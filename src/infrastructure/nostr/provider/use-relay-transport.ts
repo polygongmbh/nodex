@@ -7,7 +7,7 @@ import {
   mapNativeRelayStatus,
   resolveRelayStatus,
 } from "./relay-status";
-import { normalizeRelayUrl } from "./relay-list";
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import type { NDKRelayStatus } from "./contracts";
 
 export interface RelayTransportRefs {

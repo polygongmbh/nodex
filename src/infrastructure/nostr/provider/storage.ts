@@ -1,5 +1,6 @@
 import { safeLocalStorageSetItem, safeSessionStorageSetItem } from "@/lib/safe-local-storage";
 import { isValidNoasBaseUrl, normalizeNoasBaseUrl } from "@/lib/nostr/noas-discovery";
+import { dedupeNormalizedRelayUrls } from "@/infrastructure/nostr/relay-url";
 import type { AuthMethod } from "./contracts";
 
 type WindowWithNostr = Window & { nostr?: unknown };
@@ -32,10 +33,6 @@ function getSessionStorage(): Storage | null {
 export const hasNostrExtension = (): boolean =>
   typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
 
-function normalizeRelayUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "");
-}
-
 export function loadPersistedRelayUrls(): string[] | null {
   const storage = getLocalStorage();
   if (!storage) return null;
@@ -44,10 +41,7 @@ export function loadPersistedRelayUrls(): string[] | null {
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    const normalized = parsed
-      .map((entry) => (typeof entry === "string" ? normalizeRelayUrl(entry) : ""))
-      .filter((entry) => entry.length > 0);
-    return Array.from(new Set(normalized));
+    return dedupeNormalizedRelayUrls(parsed.filter((entry): entry is string => typeof entry === "string"));
   } catch {
     return [];
   }
@@ -56,14 +50,7 @@ export function loadPersistedRelayUrls(): string[] | null {
 export function savePersistedRelayUrls(urls: string[]): void {
   const storage = getLocalStorage();
   if (!storage) return;
-  const normalized = Array.from(
-    new Set(
-      urls
-        .map((entry) => normalizeRelayUrl(entry))
-        .filter((entry) => entry.length > 0)
-    )
-  );
-  safeLocalStorageSetItem(STORAGE_KEY_RELAYS, JSON.stringify(normalized), {
+  safeLocalStorageSetItem(STORAGE_KEY_RELAYS, JSON.stringify(dedupeNormalizedRelayUrls(urls)), {
     storage,
     context: "nostr-provider-relay-persistence",
   });

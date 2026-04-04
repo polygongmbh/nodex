@@ -2,10 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { NostrEventKind } from "@/lib/nostr/types";
+import { dedupeNormalizedRelayUrls, normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import {
-  dedupeNormalizedRelayUrls,
   filterRelayUrlsToWritableSet,
-  normalizeRelayUrl,
   resolveWritableAppRelayUrls,
 } from "@/lib/nostr/relay-write-targets";
 import {

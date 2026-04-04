@@ -8,6 +8,7 @@ import type {
   NDKSubscription,
 } from "@nostr-dev-kit/ndk";
 import { RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { summarizeRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 
 export const RELAY_NIP11_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -24,10 +25,6 @@ type PersistedRelayStatusCache = Record<string, PersistedRelayStatusEntry>;
 
 function hasLocalStorage(): boolean {
   return typeof window !== "undefined" && Boolean(window.localStorage);
-}
-
-function normalizeRelayUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "");
 }
 
 function loadPersistedRelayStatusCache(): PersistedRelayStatusCache {

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { MutableRefObject } from "react";
-import { normalizeRelayUrl } from "./relay-list";
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import {
   shouldClearReadRejectionAfterVerificationSuccess,
   shouldClearWriteRejectionAfterVerificationSuccess,

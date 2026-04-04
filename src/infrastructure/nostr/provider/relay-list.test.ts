@@ -3,16 +3,9 @@ import {
   appendResolvedRelayUrl,
   filterAutoAddRelayUrls,
   mergeConfiguredRelayStatuses,
-  normalizeRelayUrl,
   reorderResolvedRelayStatuses,
   removeResolvedRelayUrl,
 } from "./relay-list";
-
-describe("normalizeRelayUrl", () => {
-  it("removes trailing slashes", () => {
-    expect(normalizeRelayUrl("wss://relay.example.com///")).toBe("wss://relay.example.com");
-  });
-});
 
 describe("appendResolvedRelayUrl", () => {
   it("deduplicates normalized relay urls", () => {

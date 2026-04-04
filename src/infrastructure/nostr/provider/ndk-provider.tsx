@@ -29,7 +29,7 @@ import {
 } from "@/lib/presence-status";
 import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { getConfiguredDefaultRelays } from "@/infrastructure/nostr/default-relays";
-import { isRelayUrl } from "@/infrastructure/nostr/relay-url";
+import { dedupeNormalizedRelayUrls, isRelayUrl, normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
@@ -93,9 +93,7 @@ import {
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
 import { loadCachedKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 import {
-  dedupeNormalizedRelayUrls,
   filterRelayUrlsToWritableSet,
-  normalizeRelayUrl,
   resolveWritableNdkRelayUrls,
 } from "@/lib/nostr/relay-write-targets";
 import { resolveManualRelayReconnectAction } from "@/domain/relays/relay-reconnect-policy";

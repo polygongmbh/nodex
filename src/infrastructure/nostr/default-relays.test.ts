@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  relayUrlToId,
   resolveDefaultRelayUrls,
   resolveDefaultRelayUrlsWithDomainFallback,
 } from "./default-relays";
+import { relayUrlToId } from "./relay-url";
 
 describe("default relay env resolution", () => {
   beforeEach(() => {

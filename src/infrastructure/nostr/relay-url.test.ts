@@ -3,12 +3,21 @@ import {
   dedupeNormalizedRelayUrls,
   getRelayCommonPrefixes,
   getRelayDiscoveryPrefixes,
+  normalizeRelayUrl,
   normalizeRelayUrlScope,
   relayUrlToDomainMinusTld,
   relayUrlToId,
   relayUrlToName,
   resolveRelayUrlsForIds,
 } from "./relay-url";
+
+describe("normalizeRelayUrl", () => {
+  it("removes trailing slashes and trims surrounding whitespace", () => {
+    expect(normalizeRelayUrl("wss://relay.example.com///")).toBe("wss://relay.example.com");
+    expect(normalizeRelayUrl("  wss://relay.example.com  ")).toBe("wss://relay.example.com");
+    expect(normalizeRelayUrl("  wss://relay.example.com/ ")).toBe("wss://relay.example.com");
+  });
+});
 
 describe("relay-url naming", () => {
   afterEach(() => {

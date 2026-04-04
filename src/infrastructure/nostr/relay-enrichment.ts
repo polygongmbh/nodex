@@ -1,13 +1,9 @@
-import { ensureRelayProtocol } from "@/infrastructure/nostr/relay-url";
+import { dedupeNormalizedRelayUrls, ensureRelayProtocol } from "@/infrastructure/nostr/relay-url";
 
 type ComplementaryRelaySource = "nip65" | "nip05" | null;
 
 function normalizeRelayCandidates(relayUrls: string[]): string[] {
-  const normalized = relayUrls
-    .map((value) => ensureRelayProtocol(value, "wss"))
-    .map((value) => value.trim())
-    .filter(Boolean);
-  return Array.from(new Set(normalized));
+  return dedupeNormalizedRelayUrls(relayUrls.map((value) => ensureRelayProtocol(value, "wss")));
 }
 
 export function extractRelayUrlsFromNip65Tags(tags: string[][]): string[] {

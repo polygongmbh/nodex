@@ -1,8 +1,5 @@
 import type { NDKRelayStatus } from "./contracts";
-
-export function normalizeRelayUrl(url: string): string {
-  return url.replace(/\/+$/, "");
-}
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 
 export function appendResolvedRelayUrl(relayUrls: string[], relayUrl: string): string[] {
   const normalized = normalizeRelayUrl(relayUrl);

@@ -18,15 +18,10 @@ interface HostFallbackCacheEntry {
   relayUrls: string[];
 }
 
-function normalizeRelayUrl(raw: string, fallbackProtocol: RelayProtocol): string | null {
-  const normalized = ensureRelayProtocol(raw, fallbackProtocol);
-  return normalized || null;
-}
-
 export function resolveDefaultRelayUrls(relayUrls?: string[]): string[] {
   const normalized = (relayUrls ?? [])
-    .map((entry) => normalizeRelayUrl(entry, "wss"))
-    .filter((value): value is string => Boolean(value));
+    .map((entry) => ensureRelayProtocol(entry, "wss"))
+    .filter(Boolean);
   return Array.from(new Set(normalized));
 }
 
@@ -294,10 +289,6 @@ export async function getConfiguredDefaultRelaysWithFallback(): Promise<string[]
   return await resolveDefaultRelayUrlsWithDomainFallback({ relayUrls: CONFIGURED_RELAY_URLS });
 }
 
-export function relayUrlToId(url: string): string {
-  return toRelayId(url);
-}
-
 export function getConfiguredDefaultRelayIds(): string[] {
-  return getConfiguredDefaultRelays().map(relayUrlToId);
+  return getConfiguredDefaultRelays().map(toRelayId);
 }

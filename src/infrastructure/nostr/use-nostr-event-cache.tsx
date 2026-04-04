@@ -9,6 +9,7 @@ import {
   saveCachedNostrEvents,
   type CachedNostrEvent,
 } from "@/infrastructure/nostr/event-cache";
+import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/infrastructure/nostr/replaceable-events";
 
@@ -80,22 +81,14 @@ type EventLike = Pick<NDKEvent, "id" | "pubkey" | "created_at" | "kind" | "tags"
   onRelays?: RelayLike[];
 };
 
-function normalizeRelayUrl(url?: string): string | null {
-  if (!url) return null;
-  const normalized = url.trim().replace(/\/+$/, "");
-  return normalized || null;
-}
-
 function getRelayUrlsFromEvent(event: EventLike, relayOverride?: RelayLike): string[] {
-  return Array.from(
-    new Set(
-      [
-        normalizeRelayUrl(relayOverride?.url),
-        normalizeRelayUrl(event.relay?.url),
-        ...(event.onRelays || []).map((relay) => normalizeRelayUrl(relay?.url)),
-      ].filter((url): url is string => Boolean(url))
-    )
-  ).sort();
+  return normalizeRelayUrlScope(
+    [
+      relayOverride?.url,
+      event.relay?.url,
+      ...(event.onRelays || []).map((relay) => relay?.url),
+    ].filter((url): url is string => Boolean(url))
+  );
 }
 
 function toCachedEvent(event: EventLike, relayOverride?: RelayLike): CachedNostrEvent | null {
@@ -115,13 +108,10 @@ function toCachedEvent(event: EventLike, relayOverride?: RelayLike): CachedNostr
 }
 
 function getRelayUrls(event: CachedNostrEvent): string[] {
-  const urls = [
+  return normalizeRelayUrlScope([
     ...(event.relayUrls || []),
     ...(event.relayUrl ? [event.relayUrl] : []),
-  ]
-    .map((url) => url.trim().replace(/\/+$/, ""))
-    .filter((url) => Boolean(url));
-  return Array.from(new Set(urls)).sort();
+  ]);
 }
 
 function upsertCachedEvent(

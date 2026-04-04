@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import type { MutableRefObject } from "react";
 import NDK, { NDKEvent, NDKRelaySet, NDKFilter, NDKSubscription, NDKRelay } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { normalizeRelayUrl } from "./relay-list";
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
   extractRelayErrorMessage,
