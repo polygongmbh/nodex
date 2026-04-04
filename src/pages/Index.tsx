@@ -45,6 +45,7 @@ import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
+import { initializeDemoFeedData } from "@/data/demo-feed";
 import { mockRelays as demoRelays } from "@/data/mockData";
 import {
   Relay,
@@ -175,6 +176,10 @@ const Index = () => {
     availableRelayIds: relays.map((relay) => relay.id),
     subscribe,
   });
+  const selectedRelayUrls = useMemo(
+    () => deriveSelectedRelayUrls(relays, effectiveActiveRelayIds),
+    [effectiveActiveRelayIds, relays]
+  );
 
   const {
     people,
@@ -184,7 +189,7 @@ const Index = () => {
     removeCachedRelayProfile,
   } = useKind0People(
     nostrEvents,
-    deriveSelectedRelayUrls(relays, effectiveActiveRelayIds),
+    selectedRelayUrls,
     user,
   );
 

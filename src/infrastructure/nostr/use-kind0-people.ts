@@ -46,9 +46,21 @@ export function useKind0People(
   selectedRelayUrls: string[],
   user: NostrUserLike | null,
 ): UseKind0PeopleResult {
+  const normalizedSelectedRelayUrls = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          selectedRelayUrls
+            .map((relayUrl) => relayUrl.trim().replace(/\/+$/, ""))
+            .filter(Boolean)
+        )
+      ).sort(),
+    [selectedRelayUrls.join("|")]
+  );
+  const selectedRelayScopeKey = normalizedSelectedRelayUrls.join("|");
   const [people, setPeople] = useState<Person[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState<Kind0LikeEvent[]>(() =>
-    loadCachedKind0EventsForRelayUrls(selectedRelayUrls)
+    loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls)
   );
   const [fallbackKind0Events, setFallbackKind0Events] = useState<Kind0LikeEvent[]>(() => loadCachedKind0Events());
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
@@ -74,9 +86,9 @@ export function useKind0People(
   );
 
   useEffect(() => {
-    setCachedKind0Events(loadCachedKind0EventsForRelayUrls(selectedRelayUrls));
+    setCachedKind0Events(loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls));
     setFallbackKind0Events(loadCachedKind0Events());
-  }, [cacheRevision, selectedRelayUrls]);
+  }, [cacheRevision, selectedRelayScopeKey]);
 
   const latestPresenceByAuthor = useMemo(() => {
     const nowUnix = Math.floor(Date.now() / 1000);

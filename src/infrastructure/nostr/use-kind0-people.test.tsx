@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useKind0People } from "./use-kind0-people";
-import { saveCachedKind0Events } from "./people-from-kind0";
+import * as peopleFromKind0 from "./people-from-kind0";
 import { DEMO_RELAY_URL } from "@/data/basic-nostr-events";
 import { NostrEventKind } from "@/lib/nostr/types";
 
@@ -11,7 +11,7 @@ describe("useKind0People", () => {
   });
 
   it("derives people from selected relay kind0 cache without live task events", async () => {
-    saveCachedKind0Events([
+    peopleFromKind0.saveCachedKind0Events([
       {
         kind: NostrEventKind.Metadata,
         pubkey: "a".repeat(64),
@@ -39,5 +39,26 @@ describe("useKind0People", () => {
       })
     );
     expect(result.current.cachedKind0Events).toHaveLength(1);
+  });
+
+  it("does not refresh selected relay cache when rerendered with an equivalent relay list", async () => {
+    const loadSpy = vi.spyOn(peopleFromKind0, "loadCachedKind0EventsForRelayUrls");
+
+    const { rerender } = renderHook(
+      ({ relayUrls }) => useKind0People([], relayUrls, null),
+      {
+        initialProps: { relayUrls: [DEMO_RELAY_URL] },
+      }
+    );
+
+    await waitFor(() => {
+      expect(loadSpy).toHaveBeenCalledTimes(2);
+    });
+
+    rerender({ relayUrls: [DEMO_RELAY_URL] });
+
+    await waitFor(() => {
+      expect(loadSpy).toHaveBeenCalledTimes(2);
+    });
   });
 });
