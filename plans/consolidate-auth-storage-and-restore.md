@@ -2,9 +2,9 @@
 
 ## Goal
 
-Make persisted auth state internally consistent by:
+Make auth state restoration internally consistent by:
 
-- adding session restore coverage for `privateKey` and `noas`
+- adding tab-session restore coverage for `privateKey` and `noas`
 - consolidating auth storage reads/writes into shared provider helpers
 - removing the unused `STORAGE_KEY_NOAS_USERNAME`
 
@@ -21,13 +21,14 @@ Current behavior:
 
 Consequence:
 
-- there is no recoverable material for a restore flow
-- a real restore path would require storing the user-provided private key or an equivalent decryptable credential locally
+- there is no recoverable material for a restore flow today
+- reload restore becomes feasible if the normalized private key is stored in `sessionStorage`
 
 Recommendation:
 
-- do **not** add a restore flow for `privateKey`
-- centralize auth persistence so `privateKey` is treated as intentionally non-restorable and does not persist `nostr_auth_method`
+- add a `sessionStorage`-backed restore flow for `privateKey`
+- keep it non-durable across tab close by avoiding `localStorage`
+- centralize auth persistence so `privateKey` stores its key in session scope only
 
 ### `noas`
 
@@ -44,40 +45,50 @@ Consequence:
 - the persisted username is not sufficient to recreate the signer
 - the app has no persisted password, no persisted encrypted key, and no `NoasClient` method to fetch current-user signer material from an existing cookie-backed session
 - `credentials: "include"` is used on Noas requests, but the client exposes only `/auth/signin`, `/auth/register`, `/picture/:pubkey`, and `/health`; there is no current-session restore endpoint in the codebase
+- reload restore becomes feasible if the derived signer key is stored in `sessionStorage` after successful auth
 
 Recommendation:
 
-- do **not** add a restore flow for `noas` unless the server/API contract first grows a dedicated session-rehydration endpoint or the product deliberately chooses to store recoverable Noas credentials locally
+- add a `sessionStorage`-backed restore flow for `noas` using the normalized signer key already derived after successful auth
 - remove `STORAGE_KEY_NOAS_USERNAME`
-- centralize auth persistence so `noas` is treated as intentionally non-restorable and does not persist `nostr_auth_method`
+- keep it non-durable across tab close by avoiding `localStorage`
+- centralize auth persistence so `noas` stores only the session-scoped signer key plus any minimal metadata needed to rebuild the signed-in user profile
 
 ## Opinionated Direction
 
-Persist only data that participates in an actual restore flow.
+Persist only data that matches the intended lifetime of the auth mode.
 
 - `guest` continues to restore from persisted guest nsec
 - `extension` continues to restore by probing NIP-07 availability
 - `nostrConnect` continues to restore from persisted bunker metadata
-- `privateKey` becomes explicitly non-restorable
-- `noas` becomes explicitly non-restorable until the upstream auth contract supports secure rehydration
+- `privateKey` restores from `sessionStorage` only
+- `noas` restores from `sessionStorage` only, using the signer key already available after auth
+- `localStorage` remains reserved for auth modes intentionally durable across browser restarts
 
-The practical implementation is therefore not “add restore flows for both methods” but “consolidate auth persistence and stop writing stale auth state for non-restorable methods.”
+The practical implementation is therefore:
+
+- keep durable auth persistence where it already exists and is intentional
+- add non-durable reload persistence for `privateKey` and `noas`
+- remove stale or redundant auth keys
+- centralize storage decisions so auth mode and key lifetime stay aligned
 
 ## Steps
 
 1. Introduce shared auth-storage helpers in the provider layer.
-   - Centralize `setItem`/`removeItem` logic for auth method and related keys.
+   - Centralize `localStorage`/`sessionStorage` reads, writes, and cleanup for auth method and related keys.
    - Eliminate duplicated persistence logic between `ndk-provider.tsx` and `use-auth-actions.ts`.
 
 2. Align persistence with restorable behavior.
    - Remove `STORAGE_KEY_NOAS_USERNAME`.
-   - Stop persisting `STORAGE_KEY_AUTH=privateKey`.
-   - Stop persisting `STORAGE_KEY_AUTH=noas`.
-   - Keep cleanup on boot/logout for stale legacy values.
+   - Add session-scoped key storage for `privateKey`.
+   - Add session-scoped key storage for `noas` after successful key derivation.
+   - Persist `STORAGE_KEY_AUTH` only when a matching restore path exists for the selected storage lifetime.
+   - Keep cleanup on boot/logout for stale legacy values and old `nostr_noas_username` data.
 
 3. Add/update tests around auth restore behavior.
    - Cover startup restore for each supported persisted auth mode.
-   - Cover stale auth-method cleanup for legacy `privateKey` and `noas` values.
+   - Cover reload restore for `privateKey` and `noas` from `sessionStorage`.
+   - Cover stale auth-method cleanup for incomplete or legacy persisted state.
    - Cover removal of dead Noas username persistence.
 
 4. Verify and commit.
@@ -86,9 +97,9 @@ The practical implementation is therefore not “add restore flows for both meth
 
 ## Expected Outcome
 
-After the change, every persisted auth key should satisfy one of two rules:
+After the change, every auth storage key should satisfy one of two rules:
 
-- it is required for a working restore path
+- it is required for a working restore path with an explicit lifetime (`localStorage` or `sessionStorage`)
 - it is removed as dead state
 
-That leaves storage behavior smaller, more predictable, and easier to reason about during future auth work.
+That leaves storage behavior smaller, more predictable, and aligned with the product’s durability policy for each auth method.

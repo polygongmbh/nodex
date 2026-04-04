@@ -5,9 +5,9 @@ Refactor mobile filtering so task views do not decide text-query fallback themse
 The target design is:
 
 - one canonical `searchQuery` in shared surface state
-- central controller logic decides whether text search is active for the current mobile render
-- views receive already-filtered data and simple render flags
-- mobile fallback uses an explicit boolean for "ignore text query for this render" instead of passing a derived query string through override props
+- central controller logic computes the final task set for the current mobile render
+- views receive already-filtered data only
+- mobile fallback is resolved inside controller filtering instead of being exposed as a view flag or query override
 
 ## Why This Refactor
 
@@ -36,12 +36,14 @@ That creates three failure modes:
 - Preserve `searchQuery` in feed surface state as the user-entered filter text.
 - Remove the need for mobile to manufacture an alternate search string just to change filtering behavior.
 
-### 2. Replace query overrides with an explicit filtering mode
+### 2. Resolve fallback entirely inside controller filtering
 
-- Introduce a controller-level flag or mode for mobile rendering, for example:
-  - `ignoreTextQueryForMobileFallback: boolean`
-  - or a small enum if needed later, but prefer a boolean unless the logic clearly needs more states
-- This flag should be derived centrally from the existing mobile fallback decision logic.
+- Do not expose a fallback flag to views.
+- The controller should:
+  - compute the normal filtered task set
+  - if that set is empty and mobile fallback applies, compute the fallback task set with only text search ignored
+  - return one resolved final task set to the view
+- The view should not need to know whether that task set came from normal filtering or fallback filtering.
 
 ### 3. Centralize filtered task-set computation
 
@@ -49,7 +51,8 @@ That creates three failure modes:
 - Each controller path should be able to compute:
   - the fully filtered task set
   - the fallback task set with text query ignored but remaining scope preserved
-- Views should receive the correct task set for the current mode rather than reinterpreting filtering inputs locally.
+- If the normal task set is empty and fallback is allowed, the controller should choose the fallback task set before data reaches the view.
+- Views should receive one resolved task set rather than raw filtering inputs plus fallback state.
 
 ### 4. Narrow view responsibilities
 
@@ -71,21 +74,21 @@ That creates three failure modes:
      - [`src/features/feed-page/controllers/use-task-view-states.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.ts)
      - [`src/components/mobile/MobileLayout.tsx`](/Users/tj/IT/nostr/nodex/src/components/mobile/MobileLayout.tsx)
      - [`src/pages/Index.tsx`](/Users/tj/IT/nostr/nodex/src/pages/Index.tsx)
-   - Identify the minimum shared API change that lets mobile pass an explicit fallback mode instead of an alternate query string.
+   - Identify the minimum shared API change that lets mobile consume a resolved task set instead of an alternate query string or fallback flag.
 
 2. Refactor controller filtering helpers.
-   - Add a shared helper that computes both:
-     - normal filtered matches
-     - fallback matches with text query ignored
+   - Do not add a new shared filtering utility. `useFeedViewState` and `createTreeSelectors.getDisplayedTasks` already express the correct pattern — extend the same `isMobile` param to `useListViewState` and `useKanbanViewState` instead.
+   - Each view controller gains an `isMobile` param, computes both the normal and fallback task sets internally, and returns one resolved set.
    - Keep channel, people, relay, focused-task, and quick-filter constraints active in fallback mode.
+   - Make the controller select the final result set internally before returning data to the view layer.
 
 3. Update mobile shell wiring.
-   - Replace the mobile `effectiveSearchQuery` transport with a boolean fallback/filtering mode.
-   - Ensure the shell only controls notice visibility and the filtering mode, not the query text itself.
+   - The concrete change is: remove `searchQueryOverride: effectiveSearchQuery` from `effectiveTaskViewModel` in `MobileLayout` and drop `effectiveSearchQuery` from `MobileFallbackNoticeState`. No new wiring needed.
+   - Ensure the shell only controls notice visibility while consuming the resolved task set from the controller.
 
 4. Update views to consume controller output.
    - Prefer passing resolved task collections over raw filter override props.
-   - Reduce or eliminate per-view branching that re-applies mobile text fallback independently.
+   - Remove per-view branching that re-applies mobile text fallback independently.
 
 5. Clean up obsolete props and dead branches.
    - Remove now-unused override plumbing where possible.
@@ -97,7 +100,7 @@ Add or update tests before/during implementation so the refactor protects behavi
 
 - controller-level tests proving:
   - normal filtering uses text query
-  - mobile fallback ignores only text query
+  - when the normal result is empty, controller fallback ignores only text query
   - channel/person/relay/quick-filter scope remains active during fallback
 - mobile layout tests proving:
   - fallback still shows the notice

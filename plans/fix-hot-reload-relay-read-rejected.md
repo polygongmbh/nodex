@@ -3,7 +3,7 @@
 ## Problem
 
 During Vite hot reloads, relays often end up stuck in `verification-failed` / read-rejected state.
-The most likely cause is that the Nostr provider recreates relay connections and/or replays auth-sensitive subscriptions too aggressively when React effects rerun or the provider remounts during HMR.
+The current code still suggests that relay connections are being recreated too aggressively when the Nostr provider remounts or re-initializes during HMR.
 
 ## Working Hypothesis
 
@@ -13,44 +13,53 @@ The primary risk area is [`src/infrastructure/nostr/provider/ndk-provider.tsx`](
 - That effect depends on many callbacks and derived values, so it is structurally easy to retrigger.
 - Cleanup disconnects every relay and clears listeners, which is correct for a real teardown but expensive and noisy under hot reload.
 - Read-verification failure state is held in refs local to the provider instance, so repeated teardown/recreate cycles can leave relay state biased toward rejection while sockets/auth challenges are still settling.
+- Current code still creates the NDK instance inside the component lifecycle, so even a mount-only effect would not help if Fast Refresh remounts the provider.
 
 ## Opinionated Fix Direction
 
 Do not try to "debounce" rejected states first.
-Instead, reduce connection churn so hot reload stops creating the failure condition.
+Reduce connection churn at the runtime boundary.
+
+With the current implementation, the first move should be to separate the long-lived relay runtime from the React provider component.
+Effect cleanup tuning inside `NDKProvider` is still worthwhile, but it should be secondary.
 
 ## Plan
 
-1. Isolate provider bootstrap from routine render churn.
-   - Split the current initialization effect into:
-     - one mount-only/provider-lifetime bootstrap for creating the NDK instance, pool listeners, timers, and cleanup
-     - one narrower reconciliation path for relay list changes
-   - Make the bootstrap depend only on true lifetime inputs, not a broad callback set.
-   - Prefer refs for event-handler access where needed so listener wiring does not require re-instantiating NDK.
+1. Extract a stable NDK runtime outside the provider component.
+   - Create a small module-scoped runtime owner for:
+     - the `NDK` instance
+     - relay pool listeners
+     - relay bookkeeping refs that represent transport/auth state rather than UI state
+   - Have `NDKProvider` attach to that runtime instead of constructing it directly in component lifecycle.
+   - In development, preserve that runtime across Fast Refresh so relay sockets are not torn down on provider remount.
+   - If needed, keep the persistence dev-only first to minimize production risk.
 
-2. Preserve relay/socket ownership across no-op rerenders and HMR-adjacent updates.
-   - Ensure `defaultRelays` identity changes alone do not force full provider teardown when the normalized relay set is unchanged.
-   - Compare normalized relay sets before mutating `ndk.explicitRelayUrls`, reconnecting, or resetting relay status.
-   - Treat persisted relay state as a reconciliation input, not as a reason to rebuild the whole provider.
+2. Narrow the provider to UI/session state and runtime subscription.
+   - Let `NDKProvider` read runtime snapshots and expose context actions, but avoid owning socket lifetime directly.
+   - Move event-listener registration and interval wiring out of the render-driven effect where practical.
+   - Use refs/callback refs where needed so runtime listeners do not have to be rebound for ordinary React updates.
 
-3. Reconcile relays incrementally instead of rebuilding the pool.
+3. Reconcile relay-list changes incrementally instead of rebuilding the pool.
    - On relay-list changes:
      - add newly introduced relays
      - remove deleted relays cleanly
      - keep existing relay instances/subscriptions intact
    - Avoid disconnect/reconnect for relays whose normalized URL is already present and healthy.
+   - Compare normalized relay sets before mutating `ndk.explicitRelayUrls`, reconnecting, or resetting relay status.
 
-4. Make read-rejection state less sticky across legitimate reconnects.
+4. Make auth/read rejection state instance-aware.
    - Audit when `relayReadRejectedRef` is cleared.
-   - On explicit successful reconnect/auth completion for the same relay instance, clear stale read rejection before surfacing `verification-failed`.
-   - Keep this as a secondary safeguard, not the primary fix.
+   - Tie read-rejected recovery to successful auth/connect for the active relay instance, so a stale close from a previous socket cannot keep the current relay marked rejected.
+   - Review whether `pendingRelayVerificationRef` and `relaysPendingAuthSubscriptionReplayRef` should also be keyed/validated against the active relay instance.
+   - Keep this as a safeguard, not the main fix.
 
-5. Add a regression test for provider stability.
+5. Add regression coverage for remount/HMR-adjacent behavior.
    - Extend [`src/infrastructure/nostr/provider/ndk-provider.test.tsx`](/Users/tj/IT/nostr/nodex/src/infrastructure/nostr/provider/ndk-provider.test.tsx) with a case that:
      - renders `NDKProvider`
-     - rerenders with semantically identical relay props or triggers the relevant bootstrap update path
-     - asserts NDK creation/connect is not repeated unnecessarily
-     - asserts an already-connected relay does not get forced into read-rejected state by that rerender
+     - unmounts/remounts it or simulates the relevant runtime reattachment path
+     - asserts the relay runtime is reused instead of reconnecting everything from scratch
+     - asserts an already-connected relay does not get forced into read-rejected state by reattachment
+   - Add a smaller reconciliation test for semantically identical relay props so no-op prop churn also stays safe.
 
 6. Verify with focused and broader checks.
    - Minimum for the change:
@@ -63,8 +72,9 @@ Instead, reduce connection churn so hot reload stops creating the failure condit
 ## Implementation Notes
 
 - Start in `ndk-provider.tsx`; do not spread the fix into feed-page relay controllers unless evidence requires it.
-- Prefer a small internal lifecycle refactor over introducing another external state layer.
-- If HMR still remounts the provider completely, consider a second-step fallback: a module-scoped dev-only singleton transport/session holder. That should be a backup option, not the first move.
+- Prefer a small runtime extraction dedicated to transport/session lifetime over trying to make one giant effect perfectly stable.
+- A split between "runtime state" and "React view state" is justified here because websocket lifetime is not naturally component-scoped.
+- Keep the public `NDKContextValue` surface stable unless the refactor proves it is necessary to change it.
 
 ## Success Criteria
 
