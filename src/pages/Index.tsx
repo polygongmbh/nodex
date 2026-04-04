@@ -35,7 +35,7 @@ import { useIndexDerivedData } from "@/features/feed-page/controllers/use-index-
 import { usePinnedSidebarChannels } from "@/features/feed-page/controllers/use-pinned-sidebar-channels";
 import { usePinnedSidebarPeople } from "@/features/feed-page/controllers/use-pinned-sidebar-people";
 import { useFeedInteractionFrecency } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
-import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
+import { deriveSelectedRelayUrls, useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
 import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
@@ -188,6 +188,11 @@ const Index = () => {
     subscribe,
   });
 
+  const selectedRelayUrls = useMemo(
+    () => deriveSelectedRelayUrls(relays, effectiveActiveRelayIds),
+    [effectiveActiveRelayIds, relays]
+  );
+
   const {
     people,
     setPeople,
@@ -200,7 +205,6 @@ const Index = () => {
   const {
     nostrRelays,
     relaysWithActiveState,
-    selectedRelayUrls,
     handleAddRelay,
     handleRemoveRelay,
   } = useIndexRelayShell({

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { normalizeRelayAddUrl, useIndexRelayShell } from "./use-index-relay-shell";
+import { deriveSelectedRelayUrls, normalizeRelayAddUrl, useIndexRelayShell } from "./use-index-relay-shell";
 
 function createWrapper() {
   const queryClient = new QueryClient();
@@ -118,5 +118,41 @@ describe("normalizeRelayAddUrl", () => {
     expect(normalizeRelayAddUrl(" ws://relay.example.com/ ")).toBe("ws://relay.example.com");
     expect(normalizeRelayAddUrl("   ")).toBeNull();
     expect(normalizeRelayAddUrl("https://relay.example.com")).toBeNull();
+  });
+});
+
+describe("deriveSelectedRelayUrls", () => {
+  it("returns active non-demo relay urls without requiring hook ordering", () => {
+    expect(
+      deriveSelectedRelayUrls(
+        [
+          {
+            id: "demo",
+            name: "Demo",
+            icon: "radio",
+            isActive: true,
+            connectionStatus: "connected",
+            url: "wss://demo.invalid",
+          },
+          {
+            id: "relay-one",
+            name: "Relay One",
+            icon: "radio",
+            isActive: false,
+            connectionStatus: "connected",
+            url: "wss://relay.one",
+          },
+          {
+            id: "relay-two",
+            name: "Relay Two",
+            icon: "radio",
+            isActive: false,
+            connectionStatus: "connected",
+            url: "wss://relay.two",
+          },
+        ],
+        new Set(["relay-two"])
+      )
+    ).toEqual(["wss://relay.two"]);
   });
 });

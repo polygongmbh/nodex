@@ -38,6 +38,12 @@ export interface UseIndexRelayShellResult {
   handleRemoveRelay: (url: string) => void;
 }
 
+export function deriveSelectedRelayUrls(relays: Relay[], effectiveActiveRelayIds: Set<string>): string[] {
+  return relays
+    .filter((relay) => relay.id !== "demo" && relay.url && effectiveActiveRelayIds.has(relay.id))
+    .map((relay) => relay.url as string);
+}
+
 export function normalizeRelayAddUrl(url: string): string | null {
   const trimmed = url.trim();
   if (!trimmed) return null;
@@ -87,11 +93,8 @@ export function useIndexRelayShell({
     }));
   }, [relays, effectiveActiveRelayIds]);
   const selectedRelayUrls = useMemo(
-    () =>
-      relaysWithActiveState
-        .filter((relay) => relay.id !== "demo" && relay.url && relay.isActive)
-        .map((relay) => relay.url as string),
-    [relaysWithActiveState]
+    () => deriveSelectedRelayUrls(relays, effectiveActiveRelayIds),
+    [effectiveActiveRelayIds, relays]
   );
 
   const handleAddRelay = useCallback(
