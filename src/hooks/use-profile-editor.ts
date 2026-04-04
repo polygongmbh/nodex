@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { TFunction } from "i18next";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -92,7 +92,7 @@ export function useProfileEditor({
     });
   const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid && !showProfileNameTaken;
 
-  const resetFromProfile = (profile: ProfileEditorSnapshot) => {
+  const resetFromProfile = useCallback((profile: ProfileEditorSnapshot) => {
     const nextSnapshot = {
       name: normalizeSnapshotValue(profile.name),
       displayName: normalizeSnapshotValue(profile.displayName),
@@ -110,7 +110,7 @@ export function useProfileEditor({
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
     setPublishDelayEnabled(loadPublishDelayEnabled());
     setAutoCaptionEnabled(loadAutoCaptionEnabled());
-  };
+  }, []);
 
   const handleProfileNameChange = (value: string) => {
     setProfileName(value);
