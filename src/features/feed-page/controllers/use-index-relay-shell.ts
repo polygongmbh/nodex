@@ -33,6 +33,7 @@ export interface UseIndexRelayShellResult {
     nip11?: NDKRelayStatus["nip11"];
   }>;
   relaysWithActiveState: Relay[];
+  selectedRelayUrls: string[];
   handleAddRelay: (url: string) => void;
   handleRemoveRelay: (url: string) => void;
 }
@@ -85,6 +86,13 @@ export function useIndexRelayShell({
       isActive: effectiveActiveRelayIds.has(r.id),
     }));
   }, [relays, effectiveActiveRelayIds]);
+  const selectedRelayUrls = useMemo(
+    () =>
+      relaysWithActiveState
+        .filter((relay) => relay.id !== "demo" && relay.url && relay.isActive)
+        .map((relay) => relay.url as string),
+    [relaysWithActiveState]
+  );
 
   const handleAddRelay = useCallback(
     (url: string) => {
@@ -134,6 +142,7 @@ export function useIndexRelayShell({
   return {
     nostrRelays,
     relaysWithActiveState,
+    selectedRelayUrls,
     handleAddRelay,
     handleRemoveRelay,
   };

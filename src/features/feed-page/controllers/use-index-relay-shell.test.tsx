@@ -67,6 +67,49 @@ describe("useIndexRelayShell", () => {
     expect(addRelay).not.toHaveBeenCalled();
     expect(setActiveRelayIds).not.toHaveBeenCalled();
   });
+
+  it("returns the active non-demo relay urls for downstream profile hydration", () => {
+    const { result } = renderHook(
+      () =>
+        useIndexRelayShell({
+          ndkRelays: [],
+          relays: [
+            {
+              id: "relay-one",
+              name: "Relay One",
+              icon: "radio",
+              isActive: false,
+              connectionStatus: "connected",
+              url: "wss://relay.one",
+            },
+            {
+              id: "demo",
+              name: "Demo",
+              icon: "radio",
+              isActive: false,
+              connectionStatus: "connected",
+              url: "wss://demo.invalid",
+            },
+            {
+              id: "relay-two",
+              name: "Relay Two",
+              icon: "radio",
+              isActive: false,
+              connectionStatus: "connected",
+              url: "wss://relay.two",
+            },
+          ],
+          effectiveActiveRelayIds: new Set(["relay-two"]),
+          addRelay: vi.fn(),
+          removeRelay: vi.fn(),
+          setActiveRelayIds: vi.fn(),
+          removeCachedRelayProfile: vi.fn(),
+        }),
+      { wrapper: createWrapper() }
+    );
+
+    expect(result.current.selectedRelayUrls).toEqual(["wss://relay.two"]);
+  });
 });
 
 describe("normalizeRelayAddUrl", () => {

@@ -201,27 +201,6 @@ const Index = () => {
     subscribe,
   });
 
-  const selectedRelayScopeIds = useMemo(
-    () =>
-      resolveChannelRelayScopeIds(
-        effectiveActiveRelayIds,
-        relays.map((relay) => relay.id)
-      ),
-    [effectiveActiveRelayIds, relays]
-  );
-
-  // Compute selected relay URLs for profile hydration
-  const selectedRelayUrls = useMemo(
-    () =>
-      relays
-        .filter(
-          (relay) =>
-            relay.id !== DEMO_RELAY_ID && relay.url && selectedRelayScopeIds.has(relay.id)
-        )
-        .map((relay) => relay.url as string),
-    [relays, selectedRelayScopeIds]
-  );
-
   const {
     people,
     setPeople,
@@ -234,6 +213,7 @@ const Index = () => {
   const {
     nostrRelays,
     relaysWithActiveState,
+    selectedRelayUrls,
     handleAddRelay,
     handleRemoveRelay,
   } = useIndexRelayShell({
@@ -245,6 +225,15 @@ const Index = () => {
     setActiveRelayIds,
     removeCachedRelayProfile,
   });
+
+  const selectedRelayScopeIds = useMemo(
+    () =>
+      resolveChannelRelayScopeIds(
+        effectiveActiveRelayIds,
+        relays.map((relay) => relay.id)
+      ),
+    [effectiveActiveRelayIds, relays]
+  );
 
   const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? getDemoSeedTasks() : []));
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
