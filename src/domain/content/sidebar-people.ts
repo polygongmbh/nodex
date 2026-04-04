@@ -54,10 +54,10 @@ export function deriveSidebarPeople(
     .map((person) => {
       const normalizedId = person.id.trim().toLowerCase();
       const stats = statsByAuthorId.get(normalizedId);
-      const personalScore = personalizeScores.get(normalizedId) || 0;
-      if ((!stats || stats.count < minPosts) && personalScore <= 0) {
+      if (!stats || stats.count < minPosts) {
         return null;
       }
+      const personalScore = personalizeScores.get(normalizedId) || 0;
 
       const latestPresenceTimestampMs = latestPresenceByAuthorId.get(normalizedId);
       const latestActivityTimestampMs = Math.max(

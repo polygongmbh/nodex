@@ -231,7 +231,7 @@ describe("useIndexDerivedData sidebar people", () => {
     expect(screen.getByTestId("sidebar-people-ids")).not.toHaveTextContent("alice");
   });
 
-  it("keeps manually interacted people visible through person frecency", () => {
+  it("does not let person frecency keep out-of-scope people visible after switching relays", () => {
     render(
       <MemoryRouter>
         <SidebarPeopleHarness />
@@ -244,8 +244,8 @@ describe("useIndexDerivedData sidebar people", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "RefreshAlice" }));
 
-    expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("alice");
     expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("bob");
+    expect(screen.getByTestId("sidebar-people-ids")).not.toHaveTextContent("alice");
   });
 });
 
