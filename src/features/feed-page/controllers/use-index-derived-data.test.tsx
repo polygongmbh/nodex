@@ -75,7 +75,7 @@ function Harness() {
     postedTags,
     suppressedNostrEventIds: new Set(),
     people,
-    supplementalLatestActivityByAuthor: new Map(),
+    latestPresenceByAuthor: new Map(),
     cachedKind0Events: [],
     user: null,
     effectiveActiveRelayIds: activeRelayIds,
@@ -185,7 +185,7 @@ function SidebarPeopleHarness() {
     postedTags: [],
     suppressedNostrEventIds: new Set(),
     people: [alice, bob],
-    supplementalLatestActivityByAuthor: new Map(),
+    latestPresenceByAuthor: new Map(),
     cachedKind0Events: [],
     user: null,
     effectiveActiveRelayIds: activeRelayIds,
@@ -262,7 +262,7 @@ function MentionAutocompleteHarness() {
     postedTags: [],
     suppressedNostrEventIds: new Set(),
     people: [alice, carol],
-    supplementalLatestActivityByAuthor: new Map(),
+    latestPresenceByAuthor: new Map(),
     cachedKind0Events: [
       {
         kind: 0,

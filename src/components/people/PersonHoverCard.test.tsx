@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PersonHoverCard, resumePersonHoverCards, suspendPersonHoverCards } from "./PersonHoverCard";
 import type { Person } from "@/types/person";
+import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
+import { makeTask } from "@/test/fixtures";
 
 const alice: Person = {
   id: "a".repeat(64),
@@ -112,5 +114,67 @@ describe("PersonHoverCard", () => {
     });
 
     expect(screen.queryByText("Alice bio")).not.toBeInTheDocument();
+  });
+
+  it("shows presence details and resolves the viewed task title", () => {
+    vi.useFakeTimers();
+
+    render(
+      <FeedTaskViewModelProvider
+        value={{
+          tasks: [],
+          allTasks: [makeTask({ id: "task-123", content: "Fix relay reconnect jitter" })],
+        }}
+      >
+        <PersonHoverCard
+          person={{
+            ...alice,
+            onlineStatus: "online",
+            lastPresenceAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
+            presenceView: "feed",
+            presenceTaskId: "task-123",
+          }}
+        >
+          <button type="button">Alice trigger</button>
+        </PersonHoverCard>
+      </FeedTaskViewModelProvider>
+    );
+
+    fireEvent.focus(screen.getByRole("button", { name: "Alice trigger" }));
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    expect(screen.getByText("Last Seen")).toBeInTheDocument();
+    expect(screen.getByText("Viewing")).toBeInTheDocument();
+    expect(screen.getByText("Fix relay reconnect jitter")).toBeInTheDocument();
+    expect(screen.queryByText("Timeline")).not.toBeInTheDocument();
+  });
+
+  it("falls back to the current view when a presence task id is not in the current task model", () => {
+    vi.useFakeTimers();
+
+    render(
+      <PersonHoverCard
+        person={{
+          ...alice,
+          onlineStatus: "online",
+          lastPresenceAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
+          presenceView: "tree",
+          presenceTaskId: "missing-task",
+        }}
+      >
+        <button type="button">Alice trigger</button>
+      </PersonHoverCard>
+    );
+
+    fireEvent.focus(screen.getByRole("button", { name: "Alice trigger" }));
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    expect(screen.getByText("Viewing")).toBeInTheDocument();
+    expect(screen.getByText("Tree")).toBeInTheDocument();
+    expect(screen.queryByText("Unknown task")).not.toBeInTheDocument();
   });
 });

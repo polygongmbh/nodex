@@ -1,5 +1,6 @@
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
+import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 
 const DEFAULT_MIN_POSTS = 3;
 const ONLINE_WINDOW_MS = 3 * 60 * 1000;
@@ -18,7 +19,7 @@ interface SidebarPersonStats {
 export function deriveSidebarPeople(
   people: Person[],
   tasks: Task[],
-  latestPresenceByAuthorId: Map<string, number> = new Map(),
+  latestPresenceByAuthorId: Map<string, LatestPresenceSnapshot> = new Map(),
   now: Date = new Date(),
   options: DeriveSidebarPeopleOptions = {}
 ): Person[] {
@@ -59,7 +60,9 @@ export function deriveSidebarPeople(
       }
       const personalScore = personalizeScores.get(normalizedId) || 0;
 
-      const latestPresenceTimestampMs = latestPresenceByAuthorId.get(normalizedId);
+      const latestPresence = latestPresenceByAuthorId.get(normalizedId);
+      const latestPresenceTimestampMs =
+        latestPresence?.state === "active" ? latestPresence.reportedAtMs : undefined;
       const latestActivityTimestampMs = Math.max(
         stats?.latestTimestampMs ?? Number.NEGATIVE_INFINITY,
         latestPresenceTimestampMs ?? Number.NEGATIVE_INFINITY
@@ -68,14 +71,22 @@ export function deriveSidebarPeople(
         latestActivityTimestampMs === Number.NEGATIVE_INFINITY
           ? Number.POSITIVE_INFINITY
           : nowMs - latestActivityTimestampMs;
-      const onlineStatus: Person["onlineStatus"] =
-        ageMs <= ONLINE_WINDOW_MS ? "online" : ageMs <= RECENT_WINDOW_MS ? "recent" : "offline";
+      const onlineStatus: Person["onlineStatus"] = latestPresence?.state === "offline"
+        ? "offline"
+        : ageMs <= ONLINE_WINDOW_MS
+          ? "online"
+          : ageMs <= RECENT_WINDOW_MS
+            ? "recent"
+            : "offline";
 
       return {
         person: {
           ...person,
           isOnline: onlineStatus === "online",
           onlineStatus,
+          lastPresenceAtMs: latestPresence?.reportedAtMs,
+          presenceView: latestPresence?.state === "active" ? latestPresence.view : undefined,
+          presenceTaskId: latestPresence?.state === "active" ? latestPresence.taskId : undefined,
         },
         latestTimestampMs: latestActivityTimestampMs,
         personalScore,

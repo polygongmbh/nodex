@@ -230,7 +230,7 @@ const Index = () => {
     people,
     setPeople,
     cachedKind0Events,
-    supplementalLatestActivityByAuthor,
+    latestPresenceByAuthor,
     seedCachedKind0Events,
     removeCachedRelayProfile,
   } = useKind0People(nostrEvents, selectedRelayUrls, user);
@@ -276,7 +276,7 @@ const Index = () => {
     postedTags,
     suppressedNostrEventIds,
     people,
-    supplementalLatestActivityByAuthor,
+    latestPresenceByAuthor,
     cachedKind0Events,
     user,
     effectiveActiveRelayIds,

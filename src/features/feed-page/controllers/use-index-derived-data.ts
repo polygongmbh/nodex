@@ -4,6 +4,7 @@ import type { Person } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
 import type { NostrUser } from "@/infrastructure/nostr/ndk-context";
+import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 import {
   nostrEventsToTasks,
   isSpamContent,
@@ -40,7 +41,7 @@ export interface UseIndexDerivedDataOptions {
   postedTags: PostedTag[];
   suppressedNostrEventIds: Set<string>;
   people: Person[];
-  supplementalLatestActivityByAuthor: Map<string, number>;
+  latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   cachedKind0Events: Kind0LikeEvent[];
   user: NostrUser | null;
   effectiveActiveRelayIds: Set<string>;
@@ -84,7 +85,7 @@ export function useIndexDerivedData({
   postedTags,
   suppressedNostrEventIds,
   people,
-  supplementalLatestActivityByAuthor,
+  latestPresenceByAuthor,
   cachedKind0Events,
   user,
   effectiveActiveRelayIds,
@@ -252,11 +253,11 @@ export function useIndexDerivedData({
     return deriveSidebarPeople(
       people,
       scopedTasksForSidebarPeople,
-      supplementalLatestActivityByAuthor,
+      latestPresenceByAuthor,
       new Date(),
       { personalizeScores: personalizedPersonScores }
     );
-  }, [people, scopedTasksForSidebarPeople, supplementalLatestActivityByAuthor, personalizedPersonScores]);
+  }, [latestPresenceByAuthor, people, scopedTasksForSidebarPeople, personalizedPersonScores]);
 
   const currentUser = resolveCurrentUser(people, user);
 

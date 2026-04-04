@@ -902,6 +902,11 @@
       "recent": "recent",
       "offline": "offline"
     },
+    "presence": {
+      "lastSeen": "Last Seen",
+      "viewing": "Viewing",
+      "unknownTask": "Unknown task"
+    },
     "actions": {
       "openMenu": "Person actions for {{name}}",
       "showOnly": "Show only content involving {{name}}",

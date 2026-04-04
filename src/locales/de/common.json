@@ -902,6 +902,11 @@
       "recent": "kürzlich aktiv",
       "offline": "offline"
     },
+    "presence": {
+      "lastSeen": "Zuletzt gesehen",
+      "viewing": "Gerade in",
+      "unknownTask": "Unbekannte Aufgabe"
+    },
     "actions": {
       "openMenu": "Personenaktionen für {{name}}",
       "showOnly": "Nur Inhalte mit Beteiligung von {{name}} anzeigen",

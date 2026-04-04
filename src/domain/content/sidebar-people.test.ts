@@ -72,13 +72,45 @@ describe("deriveSidebarPeople", () => {
       makeTask({ id: "a3", author: alice, timestamp: new Date("2026-02-17T10:10:00.000Z") }),
     ];
     const presence = new Map([
-      ["alice-pk", new Date("2026-02-17T11:58:30.000Z").getTime()],
+      ["alice-pk", {
+        reportedAtMs: new Date("2026-02-17T11:58:30.000Z").getTime(),
+        state: "active" as const,
+        view: "feed",
+        taskId: "task-123",
+      }],
     ]);
 
     const sidebarPeople = deriveSidebarPeople([alice], tasks, presence, now);
 
     expect(sidebarPeople[0].isOnline).toBe(true);
     expect(sidebarPeople[0].onlineStatus).toBe("online");
+    expect(sidebarPeople[0].lastPresenceAtMs).toBe(new Date("2026-02-17T11:58:30.000Z").getTime());
+    expect(sidebarPeople[0].presenceView).toBe("feed");
+    expect(sidebarPeople[0].presenceTaskId).toBe("task-123");
+  });
+
+  it("shows offline when the latest presence explicitly reports offline", () => {
+    const now = new Date("2026-02-17T12:00:00.000Z");
+    const alice = makePerson({ id: "alice-pk", name: "alice", displayName: "Alice" });
+    const tasks = [
+      makeTask({ id: "a1", author: alice, timestamp: new Date("2026-02-17T11:59:30.000Z") }),
+      makeTask({ id: "a2", author: alice, timestamp: new Date("2026-02-17T11:58:10.000Z") }),
+      makeTask({ id: "a3", author: alice, timestamp: new Date("2026-02-17T11:57:50.000Z") }),
+    ];
+    const presence = new Map([
+      ["alice-pk", {
+        reportedAtMs: new Date("2026-02-17T11:59:45.000Z").getTime(),
+        state: "offline" as const,
+      }],
+    ]);
+
+    const sidebarPeople = deriveSidebarPeople([alice], tasks, presence, now);
+
+    expect(sidebarPeople[0].isOnline).toBe(false);
+    expect(sidebarPeople[0].onlineStatus).toBe("offline");
+    expect(sidebarPeople[0].lastPresenceAtMs).toBe(new Date("2026-02-17T11:59:45.000Z").getTime());
+    expect(sidebarPeople[0].presenceView).toBeUndefined();
+    expect(sidebarPeople[0].presenceTaskId).toBeUndefined();
   });
 
   it("uses person frecency only as a tiebreaker inside the visible relay scope", () => {

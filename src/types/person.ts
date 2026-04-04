@@ -9,6 +9,9 @@ export interface Person {
   avatar?: string;
   isOnline: boolean;
   onlineStatus?: "online" | "recent" | "offline";
+  lastPresenceAtMs?: number;
+  presenceView?: string;
+  presenceTaskId?: string | null;
   isSelected: boolean;
 }
 

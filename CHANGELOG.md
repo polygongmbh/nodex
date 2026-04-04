@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Profile hover cards now show the latest presence report details, including when someone last reported status plus the current view and task they are looking at when NIP-38 presence data includes it.
 - People lists are relay-scoped again across desktop and mobile; recent person interactions now only affect ordering within the visible relay scope instead of reviving people from hidden relays.
 - Manual relay reconnect now retries relay auth for `read-only` and read-rejected spaces on the existing live session, and activating those spaces in the list now dispatches the same reconnect intent used by the relay-management reload action, so access recovery no longer depends on a separate button click or unnecessary websocket teardown.
 - Guest/profile setup no longer force-opens on reload when the app already has cached or fetched profile data for the current identity, and read-only-only relay sessions no longer prompt for profile publishing that cannot succeed.

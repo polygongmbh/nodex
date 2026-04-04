@@ -13,7 +13,10 @@ import {
   saveCachedKind0Events,
   type Kind0LikeEvent,
 } from "@/infrastructure/nostr/people-from-kind0";
-import { deriveLatestActivePresenceByAuthor } from "@/lib/presence-status";
+import {
+  deriveLatestPresenceByAuthor,
+  type LatestPresenceSnapshot,
+} from "@/lib/presence-status";
 
 interface UserProfileSnapshot {
   name?: string;
@@ -33,6 +36,7 @@ interface UseKind0PeopleResult {
   people: Person[];
   setPeople: Dispatch<SetStateAction<Person[]>>;
   cachedKind0Events: Kind0LikeEvent[];
+  latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   supplementalLatestActivityByAuthor: Map<string, number>;
   seedCachedKind0Events: (events: Kind0LikeEvent[]) => void;
   removeCachedRelayProfile: (relayUrl: string) => void;
@@ -75,12 +79,21 @@ export function useKind0People(
     setFallbackKind0Events(loadCachedKind0Events());
   }, [cacheRevision, selectedRelayUrls]);
 
-  const supplementalLatestActivityByAuthor = useMemo(() => {
+  const latestPresenceByAuthor = useMemo(() => {
     const nowUnix = Math.floor(Date.now() / 1000);
-    const latestActivePresenceByAuthor = deriveLatestActivePresenceByAuthor(
+    return deriveLatestPresenceByAuthor(
       nostrEvents.filter((event) => event.kind === NostrEventKind.UserStatus),
       nowUnix
     );
+  }, [nostrEvents]);
+
+  const supplementalLatestActivityByAuthor = useMemo(() => {
+    const latestActivePresenceByAuthor = new Map<string, number>();
+    for (const [authorId, snapshot] of latestPresenceByAuthor.entries()) {
+      if (snapshot.state === "active") {
+        latestActivePresenceByAuthor.set(authorId, snapshot.reportedAtMs);
+      }
+    }
     const latestByAuthor = new Map<string, number>();
 
     for (const event of nostrEvents) {
@@ -104,7 +117,7 @@ export function useKind0People(
     }
 
     return latestByAuthor;
-  }, [nostrEvents]);
+  }, [latestPresenceByAuthor, nostrEvents]);
 
   useEffect(() => {
     const eventsByRelayUrl = new Map<string, Kind0LikeEvent[]>();
@@ -235,6 +248,7 @@ export function useKind0People(
     people,
     setPeople,
     cachedKind0Events,
+    latestPresenceByAuthor,
     supplementalLatestActivityByAuthor,
     seedCachedKind0Events,
     removeCachedRelayProfile,

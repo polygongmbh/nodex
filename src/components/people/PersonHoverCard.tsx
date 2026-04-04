@@ -6,6 +6,8 @@ import type { Person } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getCompactPersonLabel } from "@/types/person";
 import { cn } from "@/lib/utils";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 
 interface PersonHoverCardProps {
   person: Person;
@@ -77,7 +79,8 @@ export function PersonHoverCard({
   triggerClassName,
   sideOffset = 8,
 }: PersonHoverCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { allTasks } = useFeedTaskViewModel();
   const hoverCardId = useId();
   const openSourceRef = useRef<HoverCardOpenSource>("focus");
   const activeId = useSyncExternalStore(
@@ -99,6 +102,17 @@ export function PersonHoverCard({
   const compactLabel = getCompactPersonLabel(person);
   const pubkeyLabel = toUserFacingPubkey(person.id);
   const statusKey = getStatusKey(person);
+  const resolvedPresenceTaskTitle = person.presenceTaskId
+    ? getTrimmedFirstTaskContentLine(
+        allTasks.find((task) => task.id === person.presenceTaskId)?.content
+      )
+    : "";
+  const presenceViewLabel = person.presenceView
+    ? t(`navigation.views.${person.presenceView}`, {
+        defaultValue: person.presenceView,
+      })
+    : null;
+  const viewingLabel = resolvedPresenceTaskTitle || presenceViewLabel;
   const open = !suspended && requestedOpen && activeId === hoverCardId;
 
   useEffect(() => {
@@ -194,6 +208,34 @@ export function PersonHoverCard({
             </p>
           </div>
         </div>
+        {person.lastPresenceAtMs || viewingLabel ? (
+          <div className="mt-3 rounded-md border border-border/60 bg-muted/40 p-3">
+            <div className="grid gap-2 text-xs text-muted-foreground">
+              {person.lastPresenceAtMs ? (
+                <div className="flex items-start justify-between gap-3">
+                  <span>{t("people.presence.lastSeen")}</span>
+                  <span className="text-right text-foreground">
+                    {new Intl.DateTimeFormat(i18n.language, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(person.lastPresenceAtMs))}
+                  </span>
+                </div>
+              ) : null}
+              {viewingLabel ? (
+                <div className="flex items-start justify-between gap-3">
+                  <span>{t("people.presence.viewing")}</span>
+                  <span
+                    className="max-w-[12rem] text-right text-foreground"
+                    title={resolvedPresenceTaskTitle || presenceViewLabel || person.presenceTaskId || ""}
+                  >
+                    {viewingLabel}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         {person.about ? (
           <p className="mt-3 line-clamp-4 whitespace-pre-wrap text-xs text-muted-foreground">
             {person.about}

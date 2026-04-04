@@ -10,6 +10,13 @@ export interface PresenceContent {
   taskId?: string | null;
 }
 
+export interface LatestPresenceSnapshot {
+  reportedAtMs: number;
+  state: PresenceState;
+  view?: string;
+  taskId?: string | null;
+}
+
 export function buildPresenceTags(expirationUnix: number): string[][] {
   return [
     ["d", NIP38_PRESENCE_TAG],
@@ -64,16 +71,11 @@ interface PresenceLikeEvent {
   content?: string;
 }
 
-interface PresenceStateSnapshot {
-  createdAtMs: number;
-  state: PresenceState;
-}
-
-export function deriveLatestActivePresenceByAuthor(
+export function deriveLatestPresenceByAuthor(
   events: PresenceLikeEvent[],
   nowUnix: number
-): Map<string, number> {
-  const latestPresenceByAuthor = new Map<string, PresenceStateSnapshot>();
+): Map<string, LatestPresenceSnapshot> {
+  const latestPresenceByAuthor = new Map<string, LatestPresenceSnapshot>();
 
   for (const event of events) {
     const authorId = event.pubkey?.trim().toLowerCase();
@@ -87,18 +89,28 @@ export function deriveLatestActivePresenceByAuthor(
 
     const createdAtMs = (event.created_at || 0) * 1000;
     const previous = latestPresenceByAuthor.get(authorId);
-    if (!previous || createdAtMs >= previous.createdAtMs) {
+    if (!previous || createdAtMs >= previous.reportedAtMs) {
       latestPresenceByAuthor.set(authorId, {
-        createdAtMs,
+        reportedAtMs: createdAtMs,
         state: presence.state,
+        view: presence.view,
+        taskId: presence.taskId,
       });
     }
   }
 
+  return latestPresenceByAuthor;
+}
+
+export function deriveLatestActivePresenceByAuthor(
+  events: PresenceLikeEvent[],
+  nowUnix: number
+): Map<string, number> {
+  const latestPresenceByAuthor = deriveLatestPresenceByAuthor(events, nowUnix);
   const latestActivePresenceByAuthor = new Map<string, number>();
   for (const [authorId, snapshot] of latestPresenceByAuthor.entries()) {
     if (snapshot.state === "active") {
-      latestActivePresenceByAuthor.set(authorId, snapshot.createdAtMs);
+      latestActivePresenceByAuthor.set(authorId, snapshot.reportedAtMs);
     }
   }
 
