@@ -23,11 +23,16 @@ function Harness({
   });
 
   return (
-    <output data-testid="channels-with-state">
-      {result.channelsWithState
-        .map((channel) => `${channel.id}:${channel.filterState}`)
-        .join(",")}
-    </output>
+    <>
+      <output data-testid="channels-with-state">
+        {result.channelsWithState
+          .map((channel) => `${channel.id}:${channel.filterState}`)
+          .join(",")}
+      </output>
+      <output data-testid="pinned-channel-ids">
+        {result.pinnedChannelIds.join(",")}
+      </output>
+    </>
   );
 }
 
@@ -64,5 +69,25 @@ describe("usePinnedSidebarChannels", () => {
     );
 
     expect(screen.getByTestId("channels-with-state")).toHaveTextContent("general:neutral,urgent:included");
+  });
+
+  it("returns pinned channel ids as a first-class result", () => {
+    window.localStorage.setItem(
+      "nodex.pinned-channels.guest",
+      JSON.stringify({
+        byRelay: {
+          "relay-one": [{ channelId: "ops", pinnedAt: "2026-04-04T10:00:00.000Z", order: 0 }],
+        },
+      })
+    );
+
+    render(
+      <Harness
+        channels={[makeChannel({ id: "general", name: "general" })]}
+        channelFilterStates={new Map()}
+      />
+    );
+
+    expect(screen.getByTestId("pinned-channel-ids")).toHaveTextContent("ops");
   });
 });

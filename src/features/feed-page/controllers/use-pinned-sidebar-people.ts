@@ -26,6 +26,7 @@ export interface UsePinnedSidebarPeopleOptions {
 export interface UsePinnedSidebarPeopleResult {
   pinnedPeopleState: PinnedPeopleState;
   activeRelayIdList: string[];
+  pinnedPersonIds: string[];
   personRelayIds: Map<string, Set<string>>;
   peopleWithState: Person[];
   handlePersonPin: (id: string) => void;
@@ -54,6 +55,10 @@ export function usePinnedSidebarPeople({
     () => Array.from(effectiveActiveRelayIds),
     [effectiveActiveRelayIds]
   );
+  const pinnedPersonIds = useMemo(
+    () => getPinnedPersonIdsForRelays(pinnedPeopleState, activeRelayIdList),
+    [activeRelayIdList, pinnedPeopleState]
+  );
 
   const personRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -71,10 +76,9 @@ export function usePinnedSidebarPeople({
   }, [allTasks]);
 
   const peopleWithState: Person[] = useMemo(() => {
-    const pinnedIds = getPinnedPersonIdsForRelays(pinnedPeopleState, activeRelayIdList);
-    const pinnedSet = new Set(pinnedIds.map(normalizePersonId));
+    const pinnedSet = new Set(pinnedPersonIds.map(normalizePersonId));
     const existingIds = new Set(people.map((person) => normalizePersonId(person.id)));
-    const stubs: Person[] = pinnedIds
+    const stubs: Person[] = pinnedPersonIds
       .filter((id) => !existingIds.has(normalizePersonId(id)))
       .map((id) => ({
         id,
@@ -87,14 +91,14 @@ export function usePinnedSidebarPeople({
 
     return [...stubs, ...people].sort((a, b) => {
       const aIdx = pinnedSet.has(normalizePersonId(a.id))
-        ? pinnedIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(a.id))
+        ? pinnedPersonIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(a.id))
         : Infinity;
       const bIdx = pinnedSet.has(normalizePersonId(b.id))
-        ? pinnedIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(b.id))
+        ? pinnedPersonIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(b.id))
         : Infinity;
       return aIdx - bIdx;
     });
-  }, [people, pinnedPeopleState, activeRelayIdList]);
+  }, [people, pinnedPersonIds]);
 
   const handlePersonPin = useCallback(
     (id: string) => {
@@ -118,6 +122,7 @@ export function usePinnedSidebarPeople({
   return {
     pinnedPeopleState,
     activeRelayIdList,
+    pinnedPersonIds,
     personRelayIds,
     peopleWithState,
     handlePersonPin,

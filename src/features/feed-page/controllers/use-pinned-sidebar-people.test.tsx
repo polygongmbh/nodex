@@ -29,9 +29,14 @@ function Harness({ people }: { people: Person[] }) {
   });
 
   return (
-    <output data-testid="people-with-state">
-      {result.peopleWithState.map((person) => person.id).join(",")}
-    </output>
+    <>
+      <output data-testid="people-with-state">
+        {result.peopleWithState.map((person) => person.id).join(",")}
+      </output>
+      <output data-testid="pinned-person-ids">
+        {result.pinnedPersonIds.join(",")}
+      </output>
+    </>
   );
 }
 
@@ -84,5 +89,20 @@ describe("usePinnedSidebarPeople", () => {
     );
 
     expect(screen.getByTestId("people-with-state")).toHaveTextContent("bob,alice");
+  });
+
+  it("returns pinned person ids as a first-class result", () => {
+    const state = pinPersonForRelays(createEmptyPinnedPeopleState(), ["relay-one"], "bob");
+    savePinnedPeopleState(state);
+
+    render(
+      <Harness
+        people={[
+          makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
+        ]}
+      />
+    );
+
+    expect(screen.getByTestId("pinned-person-ids")).toHaveTextContent("bob");
   });
 });

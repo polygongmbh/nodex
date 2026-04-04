@@ -22,6 +22,7 @@ export interface UsePinnedSidebarChannelsOptions {
 export interface UsePinnedSidebarChannelsResult {
   pinnedChannelsState: PinnedChannelsState;
   activeRelayIdList: string[];
+  pinnedChannelIds: string[];
   channelRelayIds: Map<string, Set<string>>;
   channelsWithState: Channel[];
   handleChannelPin: (id: string) => void;
@@ -51,6 +52,10 @@ export function usePinnedSidebarChannels({
     () => Array.from(effectiveActiveRelayIds),
     [effectiveActiveRelayIds]
   );
+  const pinnedChannelIds = useMemo(
+    () => getPinnedChannelIdsForRelays(pinnedChannelsState, activeRelayIdList),
+    [activeRelayIdList, pinnedChannelsState]
+  );
 
   const channelRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -68,10 +73,9 @@ export function usePinnedSidebarChannels({
   }, [allTasks]);
 
   const channelsWithState: Channel[] = useMemo(() => {
-    const pinnedIds = getPinnedChannelIdsForRelays(pinnedChannelsState, activeRelayIdList);
-    const pinnedSet = new Set(pinnedIds);
+    const pinnedSet = new Set(pinnedChannelIds);
     const existingIds = new Set(channels.map((c) => c.id));
-    const stubs: Channel[] = pinnedIds
+    const stubs: Channel[] = pinnedChannelIds
       .filter((id) => !existingIds.has(id))
       .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
     return [...stubs, ...channels]
@@ -80,15 +84,14 @@ export function usePinnedSidebarChannels({
         filterState: channelFilterStates.get(channel.id) ?? "neutral",
       }))
       .sort((a, b) => {
-        const aIdx = pinnedSet.has(a.id) ? pinnedIds.indexOf(a.id) : Infinity;
-        const bIdx = pinnedSet.has(b.id) ? pinnedIds.indexOf(b.id) : Infinity;
+        const aIdx = pinnedSet.has(a.id) ? pinnedChannelIds.indexOf(a.id) : Infinity;
+        const bIdx = pinnedSet.has(b.id) ? pinnedChannelIds.indexOf(b.id) : Infinity;
         return aIdx - bIdx;
       });
   }, [
     channels,
     channelFilterStates,
-    pinnedChannelsState,
-    activeRelayIdList,
+    pinnedChannelIds,
   ]);
 
   const handleChannelPin = useCallback(
@@ -113,6 +116,7 @@ export function usePinnedSidebarChannels({
   return {
     pinnedChannelsState,
     activeRelayIdList,
+    pinnedChannelIds,
     channelRelayIds,
     channelsWithState,
     handleChannelPin,

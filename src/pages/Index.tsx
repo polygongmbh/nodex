@@ -14,10 +14,6 @@ import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroP
 import { mergeTasks } from "@/domain/content/task-merge";
 import { getRelayIdFromUrl, getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
-import {
-  getPinnedChannelIdsForRelays,
-} from "@/domain/preferences/pinned-channel-state";
-import { getPinnedPersonIdsForRelays } from "@/domain/preferences/pinned-person-state";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
@@ -483,6 +479,7 @@ const Index = () => {
   const {
     pinnedChannelsState,
     activeRelayIdList,
+    pinnedChannelIds,
     channelsWithState,
     handleChannelPin,
     handleChannelUnpin,
@@ -496,6 +493,7 @@ const Index = () => {
 
   const {
     pinnedPeopleState,
+    pinnedPersonIds,
     peopleWithState,
     handlePersonPin,
     handlePersonUnpin,
@@ -1058,11 +1056,8 @@ const Index = () => {
       quickFilters,
       savedFilterConfigurations: savedFilterController.configurations,
       activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
-      pinnedChannelIds: getPinnedChannelIdsForRelays(
-        pinnedChannelsState,
-        activeRelayIdList
-      ),
-      pinnedPersonIds: getPinnedPersonIdsForRelays(pinnedPeopleState, activeRelayIdList),
+      pinnedChannelIds,
+      pinnedPersonIds,
     }),
     [
       relaysWithActiveState,
@@ -1076,9 +1071,8 @@ const Index = () => {
       quickFilters,
       savedFilterController.configurations,
       savedFilterController.activeConfigurationId,
-      pinnedChannelsState,
-      pinnedPeopleState,
-      activeRelayIdList,
+      pinnedChannelIds,
+      pinnedPersonIds,
     ]
   );
 
