@@ -46,18 +46,26 @@ export function FeedPageViewPane({
   const scopedTasks = useMemo(
     () =>
       filterTasksForView({
-        allTasks: taskSource.allTasks,
-        filterIndex: taskSource.filterIndex,
-        prefilteredTaskIds: taskSource.prefilteredTaskIds,
-        focusedTaskId: taskSource.focusedTaskId,
-        includeFocusedTask: currentView === "feed",
-        hideClosedTasks: false,
-        searchQuery: taskSource.searchQuery,
-        people: taskSource.people,
-        quickFilters: taskSource.quickFilters,
-        includedChannels: included,
-        excludedChannels: excluded,
-        channelMatchMode: taskSource.channelMatchMode,
+        source: {
+          allTasks: taskSource.allTasks,
+          filterIndex: taskSource.filterIndex,
+          prefilteredTaskIds: taskSource.prefilteredTaskIds,
+          people: taskSource.people,
+        },
+        scope: {
+          focusedTaskId: taskSource.focusedTaskId,
+          includeFocusedTask: currentView === "feed",
+          hideClosedTasks: false,
+        },
+        criteria: {
+          searchQuery: taskSource.searchQuery,
+          quickFilters: taskSource.quickFilters,
+          channels: {
+            included,
+            excluded,
+            matchMode: taskSource.channelMatchMode,
+          },
+        },
       }),
     [
       excluded,

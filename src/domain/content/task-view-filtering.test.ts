@@ -78,15 +78,23 @@ describe("task view filtering", () => {
 
     const filterIndex = buildTaskViewFilterIndex(tasks, people);
     const result = filterTasksForView({
-      allTasks: tasks,
-      filterIndex,
-      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
-      focusedTaskId: "root",
-      searchQuery: "discuss",
-      people,
-      includedChannels: ["alpha", "beta"],
-      excludedChannels: [],
-      channelMatchMode: "and",
+      source: {
+        allTasks: tasks,
+        filterIndex,
+        prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+        people,
+      },
+      scope: {
+        focusedTaskId: "root",
+      },
+      criteria: {
+        searchQuery: "discuss",
+        channels: {
+          included: ["alpha", "beta"],
+          excluded: [],
+          matchMode: "and",
+        },
+      },
     });
 
     expect(result.map((task) => task.id)).toEqual(["descendant-hit"]);
@@ -100,26 +108,38 @@ describe("task view filtering", () => {
     });
     const filterIndex = buildTaskViewFilterIndex([task]);
     const baseParams = {
-      allTasks: [task],
-      filterIndex,
-      prefilteredTaskIds: new Set([task.id]),
-      people: [],
-      includedChannels: [],
-      excludedChannels: [],
-      channelMatchMode: "and" as const,
+      source: {
+        allTasks: [task],
+        filterIndex,
+        prefilteredTaskIds: new Set([task.id]),
+        people: [],
+      },
+      criteria: {
+        channels: {
+          included: [],
+          excluded: [],
+          matchMode: "and" as const,
+        },
+      },
     };
 
     expect(
       getDirectMatchTaskIdsForView({
         ...baseParams,
-        searchQuery: "#beta",
+        criteria: {
+          ...baseParams.criteria,
+          searchQuery: "#beta",
+        },
       })
     ).toEqual(new Set(["tagged-task"]));
 
     expect(
       getDirectMatchTaskIdsForView({
         ...baseParams,
-        searchQuery: "beta",
+        criteria: {
+          ...baseParams.criteria,
+          searchQuery: "beta",
+        },
       })
     ).toEqual(new Set(["tagged-task"]));
   });
@@ -148,16 +168,24 @@ describe("task view filtering", () => {
 
     const filterIndex = buildTaskViewFilterIndex(tasks);
     const result = filterTasksForView({
-      allTasks: tasks,
-      filterIndex,
-      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
-      focusedTaskId: "root",
-      includeFocusedTask: true,
-      searchQuery: "",
-      people: [],
-      includedChannels: ["alpha", "beta"],
-      excludedChannels: ["blocked"],
-      channelMatchMode: "or",
+      source: {
+        allTasks: tasks,
+        filterIndex,
+        prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+        people: [],
+      },
+      scope: {
+        focusedTaskId: "root",
+        includeFocusedTask: true,
+      },
+      criteria: {
+        searchQuery: "",
+        channels: {
+          included: ["alpha", "beta"],
+          excluded: ["blocked"],
+          matchMode: "or",
+        },
+      },
     });
 
     expect(result.map((task) => task.id)).toEqual(["root", "descendant-1"]);
@@ -187,15 +215,23 @@ describe("task view filtering", () => {
 
     const filterIndex = buildTaskViewFilterIndex(tasks);
     const result = filterTasksForView({
-      allTasks: tasks,
-      filterIndex,
-      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
-      searchQuery: "",
-      people: [],
-      includedChannels: [],
-      excludedChannels: [],
-      channelMatchMode: "and",
-      hideClosedTasks: true,
+      source: {
+        allTasks: tasks,
+        filterIndex,
+        prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+        people: [],
+      },
+      scope: {
+        hideClosedTasks: true,
+      },
+      criteria: {
+        searchQuery: "",
+        channels: {
+          included: [],
+          excluded: [],
+          matchMode: "and",
+        },
+      },
     });
 
     expect(result.map((task) => task.id)).toEqual(["todo-task", "done-task"]);
@@ -227,17 +263,25 @@ describe("task view filtering", () => {
 
     const filterIndex = buildTaskViewFilterIndex(tasks);
     const result = filterTasksForView({
-      allTasks: tasks,
-      filterIndex,
-      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
-      focusedTaskId: "closed-root",
-      includeFocusedTask: true,
-      hideClosedTasks: true,
-      searchQuery: "",
-      people: [],
-      includedChannels: [],
-      excludedChannels: [],
-      channelMatchMode: "and",
+      source: {
+        allTasks: tasks,
+        filterIndex,
+        prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+        people: [],
+      },
+      scope: {
+        focusedTaskId: "closed-root",
+        includeFocusedTask: true,
+        hideClosedTasks: true,
+      },
+      criteria: {
+        searchQuery: "",
+        channels: {
+          included: [],
+          excluded: [],
+          matchMode: "and",
+        },
+      },
     });
 
     expect(result.map((task) => task.id)).toEqual(["closed-root", "open-child"]);

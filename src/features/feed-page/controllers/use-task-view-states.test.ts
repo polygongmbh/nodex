@@ -68,14 +68,15 @@ describe("buildTreeVisibilityState", () => {
     const middle = makeTask({ id: "middle", parentId: "root", content: "Middle task" });
     const leaf = makeTask({ id: "leaf", parentId: "middle", content: "Leaf task #beta", tags: ["beta"] });
     const tasks = [root, middle, leaf];
-    const taskById = new Map(tasks.map((task) => [task.id, task] as const));
     const childrenMap = buildChildrenMap(tasks);
     const visibility = buildTreeVisibilityState({
-      currentContextId: null,
-      taskById,
-      childrenMap,
+      focusedTaskId: null,
       prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
-      sortContext: { childrenMap, allTasks: tasks, taskById },
+      sortContext: {
+        childrenMap,
+        allTasks: tasks,
+        taskById: new Map(tasks.map((task) => [task.id, task] as const)),
+      },
       directlyMatchingIds: new Set(["leaf"]),
     });
 

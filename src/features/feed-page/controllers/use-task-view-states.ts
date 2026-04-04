@@ -8,6 +8,7 @@ import {
   buildTaskViewFilterIndex,
   filterTasksForView,
   getDirectMatchTaskIdsForView,
+  type TaskViewFilterRequest,
 } from "@/domain/content/task-view-filtering";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
@@ -141,8 +142,6 @@ export interface TreeSelectors {
 
 interface TreeVisibilitySource {
   focusedTaskId: string | null;
-  taskById: Map<string, Task>;
-  childrenMap: Map<string | undefined, Task[]>;
   prefilteredTaskIds: Set<string>;
   sortContext: SortContext;
 }
@@ -273,20 +272,29 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
 
   const getTasksWithDueDates = () => {
     if (tasksWithDueDatesCache) return tasksWithDueDatesCache;
-    tasksWithDueDatesCache = filterTasksForView({
-      allTasks: source.allTasks,
-      filterIndex: source.filterIndex,
-      prefilteredTaskIds: source.prefilteredTaskIds,
-      focusedTaskId: source.focusedTaskId,
-      hideClosedTasks: true,
-      searchQuery: source.searchQuery,
-      people: source.people,
-      quickFilters: source.quickFilters,
-      includedChannels: included,
-      excludedChannels: excluded,
-      channelMatchMode: source.channelMatchMode,
-      taskPredicate: (task) => Boolean(task.dueDate) && task.taskType === "task",
-    }).filter((task) => Boolean(task.dueDate));
+    const request: TaskViewFilterRequest = {
+      source: {
+        allTasks: source.allTasks,
+        filterIndex: source.filterIndex,
+        prefilteredTaskIds: source.prefilteredTaskIds,
+        people: source.people,
+      },
+      scope: {
+        focusedTaskId: source.focusedTaskId,
+        hideClosedTasks: true,
+        taskPredicate: (task) => Boolean(task.dueDate) && task.taskType === "task",
+      },
+      criteria: {
+        searchQuery: source.searchQuery,
+        quickFilters: source.quickFilters,
+        channels: {
+          included,
+          excluded,
+          matchMode: source.channelMatchMode,
+        },
+      },
+    };
+    tasksWithDueDatesCache = filterTasksForView(request).filter((task) => Boolean(task.dueDate));
     return tasksWithDueDatesCache;
   };
 
@@ -345,23 +353,29 @@ export function createTreeSelectors(source: TreeSelectorSource): TreeSelectors {
 
     if (hasMatchingFilters) {
       const directlyMatchingIds = getDirectMatchTaskIdsForView({
-        allTasks: source.allTasks,
-        filterIndex: source.filterIndex,
-        prefilteredTaskIds: source.prefilteredTaskIds,
-        focusedTaskId: source.focusedTaskId,
-        searchQuery: source.deferredSearchQuery,
-        people: source.people,
-        quickFilters: source.quickFilters,
-        includedChannels: included,
-        excludedChannels: excluded,
-        channelMatchMode: source.channelMatchMode,
+        source: {
+          allTasks: source.allTasks,
+          filterIndex: source.filterIndex,
+          prefilteredTaskIds: source.prefilteredTaskIds,
+          people: source.people,
+        },
+        scope: {
+          focusedTaskId: source.focusedTaskId,
+        },
+        criteria: {
+          searchQuery: source.deferredSearchQuery,
+          quickFilters: source.quickFilters,
+          channels: {
+            included,
+            excluded,
+            matchMode: source.channelMatchMode,
+          },
+        },
       });
       visibilityCache = {
         hasMatchingFilters,
         state: buildTreeVisibilityState({
           focusedTaskId: source.focusedTaskId,
-          taskById: source.taskById,
-          childrenMap: source.childrenMap,
           prefilteredTaskIds: source.prefilteredTaskIds,
           sortContext: source.sortContext,
           directlyMatchingIds,
@@ -374,8 +388,6 @@ export function createTreeSelectors(source: TreeSelectorSource): TreeSelectors {
       hasMatchingFilters,
       state: buildTreeVisibilityState({
         focusedTaskId: source.focusedTaskId,
-        taskById: source.taskById,
-        childrenMap: source.childrenMap,
         prefilteredTaskIds: source.prefilteredTaskIds,
         sortContext: source.sortContext,
         directlyMatchingIds: new Set<string>(),
@@ -450,14 +462,14 @@ export function createTreeSelectors(source: TreeSelectorSource): TreeSelectors {
 
 export function buildTreeVisibilityState({
   focusedTaskId,
-  taskById,
-  childrenMap,
   prefilteredTaskIds,
   sortContext,
   directlyMatchingIds,
 }: TreeVisibilitySource & {
   directlyMatchingIds: Set<string>;
 }): TreeVisibilityState {
+  const taskById = sortContext.taskById ?? new Map(sortContext.allTasks.map((task) => [task.id, task] as const));
+  const { childrenMap } = sortContext;
   const matchingVisibleIds = new Set<string>();
 
   for (const taskId of directlyMatchingIds) {
@@ -750,66 +762,39 @@ export function useMobileFallbackNoticeState({
   }, [currentView]);
   const includeFocusedTaskForActiveView = currentView === "feed";
   const hideClosedForActiveView = currentView === "feed";
-  const scopedMatchesWithSearch = useMemo(
-    () =>
-      filterTasksForView({
+  type ActiveViewMatchVariant = "scopedWithSearch" | "scopedWithoutSearch" | "sourceWithoutScope";
+  function hasActiveViewMatches(variant: ActiveViewMatchVariant): boolean {
+    const useScopedFilters = variant !== "sourceWithoutScope";
+    const effectivePeople = variant === "sourceWithoutScope" ? neutralPeople : people;
+    const effectiveSearchQuery = variant === "scopedWithSearch" ? searchQuery : "";
+
+    return getDirectMatchTaskIdsForView({
+      source: {
         allTasks,
         filterIndex: taskFilterIndex,
         prefilteredTaskIds,
+        people: effectivePeople,
+      },
+      scope: {
         focusedTaskId,
         includeFocusedTask: includeFocusedTaskForActiveView,
         hideClosedTasks: hideClosedForActiveView,
-        searchQuery,
-        people,
-        quickFilters,
-        includedChannels: includedChannelNames,
-        excludedChannels: excludedChannelNames,
-        channelMatchMode,
         taskPredicate: activeViewTaskPredicate,
-      }),
-    [activeViewTaskPredicate, allTasks, channelMatchMode, excludedChannelNames, focusedTaskId, hideClosedForActiveView, includeFocusedTaskForActiveView, includedChannelNames, people, prefilteredTaskIds, quickFilters, searchQuery, taskFilterIndex]
-  );
-  const scopedMatchesWithoutSearch = useMemo(
-    () =>
-      filterTasksForView({
-        allTasks,
-        filterIndex: taskFilterIndex,
-        prefilteredTaskIds,
-        focusedTaskId,
-        includeFocusedTask: includeFocusedTaskForActiveView,
-        hideClosedTasks: hideClosedForActiveView,
-        searchQuery: "",
-        people,
+      },
+      criteria: {
+        searchQuery: effectiveSearchQuery,
         quickFilters,
-        includedChannels: includedChannelNames,
-        excludedChannels: excludedChannelNames,
-        channelMatchMode,
-        taskPredicate: activeViewTaskPredicate,
-      }),
-    [activeViewTaskPredicate, allTasks, channelMatchMode, excludedChannelNames, focusedTaskId, hideClosedForActiveView, includeFocusedTaskForActiveView, includedChannelNames, people, prefilteredTaskIds, quickFilters, taskFilterIndex]
-  );
-  const sourceMatchesWithoutScope = useMemo(
-    () =>
-      filterTasksForView({
-        allTasks,
-        filterIndex: taskFilterIndex,
-        prefilteredTaskIds,
-        focusedTaskId,
-        includeFocusedTask: includeFocusedTaskForActiveView,
-        hideClosedTasks: hideClosedForActiveView,
-        searchQuery: "",
-        people: neutralPeople,
-        quickFilters,
-        includedChannels: [],
-        excludedChannels: [],
-        channelMatchMode,
-        taskPredicate: activeViewTaskPredicate,
-      }),
-    [activeViewTaskPredicate, allTasks, channelMatchMode, focusedTaskId, hideClosedForActiveView, includeFocusedTaskForActiveView, neutralPeople, prefilteredTaskIds, quickFilters, taskFilterIndex]
-  );
-  const hasScopedMatchesWithSearch = scopedMatchesWithSearch.length > 0;
-  const hasScopedMatchesWithoutSearch = scopedMatchesWithoutSearch.length > 0;
-  const hasSourceContent = sourceMatchesWithoutScope.length > 0;
+        channels: {
+          included: useScopedFilters ? includedChannelNames : [],
+          excluded: useScopedFilters ? excludedChannelNames : [],
+          matchMode: channelMatchMode,
+        },
+      },
+    }).size > 0;
+  }
+  const hasScopedMatchesWithSearch = hasActiveViewMatches("scopedWithSearch");
+  const hasScopedMatchesWithoutSearch = hasActiveViewMatches("scopedWithoutSearch");
+  const hasSourceContent = hasActiveViewMatches("sourceWithoutScope");
   const shouldOmitSearchQuery = !showFilters && hasSearchQuery && !hasScopedMatchesWithSearch && hasSourceContent;
   const effectiveSearchQuery = shouldOmitSearchQuery ? "" : searchQuery;
   const scopeModelWithoutQuickSearch = useEmptyScopeModel({

@@ -498,15 +498,21 @@ const Index = () => {
       .filter(Boolean);
 
     return filterTasksForView({
-      allTasks,
-      filterIndex: snapshotFilterIndex,
-      prefilteredTaskIds,
-      searchQuery,
-      people: snapshotPeople,
-      quickFilters: snapshot.quickFilters,
-      includedChannels,
-      excludedChannels,
-      channelMatchMode: snapshot.channelMatchMode,
+      source: {
+        allTasks,
+        filterIndex: snapshotFilterIndex,
+        prefilteredTaskIds,
+        people: snapshotPeople,
+      },
+      criteria: {
+        searchQuery,
+        quickFilters: snapshot.quickFilters,
+        channels: {
+          included: includedChannels,
+          excluded: excludedChannels,
+          matchMode: snapshot.channelMatchMode,
+        },
+      },
     }).length > 0;
   }, [allTasks, people, relayScopedTasks, searchQuery]);
 

@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
-import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
+import {
+  buildTaskViewFilterIndex,
+  filterTasksForView,
+  type TaskViewFilterRequest,
+} from "@/domain/content/task-view-filtering";
 import type { Channel, ChannelMatchMode, QuickFilterState, Task } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -40,38 +44,49 @@ export function useTaskViewFiltering({
     [channels]
   );
   const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
-
-  return useMemo(
-    () =>
-      filterTasksForView({
+  const request = useMemo<TaskViewFilterRequest>(
+    () => ({
+      source: {
         allTasks,
         filterIndex,
         prefilteredTaskIds,
+        people,
+      },
+      scope: {
         focusedTaskId,
         includeFocusedTask,
         hideClosedTasks,
-        searchQuery,
-        people,
-        quickFilters,
-        includedChannels: included,
-        excludedChannels: excluded,
-        channelMatchMode,
         taskPredicate,
-      }),
+      },
+      criteria: {
+        searchQuery,
+        quickFilters,
+        channels: {
+          included,
+          excluded,
+          matchMode: channelMatchMode,
+        },
+      },
+    }),
     [
       allTasks,
       channelMatchMode,
+      excluded,
       filterIndex,
       focusedTaskId,
-      includeFocusedTask,
       hideClosedTasks,
+      includeFocusedTask,
       included,
-      excluded,
       people,
-      quickFilters,
       prefilteredTaskIds,
+      quickFilters,
       searchQuery,
       taskPredicate,
     ]
+  );
+
+  return useMemo(
+    () => filterTasksForView(request),
+    [request]
   );
 }

@@ -107,37 +107,57 @@ function taskMatchesChannelIndex(
   return includedChannels.every((included) => taskTagSet.has(included));
 }
 
-interface FilterTasksForViewParams {
+export interface TaskViewFilterSource {
   allTasks: Task[];
   filterIndex?: TaskViewFilterIndex;
   prefilteredTaskIds: Set<string>;
+  people: Person[];
+}
+
+export interface TaskViewFilterScope {
   focusedTaskId?: string | null;
   includeFocusedTask?: boolean;
   hideClosedTasks?: boolean;
-  searchQuery: string;
-  people: Person[];
-  quickFilters?: QuickFilterState;
-  includedChannels: string[];
-  excludedChannels: string[];
-  channelMatchMode: ChannelMatchMode;
   taskPredicate?: (task: Task) => boolean;
 }
 
+export interface TaskViewFilterCriteria {
+  searchQuery: string;
+  quickFilters?: QuickFilterState;
+  channels: {
+    included: string[];
+    excluded: string[];
+    matchMode: ChannelMatchMode;
+  };
+}
+
+export interface TaskViewFilterRequest {
+  source: TaskViewFilterSource;
+  scope?: TaskViewFilterScope;
+  criteria: TaskViewFilterCriteria;
+}
+
 export function getDirectMatchTaskIdsForView({
-  allTasks,
-  filterIndex,
-  prefilteredTaskIds,
-  focusedTaskId,
-  includeFocusedTask = false,
-  hideClosedTasks = false,
-  searchQuery,
-  people,
-  quickFilters = normalizeQuickFilterState(),
-  includedChannels,
-  excludedChannels,
-  channelMatchMode,
-  taskPredicate,
-}: FilterTasksForViewParams): Set<string> {
+  source,
+  scope = {},
+  criteria,
+}: TaskViewFilterRequest): Set<string> {
+  const { allTasks, filterIndex, prefilteredTaskIds, people } = source;
+  const {
+    focusedTaskId,
+    includeFocusedTask = false,
+    hideClosedTasks = false,
+    taskPredicate,
+  } = scope;
+  const {
+    searchQuery,
+    quickFilters = normalizeQuickFilterState(),
+    channels: {
+      included: includedChannels,
+      excluded: excludedChannels,
+      matchMode: channelMatchMode,
+    },
+  } = criteria;
   const effectiveFilterIndex = filterIndex ?? buildTaskViewFilterIndex(allTasks, people);
   const descendantIds = focusedTaskId
     ? effectiveFilterIndex.descendantIdsByTaskId.get(focusedTaskId) ?? new Set<string>()
@@ -185,7 +205,7 @@ export function getDirectMatchTaskIdsForView({
   return matchingIds;
 }
 
-export function filterTasksForView(params: FilterTasksForViewParams): Task[] {
-  const matchingIds = getDirectMatchTaskIdsForView(params);
-  return params.allTasks.filter((task) => matchingIds.has(task.id));
+export function filterTasksForView(request: TaskViewFilterRequest): Task[] {
+  const matchingIds = getDirectMatchTaskIdsForView(request);
+  return request.source.allTasks.filter((task) => matchingIds.has(task.id));
 }
