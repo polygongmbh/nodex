@@ -728,6 +728,37 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge, relays]);
 
+  const applyAuthenticatedState = useCallback((
+    ndkInstance: NDK,
+    signer: NDKNip07Signer | NDKNip46Signer | NDKPrivateKeySigner,
+    authenticatedUser: NDKUser,
+    nextAuthMethod: NonNullable<AuthMethod>
+  ) => {
+    ndkInstance.signer = signer;
+    setUser(authenticatedUser);
+    setAuthMethod(nextAuthMethod);
+  }, []);
+
+  const clearTransientAuthState = useCallback(() => {
+    clearSessionPrivateKey();
+    clearSessionNoasState();
+  }, []);
+
+  const persistNoasSession = useCallback((params: {
+    privateKey: string;
+    apiBaseUrl: string;
+    username: string;
+    relayUrls: string[];
+  }) => {
+    saveSessionPrivateKey(params.privateKey);
+    saveSessionNoasState({
+      apiBaseUrl: params.apiBaseUrl,
+      username: params.username,
+      relayUrls: params.relayUrls,
+    });
+    saveSessionAuthMethod("noas");
+  }, []);
+
   const fetchLatestKind0Profile = useCallback(async (
     pubkey: string,
     options?: { force?: boolean }
@@ -1084,11 +1115,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         if (!savedNsec) return;
         try {
           const signer = new NDKPrivateKeySigner(savedNsec);
-          ndkInstance.signer = signer;
           const ndkUser = await signer.user();
           if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-          setUser(ndkUser);
-          setAuthMethod("guest");
+          applyAuthenticatedState(ndkInstance, signer, ndkUser, "guest");
         } catch {
           clearStoredAuthMethod();
         }
@@ -1113,12 +1142,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         }
 
         const signer = new NDKNip07Signer();
-        ndkInstance.signer = signer;
         try {
           const ndkUser = await signer.user();
           if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-          setUser(ndkUser);
-          setAuthMethod("extension");
+          applyAuthenticatedState(ndkInstance, signer, ndkUser, "extension");
           nostrDevLog("auth", "Extension session restored", { pubkey: ndkUser.pubkey });
         } catch (error) {
           nostrDevLog("auth", "Extension restore failed while resolving signer user", {
@@ -1137,13 +1164,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           return;
         }
         const signer = NDKNip46Signer.bunker(ndkInstance, bunkerUrl, localKey);
-        ndkInstance.signer = signer;
         try {
           const ndkUser: NDKUser = await signer.blockUntilReady();
           await ndkUser.fetchProfile();
           if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-          setUser(ndkUser);
-          setAuthMethod("nostrConnect");
+          applyAuthenticatedState(ndkInstance, signer, ndkUser, "nostrConnect");
         } catch {
           clearStoredAuthMethod();
           localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
@@ -1161,11 +1186,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
         try {
           const signer = new NDKPrivateKeySigner(sessionPrivateKey);
-          ndkInstance.signer = signer;
           const ndkUser = await signer.user();
           if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-          setUser(ndkUser);
-          setAuthMethod("privateKey");
+          applyAuthenticatedState(ndkInstance, signer, ndkUser, "privateKey");
         } catch {
           clearStoredAuthMethod();
           clearSessionPrivateKey();
@@ -1185,15 +1208,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
         try {
           const signer = new NDKPrivateKeySigner(sessionPrivateKey);
-          ndkInstance.signer = signer;
           const ndkUser = await signer.user();
           ndkUser.profile = {
             name: noasSession.username,
             displayName: noasSession.username,
             picture: `${noasSession.apiBaseUrl}/picture/${ndkUser.pubkey}`,
           };
-          setUser(ndkUser);
-          setAuthMethod("noas");
+          applyAuthenticatedState(ndkInstance, signer, ndkUser, "noas");
           connectResolvedAuthRelayUrlsRef.current(noasSession.relayUrls || []);
         } catch {
           clearStoredAuthMethod();
@@ -1220,7 +1241,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       inFlightKind0ProfileRequests.clear();
       relayCurrentInstance.clear();
     };
-  }, [attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
+  }, [applyAuthenticatedState, attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -1233,14 +1254,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     setIsAuthenticating(true);
     try {
       const signer = new NDKNip07Signer();
-      ndk.signer = signer;
-      
       const ndkUser = await signer.user();
       if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-      setUser(ndkUser);
-      setAuthMethod("extension");
-      clearSessionPrivateKey();
-      clearSessionNoasState();
+      applyAuthenticatedState(ndk, signer, ndkUser, "extension");
+      clearTransientAuthState();
       savePersistentAuthMethod("extension");
       retryNip42RelaysAfterSignIn();
       return true;
@@ -1250,7 +1267,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk, retryNip42RelaysAfterSignIn]);
+  }, [applyAuthenticatedState, clearTransientAuthState, ndk, retryNip42RelaysAfterSignIn]);
 
   const loginWithPrivateKey = useCallback(async (nsecOrHex: string): Promise<boolean> => {
     if (!ndk) return false;
@@ -1258,14 +1275,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     setIsAuthenticating(true);
     try {
       const signer = new NDKPrivateKeySigner(nsecOrHex);
-      ndk.signer = signer;
-      
       const ndkUser = await signer.user();
       if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-      setUser(ndkUser);
-      setAuthMethod("privateKey");
+      applyAuthenticatedState(ndk, signer, ndkUser, "privateKey");
+      clearTransientAuthState();
       saveSessionPrivateKey(nsecOrHex);
-      clearSessionNoasState();
       saveSessionAuthMethod("privateKey");
       retryNip42RelaysAfterSignIn();
       return true;
@@ -1275,7 +1289,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk, retryNip42RelaysAfterSignIn]);
+  }, [applyAuthenticatedState, clearTransientAuthState, ndk, retryNip42RelaysAfterSignIn]);
 
   const loginAsGuest = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -1297,13 +1311,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         }
       }
       
-      ndk.signer = signer;
       const ndkUser = await signer.user();
       ndkUser.profile = { name: buildDeterministicGuestName(ndkUser.pubkey) };
-      setUser(ndkUser);
-      setAuthMethod("guest");
-      clearSessionPrivateKey();
-      clearSessionNoasState();
+      applyAuthenticatedState(ndk, signer, ndkUser, "guest");
+      clearTransientAuthState();
       savePersistentAuthMethod("guest");
       retryNip42RelaysAfterSignIn();
       return true;
@@ -1313,7 +1324,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk, retryNip42RelaysAfterSignIn]);
+  }, [applyAuthenticatedState, clearTransientAuthState, ndk, retryNip42RelaysAfterSignIn]);
 
   const loginWithNostrConnect = useCallback(async (bunkerUrl: string): Promise<boolean> => {
     if (!ndk) return false;
@@ -1326,16 +1337,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     try {
       const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
       const signer = NDKNip46Signer.bunker(ndk, bunkerUrl.trim(), localKey);
-      ndk.signer = signer;
-
       const ndkUser = await signer.blockUntilReady();
       const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
       if (profile) ndkUser.profile = profile;
       else if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-      setUser(ndkUser);
-      setAuthMethod("nostrConnect");
-      clearSessionPrivateKey();
-      clearSessionNoasState();
+      applyAuthenticatedState(ndk, signer, ndkUser, "nostrConnect");
+      clearTransientAuthState();
       savePersistentAuthMethod("nostrConnect");
       localStorage.setItem(STORAGE_KEY_NIP46_BUNKER, bunkerUrl.trim());
       if (signer.localSigner?.privateKey) {
@@ -1349,7 +1356,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
+  }, [applyAuthenticatedState, clearTransientAuthState, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
 
 
 
@@ -1488,7 +1495,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         // Convert hex key to nsec format for better compatibility with NDK
         const nsecKey = privateKeyHexToNsec(decryptedPrivateKey);
         signer = new NDKPrivateKeySigner(nsecKey);
-        ndk.signer = signer;
       } catch (decryptionError) {
         console.error('Failed to decrypt private key:', decryptionError);
         setIsAuthenticating(false);
@@ -1511,21 +1517,21 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         });
         return { success: false, errorCode: "key_mismatch" };
       }
-      ndkUser.profile = { name: username, displayName: username, picture: `${noasApiUrl}/picture/${ndkUser.pubkey}` };
-      setUser(ndkUser);
-
-      setAuthMethod("noas");
       const noasRelayUrls = resolveNoasAuthRelayUrls(signInResponse);
-      saveSessionPrivateKey(signer.privateKey || privateKeyHexToNsec(decryptedPrivateKey));
-      saveSessionNoasState({
+      ndkUser.profile = {
+        name: username,
+        displayName: username,
+        picture: `${noasApiUrl}/picture/${ndkUser.pubkey}`,
+      };
+      applyAuthenticatedState(ndk, signer, ndkUser, "noas");
+      clearTransientAuthState();
+      persistNoasSession({
+        privateKey: signer.privateKey || privateKeyHexToNsec(decryptedPrivateKey),
         apiBaseUrl: noasApiUrl,
         username,
         relayUrls: noasRelayUrls,
       });
-      saveSessionAuthMethod("noas");
-
       connectResolvedAuthRelayUrls(noasRelayUrls);
-
       retryNip42RelaysAfterSignIn();
       return { success: true };
     } catch (error) {
@@ -1534,7 +1540,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, ndk, retryNip42RelaysAfterSignIn]);
+  }, [applyAuthenticatedState, clearTransientAuthState, configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, ndk, persistNoasSession, retryNip42RelaysAfterSignIn]);
 
   const signupWithNoas = useCallback(async (
     username: string,
@@ -1625,7 +1631,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       let signer: NDKPrivateKeySigner | null = null;
       try {
         signer = new NDKPrivateKeySigner(nsecKey);
-        ndk.signer = signer;
       } catch (error) {
         console.error('Failed to create signer:', error);
         setIsAuthenticating(false);
@@ -1639,20 +1644,21 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
 
       const noasUser = new NDKUser({ pubkey });
-      noasUser.profile = { name: username, displayName: username, picture: `${noasApiUrl}/picture/${pubkey}` };
-      setUser(noasUser);
-
-      setAuthMethod("noas");
       const noasRelayUrls = resolveNoasAuthRelayUrls(signUpResponse);
-      saveSessionPrivateKey(nsecKey);
-      saveSessionNoasState({
+      noasUser.profile = {
+        name: username,
+        displayName: username,
+        picture: `${noasApiUrl}/picture/${pubkey}`,
+      };
+      applyAuthenticatedState(ndk, signer, noasUser, "noas");
+      clearTransientAuthState();
+      persistNoasSession({
+        privateKey: nsecKey,
         apiBaseUrl: noasApiUrl,
         username,
         relayUrls: noasRelayUrls,
       });
-      saveSessionAuthMethod("noas");
       connectResolvedAuthRelayUrls(noasRelayUrls);
-
       retryNip42RelaysAfterSignIn();
       return {
         success: true,
@@ -1667,7 +1673,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, ndk, relays, retryNip42RelaysAfterSignIn]);
+  }, [applyAuthenticatedState, clearTransientAuthState, configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, ndk, persistNoasSession, relays, retryNip42RelaysAfterSignIn]);
 
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
