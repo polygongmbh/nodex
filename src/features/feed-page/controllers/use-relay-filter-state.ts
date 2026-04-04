@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Relay } from "@/types";
-import type { TranslateFn } from "@/lib/i18n/translate";
 import { getEffectiveActiveRelayIds } from "@/domain/preferences/filter-state";
 import {
   loadPersistedRelayIds,
   savePersistedRelayIds,
 } from "@/infrastructure/preferences/filter-preferences-storage";
+import {
+  notifyRelayFilterDisabled,
+  notifyRelayFilterEnabled,
+  notifyShowingOnlyRelay,
+  notifyRelayFiltersCleared,
+  notifyAllRelaysSelected,
+} from "@/lib/notifications";
 
 interface UseRelayFilterStateOptions {
   relays: Relay[];
-  t: TranslateFn;
   onRelayEnabled?: (relay: Relay) => void;
   getEnableToastMessage?: (
     relay: Relay,
@@ -36,7 +41,6 @@ export function getRelayDomain(relay: Relay | undefined, fallbackId: string): st
 
 export function useRelayFilterState({
   relays,
-  t,
   onRelayEnabled,
   getEnableToastMessage,
 }: UseRelayFilterStateOptions) {
@@ -63,13 +67,17 @@ export function useRelayFilterState({
         }
       }
       if (isEnabled) {
-        toast(t("toasts.success.relayFilterDisabled", { relayDomain }));
+        notifyRelayFilterDisabled(relayDomain);
       } else {
         const enabledToastMessage = relay
           ? getEnableToastMessage?.(relay, { mode: "toggle" })
           : undefined;
         if (enabledToastMessage !== null) {
-          toast(enabledToastMessage ?? t("toasts.success.relayFilterEnabled", { relayDomain }));
+          if (typeof enabledToastMessage === "string") {
+            toast(enabledToastMessage);
+          } else {
+            notifyRelayFilterEnabled(relayDomain);
+          }
         }
       }
       return next;
@@ -81,7 +89,7 @@ export function useRelayFilterState({
     const relayDomain = getRelayDomain(relay, id);
     setActiveRelayIds((prev) => {
       if (prev.size === 1 && prev.has(id)) {
-        toast(t("toasts.success.relayFilterDisabled", { relayDomain }));
+        notifyRelayFilterDisabled(relayDomain);
         return new Set();
       }
 
@@ -92,7 +100,11 @@ export function useRelayFilterState({
         ? getEnableToastMessage?.(relay, { mode: "exclusive" })
         : undefined;
       if (enabledToastMessage !== null) {
-        toast(enabledToastMessage ?? t("toasts.success.showingOnlyRelay", { relayDomain }));
+        if (typeof enabledToastMessage === "string") {
+          toast(enabledToastMessage);
+        } else {
+          notifyShowingOnlyRelay(relayDomain);
+        }
       }
       return new Set([id]);
     });
@@ -112,7 +124,7 @@ export function useRelayFilterState({
         connectedRelays.length > 0 && connectedRelays.every((r) => prev.has(r.id));
 
       if (allConnectedActive) {
-        toast(t("toasts.success.relayFiltersCleared"));
+        notifyRelayFiltersCleared();
         return new Set();
       }
 
@@ -121,7 +133,7 @@ export function useRelayFilterState({
           onRelayEnabled?.(relay);
         }
       });
-      toast(t("toasts.success.allRelaysSelected"));
+      notifyAllRelaysSelected();
       return new Set(connectedRelays.map((r) => r.id));
     });
   };

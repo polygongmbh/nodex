@@ -152,7 +152,6 @@ const Index = () => {
     handleToggleAllRelays,
   } = useRelaySelectionController({
     relays,
-    t,
   });
   useRelayAutoReconnect({
     relays,
@@ -272,7 +271,6 @@ const Index = () => {
     sidebarPeople: sidebarPeopleWithSelected,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
     isHydrating,
-    t,
   });
 
   const {
@@ -351,7 +349,6 @@ const Index = () => {
     canModifyContent: authPolicy.canModifyContent,
     handleOpenAuthModal,
     publishEvent,
-    t,
   });
 
   const {
@@ -367,7 +364,6 @@ const Index = () => {
     guardInteraction,
     publishTaskStateUpdate,
     setLocalTasks,
-    t,
   });
 
   const allTasks = useMemo(
@@ -558,7 +554,6 @@ const Index = () => {
     setChannelFilterStates,
     setPeople,
     setIsAuthModalOpen,
-    t,
   });
 
   const { savedFilterController } = useSavedFilterConfigs({
@@ -579,7 +574,6 @@ const Index = () => {
     publishEvent,
     resolveTaskOriginRelay,
     setLocalTasks,
-    t,
   });
 
   const {
@@ -607,7 +601,6 @@ const Index = () => {
     demoFeedActive,
     demoRelayId: DEMO_RELAY_ID,
     queryClient,
-    t,
     setLocalTasks,
     setPostedTags,
     suppressedNostrEventIds,

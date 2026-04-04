@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
-import type { TranslateFn } from "@/lib/i18n/translate";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/domain/content/task-status";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { notifyStatusRestricted } from "@/lib/notifications";
@@ -20,7 +19,6 @@ export interface UseTaskStatusControllerOptions {
   guardInteraction: (mode: "post" | "modify") => boolean;
   publishTaskStateUpdate: (taskId: string, status: TaskStatus) => Promise<unknown>;
   setLocalTasks: React.Dispatch<React.SetStateAction<Task[]>>;
-  t: TranslateFn;
 }
 
 export interface UseTaskStatusControllerResult {
@@ -38,7 +36,6 @@ export function useTaskStatusController({
   guardInteraction,
   publishTaskStateUpdate,
   setLocalTasks,
-  t,
 }: UseTaskStatusControllerOptions): UseTaskStatusControllerResult {
   const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() =>
     loadCompletionSoundEnabled()
@@ -143,7 +140,7 @@ export function useTaskStatusController({
       const existingTask = allTasks.find((task) => task.id === taskId);
       if (!existingTask) return;
       if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-        notifyStatusRestricted(t);
+        notifyStatusRestricted();
         return;
       }
       const currentStatus =
@@ -159,7 +156,6 @@ export function useTaskStatusController({
       guardInteraction,
       publishTaskStateUpdate,
       scheduleTaskStatusReorderUpdate,
-      t,
       triggerCompletionFeedback,
     ]
   );
@@ -171,7 +167,7 @@ export function useTaskStatusController({
       const existingTask = allTasks.find((task) => task.id === taskId);
       if (!existingTask) return;
       if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-        notifyStatusRestricted(t);
+        notifyStatusRestricted();
         return;
       }
 
@@ -185,7 +181,6 @@ export function useTaskStatusController({
       guardInteraction,
       publishTaskStateUpdate,
       scheduleTaskStatusReorderUpdate,
-      t,
       triggerCompletionFeedback,
     ]
   );

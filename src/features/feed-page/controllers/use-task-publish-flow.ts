@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { TranslateFn } from "@/lib/i18n/translate";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {   removeCachedNostrEventById, type CachedNostrEvent, } from "@/infrastructure/nostr/event-cache";
 import {   loadFailedPublishDrafts, saveFailedPublishDrafts, type FailedPublishDraft, } from "@/infrastructure/preferences/failed-publish-drafts-storage";
@@ -25,7 +24,19 @@ import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { loadPublishDelayEnabled } from "@/infrastructure/preferences/user-preferences-storage";
 import { canUserUpdateTask } from "@/domain/content/task-permissions";
-import {   notifyLocalSaved, notifyNeedTag, notifyPartialPublish, notifyPublished, notifyPublishSavedForRetry, notifyStatusRestricted, } from "@/lib/notifications";
+import {
+  notifyLocalSaved,
+  notifyNeedTag,
+  notifyPartialPublish,
+  notifyPublished,
+  notifyPublishSavedForRetry,
+  notifyStatusRestricted,
+  notifyRelaySelectionError,
+  notifyPendingPublish,
+  notifyPublishUndone,
+  notifyRetryRelayMissing,
+  notifyRetryRejectedByRelay,
+} from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
   ComposeRestoreRequest,
@@ -75,7 +86,6 @@ interface UseTaskPublishFlowOptions {
   demoFeedActive: boolean;
   demoRelayId: string;
   queryClient: QueryClient;
-  t: TranslateFn;
   setLocalTasks: Dispatch<SetStateAction<Task[]>>;
   setPostedTags: Dispatch<SetStateAction<PostedTag[]>>;
   suppressedNostrEventIds: Set<string>;
@@ -124,7 +134,6 @@ export function useTaskPublishFlow({
   demoFeedActive,
   demoRelayId,
   queryClient,
-  t,
   setLocalTasks,
   setPostedTags,
   suppressedNostrEventIds,
@@ -205,8 +214,8 @@ export function useTaskPublishFlow({
     });
     clearPendingPublishTask(taskId);
     setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
-    toast.info(t("toasts.success.publishUndone"));
-  }, [clearPendingPublishTask, setLocalTasks, t]);
+    notifyPublishUndone();
+  }, [clearPendingPublishTask, setLocalTasks]);
 
   const suppressFailedPublishEvent = useCallback((eventId?: string) => {
     const normalizedEventId = (eventId || "").trim();
@@ -235,13 +244,13 @@ export function useTaskPublishFlow({
     const targetCount = new Set(targetRelayUrls.map(normalizeUrl)).size;
     const publishedCount = new Set((publishedRelayUrls || []).map(normalizeUrl)).size;
     if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
-      notifyPartialPublish(t, { publishedCount, targetCount });
+      notifyPartialPublish({ publishedCount, targetCount });
       nostrDevLog("publish", "Partial publish acknowledged by subset of target relays", {
         targetRelayUrls,
         publishedRelayUrls: publishedRelayUrls || [],
       });
     }
-  }, [t]);
+  }, []);
 
   const handleNewTask = useCallback(async (
     content: string,
@@ -304,11 +313,11 @@ export function useTaskPublishFlow({
     );
     const { submissionTags: resolvedSubmissionTags } = resolveSubmissionTags(normalizedExtractedTags, parentTask);
     if (resolvedSubmissionTags.length === 0) {
-      notifyNeedTag(t);
+      notifyNeedTag();
       return { ok: false, reason: "missing-tag" };
     }
     if (resolvedRelaySelection.errorKey) {
-      toast.error(t(resolvedRelaySelection.errorKey));
+      notifyRelaySelectionError(resolvedRelaySelection.errorKey);
       nostrDevLog("routing", "Relay selection rejected for submission", {
         taskType: normalizedTaskType,
         requestedRelayIds,
@@ -533,7 +542,7 @@ export function useTaskPublishFlow({
 
     if (!shouldPublish) {
       setLocalTasks((prev) => [{ ...baseTask, id: Date.now().toString() }, ...prev]);
-      notifyLocalSaved(t, normalizedTaskType);
+      notifyLocalSaved(normalizedTaskType);
       return { ok: true, mode: "local" };
     }
 
@@ -597,7 +606,7 @@ export function useTaskPublishFlow({
           const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
           setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, MAX_FAILED_PUBLISH_DRAFTS));
           setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
-          notifyPublishSavedForRetry(t, {
+          notifyPublishSavedForRetry({
             relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
             reason: publishResult.rejectionReason,
           });
@@ -630,18 +639,12 @@ export function useTaskPublishFlow({
           )
         );
         notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
-        notifyPublished(t, normalizedTaskType, {
+        notifyPublished(normalizedTaskType, {
           relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
         });
       }, PUBLISH_UNDO_DELAY_MS);
 
-      const toastId = toast(t("toasts.info.pendingPublish", { seconds: Math.floor(PUBLISH_UNDO_DELAY_MS / 1000) }), {
-        duration: PUBLISH_UNDO_DELAY_MS,
-        action: {
-          label: t("toasts.actions.undo"),
-          onClick: () => handleUndoPendingPublish(pendingTaskId),
-        },
-      });
+      const toastId = notifyPendingPublish(PUBLISH_UNDO_DELAY_MS, () => handleUndoPendingPublish(pendingTaskId));
 
       pendingPublishStateRef.current.set(pendingTaskId, { timeoutId, toastId, composeState: composeRestoreState });
       nostrDevLog("publish", "Queued publish with undo delay", {
@@ -657,7 +660,7 @@ export function useTaskPublishFlow({
       suppressFailedPublishEvent(publishResult.eventId);
       const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
       setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, MAX_FAILED_PUBLISH_DRAFTS));
-      notifyPublishSavedForRetry(t, {
+      notifyPublishSavedForRetry({
         relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
         reason: publishResult.rejectionReason,
       });
@@ -685,7 +688,7 @@ export function useTaskPublishFlow({
       ...prev,
     ]);
     notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
-    notifyPublished(t, normalizedTaskType, {
+    notifyPublished(normalizedTaskType, {
       relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
     });
     return { ok: true, mode: "published" };
@@ -707,7 +710,6 @@ export function useTaskPublishFlow({
     resolveRelayUrlsFromIds,
     setLocalTasks,
     setPostedTags,
-    t,
     user,
     clearPendingPublishTask,
     notifyIfPartialPublish,
@@ -724,7 +726,7 @@ export function useTaskPublishFlow({
 
     const relayUrls = resolveRelayUrls(draft);
     if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.retryRelayMissing"));
+      notifyRetryRelayMissing();
       return;
     }
 
@@ -743,11 +745,7 @@ export function useTaskPublishFlow({
         });
       }
       suppressFailedPublishEvent(result.eventId);
-      if (result.rejectionReason) {
-        toast.error(t("toasts.errors.retryRejectedByRelayWithReason", { reason: result.rejectionReason }));
-      } else {
-        toast.error(t("toasts.errors.retryRejectedByRelay"));
-      }
+      notifyRetryRejectedByRelay(result.rejectionReason);
       return;
     }
 
@@ -796,7 +794,7 @@ export function useTaskPublishFlow({
       fallbackRelayUrls: relayUrls,
     });
 
-    notifyPublished(t, draft.taskType, {
+    notifyPublished(draft.taskType, {
       relayUrls: result.publishedRelayUrls?.length ? result.publishedRelayUrls : relayUrls,
     });
   }, [
@@ -810,7 +808,6 @@ export function useTaskPublishFlow({
     publishTaskCreateFollowUps,
     setLocalTasks,
     suppressFailedPublishEvent,
-    t,
   ]);
 
   const handleRetryFailedPublish = useCallback(async (draftId: string) => {
@@ -843,7 +840,7 @@ export function useTaskPublishFlow({
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask || existingTask.taskType !== "task" || !dueDate) return;
     if (!canUserUpdateTask(existingTask, currentUser)) {
-      notifyStatusRestricted(t);
+      notifyStatusRestricted();
       return;
     }
     setLocalTasks((prev) =>
@@ -854,14 +851,14 @@ export function useTaskPublishFlow({
       )
     );
     void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
-  }, [allTasks, currentUser, guardInteraction, publishTaskDueUpdate, setLocalTasks, t]);
+  }, [allTasks, currentUser, guardInteraction, publishTaskDueUpdate, setLocalTasks]);
 
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask || existingTask.taskType !== "task") return;
     if (!canUserUpdateTask(existingTask, currentUser)) {
-      notifyStatusRestricted(t);
+      notifyStatusRestricted();
       return;
     }
     setLocalTasks((prev) =>
@@ -872,7 +869,7 @@ export function useTaskPublishFlow({
       )
     );
     void publishTaskPriorityUpdate(taskId, priority);
-  }, [allTasks, currentUser, guardInteraction, publishTaskPriorityUpdate, setLocalTasks, t]);
+  }, [allTasks, currentUser, guardInteraction, publishTaskPriorityUpdate, setLocalTasks]);
 
   const visibleFailedPublishDrafts = useMemo(() => {
     return failedPublishDrafts.filter((draft) => {

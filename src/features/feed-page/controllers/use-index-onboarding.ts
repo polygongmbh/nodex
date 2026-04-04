@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
+import { useTranslation } from "react-i18next";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
 import type { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
-import type { TranslateFn } from "@/lib/i18n/translate";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { shouldAutoStartOnboarding } from "@/lib/onboarding-autostart";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
@@ -34,7 +34,6 @@ interface UseIndexOnboardingOptions {
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setPeople: Dispatch<SetStateAction<Person[]>>;
   setIsAuthModalOpen: Dispatch<SetStateAction<boolean>>;
-  t: TranslateFn;
 }
 
 export function useIndexOnboarding({
@@ -52,8 +51,8 @@ export function useIndexOnboarding({
   setChannelFilterStates,
   setPeople,
   setIsAuthModalOpen,
-  t,
 }: UseIndexOnboardingOptions) {
+  const { t } = useTranslation();
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);

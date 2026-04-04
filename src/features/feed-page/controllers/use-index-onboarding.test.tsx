@@ -51,7 +51,6 @@ function Harness({
     setChannelFilterStates,
     setPeople,
     setIsAuthModalOpen: setAuthOpen,
-    t: (key) => key,
   });
 
   return (

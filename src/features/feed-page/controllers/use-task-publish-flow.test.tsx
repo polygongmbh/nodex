@@ -70,7 +70,6 @@ function Harness({
     demoFeedActive: forceLocalMode,
     demoRelayId: "demo",
     queryClient,
-    t: (key) => key,
     setLocalTasks,
     setPostedTags,
     suppressedNostrEventIds,

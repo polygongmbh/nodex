@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { toast } from "sonner";
-import type { TranslateFn } from "@/lib/i18n/translate";
+import { notifyPublishListingStatusFailed } from "@/lib/notifications";
 import { buildImetaTag } from "@/lib/attachments";
 import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
 import { isNostrEventId } from "@/lib/nostr/event-id";
@@ -27,7 +26,6 @@ interface UseListingStatusPublishOptions {
   ) => Promise<PublishResult>;
   resolveTaskOriginRelay: (taskId: string) => { relayUrls: string[] };
   setLocalTasks: Dispatch<SetStateAction<Task[]>>;
-  t: TranslateFn;
 }
 
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
@@ -39,7 +37,6 @@ export function useListingStatusPublish({
   publishEvent,
   resolveTaskOriginRelay,
   setLocalTasks,
-  t,
 }: UseListingStatusPublishOptions) {
   const handleListingStatusChange = useCallback((taskId: string, status: Nip99ListingStatus) => {
     if (guardInteraction("modify")) return;
@@ -70,7 +67,7 @@ export function useListingStatusPublish({
     if (!isNostrEventId(existing.id)) return;
     const { relayUrls } = resolveTaskOriginRelay(existing.id);
     if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.publishListingStatusFailed"));
+      notifyPublishListingStatusFailed();
       return;
     }
 
@@ -96,7 +93,7 @@ export function useListingStatusPublish({
       relayUrls.slice(0, 1)
     ).then((result) => {
       if (result.success) return;
-      toast.error(t("toasts.errors.publishListingStatusFailed"));
+      notifyPublishListingStatusFailed();
       setLocalTasks((prev) => prev.map((task) => {
         const taskReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
         if (taskReplaceableKey !== replaceableKey) return task;
@@ -114,7 +111,6 @@ export function useListingStatusPublish({
     publishEvent,
     resolveTaskOriginRelay,
     setLocalTasks,
-    t,
   ]);
 
   return { handleListingStatusChange };

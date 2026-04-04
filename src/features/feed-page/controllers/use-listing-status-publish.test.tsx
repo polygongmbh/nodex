@@ -41,7 +41,6 @@ function Harness({
     publishEvent,
     resolveTaskOriginRelay: () => ({ relayUrls: ["wss://relay.one"] }),
     setLocalTasks,
-    t: (key) => key,
   });
 
   return (

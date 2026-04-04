@@ -1,7 +1,12 @@
 import { useCallback, useMemo } from "react";
-import { toast } from "sonner";
-import { notifyDisconnectedSelectedFeeds, notifyNeedSigninModify, notifyNeedSigninPost } from "@/lib/notifications";
-import type { TranslateFn } from "@/lib/i18n/translate";
+import {
+  notifyDisconnectedSelectedFeeds,
+  notifyNeedSigninModify,
+  notifyNeedSigninPost,
+  notifyPublishStatusFailed,
+  notifyPublishDateFailed,
+  notifyPublishPriorityFailed,
+} from "@/lib/notifications";
 import { resolveOriginRelayIdForTask } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { isNostrEventId } from "@/lib/nostr/event-id";
@@ -34,7 +39,6 @@ interface UseTaskPublishControlsOptions {
     parentId?: string,
     relayUrls?: string[]
   ) => Promise<PublishResult>;
-  t: TranslateFn;
 }
 
 export function useTaskPublishControls({
@@ -45,7 +49,6 @@ export function useTaskPublishControls({
   canModifyContent,
   handleOpenAuthModal,
   publishEvent,
-  t,
 }: UseTaskPublishControlsOptions) {
   const hasDisconnectedSelectedRelays = useMemo(() => {
     return relays.some(
@@ -56,28 +59,24 @@ export function useTaskPublishControls({
     );
   }, [effectiveActiveRelayIds, relays]);
 
-  const notifyModifyBlockedByDisconnectedFeeds = useCallback(() => {
-    notifyDisconnectedSelectedFeeds(t);
-  }, [t]);
-
   const isInteractionBlocked = !canModifyContent || hasDisconnectedSelectedRelays;
 
   const guardInteraction = useCallback((mode: "post" | "modify"): boolean => {
     if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
+      notifyDisconnectedSelectedFeeds();
       return true;
     }
     if (!canModifyContent) {
       handleOpenAuthModal();
       if (mode === "post") {
-        notifyNeedSigninPost(t);
+        notifyNeedSigninPost();
       } else {
-        notifyNeedSigninModify(t);
+        notifyNeedSigninModify();
       }
       return true;
     }
     return false;
-  }, [canModifyContent, handleOpenAuthModal, hasDisconnectedSelectedRelays, notifyModifyBlockedByDisconnectedFeeds, t]);
+  }, [canModifyContent, handleOpenAuthModal, hasDisconnectedSelectedRelays]);
 
   const handleBlockedInteractionAttempt = useCallback(() => {
     guardInteraction("modify");
@@ -146,10 +145,10 @@ export function useTaskPublishControls({
     );
 
     if (!result.success) {
-      toast.error(t("toasts.errors.publishStatusFailed"));
+      notifyPublishStatusFailed();
       console.warn("Status publish failed", { taskId, status, relayUrls });
     }
-  }, [publishEvent, resolveTaskOriginRelay, t]);
+  }, [publishEvent, resolveTaskOriginRelay]);
 
   const publishTaskDueUpdate = useCallback(async (
     taskId: string,
@@ -164,7 +163,7 @@ export function useTaskPublishControls({
       ? relayUrlsOverride.slice(0, 1)
       : resolveTaskOriginRelay(taskId).relayUrls;
     if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.publishDateFailed"));
+      notifyPublishDateFailed();
       return false;
     }
     const relayUrl = relayUrls[0];
@@ -184,17 +183,17 @@ export function useTaskPublishControls({
       [relayUrl]
     );
     if (!result.success) {
-      toast.error(t("toasts.errors.publishDateFailed"));
+      notifyPublishDateFailed();
       console.warn("Date publish failed", { taskId, relayUrl });
     }
     return result.success;
-  }, [publishEvent, resolveTaskOriginRelay, t]);
+  }, [publishEvent, resolveTaskOriginRelay]);
 
   const publishTaskPriorityUpdate = useCallback(async (taskId: string, priority: number) => {
     if (!isNostrEventId(taskId)) return false;
     const { relayUrls } = resolveTaskOriginRelay(taskId);
     if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.publishPriorityFailed"));
+      notifyPublishPriorityFailed();
       return false;
     }
     const relayUrl = relayUrls[0];
@@ -211,11 +210,11 @@ export function useTaskPublishControls({
       [relayUrl]
     );
     if (!result.success) {
-      toast.error(t("toasts.errors.publishPriorityFailed"));
+      notifyPublishPriorityFailed();
       console.warn("Priority publish failed", { taskId, priority, relayUrl });
     }
     return result.success;
-  }, [publishEvent, resolveTaskOriginRelay, t]);
+  }, [publishEvent, resolveTaskOriginRelay]);
 
   const publishTaskCreateFollowUps = useCallback(async (params: {
     publishedEventId?: string;

@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useRef } from "react";
-import { toast } from "sonner";
 import type { Relay } from "@/types";
-import type { TranslateFn } from "@/lib/i18n/translate";
 import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
+import { notifyRelayReconnectFailed, notifyRelayReconnectAttempt } from "@/lib/notifications";
 import { getRelayDomain, useRelayFilterState } from "./use-relay-filter-state";
 
 type RelaySelectionMode = "toggle" | "exclusive";
 
 interface UseRelaySelectionControllerOptions {
   relays: Relay[];
-  t: TranslateFn;
   reconnectFailureGraceMs?: number;
 }
 
@@ -45,7 +43,6 @@ function isFailedRelaySelectionTarget(relay: Relay): boolean {
 
 export function useRelaySelectionController({
   relays,
-  t,
   reconnectFailureGraceMs = DEFAULT_RECONNECT_FAILURE_GRACE_MS,
 }: UseRelaySelectionControllerOptions) {
   const pendingReconnectSelectionsRef = useRef<Map<string, PendingReconnectSelection>>(new Map());
@@ -60,7 +57,6 @@ export function useRelaySelectionController({
     handleToggleAllRelays,
   } = useRelayFilterState({
     relays,
-    t,
     getEnableToastMessage: (relay) => {
       if (!isFailedRelaySelectionTarget(relay)) return undefined;
       return null;
@@ -85,7 +81,7 @@ export function useRelaySelectionController({
             next.delete(relay.id);
             return next;
           });
-          toast.error(t("toasts.errors.relayReconnectFailedDeselected", { relayDomain }));
+          notifyRelayReconnectFailed(relayDomain);
           pendingReconnectSelectionsRef.current.delete(relay.id);
           return;
         }
@@ -100,7 +96,7 @@ export function useRelaySelectionController({
         sawRecoveringState: false,
         timeoutId,
       });
-      toast.info(t("toasts.info.relayReconnectAttempt", { relayDomain }));
+      notifyRelayReconnectAttempt(relayDomain);
     },
   });
 
@@ -148,11 +144,11 @@ export function useRelaySelectionController({
           next.delete(relayId);
           return next;
         });
-        toast.error(t("toasts.errors.relayReconnectFailedDeselected", { relayDomain }));
+        notifyRelayReconnectFailed(relayDomain);
         clearPendingReconnectSelection(relayId);
       }
     });
-  }, [activeRelayIds, clearPendingReconnectSelection, relays, setActiveRelayIds, t]);
+  }, [activeRelayIds, clearPendingReconnectSelection, relays, setActiveRelayIds]);
 
   useEffect(() => {
     const pendingReconnectSelections = pendingReconnectSelectionsRef.current;

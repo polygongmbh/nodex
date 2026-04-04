@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { toast } from "sonner";
 import { getPreferredMentionIdentifier } from "@/lib/mentions";
-import type { TranslateFn } from "@/lib/i18n/translate";
+import {
+  notifyShowingOnlyChannel,
+  notifyAllChannelsReset,
+  notifyShowingOnlyTag,
+  notifyNoFrequentPeople,
+  notifyFrequentPeopleDeselected,
+  notifyShowingOnlyPersonExclusive,
+  notifyPersonFilterToggled,
+} from "@/lib/notifications";
 import {
   loadPersistedChannelFilters,
   loadPersistedChannelMatchMode,
@@ -24,7 +31,7 @@ import {
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, ChannelMatchMode, PostedTag, QuickFilterState, Relay } from "@/types";
-import { isPubkeyDerivedPlaceholder, type Person } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 
 interface UseIndexFiltersOptions {
@@ -38,7 +45,6 @@ interface UseIndexFiltersOptions {
   sidebarPeople: Person[];
   hasLiveHydratedScope?: boolean;
   isHydrating?: boolean;
-  t: TranslateFn;
 }
 
 export function useIndexFilters({
@@ -52,7 +58,6 @@ export function useIndexFilters({
   sidebarPeople,
   hasLiveHydratedScope = false,
   isHydrating = false,
-  t,
 }: UseIndexFiltersOptions) {
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
   const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
@@ -62,18 +67,6 @@ export function useIndexFilters({
     () => loadPersistedChannelMatchMode()
   );
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>(() => normalizeQuickFilterState());
-
-  const getToastPersonName = useCallback((person?: Person | null) => {
-    if (!person) return t("toasts.success.selectedUserFallback");
-
-    const displayName = person.displayName.trim();
-    if (displayName && !isPubkeyDerivedPlaceholder(displayName, person.id)) return displayName;
-
-    const username = person.name.trim();
-    if (username && !isPubkeyDerivedPlaceholder(username, person.id)) return username;
-
-    return t("toasts.success.selectedUserFallback");
-  }, [t]);
 
   const channelsWithState = useMemo(
     () =>
@@ -217,7 +210,7 @@ export function useIndexFilters({
       }
       setChannelFilterStates(() => setExclusiveChannelFilter(channels, intent.channelId));
       const channel = channelsWithState.find((entry) => entry.id === intent.channelId);
-      toast(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || intent.channelId }));
+      notifyShowingOnlyChannel(channel?.name || intent.channelId);
     },
     "sidebar.channel.toggleAll": () => {
       const hasActiveFilters =
@@ -225,7 +218,7 @@ export function useIndexFilters({
         Array.from(channelFilterStates.values()).some((state) => state !== "neutral");
       if (!hasActiveFilters) return;
       setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-      toast(t("toasts.success.allChannelsReset"));
+      notifyAllChannelsReset();
     },
     "sidebar.channel.matchMode.change": (intent) => {
       setChannelMatchMode(intent.mode);
@@ -251,7 +244,7 @@ export function useIndexFilters({
         return setExclusiveChannelFilter(allChannels, channelId);
       });
 
-      toast(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
+      notifyShowingOnlyTag(normalizedTag);
     },
     "sidebar.person.toggle": (intent) => {
       setPeople((prev) =>
@@ -274,15 +267,11 @@ export function useIndexFilters({
       }
       setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === intent.personId));
       const person = people.find((entry) => entry.id === intent.personId);
-      toast(
-        t("toasts.success.showingOnlyPersonExclusive", {
-          personName: getToastPersonName(person),
-        })
-      );
+      notifyShowingOnlyPersonExclusive(person);
     },
     "sidebar.person.toggleAll": () => {
       if (sidebarPeople.length === 0) {
-        toast(t("toasts.success.noFrequentPeople"));
+        notifyNoFrequentPeople();
         return;
       }
       const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
@@ -295,23 +284,16 @@ export function useIndexFilters({
             : person
         )
       );
-      toast(t("toasts.success.frequentPeopleDeselected"));
+      notifyFrequentPeopleDeselected();
     },
     "person.filter.exclusive": (intent) => {
       applyExclusivePersonFilter(intent.person);
-      toast(
-        t("toasts.success.showingOnlyPersonExclusive", {
-          personName: getToastPersonName(intent.person),
-        })
-      );
+      notifyShowingOnlyPersonExclusive(intent.person);
     },
     "person.filter.toggle": (intent) => {
       const wasSelected = people.find((person) => person.id === intent.person.id)?.isSelected ?? intent.person.isSelected;
       toggleInteractivePerson(intent.person);
-      toast(t(
-        wasSelected ? "toasts.success.removedPersonFilter" : "toasts.success.showingOnlyPerson",
-        { personName: getToastPersonName(intent.person) }
-      ));
+      notifyPersonFilterToggled(intent.person, wasSelected);
     },
     "person.compose.mention": (intent) => {
       queueMentionForPerson(intent.person);
@@ -370,13 +352,11 @@ export function useIndexFilters({
     setPeople,
     sidebarPeople,
     applyExclusivePersonFilter,
-    getToastPersonName,
     queueMentionForPerson,
     setQuickFilters,
     setChannelFilterStates,
     setChannelMatchMode,
     toggleInteractivePerson,
-    t,
   ]);
 
   const resetFiltersToDefault = useCallback(() => {

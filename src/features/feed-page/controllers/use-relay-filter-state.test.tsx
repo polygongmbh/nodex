@@ -49,15 +49,12 @@ const connectedRelays: Relay[] = [
 function Harness({
   onRelayEnabled,
   relayList = relays,
-  t,
 }: {
   onRelayEnabled?: (relay: Relay) => void;
   relayList?: Relay[];
-  t?: Parameters<typeof useRelayFilterState>[0]["t"];
 }) {
   const { handleRelayToggle, handleRelayExclusive, handleToggleAllRelays, effectiveActiveRelayIds } = useRelayFilterState({
     relays: relayList,
-    t: t || ((key) => key),
     onRelayEnabled,
   });
 
@@ -198,13 +195,11 @@ describe("useRelayFilterState", () => {
     expect(onRelayEnabled).toHaveBeenCalledWith(connectedRelays[0]);
   });
 
-  it("uses relay domain in toast interpolation values", () => {
-    render(<Harness relayList={connectedRelays} t={(key, values) => values ? `${key}:${JSON.stringify(values)}` : key} />);
+  it("includes relay domain in toast message when selecting exclusively", () => {
+    render(<Harness relayList={connectedRelays} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Exclusive" }));
 
-    expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining("\"relayDomain\":\"relay.one\"")
-    );
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining("relay.one"));
   });
 });

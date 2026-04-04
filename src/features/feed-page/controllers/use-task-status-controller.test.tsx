@@ -29,7 +29,6 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
     guardInteraction: () => false,
     publishTaskStateUpdate,
     setLocalTasks,
-    t: (key) => key,
   });
 
   return (

@@ -35,7 +35,6 @@ function Harness({
       setPublishCount((count) => count + 1);
       return { success: true };
     },
-    t: (key) => key,
   });
 
   return (
