@@ -1,4 +1,5 @@
 import { useMemo, useState, ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import {
   Radio,
   Plus,
@@ -70,6 +71,20 @@ export function RelayManagement({
       type: "sidebar.relay.reorder",
       orderedUrls: nextRelays.map((relay) => relay.url),
     });
+  };
+
+  const toggleExpandedRelay = (relayUrl: string) => {
+    setExpandedRelayUrl((current) => (current === relayUrl ? null : relayUrl));
+  };
+
+  const stopRelayCardToggle = (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+  };
+
+  const handleRelayCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, relayUrl: string) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    toggleExpandedRelay(relayUrl);
   };
 
   const connectedCount = relays.filter((r) => r.status === "connected").length;
@@ -203,20 +218,31 @@ export function RelayManagement({
               relays.map((relay, index) => {
                 const relayName = stripRelayProtocol(relay.url);
                 const relayProtocol = relay.url.startsWith("ws://") ? "ws://" : "wss://";
+                const isExpanded = expandedRelayUrl === relay.url;
+                const showReconnect = relay.status !== "connected";
 
                 return (
                   <div
                     key={relay.url}
-                    className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors space-y-2"
+                    className="rounded-lg bg-muted/30 transition-colors space-y-2 hover:bg-muted/50"
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    aria-label={isExpanded ? t("relay.details.hide") : t("relay.details.show")}
+                    onClick={() => toggleExpandedRelay(relay.url)}
+                    onKeyDown={(event) => handleRelayCardKeyDown(event, relay.url)}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 p-3">
                     <div className="flex flex-col gap-1">
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleRelayReorder(index, index - 1)}
+                        onClick={(event) => {
+                          stopRelayCardToggle(event);
+                          handleRelayReorder(index, index - 1);
+                        }}
                         aria-label={t("relay.moveUp", { relay: relayName })}
                         title={t("relay.moveUp", { relay: relayName })}
                         disabled={index === 0}
@@ -228,7 +254,10 @@ export function RelayManagement({
                         variant="ghost"
                         size="icon"
                         className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleRelayReorder(index, index + 1)}
+                        onClick={(event) => {
+                          stopRelayCardToggle(event);
+                          handleRelayReorder(index, index + 1);
+                        }}
                         aria-label={t("relay.moveDown", { relay: relayName })}
                         title={t("relay.moveDown", { relay: relayName })}
                         disabled={index === relays.length - 1}
@@ -269,6 +298,7 @@ export function RelayManagement({
                               <button
                                 type="button"
                                 className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                                onClick={stopRelayCardToggle}
                                 aria-label={t("relay.statusHints.readOnly")}
                               >
                                 <Info className="h-3.5 w-3.5" />
@@ -292,11 +322,12 @@ export function RelayManagement({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground"
-                      onClick={() =>
-                        setExpandedRelayUrl((current) => (current === relay.url ? null : relay.url))
-                      }
+                      onClick={(event) => {
+                        stopRelayCardToggle(event);
+                        toggleExpandedRelay(relay.url);
+                      }}
                       aria-label={
-                        expandedRelayUrl === relay.url
+                        isExpanded
                           ? t("relay.details.hide")
                           : t("relay.details.show")
                       }
@@ -304,33 +335,36 @@ export function RelayManagement({
                       <ChevronDown
                         className={cn(
                           "w-4 h-4 transition-transform",
-                          expandedRelayUrl === relay.url ? "rotate-180" : "rotate-0"
+                          isExpanded ? "rotate-180" : "rotate-0"
                         )}
                       />
                     </Button>
 
-                    {/* Remove button */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        void dispatchFeedInteraction({ type: "sidebar.relay.reconnect", url: relay.url });
-                      }}
-                      aria-label={t("relay.reconnect")}
-                      title={t("relay.reconnect")}
-                      disabled={relay.status === "connecting"}
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </Button>
+                    {showReconnect && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        onClick={(event) => {
+                          stopRelayCardToggle(event);
+                          void dispatchFeedInteraction({ type: "sidebar.relay.reconnect", url: relay.url });
+                        }}
+                        aria-label={t("relay.reconnect")}
+                        title={t("relay.reconnect")}
+                        disabled={relay.status === "connecting"}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
+                    )}
 
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => {
+                      onClick={(event) => {
+                        stopRelayCardToggle(event);
                         void dispatchFeedInteraction({ type: "sidebar.relay.remove", url: relay.url });
                       }}
                       aria-label={t("relay.remove")}
@@ -340,7 +374,7 @@ export function RelayManagement({
                     </Button>
                     </div>
 
-                    {expandedRelayUrl === relay.url && (
+                    {isExpanded && (
                       <div className="rounded-md border border-border/60 bg-background/40 p-2 text-xs space-y-2">
                         <div className="flex items-center gap-1.5 text-foreground">
                           {relay.nip11?.authRequired ? (

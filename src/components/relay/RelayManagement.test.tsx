@@ -102,13 +102,36 @@ describe("RelayManagement", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    fireEvent.click(screen.getByRole("button", { name: /show relay details/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /show relay details/i })[0]!);
 
-    expect(screen.getByRole("button", { name: /hide relay details/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /hide relay details/i })).toHaveLength(2);
     expect(screen.getByText(i18n.t("relay.details.title"))).toBeInTheDocument();
     expect(screen.getByText(i18n.t("relay.details.authRequired"))).toBeInTheDocument();
     expect(screen.getByText(i18n.t("relay.details.supportsNip42"))).toBeInTheDocument();
     expect(screen.getAllByText(i18n.t("relay.details.yes"))).toHaveLength(2);
+  });
+
+  it("expands relay details when the relay card is clicked", () => {
+    renderWithBus(
+      <RelayManagement
+        relays={[
+          {
+            url: "wss://relay.one",
+            status: "connected",
+            nip11: {
+              authRequired: true,
+              supportsNip42: false,
+              checkedAt: 1700000000000,
+            },
+          },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /show relay details/i })[0]!);
+
+    expect(screen.getByText(i18n.t("relay.details.title"))).toBeInTheDocument();
   });
 
   it("dispatches relay reconnect intent from the management panel", () => {
@@ -126,6 +149,20 @@ describe("RelayManagement", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
   });
 
+  it("hides the reconnect button for connected relays", () => {
+    renderWithBus(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "connected" },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+
+    expect(screen.queryByRole("button", { name: /reconnect relay/i })).not.toBeInTheDocument();
+  });
+
   it("dispatches relay remove intent without reconnect intent", () => {
     const dispatch = renderWithBus(
       <RelayManagement
@@ -140,6 +177,30 @@ describe("RelayManagement", () => {
 
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.remove", url: "wss://relay.one" });
     expect(dispatch).not.toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
+  });
+
+  it("does not expand relay details when remove is clicked", () => {
+    const dispatch = renderWithBus(
+      <RelayManagement
+        relays={[
+          {
+            url: "wss://relay.one",
+            status: "disconnected",
+            nip11: {
+              authRequired: true,
+              supportsNip42: true,
+              checkedAt: 1700000000000,
+            },
+          },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    fireEvent.click(screen.getByRole("button", { name: /remove relay/i }));
+
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.remove", url: "wss://relay.one" });
+    expect(screen.queryByText(i18n.t("relay.details.title"))).not.toBeInTheDocument();
   });
 
   it("dispatches relay reorder intent with the next ordered relay urls", () => {
