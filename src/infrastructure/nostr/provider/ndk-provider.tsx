@@ -1080,7 +1080,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       const info = relayInfoRef.current.get(normalizedUrl);
       const checkedAt = relayInfoFetchedAtRef.current.get(normalizedUrl);
       return {
-        url,
+        url: normalizedUrl,
         status: "connecting",
         nip11: info
           ? {
