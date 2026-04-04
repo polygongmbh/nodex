@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, HandHelping, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Channel, Nip99Metadata, PostType, TaskDateType, TaskCreateResult, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
+import { Channel, Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
 import type { Person } from "@/types/person";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -16,7 +15,7 @@ import {
   normalizeMentionIdentifier,
 } from "@/lib/mentions";
 import { hasMeaningfulComposerText } from "@/lib/composer-content";
-import { notifyNeedTag, notifyTaskCreationFailed } from "@/lib/notifications";
+import { notifyNeedTag } from "@/lib/notifications";
 import {
   isAlternateSubmitKey,
   isAutocompleteAcceptKey,
@@ -37,8 +36,6 @@ import {
   shouldShowComposeSubmitBlockDetail,
   type ComposeSubmitBlockState,
 } from "@/lib/compose-submit-block";
-import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
@@ -76,12 +73,18 @@ export interface TaskComposerOptions {
 }
 
 interface TaskComposerProps {
-  onSubmit: TaskComposerSubmit;
+  onSubmit: (data: TaskComposerFormData) => void;
   channels?: Channel[];
   people?: Person[];
   onCancel: () => void;
   options?: TaskComposerOptions;
-  submitBlockByType?: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
+  externalSubmitBlockByType?: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
+  filterTagNames?: string[];
+  filterMentionPubkeys?: string[];
+  onRemoveFilterTag?: (name: string) => void;
+  onRemoveFilterMention?: (pubkey: string) => void;
+  getUploadAuthHeader?: (url: string, method: string) => Promise<string | null>;
+  canCreateContent?: boolean;
   compact?: boolean;
   defaultDueDate?: Date;
   defaultContent?: string;
@@ -103,24 +106,20 @@ interface TaskComposerProps {
 
 type ComposerMessageType = PostType;
 
-export interface TaskComposerSubmitRequest {
+export interface TaskComposerFormData {
   content: string;
   tags: string[];
   taskType: ComposerMessageType;
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
-  explicitMentionPubkeys?: string[];
-  mentionIdentifiers?: string[];
+  explicitMentionPubkeys: string[];
+  mentionIdentifiers: string[];
   priority?: number;
-  attachments?: PublishedAttachment[];
+  attachments: PublishedAttachment[];
   nip99?: Nip99Metadata;
   locationGeohash?: string;
 }
-
-export type TaskComposerSubmit = (
-  request: TaskComposerSubmitRequest
-) => Promise<TaskCreateResult> | TaskCreateResult;
 
 const NIP99_TITLE_MAX_LENGTH = 80;
 const NIP99_SUMMARY_MAX_LENGTH = 160;
@@ -193,11 +192,17 @@ export function TaskComposer({
   onSubmit,
   channels: channelsProp,
   people: peopleProp,
-  onCancel, 
+  onCancel,
   options,
-  submitBlockByType,
+  externalSubmitBlockByType,
+  filterTagNames,
+  filterMentionPubkeys,
+  onRemoveFilterTag,
+  onRemoveFilterMention,
+  getUploadAuthHeader,
+  canCreateContent: canCreateContentProp = true,
   compact,
-  defaultDueDate, 
+  defaultDueDate,
   defaultContent,
   allowEmptyTags,
   adaptiveSize,
@@ -226,15 +231,13 @@ export function TaskComposer({
   allowComment = resolvedOptions.allowComment ?? allowComment ?? true;
   allowFeedMessageTypes = resolvedOptions.allowFeedMessageTypes ?? allowFeedMessageTypes ?? false;
   composeRestoreRequest = resolvedOptions.composeRestoreRequest ?? composeRestoreRequest ?? null;
+  const canCreateContent = canCreateContentProp;
   const { t } = useTranslation();
-  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const {
     channelOptions,
     mentionOptions,
     includedChannels,
     selectedPeoplePubkeys,
-    channelIdByName,
-    selectedPersonIdByPubkey,
     mentionOptionByPubkey,
     mentionOptionByAlias,
   } = useTaskComposerModel({
@@ -242,8 +245,6 @@ export function TaskComposer({
     people: peopleProp,
   });
   const draftStorageKey = useTaskComposerDraftStorageKey();
-  const { createHttpAuthHeader } = useNDK();
-  const authPolicy = useAuthActionPolicy();
   const initialComposerState = useMemo(
     () =>
       resolveTaskComposerInitialState({
@@ -267,7 +268,6 @@ export function TaskComposer({
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isComposerFocused, setIsComposerFocused] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
   const [isSendLaunching, setIsSendLaunching] = useState(false);
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>(initialComposerState.explicitTagNames);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(initialComposerState.explicitMentionPubkeys);
@@ -312,8 +312,8 @@ export function TaskComposer({
   const pendingOutsidePointerInteractionRef = useRef(false);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
   const remediationHighlightTimeoutRef = useRef<number | null>(null);
-  const prevIncludedChannelsRef = useRef<string[]>([]);
-  const prevSelectedPeoplePubkeysRef = useRef<string[]>([]);
+  const prevFilterTagNamesRef = useRef<string[]>([]);
+  const prevFilterMentionPubkeysRef = useRef<string[]>([]);
   const autoManagedFilterTagNamesRef = useRef<Set<string>>(new Set());
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
@@ -557,7 +557,7 @@ export function TaskComposer({
   const handleAttachmentUpload = async (file: File, id: string) => {
     try {
       const uploaded = await uploadAttachment(file, {
-        getAuthHeader: (url, method) => createHttpAuthHeader(url, method),
+        getAuthHeader: getUploadAuthHeader ?? (() => Promise.resolve(null)),
       });
       setAttachments((previous) =>
         previous.map((attachment) =>
@@ -723,19 +723,18 @@ export function TaskComposer({
   };
 
   useEffect(() => {
-    const previous = new Set(prevIncludedChannelsRef.current);
-    const next = new Set(includedChannels);
-    const added = includedChannels.filter((name) => !previous.has(name));
-    const removed = prevIncludedChannelsRef.current.filter((name) => !next.has(name));
+    if (!filterTagNames) return;
+    const previous = new Set(prevFilterTagNamesRef.current);
+    const next = new Set(filterTagNames);
+    const added = filterTagNames.filter((name) => !previous.has(name));
+    const removed = prevFilterTagNamesRef.current.filter((name) => !next.has(name));
 
     if (added.length === 0 && removed.length === 0) return;
 
     setExplicitTagNames((current) => {
       const nextTags = [...current];
       for (const tagName of added) {
-        if (!nextTags.includes(tagName)) {
-          nextTags.push(tagName);
-        }
+        if (!nextTags.includes(tagName)) nextTags.push(tagName);
         autoManagedFilterTagNamesRef.current.add(tagName);
       }
       for (const tagName of removed) {
@@ -747,23 +746,22 @@ export function TaskComposer({
       return nextTags;
     });
 
-    prevIncludedChannelsRef.current = [...includedChannels];
-  }, [includedChannels]);
+    prevFilterTagNamesRef.current = [...filterTagNames];
+  }, [filterTagNames]);
 
   useEffect(() => {
-    const previous = new Set(prevSelectedPeoplePubkeysRef.current);
-    const next = new Set(selectedPeoplePubkeys);
-    const added = selectedPeoplePubkeys.filter((pubkey) => !previous.has(pubkey));
-    const removed = prevSelectedPeoplePubkeysRef.current.filter((pubkey) => !next.has(pubkey));
+    if (!filterMentionPubkeys) return;
+    const previous = new Set(prevFilterMentionPubkeysRef.current);
+    const next = new Set(filterMentionPubkeys);
+    const added = filterMentionPubkeys.filter((pubkey) => !previous.has(pubkey));
+    const removed = prevFilterMentionPubkeysRef.current.filter((pubkey) => !next.has(pubkey));
 
     if (added.length === 0 && removed.length === 0) return;
 
     setExplicitMentionPubkeys((current) => {
       const nextMentions = [...current];
       for (const pubkey of added) {
-        if (!nextMentions.includes(pubkey)) {
-          nextMentions.push(pubkey);
-        }
+        if (!nextMentions.includes(pubkey)) nextMentions.push(pubkey);
         autoManagedFilterMentionPubkeysRef.current.add(pubkey);
       }
       for (const pubkey of removed) {
@@ -775,8 +773,8 @@ export function TaskComposer({
       return nextMentions;
     });
 
-    prevSelectedPeoplePubkeysRef.current = [...selectedPeoplePubkeys];
-  }, [selectedPeoplePubkeys]);
+    prevFilterMentionPubkeysRef.current = [...filterMentionPubkeys];
+  }, [filterMentionPubkeys]);
 
   const resolveSubmitType = (value: unknown): ComposerMessageType => {
     if (
@@ -829,8 +827,7 @@ export function TaskComposer({
     });
   }, [content, isNip99SummaryTouched, isNip99TitleTouched, taskType]);
 
-  const handleSubmit = async (submitType?: unknown) => {
-    if (isPublishing) return;
+  const handleSubmit = (submitType?: unknown) => {
     if (submitBlock && submitBlock.code !== "signin" && !submitBlock.isHardDisabled) {
       handleBlockedSubmitAttempt();
       return;
@@ -842,7 +839,7 @@ export function TaskComposer({
     const submissionDueDate = shouldSubmitTaskDates ? dueDate : undefined;
     const submissionDueTime = shouldSubmitTaskDates ? (dueTime || undefined) : undefined;
     const submissionDateType = shouldSubmitTaskDates ? dateType : undefined;
-    
+
     const extractedTags = extractHashtagsFromContent(content);
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
     if (submitTags.length === 0 && !allowEmptyTags) {
@@ -877,41 +874,23 @@ export function TaskComposer({
         name: attachment.name || attachment.fileName,
       }));
 
-    // Also add locally (and publish in parent handler)
-    const publishingToastId = "task-composer-publishing";
-    setIsPublishing(true);
-    toast.loading(t("composer.blocked.publishing"), { id: publishingToastId });
-    let result: TaskCreateResult;
     const submittedPriority = storedPriorityFromDisplay(priority);
-    try {
-      const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-      const request: TaskComposerSubmitRequest = {
-        content,
-        tags: submitTags,
-        taskType: effectiveTaskType,
-        dueDate: submissionDueDate,
-        dueTime: submissionDueTime,
-        dateType: submissionDateType,
-        explicitMentionPubkeys,
-        mentionIdentifiers: authoritativeMentionIdentifiers,
-        priority: submittedPriority,
-        attachments: uploadedAttachments,
-        nip99: listingMetadata,
-        ...(normalizedLocationGeohash ? { locationGeohash: normalizedLocationGeohash } : {}),
-      };
-      result = await Promise.resolve(onSubmit(request));
-    } catch (error) {
-      console.error("Task submit failed", error);
-      notifyTaskCreationFailed(t);
-      toast.dismiss(publishingToastId);
-      setIsPublishing(false);
-      return;
-    }
-    toast.dismiss(publishingToastId);
-    setIsPublishing(false);
-    if (!result.ok) {
-      return;
-    }
+    const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
+    onSubmit({
+      content,
+      tags: submitTags,
+      taskType: effectiveTaskType,
+      dueDate: submissionDueDate,
+      dueTime: submissionDueTime,
+      dateType: submissionDateType,
+      explicitMentionPubkeys,
+      mentionIdentifiers: authoritativeMentionIdentifiers,
+      priority: submittedPriority,
+      attachments: uploadedAttachments,
+      nip99: listingMetadata,
+      ...(normalizedLocationGeohash ? { locationGeohash: normalizedLocationGeohash } : {}),
+    });
+
     setIsSendLaunching(true);
     if (sendLaunchTimeoutRef.current !== null) {
       window.clearTimeout(sendLaunchTimeoutRef.current);
@@ -921,12 +900,14 @@ export function TaskComposer({
       sendLaunchTimeoutRef.current = null;
     }, 260);
     setContent("");
-    prevIncludedChannelsRef.current = [...includedChannels];
-    prevSelectedPeoplePubkeysRef.current = [...selectedPeoplePubkeys];
-    autoManagedFilterTagNamesRef.current = new Set(includedChannels);
-    autoManagedFilterMentionPubkeysRef.current = new Set(selectedPeoplePubkeys);
-    setExplicitTagNames([...includedChannels]);
-    setExplicitMentionPubkeys([...selectedPeoplePubkeys]);
+    const nextFilterTags = filterTagNames ?? [];
+    const nextFilterMentions = filterMentionPubkeys ?? [];
+    prevFilterTagNamesRef.current = [...nextFilterTags];
+    prevFilterMentionPubkeysRef.current = [...nextFilterMentions];
+    autoManagedFilterTagNamesRef.current = new Set(nextFilterTags);
+    autoManagedFilterMentionPubkeysRef.current = new Set(nextFilterMentions);
+    setExplicitTagNames([...nextFilterTags]);
+    setExplicitMentionPubkeys([...nextFilterMentions]);
     setLocationGeohash(undefined);
     setShowLocationControls(false);
     setNip99({});
@@ -1025,7 +1006,7 @@ export function TaskComposer({
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
   const localSubmitBlock = resolveComposeSubmitBlock({
-    isSignedIn: authPolicy.canCreateContent,
+    isSignedIn: canCreateContent,
     hasMeaningfulContent,
     hasAtLeastOneTag,
     canInheritParentTags: allowEmptyTags,
@@ -1033,11 +1014,11 @@ export function TaskComposer({
     hasFailedAttachmentUploads,
     t,
   });
-  const submitBlock = localSubmitBlock ?? submitBlockByType?.[taskType] ?? null;
+  const submitBlock = localSubmitBlock ?? externalSubmitBlockByType?.[taskType] ?? null;
   const submitBlockedReason = submitBlock?.reason ?? null;
   const showSubmitBlockBanner = submitBlock?.code !== "write";
   const showSubmitBlockDetail = shouldShowComposeSubmitBlockDetail(submitBlock);
-  const isSubmitButtonEmptyDisabled = authPolicy.canCreateContent && content.trim().length === 0;
+  const isSubmitButtonEmptyDisabled = canCreateContent && content.trim().length === 0;
   const submitButtonLabel = isSubmitButtonEmptyDisabled ? null : submitBlock?.ctaLabel;
 
   const pulseTarget = (target: "input" | "attachments" | "blocker") => {
@@ -1370,10 +1351,9 @@ export function TaskComposer({
   const removeExplicitHashtag = (tagName: string) => {
     const normalizedTag = tagName.trim().toLowerCase();
     if (!normalizedTag) return;
-    const channelId = channelIdByName.get(normalizedTag);
-    if (channelId && includedChannels.includes(normalizedTag)) {
+    if (autoManagedFilterTagNamesRef.current.has(normalizedTag)) {
       autoManagedFilterTagNamesRef.current.delete(normalizedTag);
-      void dispatchFeedInteraction({ type: "filter.clearChannel", channelId });
+      onRemoveFilterTag?.(normalizedTag);
     }
     setExplicitTagNames((previous) => previous.filter((tag) => tag !== normalizedTag));
   };
@@ -1381,10 +1361,9 @@ export function TaskComposer({
   const removeExplicitMention = (pubkey: string | undefined) => {
     if (!pubkey) return;
     const normalizedPubkey = pubkey.trim().toLowerCase();
-    const personId = selectedPersonIdByPubkey.get(normalizedPubkey);
-    if (personId) {
+    if (autoManagedFilterMentionPubkeysRef.current.has(normalizedPubkey)) {
       autoManagedFilterMentionPubkeysRef.current.delete(normalizedPubkey);
-      void dispatchFeedInteraction({ type: "filter.clearPerson", personId });
+      onRemoveFilterMention?.(normalizedPubkey);
     }
     setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
   };
@@ -1688,7 +1667,7 @@ export function TaskComposer({
         </div>
       )}
 
-      {(hasPersistentChipTray || (showExpandedControls && Boolean(submitBlockedReason && authPolicy.canCreateContent))) && (
+      {(hasPersistentChipTray || (showExpandedControls && Boolean(submitBlockedReason && canCreateContent))) && (
         <div
           className={cn(
             "order-7 flex flex-wrap items-center gap-2 border-t border-border/50 pt-2",
@@ -1765,7 +1744,7 @@ export function TaskComposer({
         </div>
       )}
 
-      {showExpandedControls && submitBlock && authPolicy.canCreateContent && submitBlock.code !== "signin" && showSubmitBlockBanner && (
+      {showExpandedControls && submitBlock && canCreateContent && submitBlock.code !== "signin" && showSubmitBlockBanner && (
         <div
           ref={blockerPanelRef}
           role="alert"
@@ -2169,13 +2148,11 @@ export function TaskComposer({
                       ? <HandHelping className="w-4 h-4" />
                       : <MessageSquare className="w-4 h-4" />;
               const submitButtonTitle = submitBlock?.reason || submitActionLabel;
-              if (!authPolicy.canCreateContent) {
+              if (!canCreateContent) {
                 return (
                   <button
                     type="button"
-                    onClick={() => {
-                      void handleSubmit();
-                    }}
+                    onClick={handleSubmit}
                     className="min-w-[12.5rem] px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 flex items-center justify-center gap-2"
                     aria-label={t("composer.actions.signin")}
                     title={t("composer.blocked.signin")}
@@ -2192,9 +2169,9 @@ export function TaskComposer({
                   handleBlockedSubmitAttempt();
                   return;
                 }
-                void handleSubmit();
+                handleSubmit();
               }}
-              disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled || isPublishing}
+              disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled}
               aria-label={submitActionLabel}
               title={submitButtonTitle}
               className={cn(
@@ -2207,9 +2184,6 @@ export function TaskComposer({
                 isSendLaunching && "motion-send-launch"
               )}
             >
-              {isPublishing && (
-                <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-              )}
               {submitActionIcon}
               {submitButtonLabel || submitActionLabel}
             </button>

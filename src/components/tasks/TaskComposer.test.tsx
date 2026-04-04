@@ -1,28 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { TaskComposer, type TaskComposerSubmitRequest } from "./TaskComposer";
+import { TaskComposer, type TaskComposerFormData } from "./TaskComposer";
 import { TaskComposerRuntimeProvider } from "./task-composer-runtime";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
-import type { Channel, Relay, TaskCreateResult } from "@/types";
+import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
-import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { toast } from "sonner";
-
-let mockUser: { id: string } | null = { id: "me" };
-
-vi.mock("@/infrastructure/nostr/ndk-context", () => ({
-  useNDK: () => ({ user: mockUser, createHttpAuthHeader: vi.fn(async () => null) }),
-}));
-
-const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => ({
-  envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
-  outcome: { status: "handled" as const },
-}));
-
-vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
-  useFeedInteractionDispatch: () => dispatchFeedInteraction,
-}));
 
 vi.mock("sonner", () => ({
   toast: {
@@ -51,7 +35,6 @@ const basePeople: Person[] = [
   },
 ];
 
-const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
 const uploadConfiguredSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
 const uploadAttachmentSpy = vi.spyOn(attachmentUpload, "uploadAttachment");
 
@@ -91,14 +74,15 @@ function buildRuntimeValue({
 }
 
 function renderComposer({
-  onSubmit = vi.fn(async () => successfulCreateResult),
+  onSubmit = vi.fn(),
   channels,
   people,
   mentionablePeople,
   draftStorageKey,
+  canCreateContent = true,
+  getUploadAuthHeader = vi.fn(async () => null),
   ...props
 }: Partial<ComponentProps<typeof TaskComposer>> & {
-  onSubmit?: ReturnType<typeof vi.fn>;
   channels?: Channel[];
   people?: Person[];
   mentionablePeople?: Person[];
@@ -108,7 +92,13 @@ function renderComposer({
     <TaskComposerRuntimeProvider
       value={buildRuntimeValue({ channels, people, mentionablePeople, draftStorageKey })}
     >
-      <TaskComposer onSubmit={onSubmit} onCancel={() => {}} {...props} />
+      <TaskComposer
+        onSubmit={onSubmit}
+        onCancel={() => {}}
+        canCreateContent={canCreateContent}
+        getUploadAuthHeader={getUploadAuthHeader}
+        {...props}
+      />
     </TaskComposerRuntimeProvider>
   );
 
@@ -127,8 +117,6 @@ function getComposerInput(kind: "task" | "comment" | "offer" | "request" = "task
 
 describe("TaskComposer", () => {
   beforeEach(() => {
-    mockUser = { id: "me" };
-    dispatchFeedInteraction.mockClear();
     vi.mocked(toast.error).mockClear();
     vi.mocked(toast.success).mockClear();
     vi.mocked(toast.loading).mockClear();
@@ -139,8 +127,8 @@ describe("TaskComposer", () => {
     localStorage.clear();
   });
 
-  it("submits only composer-entered task fields", async () => {
-    const onSubmit = vi.fn(async () => successfulCreateResult);
+  it("submits only composer-entered task fields", () => {
+    const onSubmit = vi.fn();
     renderComposer({ onSubmit });
 
     fireEvent.change(getComposerInput(), {
@@ -148,12 +136,9 @@ describe("TaskComposer", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-
-    const request = onSubmit.mock.calls[0][0] as TaskComposerSubmitRequest;
-    expect(request).toMatchObject({
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    const data = onSubmit.mock.calls[0][0] as TaskComposerFormData;
+    expect(data).toMatchObject({
       content: "Ship #backend now",
       tags: ["backend"],
       taskType: "task",
@@ -162,11 +147,11 @@ describe("TaskComposer", () => {
       mentionIdentifiers: [],
       attachments: [],
     });
-    expect(request).not.toHaveProperty("relays");
+    expect(data).not.toHaveProperty("relays");
   });
 
-  it("submits the visible mention chips as the authoritative mention set", async () => {
-    const onSubmit = vi.fn(async () => successfulCreateResult);
+  it("submits the visible mention chips as the authoritative mention set", () => {
+    const onSubmit = vi.fn();
     renderComposer({ onSubmit });
 
     const textarea = getComposerInput() as HTMLTextAreaElement;
@@ -176,18 +161,15 @@ describe("TaskComposer", () => {
     fireEvent.keyDown(textarea, { key: "Enter" });
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
-
-    const request = onSubmit.mock.calls[0][0] as TaskComposerSubmitRequest;
-    expect(request.mentionIdentifiers).toEqual(["alice@example.com"]);
-    expect(request.explicitMentionPubkeys).toEqual([]);
-    expect(request.content).toContain("@alice@example.com");
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    const data = onSubmit.mock.calls[0][0] as TaskComposerFormData;
+    expect(data.mentionIdentifiers).toEqual(["alice@example.com"]);
+    expect(data.explicitMentionPubkeys).toEqual([]);
+    expect(data.content).toContain("@alice@example.com");
   });
 
-  it("submits request-specific fields from request mode", async () => {
-    const onSubmit = vi.fn(async () => successfulCreateResult);
+  it("submits request-specific fields from request mode", () => {
+    const onSubmit = vi.fn();
     renderComposer({ onSubmit, allowFeedMessageTypes: true });
 
     fireEvent.click(screen.getByRole("button", { name: "Request" }));
@@ -198,10 +180,6 @@ describe("TaskComposer", () => {
       target: { value: "Need designer for mobile UI" },
     });
     fireEvent.click(screen.getByRole("button", { name: /post request/i }));
-
-    await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
-    });
 
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
       content: "Need a designer #design",
@@ -251,7 +229,7 @@ describe("TaskComposer", () => {
   });
 
   it("queues an uploaded attachment and includes it in submit data", async () => {
-    const onSubmit = vi.fn(async () => successfulCreateResult);
+    const onSubmit = vi.fn();
     renderComposer({ onSubmit });
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
@@ -267,9 +245,7 @@ describe("TaskComposer", () => {
       );
     });
 
-    fireEvent.change(getComposerInput(), {
-      target: { value: "Ship #backend now" },
-    });
+    fireEvent.change(getComposerInput(), { target: { value: "Ship #backend now" } });
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
     await waitFor(() => {
@@ -290,7 +266,7 @@ describe("TaskComposer", () => {
   it("shows request and offer actions only when feed message types are enabled", () => {
     const { rerender } = render(
       <TaskComposerRuntimeProvider value={buildRuntimeValue()}>
-        <TaskComposer onSubmit={() => successfulCreateResult} onCancel={() => {}} />
+        <TaskComposer onSubmit={() => {}} onCancel={() => {}} />
       </TaskComposerRuntimeProvider>
     );
 
@@ -299,11 +275,7 @@ describe("TaskComposer", () => {
 
     rerender(
       <TaskComposerRuntimeProvider value={buildRuntimeValue()}>
-        <TaskComposer
-          onSubmit={() => successfulCreateResult}
-          onCancel={() => {}}
-          allowFeedMessageTypes
-        />
+        <TaskComposer onSubmit={() => {}} onCancel={() => {}} allowFeedMessageTypes />
       </TaskComposerRuntimeProvider>
     );
 
@@ -311,9 +283,8 @@ describe("TaskComposer", () => {
     expect(screen.getByRole("button", { name: "Request" })).toBeInTheDocument();
   });
 
-  it("shows the sign-in action when the user is signed out", () => {
-    mockUser = null;
-    renderComposer();
+  it("shows the sign-in action when the user is not authenticated", () => {
+    renderComposer({ canCreateContent: false });
 
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /create task/i })).not.toBeInTheDocument();

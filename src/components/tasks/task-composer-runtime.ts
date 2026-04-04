@@ -309,6 +309,10 @@ export function resolveTaskComposerMention(mentionRequest: { mention: string; id
   };
 }
 
+export function isWritableRelay(relay: { connectionStatus?: string } | undefined): boolean {
+  return relay?.connectionStatus === undefined || relay.connectionStatus === "connected";
+}
+
 export function getTaskComposerRestoreMessageType(
   request: ComposeRestoreRequest | null,
   allowComment: boolean,

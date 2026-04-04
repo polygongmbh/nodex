@@ -1,15 +1,12 @@
 import { useEffect, useRef } from "react";
 import { TaskCreateComposer } from "./TaskCreateComposer";
+import { isWritableRelay } from "./task-composer-runtime";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type {
-  ComposeRestoreRequest,
-  Relay,
-  TaskInitialStatus,
-} from "@/types";
+import type { ComposeRestoreRequest, TaskInitialStatus } from "@/types";
 
 interface SharedViewComposerProps {
   visible: boolean;
@@ -31,10 +28,6 @@ interface SharedViewComposerProps {
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
-}
-
-function isWritableRelay(relay: Relay | undefined): boolean {
-  return relay?.connectionStatus === undefined || relay.connectionStatus === "connected";
 }
 
 export function SharedViewComposer({
