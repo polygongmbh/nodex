@@ -6,6 +6,10 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.12.1] - 2026-04-04
+
+- Mobile toast notifications now keep their top offset across the full mobile breakpoint range, so success and error toasts no longer slide up under the navigation chrome on larger mobile layouts.
+- Mobile profile editing now resets from the current profile only when the source profile actually changes, preventing the editor from unexpectedly reverting while you are using it.
 - The mobile top-nav pill now remeasures immediately when leaving Manage, preventing the first menu-to-view transition from rendering a stretched or offset active tab.
 - Mobile top-nav view switches now begin as soon as you press a different view tab, instead of waiting for release before changing views.
 
