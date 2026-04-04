@@ -64,6 +64,19 @@ describe("MobileNav", () => {
     expect(onViewChange).toHaveBeenCalledWith("feed");
   });
 
+  it("starts switching views on pointer down when pressing another tab", () => {
+    const onViewChange = vi.fn();
+
+    render(<MobileNav currentView="tree" onViewChange={onViewChange} />);
+
+    const { segments } = mockSegmentLayout();
+
+    fireEvent.pointerDown(segments[0], { button: 0, buttons: 1, pointerId: 1, clientX: 40 });
+
+    expect(onViewChange).toHaveBeenCalledTimes(1);
+    expect(onViewChange).toHaveBeenCalledWith("feed");
+  });
+
   it("does not capture the pointer for a simple tap start", () => {
     render(<MobileNav currentView="tree" onViewChange={vi.fn()} />);
 
@@ -102,6 +115,20 @@ describe("MobileNav", () => {
     expect(onViewChange).not.toHaveBeenCalledWith("calendar");
   });
 
+  it("does not dispatch the same view twice across pointer down and release", () => {
+    const onViewChange = vi.fn();
+
+    render(<MobileNav currentView="tree" onViewChange={onViewChange} />);
+
+    const { segments } = mockSegmentLayout();
+
+    fireEvent.pointerDown(segments[0], { button: 0, buttons: 1, pointerId: 1, clientX: 40 });
+    fireEvent.pointerUp(segments[0], { pointerId: 1, clientX: 40 });
+
+    expect(onViewChange).toHaveBeenCalledTimes(1);
+    expect(onViewChange).toHaveBeenCalledWith("feed");
+  });
+
   it("calls onManageOpen when hamburger button is clicked", () => {
     const onManageOpen = vi.fn();
 
@@ -111,5 +138,21 @@ describe("MobileNav", () => {
 
     fireEvent.click(menuButton);
     expect(onManageOpen).toHaveBeenCalledOnce();
+  });
+
+  it("remeasures the pill when leaving manage mode without changing the current view", () => {
+    const { rerender, container } = render(
+      <MobileNav currentView="feed" onViewChange={vi.fn()} isManageActive />
+    );
+
+    mockSegmentLayout();
+
+    rerender(<MobileNav currentView="feed" onViewChange={vi.fn()} isManageActive={false} />);
+
+    const pill = container.querySelector('[aria-hidden="true"]') as HTMLDivElement | null;
+
+    expect(pill).not.toBeNull();
+    expect(pill?.style.width).toBe("80px");
+    expect(pill?.style.getPropertyValue("--pill-x")).toBe("-3px");
   });
 });

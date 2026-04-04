@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, PointerEvent, useEffect } from "react";
+import { useRef, useCallback, useState, PointerEvent, useEffect, useLayoutEffect } from "react";
 import { Menu, Rss, GitBranch, List, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -19,6 +19,10 @@ const DRAG_START_THRESHOLD_PX = 8;
 interface HorizontalRect {
   left: number;
   right: number;
+}
+
+function isNonPrimaryMousePointer(event: Pick<PointerEvent, "button" | "pointerType">) {
+  return event.pointerType === "mouse" && event.button !== 0;
 }
 
 export function resolveSegmentFromClientX(
@@ -45,6 +49,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   const isDragging = useRef(false);
   const activePointerId = useRef<number | null>(null);
   const pointerStartX = useRef<number | null>(null);
+  const lastDispatchedSegment = useRef<MobileViewType | null>(null);
   const suppressNextClick = useRef(false);
   const [isPressed, setIsPressed] = useState(false);
   // Track whether we just came from manage view to skip pill transition
@@ -59,18 +64,6 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   };
 
   const activeIndex = allSegments.indexOf(currentView);
-
-  // Detect transition from manage → view to skip pill animation
-  useEffect(() => {
-    if (wasManageActive.current && !isManageActive) {
-      skipTransition.current = true;
-      // Reset after a frame so next navigation animates normally
-      requestAnimationFrame(() => {
-        skipTransition.current = false;
-      });
-    }
-    wasManageActive.current = isManageActive;
-  }, [isManageActive]);
 
   // Position pill by measuring actual button positions
   const updatePillPosition = useCallback(() => {
@@ -99,6 +92,35 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
       });
     }
   }, [activeIndex]);
+
+  useLayoutEffect(() => {
+    let resetSkipTransitionFrame: number | null = null;
+    let followupMeasureFrame: number | null = null;
+
+    if (wasManageActive.current && !isManageActive) {
+      skipTransition.current = true;
+      updatePillPosition();
+      followupMeasureFrame = requestAnimationFrame(() => {
+        updatePillPosition();
+      });
+      resetSkipTransitionFrame = requestAnimationFrame(() => {
+        skipTransition.current = false;
+      });
+    } else {
+      updatePillPosition();
+    }
+
+    wasManageActive.current = isManageActive;
+
+    return () => {
+      if (followupMeasureFrame !== null) {
+        cancelAnimationFrame(followupMeasureFrame);
+      }
+      if (resetSkipTransitionFrame !== null) {
+        cancelAnimationFrame(resetSkipTransitionFrame);
+      }
+    };
+  }, [isManageActive, updatePillPosition]);
 
   useEffect(() => {
     updatePillPosition();
@@ -130,17 +152,38 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     }
     activePointerId.current = null;
     pointerStartX.current = null;
+    lastDispatchedSegment.current = null;
     isDragging.current = false;
     setIsPressed(false);
   }, []);
 
   const handlePointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
+    if (isNonPrimaryMousePointer(e)) return;
     activePointerId.current = e.pointerId;
     pointerStartX.current = e.clientX;
     isDragging.current = false;
     setIsPressed(true);
-  }, []);
+
+    if (lastDispatchedSegment.current !== null) {
+      return;
+    }
+
+    const pressedSegment = getSegmentFromX(e.clientX);
+    if (pressedSegment && pressedSegment !== currentView) {
+      lastDispatchedSegment.current = pressedSegment;
+      suppressNextClick.current = true;
+      onViewChange(pressedSegment);
+    }
+  }, [currentView, getSegmentFromX, onViewChange]);
+
+  const handleSegmentPointerDown = useCallback((seg: MobileViewType) => {
+    if (seg === currentView || lastDispatchedSegment.current === seg) {
+      return;
+    }
+    lastDispatchedSegment.current = seg;
+    suppressNextClick.current = true;
+    onViewChange(seg);
+  }, [currentView, onViewChange]);
 
   const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (activePointerId.current !== e.pointerId || pointerStartX.current === null) return;
@@ -152,7 +195,8 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
       (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     }
     const seg = getSegmentFromX(e.clientX);
-    if (seg && seg !== currentView) {
+    if (seg && seg !== currentView && seg !== lastDispatchedSegment.current) {
+      lastDispatchedSegment.current = seg;
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
         navigator.vibrate(10);
       }
@@ -165,18 +209,27 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     const tappedSegment = isDragging.current ? null : getSegmentFromX(e.clientX);
     if (isDragging.current || (tappedSegment && tappedSegment !== currentView)) {
       suppressNextClick.current = true;
-      clearSuppressedClick();
     }
-    if (tappedSegment && tappedSegment !== currentView) {
+    if (
+      tappedSegment &&
+      tappedSegment !== currentView &&
+      tappedSegment !== lastDispatchedSegment.current
+    ) {
       onViewChange(tappedSegment);
     }
     finishPointerInteraction(e.currentTarget);
+    if (suppressNextClick.current) {
+      clearSuppressedClick();
+    }
   }, [clearSuppressedClick, currentView, finishPointerInteraction, getSegmentFromX, onViewChange]);
 
   const handlePointerCancel = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (activePointerId.current !== e.pointerId) return;
     finishPointerInteraction(e.currentTarget);
-  }, [finishPointerInteraction]);
+    if (suppressNextClick.current) {
+      clearSuppressedClick();
+    }
+  }, [clearSuppressedClick, finishPointerInteraction]);
 
   const handleSegmentClick = useCallback((seg: MobileViewType) => {
     if (suppressNextClick.current) {
@@ -262,6 +315,12 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               onClick={(e) => {
                 e.stopPropagation();
                 handleSegmentClick(seg);
+              }}
+              onPointerDown={(e) => {
+                if (isNonPrimaryMousePointer(e)) {
+                  return;
+                }
+                handleSegmentPointerDown(seg);
               }}
               tabIndex={currentView === seg ? 0 : -1}
             >

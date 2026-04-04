@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- The mobile top-nav pill now remeasures immediately when leaving Manage, preventing the first menu-to-view transition from rendering a stretched or offset active tab.
+- Mobile top-nav view switches now begin as soon as you press a different view tab, instead of waiting for release before changing views.
+
 ## [2.12.0] - 2026-04-04
 Minor release for feed hydration recovery, relay/publish reliability, and cross-view mobile/search fixes.
 
