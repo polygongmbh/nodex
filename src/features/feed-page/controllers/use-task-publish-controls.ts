@@ -11,6 +11,7 @@ import { buildTaskPriorityUpdateEvent } from "@/infrastructure/nostr/task-proper
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Task, TaskDateType, TaskInitialStatus, TaskStatus, Relay } from "@/types";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
+import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
 
 interface PublishResult {
   success: boolean;
@@ -83,10 +84,7 @@ export function useTaskPublishControls({
   }, [guardInteraction]);
 
   const resolveRelayUrlsFromIds = useCallback((relayIds: string[]) => {
-    const resolvedRelayUrls = relays
-      .filter((relay) => relayIds.includes(relay.id))
-      .map((relay) => relay.url)
-      .filter((url): url is string => Boolean(url));
+    const resolvedRelayUrls = resolveRelayUrlsForIds(relays, relayIds);
     nostrDevLog("routing", "Resolved relay IDs to relay URLs", {
       relayIds,
       resolvedRelayUrls,

@@ -70,6 +70,15 @@ describe("useTaskPublishControls", () => {
     expect(screen.getByTestId("relay-url")).toHaveTextContent("wss://relay.one");
   });
 
+  it("normalizes relay urls resolved from relay ids", () => {
+    render(
+      <Harness
+        relays={[makeRelay({ id: "relay-one", url: "wss://relay.one///", connectionStatus: "connected" })]}
+      />
+    );
+    expect(screen.getByTestId("relay-url")).toHaveTextContent("wss://relay.one");
+  });
+
   it("opens auth when interaction is attempted while signed out", () => {
     render(<Harness canModifyContent={false} />);
     fireEvent.click(screen.getByRole("button", { name: "GuardModify" }));

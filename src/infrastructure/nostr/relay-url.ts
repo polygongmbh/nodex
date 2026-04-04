@@ -1,3 +1,5 @@
+import type { Relay } from "@/types";
+
 export type RelayProtocol = "ws" | "wss";
 
 const DEFAULT_RELAY_COMMON_PREFIXES = ["feed", "nostr", "relay"] as const;
@@ -25,6 +27,26 @@ function getRelayEnvValue(
 
 export function normalizeRelayUrl(value: string): string {
   return value.trim().replace(/\/+$/, "");
+}
+
+export function dedupeNormalizedRelayUrls(relayUrls: readonly string[]): string[] {
+  return Array.from(new Set(relayUrls.map(normalizeRelayUrl).filter(Boolean)));
+}
+
+export function normalizeRelayUrlScope(relayUrls: readonly string[]): string[] {
+  return [...dedupeNormalizedRelayUrls(relayUrls)].sort();
+}
+
+export function resolveRelayUrlsForIds(
+  relays: Array<Pick<Relay, "id" | "url">>,
+  relayIds: Iterable<string>
+): string[] {
+  const relayIdSet = relayIds instanceof Set ? relayIds : new Set(relayIds);
+  return dedupeNormalizedRelayUrls(
+    relays
+      .filter((relay) => Boolean(relay.url) && relayIdSet.has(relay.id))
+      .map((relay) => relay.url as string)
+  );
 }
 
 export function isRelayUrl(value: string): boolean {

@@ -41,7 +41,7 @@ describe("useKind0People", () => {
     expect(result.current.cachedKind0Events).toHaveLength(1);
   });
 
-  it("does not refresh selected relay cache when rerendered with an equivalent relay list", async () => {
+  it("does not refresh selected relay cache when rerendered with an equivalent normalized relay list", async () => {
     const loadSpy = vi.spyOn(peopleFromKind0, "loadCachedKind0EventsForRelayUrls");
 
     const { rerender } = renderHook(
@@ -55,7 +55,7 @@ describe("useKind0People", () => {
       expect(loadSpy).toHaveBeenCalledTimes(2);
     });
 
-    rerender({ relayUrls: [DEMO_RELAY_URL] });
+    rerender({ relayUrls: [` ${DEMO_RELAY_URL}/`, DEMO_RELAY_URL] });
 
     await waitFor(() => {
       expect(loadSpy).toHaveBeenCalledTimes(2);

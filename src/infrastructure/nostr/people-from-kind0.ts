@@ -1,5 +1,6 @@
 import type { Person } from "@/types/person";
 import { normalizeCachedRelayUrl } from "@/infrastructure/nostr/event-cache";
+import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
@@ -142,13 +143,7 @@ export function loadCachedKind0Events(relayUrl?: string): Kind0LikeEvent[] {
 
 export function loadCachedKind0EventsForRelayUrls(relayUrls: string[]): Kind0LikeEvent[] {
   return mergeKind0EventLists(
-    ...Array.from(
-      new Set(
-        relayUrls
-          .map((relayUrl) => normalizeCachedRelayUrl(relayUrl))
-          .filter(Boolean)
-      )
-    ).map((relayUrl) => loadCachedKind0Events(relayUrl))
+    ...normalizeRelayUrlScope(relayUrls).map((relayUrl) => loadCachedKind0Events(relayUrl))
   );
 }
 

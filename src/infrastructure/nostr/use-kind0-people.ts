@@ -13,6 +13,7 @@ import {
   saveCachedKind0Events,
   type Kind0LikeEvent,
 } from "@/infrastructure/nostr/people-from-kind0";
+import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import {
   deriveLatestPresenceByAuthor,
   type LatestPresenceSnapshot,
@@ -47,15 +48,8 @@ export function useKind0People(
   user: NostrUserLike | null,
 ): UseKind0PeopleResult {
   const normalizedSelectedRelayUrls = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          selectedRelayUrls
-            .map((relayUrl) => relayUrl.trim().replace(/\/+$/, ""))
-            .filter(Boolean)
-        )
-      ).sort(),
-    [selectedRelayUrls.join("|")]
+    () => normalizeRelayUrlScope(selectedRelayUrls),
+    [selectedRelayUrls]
   );
   const selectedRelayScopeKey = normalizedSelectedRelayUrls.join("|");
   const [people, setPeople] = useState<Person[]>([]);
@@ -88,6 +82,8 @@ export function useKind0People(
   useEffect(() => {
     setCachedKind0Events(loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls));
     setFallbackKind0Events(loadCachedKind0Events());
+    // Equivalent normalized relay scopes should not trigger another cache refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheRevision, selectedRelayScopeKey]);
 
   const latestPresenceByAuthor = useMemo(() => {

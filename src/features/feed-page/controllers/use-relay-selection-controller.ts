@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import type { Relay } from "@/types";
 import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { getRelayDomain, useRelayFilterState } from "./use-relay-filter-state";
 
 type RelaySelectionMode = "toggle" | "exclusive";
@@ -36,10 +37,6 @@ const DEFAULT_RECONNECT_FAILURE_GRACE_MS = 1500;
 function resolveRelayStatus(relay: Relay | undefined): NonNullable<Relay["connectionStatus"]> {
   if (!relay?.connectionStatus || relay.id === "demo") return "connected";
   return relay.connectionStatus;
-}
-
-function normalizeRelayUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "");
 }
 
 function isFailedRelaySelectionTarget(relay: Relay): boolean {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/infrastructure/nostr/replaceable-events";
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 
 export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
 export const NOSTR_EVENT_CACHE_SCOPE_PREFIX = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:`;
@@ -120,9 +121,7 @@ const cachedNostrEventSchema = z.object({
 });
 const cachedNostrEventsSchema = z.array(cachedNostrEventSchema);
 
-export function normalizeCachedRelayUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "");
-}
+export const normalizeCachedRelayUrl = normalizeRelayUrl;
 
 function getRelayUrls(event: CachedNostrEvent): string[] {
   const urls = [

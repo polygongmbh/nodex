@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Relay } from "@/types";
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 
 const FAILED_STATUSES = new Set<NonNullable<Relay["connectionStatus"]>>([
   "connection-error",
@@ -27,10 +28,6 @@ interface UseRelayAutoReconnectOptions {
   retryMaxMs?: number;
   retryTickMs?: number;
   focusResetDebounceMs?: number;
-}
-
-function normalizeRelayUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "");
 }
 
 function resolveRelayConnectionStatus(relay: Relay): NonNullable<Relay["connectionStatus"]> {

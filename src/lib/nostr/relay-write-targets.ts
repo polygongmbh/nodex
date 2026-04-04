@@ -1,15 +1,16 @@
+import {
+  dedupeNormalizedRelayUrls,
+  normalizeRelayUrl,
+} from "@/infrastructure/nostr/relay-url";
 import type { NDKRelayStatus } from "@/infrastructure/nostr/provider/contracts";
 import type { Relay } from "@/types";
 
 const DEMO_RELAY_ID = "demo";
 
-export function normalizeRelayUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "");
-}
-
-export function dedupeNormalizedRelayUrls(relayUrls: string[]): string[] {
-  return Array.from(new Set(relayUrls.map(normalizeRelayUrl).filter(Boolean)));
-}
+export {
+  dedupeNormalizedRelayUrls,
+  normalizeRelayUrl,
+} from "@/infrastructure/nostr/relay-url";
 
 export function isWritableAppRelay(relay: Relay): boolean {
   return relay.id !== DEMO_RELAY_ID

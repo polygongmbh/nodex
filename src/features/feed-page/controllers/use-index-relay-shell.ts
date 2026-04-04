@@ -4,6 +4,7 @@ import type { Relay } from "@/types";
 import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import {
+  resolveRelayUrlsForIds,
   ensureRelayProtocol,
   isRelayUrl,
   normalizeRelayUrl,
@@ -39,9 +40,7 @@ export interface UseIndexRelayShellResult {
 }
 
 export function deriveSelectedRelayUrls(relays: Relay[], effectiveActiveRelayIds: Set<string>): string[] {
-  return relays
-    .filter((relay) => relay.url && effectiveActiveRelayIds.has(relay.id))
-    .map((relay) => relay.url as string);
+  return resolveRelayUrlsForIds(relays, effectiveActiveRelayIds);
 }
 
 export function normalizeRelayAddUrl(url: string): string | null {

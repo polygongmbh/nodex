@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  dedupeNormalizedRelayUrls,
   getRelayCommonPrefixes,
   getRelayDiscoveryPrefixes,
+  normalizeRelayUrlScope,
   relayUrlToDomainMinusTld,
   relayUrlToId,
   relayUrlToName,
+  resolveRelayUrlsForIds,
 } from "./relay-url";
 
 describe("relay-url naming", () => {
@@ -41,5 +44,26 @@ describe("relay-url naming", () => {
   it("normalizes relay ids to lowercase", () => {
     expect(relayUrlToId("ws://Demo")).toBe("demo");
     expect(relayUrlToId("wss://Relay.Example")).toBe("relay-example");
+  });
+
+  it("resolves normalized relay urls from relay ids", () => {
+    expect(resolveRelayUrlsForIds([
+      { id: "relay-one", url: "wss://relay.one/" },
+      { id: "relay-two", url: "wss://relay.two" },
+      { id: "relay-two-duplicate", url: "wss://relay.two/" },
+    ], ["relay-two", "relay-two-duplicate", "missing"])).toEqual(["wss://relay.two"]);
+  });
+
+  it("builds stable normalized relay scopes", () => {
+    expect(normalizeRelayUrlScope([
+      "wss://relay.two/",
+      "wss://relay.one",
+      "wss://relay.two",
+    ])).toEqual(["wss://relay.one", "wss://relay.two"]);
+    expect(dedupeNormalizedRelayUrls([
+      "wss://relay.two/",
+      "wss://relay.two",
+      "wss://relay.one",
+    ])).toEqual(["wss://relay.two", "wss://relay.one"]);
   });
 });
