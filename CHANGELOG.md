@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Mobile compose location now behaves like a true toggle again, so tapping the pin a second time removes the captured location instead of leaving it stuck on.
 - Task text search is now built from one shared search document across views, so `#channel` queries no longer disappear in table results, and tree search keeps ancestor paths open far enough to reveal every matching item.
 - Mobile toast notifications now offset beneath the mobile navigation and focused breadcrumb/status chrome instead of covering the top bars.
 - Feed hydration no longer retriggers kind-0 profile cache refreshes on every render, restoring incremental timeline loading after the onboarding/demo refactor.

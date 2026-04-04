@@ -976,6 +976,15 @@ export function UnifiedBottomBar({
     );
   };
 
+  const handleLocationToggle = () => {
+    if (locationGeohash) {
+      featureDebugLog("compose-location", "Clearing mobile location toggle state", { geohash: locationGeohash });
+      setLocationGeohash(undefined);
+      return;
+    }
+    useCurrentLocation();
+  };
+
   const addMentionTagOnly = (person: Person) => {
     const normalizedPubkey = person.id.trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/i.test(normalizedPubkey)) {
@@ -1351,7 +1360,7 @@ export function UnifiedBottomBar({
               )}
             </button>
             <button
-              onClick={useCurrentLocation}
+              onClick={handleLocationToggle}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 locationGeohash

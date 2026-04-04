@@ -1195,6 +1195,59 @@ describe("UnifiedBottomBar auth gating", () => {
     });
   });
 
+  it("clears captured location when the mobile location button is tapped again", async () => {
+    const latitude = 37.7749;
+    const longitude = -122.4194;
+    const getCurrentPosition = vi.fn((success: PositionCallback) => {
+      success(createPosition(latitude, longitude));
+    });
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        canCreateContent
+      />
+    );
+
+    const locationButton = screen.getByRole("button", { name: /^location$/i });
+    fireEvent.click(locationButton);
+    fireEvent.click(locationButton);
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(getTaskCreateCalls()).toHaveLength(1);
+    });
+
+    expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+    expect(getTaskCreateCalls()[0]).toEqual({
+      type: "task.create",
+      content: "Ship #general",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
+  });
+
   it("removes the document pointerdown listener on unmount", () => {
     const addEventListenerSpy = vi.spyOn(document, "addEventListener");
     const removeEventListenerSpy = vi.spyOn(document, "removeEventListener");
