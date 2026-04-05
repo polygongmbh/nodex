@@ -210,6 +210,7 @@ describe("TaskComposer", () => {
     localStorage.setItem("composer-draft", JSON.stringify({
       content: "",
       messageType: "task",
+      savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
       taskDate: {
@@ -232,10 +233,38 @@ describe("TaskComposer", () => {
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();
   });
 
+  it("drops stale restored tags, mentions, date, and location from the provided storage key", () => {
+    localStorage.setItem("composer-draft", JSON.stringify({
+      content: "keep this text",
+      messageType: "task",
+      savedAt: "2026-04-01T10:00:00.000Z",
+      explicitTagNames: ["backend"],
+      explicitMentionPubkeys: [alicePubkey],
+      taskDate: {
+        dueDate: "2026-04-06T10:00:00.000Z",
+        dueTime: "10:00",
+        dateType: "start",
+      },
+      locationGeohash: "u33db",
+      priority: 80,
+    }));
+
+    renderComposer({ draftStorageKey: "composer-draft" });
+
+    expect(getComposerInput()).toHaveValue("keep this text");
+    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(screen.getByRole("combobox", { name: /date type/i })).toHaveValue("due");
+    expect(screen.queryByDisplayValue("10:00")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/geohash/i)).not.toBeInTheDocument();
+    expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).toBeNull();
+    expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).toBeNull();
+  });
+
   it("restores listing metadata and attachments from the provided storage key", () => {
     localStorage.setItem("composer-draft", JSON.stringify({
       content: "Need a designer #design",
       messageType: "request",
+      savedAt: new Date().toISOString(),
       nip99: {
         title: "Need designer for mobile UI",
         summary: "Short summary",

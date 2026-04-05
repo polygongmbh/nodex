@@ -501,6 +501,7 @@ export function TaskComposer({
       content,
       taskType,
       messageType: taskType,
+      savedAt: new Date().toISOString(),
       taskDate: {
         dueDate: dueDate ? dueDate.toISOString() : undefined,
         dueTime,

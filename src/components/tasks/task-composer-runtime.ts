@@ -19,6 +19,7 @@ export interface TaskComposerDraftState {
   content?: string;
   taskType?: PostType;
   messageType?: PostType;
+  savedAt?: string;
   taskDate?: {
     dueDate?: string;
     dueTime?: string;
@@ -98,6 +99,7 @@ const defaultTaskComposerEnvironment: ResolvedTaskComposerEnvironment = {
 };
 
 const TaskComposerRuntimeContext = createContext<TaskComposerRuntimeContextValue | null>(null);
+const TASK_COMPOSER_STALE_DRAFT_MAX_AGE_MS = 1000 * 60 * 60; // 1 hour
 
 export function TaskComposerRuntimeProvider({
   value,
@@ -233,6 +235,14 @@ function parseDraftDueDate(value?: string): Date | undefined {
   return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
 }
 
+function isTaskComposerDraftStale(draftState: TaskComposerDraftState | null): boolean {
+  const savedAt = draftState?.savedAt;
+  if (!savedAt) return true;
+  const savedAtMs = new Date(savedAt).getTime();
+  if (Number.isNaN(savedAtMs)) return true;
+  return Date.now() - savedAtMs > TASK_COMPOSER_STALE_DRAFT_MAX_AGE_MS;
+}
+
 function resolveInitialTaskType(
   draftState: TaskComposerDraftState | null,
   allowFeedMessageTypes: boolean
@@ -259,21 +269,22 @@ export function resolveTaskComposerInitialState({
   allowFeedMessageTypes: boolean;
 }): TaskComposerInitialState {
   const draftState = draftStorageKey ? readTaskComposerDraft(draftStorageKey) : null;
+  const isStaleDraft = isTaskComposerDraftStale(draftState);
 
   return {
     content: draftState?.content ?? defaultContent,
     taskType: resolveInitialTaskType(draftState, allowFeedMessageTypes),
-    dueDate: parseDraftDueDate(draftState?.taskDate?.dueDate) ?? defaultDueDate,
-    dueTime: draftState?.taskDate?.dueTime || "",
-    dateType: draftState?.taskDate?.dateType || "due",
+    dueDate: isStaleDraft ? defaultDueDate : (parseDraftDueDate(draftState?.taskDate?.dueDate) ?? defaultDueDate),
+    dueTime: isStaleDraft ? "" : (draftState?.taskDate?.dueTime || ""),
+    dateType: isStaleDraft ? "due" : (draftState?.taskDate?.dateType || "due"),
     explicitTagNames:
-      draftState?.explicitTagNames
+      (isStaleDraft ? [] : draftState?.explicitTagNames)
         ?.filter((value): value is string => typeof value === "string")
         .map((value) => value.trim().toLowerCase())
         .filter(Boolean)
       ?? [],
     explicitMentionPubkeys:
-      draftState?.explicitMentionPubkeys
+      (isStaleDraft ? [] : draftState?.explicitMentionPubkeys)
         ?.filter((value): value is string => typeof value === "string")
         .map((value) => value.trim().toLowerCase())
         .filter((value) => /^[a-f0-9]{64}$/i.test(value))
@@ -281,7 +292,7 @@ export function resolveTaskComposerInitialState({
     priority: draftState?.priority,
     attachments: draftState?.attachments || [],
     nip99: { ...(draftState?.nip99 || {}) },
-    locationGeohash: draftState?.locationGeohash,
+    locationGeohash: isStaleDraft ? undefined : draftState?.locationGeohash,
   };
 }
 
