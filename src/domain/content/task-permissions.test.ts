@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -111,6 +111,18 @@ describe("canUserUpdateTask", () => {
     expect(canUserChangeTaskStatus(task, user)).toBe(true);
     expect(canUserChangeTaskStatus({ ...task, mentions: ["carol"] }, user)).toBe(false);
   });
+
+  it("allows assigned-task edits for any signed-in user in everyone mode", () => {
+    vi.stubEnv("VITE_TASK_EDIT_MODE", "everyone");
+    const otherAuthor = makeTestPerson({ id: "other-user", name: "bob", nip05: "bob@example.com" });
+    expect(canUserUpdateTask({ ...baseTask, author: otherAuthor, mentions: ["carol"] }, user)).toBe(true);
+  });
+
+  it("allows status changes for any signed-in user in everyone mode", () => {
+    vi.stubEnv("VITE_TASK_EDIT_MODE", "everyone");
+    const otherAuthor = makeTestPerson({ id: "other-user", name: "bob", nip05: "bob@example.com" });
+    expect(canUserChangeTaskStatus({ ...baseTask, author: otherAuthor, mentions: ["carol"] }, user)).toBe(true);
+  });
 });
 
 describe("canPubkeyUpdateTask", () => {
@@ -131,6 +143,12 @@ describe("canPubkeyUpdateTask", () => {
   it("blocks unrelated pubkeys from updating assigned tasks", () => {
     const assignedTask = { ...baseTask, assigneePubkeys: ["assignee-pubkey"] };
     expect(canPubkeyUpdateTask(assignedTask, "other-pubkey")).toBe(false);
+  });
+
+  it("allows any non-empty pubkey in everyone mode", () => {
+    vi.stubEnv("VITE_TASK_EDIT_MODE", "everyone");
+    const assignedTask = { ...baseTask, assigneePubkeys: ["assignee-pubkey"] };
+    expect(canPubkeyUpdateTask(assignedTask, "other-pubkey")).toBe(true);
   });
 });
 
@@ -190,4 +208,23 @@ describe("getTaskStatusChangeBlockedReason", () => {
   it("returns interaction-blocked message when edits are globally blocked", () => {
     expect(getTaskStatusChangeBlockedReason(baseTask, user, true)).toBe("Editing is currently unavailable.");
   });
+
+  it("does not return assignee-only denial copy in everyone mode", () => {
+    vi.stubEnv("VITE_TASK_EDIT_MODE", "everyone");
+    const otherAuthor = makeTestPerson({ id: "other-user", name: "bob", nip05: "bob@example.com" });
+    expect(
+      getTaskStatusChangeBlockedReason(
+        { ...baseTask, author: otherAuthor, mentions: ["carol"] },
+        user
+      )
+    ).toBeUndefined();
+  });
+});
+
+beforeEach(() => {
+  vi.unstubAllEnvs();
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
