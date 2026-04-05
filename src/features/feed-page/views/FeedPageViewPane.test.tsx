@@ -149,4 +149,22 @@ describe("FeedPageViewPane overlay", () => {
     await waitFor(() => expect(screen.getByTestId("feed-view")).toBeInTheDocument());
     expect(document.querySelector('[data-empty-mode="overlay"]')).not.toBeInTheDocument();
   });
+
+  it("shows the shared overlay when feed scope contains only closed tasks with no visible timeline rows", async () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: true });
+    const closedTask = makeTask({
+      id: "closed-feed-task",
+      author,
+      content: "Closed task #general",
+      status: "closed",
+    });
+
+    renderPane("feed", {
+      tasks: [closedTask],
+      allTasks: [closedTask],
+    });
+
+    await waitFor(() => expect(screen.getByTestId("feed-view")).toBeInTheDocument());
+    expect(document.querySelector('[data-empty-mode="overlay"]')).toBeInTheDocument();
+  });
 });
