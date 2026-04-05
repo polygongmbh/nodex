@@ -109,7 +109,7 @@ function renderComposer({
 
 function getComposerInput(kind: "task" | "comment" | "offer" | "request" = "task") {
   const labels = {
-    task: /what's up\? use #channels and @mentions/i,
+    task: /create a task with #channels and @mentions/i,
     comment: /add your comment with #channels and @mentions/i,
     offer: /post an offer with #channels and @mentions/i,
     request: /post a request with #channels and @mentions/i,

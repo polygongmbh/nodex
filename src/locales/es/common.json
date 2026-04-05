@@ -26,7 +26,7 @@
   },
   "composer": {
     "placeholders": {
-      "task": "¿Qué pasa? Usa #canales y @menciones...",
+      "task": "Crea una tarea con #canales y @menciones...",
       "comment": "Añade tu comentario con #canales y @menciones...",
       "offer": "Publica una oferta con #canales y @menciones...",
       "request": "Publica una solicitud con #canales y @menciones...",

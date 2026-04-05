@@ -26,7 +26,7 @@
   },
   "composer": {
     "placeholders": {
-      "task": "Was geht? Nutze #channels und @mentions...",
+      "task": "Erstelle eine Aufgabe mit #channels und @mentions...",
       "comment": "Füge deinen Kommentar mit #channels und @mentions hinzu...",
       "offer": "Veröffentliche ein Angebot mit #channels und @mentions...",
       "request": "Veröffentliche ein Gesuch mit #channels und @mentions...",
