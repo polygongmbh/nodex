@@ -71,6 +71,7 @@ export function FilteredEmptyState({
   if (mode === "screen" && (isHydrating || scopeModel.screenState === "loading")) {
     return (
       <div
+        data-empty-mode="screen"
         className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
       >
         <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">
@@ -86,6 +87,7 @@ export function FilteredEmptyState({
   if (mode === "screen" && scopeModel.screenState === "error") {
     return (
       <div
+        data-empty-mode="screen"
         className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
       >
         <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">
@@ -196,6 +198,7 @@ export function FilteredEmptyState({
 
   return (
     <div
+      data-empty-mode="screen"
       className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
     >
       <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">{collectionTitle}</p>

@@ -1,5 +1,6 @@
 import { Suspense, lazy, type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { AppViewFallback } from "@/components/app/AppViewFallback";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
@@ -25,7 +26,6 @@ const ListView = lazy(() =>
 export function FeedPageViewPane() {
   const { t } = useTranslation();
   const { currentView, kanbanDepthMode } = useFeedLayoutState();
-  const loadingLabel = t("app.loadingView");
   const viewModel = useFeedTaskViewModel();
   const feedTimelineState = useFeedTimelineState({
     tasks: viewModel.tasks,
@@ -90,11 +90,7 @@ export function FeedPageViewPane() {
   const shouldShowOverlay = currentView === "feed"
     ? feedTimelineState.shouldShowScreenEmptyState || feedTimelineState.shouldShowInlineEmptyHint
     : scopedTasks.length === 0;
-  const viewFallback = (
-    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-      {loadingLabel}
-    </div>
-  );
+  const viewFallback = <AppViewFallback />;
 
   let viewPane: ReactNode;
   switch (currentView) {

@@ -1,4 +1,5 @@
 import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { AppViewFallback } from "@/components/app/AppViewFallback";
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
@@ -148,7 +149,7 @@ export function MobileLayout() {
   });
 
   const mobileCurrentView: MobileViewType = activePrimaryView;
-  const viewFallback = <div className="h-full" aria-hidden="true" />;
+  const viewFallback = <AppViewFallback />;
   const {
     effectiveSearchQuery,
     mobileFallbackMessage,

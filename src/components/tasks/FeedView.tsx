@@ -210,7 +210,9 @@ export function FeedView({
     activeFeedEntries,
     mediaPreviewTasks,
     shouldShowMobileScopeFallback,
+    shouldShowInlineEmptyHint,
     shouldShowScopeFooterHint,
+    shouldShowScreenEmptyState,
     composerDefaultContent,
   } = useFeedViewState({
     tasks,
@@ -564,15 +566,37 @@ export function FeedView({
         data-onboarding="task-list"
         onScroll={handleFeedScroll}
       >
-        {displayedFeedEntries.map(renderFeedEntry)}
-        {hasMoreEntries ? (
+        {shouldShowScreenEmptyState ? (
+          <FilteredEmptyState
+            isHydrating={isHydrating}
+            searchQuery={searchQuery}
+            contextTaskTitle={focusedTask?.content}
+            mode="screen"
+            className="h-full"
+          />
+        ) : null}
+        {shouldShowInlineEmptyHint ? (
+          <FilteredEmptyState
+            isHydrating={isHydrating}
+            searchQuery={searchQuery}
+            contextTaskTitle={focusedTask?.content}
+            mode="inline"
+            className="min-h-full"
+          />
+        ) : null}
+        {!shouldShowScreenEmptyState && !shouldShowInlineEmptyHint
+          ? displayedFeedEntries.map(renderFeedEntry)
+          : null}
+        {hasMoreEntries && !shouldShowScreenEmptyState && !shouldShowInlineEmptyHint ? (
           <div className="flex justify-center px-4 py-4 text-center">
             <p className="text-sm text-muted-foreground">
               {t("feed.loadingMoreEvents")}
             </p>
           </div>
         ) : null}
-        {hasMoreEntries ? <div ref={loadMoreSentinelRef} aria-hidden="true" className="h-px w-full" /> : null}
+        {hasMoreEntries && !shouldShowScreenEmptyState && !shouldShowInlineEmptyHint
+          ? <div ref={loadMoreSentinelRef} aria-hidden="true" className="h-px w-full" />
+          : null}
         {shouldShowScopeFooterHint && !hasMoreEntries && !isHydrating ? (
           <FilteredEmptyState
             isHydrating={isHydrating}
