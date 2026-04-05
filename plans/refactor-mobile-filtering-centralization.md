@@ -76,11 +76,11 @@ That creates three failure modes:
      - [`src/pages/Index.tsx`](/Users/tj/IT/nostr/nodex/src/pages/Index.tsx)
    - Identify the minimum shared API change that lets mobile consume a resolved task set instead of an alternate query string or fallback flag.
 
-2. Refactor controller filtering helpers.
-   - Do not add a new shared filtering utility. `useFeedViewState` and `createTreeSelectors.getDisplayedTasks` already express the correct pattern.
+2. Centralize fallback resolution in one shared utility.
+   - Extract a small shared helper (e.g. `resolveMobileFallbackSet`) that takes the normal-filtered set, the scope-only set (search ignored), and the `{ isMobile, hasActiveFilters }` condition, and returns one resolved set.
+   - All view controllers call this helper — none implement the fallback decision themselves. This keeps fallback behavior consistent and in one place.
    - `isMobile` is already a prop on all view components (`FeedView`, `TaskTree`, `CalendarView`). Threading it into `useListViewState` and `useKanbanViewState` is internal to each view — no new prop boundary at the component level.
-   - Each view controller computes both the normal and fallback task sets internally and returns one resolved set.
-   - Keep channel, people, relay, focused-task, and quick-filter constraints active in fallback mode.
+   - Keep channel, people, relay, focused-task, and quick-filter constraints active in the scope-only set passed to the helper.
 
 3. Update mobile shell wiring.
    - The concrete change is: remove `searchQueryOverride: effectiveSearchQuery` from `effectiveTaskViewModel` in `MobileLayout` and drop `effectiveSearchQuery` from `MobileFallbackNoticeState`. No new wiring needed.
