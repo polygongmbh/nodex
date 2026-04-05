@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Relay, Task } from "@/types";
 import {
   RELAY_SELECTION_ERROR_KEY,
+  resolveEffectiveWritableRelayIds,
   resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
 } from "./task-relay-routing";
@@ -163,5 +164,31 @@ describe("resolveRelaySelectionForSubmission", () => {
     expect(commentResult.relayIds).toEqual(["relay-a"]);
     expect(taskResult.errorKey).toBeUndefined();
     expect(commentResult.errorKey).toBeUndefined();
+  });
+});
+
+describe("resolveEffectiveWritableRelayIds", () => {
+  it("returns the selected writable relays when any are selected", () => {
+    expect(resolveEffectiveWritableRelayIds({
+      selectedRelayIds: ["relay-a"],
+      relays: [makeRelay("relay-a", "wss://a.example"), makeRelay("relay-b", "wss://b.example")],
+    })).toEqual(["relay-a"]);
+  });
+
+  it("falls back to the only writable relay when none are selected", () => {
+    expect(resolveEffectiveWritableRelayIds({
+      selectedRelayIds: [],
+      relays: [{ ...makeRelay("relay-a", "wss://a.example"), isActive: false }],
+    })).toEqual(["relay-a"]);
+  });
+
+  it("returns empty when none are selected and multiple writable relays exist", () => {
+    expect(resolveEffectiveWritableRelayIds({
+      selectedRelayIds: [],
+      relays: [
+        { ...makeRelay("relay-a", "wss://a.example"), isActive: false },
+        { ...makeRelay("relay-b", "wss://b.example"), isActive: false },
+      ],
+    })).toEqual([]);
   });
 });

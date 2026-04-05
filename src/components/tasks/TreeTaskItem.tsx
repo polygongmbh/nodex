@@ -39,8 +39,8 @@ import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 import {
   deriveTreeTaskItemChildren,
   getDefaultTreeTaskFoldState,
@@ -92,6 +92,13 @@ export function TreeTaskItem({
   const { people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;
   const authorProfiles = useTaskAuthorProfiles();
+  const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
+    const shortcutIntent = getPersonShortcutIntent(event);
+    if (!shortcutIntent) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
+  };
   const getStatusToggleHint = (status?: TaskStatus): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -471,21 +478,20 @@ export function TreeTaskItem({
         {/* Avatar - only show for comments */}
         {isComment && !compactView && (
           <PersonHoverCard person={authorPerson}>
-            <PersonActionMenu person={authorPerson} enableModifierShortcuts>
-              <button
-                type="button"
-                className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-                aria-label={t("people.actions.openMenu", { name: authorName })}
-              >
-                <UserAvatar
-                  id={task.author.id}
-                  displayName={authorName}
-                  avatarUrl={authorAvatar}
-                  className="w-6 h-6 flex-shrink-0"
-                  beamTestId={`task-item-beam-${task.id}`}
-                />
-              </button>
-            </PersonActionMenu>
+            <button
+              type="button"
+              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+              aria-label={t("people.actions.openMenu", { name: authorName })}
+              onClick={(event) => handleAuthorShortcut(event, authorPerson)}
+            >
+              <UserAvatar
+                id={task.author.id}
+                displayName={authorName}
+                avatarUrl={authorAvatar}
+                className="w-6 h-6 flex-shrink-0"
+                beamTestId={`task-item-beam-${task.id}`}
+              />
+            </button>
           </PersonHoverCard>
         )}
 
@@ -497,20 +503,19 @@ export function TreeTaskItem({
               {isComment && (
                 <>
                   <PersonHoverCard person={authorPerson}>
-                    <PersonActionMenu person={authorPerson} enableModifierShortcuts>
-                      <button
-                        type="button"
-                        className="font-medium text-foreground/80 flex items-center gap-1 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
-                        aria-label={t("people.actions.openMenu", { name: authorName })}
-                      >
-                        {authorName}
-                        {authorNip05 && (
-                          <span title={authorNip05}>
-                            <BadgeCheck className="w-3 h-3 text-success" />
-                          </span>
-                        )}
-                      </button>
-                    </PersonActionMenu>
+                    <button
+                      type="button"
+                      className="font-medium text-foreground/80 flex items-center gap-1 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+                      aria-label={t("people.actions.openMenu", { name: authorName })}
+                      onClick={(event) => handleAuthorShortcut(event, authorPerson)}
+                    >
+                      {authorName}
+                      {authorNip05 && (
+                        <span title={authorNip05}>
+                          <BadgeCheck className="w-3 h-3 text-success" />
+                        </span>
+                      )}
+                    </button>
                   </PersonHoverCard>
                   <span>·</span>
                   <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>

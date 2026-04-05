@@ -11,6 +11,27 @@ function isWritableRelay(relay: Relay): boolean {
   return relay.connectionStatus === undefined || relay.connectionStatus === "connected";
 }
 
+export function resolveEffectiveWritableRelayIds(params: {
+  selectedRelayIds: string[];
+  relays: Relay[];
+}): string[] {
+  const { selectedRelayIds, relays } = params;
+  const relayById = new Map(relays.map((relay) => [relay.id, relay] as const));
+  const availableRelayIds = new Set(relayById.keys());
+  const normalizedSelectedRelayIds = dedupeRelayIds(selectedRelayIds).filter((relayId) =>
+    availableRelayIds.has(relayId)
+  );
+  const writableSelectedRelayIds = normalizedSelectedRelayIds.filter((relayId) => {
+    const relay = relayById.get(relayId);
+    return relay ? isWritableRelay(relay) : false;
+  });
+  if (writableSelectedRelayIds.length > 0) {
+    return writableSelectedRelayIds;
+  }
+  const writableRelayIds = relays.filter(isWritableRelay).map((relay) => relay.id);
+  return writableRelayIds.length === 1 ? [writableRelayIds[0]] : [];
+}
+
 function resolveSingleActiveWritableRelayId(relays: Relay[], demoRelayId?: string): string | undefined {
   const candidates = relays.filter((relay) =>
     relay.isActive

@@ -3,6 +3,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { resolveComposeSubmitBlock, type ComposeSubmitBlockState } from "@/lib/compose-submit-block";
+import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { isWritableRelay } from "./task-composer-runtime";
 import { useTranslation } from "react-i18next";
 import type { PostType } from "@/types";
@@ -10,6 +11,7 @@ import type { PostType } from "@/types";
 export interface ComposerRelayBlock {
   shouldHideComposer: boolean;
   activeWritableRelayIds: string[];
+  effectiveWritableRelayIds: string[];
   canCreateContent: boolean;
   externalSubmitBlockByType: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
 }
@@ -35,6 +37,10 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
     () => relays.filter((relay) => relay.isActive && isWritableRelay(relay)).map((relay) => relay.id),
     [relays]
   );
+  const effectiveWritableRelayIds = useMemo(
+    () => resolveEffectiveWritableRelayIds({ selectedRelayIds: activeWritableRelayIds, relays }),
+    [activeWritableRelayIds, relays]
+  );
 
   const externalSubmitBlockByType = useMemo<Partial<Record<PostType, ComposeSubmitBlockState | null>>>(() => {
     const taskBlock = resolveComposeSubmitBlock({
@@ -44,7 +50,7 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
       canInheritParentTags: true,
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
-      hasInvalidRootTaskRelaySelection: !focusedTaskId && activeWritableRelayIds.length !== 1,
+      hasInvalidRootTaskRelaySelection: !focusedTaskId && effectiveWritableRelayIds.length !== 1,
       t,
     });
     const replyBlock = resolveComposeSubmitBlock({
@@ -54,15 +60,21 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
       canInheritParentTags: true,
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
-      hasInvalidRootCommentRelaySelection: activeWritableRelayIds.length === 0,
+      hasInvalidRootCommentRelaySelection: effectiveWritableRelayIds.length === 0,
       t,
     });
     return { task: taskBlock, comment: replyBlock, offer: replyBlock, request: replyBlock };
-  }, [activeWritableRelayIds, authPolicy.canCreateContent, focusedTaskId, t]);
+  }, [
+    authPolicy.canCreateContent,
+    effectiveWritableRelayIds,
+    focusedTaskId,
+    t,
+  ]);
 
   return {
     shouldHideComposer,
     activeWritableRelayIds,
+    effectiveWritableRelayIds,
     canCreateContent: authPolicy.canCreateContent,
     externalSubmitBlockByType,
   };
