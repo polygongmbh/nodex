@@ -19,9 +19,11 @@ export interface TaskComposerDraftState {
   content?: string;
   taskType?: PostType;
   messageType?: PostType;
-  dueDate?: string;
-  dueTime?: string;
-  dateType?: TaskDateType;
+  taskDate?: {
+    dueDate?: string;
+    dueTime?: string;
+    dateType?: TaskDateType;
+  };
   explicitMentionPubkeys?: string[];
   explicitTagNames?: string[];
   priority?: number;
@@ -261,9 +263,9 @@ export function resolveTaskComposerInitialState({
   return {
     content: draftState?.content ?? defaultContent,
     taskType: resolveInitialTaskType(draftState, allowFeedMessageTypes),
-    dueDate: parseDraftDueDate(draftState?.dueDate) ?? defaultDueDate,
-    dueTime: draftState?.dueTime || "",
-    dateType: draftState?.dateType || "due",
+    dueDate: parseDraftDueDate(draftState?.taskDate?.dueDate) ?? defaultDueDate,
+    dueTime: draftState?.taskDate?.dueTime || "",
+    dateType: draftState?.taskDate?.dateType || "due",
     explicitTagNames:
       draftState?.explicitTagNames
         ?.filter((value): value is string => typeof value === "string")

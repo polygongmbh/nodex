@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 - Private-key and Noas sign-ins now survive a same-tab reload via `sessionStorage` without becoming durable browser sessions, and Noas no longer leaves behind the unused persisted username key.
 - Operators can now switch task editing between assignee-or-creator-only and all signed-in users with the `VITE_TASK_EDIT_MODE` runtime setting.
+- Shared composer reloads now restore the full local draft payload, including task scheduling details, metadata-only chips, listing metadata, and uploaded attachments.
 
 ## [2.12.1] - 2026-04-04
 

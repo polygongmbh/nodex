@@ -2,7 +2,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskComposer, type TaskComposerFormData } from "./TaskComposer";
-import { TaskComposerRuntimeProvider } from "./task-composer-runtime";
+import {
+  TaskComposerRuntimeProvider,
+} from "./task-composer-runtime";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
@@ -88,7 +90,7 @@ function renderComposer({
   mentionablePeople?: Person[];
   draftStorageKey?: string;
 } = {}) {
-  render(
+  const renderResult = render(
     <TaskComposerRuntimeProvider
       value={buildRuntimeValue({ channels, people, mentionablePeople, draftStorageKey })}
     >
@@ -102,7 +104,7 @@ function renderComposer({
     </TaskComposerRuntimeProvider>
   );
 
-  return { onSubmit };
+  return { onSubmit, ...renderResult };
 }
 
 function getComposerInput(kind: "task" | "comment" | "offer" | "request" = "task") {
@@ -202,6 +204,63 @@ describe("TaskComposer", () => {
 
     expect(getComposerInput("comment")).toHaveValue("#persisted hello");
     expect(screen.getByRole("button", { name: /add comment/i })).toBeInTheDocument();
+  });
+
+  it("restores the full draft payload from the provided storage key", () => {
+    localStorage.setItem("composer-draft", JSON.stringify({
+      content: "",
+      messageType: "task",
+      explicitTagNames: ["backend"],
+      explicitMentionPubkeys: [alicePubkey],
+      taskDate: {
+        dueDate: "2026-04-01T10:00:00.000Z",
+        dueTime: "10:00",
+        dateType: "start",
+      },
+      priority: 80,
+      locationGeohash: "u33db",
+    }));
+
+    renderComposer({ draftStorageKey: "composer-draft" });
+
+    expect(getComposerInput()).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(screen.getByRole("combobox", { name: /date type/i })).toHaveValue("start");
+    expect(screen.getByDisplayValue("10:00")).toBeInTheDocument();
+    expect(screen.getByLabelText(/geohash/i)).toHaveValue("u33db");
+    expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).not.toBeNull();
+    expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();
+  });
+
+  it("restores listing metadata and attachments from the provided storage key", () => {
+    localStorage.setItem("composer-draft", JSON.stringify({
+      content: "Need a designer #design",
+      messageType: "request",
+      nip99: {
+        title: "Need designer for mobile UI",
+        summary: "Short summary",
+        status: "active",
+      },
+      attachments: [
+        {
+          url: "https://cdn.example.com/restored.png",
+          mimeType: "image/png",
+          name: "restored.png",
+          alt: "Restored attachment",
+        },
+      ],
+      explicitTagNames: ["design"],
+      explicitMentionPubkeys: [alicePubkey],
+    }));
+
+    renderComposer({ draftStorageKey: "composer-draft", allowFeedMessageTypes: true });
+
+    expect(getComposerInput("request")).toHaveValue("Need a designer #design");
+    expect(screen.getByLabelText("Listing title")).toHaveValue("Need designer for mobile UI");
+    expect(screen.getByDisplayValue("Short summary")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Restored attachment")).toBeInTheDocument();
+    expect(screen.getByText("restored.png")).toBeInTheDocument();
+    expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();
   });
 
   it("accepts hashtag autocomplete with Enter", () => {

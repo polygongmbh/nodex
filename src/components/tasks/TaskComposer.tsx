@@ -501,9 +501,11 @@ export function TaskComposer({
       content,
       taskType,
       messageType: taskType,
-      dueDate: dueDate ? dueDate.toISOString() : undefined,
-      dueTime,
-      dateType,
+      taskDate: {
+        dueDate: dueDate ? dueDate.toISOString() : undefined,
+        dueTime,
+        dateType,
+      },
       explicitTagNames,
       explicitMentionPubkeys,
       priority: storedPriorityFromDisplay(priority),
@@ -517,9 +519,9 @@ export function TaskComposer({
           sha256: attachment.sha256,
           size: attachment.size,
           dimensions: attachment.dimensions,
-          blurhash: attachment.blurhash,
-          alt: attachment.alt,
-          name: attachment.name || attachment.fileName,
+            blurhash: attachment.blurhash,
+            alt: attachment.alt,
+            name: attachment.name || attachment.fileName,
         })),
     } satisfies TaskComposerDraftState);
   }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, draftStorageKey]);
