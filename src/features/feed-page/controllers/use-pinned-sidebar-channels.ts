@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import type { Channel, Task } from "@/types";
-import type { PinnedChannelsState } from "@/domain/preferences/pinned-channel-state";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 export interface UsePinnedSidebarChannelsOptions {
@@ -12,10 +11,7 @@ export interface UsePinnedSidebarChannelsOptions {
 }
 
 export interface UsePinnedSidebarChannelsResult {
-  pinnedChannelsState: PinnedChannelsState;
-  activeRelayIdList: string[];
   pinnedChannelIds: string[];
-  channelRelayIds: Map<string, Set<string>>;
   channelsWithState: Channel[];
   handleChannelPin: (id: string) => void;
   handleChannelUnpin: (id: string) => void;
@@ -44,8 +40,6 @@ export function usePinnedSidebarChannels({
   }, [allTasks]);
 
   const {
-    state: pinnedChannelsState,
-    activeRelayIdList,
     pinnedIds: pinnedChannelIds,
     pinAcrossRelays: handleChannelPin,
     unpinAcrossRelays: handleChannelUnpin,
@@ -62,11 +56,12 @@ export function usePinnedSidebarChannels({
     const existingIds = new Set(channels.map((c) => c.id));
     const stubs: Channel[] = pinnedChannelIds
       .filter((id) => !existingIds.has(id))
-      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
+      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const, isPinned: true }));
     return [...stubs, ...channels]
       .map((channel) => ({
         ...channel,
         filterState: channelFilterStates.get(channel.id) ?? "neutral",
+        isPinned: pinnedSet.has(channel.id),
       }))
       .sort((a, b) => {
         const aIdx = pinnedSet.has(a.id) ? pinnedChannelIds.indexOf(a.id) : Infinity;
@@ -75,13 +70,5 @@ export function usePinnedSidebarChannels({
       });
   }, [channels, channelFilterStates, pinnedChannelIds]);
 
-  return {
-    pinnedChannelsState,
-    activeRelayIdList,
-    pinnedChannelIds,
-    channelRelayIds,
-    channelsWithState,
-    handleChannelPin,
-    handleChannelUnpin,
-  };
+  return { pinnedChannelIds, channelsWithState, handleChannelPin, handleChannelUnpin };
 }

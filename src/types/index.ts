@@ -13,6 +13,7 @@ export interface Channel {
   color?: string;
   usageCount?: number;
   filterState: 'included' | 'excluded' | 'neutral';
+  isPinned?: boolean;
 }
 
 export interface PostedTag {

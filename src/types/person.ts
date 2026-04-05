@@ -13,6 +13,7 @@ export interface Person {
   presenceView?: string;
   presenceTaskId?: string | null;
   isSelected: boolean;
+  isPinned?: boolean;
 }
 
 interface AuthorMetaLabelInput {

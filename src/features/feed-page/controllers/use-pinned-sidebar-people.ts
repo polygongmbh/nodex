@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
-import type { PinnedPeopleState } from "@/domain/preferences/pinned-person-state";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 function normalizePersonId(id: string): string {
@@ -16,10 +15,7 @@ export interface UsePinnedSidebarPeopleOptions {
 }
 
 export interface UsePinnedSidebarPeopleResult {
-  pinnedPeopleState: PinnedPeopleState;
-  activeRelayIdList: string[];
   pinnedPersonIds: string[];
-  personRelayIds: Map<string, Set<string>>;
   peopleWithState: Person[];
   handlePersonPin: (id: string) => void;
   handlePersonUnpin: (id: string) => void;
@@ -47,8 +43,6 @@ export function usePinnedSidebarPeople({
   }, [allTasks]);
 
   const {
-    state: pinnedPeopleState,
-    activeRelayIdList,
     pinnedIds: pinnedPersonIds,
     pinAcrossRelays: handlePersonPin,
     unpinAcrossRelays: handlePersonUnpin,
@@ -73,26 +67,24 @@ export function usePinnedSidebarPeople({
         isOnline: false,
         onlineStatus: "offline" as const,
         isSelected: false,
+        isPinned: true,
       }));
 
-    return [...stubs, ...people].sort((a, b) => {
-      const aIdx = pinnedSet.has(normalizePersonId(a.id))
-        ? pinnedPersonIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(a.id))
-        : Infinity;
-      const bIdx = pinnedSet.has(normalizePersonId(b.id))
-        ? pinnedPersonIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(b.id))
-        : Infinity;
-      return aIdx - bIdx;
-    });
+    return [...stubs, ...people]
+      .map((person) => ({
+        ...person,
+        isPinned: pinnedSet.has(normalizePersonId(person.id)),
+      }))
+      .sort((a, b) => {
+        const aIdx = pinnedSet.has(normalizePersonId(a.id))
+          ? pinnedPersonIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(a.id))
+          : Infinity;
+        const bIdx = pinnedSet.has(normalizePersonId(b.id))
+          ? pinnedPersonIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(b.id))
+          : Infinity;
+        return aIdx - bIdx;
+      });
   }, [people, pinnedPersonIds]);
 
-  return {
-    pinnedPeopleState,
-    activeRelayIdList,
-    pinnedPersonIds,
-    personRelayIds,
-    peopleWithState,
-    handlePersonPin,
-    handlePersonUnpin,
-  };
+  return { pinnedPersonIds, peopleWithState, handlePersonPin, handlePersonUnpin };
 }

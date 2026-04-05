@@ -73,8 +73,6 @@ export interface SidebarProps {
   nostrRelays: NDKRelayStatus[];
   isFocused?: boolean;
   quickFilters?: QuickFilterState;
-  pinnedChannelIds?: string[];
-  pinnedPersonIds?: string[];
   savedFilterConfigurations?: SavedFilterConfiguration[];
   activeSavedFilterConfigurationId?: string | null;
 }
@@ -89,8 +87,6 @@ export function Sidebar({
   nostrRelays,
   isFocused = false,
   quickFilters,
-  pinnedChannelIds = [],
-  pinnedPersonIds = [],
   savedFilterConfigurations = [],
   activeSavedFilterConfigurationId = null,
 }: SidebarProps) {
@@ -122,8 +118,6 @@ export function Sidebar({
     [screenHeight]
   );
 
-  const pinnedChannelSet = useMemo(() => new Set(pinnedChannelIds), [pinnedChannelIds]);
-  const pinnedPersonSet = useMemo(() => new Set(pinnedPersonIds), [pinnedPersonIds]);
   const hasActiveChannelFilters = useMemo(
     () => channels.some((channel) => channel.filterState !== "neutral"),
     [channels]
@@ -144,13 +138,13 @@ export function Sidebar({
               return a.name.localeCompare(b.name);
             }),
             isSelected: (channel) => channel.filterState !== "neutral",
-            isPinned: (channel) => pinnedChannelSet.has(channel.id),
+            isPinned: (channel) => channel.isPinned ?? false,
             maxItems: collapsedPreviewLimit,
             alwaysIncludePinned: true,
           }
         ).map((channel) => channel.id)
       ),
-    [channels, collapsedPreviewChannels, collapsedPreviewLimit, pinnedChannelSet]
+    [channels, collapsedPreviewChannels, collapsedPreviewLimit]
   );
   const collapsedPreviewPersonIds = useMemo(
     () =>
@@ -158,12 +152,12 @@ export function Sidebar({
         buildCollapsedPreviewItems({
           items: collapsedPreviewPeople ?? people,
           isSelected: (person) => person.isSelected,
-          isPinned: (person) => pinnedPersonSet.has(person.id),
+          isPinned: (person) => person.isPinned ?? false,
           maxItems: collapsedPreviewLimit,
           alwaysIncludePinned: true,
         }).map((person) => person.id)
       ),
-    [collapsedPreviewLimit, collapsedPreviewPeople, people, pinnedPersonSet]
+    [collapsedPreviewLimit, collapsedPreviewPeople, people]
   );
 
   // Build a flat list of all focusable items
@@ -405,7 +399,7 @@ export function Sidebar({
             <ChannelItem
               key={channel.id}
               channel={channel}
-              isPinned={pinnedChannelSet.has(channel.id)}
+              isPinned={channel.isPinned ?? false}
               isKeyboardFocused={focusedItem?.type === 'channel' && focusedItem?.id === channel.id}
               className={!expandedSections.channels && !collapsedPreviewChannelIds.has(channel.id) ? "hidden" : undefined}
             />
@@ -443,7 +437,7 @@ export function Sidebar({
             <PersonItem
               key={person.id}
               person={person}
-              isPinned={pinnedPersonSet.has(person.id)}
+              isPinned={person.isPinned ?? false}
               isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.id}
               className={!expandedSections.people && !collapsedPreviewPersonIds.has(person.id) ? "hidden" : undefined}
             />

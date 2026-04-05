@@ -14,8 +14,6 @@ export interface FeedSidebarState {
   nostrRelays: NDKRelayStatus[];
   isFocused: boolean;
   quickFilters?: QuickFilterState;
-  pinnedChannelIds: string[];
-  pinnedPersonIds: string[];
   savedFilterConfigurations: SavedFilterConfiguration[];
   activeSavedFilterConfigurationId: string | null;
 }
@@ -30,8 +28,6 @@ const defaultSidebarState: FeedSidebarState = {
   nostrRelays: [],
   isFocused: false,
   quickFilters: undefined,
-  pinnedChannelIds: [],
-  pinnedPersonIds: [],
   savedFilterConfigurations: [],
   activeSavedFilterConfigurationId: null,
 };

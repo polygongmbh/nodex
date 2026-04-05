@@ -174,6 +174,12 @@ const Index = () => {
     availableRelayIds: relays.map((relay) => relay.id),
     subscribe,
   });
+  // NOTE: useIndexRelayShell already computes selectedRelayUrls internally and returns it.
+  // This page-local copy exists only because useKind0People (below) needs it before
+  // useIndexRelayShell can be called — useIndexRelayShell depends on removeCachedRelayProfile
+  // which comes from useKind0People, creating a circular dependency.
+  // Fix: extract removeCachedRelayProfile from useKind0People so useIndexRelayShell
+  // can be called first and its selectedRelayUrls used directly.
   const selectedRelayUrls = useMemo(
     () => deriveSelectedRelayUrls(relays, effectiveActiveRelayIds),
     [effectiveActiveRelayIds, relays]
@@ -428,9 +434,6 @@ const Index = () => {
   }, [channelFilterStates, channels, composeChannels]);
 
   const {
-    pinnedChannelsState,
-    activeRelayIdList,
-    pinnedChannelIds,
     channelsWithState,
     handleChannelPin,
     handleChannelUnpin,
@@ -443,8 +446,6 @@ const Index = () => {
   });
 
   const {
-    pinnedPeopleState,
-    pinnedPersonIds,
     peopleWithState,
     handlePersonPin,
     handlePersonUnpin,
@@ -808,8 +809,6 @@ const Index = () => {
       quickFilters,
       savedFilterConfigurations: savedFilterController.configurations,
       activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
-      pinnedChannelIds,
-      pinnedPersonIds,
     }),
     [
       channelMatchMode,
@@ -819,8 +818,6 @@ const Index = () => {
       isSidebarFocused,
       nostrRelays,
       peopleWithState,
-      pinnedChannelIds,
-      pinnedPersonIds,
       quickFilters,
       relaysWithActiveState,
       savedFilterController,
