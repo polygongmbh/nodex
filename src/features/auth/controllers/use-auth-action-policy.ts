@@ -3,22 +3,22 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { computeAuthActionPolicy, type AuthActionPolicy } from "@/domain/auth/action-policy";
 
 interface UseAuthActionPolicyOptions {
-  hasCachedCurrentUserProfileMetadata?: boolean;
+  hasCurrentUserProfileMetadata?: boolean;
 }
 
 export function useAuthActionPolicy(
   options: UseAuthActionPolicyOptions = {}
 ): AuthActionPolicy {
   const { user, needsProfileSetup } = useNDK();
-  const { hasCachedCurrentUserProfileMetadata = true } = options;
+  const { hasCurrentUserProfileMetadata = true } = options;
 
   return useMemo(
     () =>
       computeAuthActionPolicy({
         isSignedIn: Boolean(user),
         needsProfileSetup,
-        hasCachedCurrentUserProfileMetadata,
+        hasCurrentUserProfileMetadata,
       }),
-    [hasCachedCurrentUserProfileMetadata, needsProfileSetup, user]
+    [hasCurrentUserProfileMetadata, needsProfileSetup, user]
   );
 }

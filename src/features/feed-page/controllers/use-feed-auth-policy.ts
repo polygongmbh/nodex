@@ -3,14 +3,14 @@ import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action
 import { useProfileCompletionPromptSignal } from "@/features/auth/controllers/use-profile-completion-prompt-signal";
 
 interface UseFeedAuthPolicyOptions {
-  hasCachedCurrentUserProfileMetadata: boolean;
+  hasCurrentUserProfileMetadata: boolean;
 }
 
 export function useFeedAuthPolicy({
-  hasCachedCurrentUserProfileMetadata,
+  hasCurrentUserProfileMetadata,
 }: UseFeedAuthPolicyOptions) {
   const authPolicy = useAuthActionPolicy({
-    hasCachedCurrentUserProfileMetadata,
+    hasCurrentUserProfileMetadata,
   });
   const profileCompletionPromptSignal = useProfileCompletionPromptSignal({
     isSignedIn: authPolicy.isSignedIn,

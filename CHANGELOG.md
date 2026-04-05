@@ -10,6 +10,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Noas sign-in and sign-up now prefill a newly detected default host immediately during the current app run instead of waiting until the next startup.
 - Operators can now switch task editing between assignee-or-creator-only and all signed-in users with the `VITE_TASK_EDIT_MODE` runtime setting.
 - Shared composer reloads now restore the full local draft payload, including task scheduling details, metadata-only chips, listing metadata, and uploaded attachments.
+- Guests who already have local `name` and `displayName` profile fields no longer get a false profile-completion prompt on mobile `/feed` before the kind-0 cache catches up.
 
 ## [2.12.1] - 2026-04-04
 

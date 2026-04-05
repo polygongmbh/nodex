@@ -32,6 +32,7 @@ import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-kind0";
+import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
 
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
 
@@ -64,7 +65,7 @@ export interface UseIndexDerivedDataResult {
   mentionAutocompletePeople: Person[];
   sidebarPeople: Person[];
   currentUser: Person | undefined;
-  hasCachedCurrentUserProfileMetadata: boolean;
+  hasCurrentUserProfileMetadata: boolean;
 }
 
 function getPostedTagsForRelayScope(
@@ -264,15 +265,10 @@ export function useIndexDerivedData({
 
   const currentUser = resolveCurrentUser(people, user);
 
-  const hasCachedCurrentUserProfileMetadata = useMemo(() => {
-    if (!user?.pubkey) return true;
-    const normalizedPubkey = user.pubkey.trim().toLowerCase();
-    return cachedKind0Events.some((event) => {
-      const eventPubkey =
-        typeof event.pubkey === "string" ? event.pubkey.trim().toLowerCase() : "";
-      return eventPubkey === normalizedPubkey && Boolean(event.content?.trim());
-    });
-  }, [cachedKind0Events, user?.pubkey]);
+  const hasCurrentUserProfileMetadata = useMemo(
+    () => resolveCurrentUserProfileMetadata(user, cachedKind0Events),
+    [cachedKind0Events, user]
+  );
 
   return {
     filteredNostrEvents,
@@ -286,6 +282,6 @@ export function useIndexDerivedData({
     mentionAutocompletePeople,
     sidebarPeople,
     currentUser,
-    hasCachedCurrentUserProfileMetadata,
+    hasCurrentUserProfileMetadata,
   };
 }

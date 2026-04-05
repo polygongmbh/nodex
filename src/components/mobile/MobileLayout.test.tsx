@@ -221,7 +221,11 @@ function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
 }
 
 function setSignedInUser() {
-  ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+  ndkMock.user = {
+    pubkey: "abc123",
+    npub: "npub1abc",
+    profile: { name: "guest-user", displayName: "Guest User" },
+  };
 }
 
 beforeEach(() => {
@@ -275,6 +279,19 @@ describe("MobileLayout auth wiring", () => {
       expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
       expect(document.querySelector("#manage-profile-name")).toBeInTheDocument();
     });
+  });
+
+  it("stays on the feed surface when a signed-in guest already has local profile fields and no prompt signal", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    renderMobileLayout({
+      viewState: { canCreateContent: true, profileCompletionPromptSignal: 0 },
+    });
+
+    expect(screen.getByTestId("task-tree")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
+    expect(document.querySelector("#manage-profile-name")).not.toBeInTheDocument();
   });
 
   it("hides unified compose bar when manage view is open", () => {
