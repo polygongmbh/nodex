@@ -10,7 +10,6 @@ export interface Relay {
 export interface Channel {
   id: string;
   name: string;
-  color?: string;
   usageCount?: number;
   filterState: 'included' | 'excluded' | 'neutral';
   /** Present when pinned; value is the display order (0 = first). */
