@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -11,6 +11,7 @@ import {
   loadPinnedPeopleState,
   savePinnedPeopleState,
 } from "@/infrastructure/preferences/pinned-people-storage";
+import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 function normalizePersonId(id: string): string {
   return id.trim().toLowerCase();
@@ -39,27 +40,6 @@ export function usePinnedSidebarPeople({
   people,
   allTasks,
 }: UsePinnedSidebarPeopleOptions): UsePinnedSidebarPeopleResult {
-  const [pinnedPeopleState, setPinnedPeopleState] = useState<PinnedPeopleState>(
-    () => loadPinnedPeopleState(userPubkey)
-  );
-
-  useEffect(() => {
-    setPinnedPeopleState(loadPinnedPeopleState(userPubkey));
-  }, [userPubkey]);
-
-  useEffect(() => {
-    savePinnedPeopleState(pinnedPeopleState, userPubkey);
-  }, [pinnedPeopleState, userPubkey]);
-
-  const activeRelayIdList = useMemo(
-    () => Array.from(effectiveActiveRelayIds),
-    [effectiveActiveRelayIds]
-  );
-  const pinnedPersonIds = useMemo(
-    () => getPinnedPersonIdsForRelays(pinnedPeopleState, activeRelayIdList),
-    [activeRelayIdList, pinnedPeopleState]
-  );
-
   const personRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const task of allTasks) {
@@ -74,6 +54,24 @@ export function usePinnedSidebarPeople({
     }
     return map;
   }, [allTasks]);
+
+  const {
+    state: pinnedPeopleState,
+    activeRelayIdList,
+    pinnedIds: pinnedPersonIds,
+    pinAcrossRelays: handlePersonPin,
+    unpinAcrossRelays: handlePersonUnpin,
+  } = usePinnedSidebarEntityState<PinnedPeopleState>({
+    userPubkey,
+    effectiveActiveRelayIds,
+    entityRelayIds: personRelayIds,
+    loadState: loadPinnedPeopleState,
+    saveState: savePinnedPeopleState,
+    getPinnedIds: getPinnedPersonIdsForRelays,
+    pinForRelays: pinPersonForRelays,
+    unpinFromRelays: unpinPersonFromRelays,
+    normalizeEntityId: normalizePersonId,
+  });
 
   const peopleWithState: Person[] = useMemo(() => {
     const pinnedSet = new Set(pinnedPersonIds.map(normalizePersonId));
@@ -99,25 +97,6 @@ export function usePinnedSidebarPeople({
       return aIdx - bIdx;
     });
   }, [people, pinnedPersonIds]);
-
-  const handlePersonPin = useCallback(
-    (id: string) => {
-      const relaysWithPerson = personRelayIds.get(normalizePersonId(id));
-      const targetRelayIds = relaysWithPerson
-        ? activeRelayIdList.filter((relayId) => relaysWithPerson.has(relayId))
-        : activeRelayIdList;
-      const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
-      setPinnedPeopleState((prev) => pinPersonForRelays(prev, relayIds, id));
-    },
-    [activeRelayIdList, personRelayIds]
-  );
-
-  const handlePersonUnpin = useCallback(
-    (id: string) => {
-      setPinnedPeopleState((prev) => unpinPersonFromRelays(prev, activeRelayIdList, id));
-    },
-    [activeRelayIdList]
-  );
 
   return {
     pinnedPeopleState,

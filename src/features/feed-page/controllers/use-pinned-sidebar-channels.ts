@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import type { Channel, Task } from "@/types";
 import {
   getPinnedChannelIdsForRelays,
@@ -10,6 +10,7 @@ import {
   loadPinnedChannelsState,
   savePinnedChannelsState,
 } from "@/infrastructure/preferences/pinned-channels-storage";
+import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 export interface UsePinnedSidebarChannelsOptions {
   userPubkey: string | undefined;
@@ -36,27 +37,6 @@ export function usePinnedSidebarChannels({
   channelFilterStates,
   allTasks,
 }: UsePinnedSidebarChannelsOptions): UsePinnedSidebarChannelsResult {
-  const [pinnedChannelsState, setPinnedChannelsState] = useState<PinnedChannelsState>(
-    () => loadPinnedChannelsState(userPubkey)
-  );
-
-  useEffect(() => {
-    setPinnedChannelsState(loadPinnedChannelsState(userPubkey));
-  }, [userPubkey]);
-
-  useEffect(() => {
-    savePinnedChannelsState(pinnedChannelsState, userPubkey);
-  }, [pinnedChannelsState, userPubkey]);
-
-  const activeRelayIdList = useMemo(
-    () => Array.from(effectiveActiveRelayIds),
-    [effectiveActiveRelayIds]
-  );
-  const pinnedChannelIds = useMemo(
-    () => getPinnedChannelIdsForRelays(pinnedChannelsState, activeRelayIdList),
-    [activeRelayIdList, pinnedChannelsState]
-  );
-
   const channelRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const task of allTasks) {
@@ -71,6 +51,23 @@ export function usePinnedSidebarChannels({
     }
     return map;
   }, [allTasks]);
+
+  const {
+    state: pinnedChannelsState,
+    activeRelayIdList,
+    pinnedIds: pinnedChannelIds,
+    pinAcrossRelays: handleChannelPin,
+    unpinAcrossRelays: handleChannelUnpin,
+  } = usePinnedSidebarEntityState<PinnedChannelsState>({
+    userPubkey,
+    effectiveActiveRelayIds,
+    entityRelayIds: channelRelayIds,
+    loadState: loadPinnedChannelsState,
+    saveState: savePinnedChannelsState,
+    getPinnedIds: getPinnedChannelIdsForRelays,
+    pinForRelays: pinChannelForRelays,
+    unpinFromRelays: unpinChannelFromRelays,
+  });
 
   const channelsWithState: Channel[] = useMemo(() => {
     const pinnedSet = new Set(pinnedChannelIds);
@@ -88,30 +85,7 @@ export function usePinnedSidebarChannels({
         const bIdx = pinnedSet.has(b.id) ? pinnedChannelIds.indexOf(b.id) : Infinity;
         return aIdx - bIdx;
       });
-  }, [
-    channels,
-    channelFilterStates,
-    pinnedChannelIds,
-  ]);
-
-  const handleChannelPin = useCallback(
-    (id: string) => {
-      const relaysWithTag = channelRelayIds.get(id);
-      const targetRelayIds = relaysWithTag
-        ? activeRelayIdList.filter((r) => relaysWithTag.has(r))
-        : activeRelayIdList;
-      const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
-      setPinnedChannelsState((prev) => pinChannelForRelays(prev, relayIds, id));
-    },
-    [activeRelayIdList, channelRelayIds]
-  );
-
-  const handleChannelUnpin = useCallback(
-    (id: string) => {
-      setPinnedChannelsState((prev) => unpinChannelFromRelays(prev, activeRelayIdList, id));
-    },
-    [activeRelayIdList]
-  );
+  }, [channels, channelFilterStates, pinnedChannelIds]);
 
   return {
     pinnedChannelsState,
