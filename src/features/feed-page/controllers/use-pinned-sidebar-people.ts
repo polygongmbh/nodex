@@ -1,16 +1,7 @@
 import { useMemo } from "react";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
-import {
-  getPinnedPersonIdsForRelays,
-  pinPersonForRelays,
-  unpinPersonFromRelays,
-  type PinnedPeopleState,
-} from "@/domain/preferences/pinned-person-state";
-import {
-  loadPinnedPeopleState,
-  savePinnedPeopleState,
-} from "@/infrastructure/preferences/pinned-people-storage";
+import type { PinnedPeopleState } from "@/domain/preferences/pinned-person-state";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 function normalizePersonId(id: string): string {
@@ -61,15 +52,12 @@ export function usePinnedSidebarPeople({
     pinnedIds: pinnedPersonIds,
     pinAcrossRelays: handlePersonPin,
     unpinAcrossRelays: handlePersonUnpin,
-  } = usePinnedSidebarEntityState<PinnedPeopleState>({
+  } = usePinnedSidebarEntityState({
     userPubkey,
     effectiveActiveRelayIds,
     entityRelayIds: personRelayIds,
-    loadState: loadPinnedPeopleState,
-    saveState: savePinnedPeopleState,
-    getPinnedIds: getPinnedPersonIdsForRelays,
-    pinForRelays: pinPersonForRelays,
-    unpinFromRelays: unpinPersonFromRelays,
+    namespace: "pinned-people",
+    idKey: "personId" as const,
     normalizeEntityId: normalizePersonId,
   });
 

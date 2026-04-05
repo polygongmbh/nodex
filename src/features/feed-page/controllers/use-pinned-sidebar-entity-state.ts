@@ -1,21 +1,29 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  createEmptyPinnedEntityState,
+  getPinnedEntityIdsForRelays,
+  pinEntityForRelays,
+  unpinEntityFromRelays,
+  type PinnedEntityState,
+} from "@/domain/preferences/pinned-entity-state";
+import {
+  loadPinnedEntityState,
+  savePinnedEntityState,
+} from "@/infrastructure/preferences/pinned-entity-storage";
 
-export interface UsePinnedSidebarEntityStateOptions<S> {
+export interface UsePinnedSidebarEntityStateOptions<IdKey extends string> {
   userPubkey: string | undefined;
   effectiveActiveRelayIds: Set<string>;
   entityRelayIds: Map<string, Set<string>>;
-  loadState: (pubkey?: string) => S;
-  saveState: (state: S, pubkey?: string) => void;
-  getPinnedIds: (state: S, relayIds: string[]) => string[];
-  pinForRelays: (state: S, relayIds: string[], id: string) => S;
-  unpinFromRelays: (state: S, relayIds: string[], id: string) => S;
+  namespace: string;
+  idKey: IdKey;
   /** Applied only for relay-map lookups; the stored id is always the original. */
   normalizeEntityId?: (id: string) => string;
 }
 
-export interface UsePinnedSidebarEntityStateResult<S> {
-  state: S;
-  setState: React.Dispatch<React.SetStateAction<S>>;
+export interface UsePinnedSidebarEntityStateResult<IdKey extends string> {
+  state: PinnedEntityState<IdKey>;
+  setState: React.Dispatch<React.SetStateAction<PinnedEntityState<IdKey>>>;
   activeRelayIdList: string[];
   pinnedIds: string[];
   pinAcrossRelays: (id: string) => void;
@@ -29,29 +37,30 @@ export interface UsePinnedSidebarEntityStateResult<S> {
  * and the relay-scoped pin/unpin callbacks.
  *
  * Does NOT know about Task, Channel, Person, tag parsing, or stub shapes.
- * loadState/saveState/getPinnedIds/pinForRelays/unpinFromRelays must be
- * stable module-level function references to avoid unnecessary effect runs.
  */
-export function usePinnedSidebarEntityState<S>({
+export function usePinnedSidebarEntityState<IdKey extends string>({
   userPubkey,
   effectiveActiveRelayIds,
   entityRelayIds,
-  loadState,
-  saveState,
-  getPinnedIds,
-  pinForRelays,
-  unpinFromRelays,
+  namespace,
+  idKey,
   normalizeEntityId,
-}: UsePinnedSidebarEntityStateOptions<S>): UsePinnedSidebarEntityStateResult<S> {
-  const [state, setState] = useState<S>(() => loadState(userPubkey));
+}: UsePinnedSidebarEntityStateOptions<IdKey>): UsePinnedSidebarEntityStateResult<IdKey> {
+  const [state, setState] = useState<PinnedEntityState<IdKey>>(
+    () => loadPinnedEntityState({ namespace, idKey, pubkey: userPubkey, createEmptyState: createEmptyPinnedEntityState })
+  );
 
   // Reload when the authenticated user changes.
+  useEffect(() => {
+    setState(loadPinnedEntityState({ namespace, idKey, pubkey: userPubkey, createEmptyState: createEmptyPinnedEntityState }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setState(loadState(userPubkey)); }, [userPubkey]);
+  }, [userPubkey]);
 
   // Persist whenever state or user changes.
+  useEffect(() => {
+    savePinnedEntityState({ namespace, state, pubkey: userPubkey });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { saveState(state, userPubkey); }, [state, userPubkey]);
+  }, [state, userPubkey]);
 
   const activeRelayIdList = useMemo(
     () => Array.from(effectiveActiveRelayIds),
@@ -59,8 +68,10 @@ export function usePinnedSidebarEntityState<S>({
   );
 
   const pinnedIds = useMemo(
-    () => getPinnedIds(state, activeRelayIdList),
-    [getPinnedIds, state, activeRelayIdList]
+    () => getPinnedEntityIdsForRelays(state, activeRelayIdList, idKey),
+    // idKey and namespace are constants at the call site; no need to react to them
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state, activeRelayIdList]
   );
 
   const pinAcrossRelays = useCallback(
@@ -71,16 +82,18 @@ export function usePinnedSidebarEntityState<S>({
         ? activeRelayIdList.filter((r) => relaysWithEntity.has(r))
         : activeRelayIdList;
       const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
-      setState((prev) => pinForRelays(prev, relayIds, id));
+      setState((prev) => pinEntityForRelays(prev, relayIds, id, idKey));
     },
-    [activeRelayIdList, entityRelayIds, normalizeEntityId, pinForRelays]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeRelayIdList, entityRelayIds, normalizeEntityId]
   );
 
   const unpinAcrossRelays = useCallback(
     (id: string) => {
-      setState((prev) => unpinFromRelays(prev, activeRelayIdList, id));
+      setState((prev) => unpinEntityFromRelays(prev, activeRelayIdList, id, idKey));
     },
-    [activeRelayIdList, unpinFromRelays]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeRelayIdList]
   );
 
   return { state, setState, activeRelayIdList, pinnedIds, pinAcrossRelays, unpinAcrossRelays };

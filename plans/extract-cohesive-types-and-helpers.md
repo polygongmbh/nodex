@@ -2,7 +2,7 @@
 
 ## Goal
 
-Continue reducing mixed-concern files by extracting cohesive type and helper clusters into obvious homes, without colliding with the parts of the repo that are currently in flight.
+Continue reducing mixed-concern files by extracting cohesive type and helper clusters into obvious homes, with priorities driven by architecture rather than whatever happens to be locally dirty at the moment.
 
 ## Current State
 
@@ -24,27 +24,13 @@ Continue reducing mixed-concern files by extracting cohesive type and helper clu
 - [`src/lib/linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx) still mixes several unrelated concerns.
 - [`src/components/layout/Sidebar.tsx`](/Users/tj/IT/nostr/nodex/src/components/layout/Sidebar.tsx) still combines rendering and navigation/state logic.
 
-### Current local-collision risk
-
-There are unrelated unstaged changes in:
-
-- [`src/components/tasks/FeedView.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/FeedView.tsx)
-- [`src/features/feed-page/controllers/use-task-view-states.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.ts)
-- [`src/features/feed-page/controllers/use-task-view-states.test.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.test.ts)
-
-There is also an unrelated deleted plan file:
-
-- [`plans/unify-task-text-search-across-views.md`](/Users/tj/IT/nostr/nodex/plans/unify-task-text-search-across-views.md)
-
-Because of that, the next extraction pass should avoid `FeedView` / `use-task-view-states` first and focus on lower-overlap targets.
-
 ## Guiding Principles
 
 1. Extract by responsibility, not by file size alone.
 2. Do not reintroduce compatibility barrels unless there is a strong temporary migration reason.
 3. Prefer direct imports from the new type/helper file.
 4. Keep behavior-preserving refactors separate from semantic data-model changes.
-5. Avoid touching files that are already dirty unless the milestone explicitly needs them.
+5. Do not let transient worktree state distort the long-term extraction order.
 
 ## Revised Execution Order
 
@@ -53,18 +39,17 @@ Because of that, the next extraction pass should avoid `FeedView` / `use-task-vi
 3. Split [`use-task-publish-flow.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-publish-flow.ts) by responsibility
 4. Decompose [`linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx)
 5. Extract sidebar navigation/state logic from [`Sidebar.tsx`](/Users/tj/IT/nostr/nodex/src/components/layout/Sidebar.tsx)
-6. Reassess the large view/controller surfaces only after the current `FeedView` / `use-task-view-states` work settles
+6. Reassess the large view/controller surfaces (`FeedView`, `CalendarView`, `ListView`, `use-task-view-states`)
 
-That order is now intentionally shaped around current worktree state, not just architecture purity.
+That order is intentionally architecture-first.
 
 ---
 
 ## Phase 1: Finish Breaking Up `src/types/index.ts`
 
-### Why this is now the best first move
+### Why this is the best first move
 
 - It has the highest architectural leverage.
-- It does not need to touch the currently dirty `FeedView` / `use-task-view-states` files directly.
 - It continues the exact cleanup pattern that already worked well for `Person`.
 
 ### Proposed target files
@@ -134,7 +119,7 @@ Do not re-export these back through `src/types/index.ts` if the actual goal is t
 
 ### Why this remains a strong second step
 
-[`TaskComposer.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx) and [`UnifiedBottomBar.tsx`](/Users/tj/IT/nostr/nodex/src/components/mobile/UnifiedBottomBar.tsx) still duplicate or closely mirror helper logic, but this phase does not need to touch `FeedView` or `use-task-view-states`.
+[`TaskComposer.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx) and [`UnifiedBottomBar.tsx`](/Users/tj/IT/nostr/nodex/src/components/mobile/UnifiedBottomBar.tsx) still duplicate or closely mirror helper logic.
 
 ### Confirmed overlap or cohesive clusters
 
@@ -278,27 +263,15 @@ That is a good hook extraction, but it touches interactive behavior and should c
 
 ---
 
-## Phase 6: Reassess Dirty Large View / Controller Surfaces Later
+## Phase 6: Reassess Large View / Controller Surfaces
 
-### Explicit deferral
+### Why this stays later in the sequence
 
-Do not make `FeedView` / `use-task-view-states` the next extraction target while those files are already locally modified.
+- these are bigger behavior-rich files
+- earlier shared-helper extractions may simplify them naturally
+- the remaining complexity will be easier to judge after lower-level cleanup
 
-Deferred files:
-
-- [`src/components/tasks/FeedView.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/FeedView.tsx)
-- [`src/features/feed-page/controllers/use-task-view-states.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.ts)
-- [`src/features/feed-page/controllers/use-task-view-states.test.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.test.ts)
-
-### Why defer
-
-- avoids merge/conflict churn with current in-progress work
-- avoids mixing architectural cleanup with likely behavior edits already underway
-- some view complexity may disappear naturally after earlier helper extractions
-
-### Reassessment goal once clean
-
-After the worktree is clean or the in-flight change is committed, reassess:
+### Reassessment goal
 
 - `FeedView`
 - `CalendarView`
@@ -372,7 +345,7 @@ Commit:
 
 ### Milestone F
 
-Reassess the large view/controller surfaces only after current dirty files are resolved.
+Reassess and then split the large view/controller surfaces where the remaining complexity is still intrinsic.
 
 ---
 
@@ -394,4 +367,4 @@ Treat each milestone as a broad refactor:
 
 If implementation starts immediately, do Milestone A now.
 
-It is the highest-value structural win and the least likely to interfere with the currently dirty `FeedView` / `use-task-view-states` area.
+It is still the highest-value structural win and the cleanest foundation for the later helper and controller extractions.

@@ -1,15 +1,6 @@
 import { useMemo } from "react";
 import type { Channel, Task } from "@/types";
-import {
-  getPinnedChannelIdsForRelays,
-  pinChannelForRelays,
-  unpinChannelFromRelays,
-  type PinnedChannelsState,
-} from "@/domain/preferences/pinned-channel-state";
-import {
-  loadPinnedChannelsState,
-  savePinnedChannelsState,
-} from "@/infrastructure/preferences/pinned-channels-storage";
+import type { PinnedChannelsState } from "@/domain/preferences/pinned-channel-state";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 export interface UsePinnedSidebarChannelsOptions {
@@ -58,15 +49,12 @@ export function usePinnedSidebarChannels({
     pinnedIds: pinnedChannelIds,
     pinAcrossRelays: handleChannelPin,
     unpinAcrossRelays: handleChannelUnpin,
-  } = usePinnedSidebarEntityState<PinnedChannelsState>({
+  } = usePinnedSidebarEntityState({
     userPubkey,
     effectiveActiveRelayIds,
     entityRelayIds: channelRelayIds,
-    loadState: loadPinnedChannelsState,
-    saveState: savePinnedChannelsState,
-    getPinnedIds: getPinnedChannelIdsForRelays,
-    pinForRelays: pinChannelForRelays,
-    unpinFromRelays: unpinChannelFromRelays,
+    namespace: "pinned-channels",
+    idKey: "channelId" as const,
   });
 
   const channelsWithState: Channel[] = useMemo(() => {

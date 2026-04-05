@@ -2,15 +2,24 @@ import { renderHook, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 import {
-  createEmptyPinnedChannelsState,
-  getPinnedChannelIdsForRelays,
-  pinChannelForRelays,
-  unpinChannelFromRelays,
-} from "@/domain/preferences/pinned-channel-state";
+  createEmptyPinnedEntityState,
+  getPinnedEntityIdsForRelays,
+  pinEntityForRelays,
+} from "@/domain/preferences/pinned-entity-state";
 import {
-  loadPinnedChannelsState,
-  savePinnedChannelsState,
-} from "@/infrastructure/preferences/pinned-channels-storage";
+  loadPinnedEntityState,
+  savePinnedEntityState,
+} from "@/infrastructure/preferences/pinned-entity-storage";
+
+const NS = "pinned-channels";
+const IK = "channelId" as const;
+
+function loadState(pubkey?: string) {
+  return loadPinnedEntityState({ namespace: NS, idKey: IK, pubkey, createEmptyState: createEmptyPinnedEntityState });
+}
+function saveState(state: ReturnType<typeof loadState>, pubkey?: string) {
+  savePinnedEntityState({ namespace: NS, state, pubkey });
+}
 
 function makeOptions(overrides: {
   userPubkey?: string;
@@ -21,11 +30,8 @@ function makeOptions(overrides: {
     userPubkey: overrides.userPubkey,
     effectiveActiveRelayIds: overrides.effectiveActiveRelayIds ?? new Set(["relay-one"]),
     entityRelayIds: overrides.entityRelayIds ?? new Map(),
-    loadState: loadPinnedChannelsState,
-    saveState: savePinnedChannelsState,
-    getPinnedIds: getPinnedChannelIdsForRelays,
-    pinForRelays: pinChannelForRelays,
-    unpinFromRelays: unpinChannelFromRelays,
+    namespace: NS,
+    idKey: IK,
   };
 }
 
@@ -35,8 +41,8 @@ describe("usePinnedSidebarEntityState", () => {
   });
 
   it("initializes state from storage", () => {
-    const preloaded = pinChannelForRelays(createEmptyPinnedChannelsState(), ["relay-one"], "ops");
-    savePinnedChannelsState(preloaded);
+    const preloaded = pinEntityForRelays(createEmptyPinnedEntityState(), ["relay-one"], "ops", IK);
+    saveState(preloaded);
 
     const { result } = renderHook(() => usePinnedSidebarEntityState(makeOptions()));
 
@@ -44,11 +50,11 @@ describe("usePinnedSidebarEntityState", () => {
   });
 
   it("reloads state when userPubkey changes", () => {
-    const guestState = pinChannelForRelays(createEmptyPinnedChannelsState(), ["relay-one"], "guest-ch");
-    savePinnedChannelsState(guestState, undefined);
+    const guestState = pinEntityForRelays(createEmptyPinnedEntityState(), ["relay-one"], "guest-ch", IK);
+    saveState(guestState, undefined);
 
-    const userState = pinChannelForRelays(createEmptyPinnedChannelsState(), ["relay-one"], "user-ch");
-    savePinnedChannelsState(userState, "abc123");
+    const userState = pinEntityForRelays(createEmptyPinnedEntityState(), ["relay-one"], "user-ch", IK);
+    saveState(userState, "abc123");
 
     const { result, rerender } = renderHook(
       ({ pubkey }) => usePinnedSidebarEntityState(makeOptions({ userPubkey: pubkey })),
@@ -63,22 +69,18 @@ describe("usePinnedSidebarEntityState", () => {
   });
 
   it("persists state to storage when pinning", () => {
-    const { result } = renderHook(() =>
-      usePinnedSidebarEntityState(makeOptions())
-    );
+    const { result } = renderHook(() => usePinnedSidebarEntityState(makeOptions()));
 
     act(() => {
       result.current.pinAcrossRelays("general");
     });
 
-    const saved = loadPinnedChannelsState(undefined);
-    expect(getPinnedChannelIdsForRelays(saved, ["relay-one"])).toContain("general");
+    const saved = loadState(undefined);
+    expect(getPinnedEntityIdsForRelays(saved, ["relay-one"], IK)).toContain("general");
   });
 
   it("pins only to the relays where the entity is present", () => {
-    const entityRelayIds = new Map([
-      ["ops", new Set(["relay-two"])],
-    ]);
+    const entityRelayIds = new Map([["ops", new Set(["relay-two"])]]);
 
     const { result } = renderHook(() =>
       usePinnedSidebarEntityState(makeOptions({
@@ -91,9 +93,9 @@ describe("usePinnedSidebarEntityState", () => {
       result.current.pinAcrossRelays("ops");
     });
 
-    const saved = loadPinnedChannelsState(undefined);
-    expect(getPinnedChannelIdsForRelays(saved, ["relay-two"])).toContain("ops");
-    expect(getPinnedChannelIdsForRelays(saved, ["relay-one"])).not.toContain("ops");
+    const saved = loadState(undefined);
+    expect(getPinnedEntityIdsForRelays(saved, ["relay-two"], IK)).toContain("ops");
+    expect(getPinnedEntityIdsForRelays(saved, ["relay-one"], IK)).not.toContain("ops");
   });
 
   it("falls back to all active relays when entity has no relay presence", () => {
@@ -108,17 +110,17 @@ describe("usePinnedSidebarEntityState", () => {
       result.current.pinAcrossRelays("unknown-channel");
     });
 
-    const saved = loadPinnedChannelsState(undefined);
-    const pinned = getPinnedChannelIdsForRelays(saved, ["relay-one", "relay-two"]);
+    const saved = loadState(undefined);
+    const pinned = getPinnedEntityIdsForRelays(saved, ["relay-one", "relay-two"], IK);
     expect(pinned).toContain("unknown-channel");
   });
 
   it("unpins from all active relays", () => {
-    const initial = pinChannelForRelays(
-      pinChannelForRelays(createEmptyPinnedChannelsState(), ["relay-one"], "ops"),
-      ["relay-two"], "ops"
+    const initial = pinEntityForRelays(
+      pinEntityForRelays(createEmptyPinnedEntityState(), ["relay-one"], "ops", IK),
+      ["relay-two"], "ops", IK
     );
-    savePinnedChannelsState(initial);
+    saveState(initial);
 
     const { result } = renderHook(() =>
       usePinnedSidebarEntityState(makeOptions({
