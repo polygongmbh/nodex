@@ -354,6 +354,36 @@ describe("NostrAuthModal", () => {
     expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@example.com");
   });
 
+  it("prefills the Noas host immediately when discovery resolves after the modal mounts", () => {
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+
+    const { rerender } = render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    openNoasEntryIfNeeded();
+    expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
+
+    ndkMock.defaultNoasHostUrl = "https://example.com";
+    rerender(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    expect(screen.queryByRole("button", { name: /noas authentication/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@example.com");
+  });
+
+  it("carries a newly detected Noas host into sign-up without waiting for a restart", () => {
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+
+    const { rerender } = render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    openNoasEntryIfNeeded();
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
+
+    ndkMock.defaultNoasHostUrl = "https://example.com";
+    rerender(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@example.com");
+  });
+
   it("submits a configured noas https host with internal protocol normalization", async () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.defaultNoasHostUrl = "https://example.com";

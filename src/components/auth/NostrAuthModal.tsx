@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Key, User, Zap, AlertCircle, Loader2, LogOut, LogIn, Link2, CircleHelp, Pencil, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
@@ -192,6 +192,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   const [isEditingNoasHost, setIsEditingNoasHost] = useState(false);
   const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false);
   const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
+  const previousDefaultNoasUrlRef = useRef(defaultNoasUrl);
 
   const hasExtension = hasNostrExtension();
   const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
@@ -347,6 +348,22 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
       setStep(resolvedDefaultStep);
     }
   }, [isOpen, resolvedDefaultStep]);
+
+  useEffect(() => {
+    const previousDefaultNoasUrl = previousDefaultNoasUrlRef.current;
+    previousDefaultNoasUrlRef.current = defaultNoasUrl;
+
+    if (!defaultNoasUrl || isEditingNoasHost) {
+      return;
+    }
+
+    setEditableNoasUrl((currentEditableNoasUrl) => {
+      if (!currentEditableNoasUrl || currentEditableNoasUrl === previousDefaultNoasUrl) {
+        return defaultNoasUrl;
+      }
+      return currentEditableNoasUrl;
+    });
+  }, [defaultNoasUrl, isEditingNoasHost]);
 
   const shouldShowModalHeader = step !== "noas" && step !== "noasSignUp";
   const authMethodOptionClassName =
