@@ -1,18 +1,20 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
+import { useRef } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { usePinnedSidebarPeople } from "./use-pinned-sidebar-people";
 import { makePerson, makeTask } from "@/test/fixtures";
 import type { Person } from "@/types/person";
 import {
   createEmptyPinnedPeopleState,
+  getPinnedPersonIdsForRelays,
   pinPersonForRelays,
 } from "@/domain/preferences/pinned-person-state";
-import { savePinnedPeopleState } from "@/infrastructure/preferences/pinned-people-storage";
+import { loadPinnedPeopleState, savePinnedPeopleState } from "@/infrastructure/preferences/pinned-people-storage";
 
-function Harness({ people }: { people: Person[] }) {
+function Harness({ people, allRelays = ["relay-one"] }: { people: Person[]; allRelays?: string[] }) {
   const result = usePinnedSidebarPeople({
     userPubkey: undefined,
-    effectiveActiveRelayIds: new Set(["relay-one"]),
+    effectiveActiveRelayIds: new Set(allRelays),
     people,
     allTasks: [
       makeTask({
@@ -23,10 +25,13 @@ function Harness({ people }: { people: Person[] }) {
       makeTask({
         id: "task-two",
         author: makePerson({ id: "bob", name: "bob", displayName: "Bob" }),
-        relays: ["relay-one"],
+        relays: ["relay-two"],
       }),
     ],
   });
+
+  const handleRef = useRef(result.handlePersonPin);
+  handleRef.current = result.handlePersonPin;
 
   return (
     <>
@@ -36,6 +41,7 @@ function Harness({ people }: { people: Person[] }) {
       <output data-testid="pinned-person-ids">
         {result.pinnedPersonIds.join(",")}
       </output>
+      <button onClick={() => handleRef.current("bob")}>pin-bob</button>
     </>
   );
 }
@@ -104,5 +110,22 @@ describe("usePinnedSidebarPeople", () => {
     );
 
     expect(screen.getByTestId("pinned-person-ids")).toHaveTextContent("bob");
+  });
+
+  it("pins a person only to the relay where their tasks appear", () => {
+    render(
+      <Harness
+        people={[]}
+        allRelays={["relay-one", "relay-two"]}
+      />
+    );
+
+    act(() => {
+      screen.getByText("pin-bob").click();
+    });
+
+    const saved = loadPinnedPeopleState(undefined);
+    expect(getPinnedPersonIdsForRelays(saved, ["relay-two"])).toContain("bob");
+    expect(getPinnedPersonIdsForRelays(saved, ["relay-one"])).not.toContain("bob");
   });
 });
