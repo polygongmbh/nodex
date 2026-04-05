@@ -52,22 +52,18 @@ export function usePinnedSidebarChannels({
   });
 
   const channelsWithState: Channel[] = useMemo(() => {
-    const pinnedSet = new Set(pinnedChannelIds);
+    const pinnedIndexMap = new Map(pinnedChannelIds.map((id, idx) => [id, idx]));
     const existingIds = new Set(channels.map((c) => c.id));
     const stubs: Channel[] = pinnedChannelIds
       .filter((id) => !existingIds.has(id))
-      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const, isPinned: true }));
+      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
     return [...stubs, ...channels]
       .map((channel) => ({
         ...channel,
         filterState: channelFilterStates.get(channel.id) ?? "neutral",
-        isPinned: pinnedSet.has(channel.id),
+        pinIndex: pinnedIndexMap.get(channel.id),
       }))
-      .sort((a, b) => {
-        const aIdx = pinnedSet.has(a.id) ? pinnedChannelIds.indexOf(a.id) : Infinity;
-        const bIdx = pinnedSet.has(b.id) ? pinnedChannelIds.indexOf(b.id) : Infinity;
-        return aIdx - bIdx;
-      });
+      .sort((a, b) => (a.pinIndex ?? Infinity) - (b.pinIndex ?? Infinity));
   }, [channels, channelFilterStates, pinnedChannelIds]);
 
   return { pinnedChannelIds, channelsWithState, handleChannelPin, handleChannelUnpin };

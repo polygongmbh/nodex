@@ -13,7 +13,8 @@ export interface Channel {
   color?: string;
   usageCount?: number;
   filterState: 'included' | 'excluded' | 'neutral';
-  isPinned?: boolean;
+  /** Present when pinned; value is the display order (0 = first). */
+  pinIndex?: number;
 }
 
 export interface PostedTag {

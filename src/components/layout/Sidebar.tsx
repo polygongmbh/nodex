@@ -138,7 +138,7 @@ export function Sidebar({
               return a.name.localeCompare(b.name);
             }),
             isSelected: (channel) => channel.filterState !== "neutral",
-            isPinned: (channel) => channel.isPinned ?? false,
+            isPinned: (channel) => channel.pinIndex !== undefined,
             maxItems: collapsedPreviewLimit,
             alwaysIncludePinned: true,
           }
@@ -152,7 +152,7 @@ export function Sidebar({
         buildCollapsedPreviewItems({
           items: collapsedPreviewPeople ?? people,
           isSelected: (person) => person.isSelected,
-          isPinned: (person) => person.isPinned ?? false,
+          isPinned: (person) => person.pinIndex !== undefined,
           maxItems: collapsedPreviewLimit,
           alwaysIncludePinned: true,
         }).map((person) => person.id)
@@ -399,7 +399,7 @@ export function Sidebar({
             <ChannelItem
               key={channel.id}
               channel={channel}
-              isPinned={channel.isPinned ?? false}
+              isPinned={channel.pinIndex !== undefined}
               isKeyboardFocused={focusedItem?.type === 'channel' && focusedItem?.id === channel.id}
               className={!expandedSections.channels && !collapsedPreviewChannelIds.has(channel.id) ? "hidden" : undefined}
             />
@@ -437,7 +437,7 @@ export function Sidebar({
             <PersonItem
               key={person.id}
               person={person}
-              isPinned={person.isPinned ?? false}
+              isPinned={person.pinIndex !== undefined}
               isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.id}
               className={!expandedSections.people && !collapsedPreviewPersonIds.has(person.id) ? "hidden" : undefined}
             />

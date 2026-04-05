@@ -56,7 +56,7 @@ export function usePinnedSidebarPeople({
   });
 
   const peopleWithState: Person[] = useMemo(() => {
-    const pinnedSet = new Set(pinnedPersonIds.map(normalizePersonId));
+    const pinnedIndexMap = new Map(pinnedPersonIds.map((id, idx) => [normalizePersonId(id), idx]));
     const existingIds = new Set(people.map((person) => normalizePersonId(person.id)));
     const stubs: Person[] = pinnedPersonIds
       .filter((id) => !existingIds.has(normalizePersonId(id)))
@@ -67,23 +67,14 @@ export function usePinnedSidebarPeople({
         isOnline: false,
         onlineStatus: "offline" as const,
         isSelected: false,
-        isPinned: true,
       }));
 
     return [...stubs, ...people]
       .map((person) => ({
         ...person,
-        isPinned: pinnedSet.has(normalizePersonId(person.id)),
+        pinIndex: pinnedIndexMap.get(normalizePersonId(person.id)),
       }))
-      .sort((a, b) => {
-        const aIdx = pinnedSet.has(normalizePersonId(a.id))
-          ? pinnedPersonIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(a.id))
-          : Infinity;
-        const bIdx = pinnedSet.has(normalizePersonId(b.id))
-          ? pinnedPersonIds.findIndex((id) => normalizePersonId(id) === normalizePersonId(b.id))
-          : Infinity;
-        return aIdx - bIdx;
-      });
+      .sort((a, b) => (a.pinIndex ?? Infinity) - (b.pinIndex ?? Infinity));
   }, [people, pinnedPersonIds]);
 
   return { pinnedPersonIds, peopleWithState, handlePersonPin, handlePersonUnpin };

@@ -13,7 +13,8 @@ export interface Person {
   presenceView?: string;
   presenceTaskId?: string | null;
   isSelected: boolean;
-  isPinned?: boolean;
+  /** Present when pinned; value is the display order (0 = first). */
+  pinIndex?: number;
 }
 
 interface AuthorMetaLabelInput {
