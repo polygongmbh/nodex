@@ -133,27 +133,8 @@ export function getTaskStatusChangeBlockedReason(
   if (assignees.length > 0) {
     const assignee = assignees[0];
     const enrichedOwner = findMatchingPerson(task.author.id, knownPeople) || task.author;
-    const ownerIdentifiers = new Set(
-      [task.author.id, task.author.name, task.author.displayName, task.author.nip05]
-        .filter((value): value is string => Boolean(value))
-        .map((value) => value.toLowerCase())
-    );
-    const matchedPerson = findMatchingPerson(assignee, knownPeople);
-    const assigneeLabel = ownerIdentifiers.has(assignee.toLowerCase())
-      ? formatAuthorMetaLabel({
-          personId: enrichedOwner.id,
-          displayName: enrichedOwner.displayName,
-          username: enrichedOwner.name,
-          nip05: enrichedOwner.nip05,
-        })
-      : matchedPerson
-        ? formatAuthorMetaLabel({
-            personId: matchedPerson.id,
-            displayName: matchedPerson.displayName,
-            username: matchedPerson.name,
-            nip05: matchedPerson.nip05,
-          })
-        : formatPrincipalLabel(assignee);
+    const matchedPerson = findMatchingPerson(assignee, [enrichedOwner, ...knownPeople]);
+    const assigneeLabel = matchedPerson ? formatAuthorMetaLabel(matchedPerson) : formatPrincipalLabel(assignee);
     return `Editing is not possible because this task is assigned to ${assigneeLabel}. Only tagged assignees and the creator can update it.`;
   }
   return undefined;

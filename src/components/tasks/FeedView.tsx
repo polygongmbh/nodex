@@ -397,9 +397,9 @@ export function FeedView({
         peopleById.get(update.authorPubkey.toLowerCase()) ||
         task.author;
       const updateAuthorMeta = formatAuthorMetaParts({
-        personId: resolvedUpdateAuthor.id,
+        id: resolvedUpdateAuthor.id,
         displayName: resolvedUpdateAuthor.displayName,
-        username: resolvedUpdateAuthor.name,
+        name: resolvedUpdateAuthor.name,
       });
       const updateAuthorUserFacingId = toUserFacingPubkey(resolvedUpdateAuthor.id);
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);

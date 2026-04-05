@@ -11,9 +11,9 @@ describe("person helpers", () => {
   it("includes display name, username, and abbreviated pubkey", () => {
     const pubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const label = formatAuthorMetaLabel({
-      personId: pubkey,
+      id: pubkey,
       displayName: "Alice Doe",
-      username: "alice",
+      name: "alice",
       nip05: "alice@example.com",
     });
 
@@ -26,9 +26,9 @@ describe("person helpers", () => {
   it("includes display name with abbreviated pubkey when username is not distinct", () => {
     const pubkey = "npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
     const label = formatAuthorMetaLabel({
-      personId: pubkey,
+      id: pubkey,
       displayName: "alice",
-      username: "alice",
+      name: "alice",
     });
 
     expect(label).toContain("alice (npub");
@@ -38,9 +38,9 @@ describe("person helpers", () => {
   it("shows full pubkey when no display name and username are available", () => {
     const pubkey = "npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
     const label = formatAuthorMetaLabel({
-      personId: pubkey,
+      id: pubkey,
       displayName: "",
-      username: "",
+      name: "",
     });
 
     expect(label).toBe(pubkey);
@@ -49,9 +49,9 @@ describe("person helpers", () => {
   it("shows full pubkey when display and username are pubkey-derived placeholders", () => {
     const pubkey = "e752d82f04fb53a2e328ea9fb23a6d7ea52b8ba6f833de31e48d95107e8cb9f2";
     const label = formatAuthorMetaLabel({
-      personId: pubkey,
+      id: pubkey,
       displayName: "e752d82f...b9f2",
-      username: "e752d82f",
+      name: "e752d82f",
     });
 
     expect(label).toBe(nip19.npubEncode(pubkey));
@@ -60,9 +60,9 @@ describe("person helpers", () => {
   it("returns structured parts so secondary metadata can be styled separately", () => {
     const pubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const parts = formatAuthorMetaParts({
-      personId: pubkey,
+      id: pubkey,
       displayName: "Alice Doe",
-      username: "alice",
+      name: "alice",
       nip05: "alice@example.com",
     });
 
@@ -75,9 +75,9 @@ describe("person helpers", () => {
   it("uses nip05 as the primary label when no human display name or username are available", () => {
     const pubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const label = formatAuthorMetaLabel({
-      personId: pubkey,
+      id: pubkey,
       displayName: "",
-      username: "",
+      name: "",
       nip05: "alice@example.com",
     });
 

@@ -120,9 +120,9 @@ export function FeedTaskCard({
         ? "Request"
         : t("tasks.comment");
   const authorMeta = formatAuthorMetaParts({
-    personId: resolvedAuthor.id,
+    id: resolvedAuthor.id,
     displayName: resolvedAuthor.displayName,
-    username: resolvedAuthor.name,
+    name: resolvedAuthor.name,
   });
   const authorUserFacingId = toUserFacingPubkey(resolvedAuthor.id);
   const isPubkeyPrimary =

@@ -17,12 +17,7 @@ export interface Person {
   pinIndex?: number;
 }
 
-interface AuthorMetaLabelInput {
-  personId: string;
-  displayName: string;
-  username?: string;
-  nip05?: string;
-}
+type AuthorMetaLabelInput = Pick<Person, "id" | "displayName" | "name" | "nip05">;
 
 interface AuthorMetaLabelParts {
   primary: string;
@@ -85,32 +80,32 @@ export function getCompactPersonLabel(person: PersonLabelSource): string {
 }
 
 export function formatAuthorMetaLabel({
-  personId,
+  id,
   displayName,
-  username,
+  name,
   nip05,
 }: AuthorMetaLabelInput): string {
-  const parts = formatAuthorMetaParts({ personId, displayName, username, nip05 });
+  const parts = formatAuthorMetaParts({ id, displayName, name, nip05 });
   if (!parts.secondary) return parts.primary;
   return `${parts.primary} (${parts.secondary})`;
 }
 
 export function formatAuthorMetaParts({
-  personId,
+  id,
   displayName,
-  username,
+  name,
   nip05,
 }: AuthorMetaLabelInput): AuthorMetaLabelParts {
   const normalizedName = displayName.trim();
-  const normalizedUsername = (username || "").trim();
+  const normalizedUsername = (name || "").trim();
   const normalizedNip05 = (nip05 || "").trim();
   const hasDisplayName = normalizedName.length > 0;
   const hasUsername = normalizedUsername.length > 0;
   const hasNip05 = normalizedNip05.length > 0;
   const hasHumanDisplayName =
-    hasDisplayName && !isPubkeyDerivedPlaceholder(normalizedName, personId);
+    hasDisplayName && !isPubkeyDerivedPlaceholder(normalizedName, id);
   const hasHumanUsername =
-    hasUsername && !isPubkeyDerivedPlaceholder(normalizedUsername, personId);
+    hasUsername && !isPubkeyDerivedPlaceholder(normalizedUsername, id);
   const hasDistinctUsername =
     hasHumanUsername &&
     (!hasHumanDisplayName || normalizedUsername.toLowerCase() !== normalizedName.toLowerCase());
@@ -120,10 +115,10 @@ export function formatAuthorMetaParts({
     (!hasHumanUsername || normalizedNip05.toLowerCase() !== normalizedUsername.toLowerCase());
 
   if (!hasHumanDisplayName && !hasHumanUsername && !hasDistinctNip05) {
-    return { primary: toUserFacingPubkey(personId) };
+    return { primary: toUserFacingPubkey(id) };
   }
 
-  const abbreviatedPubkey = abbreviatePubkey(personId);
+  const abbreviatedPubkey = abbreviatePubkey(id);
   const secondaryParts: string[] = [];
 
   if (hasDistinctUsername) {
