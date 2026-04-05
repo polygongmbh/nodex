@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Fatal startup and uncaught runtime failures now render a dedicated recovery page with reload and home actions instead of collapsing to a blank screen.
 - Root task posting no longer forces a manual space pick when exactly one connected space is writable, while still blocking creation when multiple writable spaces remain selected.
 - Private-key and Noas sign-ins now survive a same-tab reload via `sessionStorage` without becoming durable browser sessions, and Noas no longer leaves behind the unused persisted username key.
 - Noas sign-in and sign-up now prefill a newly detected default host immediately during the current app run instead of waiting until the next startup.

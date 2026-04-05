@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AppErrorScreen } from "@/components/app/AppErrorScreen";
+import { navigateToAppHome, reloadAppWithCacheBypass } from "@/lib/app-fatal-error";
 import i18n from "@/lib/i18n/config";
 
 interface AppErrorBoundaryProps {
@@ -61,11 +62,11 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem(CHUNK_ERROR_RELOAD_KEY);
     }
-    reloadWithCacheBypass();
+    reloadAppWithCacheBypass();
   };
 
   handleGoHome = () => {
-    window.location.assign("/");
+    navigateToAppHome();
   };
 
   componentDidMount(): void {
@@ -87,38 +88,11 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     }
 
     return (
-      <main className="min-h-screen bg-background text-foreground px-6 py-10 flex items-center justify-center">
-        <section className="w-full max-w-xl border border-border rounded-2xl bg-card/80 backdrop-blur px-6 py-8 shadow-md">
-          <div className="flex items-center gap-3 mb-4">
-            <AlertTriangle className="w-6 h-6 text-destructive" aria-hidden="true" />
-            <h1 className="text-xl font-semibold">{i18n.t("appError.title")}</h1>
-          </div>
-          <p className="text-sm text-muted-foreground mb-5">
-            {i18n.t("appError.description")}
-          </p>
-          {this.state.errorMessage && (
-            <pre className="text-xs bg-muted/50 border border-border rounded-lg p-3 mb-5 overflow-auto">
-              {this.state.errorMessage}
-            </pre>
-          )}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={this.handleReload}
-              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {i18n.t("appError.reload")}
-            </button>
-            <button
-              type="button"
-              onClick={this.handleGoHome}
-              className="px-4 py-2 rounded-lg border border-border hover:bg-muted/60"
-            >
-              {i18n.t("appError.goHome")}
-            </button>
-          </div>
-        </section>
-      </main>
+      <AppErrorScreen
+        errorMessage={this.state.errorMessage}
+        onReload={this.handleReload}
+        onGoHome={this.handleGoHome}
+      />
     );
   }
 }
