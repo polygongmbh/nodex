@@ -40,6 +40,14 @@ const relays: Relay[] = [{
   isActive: true,
   connectionStatus: "connected",
 }];
+const singleInactiveRelay: Relay[] = [{
+  id: "relay-a",
+  name: "Relay A",
+  url: "wss://relay-a.example.com",
+  icon: "R",
+  isActive: false,
+  connectionStatus: "connected",
+}];
 const multiRelays: Relay[] = [
   {
     id: "relay-a",
@@ -177,6 +185,44 @@ describe("TaskCreateComposer", () => {
     expect(dispatchFeedInteraction).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("Select a single space or a parent task to create a new task");
     expect(getComposerPrimaryAction()).toHaveTextContent("Select space");
+  });
+
+  it("allows root task creation when exactly one writable relay is active", async () => {
+    renderCreateComposer({ feedRelays: mixedRelays });
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Ship #backend" },
+    });
+    fireEvent.click(getComposerPrimaryAction());
+
+    await waitFor(() => {
+      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
+        type: "task.create",
+        content: "Ship #backend",
+        tags: ["backend"],
+        taskType: "task",
+        relays: ["relay-a"],
+      }));
+    });
+  });
+
+  it("allows root task creation when no relay is selected but exactly one writable relay exists", async () => {
+    renderCreateComposer({ feedRelays: singleInactiveRelay });
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Ship #backend" },
+    });
+    fireEvent.click(getComposerPrimaryAction());
+
+    await waitFor(() => {
+      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
+        type: "task.create",
+        content: "Ship #backend",
+        tags: ["backend"],
+        taskType: "task",
+        relays: ["relay-a"],
+      }));
+    });
   });
 
   it("allows parent-scoped submit without explicit tags", async () => {

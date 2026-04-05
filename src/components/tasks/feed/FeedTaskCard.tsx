@@ -30,8 +30,8 @@ import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-time
 import { useTranslation } from "react-i18next";
 import type { Nip99ListingStatus, RawNostrEvent, Task } from "@/types";
 import type { Person } from "@/types/person";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 
 interface FeedTaskCardProps {
   task: Task;
@@ -89,6 +89,13 @@ export function FeedTaskCard({
     return t("hints.statusToggle.todo", { alternateKey });
   };
   const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
+  const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
+    const shortcutIntent = getPersonShortcutIntent(event);
+    if (!shortcutIntent) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
+  };
   const formatFeedNpubLabel = (value: string, showFull: boolean): string => {
     if (showFull || value.length <= 11) return value;
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
@@ -284,21 +291,20 @@ export function FeedTaskCard({
             <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4 mx-1.5" : "w-5 h-5")} />
           )}
           <PersonHoverCard person={resolvedAuthor}>
-            <PersonActionMenu person={resolvedAuthor} enableModifierShortcuts>
-              <button
-                type="button"
-                className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-                aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
-              >
-                <UserAvatar
-                  id={resolvedAuthor.id}
-                  displayName={resolvedAuthor.displayName}
-                  avatarUrl={resolvedAuthor.avatar}
-                  className={cn("flex-shrink-0", isMobile ? "w-7 h-7" : "w-8 h-8")}
-                  beamTestId={`feed-beam-${task.id}`}
-                />
-              </button>
-            </PersonActionMenu>
+            <button
+              type="button"
+              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+              aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
+              onClick={(event) => handleAuthorShortcut(event, resolvedAuthor)}
+            >
+              <UserAvatar
+                id={resolvedAuthor.id}
+                displayName={resolvedAuthor.displayName}
+                avatarUrl={resolvedAuthor.avatar}
+                className={cn("flex-shrink-0", isMobile ? "w-7 h-7" : "w-8 h-8")}
+                beamTestId={`feed-beam-${task.id}`}
+              />
+            </button>
           </PersonHoverCard>
           <div className="flex-1 min-w-0">
             <div className={cn("mb-1 flex min-w-0 items-start text-muted-foreground", isMobile ? "gap-1 text-xs" : "gap-2 text-sm")}>
@@ -306,25 +312,24 @@ export function FeedTaskCard({
                 {hasPrimaryAuthorLabel ? (
                   <>
                     <PersonHoverCard person={resolvedAuthor}>
-                      <PersonActionMenu person={resolvedAuthor} enableModifierShortcuts>
-                        <button
-                          type="button"
-                          className={cn(
-                            "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
-                            isMobile && "max-w-full"
-                          )}
-                          aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
-                        >
-                          <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
-                            {primaryAuthorLabel}
+                      <button
+                        type="button"
+                        className={cn(
+                          "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
+                          isMobile && "max-w-full"
+                        )}
+                        aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
+                        onClick={(event) => handleAuthorShortcut(event, resolvedAuthor)}
+                      >
+                        <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
+                          {primaryAuthorLabel}
+                        </span>
+                        {secondaryAuthorLabel && !isMobile ? (
+                          <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
+                            {` (${secondaryAuthorLabel})`}
                           </span>
-                          {secondaryAuthorLabel && !isMobile ? (
-                            <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
-                              {` (${secondaryAuthorLabel})`}
-                            </span>
-                          ) : null}
-                        </button>
-                      </PersonActionMenu>
+                        ) : null}
+                      </button>
                     </PersonHoverCard>
                     <span className="shrink-0">·</span>
                   </>

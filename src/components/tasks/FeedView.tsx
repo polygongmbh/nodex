@@ -44,8 +44,8 @@ import {
 } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
 import { buildFeedDisclosureResetKey } from "./feed-disclosure-reset";
 
@@ -174,6 +174,13 @@ export function FeedView({
 }: FeedViewProps) {
   const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
+    const shortcutIntent = getPersonShortcutIntent(event);
+    if (!shortcutIntent) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
+  };
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { relays, channels, people, quickFilters, channelMatchMode = "and" } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
@@ -443,15 +450,14 @@ export function FeedView({
                   )}
                   <span className="shrink-0">·</span>
                   <PersonHoverCard person={resolvedUpdateAuthor}>
-                    <PersonActionMenu person={resolvedUpdateAuthor} enableModifierShortcuts>
-                      <button
-                        type="button"
-                        className="hover:text-foreground shrink-0"
-                        aria-label={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
-                      >
-                        {updateAuthorMeta.primary}
-                      </button>
-                    </PersonActionMenu>
+                    <button
+                      type="button"
+                      className="hover:text-foreground shrink-0"
+                      aria-label={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
+                      onClick={(event) => handleAuthorShortcut(event, resolvedUpdateAuthor)}
+                    >
+                      {updateAuthorMeta.primary}
+                    </button>
                   </PersonHoverCard>
                   <span className="shrink-0">·</span>
                   <button

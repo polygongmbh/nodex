@@ -361,6 +361,67 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(getTaskCreateCalls()).toHaveLength(0);
   });
 
+  it("submits a root task when exactly one active relay is writable", async () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        currentView="tree"
+        relays={[
+          { id: "relay-one", name: "Relay One", icon: "D", isActive: true, connectionStatus: "connected" },
+          { id: "relay-two", name: "Relay Two", icon: "D", isActive: true, connectionStatus: "read-only" },
+        ]}
+        channels={channels}
+        people={people}
+        canCreateContent={true}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.click(getMobilePrimaryAction());
+
+    await waitFor(() => {
+      expect(getTaskCreateCalls()).toHaveLength(1);
+    });
+    expectLatestTaskCreateCall({
+      type: "task.create",
+      content: "Ship #general",
+      tags: ["general"],
+      relays: ["relay-one"],
+      taskType: "task",
+    });
+  });
+
+  it("submits a root task when no relay is selected but exactly one writable relay exists", async () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        currentView="tree"
+        relays={[
+          { id: "relay-one", name: "Relay One", icon: "D", isActive: false, connectionStatus: "connected" },
+        ]}
+        channels={channels}
+        people={people}
+        canCreateContent={true}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.click(getMobilePrimaryAction());
+
+    await waitFor(() => {
+      expect(getTaskCreateCalls()).toHaveLength(1);
+    });
+    expectLatestTaskCreateCall({
+      type: "task.create",
+      content: "Ship #general",
+      tags: ["general"],
+      relays: ["relay-one"],
+      taskType: "task",
+    });
+  });
+
   it("allows focused-subtask send without explicit tags", async () => {
     render(
       <UnifiedBottomBar

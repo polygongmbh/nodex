@@ -49,6 +49,8 @@ import {
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
+import { isWritableRelay } from "@/components/tasks/task-composer-runtime";
+import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
@@ -470,8 +472,13 @@ export function UnifiedBottomBar({
         alt: attachment.alt,
         name: attachment.name || attachment.fileName,
       }));
-    const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
-    const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
+    const activeWritableRelayIds = relays
+      .filter((relay) => relay.isActive && isWritableRelay(relay))
+      .map((relay) => relay.id);
+    const relayIds = resolveEffectiveWritableRelayIds({
+      selectedRelayIds: activeWritableRelayIds,
+      relays,
+    });
     if (submitType === "task" && !focusedTaskId && relayIds.length !== 1) {
       toast.error(t("toasts.errors.selectRelayOrParent"));
       return;
@@ -697,8 +704,14 @@ export function UnifiedBottomBar({
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
-  const activeRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
-  const hasInvalidRootTaskRelaySelection = !focusedTaskId && activeRelayIds.length !== 1;
+  const activeWritableRelayIds = relays
+    .filter((relay) => relay.isActive && isWritableRelay(relay))
+    .map((relay) => relay.id);
+  const effectiveWritableRelayIds = resolveEffectiveWritableRelayIds({
+    selectedRelayIds: activeWritableRelayIds,
+    relays,
+  });
+  const hasInvalidRootTaskRelaySelection = !focusedTaskId && effectiveWritableRelayIds.length !== 1;
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
   const hasAtLeastOneTag = countHashtagsInContent(sharedText) + explicitTagNames.length > 0;

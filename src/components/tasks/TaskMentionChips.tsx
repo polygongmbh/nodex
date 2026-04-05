@@ -3,9 +3,10 @@ import type { Person } from "@/types/person";
 import { AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedPersonLookup, useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 
 const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 
@@ -54,6 +55,7 @@ export function TaskMentionChips({
 }: TaskMentionChipsProps) {
   const { people: contextPeople } = useFeedSurfaceState();
   const { getPersonById } = useFeedPersonLookup();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const people = peopleProp ?? contextPeople;
   const mentionPubkeys = collectMentionPubkeys(task);
   if (mentionPubkeys.length === 0) return null;
@@ -69,16 +71,21 @@ export function TaskMentionChips({
     if (clickablePerson) {
       return (
         <PersonHoverCard key={pubkey} person={clickablePerson}>
-          <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
-            <button
-              type="button"
-              className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
-              aria-label={`Person actions for ${label}`}
-            >
-              <AtSign className="h-3 w-3" />
-              {label}
-            </button>
-          </PersonActionMenu>
+          <button
+            type="button"
+            className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+            aria-label={`Person actions for ${label}`}
+            onClick={(event) => {
+              const shortcutIntent = getPersonShortcutIntent(event);
+              if (!shortcutIntent) return;
+              event.preventDefault();
+              event.stopPropagation();
+              void dispatchFeedInteraction(toPersonShortcutInteraction(clickablePerson, shortcutIntent));
+            }}
+          >
+            <AtSign className="h-3 w-3" />
+            {label}
+          </button>
         </PersonHoverCard>
       );
     }

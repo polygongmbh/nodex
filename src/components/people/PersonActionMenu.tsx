@@ -23,7 +23,7 @@ import { resumePersonHoverCards, suspendPersonHoverCards } from "./PersonHoverCa
 
 interface PersonActionMenuProps {
   person: Person;
-  children: React.ReactElement;
+  children: React.ReactNode;
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   enableModifierShortcuts?: boolean;
@@ -37,12 +37,6 @@ export function PersonActionMenu({
   enableModifierShortcuts = false,
 }: PersonActionMenuProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const childProps = children.props as {
-    onClick?: (event: React.MouseEvent<HTMLElement>) => void;
-    onMouseDownCapture?: (event: React.MouseEvent<HTMLElement>) => void;
-    onPointerDown?: (event: React.PointerEvent<HTMLElement>) => void;
-    onPointerDownCapture?: (event: React.PointerEvent<HTMLElement>) => void;
-  };
   const handledPointerShortcutRef = React.useRef(false);
   const pointerOpenedMenuRef = React.useRef(false);
   const shouldPreventCloseAutoFocusRef = React.useRef(false);
@@ -71,28 +65,25 @@ export function PersonActionMenu({
       }}
     >
       <DropdownMenuTrigger asChild>
-        {React.cloneElement(children, {
-          onPointerDownCapture: (event: React.PointerEvent<HTMLElement>) => {
-            childProps.onPointerDownCapture?.(event);
+        <span
+          className="inline-flex"
+          onPointerDownCapture={(event: React.PointerEvent<HTMLElement>) => {
             if (event.button !== 0) return;
             if (handleShortcut(event)) {
               handledPointerShortcutRef.current = true;
             }
-          },
-          onMouseDownCapture: (event: React.MouseEvent<HTMLElement>) => {
-            childProps.onMouseDownCapture?.(event);
+          }}
+          onMouseDownCapture={(event: React.MouseEvent<HTMLElement>) => {
             if (event.button !== 0) return;
             if (handleShortcut(event)) {
               handledPointerShortcutRef.current = true;
             }
-          },
-          onPointerDown: (event: React.PointerEvent<HTMLElement>) => {
+          }}
+          onPointerDown={(event: React.PointerEvent<HTMLElement>) => {
             event.stopPropagation();
             pointerOpenedMenuRef.current = event.button === 0;
-            if (handledPointerShortcutRef.current) return;
-            childProps.onPointerDown?.(event);
-          },
-          onClick: (event: React.MouseEvent<HTMLElement>) => {
+          }}
+          onClick={(event: React.MouseEvent<HTMLElement>) => {
             event.stopPropagation();
             if (handledPointerShortcutRef.current) {
               handledPointerShortcutRef.current = false;
@@ -100,15 +91,16 @@ export function PersonActionMenu({
               return;
             }
             if (handleShortcut(event)) return;
-            childProps.onClick?.(event);
             if (pointerOpenedMenuRef.current) {
               pointerOpenedMenuRef.current = false;
               queueMicrotask(() => {
                 event.currentTarget.blur();
               });
             }
-          },
-        })}
+          }}
+        >
+          {children}
+        </span>
       </DropdownMenuTrigger>
       <PersonActionMenuContent
         person={person}

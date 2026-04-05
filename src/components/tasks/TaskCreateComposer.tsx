@@ -52,13 +52,13 @@ export function TaskCreateComposer({
 }: TaskCreateComposerProps) {
   const { createHttpAuthHeader } = useNDK();
   const environment = useResolvedTaskComposerEnvironment({});
-  const { shouldHideComposer, activeWritableRelayIds, canCreateContent, externalSubmitBlockByType } =
+  const { shouldHideComposer, effectiveWritableRelayIds, canCreateContent, externalSubmitBlockByType } =
     useComposerRelayBlock(focusedTaskId);
   const filterSync = useComposerFilterSync(environment);
   const handleSubmit = useComposerSubmitHandler({
     focusedTaskId,
     initialStatus,
-    activeRelayIds: activeWritableRelayIds,
+    activeRelayIds: effectiveWritableRelayIds,
     closeOnSuccess,
     onCancel,
   });

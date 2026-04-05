@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Root task posting no longer forces a manual space pick when exactly one connected space is writable, while still blocking creation when multiple writable spaces remain selected.
 - Task creators can now keep editing assigned tasks even when their identity is represented as an `npub` in one place and a hex pubkey in another, so creator permissions no longer silently fail on mixed-format identities.
 
 ## [2.12.2] - 2026-04-12
