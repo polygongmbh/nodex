@@ -1,11 +1,7 @@
 import type { Task } from "@/types";
-import type { Person } from "@/types/person";
-import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
+import { extractMentionIdentifiersFromContent, formatMentionIdentifierForDisplay } from "@/lib/mentions";
+import { formatAuthorMetaLabel, type Person } from "@/types/person";
 import { resolveTaskEditMode } from "./task-permissions-policy";
-
-export function extractAssignedMentionsFromContent(content: string): string[] {
-  return extractMentionIdentifiersFromContent(content);
-}
 
 function getTaskAssignees(task: Task): string[] {
   const explicitAssigneePubkeys =
@@ -19,7 +15,7 @@ function getTaskAssignees(task: Task): string[] {
       ?.map((value) => value.trim().toLowerCase())
       .filter((value): value is string => Boolean(value)) || [];
   if (explicitMentions.length > 0) return explicitMentions;
-  return extractAssignedMentionsFromContent(task.content);
+  return extractMentionIdentifiersFromContent(task.content);
 }
 
 function getTaskAssigneePubkeys(task: Task): string[] {
@@ -35,7 +31,7 @@ function getTaskAssigneePubkeys(task: Task): string[] {
       .filter((value) => /^[a-f0-9]{64}$/i.test(value)) || [];
   if (explicitMentionPubkeys.length > 0) return explicitMentionPubkeys;
 
-  return extractAssignedMentionsFromContent(task.content).filter((value) => /^[a-f0-9]{64}$/i.test(value));
+  return extractMentionIdentifiersFromContent(task.content).filter((value) => /^[a-f0-9]{64}$/i.test(value));
 }
 
 function normalizeIdentity(value: string | undefined): string {
@@ -109,37 +105,10 @@ export function canUserChangeTaskStatus(task: Task, currentUser?: Person): boole
   return canUserUpdateTask(task, currentUser);
 }
 
-function getPersonIdentityLabel(person: Person): string {
-  const displayName = person.displayName?.trim();
-  const username = person.name?.trim();
-  const nip05 = person.nip05?.trim();
-  const pubkey = person.id?.trim();
-
-  const primary = displayName || username || nip05 || pubkey || "another user";
-  const extras: string[] = [];
-
-  if (username && username !== primary) extras.push(`@${username}`);
-  if (nip05 && nip05 !== primary) extras.push(nip05);
-  if (pubkey && pubkey !== primary) extras.push(pubkey);
-
-  if (extras.length === 0) return primary;
-  return `${primary} (${extras.join(", ")})`;
-}
-
-function getTaskOwnerLabel(task: Task, knownPeople: Person[]): string {
-  const enriched = findMatchingPerson(task.author.id, knownPeople) || task.author;
-  return getPersonIdentityLabel({
-    ...task.author,
-    ...enriched,
-  });
-}
-
 function formatPrincipalLabel(value: string): string {
   const normalized = value.trim();
   if (!normalized) return "another user";
-  if (/^[a-f0-9]{64}$/i.test(normalized)) return normalized;
-  if (/^[a-z0-9._-]+$/i.test(normalized)) return `@${normalized}`;
-  return normalized;
+  return formatMentionIdentifierForDisplay(normalized);
 }
 
 export function getTaskStatusChangeBlockedReason(
@@ -163,6 +132,7 @@ export function getTaskStatusChangeBlockedReason(
   const assignees = getTaskAssignees(task);
   if (assignees.length > 0) {
     const assignee = assignees[0];
+    const enrichedOwner = findMatchingPerson(task.author.id, knownPeople) || task.author;
     const ownerIdentifiers = new Set(
       [task.author.id, task.author.name, task.author.displayName, task.author.nip05]
         .filter((value): value is string => Boolean(value))
@@ -170,9 +140,19 @@ export function getTaskStatusChangeBlockedReason(
     );
     const matchedPerson = findMatchingPerson(assignee, knownPeople);
     const assigneeLabel = ownerIdentifiers.has(assignee.toLowerCase())
-      ? getTaskOwnerLabel(task, knownPeople)
+      ? formatAuthorMetaLabel({
+          personId: enrichedOwner.id,
+          displayName: enrichedOwner.displayName,
+          username: enrichedOwner.name,
+          nip05: enrichedOwner.nip05,
+        })
       : matchedPerson
-        ? getPersonIdentityLabel(matchedPerson)
+        ? formatAuthorMetaLabel({
+            personId: matchedPerson.id,
+            displayName: matchedPerson.displayName,
+            username: matchedPerson.name,
+            nip05: matchedPerson.nip05,
+          })
         : formatPrincipalLabel(assignee);
     return `Editing is not possible because this task is assigned to ${assigneeLabel}. Only tagged assignees and the creator can update it.`;
   }

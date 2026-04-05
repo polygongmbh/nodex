@@ -14,10 +14,12 @@ describe("person helpers", () => {
       personId: pubkey,
       displayName: "Alice Doe",
       username: "alice",
+      nip05: "alice@example.com",
     });
 
     expect(label).toContain("Alice Doe");
     expect(label).toContain("@alice");
+    expect(label).toContain("alice@example.com");
     expect(label).toContain("npub1");
   });
 
@@ -61,10 +63,26 @@ describe("person helpers", () => {
       personId: pubkey,
       displayName: "Alice Doe",
       username: "alice",
+      nip05: "alice@example.com",
     });
 
     expect(parts.primary).toBe("Alice Doe");
-    expect(parts.secondary?.startsWith("@alice · npub")).toBe(true);
+    expect(parts.secondary).toContain("@alice");
+    expect(parts.secondary).toContain("alice@example.com");
+    expect(parts.secondary).toContain("npub1");
+  });
+
+  it("uses nip05 as the primary label when no human display name or username are available", () => {
+    const pubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const label = formatAuthorMetaLabel({
+      personId: pubkey,
+      displayName: "",
+      username: "",
+      nip05: "alice@example.com",
+    });
+
+    expect(label).toContain("alice@example.com");
+    expect(label).toContain("npub1");
   });
 
   it("prefers display name over username for compact person labels", () => {

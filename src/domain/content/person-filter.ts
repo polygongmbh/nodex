@@ -1,6 +1,6 @@
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
-import { extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
+import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 
 function normalize(value?: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -38,7 +38,7 @@ export function taskMatchesSelectedPeople(task: Task, selectedPeople: Person[]):
     if (normalizedMention) taskMentions.add(normalizedMention);
   }
 
-  for (const mention of extractAssignedMentionsFromContent(task.content || "")) {
+  for (const mention of extractMentionIdentifiersFromContent(task.content || "")) {
     const normalizedMention = normalize(mention);
     if (normalizedMention) taskMentions.add(normalizedMention);
   }

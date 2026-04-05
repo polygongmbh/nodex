@@ -21,6 +21,7 @@ interface AuthorMetaLabelInput {
   personId: string;
   displayName: string;
   username?: string;
+  nip05?: string;
 }
 
 interface AuthorMetaLabelParts {
@@ -87,8 +88,9 @@ export function formatAuthorMetaLabel({
   personId,
   displayName,
   username,
+  nip05,
 }: AuthorMetaLabelInput): string {
-  const parts = formatAuthorMetaParts({ personId, displayName, username });
+  const parts = formatAuthorMetaParts({ personId, displayName, username, nip05 });
   if (!parts.secondary) return parts.primary;
   return `${parts.primary} (${parts.secondary})`;
 }
@@ -97,11 +99,14 @@ export function formatAuthorMetaParts({
   personId,
   displayName,
   username,
+  nip05,
 }: AuthorMetaLabelInput): AuthorMetaLabelParts {
   const normalizedName = displayName.trim();
   const normalizedUsername = (username || "").trim();
+  const normalizedNip05 = (nip05 || "").trim();
   const hasDisplayName = normalizedName.length > 0;
   const hasUsername = normalizedUsername.length > 0;
+  const hasNip05 = normalizedNip05.length > 0;
   const hasHumanDisplayName =
     hasDisplayName && !isPubkeyDerivedPlaceholder(normalizedName, personId);
   const hasHumanUsername =
@@ -109,35 +114,46 @@ export function formatAuthorMetaParts({
   const hasDistinctUsername =
     hasHumanUsername &&
     (!hasHumanDisplayName || normalizedUsername.toLowerCase() !== normalizedName.toLowerCase());
+  const hasDistinctNip05 =
+    hasNip05 &&
+    (!hasHumanDisplayName || normalizedNip05.toLowerCase() !== normalizedName.toLowerCase()) &&
+    (!hasHumanUsername || normalizedNip05.toLowerCase() !== normalizedUsername.toLowerCase());
 
-  if (!hasHumanDisplayName && !hasHumanUsername) {
+  if (!hasHumanDisplayName && !hasHumanUsername && !hasDistinctNip05) {
     return { primary: toUserFacingPubkey(personId) };
   }
 
   const abbreviatedPubkey = abbreviatePubkey(personId);
+  const secondaryParts: string[] = [];
 
   if (hasDistinctUsername) {
-    if (hasHumanDisplayName) {
-      return {
-        primary: normalizedName,
-        secondary: `@${normalizedUsername} · ${abbreviatedPubkey}`,
-      };
-    }
-    return {
-      primary: `@${normalizedUsername}`,
-      secondary: abbreviatedPubkey,
-    };
+    secondaryParts.push(`@${normalizedUsername}`);
   }
+
+  if (hasDistinctNip05) {
+    secondaryParts.push(normalizedNip05);
+  }
+
+  secondaryParts.push(abbreviatedPubkey);
 
   if (hasHumanDisplayName) {
     return {
       primary: normalizedName,
-      secondary: abbreviatedPubkey,
+      secondary: secondaryParts.join(" · "),
+    };
+  }
+
+  if (hasHumanUsername) {
+    return {
+      primary: `@${normalizedUsername}`,
+      secondary: secondaryParts
+        .filter((part) => part !== `@${normalizedUsername}`)
+        .join(" · "),
     };
   }
 
   return {
-    primary: `@${normalizedUsername}`,
+    primary: normalizedNip05,
     secondary: abbreviatedPubkey,
   };
 }

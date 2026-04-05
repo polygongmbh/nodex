@@ -1,6 +1,6 @@
 import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, Task } from "@/types";
 import type { Person } from "@/types/person";
-import { extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
+import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
   extractTaskStateTargetId,
   isTaskStateEventKind,
@@ -189,7 +189,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const mentionedPubkeys = event.tags
     .filter((tag) => tag[0]?.toLowerCase() === "p" && tag[1])
     .map((tag) => tag[1].toLowerCase());
-  const mentionedHandles = extractAssignedMentionsFromContent(normalizedContent);
+  const mentionedHandles = extractMentionIdentifiersFromContent(normalizedContent);
   const referencedProfilePubkeys = extractNostrContentReferences(normalizedContent)
     .flatMap((reference) => (reference.type === "profile" ? [reference.pubkey] : []));
   const priority = parsePriorityTag(event.tags);

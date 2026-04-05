@@ -5,7 +5,6 @@ import {
   canPubkeyUpdateTask,
   canUserChangeTaskStatus,
   canUserUpdateTask,
-  extractAssignedMentionsFromContent,
   getTaskStatusChangeBlockedReason,
 } from "./task-permissions";
 
@@ -152,21 +151,6 @@ describe("canPubkeyUpdateTask", () => {
   });
 });
 
-describe("extractAssignedMentionsFromContent", () => {
-  it("extracts normalized unique @mentions", () => {
-    expect(extractAssignedMentionsFromContent("pair with @Alice and @bob and @alice")).toEqual([
-      "alice",
-      "bob",
-    ]);
-  });
-
-  it("extracts nip05 mentions", () => {
-    expect(extractAssignedMentionsFromContent("pair with @alice@example.com")).toEqual([
-      "alice@example.com",
-    ]);
-  });
-});
-
 describe("getTaskStatusChangeBlockedReason", () => {
   it("returns assignee-focused message when task is assigned to another user", () => {
     const otherAuthor = makeTestPerson({ id: "other-user", name: "bob", nip05: "bob@example.com" });
@@ -179,10 +163,12 @@ describe("getTaskStatusChangeBlockedReason", () => {
     expect(reason).toContain("other-user");
   });
 
-  it("does not trim pubkeys in assignee-focused message", () => {
+  it("uses the shared compact pubkey formatter in assignee-focused messages", () => {
     const pubkey = "f".repeat(64);
     const otherAuthor = makeTestPerson({ id: "other-user", name: "bob", nip05: "bob@example.com" });
-    expect(getTaskStatusChangeBlockedReason({ ...baseTask, author: otherAuthor, mentions: [pubkey] }, user)).toContain(pubkey);
+    const reason = getTaskStatusChangeBlockedReason({ ...baseTask, author: otherAuthor, mentions: [pubkey] }, user);
+    expect(reason).toContain("npub1");
+    expect(reason).toContain("…");
   });
 
   it("returns undefined for signed-in users on unassigned tasks regardless of creator", () => {
