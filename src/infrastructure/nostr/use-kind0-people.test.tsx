@@ -1,9 +1,10 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useKind0People } from "./use-kind0-people";
 import * as peopleFromKind0 from "./people-from-kind0";
 import { DEMO_RELAY_URL } from "@/data/basic-nostr-events";
 import { NostrEventKind } from "@/lib/nostr/types";
+import { makePerson } from "@/test/fixtures";
 
 describe("useKind0People", () => {
   beforeEach(() => {
@@ -59,6 +60,57 @@ describe("useKind0People", () => {
 
     await waitFor(() => {
       expect(loadSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("preserves interactive people selection across semantically unchanged rerenders", async () => {
+    peopleFromKind0.saveCachedKind0Events([
+      {
+        kind: NostrEventKind.Metadata,
+        pubkey: "a".repeat(64),
+        created_at: 1,
+        content: JSON.stringify({
+          name: "alice",
+          displayName: "Alice Demo",
+        }),
+      },
+    ], DEMO_RELAY_URL);
+
+    const { result, rerender } = renderHook(
+      ({ relayUrls }) => useKind0People([], relayUrls, null),
+      {
+        initialProps: { relayUrls: [DEMO_RELAY_URL] },
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.people).toHaveLength(1);
+    });
+
+    act(() => {
+      result.current.setPeople((previous) =>
+        previous.map((person) =>
+          person.id === "a".repeat(64) ? { ...person, isSelected: true } : person
+        )
+      );
+    });
+
+    expect(result.current.people[0]?.isSelected).toBe(true);
+
+    act(() => {
+      result.current.setPeople((previous) => [
+        ...previous,
+        makePerson({ id: "manual", name: "manual", displayName: "Manual Person", isSelected: true }),
+      ]);
+    });
+
+    rerender({ relayUrls: [` ${DEMO_RELAY_URL}/`, DEMO_RELAY_URL] });
+
+    await waitFor(() => {
+      expect(result.current.people.find((person) => person.id === "a".repeat(64))?.isSelected).toBe(true);
+      expect(result.current.people.find((person) => person.id === "manual")).toEqual(
+        expect.objectContaining({ isSelected: true, displayName: "Manual Person" })
+      );
     });
   });
 });

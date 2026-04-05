@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type { Person } from "@/types/person";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
@@ -42,22 +42,80 @@ interface UseKind0PeopleResult {
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
-function arePeopleListsEqual(previous: Person[], next: Person[]): boolean {
-  if (previous.length !== next.length) return false;
-  return previous.every((person, index) => {
-    const candidate = next[index];
-    return (
-      person.id === candidate.id &&
-      person.name === candidate.name &&
-      person.displayName === candidate.displayName &&
-      person.nip05 === candidate.nip05 &&
-      person.about === candidate.about &&
-      person.avatar === candidate.avatar &&
-      person.isOnline === candidate.isOnline &&
-      person.onlineStatus === candidate.onlineStatus &&
-      person.isSelected === candidate.isSelected
-    );
+function buildPriorityLookup(prioritizedPubkeys: string[]): Map<string, number> {
+  return new Map(prioritizedPubkeys.map((pubkey, index) => [pubkey.toLowerCase(), index] as const));
+}
+
+function sortPeopleByPriority(people: Person[], priorityLookup: Map<string, number>): Person[] {
+  return [...people].sort((a, b) => {
+    const aPriority = priorityLookup.get(a.id.toLowerCase());
+    const bPriority = priorityLookup.get(b.id.toLowerCase());
+    if (aPriority !== undefined && bPriority !== undefined) return aPriority - bPriority;
+    if (aPriority !== undefined) return -1;
+    if (bPriority !== undefined) return 1;
+    return a.displayName.localeCompare(b.displayName);
   });
+}
+
+function mergeDerivedPeopleWithInteractiveState(
+  derivedPeople: Person[],
+  interactivePeople: Person[],
+  priorityLookup: Map<string, number>
+): Person[] {
+  const interactiveById = new Map(interactivePeople.map((person) => [person.id, person]));
+  const merged = derivedPeople.map((person) => {
+    const interactivePerson = interactiveById.get(person.id);
+    if (!interactivePerson) return person;
+    return {
+      ...person,
+      isSelected: interactivePerson.isSelected,
+    };
+  });
+
+  interactivePeople.forEach((person) => {
+    if (interactiveById.has(person.id) && !derivedPeople.some((entry) => entry.id === person.id)) {
+      merged.push(person);
+    }
+  });
+
+  return sortPeopleByPriority(merged, priorityLookup);
+}
+
+function buildDerivedPeople(
+  visiblePubkeys: string[],
+  cachedKind0Events: Kind0LikeEvent[],
+  fallbackKind0Events: Kind0LikeEvent[],
+  user: NostrUserLike | null,
+  loggedInIdentityPriority: string[]
+): Person[] {
+  const priorityLookup = buildPriorityLookup(loggedInIdentityPriority);
+  let people = derivePeopleFromKind0Events(
+    visiblePubkeys,
+    cachedKind0Events,
+    fallbackKind0Events,
+    [],
+    {
+      prioritizedPubkeys: loggedInIdentityPriority,
+    }
+  );
+
+  if (user?.pubkey && !people.some((person) => person.id === user.pubkey)) {
+    people = [
+      ...people,
+      {
+        id: user.pubkey,
+        name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
+        displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
+        nip05: user.profile?.nip05?.trim().toLowerCase(),
+        avatar: user.profile?.picture,
+        isOnline: true,
+        onlineStatus: "online",
+        isSelected: false,
+      },
+    ];
+  }
+
+  return sortPeopleByPriority(people, priorityLookup);
 }
 
 export function useKind0People(
@@ -70,7 +128,7 @@ export function useKind0People(
     [selectedRelayUrls]
   );
   const selectedRelayScopeKey = normalizedSelectedRelayUrls.join("|");
-  const [people, setPeople] = useState<Person[]>([]);
+  const [interactivePeople, setInteractivePeople] = useState<Person[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState<Kind0LikeEvent[]>(() =>
     loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls)
   );
@@ -218,45 +276,38 @@ export function useKind0People(
     [cachedKind0Events, nostrEvents]
   );
 
-  useEffect(() => {
-    const priorityLookup = new Map(
-      loggedInIdentityPriority.map((pubkey, index) => [pubkey.toLowerCase(), index] as const)
-    );
-    const sortPeopleByPriority = (value: Person[]): Person[] =>
-      [...value].sort((a, b) => {
-        const aPriority = priorityLookup.get(a.id.toLowerCase());
-        const bPriority = priorityLookup.get(b.id.toLowerCase());
-        if (aPriority !== undefined && bPriority !== undefined) return aPriority - bPriority;
-        if (aPriority !== undefined) return -1;
-        if (bPriority !== undefined) return 1;
-        return a.displayName.localeCompare(b.displayName);
-      });
+  const priorityLookup = useMemo(
+    () => buildPriorityLookup(loggedInIdentityPriority),
+    [loggedInIdentityPriority]
+  );
+  const derivedPeople = useMemo(
+    () => buildDerivedPeople(
+      visiblePubkeys,
+      cachedKind0Events,
+      fallbackKind0Events,
+      user,
+      loggedInIdentityPriority
+    ),
+    [cachedKind0Events, fallbackKind0Events, loggedInIdentityPriority, user, visiblePubkeys]
+  );
+  const derivedPeopleRef = useRef(derivedPeople);
+  derivedPeopleRef.current = derivedPeople;
 
-    setPeople((prev) => {
-      let next = derivePeopleFromKind0Events(visiblePubkeys, cachedKind0Events, fallbackKind0Events, prev, {
-        prioritizedPubkeys: loggedInIdentityPriority,
-      });
+  const people = useMemo(
+    () => mergeDerivedPeopleWithInteractiveState(derivedPeople, interactivePeople, priorityLookup),
+    [derivedPeople, interactivePeople, priorityLookup]
+  );
 
-      if (user?.pubkey && !next.some((person) => person.id === user.pubkey)) {
-        next = [
-          ...next,
-          {
-            id: user.pubkey,
-            name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
-            displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
-            nip05: user.profile?.nip05?.trim().toLowerCase(),
-            avatar: user.profile?.picture,
-            isOnline: true,
-            onlineStatus: "online",
-            isSelected: prev.find((person) => person.id === user.pubkey)?.isSelected || false,
-          },
-        ];
-      }
-
-      const sortedPeople = sortPeopleByPriority(next);
-      return arePeopleListsEqual(prev, sortedPeople) ? prev : sortedPeople;
+  const setPeople = useCallback<Dispatch<SetStateAction<Person[]>>>((value) => {
+    setInteractivePeople((previousInteractivePeople) => {
+      const previousMergedPeople = mergeDerivedPeopleWithInteractiveState(
+        derivedPeopleRef.current,
+        previousInteractivePeople,
+        priorityLookup
+      );
+      return typeof value === "function" ? value(previousMergedPeople) : value;
     });
-  }, [cachedKind0Events, fallbackKind0Events, loggedInIdentityPriority, user, visiblePubkeys]);
+  }, [priorityLookup]);
 
   const removeCachedRelayProfile = useCallback((relayUrl: string) => {
     removeCachedKind0EventsByRelayUrl(relayUrl);
