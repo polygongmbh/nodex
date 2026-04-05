@@ -230,7 +230,7 @@ const Index = () => {
     mentionAutocompletePeople,
     sidebarPeople,
     currentUser,
-    hasCachedCurrentUserProfileMetadata,
+    hasCurrentUserProfileMetadata,
   } = useIndexDerivedData({
     nostrEvents,
     demoTasks,
@@ -283,7 +283,7 @@ const Index = () => {
     authPolicy,
     profileCompletionPromptSignal,
   } = useFeedAuthPolicy({
-    hasCachedCurrentUserProfileMetadata,
+    hasCurrentUserProfileMetadata,
   });
 
   const shortcutsHelp = useKeyboardShortcutsHelp();

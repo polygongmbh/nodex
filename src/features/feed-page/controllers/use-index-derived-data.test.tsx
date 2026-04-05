@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -11,6 +11,8 @@ import type { PostedTag, Relay } from "@/types";
 import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
+import { NostrEventKind } from "@/lib/nostr/types";
+import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
 
 const mockApi: FeedInteractionPipelineApi = {
   dispatch: () => Promise.resolve({ envelope: { id: 0, dispatchedAtMs: 0, intent: { type: "ui.openGuide" } }, outcome: { status: "handled" } }),
@@ -246,6 +248,108 @@ describe("useIndexDerivedData sidebar people", () => {
 
     expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("bob");
     expect(screen.getByTestId("sidebar-people-ids")).not.toHaveTextContent("alice");
+  });
+});
+
+describe("useIndexDerivedData current user profile metadata", () => {
+  it("treats a signed-in guest with local name and displayName as already having profile metadata", () => {
+    const guestUser: Partial<NDKUser> = {
+      pubkey: "a".repeat(64),
+      npub: "npub1guest",
+      profile: {
+        name: "guest-user",
+        displayName: "Guest User",
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useIndexDerivedData({
+        nostrEvents: [],
+        demoTasks: [],
+        localTasks: [],
+        postedTags: [],
+        suppressedNostrEventIds: new Set(),
+        people: [],
+        latestPresenceByAuthor: new Map(),
+        cachedKind0Events: [],
+        user: guestUser as NDKUser,
+        effectiveActiveRelayIds: new Set(["relay-one"]),
+        relays,
+        channelFrecencyState: {},
+        personFrecencyState: {},
+        isHydrating: false,
+      })
+    );
+
+    expect(result.current.hasCurrentUserProfileMetadata).toBe(true);
+  });
+
+  it("keeps requiring metadata when the current user lacks required local profile fields and cache", () => {
+    const guestUser: Partial<NDKUser> = {
+      pubkey: "b".repeat(64),
+      npub: "npub1incomplete",
+      profile: {
+        displayName: "Only Display Name",
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useIndexDerivedData({
+        nostrEvents: [],
+        demoTasks: [],
+        localTasks: [],
+        postedTags: [],
+        suppressedNostrEventIds: new Set(),
+        people: [],
+        latestPresenceByAuthor: new Map(),
+        cachedKind0Events: [],
+        user: guestUser as NDKUser,
+        effectiveActiveRelayIds: new Set(["relay-one"]),
+        relays,
+        channelFrecencyState: {},
+        personFrecencyState: {},
+        isHydrating: false,
+      })
+    );
+
+    expect(result.current.hasCurrentUserProfileMetadata).toBe(false);
+  });
+
+  it("still treats cached kind-0 metadata as sufficient when local profile fields are absent", () => {
+    const pubkey = "c".repeat(64);
+    const guestUser: Partial<NDKUser> = {
+      pubkey,
+      npub: "npub1cached",
+      profile: {},
+    };
+
+    const { result } = renderHook(() =>
+      useIndexDerivedData({
+        nostrEvents: [],
+        demoTasks: [],
+        localTasks: [],
+        postedTags: [],
+        suppressedNostrEventIds: new Set(),
+        people: [],
+        latestPresenceByAuthor: new Map(),
+        cachedKind0Events: [
+          {
+            kind: NostrEventKind.Metadata,
+            pubkey,
+            created_at: 1,
+            content: JSON.stringify({ name: "cached", displayName: "Cached User" }),
+          },
+        ],
+        user: guestUser as NDKUser,
+        effectiveActiveRelayIds: new Set(["relay-one"]),
+        relays,
+        channelFrecencyState: {},
+        personFrecencyState: {},
+        isHydrating: false,
+      })
+    );
+
+    expect(result.current.hasCurrentUserProfileMetadata).toBe(true);
   });
 });
 

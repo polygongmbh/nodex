@@ -1,7 +1,7 @@
 export interface AuthActionPolicyInput {
   isSignedIn: boolean;
   needsProfileSetup: boolean;
-  hasCachedCurrentUserProfileMetadata?: boolean;
+  hasCurrentUserProfileMetadata?: boolean;
 }
 
 export interface AuthActionPolicy {
@@ -15,10 +15,10 @@ export interface AuthActionPolicy {
 export function computeAuthActionPolicy({
   isSignedIn,
   needsProfileSetup,
-  hasCachedCurrentUserProfileMetadata = true,
+  hasCurrentUserProfileMetadata = true,
 }: AuthActionPolicyInput): AuthActionPolicy {
   const requiresProfileSetup =
-    isSignedIn && (needsProfileSetup || !hasCachedCurrentUserProfileMetadata);
+    isSignedIn && (needsProfileSetup || !hasCurrentUserProfileMetadata);
 
   return {
     isSignedIn,
