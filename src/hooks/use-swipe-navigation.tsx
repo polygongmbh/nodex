@@ -92,7 +92,11 @@ export function useSwipeNavigation({
   const lastWheelSwipeAt = useRef(0);
   const wheelGestureMode = useRef<"idle" | "scroll" | "navigate">("idle");
 
+  const isDndTouch = useRef(false);
+
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    // When touch starts inside a DnD drag handle, let @hello-pangea/dnd own the gesture entirely.
+    isDndTouch.current = isInsideDndDragHandle(e.target);
     touchStartX.current = e.targetTouches[0].clientX;
     touchStartY.current = e.targetTouches[0].clientY;
     touchEndX.current = null;
