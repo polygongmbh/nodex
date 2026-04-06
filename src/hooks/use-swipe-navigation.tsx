@@ -109,6 +109,13 @@ export function useSwipeNavigation({
   }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (isDndTouch.current) {
+      isDndTouch.current = false;
+      touchStartX.current = null;
+      touchStartY.current = null;
+      touchEndX.current = null;
+      return;
+    }
     if (touchStartX.current === null || touchEndX.current === null || touchStartY.current === null) {
       return;
     }
