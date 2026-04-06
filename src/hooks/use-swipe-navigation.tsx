@@ -20,6 +20,16 @@ const triggerHaptic = (style: "light" | "medium" | "heavy" = "light") => {
 };
 
 const HORIZONTAL_SCROLL_OVERFLOW_VALUES = new Set(["auto", "scroll", "overlay"]);
+
+/** Returns true when the touch target is inside a @hello-pangea/dnd drag handle. */
+function isInsideDndDragHandle(target: EventTarget | null): boolean {
+  let el = target instanceof HTMLElement ? target : null;
+  while (el) {
+    if (el.hasAttribute("data-rbd-drag-handle-draggable-id")) return true;
+    el = el.parentElement;
+  }
+  return false;
+}
 const WHEEL_GESTURE_IDLE_MS = 220;
 
 function getHorizontalScrollableAncestor(target: EventTarget | null) {
