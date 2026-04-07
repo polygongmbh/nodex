@@ -89,6 +89,7 @@ function Harness() {
 
   const filters = useIndexFilters({
     relays: relaysWithActiveState,
+    activeRelayIds,
     setActiveRelayIds,
     channels: derived.channels,
     composeChannels: derived.composeChannels,

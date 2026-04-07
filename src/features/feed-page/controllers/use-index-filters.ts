@@ -36,6 +36,7 @@ import type { FeedInteractionHandlerMap } from "@/features/feed-page/interaction
 
 interface UseIndexFiltersOptions {
   relays: Relay[];
+  activeRelayIds: Set<string>;
   setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
   channels: Channel[];
   composeChannels: Channel[];
@@ -49,6 +50,7 @@ interface UseIndexFiltersOptions {
 
 export function useIndexFilters({
   relays,
+  activeRelayIds,
   setActiveRelayIds,
   channels,
   composeChannels,
@@ -126,6 +128,8 @@ export function useIndexFilters({
   }, [isFilterPruneReady, setPeople, sidebarPeople]);
 
   useFilterUrlSync({
+    activeRelayIds,
+    setActiveRelayIds,
     channelFilterStates,
     people,
     setChannelFilterStates,
