@@ -268,6 +268,7 @@ const Index = () => {
     resetFiltersToDefault,
   } = useIndexFilters({
     relays,
+    activeRelayIds,
     setActiveRelayIds,
     channels,
     composeChannels,

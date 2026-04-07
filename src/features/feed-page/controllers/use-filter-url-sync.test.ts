@@ -10,8 +10,15 @@ describe("parseFilterSearchParams", () => {
   it("returns null when no filter params present", () => {
     const params = new URLSearchParams();
     const result = parseFilterSearchParams(params);
+    expect(result.relayIds).toBeNull();
     expect(result.channelFilters).toBeNull();
     expect(result.selectedPersonIds).toBeNull();
+  });
+
+  it("parses relay ids", () => {
+    const params = new URLSearchParams("r=relay1,relay2");
+    const result = parseFilterSearchParams(params);
+    expect(result.relayIds).toEqual(new Set(["relay1", "relay2"]));
   });
 
   it("parses included channels", () => {
@@ -62,8 +69,13 @@ describe("buildFilterSearchParams", () => {
   });
 
   it("builds empty params when no filters active", () => {
-    const params = buildFilterSearchParams(new Map(), [makePerson("a", false)]);
+    const params = buildFilterSearchParams(new Set(), new Map(), [makePerson("a", false)]);
     expect(params.toString()).toBe("");
+  });
+
+  it("builds r param for active relays", () => {
+    const params = buildFilterSearchParams(new Set(["relay-b", "relay-a"]), new Map(), []);
+    expect(params.get("r")).toBe("relay-a,relay-b"); // sorted
   });
 
   it("builds ch param for included channels", () => {
@@ -72,7 +84,7 @@ describe("buildFilterSearchParams", () => {
       ["alpha", "included"],
       ["gamma", "neutral"],
     ]);
-    const params = buildFilterSearchParams(filters, []);
+    const params = buildFilterSearchParams(new Set(), filters, []);
     expect(params.get("ch")).toBe("alpha,beta"); // sorted
     expect(params.has("ex")).toBe(false);
   });
@@ -81,24 +93,26 @@ describe("buildFilterSearchParams", () => {
     const filters = new Map<string, "included" | "excluded" | "neutral">([
       ["spam", "excluded"],
     ]);
-    const params = buildFilterSearchParams(filters, []);
+    const params = buildFilterSearchParams(new Set(), filters, []);
     expect(params.get("ex")).toBe("spam");
   });
 
   it("builds p param for selected people", () => {
     const people = [makePerson("z", true), makePerson("a", true), makePerson("m", false)];
-    const params = buildFilterSearchParams(new Map(), people);
+    const params = buildFilterSearchParams(new Set(), new Map(), people);
     expect(params.get("p")).toBe("a,z"); // sorted
   });
 
   it("roundtrips through parse", () => {
+    const relayIds = new Set(["relay-x"]);
     const filters = new Map<string, "included" | "excluded" | "neutral">([
       ["dev", "included"],
       ["spam", "excluded"],
     ]);
     const people = [makePerson("pub1", true), makePerson("pub2", false)];
-    const params = buildFilterSearchParams(filters, people);
+    const params = buildFilterSearchParams(relayIds, filters, people);
     const parsed = parseFilterSearchParams(params);
+    expect(parsed.relayIds).toEqual(new Set(["relay-x"]));
     expect(parsed.channelFilters?.get("dev")).toBe("included");
     expect(parsed.channelFilters?.get("spam")).toBe("excluded");
     expect(parsed.selectedPersonIds).toEqual(new Set(["pub1"]));
@@ -116,15 +130,15 @@ describe("mergeFilterSearchParams", () => {
   });
 
   it("removes stale filter params when filters are cleared", () => {
-    const current = new URLSearchParams("view=feed&ch=alpha&ex=spam&p=bob");
+    const current = new URLSearchParams("view=feed&r=relay1&ch=alpha&ex=spam&p=bob");
     const merged = mergeFilterSearchParams(current, new URLSearchParams());
 
     expect(merged.toString()).toBe("view=feed");
   });
 
   it("keeps an identical query string identical after merging", () => {
-    const current = new URLSearchParams("view=feed&ch=alpha&ex=spam&p=bob");
-    const nextFilters = new URLSearchParams("ch=alpha&ex=spam&p=bob");
+    const current = new URLSearchParams("view=feed&r=relay1&ch=alpha&ex=spam&p=bob");
+    const nextFilters = new URLSearchParams("r=relay1&ch=alpha&ex=spam&p=bob");
 
     const merged = mergeFilterSearchParams(current, nextFilters);
 

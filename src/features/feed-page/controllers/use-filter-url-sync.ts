@@ -3,20 +3,33 @@ import { useSearchParams } from "react-router-dom";
 import type { Channel } from "@/types";
 import type { Person } from "@/types/person";
 
+const RELAY_PARAM = "r";
 const CHANNEL_INCLUDE_PARAM = "ch";
 const CHANNEL_EXCLUDE_PARAM = "ex";
 const PEOPLE_PARAM = "p";
+
+interface RelayFilterSnapshot {
+  channelStates: Map<string, Channel["filterState"]>;
+  selectedPeopleIds: Set<string>;
+}
 
 /**
  * Parses filter state from URL search params.
  */
 export function parseFilterSearchParams(searchParams: URLSearchParams): {
+  relayIds: Set<string> | null;
   channelFilters: Map<string, Channel["filterState"]> | null;
   selectedPersonIds: Set<string> | null;
 } {
+  const rRaw = searchParams.get(RELAY_PARAM);
   const chRaw = searchParams.get(CHANNEL_INCLUDE_PARAM);
   const exRaw = searchParams.get(CHANNEL_EXCLUDE_PARAM);
   const pRaw = searchParams.get(PEOPLE_PARAM);
+
+  let relayIds: Set<string> | null = null;
+  if (rRaw !== null) {
+    relayIds = new Set(rRaw.split(",").map((s) => s.trim()).filter(Boolean));
+  }
 
   let channelFilters: Map<string, Channel["filterState"]> | null = null;
   if (chRaw !== null || exRaw !== null) {
@@ -40,17 +53,21 @@ export function parseFilterSearchParams(searchParams: URLSearchParams): {
     );
   }
 
-  return { channelFilters, selectedPersonIds };
+  return { relayIds, channelFilters, selectedPersonIds };
 }
 
 /**
  * Builds URL search params from filter state, returning only non-empty params.
  */
 export function buildFilterSearchParams(
+  activeRelayIds: Set<string>,
   channelFilterStates: Map<string, Channel["filterState"]>,
   people: Person[]
 ): URLSearchParams {
   const params = new URLSearchParams();
+
+  const relayArray = [...activeRelayIds].sort();
+  if (relayArray.length > 0) params.set(RELAY_PARAM, relayArray.join(","));
 
   const included: string[] = [];
   const excluded: string[] = [];
@@ -76,14 +93,17 @@ export function mergeFilterSearchParams(
 ): URLSearchParams {
   const merged = new URLSearchParams(currentSearchParams);
 
+  merged.delete(RELAY_PARAM);
   merged.delete(CHANNEL_INCLUDE_PARAM);
   merged.delete(CHANNEL_EXCLUDE_PARAM);
   merged.delete(PEOPLE_PARAM);
 
+  const r = nextFilterSearchParams.get(RELAY_PARAM);
   const ch = nextFilterSearchParams.get(CHANNEL_INCLUDE_PARAM);
   const ex = nextFilterSearchParams.get(CHANNEL_EXCLUDE_PARAM);
   const p = nextFilterSearchParams.get(PEOPLE_PARAM);
 
+  if (r) merged.set(RELAY_PARAM, r);
   if (ch) merged.set(CHANNEL_INCLUDE_PARAM, ch);
   if (ex) merged.set(CHANNEL_EXCLUDE_PARAM, ex);
   if (p) merged.set(PEOPLE_PARAM, p);
@@ -91,7 +111,17 @@ export function mergeFilterSearchParams(
   return merged;
 }
 
+function setsEqual(a: Set<string>, b: Set<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const item of a) {
+    if (!b.has(item)) return false;
+  }
+  return true;
+}
+
 interface UseFilterUrlSyncOptions {
+  activeRelayIds: Set<string>;
+  setActiveRelayIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   channelFilterStates: Map<string, Channel["filterState"]>;
   people: Person[];
   setChannelFilterStates: React.Dispatch<React.SetStateAction<Map<string, Channel["filterState"]>>>;
@@ -99,12 +129,20 @@ interface UseFilterUrlSyncOptions {
 }
 
 /**
- * Bidirectional sync between channel/people filter state and URL search params.
+ * Bidirectional sync between relay/channel/people filter state and URL search params.
  *
- * On mount: reads URL params and applies them to state (URL wins).
+ * Also manages per-relay session memory: when switching exclusively from one single-relay
+ * selection to another (complete switch, no intersection), saves and restores the
+ * channel/people selection for each relay. The save/restore is skipped when channels or
+ * people change simultaneously with the relay (e.g. a saved-filter apply), so saved filters
+ * own their state without interference.
+ *
+ * On mount: reads URL params and applies them to state (URL wins over localStorage).
  * On state change: updates URL params (replaces, doesn't push history).
  */
 export function useFilterUrlSync({
+  activeRelayIds,
+  setActiveRelayIds,
   channelFilterStates,
   people,
   setChannelFilterStates,
@@ -114,12 +152,24 @@ export function useFilterUrlSync({
   const didHydrateFromUrlRef = useRef(false);
   const pendingUrlSelectedPersonIdsRef = useRef<Set<string> | null>(null);
 
-  // Hydrate state from URL on initial mount
+  // Per-relay session memory: channel/people snapshot per relay ID (only saved for single-relay selections)
+  const perRelayMemoryRef = useRef(new Map<string, RelayFilterSnapshot>());
+
+  // Previous-value refs for change detection in the per-relay memory effect
+  const prevRelayIdsRef = useRef<Set<string> | null>(null);
+  const prevChannelStatesRef = useRef(channelFilterStates);
+  const prevPeopleRef = useRef(people);
+
+  // Hydrate state from URL on initial mount (URL wins)
   useEffect(() => {
     if (didHydrateFromUrlRef.current) return;
     didHydrateFromUrlRef.current = true;
 
-    const { channelFilters, selectedPersonIds } = parseFilterSearchParams(searchParams);
+    const { relayIds, channelFilters, selectedPersonIds } = parseFilterSearchParams(searchParams);
+
+    if (relayIds !== null) {
+      setActiveRelayIds(relayIds);
+    }
 
     if (channelFilters !== null) {
       setChannelFilterStates(channelFilters);
@@ -165,11 +215,64 @@ export function useFilterUrlSync({
     pendingUrlSelectedPersonIdsRef.current = remainingIds.size > 0 ? remainingIds : null;
   }, [people, setPeople]);
 
-  // Sync state → URL (debounced to avoid thrashing during rapid changes)
+  // Per-relay session memory: save and restore channel/people selection on relay switches.
+  useEffect(() => {
+    const prevRelayIds = prevRelayIdsRef.current;
+
+    // Skip on first render — initialise refs and bail
+    if (prevRelayIds === null) {
+      prevRelayIdsRef.current = activeRelayIds;
+      prevChannelStatesRef.current = channelFilterStates;
+      prevPeopleRef.current = people;
+      return;
+    }
+
+    const prevChannelStates = prevChannelStatesRef.current;
+    const prevPeople = prevPeopleRef.current;
+
+    const isRelayChange = !setsEqual(prevRelayIds, activeRelayIds);
+    const isChannelChange = channelFilterStates !== prevChannelStates;
+    const isPeopleChange = people !== prevPeople;
+
+    if (isRelayChange) {
+      // Always save the departing single-relay's state before this render's values take hold
+      if (prevRelayIds.size === 1) {
+        const [oldRelayId] = prevRelayIds;
+        perRelayMemoryRef.current.set(oldRelayId, {
+          channelStates: prevChannelStates,
+          selectedPeopleIds: new Set(prevPeople.filter((p) => p.isSelected).map((p) => p.id)),
+        });
+      }
+
+      // Restore only on a pure relay switch (channels/people unchanged in the same batch).
+      // If channels or people also changed, something else (e.g. a saved-filter apply) drove
+      // the update and should own the resulting state.
+      if (!isChannelChange && !isPeopleChange) {
+        const isCompleteSwitch = [...activeRelayIds].every((id) => !prevRelayIds.has(id));
+        if (isCompleteSwitch && activeRelayIds.size === 1) {
+          const [newRelayId] = activeRelayIds;
+          const saved = perRelayMemoryRef.current.get(newRelayId);
+          if (saved) {
+            setChannelFilterStates(saved.channelStates);
+            const savedIds = saved.selectedPeopleIds;
+            setPeople((prev) =>
+              prev.map((person) => ({ ...person, isSelected: savedIds.has(person.id) }))
+            );
+          }
+        }
+      }
+    }
+
+    prevRelayIdsRef.current = activeRelayIds;
+    prevChannelStatesRef.current = channelFilterStates;
+    prevPeopleRef.current = people;
+  }, [activeRelayIds, channelFilterStates, people, setChannelFilterStates, setPeople]);
+
+  // Sync state → URL
   useEffect(() => {
     if (!didHydrateFromUrlRef.current) return;
 
-    const newFilterParams = buildFilterSearchParams(channelFilterStates, people);
+    const newFilterParams = buildFilterSearchParams(activeRelayIds, channelFilterStates, people);
     const mergedSearchParams = mergeFilterSearchParams(searchParams, newFilterParams);
 
     if (mergedSearchParams.toString() === searchParams.toString()) {
@@ -177,5 +280,5 @@ export function useFilterUrlSync({
     }
 
     setSearchParams(mergedSearchParams, { replace: true });
-  }, [channelFilterStates, people, searchParams, setSearchParams]);
+  }, [activeRelayIds, channelFilterStates, people, searchParams, setSearchParams]);
 }
