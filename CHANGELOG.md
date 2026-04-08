@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Idle CPU usage is significantly reduced: relay connect/disconnect events no longer trigger React re-renders when the status has not changed, the live subscription no longer restarts on every incoming event, relay reconnect callbacks are now stable across renders, and the redundant 5-second relay-status polling interval has been removed.
 - Busy relay sessions now avoid both redundant kind-0 profile cache rewrites on unrelated live events and unbounded historical feed backfill beyond the retained cache horizon, cutting idle CPU churn and secondary UI lag while the feed is open.
 - Feed and mobile shell view loading/empty states now render visible recovery placeholders instead of leaving the center pane blank.
 - Fatal startup and uncaught runtime failures now render a dedicated recovery page with reload and home actions instead of collapsing to a blank screen.
