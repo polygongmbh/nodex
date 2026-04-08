@@ -34,6 +34,7 @@ describe("startup Noas bootstrap", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
     storageModule.loadPersistedNoasDefaultHostUrl.mockReturnValue("");
     noasClientModule.discoverNoasApiBaseUrl.mockResolvedValue(null);
     window.history.pushState({}, "", "/feed");
