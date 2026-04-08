@@ -320,7 +320,7 @@ export function useNostrEventCache({
     const timeoutId = window.setTimeout(() => {
       finalizeBootstrapScope();
     }, CACHE_BOOTSTRAP_MAX_AGE_MS);
-    const liveSubscriptionFilters = buildLiveSubscriptionFilters(subscribedKinds, nostrEvents);
+    const liveSubscriptionFilters = buildLiveSubscriptionFilters(subscribedKinds, latestPersistedEventsRef.current);
 
     const subscription = subscribe(
       liveSubscriptionFilters,
@@ -338,7 +338,7 @@ export function useNostrEventCache({
       setIsHydrating(false);
       subscription?.stop();
     };
-  }, [finalizeBootstrapScope, flushPendingEvents, isConnected, nostrEvents, pushEvent, subscribe, subscribedKinds]);
+  }, [finalizeBootstrapScope, flushPendingEvents, isConnected, pushEvent, subscribe, subscribedKinds]);
 
   const flushPersist = useCallback(() => {
     if (typeof window !== "undefined" && persistTimerRef.current !== null) {
