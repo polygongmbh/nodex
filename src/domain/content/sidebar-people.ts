@@ -1,10 +1,8 @@
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
-import type { LatestPresenceSnapshot } from "@/lib/presence-status";
+import { PRESENCE_ONLINE_WINDOW_MS, PRESENCE_RECENT_WINDOW_MS, type LatestPresenceSnapshot } from "@/lib/presence-status";
 
 const DEFAULT_MIN_POSTS = 3;
-const ONLINE_WINDOW_MS = 3 * 60 * 1000;
-const RECENT_WINDOW_MS = 60 * 60 * 1000;
 
 interface DeriveSidebarPeopleOptions {
   minPosts?: number;
@@ -73,9 +71,9 @@ export function deriveSidebarPeople(
           : nowMs - latestActivityTimestampMs;
       const onlineStatus: Person["onlineStatus"] = latestPresence?.state === "offline"
         ? "offline"
-        : ageMs <= ONLINE_WINDOW_MS
+        : ageMs <= PRESENCE_ONLINE_WINDOW_MS
           ? "online"
-          : ageMs <= RECENT_WINDOW_MS
+          : ageMs <= PRESENCE_RECENT_WINDOW_MS
             ? "recent"
             : "offline";
 
