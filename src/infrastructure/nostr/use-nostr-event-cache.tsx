@@ -4,6 +4,7 @@ import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-
 import {
   ALL_RELAYS_SCOPE_KEY,
   EMPTY_RELAY_SCOPE_KEY,
+  NOSTR_EVENT_CACHE_RETENTION_SECONDS,
   loadCachedNostrEventsForBootstrap,
   loadCachedNostrEvents,
   saveCachedNostrEvents,
@@ -22,6 +23,7 @@ const HYDRATION_FLUSH_DELAY_MS = 64;
 // Use a longer delay so events accumulate into fewer, larger flushes.
 const HYDRATION_BURST_THRESHOLD = 200;
 const HYDRATION_BURST_DELAY_MS = 500;
+const LIVE_SUBSCRIPTION_OVERLAP_SECONDS = 60;
 const DEMO_RELAY_ID = "demo";
 
 /** Returns the flush debounce delay appropriate for the current pending queue depth. */
@@ -72,6 +74,25 @@ export function buildFeedScopeKey(activeRelayIds: Set<string>, availableRelayIds
 
 export function getNostrEventsQueryKey(feedScopeKey: string): readonly [...typeof NOSTR_EVENTS_QUERY_KEY, string] {
   return [...NOSTR_EVENTS_QUERY_KEY, feedScopeKey] as const;
+}
+
+export function buildLiveSubscriptionFilters(
+  subscribedKinds: number[],
+  cachedEvents: CachedNostrEvent[],
+  nowSeconds = Math.floor(Date.now() / 1000)
+): NDKFilter[] {
+  const latestCreatedAt = cachedEvents.reduce((latest, event) => {
+    return event.created_at > latest ? event.created_at : latest;
+  }, 0);
+  const fallbackSince = Math.max(0, nowSeconds - NOSTR_EVENT_CACHE_RETENTION_SECONDS);
+  const since = latestCreatedAt > 0
+    ? Math.max(0, latestCreatedAt - LIVE_SUBSCRIPTION_OVERLAP_SECONDS)
+    : fallbackSince;
+
+  return [{
+    kinds: subscribedKinds,
+    since,
+  }];
 }
 
 type RelayLike = Pick<NDKRelay, "url"> | null | undefined;
@@ -299,9 +320,10 @@ export function useNostrEventCache({
     const timeoutId = window.setTimeout(() => {
       finalizeBootstrapScope();
     }, CACHE_BOOTSTRAP_MAX_AGE_MS);
+    const liveSubscriptionFilters = buildLiveSubscriptionFilters(subscribedKinds, nostrEvents);
 
     const subscription = subscribe(
-      [{ kinds: subscribedKinds }],
+      liveSubscriptionFilters,
       pushEvent,
       { closeOnEose: false }
     );
@@ -316,7 +338,7 @@ export function useNostrEventCache({
       setIsHydrating(false);
       subscription?.stop();
     };
-  }, [finalizeBootstrapScope, flushPendingEvents, isConnected, pushEvent, subscribe, subscribedKinds]);
+  }, [finalizeBootstrapScope, flushPendingEvents, isConnected, nostrEvents, pushEvent, subscribe, subscribedKinds]);
 
   const flushPersist = useCallback(() => {
     if (typeof window !== "undefined" && persistTimerRef.current !== null) {

@@ -10,6 +10,7 @@ import {
 } from "@/infrastructure/nostr/event-cache";
 import {
   buildFeedScopeKey,
+  buildLiveSubscriptionFilters,
   drainPendingCachedEvents,
   getFlushDelayMs,
   getNostrEventsQueryKey,
@@ -81,6 +82,33 @@ describe("nostr event cache feed scope helpers", () => {
     expect(drained.flushedCount).toBe(1);
     expect(drained.remaining).toEqual([pending[1]]);
     expect(drained.nextEvents.map((event) => event.id)).toEqual(["event-3", "existing"]);
+  });
+
+  it("bounds live subscriptions to the latest cached event when cache exists", () => {
+    expect(buildLiveSubscriptionFilters([1, 30023], [
+      {
+        id: "cached-1",
+        pubkey: "pubkey-1",
+        created_at: 1_700_000_100,
+        kind: 1,
+        tags: [],
+        content: "cached",
+      },
+    ], 1_700_000_200)).toEqual([
+      {
+        kinds: [1, 30023],
+        since: 1_700_000_040,
+      },
+    ]);
+  });
+
+  it("uses the cache retention window for cold-start live subscriptions", () => {
+    expect(buildLiveSubscriptionFilters([1], [], 1_700_000_200)).toEqual([
+      {
+        kinds: [1],
+        since: 1_699_395_400,
+      },
+    ]);
   });
 });
 
@@ -188,11 +216,13 @@ describe("useNostrEventCache live subscription behavior", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it("keeps receiving events after EOSE and requests a persistent subscription", async () => {
     const controls = createMockSubscriptionControls();
     const queryClient = new QueryClient();
+    vi.spyOn(Date, "now").mockReturnValue(1_700_000_200_000);
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -202,7 +232,7 @@ describe("useNostrEventCache live subscription behavior", () => {
 
     await waitFor(() => expect(controls.subscribe).toHaveBeenCalled());
     expect(controls.subscribe).toHaveBeenLastCalledWith(
-      [{ kinds: [1] }],
+      [{ kinds: [1], since: 1_699_395_400 }],
       expect.any(Function),
       { closeOnEose: false }
     );

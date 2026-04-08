@@ -81,6 +81,15 @@ function mergeDerivedPeopleWithInteractiveState(
   return sortPeopleByPriority(merged, priorityLookup);
 }
 
+function buildPersistedRelayKind0Key(event: Kind0LikeEvent, relayUrl: string): string {
+  return [
+    relayUrl.trim().replace(/\/+$/, ""),
+    event.pubkey.trim().toLowerCase(),
+    event.created_at || 0,
+    event.content,
+  ].join("|");
+}
+
 function buildDerivedPeople(
   visiblePubkeys: string[],
   cachedKind0Events: Kind0LikeEvent[],
@@ -135,6 +144,7 @@ export function useKind0People(
   const [fallbackKind0Events, setFallbackKind0Events] = useState<Kind0LikeEvent[]>(() => loadCachedKind0Events());
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
   const [cacheRevision, setCacheRevision] = useState(0);
+  const persistedRelayKind0KeysRef = useRef<Set<string>>(new Set());
 
   const liveKind0Events = useMemo(
     () =>
@@ -206,6 +216,11 @@ export function useKind0People(
     const eventsByRelayUrl = new Map<string, Kind0LikeEvent[]>();
     liveKind0Events.forEach((event) => {
       event.relayUrls.forEach((relayUrl) => {
+        const persistedRelayKind0Key = buildPersistedRelayKind0Key(event, relayUrl);
+        if (persistedRelayKind0KeysRef.current.has(persistedRelayKind0Key)) {
+          return;
+        }
+        persistedRelayKind0KeysRef.current.add(persistedRelayKind0Key);
         const previous = eventsByRelayUrl.get(relayUrl) || [];
         eventsByRelayUrl.set(relayUrl, [
           ...previous,
@@ -310,6 +325,13 @@ export function useKind0People(
   }, [priorityLookup]);
 
   const removeCachedRelayProfile = useCallback((relayUrl: string) => {
+    const normalizedRelayUrl = normalizeRelayUrlScope([relayUrl])[0];
+    if (normalizedRelayUrl) {
+      persistedRelayKind0KeysRef.current.forEach((key) => {
+        if (!key.startsWith(`${normalizedRelayUrl}|`)) return;
+        persistedRelayKind0KeysRef.current.delete(key);
+      });
+    }
     removeCachedKind0EventsByRelayUrl(relayUrl);
     setCacheRevision((previous) => previous + 1);
   }, []);

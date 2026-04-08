@@ -113,4 +113,48 @@ describe("useKind0People", () => {
       );
     });
   });
+
+  it("does not rewrite kind0 relay cache when unrelated live events arrive", async () => {
+    const saveSpy = vi.spyOn(peopleFromKind0, "saveCachedKind0Events");
+    const metadataEvent = {
+      id: "kind0-event",
+      pubkey: "a".repeat(64),
+      created_at: 1,
+      kind: NostrEventKind.Metadata,
+      tags: [],
+      content: JSON.stringify({
+        name: "alice",
+        displayName: "Alice Demo",
+      }),
+      relayUrl: DEMO_RELAY_URL,
+      relayUrls: [DEMO_RELAY_URL],
+    };
+    const textNoteEvent = {
+      id: "text-event",
+      pubkey: "b".repeat(64),
+      created_at: 2,
+      kind: NostrEventKind.TextNote,
+      tags: [],
+      content: "hello",
+      relayUrl: DEMO_RELAY_URL,
+      relayUrls: [DEMO_RELAY_URL],
+    };
+
+    const { rerender } = renderHook(
+      ({ events }) => useKind0People(events, [DEMO_RELAY_URL], null),
+      {
+        initialProps: { events: [metadataEvent] },
+      }
+    );
+
+    await waitFor(() => {
+      expect(saveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    rerender({ events: [metadataEvent, textNoteEvent] });
+
+    await waitFor(() => {
+      expect(saveSpy).toHaveBeenCalledTimes(1);
+    });
+  });
 });

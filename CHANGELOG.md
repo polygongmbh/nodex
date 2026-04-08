@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Busy relay sessions now avoid both redundant kind-0 profile cache rewrites on unrelated live events and unbounded historical feed backfill beyond the retained cache horizon, cutting idle CPU churn and secondary UI lag while the feed is open.
 - Feed and mobile shell view loading/empty states now render visible recovery placeholders instead of leaving the center pane blank.
 - Fatal startup and uncaught runtime failures now render a dedicated recovery page with reload and home actions instead of collapsing to a blank screen.
 - Root task posting no longer forces a manual space pick when exactly one connected space is writable, while still blocking creation when multiple writable spaces remain selected.
