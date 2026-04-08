@@ -159,6 +159,12 @@ const Index = () => {
     reconnectRelay,
   });
 
+  const nostrRelayIds = useMemo(
+    () => relays.map((relay) => relay.id).filter((id) => id !== DEMO_RELAY_ID),
+    [relays]
+  );
+  const nostrRelayIdSet = useMemo(() => new Set(nostrRelayIds), [nostrRelayIds]);
+  const allRelayIds = useMemo(() => relays.map((relay) => relay.id), [relays]);
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
@@ -166,12 +172,8 @@ const Index = () => {
   } = useNostrEventCache({
     isConnected: isNostrConnected,
     subscribedKinds,
-    activeRelayIds: new Set(
-      relays
-        .map((relay) => relay.id)
-        .filter((relayId) => relayId !== DEMO_RELAY_ID)
-    ),
-    availableRelayIds: relays.map((relay) => relay.id),
+    activeRelayIds: nostrRelayIdSet,
+    availableRelayIds: allRelayIds,
     subscribe,
   });
   // NOTE: useIndexRelayShell already computes selectedRelayUrls internally and returns it.
