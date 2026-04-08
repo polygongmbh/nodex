@@ -39,17 +39,16 @@ function buildTask(overrides: Partial<Task> & Pick<Task, "id" | "relays">): Task
 }
 
 describe("buildRelayScopedPresenceTargets", () => {
-  const relays = [
-    buildRelay({ id: "relay-a", url: "wss://relay.a" }),
-    buildRelay({ id: "relay-b", url: "wss://relay.b" }),
-  ];
-
-  it("includes the focused task id only on relays that carry the task", () => {
+  it("splits scoped writable relays by whether they carry the focused task", () => {
     const targets = buildRelayScopedPresenceTargets({
       currentView: "feed",
-      focusedTask: buildTask({ id: "a".repeat(64), relays: ["relay-a"] }),
-      relayScopeIds: new Set(["relay-a", "relay-b"]),
-      relays,
+      focusedTask: buildTask({ id: "a".repeat(64), relays: ["relay-a", "relay-c"] }),
+      relayScopeIds: new Set(["relay-a", "relay-b", "relay-c"]),
+      relays: [
+        buildRelay({ id: "relay-a", url: "wss://relay.a", connectionStatus: "connected" }),
+        buildRelay({ id: "relay-b", url: "wss://relay.b", connectionStatus: "connected" }),
+        buildRelay({ id: "relay-c", url: "wss://relay.c", connectionStatus: "read-only" }),
+      ],
     });
 
     expect(targets).toHaveLength(2);
@@ -65,85 +64,37 @@ describe("buildRelayScopedPresenceTargets", () => {
     ]);
   });
 
-  it("omits the task id for non-nostr task ids", () => {
-    const targets = buildRelayScopedPresenceTargets({
-      currentView: "feed",
-      focusedTask: buildTask({ id: "local-task", relays: ["relay-a", "relay-b"] }),
-      relayScopeIds: new Set(["relay-a", "relay-b"]),
-      relays,
-    });
-
-    expect(targets).toEqual([
-      expect.objectContaining({
-        relayUrls: ["wss://relay.a", "wss://relay.b"],
-        taskId: null,
-      }),
-    ]);
-  });
-
-  it("omits the task id when relay membership is unknown", () => {
-    const targets = buildRelayScopedPresenceTargets({
-      currentView: "feed",
-      focusedTask: buildTask({ id: "a".repeat(64), relays: [] }),
-      relayScopeIds: new Set(["relay-a", "relay-b"]),
-      relays,
-    });
-
-    expect(targets).toEqual([
-      expect.objectContaining({
-        relayUrls: ["wss://relay.a", "wss://relay.b"],
-        taskId: null,
-      }),
-    ]);
-  });
-
-  it("excludes non-writable relays from presence targets", () => {
-    const targets = buildRelayScopedPresenceTargets({
-      currentView: "feed",
-      focusedTask: buildTask({ id: "a".repeat(64), relays: ["relay-a", "relay-b", "relay-c"] }),
-      relayScopeIds: new Set(["relay-a", "relay-b", "relay-c"]),
-      relays: [
-        buildRelay({ id: "relay-a", url: "wss://relay.a", connectionStatus: "connected" }),
-        buildRelay({ id: "relay-b", url: "wss://relay.b", connectionStatus: "read-only" }),
-        buildRelay({ id: "relay-c", url: "wss://relay.c", connectionStatus: "disconnected" }),
-      ],
-    });
-
-    expect(targets).toEqual([
-      expect.objectContaining({
-        relayUrls: ["wss://relay.a"],
-        taskId: "a".repeat(64),
-      }),
-    ]);
-  });
 });
 
 describe("useRelayScopedPresence", () => {
-  it("publishes relay-specific presence payloads for selected relays", async () => {
+  it("publishes relay-specific presence payloads and skips unchanged fingerprints", async () => {
     const publishEvent = vi.fn(async (_kind, _content, _tags, _parentId, relayUrls) => ({
       success: true,
       publishedRelayUrls: relayUrls ?? [],
     }));
 
-    renderHook(() =>
-      useRelayScopedPresence({
-        userPubkey: "pub",
-        presenceEnabled: true,
-        currentView: "feed",
-        focusedTask: buildTask({ id: "a".repeat(64), relays: ["relay-a"] }),
-        relayScopeIds: new Set(["relay-a", "relay-b"]),
-        relays: [
-          buildRelay({ id: "relay-a", url: "wss://relay.a" }),
-          buildRelay({ id: "relay-b", url: "wss://relay.b" }),
-        ],
-        publishEvent,
-      })
+    const { rerender } = renderHook(
+      ({ currentView }) =>
+        useRelayScopedPresence({
+          userPubkey: "pub",
+          presenceEnabled: true,
+          currentView,
+          focusedTask: buildTask({ id: "a".repeat(64), relays: ["relay-a"] }),
+          relayScopeIds: new Set(["relay-a", "relay-b"]),
+          relays: [
+            buildRelay({ id: "relay-a", url: "wss://relay.a" }),
+            buildRelay({ id: "relay-b", url: "wss://relay.b" }),
+          ],
+          publishEvent,
+        }),
+      {
+        initialProps: { currentView: "feed" },
+      }
     );
 
     await act(async () => {});
 
     expect(publishEvent).toHaveBeenCalledTimes(2);
-
     expect(publishEvent.mock.calls).toEqual([
       [
         30315,
@@ -160,15 +111,25 @@ describe("useRelayScopedPresence", () => {
         ["wss://relay.b"],
       ],
     ]);
+
+    rerender({ currentView: "feed" });
+    await act(async () => {});
+    expect(publishEvent).toHaveBeenCalledTimes(2);
+
+    rerender({ currentView: "list" });
+    await act(async () => {});
+    expect(publishEvent).toHaveBeenCalledTimes(4);
+    expect(publishEvent.mock.calls[2]?.[1]).toContain(`"view":"list"`);
+    expect(publishEvent.mock.calls[3]?.[1]).toContain(`"view":"list"`);
   });
 
-  it("switches relay without sending offline on deselection", async () => {
+  it("switches relays without implicit offline and only publishes offline on demand", async () => {
     const publishEvent = vi.fn(async (_kind, _content, _tags, _parentId, relayUrls) => ({
       success: true,
       publishedRelayUrls: relayUrls ?? [],
     }));
 
-    const { rerender } = renderHook(
+    const { result, rerender } = renderHook(
       ({ relayScopeIds }) =>
         useRelayScopedPresence({
           userPubkey: "pub",
@@ -188,6 +149,7 @@ describe("useRelayScopedPresence", () => {
     );
 
     await act(async () => {});
+
     expect(publishEvent).toHaveBeenCalledTimes(1);
     expect(publishEvent.mock.calls[0]?.[4]).toEqual(["wss://relay.a"]);
 
@@ -196,78 +158,14 @@ describe("useRelayScopedPresence", () => {
 
     expect(publishEvent).toHaveBeenCalledTimes(2);
     expect(publishEvent.mock.calls[1]?.[4]).toEqual(["wss://relay.b"]);
-    // No offline published to relay-a
     expect(publishEvent.mock.calls.every((call) => !String(call[1]).includes('"state":"offline"'))).toBe(true);
-  });
-
-  it("does not re-publish when the fingerprint has not changed", async () => {
-    const publishEvent = vi.fn(async (_kind, _content, _tags, _parentId, relayUrls) => ({
-      success: true,
-      publishedRelayUrls: relayUrls ?? [],
-    }));
-
-    const { rerender } = renderHook(
-      ({ currentView }) =>
-        useRelayScopedPresence({
-          userPubkey: "pub",
-          presenceEnabled: true,
-          currentView,
-          focusedTask: null,
-          relayScopeIds: new Set(["relay-a"]),
-          relays: [buildRelay({ id: "relay-a", url: "wss://relay.a" })],
-          publishEvent,
-        }),
-      {
-        initialProps: { currentView: "feed" },
-      }
-    );
-
-    await act(async () => {});
-    expect(publishEvent).toHaveBeenCalledTimes(1);
-
-    // Re-render with the same view — fingerprint unchanged, no re-publish.
-    rerender({ currentView: "feed" });
-
-    await act(async () => {});
-    expect(publishEvent).toHaveBeenCalledTimes(1);
-
-    // Change view — new fingerprint, publish again.
-    rerender({ currentView: "list" });
-
-    await act(async () => {});
-    expect(publishEvent).toHaveBeenCalledTimes(2);
-    expect(publishEvent.mock.calls[1]?.[1]).toContain(`"view":"list"`);
-  });
-
-  it("publishes offline only when explicitly requested", async () => {
-    const publishEvent = vi.fn(async (_kind, _content, _tags, _parentId, relayUrls) => ({
-      success: true,
-      publishedRelayUrls: relayUrls ?? [],
-    }));
-
-    const { result } = renderHook(() =>
-      useRelayScopedPresence({
-        userPubkey: "pub",
-        presenceEnabled: true,
-        currentView: "feed",
-        focusedTask: null,
-        relayScopeIds: new Set(["relay-a"]),
-        relays: [buildRelay({ id: "relay-a", url: "wss://relay.a" })],
-        publishEvent,
-      })
-    );
-
-    await act(async () => {});
-
-    expect(publishEvent).toHaveBeenCalledTimes(1);
-    expect(publishEvent.mock.calls[0]?.[1]).not.toContain(`"state":"offline"`);
 
     await act(async () => {
       await result.current.publishOfflinePresenceNow();
     });
 
-    expect(publishEvent).toHaveBeenCalledTimes(2);
-    expect(publishEvent.mock.calls[1]?.[1]).toContain(`"state":"offline"`);
-    expect(publishEvent.mock.calls[1]?.[4]).toEqual(["wss://relay.a"]);
+    expect(publishEvent).toHaveBeenCalledTimes(3);
+    expect(publishEvent.mock.calls[2]?.[1]).toContain(`"state":"offline"`);
+    expect(publishEvent.mock.calls[2]?.[4]).toEqual(["wss://relay.b", "wss://relay.a"]);
   });
 });

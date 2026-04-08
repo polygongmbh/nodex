@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { isNostrEventId } from "@/lib/nostr/event-id";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { dedupeNormalizedRelayUrls, normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
@@ -107,11 +106,7 @@ export function buildRelayScopedPresenceTargets({
     return [];
   }
 
-  const taskId =
-    focusedTask && isNostrEventId(focusedTask.id) && focusedTask.relays.length > 0
-      ? focusedTask.id
-      : null;
-  const visibleRelayIds = taskId ? new Set(focusedTask?.relays ?? []) : null;
+  const taskId = focusedTask?.id ?? null;
   const withTaskIdRelayUrls: string[] = [];
   const withoutTaskIdRelayUrls: string[] = [];
 
@@ -119,7 +114,7 @@ export function buildRelayScopedPresenceTargets({
     const relayUrl = relay.url ? normalizeRelayUrl(relay.url) : "";
     if (!relayUrl) return;
 
-    if (taskId && visibleRelayIds?.has(relay.id)) {
+    if (focusedTask?.relays.includes(relay.id)) {
       withTaskIdRelayUrls.push(relayUrl);
       return;
     }
