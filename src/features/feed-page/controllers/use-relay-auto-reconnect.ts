@@ -60,9 +60,27 @@ export function useRelayAutoReconnect({
   const nextEligibleAtByRelayRef = useRef<Map<string, number>>(new Map());
   const lastFocusResetAtRef = useRef(0);
 
+  // Keep refs to latest props so interval/focus callbacks never need to be recreated.
+  const relaysRef = useRef(relays);
+  const activeRelayIdsRef = useRef(activeRelayIds);
+  const reconnectRelayRef = useRef(reconnectRelay);
+  const retryBaseMsRef = useRef(retryBaseMs);
+  const retryMultiplierRef = useRef(retryMultiplier);
+  const retryMaxMsRef = useRef(retryMaxMs);
+  const focusResetDebounceMsRef = useRef(focusResetDebounceMs);
+  useEffect(() => {
+    relaysRef.current = relays;
+    activeRelayIdsRef.current = activeRelayIds;
+    reconnectRelayRef.current = reconnectRelay;
+    retryBaseMsRef.current = retryBaseMs;
+    retryMultiplierRef.current = retryMultiplier;
+    retryMaxMsRef.current = retryMaxMs;
+    focusResetDebounceMsRef.current = focusResetDebounceMs;
+  });
+
   const pruneBackoffForHealthyRelays = useCallback(() => {
     const failedRelayUrls = new Set(
-      relays.filter(isFailedRelay).map((relay) => normalizeRelayUrl(relay.url))
+      relaysRef.current.filter(isFailedRelay).map((relay) => normalizeRelayUrl(relay.url))
     );
 
     attemptCountByRelayRef.current.forEach((_, relayUrl) => {
@@ -75,10 +93,10 @@ export function useRelayAutoReconnect({
         nextEligibleAtByRelayRef.current.delete(relayUrl);
       }
     });
-  }, [relays]);
+  }, []);
 
   const runReconnectPass = useCallback((options?: { force?: boolean }) => {
-    const eligibleRelays = relays.filter(isEligibleRelay);
+    const eligibleRelays = relaysRef.current.filter(isEligibleRelay);
     if (eligibleRelays.length === 0) return;
 
     eligibleRelays.forEach((relay) => {
@@ -95,13 +113,11 @@ export function useRelayAutoReconnect({
     if (failedRelays.length === 0) return;
 
     const allEligibleRelaysFailed = failedRelays.length === eligibleRelays.length;
-    const failedSelectedRelays = activeRelayIds.size > 0
-      ? failedRelays.filter((relay) => activeRelayIds.has(relay.id))
+    const failedSelectedRelays = activeRelayIdsRef.current.size > 0
+      ? failedRelays.filter((relay) => activeRelayIdsRef.current.has(relay.id))
       : [];
 
-    const targets = allEligibleRelaysFailed
-      ? failedRelays
-      : failedSelectedRelays;
+    const targets = allEligibleRelaysFailed ? failedRelays : failedSelectedRelays;
     if (targets.length === 0) return;
 
     const now = Date.now();
@@ -110,55 +126,45 @@ export function useRelayAutoReconnect({
       const nextEligibleAt = nextEligibleAtByRelayRef.current.get(relayUrl) ?? 0;
       if (!options?.force && now < nextEligibleAt) return;
 
-      reconnectRelay(relayUrl, { forceNewSocket: false });
+      reconnectRelayRef.current(relayUrl, { forceNewSocket: false });
 
       const nextAttemptCount = (attemptCountByRelayRef.current.get(relayUrl) ?? 0) + 1;
       attemptCountByRelayRef.current.set(relayUrl, nextAttemptCount);
       const cooldown = Math.min(
-        retryBaseMs * retryMultiplier ** Math.max(nextAttemptCount - 1, 0),
-        retryMaxMs
+        retryBaseMsRef.current * retryMultiplierRef.current ** Math.max(nextAttemptCount - 1, 0),
+        retryMaxMsRef.current
       );
       nextEligibleAtByRelayRef.current.set(relayUrl, now + cooldown);
     });
-  }, [activeRelayIds, reconnectRelay, relays, retryBaseMs, retryMaxMs, retryMultiplier]);
+  }, []);
 
   const resetCooldownAndRetry = useCallback(() => {
     const now = Date.now();
-    if (now - lastFocusResetAtRef.current < focusResetDebounceMs) return;
+    if (now - lastFocusResetAtRef.current < focusResetDebounceMsRef.current) return;
     lastFocusResetAtRef.current = now;
 
     attemptCountByRelayRef.current.clear();
     nextEligibleAtByRelayRef.current.clear();
     runReconnectPass({ force: true });
-  }, [focusResetDebounceMs, runReconnectPass]);
+  }, [runReconnectPass]);
 
   useEffect(() => {
     pruneBackoffForHealthyRelays();
-  }, [pruneBackoffForHealthyRelays]);
+  }, [relays, pruneBackoffForHealthyRelays]);
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      runReconnectPass();
-    }, retryTickMs);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
+    const intervalId = window.setInterval(runReconnectPass, retryTickMs);
+    return () => window.clearInterval(intervalId);
   }, [retryTickMs, runReconnectPass]);
 
   useEffect(() => {
-    const handleFocus = () => {
-      resetCooldownAndRetry();
-    };
+    window.addEventListener("focus", resetCooldownAndRetry);
     const handleVisibilityChange = () => {
-      if (document.visibilityState !== "visible") return;
-      resetCooldownAndRetry();
+      if (document.visibilityState === "visible") resetCooldownAndRetry();
     };
-
-    window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("focus", resetCooldownAndRetry);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [resetCooldownAndRetry]);
