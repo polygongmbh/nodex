@@ -54,7 +54,6 @@ import {
   mapNativeRelayStatus,
   mergeRelayStatusUpdates,
   MAX_INITIAL_CONNECT_FAILURES,
-  RELAY_STATUS_RECONCILE_INTERVAL_MS,
 } from "./relay-status";
 import { reorderResolvedRelayStatuses } from "./relay-list";
 import { waitForNostrExtensionAvailability } from "./session-restore";
@@ -1096,10 +1095,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // when ready. NIP-42 auth challenges are handled per-relay on-demand, so relays that require
     // auth will challenge after EOSE once the signer is available.
     let extensionRestoreController: AbortController | undefined;
-    const reconcileIntervalId = window.setInterval(
-      syncRelayStatusesFromPool,
-      RELAY_STATUS_RECONCILE_INTERVAL_MS
-    );
     const restoreSession = async (): Promise<void> => {
       const savedAuthMethod = loadStoredAuthMethod();
       if (savedAuthMethod === "guest") {
@@ -1223,7 +1218,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     return () => {
       extensionRestoreController?.abort();
-      window.clearInterval(reconcileIntervalId);
       clearAllTrackedRelayTimeouts();
       detachAllRelayOkRejectObservers();
       ndkInstance.pool.removeAllListeners();

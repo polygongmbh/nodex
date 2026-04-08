@@ -2,7 +2,6 @@ import { NDKRelayStatus as NativeNDKRelayStatus } from "@nostr-dev-kit/ndk";
 import type { NDKRelayStatus } from "./contracts";
 
 export const MAX_INITIAL_CONNECT_FAILURES = 5;
-export const RELAY_STATUS_RECONCILE_INTERVAL_MS = 5000;
 export const RELAY_CONNECTING_GRACE_MS = 1000;
 
 interface ResolveRelayLifecycleStatusOptions {
