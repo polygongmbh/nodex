@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Presence events now expire after 30 minutes instead of 60, and the sidebar yellow-dot window aligns with this threshold; idle users (no re-navigation) are now shown as offline once their last presence event expires rather than remaining shown as online indefinitely.
 - Fatal startup and uncaught runtime failures now render a dedicated recovery page with reload and home actions instead of collapsing to a blank screen.
 - Root task posting no longer forces a manual space pick when exactly one connected space is writable, while still blocking creation when multiple writable spaces remain selected.
 - Task creators can now keep editing assigned tasks even when their identity is represented as an `npub` in one place and a hex pubkey in another, so creator permissions no longer silently fail on mixed-format identities.

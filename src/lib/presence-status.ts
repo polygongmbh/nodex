@@ -1,6 +1,12 @@
 export const NIP38_PRESENCE_TAG = "nodex-presence";
-export const NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS = 60 * 60;
+export const NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS = 30 * 60;
 export const NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS = 60;
+
+// Thresholds for displaying presence indicators in the sidebar.
+// ONLINE (green) = recently seen within a short window.
+// RECENT (yellow) = seen within the active presence expiry window.
+export const PRESENCE_ONLINE_WINDOW_MS = 3 * 60 * 1000;
+export const PRESENCE_RECENT_WINDOW_MS = NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS * 1000;
 
 type PresenceState = "active" | "offline";
 
