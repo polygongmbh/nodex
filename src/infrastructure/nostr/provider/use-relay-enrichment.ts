@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -24,6 +24,8 @@ export function useRelayEnrichment(
   endRelayOperation: RelayVerificationCallbacks["endRelayOperation"],
   complementaryRelaySyncKeyRef: MutableRefObject<string | null>,
 ): void {
+  const relaysRef = useRef(relays);
+  useEffect(() => { relaysRef.current = relays; }, [relays]);
   const fetchLatestNip65RelayUrls = async (pubkey: string): Promise<string[]> => {
     if (!ndk) return [];
 
@@ -98,7 +100,7 @@ export function useRelayEnrichment(
 
       const newRelayUrls = filterAutoAddRelayUrls({
         candidateRelayUrls: relaySelection.relayUrls,
-        existingRelayUrls: relays.map((relay) => relay.url),
+        existingRelayUrls: relaysRef.current.map((relay) => relay.url),
         removedRelayUrls: removedRelaysRef.current,
       });
       if (newRelayUrls.length === 0) {
@@ -121,6 +123,5 @@ export function useRelayEnrichment(
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addRelay, ndk, relays, user?.profile?.nip05, user?.pubkey]);
+  }, [addRelay, ndk, user?.profile?.nip05, user?.pubkey]);
 }
