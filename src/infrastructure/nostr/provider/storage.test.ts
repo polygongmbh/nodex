@@ -50,7 +50,7 @@ describe("relay list persistence", () => {
   });
 
   it("does not throw when localStorage quota is exceeded while saving relays", () => {
-    const setItemSpy = vi.spyOn(window.localStorage, "setItem").mockImplementation(() => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("quota exceeded", "QuotaExceededError");
     });
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);

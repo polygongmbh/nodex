@@ -881,8 +881,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.mouseDown(screen.getAllByRole("button", { name: /person actions for/i })[0], {
-      button: 0,
+    fireEvent.click(screen.getAllByRole("button", { name: /person actions for/i })[0], {
       ctrlKey: true,
       altKey: true,
     });

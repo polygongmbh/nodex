@@ -14,7 +14,7 @@ describe("safeLocalStorageSetItem", () => {
   });
 
   it("returns false and warns once per key+error when write fails", () => {
-    const setItemSpy = vi.spyOn(window.localStorage, "setItem").mockImplementation(() => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("quota exceeded", "QuotaExceededError");
     });
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -29,7 +29,7 @@ describe("safeLocalStorageSetItem", () => {
 
   it("warns separately for different error types", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const setItemSpy = vi.spyOn(window.localStorage, "setItem");
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
     setItemSpy
       .mockImplementationOnce(() => {
         throw new DOMException("quota exceeded", "QuotaExceededError");
