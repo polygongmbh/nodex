@@ -915,14 +915,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       if (removedRelaysRef.current.has(normalized)) return;
       setRelays((prev) => {
         const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);
+        const newStatus = resolveConnectedRelayStatus(normalized);
         if (existing) {
+          if (existing.status === newStatus) return prev;
           return prev.map((r) =>
             normalizeRelayUrl(r.url) === normalized
-              ? {
-                  ...r,
-                  url: normalized,
-                  status: resolveConnectedRelayStatus(normalized),
-                }
+              ? { ...r, url: normalized, status: newStatus }
               : r
           );
         }
@@ -930,7 +928,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         const checkedAt = relayInfoFetchedAtRef.current.get(normalized);
         return [...prev, {
           url: normalized,
-          status: resolveConnectedRelayStatus(normalized),
+          status: newStatus,
           nip11: info
             ? {
                 authRequired: info.authRequired,
@@ -978,11 +976,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       // Do not overwrite "connection-error" with "disconnected": pool.removeRelay() fires a
       // second relay:disconnect after auto-pause, which would clobber the error status.
       if (!removedRelaysRef.current.has(normalized) && !relayAutoPausedRef.current.has(normalized)) {
-        setRelays((prev) =>
-          prev.map((r) =>
+        setRelays((prev) => {
+          const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);
+          if (!existing || existing.status === "disconnected") return prev;
+          return prev.map((r) =>
             normalizeRelayUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
-          )
-        );
+          );
+        });
       }
 
       if (relayAutoPausedRef.current.has(normalized)) return;
