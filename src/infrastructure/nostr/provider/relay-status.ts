@@ -127,3 +127,19 @@ export function mergeRelayStatusUpdates(
 
   return changed ? next : previous;
 }
+
+export function mapRelayStatuses(
+  previous: NDKRelayStatus[],
+  mapEntry: (relay: NDKRelayStatus) => NDKRelayStatus
+): NDKRelayStatus[] {
+  let changed = false;
+  const next = previous.map((relay) => {
+    const updated = mapEntry(relay);
+    if (updated !== relay) {
+      changed = true;
+    }
+    return updated;
+  });
+
+  return changed ? next : previous;
+}
