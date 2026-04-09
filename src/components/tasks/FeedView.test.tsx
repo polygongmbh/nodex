@@ -954,6 +954,83 @@ describe("FeedView", () => {
     });
   });
 
+  it("filters by hashtag without focusing the task row", () => {
+    const hashtagTask = makeTask({
+      id: "task-hashtag",
+      author,
+      content: "Ship #frontend today",
+      status: "todo",
+    });
+
+    renderFeedView({
+      tasks: [hashtagTask],
+      allTasks: [hashtagTask],
+      searchQueryOverride: "",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Filter by #frontend" }));
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "filter.applyHashtagExclusive",
+      tag: "frontend",
+    });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
+      type: "task.focus.change",
+      taskId: "task-hashtag",
+    });
+  });
+
+  it("focuses the task when clicking plain task text", () => {
+    const clickTask = makeTask({
+      id: "task-click-text",
+      author,
+      content: "Open this task",
+      status: "todo",
+    });
+
+    renderFeedView({
+      tasks: [clickTask],
+      allTasks: [clickTask],
+      searchQueryOverride: "",
+    });
+
+    fireEvent.click(screen.getByText("Open this task"));
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.focus.change",
+      taskId: "task-click-text",
+    });
+  });
+
+  it("does not focus the task when text is selected before clicking", () => {
+    const selectionTask = makeTask({
+      id: "task-selection",
+      author,
+      content: "Select this task text",
+      status: "todo",
+    });
+    const selection = {
+      toString: () => "Select this",
+      removeAllRanges: vi.fn(),
+    } as unknown as Selection;
+    const getSelectionSpy = vi.spyOn(window, "getSelection").mockReturnValue(selection);
+
+    renderFeedView({
+      tasks: [selectionTask],
+      allTasks: [selectionTask],
+      searchQueryOverride: "",
+    });
+
+    fireEvent.click(screen.getByText("Select this task text"));
+
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
+      type: "task.focus.change",
+      taskId: "task-selection",
+    });
+
+    getSelectionSpy.mockRestore();
+  });
+
   it("shows non-text mention chips from assignee pubkeys", () => {
     const mentionTask = makeTask({
       id: "task-chip",

@@ -6,7 +6,7 @@ import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { filterTasksForView } from "@/domain/content/task-view-filtering";
-import { useFeedViewState as useFeedTimelineState, useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
+import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedTaskViewModel } from "./feed-task-view-model-context";
 import { useFeedViewState as useFeedLayoutState } from "./feed-view-state-context";
 
@@ -27,12 +27,6 @@ export function FeedPageViewPane() {
   const { t } = useTranslation();
   const { currentView, kanbanDepthMode } = useFeedLayoutState();
   const viewModel = useFeedTaskViewModel();
-  const feedTimelineState = useFeedTimelineState({
-    tasks: viewModel.tasks,
-    allTasks: viewModel.allTasks,
-    focusedTaskId: viewModel.focusedTaskId,
-    isMobile: false,
-  });
   const taskSource = useTaskViewSource({
     tasks: viewModel.tasks,
     allTasks: viewModel.allTasks,
@@ -87,9 +81,7 @@ export function FeedPageViewPane() {
         : "",
     [taskSource.focusedTaskId, taskSource.taskById]
   );
-  const shouldShowOverlay = currentView === "feed"
-    ? feedTimelineState.shouldShowScreenEmptyState || feedTimelineState.shouldShowInlineEmptyHint
-    : scopedTasks.length === 0;
+  const shouldShowOverlay = scopedTasks.length === 0;
   const viewFallback = <AppViewFallback />;
 
   let viewPane: ReactNode;
