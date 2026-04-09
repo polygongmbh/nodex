@@ -90,10 +90,10 @@ export function FeedTaskCard({
   };
   const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
   const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
+    event.stopPropagation();
     const shortcutIntent = getPersonShortcutIntent(event);
     if (!shortcutIntent) return;
     event.preventDefault();
-    event.stopPropagation();
     void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
   };
   const formatFeedNpubLabel = (value: string, showFull: boolean): string => {

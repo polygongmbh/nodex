@@ -320,7 +320,11 @@ export function useKind0People(
         previousInteractivePeople,
         priorityLookup
       );
-      return typeof value === "function" ? value(previousMergedPeople) : value;
+      const result = typeof value === "function" ? value(previousMergedPeople) : value;
+      // If the functional update returned the same reference (no change), bail out
+      // so React does not see a new state value and skips the re-render.
+      if (result === previousMergedPeople) return previousInteractivePeople;
+      return result;
     });
   }, [priorityLookup]);
 
