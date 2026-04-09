@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Message-of-the-day banners now stay pinned at the top without shrinking the app shell, use a centered full-width layout with a right-side close affordance, and can be dismissed with either the `X` or a short tap that still preserves text selection/copying.
 - Relay status no longer gets stuck as read-rejected when an older failed websocket emits a late auth denial after a newer connection has already recovered.
 - Presence events now expire after 30 minutes instead of 60, and the sidebar yellow-dot window aligns with this threshold; idle users (no re-navigation) are now shown as offline once their last presence event expires rather than remaining shown as online indefinitely.
 - Fatal startup and uncaught runtime failures now render a dedicated recovery page with reload and home actions instead of collapsing to a blank screen.
