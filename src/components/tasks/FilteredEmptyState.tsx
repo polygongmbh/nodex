@@ -1,15 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { useDeferredValue, useMemo } from "react";
-import { cn } from "@/lib/utils";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 
-interface FilteredEmptyStateProps {
-  className?: string;
-}
-
-export function FilteredEmptyState({ className }: FilteredEmptyStateProps) {
+export function FilteredEmptyState() {
   const { t } = useTranslation();
   const surface = useFeedSurfaceState();
   const { isHydrating = false, focusedTaskId, allTasks } = useFeedTaskViewModel();
@@ -72,7 +67,7 @@ export function FilteredEmptyState({ className }: FilteredEmptyStateProps) {
   return (
     <div
       role="status"
-      className={cn("absolute inset-x-0 bottom-4 z-10 flex justify-center px-4", className)}
+      className="absolute inset-x-0 bottom-4 z-10 flex justify-center px-4"
     >
       <div className="pointer-events-none max-w-2xl select-text rounded-2xl border border-border/70 bg-background/90 px-5 py-4 text-center shadow-lg backdrop-blur-sm sm:px-6 sm:py-5">
         <p className="text-base font-medium leading-relaxed text-foreground sm:text-lg">
