@@ -1,7 +1,8 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { AppErrorBoundary } from "@/components/app/AppErrorBoundary";
-import { renderFatalAppError } from "@/lib/app-fatal-error";
+import { AppErrorScreen } from "@/components/app/AppErrorScreen";
+import { getAppErrorMessage } from "@/lib/app-fatal-error";
 import "@/lib/runtime-storage-guard";
 import "@/lib/i18n/config";
 import "./index.css";
@@ -16,7 +17,7 @@ const root = createRoot(rootElement);
 
 const showFatalAppError = (error: unknown) => {
   console.error("Fatal application error", { error });
-  renderFatalAppError(rootElement, error);
+  root.render(<AppErrorScreen errorMessage={getAppErrorMessage(error)} />);
 };
 
 window.addEventListener("error", (event) => {
@@ -27,12 +28,8 @@ window.addEventListener("unhandledrejection", (event) => {
   showFatalAppError(event.reason);
 });
 
-try {
-  root.render(
-    <AppErrorBoundary>
-      <App />
-    </AppErrorBoundary>
-  );
-} catch (error) {
-  showFatalAppError(error);
-}
+root.render(
+  <AppErrorBoundary>
+    <App />
+  </AppErrorBoundary>
+);

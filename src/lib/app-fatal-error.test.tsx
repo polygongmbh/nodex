@@ -1,10 +1,17 @@
-import { act, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getAppErrorMessage, renderFatalAppError } from "@/lib/app-fatal-error";
+import {
+  clearChunkErrorReloadState,
+  consumeReloadSearchParam,
+  getAppErrorMessage,
+  markChunkErrorReloadAttempted,
+  reloadAppWithCacheBypass,
+  shouldRetryChunkErrorOnce,
+} from "@/lib/app-fatal-error";
 
 describe("app fatal error rendering", () => {
   afterEach(() => {
-    document.body.innerHTML = "";
+    window.history.replaceState(window.history.state, "", "/");
+    window.sessionStorage.clear();
     vi.restoreAllMocks();
   });
 
@@ -14,32 +21,30 @@ describe("app fatal error rendering", () => {
     expect(getAppErrorMessage({ reason: "opaque" })).toBe("Unexpected application error");
   });
 
-  it("renders the fatal app error screen into the target container", () => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
+  it("tracks chunk reload retries through session storage", () => {
+    expect(shouldRetryChunkErrorOnce()).toBe(true);
 
-    act(() => {
-      renderFatalAppError(container, new Error("Startup blew up"));
-    });
+    markChunkErrorReloadAttempted();
+    expect(shouldRetryChunkErrorOnce()).toBe(false);
 
-    expect(screen.getByRole("heading", { name: /something went wrong/i })).toBeInTheDocument();
-    expect(screen.getByText("Startup blew up")).toBeInTheDocument();
+    clearChunkErrorReloadState();
+    expect(shouldRetryChunkErrorOnce()).toBe(true);
   });
 
-  it("wires the fatal screen actions to navigation", () => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const onReload = vi.fn();
-    const onGoHome = vi.fn();
+  it("consumes the reload search param after a retry", () => {
+    window.history.replaceState(window.history.state, "", "/?reload=123");
+    markChunkErrorReloadAttempted();
 
-    act(() => {
-      renderFatalAppError(container, new Error("Startup blew up"), { onReload, onGoHome });
-    });
+    consumeReloadSearchParam();
 
-    fireEvent.click(screen.getByRole("button", { name: /reload app/i }));
-    fireEvent.click(screen.getByRole("button", { name: /go to home/i }));
+    expect(window.location.search).toBe("");
+    expect(shouldRetryChunkErrorOnce()).toBe(true);
+  });
 
-    expect(onReload).toHaveBeenCalled();
-    expect(onGoHome).toHaveBeenCalled();
+  it("clears prior chunk retry state before reloading", () => {
+    markChunkErrorReloadAttempted();
+
+    reloadAppWithCacheBypass();
+    expect(shouldRetryChunkErrorOnce()).toBe(true);
   });
 });

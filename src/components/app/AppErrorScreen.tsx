@@ -1,13 +1,12 @@
 import { AlertTriangle } from "lucide-react";
+import { navigateToAppHome, reloadAppWithCacheBypass } from "@/lib/app-fatal-error";
 import i18n from "@/lib/i18n/config";
 
 interface AppErrorScreenProps {
   errorMessage?: string;
-  onGoHome: () => void;
-  onReload: () => void;
 }
 
-export function AppErrorScreen({ errorMessage, onGoHome, onReload }: AppErrorScreenProps) {
+export function AppErrorScreen({ errorMessage }: AppErrorScreenProps) {
   return (
     <main className="min-h-screen bg-background text-foreground px-6 py-10 flex items-center justify-center">
       <section className="w-full max-w-xl border border-border rounded-2xl bg-card/80 backdrop-blur px-6 py-8 shadow-md">
@@ -26,14 +25,14 @@ export function AppErrorScreen({ errorMessage, onGoHome, onReload }: AppErrorScr
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={onReload}
+            onClick={reloadAppWithCacheBypass}
             className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {i18n.t("appError.reload")}
           </button>
           <button
             type="button"
-            onClick={onGoHome}
+            onClick={navigateToAppHome}
             className="px-4 py-2 rounded-lg border border-border hover:bg-muted/60"
           >
             {i18n.t("appError.goHome")}

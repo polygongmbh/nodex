@@ -1,8 +1,6 @@
-import { createRoot, type Root } from "react-dom/client";
-import { AppErrorScreen } from "@/components/app/AppErrorScreen";
 import i18n from "@/lib/i18n/config";
 
-const fatalErrorRoots = new WeakMap<HTMLElement, Root>();
+const CHUNK_ERROR_RELOAD_KEY = "nodex.chunk-error-reload";
 
 export function getAppErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
@@ -17,6 +15,7 @@ export function getAppErrorMessage(error: unknown): string {
 }
 
 export function reloadAppWithCacheBypass() {
+  clearChunkErrorReloadState();
   const url = new URL(window.location.href);
   url.searchParams.set("reload", String(Date.now()));
   window.location.replace(url.toString());
@@ -26,25 +25,29 @@ export function navigateToAppHome() {
   window.location.assign("/");
 }
 
-interface RenderFatalAppErrorOptions {
-  onGoHome?: () => void;
-  onReload?: () => void;
+export function shouldRetryChunkErrorOnce() {
+  return typeof window !== "undefined" && window.sessionStorage.getItem(CHUNK_ERROR_RELOAD_KEY) !== "1";
 }
 
-export function renderFatalAppError(
-  container: HTMLElement,
-  error: unknown,
-  options: RenderFatalAppErrorOptions = {}
-) {
-  const root = fatalErrorRoots.get(container) ?? createRoot(container);
-  fatalErrorRoots.set(container, root);
-  const errorMessage = getAppErrorMessage(error);
+export function markChunkErrorReloadAttempted() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(CHUNK_ERROR_RELOAD_KEY, "1");
+}
 
-  root.render(
-    <AppErrorScreen
-      errorMessage={errorMessage}
-      onReload={options.onReload ?? reloadAppWithCacheBypass}
-      onGoHome={options.onGoHome ?? navigateToAppHome}
-    />
-  );
+export function clearChunkErrorReloadState() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(CHUNK_ERROR_RELOAD_KEY);
+}
+
+export function consumeReloadSearchParam() {
+  if (typeof window === "undefined") return;
+  if (!window.location.search.includes("reload=")) {
+    clearChunkErrorReloadState();
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("reload");
+  window.history.replaceState(window.history.state, "", url.toString());
+  clearChunkErrorReloadState();
 }
