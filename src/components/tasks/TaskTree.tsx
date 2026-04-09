@@ -5,7 +5,7 @@ import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
-import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
+import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import {
   createTreeSelectors,
@@ -248,12 +248,7 @@ export function TaskTree({
             />
           ))}
           {shouldShowScopeFooterHint ? (
-            <FilteredEmptyState
-              isHydrating={isHydrating}
-              searchQuery={searchQuery}
-              contextTaskTitle={currentContextTask?.content}
-              mode="footer"
-            />
+            <ScopeFooterHint contextTaskTitle={currentContextTask?.content} />
           ) : null}
         </div>
       </TaskAuthorProfilesProvider>

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/popover";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
-import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
+import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -578,13 +578,7 @@ export function ListView({
               })}
               {shouldShowScopeFooterHint ? (
                 <div className="col-span-full p-0">
-                    <FilteredEmptyState
-                      isHydrating={isHydrating}
-                      searchQuery={searchQuery}
-                      contextTaskTitle={focusedTask?.content}
-                      mode="footer"
-                      className="py-6"
-                    />
+                  <ScopeFooterHint contextTaskTitle={focusedTask?.content} />
                 </div>
               ) : null}
             </>
