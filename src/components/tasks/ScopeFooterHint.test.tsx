@@ -114,15 +114,13 @@ describe("ScopeFooterHint", () => {
   });
 
   it("truncates long parent context in the footer scope sentence", () => {
-    const longContent = "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA";
-    const expectedTail = longContent.slice(-20);
-    const parentTask = makeTask({ id: "parent", author, content: longContent, status: "todo" });
+    const parentTask = makeTask({ id: "parent", author, content: "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA", status: "todo" });
     renderHint({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>
       content.includes('under "This immediate parent')
       && content.includes(" ... ")
-      && content.includes(`${expectedTail}".`)
+      && content.includes('ing token ZETA-OMEGA".')
     )).toBeInTheDocument();
   });
 

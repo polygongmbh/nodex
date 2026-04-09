@@ -136,27 +136,23 @@ describe("FilteredEmptyState overlay", () => {
   });
 
   it("truncates long parent context at word boundaries while preserving start and end fragments", () => {
-    const longContent = "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA";
-    const expectedTail = longContent.slice(-20);
-    const parentTask = makeTask({ id: "parent", author, content: longContent, status: "todo" });
+    const parentTask = makeTask({ id: "parent", author, content: "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA", status: "todo" });
     renderOverlay({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>
       content.includes('under "This immediate parent')
       && content.includes(" ... ")
-      && content.includes(`${expectedTail}".`)
+      && content.includes('ing token ZETA-OMEGA".')
     )).toBeInTheDocument();
   });
 
   it("does not treat umlauts as boundaries when preserving the end fragment", () => {
-    const umlautContent = "Context prefix that is definitely long enough to trigger truncation and ends with kontinuierlichÜbermäßigÄußerst";
-    const expectedTail = umlautContent.slice(-20);
-    const parentTask = makeTask({ id: "parent", author, content: umlautContent, status: "todo" });
+    const parentTask = makeTask({ id: "parent", author, content: "Context prefix that is definitely long enough to trigger truncation and ends with kontinuierlichÜbermäßigÄußerst", status: "todo" });
     renderOverlay({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>
       content.includes(" ... ")
-      && content.includes(`${expectedTail}".`)
+      && content.includes('lichÜbermäßigÄußerst".')
     )).toBeInTheDocument();
   });
 
