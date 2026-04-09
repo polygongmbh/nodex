@@ -52,6 +52,7 @@ import {
 } from "./storage";
 import {
   mapNativeRelayStatus,
+  mapRelayStatuses,
   mergeRelayStatusUpdates,
   MAX_INITIAL_CONNECT_FAILURES,
 } from "./relay-status";
@@ -272,6 +273,19 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     return "connected";
   }, []);
 
+  const updateRelayEntry = useCallback((
+    normalizedRelayUrl: string,
+    transform: (relay: NDKRelayStatus) => NDKRelayStatus
+  ) => {
+    setRelays((previous) =>
+      mapRelayStatuses(previous, (relay) => (
+        relay.url.replace(/\/+$/, "") === normalizedRelayUrl
+          ? transform(relay)
+          : relay
+      ))
+    );
+  }, []);
+
   const markRelayReadOutcome = useCallback((relayUrl: string, allowed: boolean) => {
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
     if (allowed) {
@@ -279,19 +293,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } else {
       relayReadRejectedRef.current.set(normalizedRelayUrl, true);
     }
-    setRelays((previous) =>
-      previous.map((relay) => {
-        if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
-        if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
-          return relay;
-        }
-        return {
-          ...relay,
-          status: resolveConnectedRelayStatus(normalizedRelayUrl),
-        };
-      })
-    );
-  }, [resolveConnectedRelayStatus]);
+    updateRelayEntry(normalizedRelayUrl, (relay) => {
+      if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
+        return relay;
+      }
+      const nextStatus = resolveConnectedRelayStatus(normalizedRelayUrl);
+      return relay.status === nextStatus ? relay : { ...relay, status: nextStatus };
+    });
+  }, [resolveConnectedRelayStatus, updateRelayEntry]);
 
   const markRelayWriteOutcome = useCallback((relayUrl: string, allowed: boolean) => {
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
@@ -300,19 +309,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } else {
       relayWriteRejectedRef.current.set(normalizedRelayUrl, true);
     }
-    setRelays((previous) =>
-      previous.map((relay) => {
-        if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
-        if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
-          return relay;
-        }
-        return {
-          ...relay,
-          status: resolveConnectedRelayStatus(normalizedRelayUrl),
-        };
-      })
-    );
-  }, [resolveConnectedRelayStatus]);
+    updateRelayEntry(normalizedRelayUrl, (relay) => {
+      if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
+        return relay;
+      }
+      const nextStatus = resolveConnectedRelayStatus(normalizedRelayUrl);
+      return relay.status === nextStatus ? relay : { ...relay, status: nextStatus };
+    });
+  }, [resolveConnectedRelayStatus, updateRelayEntry]);
 
   const shouldShowRelayVerificationToast = useCallback((
     relayUrl: string,
@@ -492,20 +496,21 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     if (cached) {
       relayInfoRef.current.set(normalizedRelayUrl, cached.summary);
       relayInfoFetchedAtRef.current.set(normalizedRelayUrl, cached.fetchedAt);
-      setRelays((previous) =>
-        previous.map((relay) =>
-          relay.url.replace(/\/+$/, "") === normalizedRelayUrl
-            ? {
-                ...relay,
-                nip11: {
-                  authRequired: cached.summary.authRequired,
-                  supportsNip42: cached.summary.supportsNip42,
-                  checkedAt: cached.fetchedAt,
-                },
-              }
-            : relay
-        )
-      );
+      updateRelayEntry(normalizedRelayUrl, (relay) => {
+        const nextNip11 = {
+          authRequired: cached.summary.authRequired,
+          supportsNip42: cached.summary.supportsNip42,
+          checkedAt: cached.fetchedAt,
+        };
+        if (
+          relay.nip11?.authRequired === nextNip11.authRequired
+          && relay.nip11?.supportsNip42 === nextNip11.supportsNip42
+          && relay.nip11?.checkedAt === nextNip11.checkedAt
+        ) {
+          return relay;
+        }
+        return { ...relay, nip11: nextNip11 };
+      });
       nostrDevLog("relay", "Relay NIP-11 info restored from cache", {
         relayUrl: normalizedRelayUrl,
         authRequired: cached.summary.authRequired,
@@ -530,26 +535,27 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         fetchedAt: checkedAt,
       },
     });
-    setRelays((previous) =>
-      previous.map((relay) =>
-        relay.url.replace(/\/+$/, "") === normalizedRelayUrl
-          ? {
-              ...relay,
-              nip11: {
-                authRequired: info.authRequired,
-                supportsNip42: info.supportsNip42,
-                checkedAt,
-              },
-            }
-          : relay
-      )
-    );
+    updateRelayEntry(normalizedRelayUrl, (relay) => {
+      const nextNip11 = {
+        authRequired: info.authRequired,
+        supportsNip42: info.supportsNip42,
+        checkedAt,
+      };
+      if (
+        relay.nip11?.authRequired === nextNip11.authRequired
+        && relay.nip11?.supportsNip42 === nextNip11.supportsNip42
+        && relay.nip11?.checkedAt === nextNip11.checkedAt
+      ) {
+        return relay;
+      }
+      return { ...relay, nip11: nextNip11 };
+    });
     nostrDevLog("relay", "Relay NIP-11 info loaded", {
       relayUrl: normalizedRelayUrl,
       authRequired: info.authRequired,
       supportsNip42: info.supportsNip42,
     });
-  }, [relayStatusCacheAdapter]);
+  }, [relayStatusCacheAdapter, updateRelayEntry]);
 
   const primeRelayAuthChallenge = useCallback((ndkInstance: NDK, relayUrl: string) => {
     if (!ndkInstance.signer) return;
@@ -1803,19 +1809,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       primeRelayAuthChallenge(ndk, normalized);
     }
     const mappedStatus = mapRelayTransportStatus(relay);
-    setRelays((previous) =>
-      previous.map((entry) =>
-        entry.url.replace(/\/+$/, "") === normalized
-          ? {
-              ...entry,
-              status: mappedStatus === "connected"
-                ? resolveConnectedRelayStatus(normalized)
-                : mappedStatus,
-            }
-          : entry
-      )
-    );
-  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus]);
+    updateRelayEntry(normalized, (relayEntry) => {
+      const nextStatus = mappedStatus === "connected"
+        ? resolveConnectedRelayStatus(normalized)
+        : mappedStatus;
+      return relayEntry.status === nextStatus ? relayEntry : { ...relayEntry, status: nextStatus };
+    });
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus, updateRelayEntry]);
 
   const publishEvent = useCallback(async (
     kind: NostrEventKind,

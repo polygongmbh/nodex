@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   areRelayStatusesEqual,
   inferMappedStatusFromUiStatus,
+  mapRelayStatuses,
   mapNativeRelayStatus,
   mergeRelayStatusUpdates,
   RELAY_CONNECTING_GRACE_MS,
@@ -160,6 +161,42 @@ describe("mergeRelayStatusUpdates", () => {
       url: "wss://relay.two",
       status: "disconnected",
     }]);
+
+    expect(next).not.toBe(previous);
+    expect(next[0]).toBe(unchanged);
+    expect(next[1]).not.toBe(changed);
+    expect(next[1].status).toBe("disconnected");
+  });
+});
+
+describe("mapRelayStatuses", () => {
+  it("returns the previous array when the mapper preserves every relay entry", () => {
+    const previous = [{
+      url: "wss://relay.example",
+      status: "connected" as const,
+    }];
+
+    const next = mapRelayStatuses(previous, (relay) => relay);
+
+    expect(next).toBe(previous);
+  });
+
+  it("replaces only the changed relay entry", () => {
+    const unchanged = {
+      url: "wss://relay.one",
+      status: "connected" as const,
+    };
+    const changed = {
+      url: "wss://relay.two",
+      status: "connecting" as const,
+    };
+    const previous = [unchanged, changed];
+
+    const next = mapRelayStatuses(previous, (relay) => (
+      relay.url === "wss://relay.two"
+        ? { ...relay, status: "disconnected" as const }
+        : relay
+    ));
 
     expect(next).not.toBe(previous);
     expect(next[0]).toBe(unchanged);
