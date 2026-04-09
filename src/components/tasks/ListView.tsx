@@ -578,7 +578,7 @@ export function ListView({
               })}
               {shouldShowScopeFooterHint ? (
                 <div className="col-span-full p-0">
-                  <ScopeFooterHint contextTaskTitle={focusedTask?.content} />
+                  <ScopeFooterHint />
                 </div>
               ) : null}
             </>

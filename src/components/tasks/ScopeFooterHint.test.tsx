@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ScopeFooterHint } from "./ScopeFooterHint";
-import type { Channel, Relay } from "@/types";
+import type { Channel, Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
+import { makeTask, makePerson } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
+import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 
 const relays: Relay[] = [
   {
@@ -42,6 +44,8 @@ const people: Person[] = [
   },
 ];
 
+const author = makePerson({ id: "author", name: "author", displayName: "Author", isOnline: false });
+
 const FILTER_SCOPE = "with Alice, in #ops, excluding #frontend, on relay.one";
 const FOOTER_SCOPE_TEXT = `This is all ${FILTER_SCOPE}`;
 const PARENT_SCOPE_SUFFIX = ', under "Parent Task".';
@@ -49,7 +53,7 @@ const RECENT_SCOPE = "from the last 7 days";
 const PRIORITY_SCOPE = "at priority P4 or higher";
 
 function renderHint(
-  props: Parameters<typeof ScopeFooterHint>[0] = {},
+  viewModel: { focusedTaskId?: string | null; allTasks?: Task[] } = {},
   surface: { relays?: Relay[]; channels?: Channel[]; people?: Person[]; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
   return render(
@@ -62,7 +66,11 @@ function renderHint(
         quickFilters: surface.quickFilters ?? makeQuickFilterState(),
       }}
     >
-      <ScopeFooterHint {...props} />
+      <FeedTaskViewModelProvider
+        value={{ tasks: [], allTasks: viewModel.allTasks ?? [], focusedTaskId: viewModel.focusedTaskId ?? null }}
+      >
+        <ScopeFooterHint />
+      </FeedTaskViewModelProvider>
     </FeedSurfaceProvider>
   );
 }
@@ -76,7 +84,10 @@ describe("ScopeFooterHint", () => {
   });
 
   it("renders for a single-relay selection", () => {
-    renderHint({}, { relays: singleRelay, channels: [{ id: "ops", name: "ops", filterState: "neutral" }], people: [{ ...people[0], isSelected: false }] });
+    renderHint(
+      {},
+      { relays: singleRelay, channels: [{ id: "ops", name: "ops", filterState: "neutral" }], people: [{ ...people[0], isSelected: false }] }
+    );
 
     expect(screen.getByText("This is all on relay.one.")).toBeInTheDocument();
   });
@@ -96,15 +107,17 @@ describe("ScopeFooterHint", () => {
   });
 
   it("appends parent context to the footer scope sentence", () => {
-    renderHint({ contextTaskTitle: "Parent Task\nSecond line should not be shown" });
+    const parentTask = makeTask({ id: "parent", author, content: "Parent Task\nSecond line should not be shown", status: "todo" });
+    renderHint({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText(`${FOOTER_SCOPE_TEXT}${PARENT_SCOPE_SUFFIX}`)).toBeInTheDocument();
   });
 
   it("truncates long parent context in the footer scope sentence", () => {
-    const longParentTitle = "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA";
-    const expectedTail = longParentTitle.slice(-20);
-    renderHint({ contextTaskTitle: longParentTitle });
+    const longContent = "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA";
+    const expectedTail = longContent.slice(-20);
+    const parentTask = makeTask({ id: "parent", author, content: longContent, status: "todo" });
+    renderHint({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>
       content.includes('under "This immediate parent')

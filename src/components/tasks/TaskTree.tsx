@@ -247,9 +247,7 @@ export function TaskTree({
               sortContext={sortContext}
             />
           ))}
-          {shouldShowScopeFooterHint ? (
-            <ScopeFooterHint contextTaskTitle={currentContextTask?.content} />
-          ) : null}
+          {shouldShowScopeFooterHint ? <ScopeFooterHint /> : null}
         </div>
       </TaskAuthorProfilesProvider>
 
