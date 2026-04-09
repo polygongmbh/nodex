@@ -7,7 +7,7 @@ import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filter
 import { filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedTaskViewModel } from "./feed-task-view-model-context";
-import { useFeedViewState as useFeedLayoutState } from "./feed-view-state-context";
+import { useFeedViewState } from "./feed-view-state-context";
 
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
@@ -24,7 +24,7 @@ const ListView = lazy(() =>
 
 export function FeedPageViewPane() {
   const { t } = useTranslation();
-  const { currentView, kanbanDepthMode } = useFeedLayoutState();
+  const { currentView, kanbanDepthMode } = useFeedViewState();
   const loadingLabel = t("app.loadingView");
   const viewModel = useFeedTaskViewModel();
   const taskSource = useTaskViewSource({
