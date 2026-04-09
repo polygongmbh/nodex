@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { AppViewFallback } from "@/components/app/AppViewFallback";
+import { useTranslation } from "react-i18next";
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
@@ -32,6 +32,7 @@ const CalendarView = lazy(() =>
 );
 
 export function MobileLayout() {
+  const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const channels = surface.visibleChannels ?? surface.channels;
@@ -149,7 +150,12 @@ export function MobileLayout() {
   });
 
   const mobileCurrentView: MobileViewType = activePrimaryView;
-  const viewFallback = <AppViewFallback />;
+  const loadingLabel = t("app.loadingView");
+  const viewFallback = (
+    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      {loadingLabel}
+    </div>
+  );
   const {
     effectiveSearchQuery,
     mobileFallbackMessage,

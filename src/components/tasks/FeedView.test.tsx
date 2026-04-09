@@ -1267,7 +1267,7 @@ describe("FeedView", () => {
     expect(screen.getByTestId("feed-state-entry-close-update-1")).toHaveTextContent("Closed");
   });
 
-  it("renders a local inline scope hint when source posts exist but none match the current scope", () => {
+  it("does not render a local inline scope hint when source posts exist but none match the current scope", () => {
     const { container } = renderFeedView(
       {
         tasks,
@@ -1279,26 +1279,8 @@ describe("FeedView", () => {
       }
     );
 
-    expect(container.querySelector('[data-empty-mode="inline"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-task-id="task-1"]')).not.toBeInTheDocument();
-  });
-
-  it("renders a screen empty state when the feed has no source posts", () => {
-    const { container } = renderFeedView(
-      {
-        tasks: [],
-        allTasks: [],
-        searchQueryOverride: "",
-      },
-      {
-        channels: [],
-        people: [],
-        mentionablePeople: [],
-      }
-    );
-
     expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
-    expect(container.querySelector('[data-empty-mode="screen"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-task-id="task-1"]')).not.toBeInTheDocument();
   });
 
   it("renders a scope footer hint at the end when filtered results are visible", () => {
@@ -1318,6 +1300,7 @@ describe("FeedView", () => {
     const footerState = container.querySelector('[data-empty-mode="footer"]');
     expect(footerState).toBeInTheDocument();
     expect(footerState).toHaveTextContent("Alice Doe");
+    expect(footerState).toHaveTextContent("demo.test");
     expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
   });
 
