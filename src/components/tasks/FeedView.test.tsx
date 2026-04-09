@@ -267,7 +267,7 @@ describe("FeedView", () => {
     );
 
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
-    expect(container.querySelector('[data-empty-mode="footer"]')).not.toBeInTheDocument();
+    expect(screen.queryByText(/This is all/)).not.toBeInTheDocument();
   });
 
   it("hides the scope footer while the feed is still hydrating even if the current batch is full", () => {
@@ -296,7 +296,7 @@ describe("FeedView", () => {
     );
 
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
-    expect(container.querySelector('[data-empty-mode="footer"]')).not.toBeInTheDocument();
+    expect(screen.queryByText(/This is all/)).not.toBeInTheDocument();
   });
 
   it("re-clamps the visible feed window when clearing a broadening filter", () => {
@@ -1279,13 +1279,12 @@ describe("FeedView", () => {
       }
     );
 
-    expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
     expect(container.querySelector('[data-task-id="task-1"]')).not.toBeInTheDocument();
   });
 
   it("renders a scope footer hint at the end when filtered results are visible", () => {
     const selectedAuthor = { ...author, isSelected: true };
-    const { container } = renderFeedView(
+    renderFeedView(
       {
         tasks,
         allTasks: tasks,
@@ -1297,16 +1296,15 @@ describe("FeedView", () => {
       }
     );
 
-    const footerState = container.querySelector('[data-empty-mode="footer"]');
-    expect(footerState).toBeInTheDocument();
-    expect(footerState).toHaveTextContent("Alice Doe");
-    expect(footerState).toHaveTextContent("demo.test");
-    expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
+    const footerText = screen.getByText(/This is all/);
+    expect(footerText).toBeInTheDocument();
+    expect(footerText).toHaveTextContent("Alice Doe");
+    expect(footerText).toHaveTextContent("demo.test");
   });
 
   it("renders a scope footer hint at the end for a feed-only selection", () => {
     const singleRelay = [makeRelay({ id: "feed-example", name: "Feed Example", url: "wss://feed.example.com" })];
-    const { container } = renderFeedView(
+    renderFeedView(
       {
         tasks,
         allTasks: tasks,
@@ -1317,9 +1315,7 @@ describe("FeedView", () => {
       }
     );
 
-    const footerState = container.querySelector('[data-empty-mode="footer"]');
-    expect(footerState).toBeInTheDocument();
-    expect(footerState).toHaveTextContent("feed.example.com");
+    expect(screen.getByText(/This is all/)).toHaveTextContent("feed.example.com");
   });
 
   it("keeps showing feed posts on mobile when the current scope has no matches", () => {
@@ -1335,10 +1331,8 @@ describe("FeedView", () => {
       }
     );
 
-    expect(document.querySelector('[data-empty-mode="mobile"]')).not.toBeInTheDocument();
     expect(container.querySelector('[data-task-id="task-1"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
-    expect(container.querySelector('[data-empty-mode="footer"]')).not.toBeInTheDocument();
+    expect(screen.queryByText(/This is all/)).not.toBeInTheDocument();
   });
 
   it("ignores selected people as well as channel filters for the mobile fallback", () => {
@@ -1373,9 +1367,7 @@ describe("FeedView", () => {
       }
     );
 
-    expect(document.querySelector('[data-empty-mode="mobile"]')).not.toBeInTheDocument();
     expect(container.querySelector('[data-task-id="task-2"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
   });
 
   it("updates task priority from the feed priority chip", () => {
