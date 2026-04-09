@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Relay status no longer gets stuck as read-rejected when an older failed websocket emits a late auth denial after a newer connection has already recovered.
 - Idle CPU usage is significantly reduced: relay connect/disconnect events no longer trigger React re-renders when the status has not changed, the live subscription no longer restarts on every incoming event, relay reconnect callbacks are now stable across renders, and the redundant 5-second relay-status polling interval has been removed.
 - Presence events now expire after 30 minutes instead of 60, and the sidebar yellow-dot window aligns with this threshold; idle users (no re-navigation) are now shown as offline once their last presence event expires rather than remaining shown as online indefinitely.
 - Busy relay sessions now avoid both redundant kind-0 profile cache rewrites on unrelated live events and unbounded historical feed backfill beyond the retained cache horizon, cutting idle CPU churn and secondary UI lag while the feed is open.

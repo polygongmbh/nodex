@@ -1004,6 +1004,38 @@ describe("NDKProvider relay lifecycle", () => {
     });
   });
 
+  it("ignores auth rejection frames from a stale relay socket after a hard reconnect", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "hard reconnect relay" }));
+    });
+
+    await waitFor(() => {
+      expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    await act(async () => {
+      firstRelay.emitServerMessage('["CLOSED","kinds-limit-subid","auth-required: pubkey not in whitelist"]');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+  });
+
   it("retries verification-failed relays after signing in again without forcing a new socket", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
