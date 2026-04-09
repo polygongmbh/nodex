@@ -396,6 +396,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     }
 
     const handler = (event: MessageEvent) => {
+      if (relayCurrentInstanceRef.current.get(normalizedRelayUrl) !== relay) return;
       if (typeof event.data !== "string") return;
       try {
         const payload = JSON.parse(event.data);
