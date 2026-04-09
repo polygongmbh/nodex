@@ -574,7 +574,7 @@ export function FeedView({
         ) : null}
         {hasMoreEntries ? <div ref={loadMoreSentinelRef} aria-hidden="true" className="h-px w-full" /> : null}
         {shouldShowScopeFooterHint && !hasMoreEntries && !isHydrating ? (
-          <ScopeFooterHint contextTaskTitle={focusedTask?.content} />
+          <ScopeFooterHint />
         ) : null}
       </div>
       <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />

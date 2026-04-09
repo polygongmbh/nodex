@@ -3,21 +3,20 @@ import { useDeferredValue, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 
 interface FilteredEmptyStateProps {
-  isHydrating?: boolean;
-  contextTaskTitle?: string;
   className?: string;
 }
 
-export function FilteredEmptyState({
-  isHydrating = false,
-  contextTaskTitle = "",
-  className,
-}: FilteredEmptyStateProps) {
+export function FilteredEmptyState({ className }: FilteredEmptyStateProps) {
   const { t } = useTranslation();
   const surface = useFeedSurfaceState();
+  const { isHydrating = false, focusedTaskId, allTasks } = useFeedTaskViewModel();
   const searchQuery = useDeferredValue(surface.searchQuery);
+  const contextTaskTitle = focusedTaskId
+    ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
+    : "";
   const scopeModel = useEmptyScopeModel({
     relays: surface.relays,
     channels: surface.channels,

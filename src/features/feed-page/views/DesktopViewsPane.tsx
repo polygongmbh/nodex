@@ -74,13 +74,6 @@ export function DesktopViewsPane() {
       taskSource.searchQuery,
     ]
   );
-  const focusedTaskTitle = useMemo(
-    () =>
-      taskSource.focusedTaskId
-        ? taskSource.taskById.get(taskSource.focusedTaskId)?.content ?? ""
-        : "",
-    [taskSource.focusedTaskId, taskSource.taskById]
-  );
   const shouldShowOverlay = scopedTasks.length === 0;
   const viewFallback = (
     <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -136,10 +129,7 @@ export function DesktopViewsPane() {
       <div className="relative min-h-0 flex-1 overflow-hidden">
         {viewPane}
         {shouldShowOverlay ? (
-          <FilteredEmptyState
-            isHydrating={viewModel.isHydrating}
-            contextTaskTitle={focusedTaskTitle}
-          />
+          <FilteredEmptyState />
         ) : null}
       </div>
     </div>

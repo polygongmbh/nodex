@@ -1,10 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilteredEmptyState } from "./FilteredEmptyState";
-import type { Channel, Relay } from "@/types";
+import type { Channel, Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
+import { makeTask, makePerson } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
+import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 
 const relays: Relay[] = [
   {
@@ -42,6 +44,8 @@ const people: Person[] = [
   },
 ];
 
+const author = makePerson({ id: "author", name: "author", displayName: "Author", isOnline: false });
+
 const FILTER_SCOPE = "with Alice, in #ops, excluding #frontend, on relay.one";
 const EMPTY_SCOPE_TEXT = `No post yet ${FILTER_SCOPE}`;
 const PARENT_SCOPE_SUFFIX = ', under "Parent Task".';
@@ -49,7 +53,7 @@ const RECENT_SCOPE = "from the last 7 days";
 const PRIORITY_SCOPE = "at priority P4 or higher";
 
 function renderOverlay(
-  props: Parameters<typeof FilteredEmptyState>[0],
+  viewModel: { isHydrating?: boolean; focusedTaskId?: string | null; allTasks?: Task[] } = {},
   surface: { relays?: Relay[]; channels?: Channel[]; people?: Person[]; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
   return render(
@@ -62,7 +66,11 @@ function renderOverlay(
         quickFilters: surface.quickFilters ?? makeQuickFilterState(),
       }}
     >
-      <FilteredEmptyState {...props} />
+      <FeedTaskViewModelProvider
+        value={{ tasks: [], allTasks: viewModel.allTasks ?? [], focusedTaskId: viewModel.focusedTaskId ?? null, isHydrating: viewModel.isHydrating }}
+      >
+        <FilteredEmptyState />
+      </FeedTaskViewModelProvider>
     </FeedSurfaceProvider>
   );
 }
@@ -73,7 +81,7 @@ describe("FilteredEmptyState overlay", () => {
   });
 
   it("renders the selected filtered scope summary", () => {
-    renderOverlay({});
+    renderOverlay();
 
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.getByText(`${EMPTY_SCOPE_TEXT}.`)).toBeInTheDocument();
@@ -121,15 +129,17 @@ describe("FilteredEmptyState overlay", () => {
   });
 
   it("appends immediate parent context to the scope sentence", () => {
-    renderOverlay({ contextTaskTitle: "Parent Task\nSecond line should not be shown" });
+    const parentTask = makeTask({ id: "parent", author, content: "Parent Task\nSecond line should not be shown", status: "todo" });
+    renderOverlay({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText(`${EMPTY_SCOPE_TEXT}${PARENT_SCOPE_SUFFIX}`)).toBeInTheDocument();
   });
 
   it("truncates long parent context at word boundaries while preserving start and end fragments", () => {
-    const longParentTitle = "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA";
-    const expectedTail = longParentTitle.slice(-20);
-    renderOverlay({ contextTaskTitle: longParentTitle });
+    const longContent = "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA";
+    const expectedTail = longContent.slice(-20);
+    const parentTask = makeTask({ id: "parent", author, content: longContent, status: "todo" });
+    renderOverlay({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>
       content.includes('under "This immediate parent')
@@ -139,9 +149,10 @@ describe("FilteredEmptyState overlay", () => {
   });
 
   it("does not treat umlauts as boundaries when preserving the end fragment", () => {
-    const umlautEndingTitle = "Context prefix that is definitely long enough to trigger truncation and ends with kontinuierlichÜbermäßigÄußerst";
-    const expectedTail = umlautEndingTitle.slice(-20);
-    renderOverlay({ contextTaskTitle: umlautEndingTitle });
+    const umlautContent = "Context prefix that is definitely long enough to trigger truncation and ends with kontinuierlichÜbermäßigÄußerst";
+    const expectedTail = umlautContent.slice(-20);
+    const parentTask = makeTask({ id: "parent", author, content: umlautContent, status: "todo" });
+    renderOverlay({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>
       content.includes(" ... ")
