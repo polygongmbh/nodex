@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.13.0] - 2026-04-09
+Minor release for feed-shell resilience, runtime performance, and sign-in/composer recovery improvements.
+
 - Message-of-the-day banners now stay pinned at the top without shrinking the app shell, use a centered full-width layout with a right-side close affordance, and can be dismissed with either the `X` or a short tap that still preserves text selection/copying.
 - Relay status no longer gets stuck as read-rejected when an older failed websocket emits a late auth denial after a newer connection has already recovered.
 - Idle CPU usage is significantly reduced: relay connect/disconnect events no longer trigger React re-renders when the status has not changed, the live subscription no longer restarts on every incoming event, relay reconnect callbacks are now stable across renders, and the redundant 5-second relay-status polling interval has been removed.
