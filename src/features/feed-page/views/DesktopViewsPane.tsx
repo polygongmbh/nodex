@@ -22,7 +22,7 @@ const ListView = lazy(() =>
   import("@/components/tasks/ListView").then((module) => ({ default: module.ListView }))
 );
 
-export function FeedPageViewPane() {
+export function DesktopViewsPane() {
   const { t } = useTranslation();
   const { currentView, kanbanDepthMode } = useFeedViewState();
   const loadingLabel = t("app.loadingView");
@@ -140,7 +140,6 @@ export function FeedPageViewPane() {
             isHydrating={viewModel.isHydrating}
             searchQuery={taskSource.searchQuery}
             contextTaskTitle={focusedTaskTitle}
-            mode="overlay"
           />
         ) : null}
       </div>

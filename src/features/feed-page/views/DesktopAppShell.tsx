@@ -10,19 +10,19 @@ import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedViewState } from "./feed-view-state-context";
 import { FeedPageSidebar } from "./FeedPageSidebar";
-import { FeedPageViewPane } from "./FeedPageViewPane";
+import { DesktopViewsPane } from "./DesktopViewsPane";
 
-interface FeedPageDesktopShellProps {
+interface DesktopAppShellProps {
   shortcutsHelpProps: ComponentProps<typeof KeyboardShortcutsHelp>;
   authModalProps: ComponentProps<typeof NostrAuthModal>;
   onboardingOverlays: ReactNode;
 }
 
-export function FeedPageDesktopShell({
+export function DesktopAppShell({
   shortcutsHelpProps,
   authModalProps,
   onboardingOverlays,
-}: FeedPageDesktopShellProps) {
+}: DesktopAppShellProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const {
     currentView,
@@ -57,7 +57,7 @@ export function FeedPageDesktopShell({
           selectedRelayIds={selectedPublishableRelayIds}
         />
         <div className="min-h-0 flex-1 overflow-hidden">
-          <FeedPageViewPane />
+          <DesktopViewsPane />
         </div>
         <DesktopSearchDock />
       </div>
