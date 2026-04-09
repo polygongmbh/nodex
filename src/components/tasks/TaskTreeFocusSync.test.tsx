@@ -18,7 +18,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
 
-const relays: Relay[] = [{ id: "demo", name: "Demo", icon: "R", isActive: true }];
+const relays: Relay[] = [{ id: "demo", name: "Demo", icon: "R", isActive: true, url: "wss://demo.test" }];
 const channels: Channel[] = [{ id: "general", name: "general", filterState: "neutral" }];
 const people: Person[] = [];
 

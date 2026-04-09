@@ -6,7 +6,6 @@ const DEMO_RELAY_ID = "demo";
 
 export function isWritableAppRelay(relay: Relay): boolean {
   return relay.id !== DEMO_RELAY_ID
-    && Boolean(relay.url)
     && (relay.connectionStatus === undefined || relay.connectionStatus === "connected");
 }
 
@@ -18,7 +17,7 @@ export function resolveWritableAppRelayUrls(relays: Relay[], relayScopeIds?: Set
   return dedupeNormalizedRelayUrls(
     relays
       .filter((relay) => isWritableAppRelay(relay) && (!relayScopeIds || relayScopeIds.has(relay.id)))
-      .map((relay) => relay.url ?? "")
+      .map((relay) => relay.url)
   );
 }
 

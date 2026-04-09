@@ -21,6 +21,7 @@ export function makeRelay(overrides: Partial<Relay> = {}): Relay {
     name: "Demo",
     icon: "D",
     isActive: true,
+    url: "wss://demo.test",
     ...overrides,
   };
 }

@@ -98,7 +98,7 @@ export function buildRelayScopedPresenceTargets({
 }: BuildRelayScopedPresenceTargetsOptions): PresencePublishTarget[] {
   const writableRelayUrls = resolveWritableRelayUrlSet(relays);
   const relayTargets = relays.filter((relay) => {
-    if (!relay.url || !relayScopeIds.has(relay.id)) return false;
+    if (!relayScopeIds.has(relay.id)) return false;
     return writableRelayUrls.has(normalizeRelayUrl(relay.url));
   });
 
@@ -111,7 +111,7 @@ export function buildRelayScopedPresenceTargets({
   const withoutTaskIdRelayUrls: string[] = [];
 
   relayTargets.forEach((relay) => {
-    const relayUrl = relay.url ? normalizeRelayUrl(relay.url) : "";
+    const relayUrl = normalizeRelayUrl(relay.url);
     if (!relayUrl) return;
 
     if (focusedTask?.relays.includes(relay.id)) {

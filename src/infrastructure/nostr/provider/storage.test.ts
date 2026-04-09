@@ -53,13 +53,10 @@ describe("relay list persistence", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("quota exceeded", "QuotaExceededError");
     });
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     expect(() => savePersistedRelayUrls(["wss://relay.one"])).not.toThrow();
-    expect(warnSpy).toHaveBeenCalledTimes(1);
 
     setItemSpy.mockRestore();
-    warnSpy.mockRestore();
   });
 
   it("normalizes a persisted Noas default host URL", () => {

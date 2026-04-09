@@ -38,7 +38,7 @@ function resolveRelayStatus(relay: Relay | undefined): NonNullable<Relay["connec
 }
 
 function isFailedRelaySelectionTarget(relay: Relay): boolean {
-  return Boolean(relay.url) && shouldReconnectRelayOnSelection(relay.connectionStatus);
+  return shouldReconnectRelayOnSelection(relay.connectionStatus);
 }
 
 export function useRelaySelectionController({
@@ -62,7 +62,7 @@ export function useRelaySelectionController({
       return null;
     },
     onRelayEnabled: (relay) => {
-      if (!isFailedRelaySelectionTarget(relay) || !relay.url) return;
+      if (!isFailedRelaySelectionTarget(relay)) return;
 
       const relayUrl = normalizeRelayUrl(relay.url);
       const relayDomain = getRelayDomain(relay, relay.id);
@@ -162,7 +162,7 @@ export function useRelaySelectionController({
 
   const handleRelaySelectIntent = useCallback((relayId: string, mode: RelaySelectionMode) => {
     const relay = relays.find((entry) => entry.id === relayId);
-    const relayUrl = relay?.url ? normalizeRelayUrl(relay.url) : null;
+    const relayUrl = relay ? normalizeRelayUrl(relay.url) : null;
     const isCurrentlyActive = activeRelayIds.has(relayId);
     const willEnable = mode === "exclusive"
       ? !(activeRelayIds.size === 1 && isCurrentlyActive)
