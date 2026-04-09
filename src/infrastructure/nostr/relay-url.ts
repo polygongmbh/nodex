@@ -44,8 +44,8 @@ export function resolveRelayUrlsForIds(
   const relayIdSet = relayIds instanceof Set ? relayIds : new Set(relayIds);
   return dedupeNormalizedRelayUrls(
     relays
-      .filter((relay) => Boolean(relay.url) && relayIdSet.has(relay.id))
-      .map((relay) => relay.url as string)
+      .filter((relay) => relayIdSet.has(relay.id))
+      .map((relay) => relay.url)
   );
 }
 

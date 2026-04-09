@@ -256,11 +256,10 @@ describe("useRelayAutoReconnect", () => {
     expect(reconnectRelay).toHaveBeenCalledTimes(3);
   });
 
-  it("ignores demo and url-less failed relays", () => {
+  it("ignores demo failed relays when selecting reconnect targets", () => {
     const reconnectRelay = vi.fn();
     const relays = [
       buildRelay({ id: "demo", url: "wss://demo.local", connectionStatus: "connection-error" }),
-      buildRelay({ id: "relay-no-url", connectionStatus: "connection-error" }),
       buildRelay({ id: "relay-real", url: "wss://relay.real", connectionStatus: "disconnected" }),
     ];
 

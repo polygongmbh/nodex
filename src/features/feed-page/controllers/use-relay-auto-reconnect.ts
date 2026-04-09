@@ -37,7 +37,6 @@ function resolveRelayConnectionStatus(relay: Relay): NonNullable<Relay["connecti
 
 function isEligibleRelay(relay: Relay): relay is Relay & { url: string } {
   if (relay.id === "demo") return false;
-  if (typeof relay.url !== "string") return false;
   return normalizeRelayUrl(relay.url).length > 0;
 }
 

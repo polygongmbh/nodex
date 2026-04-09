@@ -425,7 +425,7 @@ export function MobileFilters({
           <div className="flex flex-wrap gap-2">
             {relays.map((relay) => {
               const RelayIcon = relayIconMap[relay.icon] || Building2;
-              const relayDisplayName = relay.url ? relayUrlToName(relay.url) : relay.name || relay.id;
+              const relayDisplayName = relayUrlToName(relay.url);
               const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
               const isConnectionActive = resolvedConnectionStatus === "connected";
               const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);

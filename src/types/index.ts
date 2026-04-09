@@ -4,7 +4,7 @@ export interface Relay {
   icon: string;
   isActive: boolean;
   connectionStatus?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
-  url?: string;
+  url: string;
 }
 
 export interface Channel {

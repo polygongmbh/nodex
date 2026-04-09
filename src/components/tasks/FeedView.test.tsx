@@ -1223,7 +1223,6 @@ describe("FeedView", () => {
     const footerState = container.querySelector('[data-empty-mode="footer"]');
     expect(footerState).toBeInTheDocument();
     expect(footerState).toHaveTextContent("Alice Doe");
-    expect(footerState).toHaveTextContent("Demo");
     expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
   });
 

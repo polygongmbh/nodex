@@ -884,7 +884,7 @@ export function useTaskPublishFlow({
   const selectedPublishableRelayIds = useMemo(
     () =>
       relays
-        .filter((relay) => effectiveActiveRelayIds.has(relay.id) && Boolean(relay.url))
+        .filter((relay) => effectiveActiveRelayIds.has(relay.id))
         .map((relay) => relay.id),
     [effectiveActiveRelayIds, relays]
   );

@@ -44,8 +44,8 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const Icon = iconMap[relay.icon] || Building2;
-  const relayDisplayName = relay.url ? relayUrlToName(relay.url) : relay.name || relay.id;
-  const relayTooltipName = relay.url ? stripRelayProtocol(relay.url) : relayDisplayName;
+  const relayDisplayName = relayUrlToName(relay.url);
+  const relayTooltipName = stripRelayProtocol(relay.url);
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
   const isConnectionActive = resolvedConnectionStatus === "connected";
   const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);

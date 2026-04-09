@@ -5,6 +5,22 @@ import {
 } from "./safe-local-storage";
 
 describe("safeLocalStorageSetItem", () => {
+  const createFailingStorage = (...errors: Error[]): Storage => {
+    let index = 0;
+    return {
+      get length() {
+        return 0;
+      },
+      clear: vi.fn(),
+      getItem: vi.fn(() => null),
+      key: vi.fn(() => null),
+      removeItem: vi.fn(),
+      setItem: vi.fn(() => {
+        throw errors[Math.min(index++, errors.length - 1)];
+      }),
+    };
+  };
+
   beforeEach(() => {
     resetSafeLocalStorageWarningsForTests();
   });
@@ -14,35 +30,27 @@ describe("safeLocalStorageSetItem", () => {
   });
 
   it("returns false and warns once per key+error when write fails", () => {
-    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-      throw new DOMException("quota exceeded", "QuotaExceededError");
-    });
+    const storage = createFailingStorage(new DOMException("quota exceeded", "QuotaExceededError"));
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
-    expect(safeLocalStorageSetItem("key", "value", { context: "test" })).toBe(false);
-    expect(safeLocalStorageSetItem("key", "value", { context: "test" })).toBe(false);
+    expect(safeLocalStorageSetItem("key", "value", { context: "test", storage })).toBe(false);
+    expect(safeLocalStorageSetItem("key", "value", { context: "test", storage })).toBe(false);
     expect(warnSpy).toHaveBeenCalledTimes(1);
 
-    setItemSpy.mockRestore();
     warnSpy.mockRestore();
   });
 
   it("warns separately for different error types", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
-    setItemSpy
-      .mockImplementationOnce(() => {
-        throw new DOMException("quota exceeded", "QuotaExceededError");
-      })
-      .mockImplementationOnce(() => {
-        throw new DOMException("security blocked", "SecurityError");
-      });
+    const storage = createFailingStorage(
+      new DOMException("quota exceeded", "QuotaExceededError"),
+      new DOMException("security blocked", "SecurityError")
+    );
 
-    expect(safeLocalStorageSetItem("key", "value")).toBe(false);
-    expect(safeLocalStorageSetItem("key", "value")).toBe(false);
+    expect(safeLocalStorageSetItem("key", "value", { storage })).toBe(false);
+    expect(safeLocalStorageSetItem("key", "value", { storage })).toBe(false);
     expect(warnSpy).toHaveBeenCalledTimes(2);
 
-    setItemSpy.mockRestore();
     warnSpy.mockRestore();
   });
 });

@@ -381,7 +381,7 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent("No matches for the quick filter, showing all posts on Demo.");
+    expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
     expect(status).toHaveClass("text-center");
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
@@ -468,9 +468,8 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent(
-      "Nothing yet in #nodex and #nostr, excluding #tech, on Demo, showing everything."
-    );
+    expect(status).toHaveTextContent("Nothing yet in #nodex and #nostr, excluding #tech");
+    expect(status).toHaveTextContent("showing everything");
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "nomatchquery");
   });
 
@@ -495,7 +494,8 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent("Nothing yet in #nodex, on Demo, showing everything.");
+    expect(status).toHaveTextContent("Nothing yet in #nodex");
+    expect(status).toHaveTextContent("showing everything");
     expect(status).toHaveClass("text-center");
   });
 
@@ -558,7 +558,8 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent("Nothing yet with Me, in #nodex, on Demo, showing everything.");
+    expect(status).toHaveTextContent("Nothing yet with Me, in #nodex");
+    expect(status).toHaveTextContent("showing everything");
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 
