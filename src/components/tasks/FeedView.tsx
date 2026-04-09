@@ -24,7 +24,7 @@ import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
-import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
+import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
@@ -574,12 +574,7 @@ export function FeedView({
         ) : null}
         {hasMoreEntries ? <div ref={loadMoreSentinelRef} aria-hidden="true" className="h-px w-full" /> : null}
         {shouldShowScopeFooterHint && !hasMoreEntries && !isHydrating ? (
-          <FilteredEmptyState
-            isHydrating={isHydrating}
-            searchQuery={searchQuery}
-            contextTaskTitle={focusedTask?.content}
-            mode="footer"
-          />
+          <ScopeFooterHint contextTaskTitle={focusedTask?.content} />
         ) : null}
       </div>
       <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
