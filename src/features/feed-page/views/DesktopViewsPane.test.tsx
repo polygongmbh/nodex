@@ -4,7 +4,7 @@ import { makePerson, makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "./feed-surface-context";
 import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
 import { FeedViewStateProvider } from "./feed-view-state-context";
-import { FeedPageViewPane } from "./FeedPageViewPane";
+import { DesktopViewsPane } from "./DesktopViewsPane";
 
 vi.mock("@/components/tasks/TaskTree", () => ({
   TaskTree: () => <div data-testid="tree-view" />,
@@ -66,14 +66,14 @@ function renderPane(currentView: "feed" | "tree" | "kanban" | "calendar" | "list
         }}
       >
         <FeedTaskViewModelProvider value={value}>
-          <FeedPageViewPane />
+          <DesktopViewsPane />
         </FeedTaskViewModelProvider>
       </FeedViewStateProvider>
     </FeedSurfaceProvider>
   );
 }
 
-describe("FeedPageViewPane overlay", () => {
+describe("DesktopViewsPane overlay", () => {
   it("renders the shared overlay above an empty tree surface", () => {
     renderPane("tree", {
       tasks: [],
@@ -81,7 +81,7 @@ describe("FeedPageViewPane overlay", () => {
     });
 
     expect(screen.getByTestId("tree-view")).toBeInTheDocument();
-    expect(document.querySelector('[data-empty-mode="overlay"]')).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
   it("renders the same shared overlay for kanban without view-specific gating", async () => {
@@ -91,7 +91,7 @@ describe("FeedPageViewPane overlay", () => {
     });
 
     await waitFor(() => expect(screen.getByTestId("kanban-view")).toBeInTheDocument());
-    expect(document.querySelector('[data-empty-mode="overlay"]')).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
   it("does not render the shared overlay when scoped tasks are present", async () => {
@@ -103,13 +103,13 @@ describe("FeedPageViewPane overlay", () => {
       status: "todo",
     });
 
-    renderPane("list", {
+    const { container } = renderPane("list", {
       tasks: [task],
       allTasks: [task],
     });
 
     await waitFor(() => expect(screen.getByTestId("list-view")).toBeInTheDocument());
-    expect(document.querySelector('[data-empty-mode="overlay"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[role="status"]')).not.toBeInTheDocument();
   });
 
   it("shows the shared overlay for a focused leaf task in table view", async () => {
@@ -128,7 +128,7 @@ describe("FeedPageViewPane overlay", () => {
     });
 
     await waitFor(() => expect(screen.getByTestId("list-view")).toBeInTheDocument());
-    expect(document.querySelector('[data-empty-mode="overlay"]')).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
   it("does not show the shared overlay for a focused leaf task in timeline view", async () => {
@@ -140,13 +140,13 @@ describe("FeedPageViewPane overlay", () => {
       status: "todo",
     });
 
-    renderPane("feed", {
+    const { container } = renderPane("feed", {
       tasks: [leaf],
       allTasks: [leaf],
       focusedTaskId: "focused-feed-leaf",
     });
 
     await waitFor(() => expect(screen.getByTestId("feed-view")).toBeInTheDocument());
-    expect(document.querySelector('[data-empty-mode="overlay"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[role="status"]')).not.toBeInTheDocument();
   });
 });

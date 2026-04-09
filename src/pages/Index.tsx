@@ -56,8 +56,8 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
-  FeedPageDesktopShell,
-} from "@/features/feed-page/views/FeedPageDesktopShell";
+  DesktopAppShell,
+} from "@/features/feed-page/views/DesktopAppShell";
 import {
   FeedPageMobileShell,
 } from "@/features/feed-page/views/FeedPageMobileShell";
@@ -893,7 +893,7 @@ const Index = () => {
       sidebarController={desktopSidebarController}
     >
       <MotdBanner />
-      <FeedPageDesktopShell
+      <DesktopAppShell
         shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
         authModalProps={{
           isOpen: isAuthModalOpen,
