@@ -132,7 +132,6 @@ export function DesktopViewsPane() {
         {shouldShowOverlay ? (
           <FilteredEmptyState
             isHydrating={viewModel.isHydrating}
-            searchQuery={taskSource.searchQuery}
             contextTaskTitle={focusedTaskTitle}
           />
         ) : null}

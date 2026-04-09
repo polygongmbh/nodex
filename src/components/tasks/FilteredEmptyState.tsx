@@ -1,25 +1,23 @@
 import { useTranslation } from "react-i18next";
-import { useMemo } from "react";
+import { useDeferredValue, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface FilteredEmptyStateProps {
   isHydrating?: boolean;
-  searchQuery?: string;
   contextTaskTitle?: string;
   className?: string;
 }
 
 export function FilteredEmptyState({
   isHydrating = false,
-  searchQuery: searchQueryProp,
   contextTaskTitle = "",
   className,
 }: FilteredEmptyStateProps) {
   const { t } = useTranslation();
   const surface = useFeedSurfaceState();
-  const searchQuery = searchQueryProp ?? surface.searchQuery;
+  const searchQuery = useDeferredValue(surface.searchQuery);
   const scopeModel = useEmptyScopeModel({
     relays: surface.relays,
     channels: surface.channels,
