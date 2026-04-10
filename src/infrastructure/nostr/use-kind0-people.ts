@@ -42,6 +42,24 @@ interface UseKind0PeopleResult {
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
+function arePeopleListsEqual(previous: Person[], next: Person[]): boolean {
+  if (previous.length !== next.length) return false;
+  return previous.every((person, index) => {
+    const candidate = next[index];
+    return (
+      person.id === candidate.id &&
+      person.name === candidate.name &&
+      person.displayName === candidate.displayName &&
+      person.nip05 === candidate.nip05 &&
+      person.about === candidate.about &&
+      person.avatar === candidate.avatar &&
+      person.isOnline === candidate.isOnline &&
+      person.onlineStatus === candidate.onlineStatus &&
+      person.isSelected === candidate.isSelected
+    );
+  });
+}
+
 function buildPriorityLookup(prioritizedPubkeys: string[]): Map<string, number> {
   return new Map(prioritizedPubkeys.map((pubkey, index) => [pubkey.toLowerCase(), index] as const));
 }
@@ -308,10 +326,13 @@ export function useKind0People(
   const derivedPeopleRef = useRef(derivedPeople);
   derivedPeopleRef.current = derivedPeople;
 
-  const people = useMemo(
-    () => mergeDerivedPeopleWithInteractiveState(derivedPeople, interactivePeople, priorityLookup),
-    [derivedPeople, interactivePeople, priorityLookup]
-  );
+  const previousPeopleRef = useRef<Person[]>([]);
+  const people = useMemo(() => {
+    const next = mergeDerivedPeopleWithInteractiveState(derivedPeople, interactivePeople, priorityLookup);
+    if (arePeopleListsEqual(previousPeopleRef.current, next)) return previousPeopleRef.current;
+    previousPeopleRef.current = next;
+    return next;
+  }, [derivedPeople, interactivePeople, priorityLookup]);
 
   const setPeople = useCallback<Dispatch<SetStateAction<Person[]>>>((value) => {
     setInteractivePeople((previousInteractivePeople) => {

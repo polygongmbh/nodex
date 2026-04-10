@@ -114,6 +114,60 @@ describe("useKind0People", () => {
     });
   });
 
+  it("returns the same people reference when events from known pubkeys arrive and profiles are unchanged", async () => {
+    peopleFromKind0.saveCachedKind0Events([
+      {
+        kind: NostrEventKind.Metadata,
+        pubkey: "a".repeat(64),
+        created_at: 1,
+        content: JSON.stringify({ name: "alice", displayName: "Alice Demo" }),
+      },
+    ], DEMO_RELAY_URL);
+
+    const metadataEvent = {
+      id: "kind0-event",
+      pubkey: "a".repeat(64),
+      created_at: 1,
+      kind: NostrEventKind.Metadata,
+      tags: [],
+      content: JSON.stringify({ name: "alice", displayName: "Alice Demo" }),
+      relayUrl: DEMO_RELAY_URL,
+      relayUrls: [DEMO_RELAY_URL],
+    };
+    // A task event from the same known pubkey — does not add new people or change profiles
+    const taskEventFromKnownAuthor = {
+      id: "task-event",
+      pubkey: "a".repeat(64),
+      created_at: 2,
+      kind: 1621,
+      tags: [],
+      content: "a task",
+      relayUrl: DEMO_RELAY_URL,
+      relayUrls: [DEMO_RELAY_URL],
+    };
+
+    const { result, rerender } = renderHook(
+      ({ events }) => useKind0People(events, [DEMO_RELAY_URL], null),
+      { initialProps: { events: [metadataEvent] } }
+    );
+
+    await waitFor(() => {
+      expect(result.current.people).toHaveLength(1);
+    });
+
+    const firstPeopleRef = result.current.people;
+
+    rerender({ events: [metadataEvent, taskEventFromKnownAuthor] });
+
+    await waitFor(() => {
+      expect(result.current.people).toHaveLength(1);
+    });
+
+    // The people reference must be stable — scroll hydration windows and other memos
+    // depend on reference identity to avoid spurious resets.
+    expect(result.current.people).toBe(firstPeopleRef);
+  });
+
   it("does not rewrite kind0 relay cache when unrelated live events arrive", async () => {
     const saveSpy = vi.spyOn(peopleFromKind0, "saveCachedKind0Events");
     const metadataEvent = {
