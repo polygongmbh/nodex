@@ -7,8 +7,8 @@ import {
 } from "./hashtags";
 
 describe("hashtags helpers", () => {
-  it("extracts standalone hashtags and ignores embedded ones", () => {
-    expect(extractHashtagsFromContent("alpha#beta #gamma (#delta)")).toEqual(["gamma", "delta"]);
+  it("extracts whitespace-delimited hashtags and ignores embedded or punctuated prefixes", () => {
+    expect(extractHashtagsFromContent("alpha#beta #gamma (#delta)")).toEqual(["gamma"]);
   });
 
   it("counts only standalone hashtags", () => {
@@ -18,6 +18,7 @@ describe("hashtags helpers", () => {
   it("returns an active hashtag query only when the cursor is in a standalone token", () => {
     expect(getHashtagQueryAtCursor("ship #back")).toBe("back");
     expect(getHashtagQueryAtCursor("ship email#back")).toBeNull();
+    expect(getHashtagQueryAtCursor("ship (#back")).toBeNull();
   });
 
   it("extracts only committed hashtags followed by whitespace or end of content", () => {

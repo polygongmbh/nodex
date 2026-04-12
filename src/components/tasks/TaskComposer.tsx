@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, HandHelping, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
 import { Channel, Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
 import type { Person } from "@/types/person";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -126,9 +127,7 @@ const NIP99_SUMMARY_MAX_LENGTH = 160;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
 const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
 function normalizeListingTextFromContent(content: string): string {
-  return content
-    .replace(/(^|\s)#\w+/g, " ")
-    .replace(/(^|\s)@[^\s]+/g, " ")
+  return stripStandaloneMentionsAndHashtags(content)
     .replace(/\s+/g, " ")
     .trim();
 }

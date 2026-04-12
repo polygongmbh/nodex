@@ -1,4 +1,5 @@
 import type { Person } from "@/types/person";
+import { MENTION_CONTENT_REGEX } from "@/lib/content-tokens";
 import {
   formatUserFacingPubkey,
   isHexPubkey,
@@ -14,9 +15,8 @@ export function normalizeMentionIdentifier(value: string): string {
 }
 
 export function extractMentionIdentifiersFromContent(content: string): string[] {
-  const mentionPattern = /@([a-zA-Z0-9._-]+(?:@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})?)/g;
-  const normalized = Array.from(content.matchAll(mentionPattern))
-    .map((match) => normalizeMentionIdentifier(match[1] || ""))
+  const normalized = Array.from(content.matchAll(MENTION_CONTENT_REGEX))
+    .map((match) => normalizeMentionIdentifier(match[2] || ""))
     .filter(Boolean);
   return Array.from(new Set(normalized));
 }

@@ -3,6 +3,7 @@ import LinkifyIt from "linkify-it";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { LINKIFY_CONTENT_TOKEN_REGEX } from "@/lib/content-tokens";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Person } from "@/types/person";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
@@ -17,8 +18,6 @@ import {
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 
-const TOKEN_REGEX =
-  /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?)|nostr:(npub1[023456789acdefghjklmnpqrstuvwxyz]+))/gi;
 const linkify = new LinkifyIt();
 
 const HASH_LINK_PREFIX = "https://nodex.local/hashtag/";
@@ -276,10 +275,10 @@ export function getStandaloneEmbeddableUrls(content: string): string[] {
 function preprocessMarkdownTokens(value: string): string {
   const nodes: string[] = [];
   let tokenCursor = 0;
-  TOKEN_REGEX.lastIndex = 0;
+  LINKIFY_CONTENT_TOKEN_REGEX.lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = TOKEN_REGEX.exec(value)) !== null) {
+  while ((match = LINKIFY_CONTENT_TOKEN_REGEX.exec(value)) !== null) {
     const matchIndex = match.index;
     const prefix = match[1] ?? "";
     const token = match[2] ?? "";

@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Mentions and hashtags now only parse and linkify when they start at the beginning of content or after whitespace, so `foo#bar`, `foo@bar`, and `(#tag)` no longer become channels or mentions while composing or reading tasks.
 - Private-key and Noas sign-ins now survive a same-tab reload via `sessionStorage` without becoming durable browser sessions, and Noas no longer leaves behind the unused persisted username key.
 - Noas sign-in and sign-up now prefill a newly detected default host immediately during the current app run instead of waiting until the next startup.
 - Operators can now switch task editing between assignee-or-creator-only and all signed-in users with the `VITE_TASK_EDIT_MODE` runtime setting.

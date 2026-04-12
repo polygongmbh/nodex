@@ -50,6 +50,21 @@ describe("linkifyContent interaction styles", () => {
     expect(hashtag).toBeInTheDocument();
   });
 
+  it("does not linkify hashtags or mentions that are attached to non-whitespace prefixes", () => {
+    render(
+      <div>
+        {linkifyContent("Ship(#frontend) email@alice.test and @alice@example.com", undefined, {
+          people: [alice],
+        })}
+      </div>
+    );
+
+    expect(screen.queryByRole("button", { name: "Filter by #frontend" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Person actions for alice" })).toHaveLength(1);
+    expect(screen.getByText((value) => value.includes("Ship(#frontend)"))).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "email@alice.test" })).toHaveAttribute("href", "mailto:email@alice.test");
+  });
+
   it("keeps long inline hashtag and mention tokens breakable for clamped content", () => {
     render(
       <div>

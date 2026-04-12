@@ -1,7 +1,6 @@
 import type { Channel } from "@/types";
+import { MENTION_AT_CURSOR_REGEX } from "@/lib/content-tokens";
 import { getHashtagQueryAtCursor } from "@/lib/hashtags";
-
-const MENTION_AT_CURSOR_REGEX = /@([^\s@]*)$/;
 
 export type ComposerAutocompleteMatch =
   | { kind: "hashtag"; query: string }
@@ -20,7 +19,7 @@ export function getComposerAutocompleteMatch(textBeforeCursor: string): Composer
   if (mentionMatch) {
     return {
       kind: "mention",
-      query: (mentionMatch[1] || "").toLowerCase(),
+      query: (mentionMatch[2] || "").toLowerCase(),
     };
   }
 

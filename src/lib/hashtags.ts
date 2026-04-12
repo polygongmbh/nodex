@@ -1,5 +1,4 @@
-const HASHTAG_CONTENT_REGEX = /(^|[^A-Za-z0-9_])#([A-Za-z0-9_]+)/g;
-const HASHTAG_AT_CURSOR_REGEX = /(^|[^A-Za-z0-9_])#([A-Za-z0-9_]*)$/;
+import { HASHTAG_AT_CURSOR_REGEX, HASHTAG_CONTENT_REGEX } from "@/lib/content-tokens";
 
 export function extractHashtagsFromContent(content: string): string[] {
   const hashtags = new Set<string>();

@@ -13,6 +13,8 @@ describe("composer autocomplete helpers", () => {
   it("prefers hashtag matches over mention matches at the cursor", () => {
     expect(getComposerAutocompleteMatch("Ship #ba")).toEqual({ kind: "hashtag", query: "ba" });
     expect(getComposerAutocompleteMatch("Ping @al")).toEqual({ kind: "mention", query: "al" });
+    expect(getComposerAutocompleteMatch("Ship(#ba")).toBeNull();
+    expect(getComposerAutocompleteMatch("Ping(@al")).toBeNull();
     expect(getComposerAutocompleteMatch("Ship update")).toBeNull();
   });
 

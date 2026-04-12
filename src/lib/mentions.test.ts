@@ -34,6 +34,12 @@ describe("mentions", () => {
     ).toEqual(["alice", "alice@example.com"]);
   });
 
+  it("ignores mentions that do not start after whitespace or content start", () => {
+    expect(
+      extractMentionIdentifiersFromContent("Ping(@alice) email@bob.test and @carol@example.com")
+    ).toEqual(["carol@example.com"]);
+  });
+
   it("prefers NIP-05 identifier for mention insertion", () => {
     expect(getPreferredMentionIdentifier(alice)).toBe("alice@example.com");
     expect(getPreferredMentionIdentifier(bob)).toBe(nip19.npubEncode("b".repeat(64)));

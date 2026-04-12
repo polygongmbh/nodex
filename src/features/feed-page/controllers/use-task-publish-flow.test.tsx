@@ -174,6 +174,19 @@ function Harness({
       >
         SubmitAuthoritativeMentions
       </button>
+      <button
+        onClick={async () => {
+          const result = await hook.handleNewTask(
+            "Assign(@alice) (#general) and @alice #general",
+            ["general"],
+            ["relay-one"],
+            "task"
+          );
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        SubmitWhitespaceDelimitedTokens
+      </button>
       <button onClick={() => hook.handleRetryFailedPublish(hook.failedPublishDrafts[0]?.id || "")}>Retry</button>
       <button onClick={() => hook.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due")}>
         Due
@@ -354,6 +367,34 @@ describe("useTaskPublishFlow", () => {
     expect(publishTags).not.toEqual(expect.arrayContaining([["p", "a".repeat(64)]]));
     expect(screen.getByTestId("first-assignees")).toBeEmptyDOMElement();
     expect(screen.getByTestId("first-mentions")).toBeEmptyDOMElement();
+  });
+
+  it("publishes only whitespace-delimited mention and hashtag tokens from content", async () => {
+    const publishEvent = vi.fn(async () => ({
+      success: true,
+      eventId: "f".repeat(64),
+      publishedRelayUrls: ["wss://relay.one"],
+    }));
+
+    renderHarness({
+      publishEvent,
+      people: [makePerson({ id: "a".repeat(64), name: "alice", displayName: "Alice" })],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "SubmitWhitespaceDelimitedTokens" }));
+
+    await waitFor(() => {
+      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+    });
+
+    const [, , publishTags] = publishEvent.mock.calls[0] as unknown as [
+      number,
+      string,
+      string[][] | undefined,
+    ];
+    expect(publishTags).toEqual(expect.arrayContaining([["t", "general"], ["p", "a".repeat(64)]]));
+    expect(publishTags).not.toEqual(expect.arrayContaining([["t", "(#general)"]]));
+    expect(screen.getByTestId("first-assignees")).toHaveTextContent("a".repeat(64));
+    expect(screen.getByTestId("first-mentions")).toHaveTextContent(`alice,${"a".repeat(64)}`);
   });
 
   it("defaults root offer submissions to the only active relay when none is explicitly selected", async () => {
