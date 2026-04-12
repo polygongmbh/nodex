@@ -17,11 +17,10 @@ function makeHarness(
   initialUserProfile?: Record<string, string>,
 ) {
   const publishEvent = vi.fn(async () => publishResult);
+  const fetchLatestKind0Profile = vi.fn(async () => null);
   const setUser = vi.fn();
   const setNeedsProfileSetup = vi.fn();
   const setIsProfileSyncing = vi.fn();
-  const beginRelayOperation = vi.fn();
-  const endRelayOperation = vi.fn();
 
   const user = initialUserProfile
     ? { pubkey: PUBKEY, profile: initialUserProfile }
@@ -35,12 +34,11 @@ function makeHarness(
       user as any,
       relays,
       publishEvent,
+      fetchLatestKind0Profile,
       profileSyncRunRef,
       setUser,
       setNeedsProfileSetup,
       setIsProfileSyncing,
-      beginRelayOperation,
-      endRelayOperation,
     );
   });
 

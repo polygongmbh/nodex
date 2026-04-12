@@ -17,11 +17,7 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { NoasClient, type NoasAuthResult } from "@/lib/nostr/noas-client";
 import { isValidNoasBaseUrl, normalizeNoasBaseUrl, resolveNoasApiBaseUrl } from "@/lib/nostr/noas-discovery";
 import { privateKeyHexToNsec } from "@/lib/nostr/nip49-utils";
-import {
-  buildKind0Content,
-  hasRequiredProfileFields,
-  type EditableNostrProfile,
-} from "@/infrastructure/nostr/profile-metadata";
+import type { EditableNostrProfile } from "@/infrastructure/nostr/profile-metadata";
 import {
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildOfflinePresenceContent,
@@ -97,6 +93,7 @@ import {
   resolveWritableNdkRelayUrls,
 } from "@/lib/nostr/relay-write-targets";
 import { resolveManualRelayReconnectAction } from "@/domain/relays/relay-reconnect-policy";
+import { useProfileSync } from "./use-profile-sync";
 export type { AuthMethod, NDKUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
@@ -842,11 +839,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     kind0ProfileInFlightRef.current.set(normalizedPubkey, request);
     return await request;
   }, [beginRelayOperation, clearTrackedRelayTimeout, endRelayOperation, ndk, scheduleRelayTimeout]);
-
-  const userProfileSnapshot = useMemo<NDKUserProfile | null>(() => {
-    if (!user?.profile) return null;
-    return { ...user.profile };
-  }, [user?.profile]);
 
   // Initialize NDK
   useEffect(() => {
@@ -1988,105 +1980,17 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     return createNip98AuthHeader(ndk, url, method);
   }, [ndk]);
 
-  const updateUserProfile = useCallback(async (profile: EditableNostrProfile): Promise<boolean> => {
-    if (!hasRequiredProfileFields(profile)) {
-      console.warn("Profile update rejected: missing required name");
-      return false;
-    }
-
-    const relayUrls = relays
-      .filter((relay) => relay.status === "connected")
-      .map((relay) => relay.url);
-
-    if (relayUrls.length === 0) {
-      console.warn("Profile update skipped: no connected relays");
-      return false;
-    }
-
-    const result = await publishEvent(
-      NostrEventKind.Metadata,
-      buildKind0Content(profile),
-      [],
-      undefined,
-      relayUrls
-    );
-
-    if (!result.success) {
-      return false;
-    }
-
-    setUser((prev) => {
-      if (!prev) return prev;
-      const updated = new NDKUser({ pubkey: prev.pubkey });
-      updated.profile = {
-        ...prev.profile,
-        name: profile.name.trim(),
-        displayName: profile.displayName?.trim() || undefined,
-        picture: profile.picture?.trim() || undefined,
-        about: profile.about?.trim() || undefined,
-        nip05: profile.nip05?.trim() || undefined,
-      };
-      return updated;
-    });
-    setNeedsProfileSetup(false);
-    return true;
-  }, [publishEvent, relays]);
-
-  useEffect(() => {
-    if (!user?.pubkey) {
-      setNeedsProfileSetup(false);
-      setIsProfileSyncing(false);
-      return;
-    }
-
-    const syncRun = profileSyncRunRef.current + 1;
-    profileSyncRunRef.current = syncRun;
-    let cancelled = false;
-    const isStale = () => cancelled || profileSyncRunRef.current !== syncRun;
-
-    setIsProfileSyncing(true);
-
-    const syncProfile = async () => {
-      const kind0Profile = await fetchLatestKind0Profile(user.pubkey);
-      if (isStale()) return;
-
-      const mergedProfile = {
-        ...(userProfileSnapshot || {}),
-        ...(kind0Profile || {}),
-      };
-
-      setUser((prev) => {
-        if (!prev || prev.pubkey !== user.pubkey) return prev;
-        const p = prev.profile;
-        const isUnchanged =
-          p?.name === mergedProfile.name &&
-          p?.displayName === mergedProfile.displayName &&
-          p?.picture === mergedProfile.picture &&
-          p?.about === mergedProfile.about &&
-          p?.nip05 === mergedProfile.nip05;
-        if (isUnchanged) return prev;
-        const updated = new NDKUser({ pubkey: prev.pubkey });
-        updated.profile = mergedProfile;
-        return updated;
-      });
-
-      const hasProfile = !!(mergedProfile.name || mergedProfile.displayName || mergedProfile.picture || mergedProfile.about || mergedProfile.nip05);
-      setNeedsProfileSetup(!hasProfile);
-      setIsProfileSyncing(false);
-    };
-
-    void syncProfile().catch((error) => {
-      if (isStale()) return;
-      console.warn("Profile sync failed", error);
-      const p = userProfileSnapshot;
-      const hasProfile = !!(p?.name || p?.displayName || p?.picture || p?.about || p?.nip05);
-      setNeedsProfileSetup(!hasProfile);
-      setIsProfileSyncing(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchLatestKind0Profile, user?.pubkey, userProfileSnapshot]);
+  const { updateUserProfile } = useProfileSync(
+    ndk,
+    user,
+    relays,
+    publishEvent,
+    fetchLatestKind0Profile,
+    profileSyncRunRef,
+    setUser,
+    setNeedsProfileSetup,
+    setIsProfileSyncing,
+  );
 
   const subscribe = useCallback((
     filters: NDKFilter[],
