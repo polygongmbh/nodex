@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
 import { NDKUser } from "@nostr-dev-kit/ndk";
 import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
@@ -35,6 +35,11 @@ export function useProfileSync(
     if (!user?.profile) return null;
     return { ...user.profile };
   }, [user?.profile]);
+
+  // Tracks the pubkey we last started a sync for so re-renders caused by profile
+  // writes (which change the user object reference without changing the identity)
+  // do not trigger a second relay fetch.
+  const lastSyncedPubkeyRef = useRef<string | null>(null);
 
   const updateUserProfile = useCallback(async (profile: EditableNostrProfile): Promise<boolean> => {
     if (!hasRequiredProfileFields(profile)) {
@@ -99,11 +104,21 @@ export function useProfileSync(
   }, [publishEvent, relays, setUser, setNeedsProfileSetup, user?.pubkey]);
 
   useEffect(() => {
-    if (!user?.pubkey) {
+    const pubkey = user?.pubkey ?? null;
+
+    if (pubkey === lastSyncedPubkeyRef.current) return;
+    lastSyncedPubkeyRef.current = pubkey;
+
+    if (!pubkey) {
       setNeedsProfileSetup(false);
       setIsProfileSyncing(false);
       return;
     }
+
+    // Capture the profile snapshot at sync-start as the local baseline.
+    // Not in deps — we intentionally want the value from login time, not
+    // re-firing every time a profile write updates the user object.
+    const initialSnapshot = { ...user?.profile };
 
     const syncRun = profileSyncRunRef.current + 1;
     profileSyncRunRef.current = syncRun;
@@ -117,7 +132,7 @@ export function useProfileSync(
       if (ndk?.signer) {
         try {
           const signerUser = await ndk.signer.user();
-          if (!isStale() && signerUser.pubkey === user.pubkey) {
+          if (!isStale() && signerUser.pubkey === pubkey) {
             await signerUser.fetchProfile();
             if (!isStale()) {
               signerProfile = signerUser.profile ?? null;
@@ -128,17 +143,17 @@ export function useProfileSync(
         }
       }
 
-      const kind0Profile = await fetchLatestKind0Profile(user.pubkey);
+      const kind0Profile = await fetchLatestKind0Profile(pubkey);
       if (isStale()) return;
 
       const mergedProfile: NDKUserProfile = {
-        ...(userProfileSnapshot || {}),
+        ...initialSnapshot,
         ...(signerProfile || {}),
         ...(kind0Profile || {}),
       };
 
       setUser((prev) => {
-        if (!prev || prev.pubkey !== user.pubkey) return prev;
+        if (!prev || prev.pubkey !== pubkey) return prev;
         const p = prev.profile;
         const isUnchanged =
           p?.name === mergedProfile.name &&
@@ -160,15 +175,14 @@ export function useProfileSync(
     void syncProfile().catch((error) => {
       if (isStale()) return;
       console.warn("Profile sync failed", error);
-      const p = userProfileSnapshot;
-      const hasProfile = !!(p?.name || p?.displayName || p?.picture || p?.about || p?.nip05);
+      const hasProfile = !!(initialSnapshot.name || initialSnapshot.displayName || initialSnapshot.picture || initialSnapshot.about || initialSnapshot.nip05);
       setNeedsProfileSetup(!hasProfile);
       setIsProfileSyncing(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [ndk, fetchLatestKind0Profile, user?.pubkey, userProfileSnapshot, profileSyncRunRef, setIsProfileSyncing, setNeedsProfileSetup, setUser]);
+  }, [ndk, fetchLatestKind0Profile, user, profileSyncRunRef, setIsProfileSyncing, setNeedsProfileSetup, setUser]);
 
   return {
     updateUserProfile,
