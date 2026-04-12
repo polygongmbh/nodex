@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.12.2] - 2026-04-12
+
 - Mentions and hashtags now only parse and linkify when they start at the beginning of content or after whitespace, so `foo#bar`, `foo@bar`, and `(#tag)` no longer become channels or mentions while composing or reading tasks.
 - Private-key and Noas sign-ins now survive a same-tab reload via `sessionStorage` without becoming durable browser sessions, and Noas no longer leaves behind the unused persisted username key.
 - Noas sign-in and sign-up now prefill a newly detected default host immediately during the current app run instead of waiting until the next startup.
