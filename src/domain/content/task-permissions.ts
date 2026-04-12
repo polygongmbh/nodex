@@ -1,5 +1,6 @@
 import type { Task } from "@/types";
 import { extractMentionIdentifiersFromContent, formatMentionIdentifierForDisplay } from "@/lib/mentions";
+import { hexPubkeyToNpub, npubToHexPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { formatAuthorMetaLabel, type Person } from "@/types/person";
 import { resolveTaskEditMode } from "./task-permissions-policy";
 
@@ -38,6 +39,24 @@ function normalizeIdentity(value: string | undefined): string {
   return value?.trim().toLowerCase() || "";
 }
 
+function getIdentityVariants(value: string | undefined): string[] {
+  const normalized = normalizeIdentity(value);
+  if (!normalized) return [];
+
+  const variants = new Set<string>([normalized]);
+  const decodedHex = npubToHexPubkey(normalized);
+  if (decodedHex) {
+    variants.add(decodedHex);
+  }
+
+  const encodedNpub = hexPubkeyToNpub(normalized);
+  if (encodedNpub) {
+    variants.add(encodedNpub);
+  }
+
+  return Array.from(variants);
+}
+
 function findMatchingPerson(identifier: string, people: Person[]): Person | undefined {
   const needle = normalizeIdentity(identifier);
   if (!needle) return undefined;
@@ -50,8 +69,7 @@ function findMatchingPerson(identifier: string, people: Person[]): Person | unde
 function getNormalizedUserIdentifiers(user?: Person): Set<string> {
   return new Set(
     [user?.id, user?.name, user?.displayName, user?.nip05]
-      .filter((value): value is string => Boolean(value))
-      .map((value) => value.toLowerCase())
+      .flatMap((value) => getIdentityVariants(value))
   );
 }
 
@@ -59,8 +77,7 @@ function isTaskOwnedByUser(task: Task, currentUser?: Person): boolean {
   const userIdentifiers = getNormalizedUserIdentifiers(currentUser);
   if (userIdentifiers.size === 0) return false;
   const ownerIdentifiers = [task.author.id, task.author.name, task.author.displayName, task.author.nip05]
-    .filter((value): value is string => Boolean(value))
-    .map((value) => value.toLowerCase());
+    .flatMap((value) => getIdentityVariants(value));
   return ownerIdentifiers.some((value) => userIdentifiers.has(value));
 }
 

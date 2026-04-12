@@ -7,6 +7,7 @@ import {
   canUserUpdateTask,
   getTaskStatusChangeBlockedReason,
 } from "./task-permissions";
+import { hexPubkeyToNpub } from "@/lib/nostr/user-facing-pubkey";
 
 function makeTestPerson(overrides: Partial<Person> = {}): Person {
   const id = overrides.id ?? "person-id";
@@ -60,6 +61,22 @@ describe("canUserUpdateTask", () => {
   it("allows task creator to update assigned tasks", () => {
     const otherAuthor = makeTestPerson({ id: "other-user", name: "bob", nip05: "bob@example.com" });
     expect(canUserUpdateTask({ ...baseTask, author: otherAuthor, mentions: ["carol"] }, otherAuthor)).toBe(true);
+  });
+
+  it("allows task creators to update assigned tasks when author and current user use hex and npub variants", () => {
+    const creatorHex = "f".repeat(64);
+    const creatorNpub = hexPubkeyToNpub(creatorHex);
+    expect(creatorNpub).toBeTruthy();
+
+    const taskAuthor = makeTestPerson({ id: creatorHex, name: "creator", displayName: "Creator" });
+    const currentUser = makeTestPerson({ id: creatorNpub ?? creatorHex, name: "creator", displayName: "Creator" });
+
+    expect(
+      canUserUpdateTask(
+        { ...baseTask, author: taskAuthor, assigneePubkeys: ["a".repeat(64)] },
+        currentUser
+      )
+    ).toBe(true);
   });
 
   it("prefers assignee pubkeys over mention aliases", () => {
