@@ -237,6 +237,12 @@ afterEach(() => {
 });
 
 describe("MobileLayout auth wiring", () => {
+  it("shows the same loading fallback copy as desktop while lazy mobile views resolve", () => {
+    renderMobileLayout({ viewState: { currentView: "feed" } });
+
+    expect(screen.getByText("Loading view...")).toBeInTheDocument();
+  });
+
   it("uses auth state (not current user) to gate compose", () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;

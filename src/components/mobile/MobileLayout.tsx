@@ -14,6 +14,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useMobileToastOffset } from "./use-mobile-toast-offset";
 
 // Mobile view order for swipe navigation
@@ -148,7 +149,7 @@ export function MobileLayout() {
   });
 
   const mobileCurrentView: MobileViewType = activePrimaryView;
-  const viewFallback = <div className="h-full" aria-hidden="true" />;
+  const viewFallback = <ViewLoadingFallback />;
   const {
     effectiveSearchQuery,
     mobileFallbackMessage,
