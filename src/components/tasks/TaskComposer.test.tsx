@@ -108,13 +108,12 @@ function renderComposer({
 }
 
 function getComposerInput(kind: "task" | "comment" | "offer" | "request" = "task") {
-  const labels = {
-    task: /create a task with #channels and @mentions/i,
-    comment: /add your comment with #channels and @mentions/i,
-    offer: /post an offer with #channels and @mentions/i,
-    request: /post a request with #channels and @mentions/i,
-  };
-  return screen.getByRole("textbox", { name: labels[kind] });
+  void kind;
+  const input = document.querySelector<HTMLTextAreaElement>('textarea[data-onboarding="compose-input"]');
+  if (!input) {
+    throw new Error("Expected composer textarea");
+  }
+  return input;
 }
 
 describe("TaskComposer", () => {

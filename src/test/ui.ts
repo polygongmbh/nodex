@@ -1,23 +1,16 @@
 import { fireEvent, screen } from "@testing-library/react";
 
-const composerPlaceholders = {
-  task: /create a task with #channels and @mentions/i,
-  comment: /add your comment with #channels and @mentions/i,
-  offer: /post an offer with #channels and @mentions/i,
-  request: /post a request with #channels and @mentions/i,
-};
-
 export const getTaskComposerInput = () =>
-  screen.getByRole("textbox", { name: composerPlaceholders.task });
+  screen.getByRole("textbox");
 
 export const getCommentComposerInput = () =>
-  screen.getByRole("textbox", { name: composerPlaceholders.comment });
+  screen.getByRole("textbox");
 
 export const getOfferComposerInput = () =>
-  screen.getByRole("textbox", { name: composerPlaceholders.offer });
+  screen.getByRole("textbox");
 
 export const getRequestComposerInput = () =>
-  screen.getByRole("textbox", { name: composerPlaceholders.request });
+  screen.getByRole("textbox");
 
 export const getComposerPrimaryAction = () =>
   screen.getByRole("button", {

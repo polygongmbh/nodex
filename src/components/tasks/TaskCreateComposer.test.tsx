@@ -149,6 +149,33 @@ describe("TaskCreateComposer", () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
+  it("shows the focused task title in the composer placeholder", () => {
+    const parentTask = makeTask({
+      id: "parent-task",
+      content: "Parent #planning task for @alice",
+    });
+
+    renderCreateComposer({
+      focusedTaskId: "parent-task",
+      tasks: [parentTask],
+      allTasks: [parentTask],
+      allowComment: false,
+    });
+
+    expect(screen.getByRole("textbox")).toHaveAttribute(
+      "placeholder",
+      expect.stringContaining("Parent planning task for")
+    );
+    expect(screen.getByRole("textbox")).not.toHaveAttribute(
+      "placeholder",
+      expect.stringContaining("#planning")
+    );
+    expect(screen.getByRole("textbox")).not.toHaveAttribute(
+      "placeholder",
+      expect.stringContaining("@alice")
+    );
+  });
+
   it("does not render the composer when the parent only lives on read-only relays", () => {
     const readOnlyRelays: Relay[] = [{
       id: "relay-a",
@@ -259,7 +286,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
       target: { value: "comment" },
     });
-    fireEvent.change(screen.getByRole("textbox", { name: /add your comment/i }), {
+    fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Looks good #backend" },
     });
     fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
@@ -289,7 +316,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
       target: { value: "comment" },
     });
-    fireEvent.change(screen.getByRole("textbox", { name: /add your comment/i }), {
+    fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Great progress" },
     });
     fireEvent.click(screen.getByRole("button", { name: /add comment/i }));

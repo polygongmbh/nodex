@@ -1,6 +1,6 @@
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import { displayPriorityFromStored } from "@/domain/content/task-priority";
-import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
+import { formatContextTaskTitle } from "@/lib/context-task-title";
 import type { Channel, QuickFilterState, Relay } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -47,43 +47,6 @@ function formatRelayLabel(relay: Relay): string {
 function resolveRelayStatus(relay: Relay): NonNullable<Relay["connectionStatus"]> | "connected" {
   if (relay.id === "demo" || !relay.connectionStatus) return "connected";
   return relay.connectionStatus;
-}
-
-const CONTEXT_TITLE_MAX_CHARS = 72;
-const CONTEXT_TITLE_PREFIX_CHARS = 44;
-const CONTEXT_TITLE_SUFFIX_CHARS = 20;
-
-function trimAtWordBoundaryStart(value: string, maxChars: number): string {
-  if (value.length <= maxChars) return value;
-  const slice = value.slice(0, maxChars + 1);
-  const lastSpace = slice.lastIndexOf(" ");
-  if (lastSpace >= Math.floor(maxChars * 0.6)) {
-    return slice.slice(0, lastSpace).trimEnd();
-  }
-  return value.slice(0, maxChars).trimEnd();
-}
-
-function trimAtWordBoundaryEnd(value: string, maxChars: number): string {
-  if (value.length <= maxChars) return value;
-  const rawSlice = value.slice(-maxChars - 8);
-  const firstSpace = rawSlice.indexOf(" ");
-  if (firstSpace >= 0 && firstSpace <= Math.floor(maxChars * 0.35)) {
-    const candidate = rawSlice.slice(firstSpace + 1).trimStart();
-    if (candidate.length >= maxChars) return candidate;
-  }
-  return value.slice(-maxChars).trimStart();
-}
-
-function formatContextTaskTitle(title: string): string {
-  const normalized = getTrimmedFirstTaskContentLine(title).replace(/\s+/g, " ").trim();
-  if (!normalized) return "";
-  if (normalized.length <= CONTEXT_TITLE_MAX_CHARS) {
-    return `"${normalized}"`;
-  }
-
-  const prefix = trimAtWordBoundaryStart(normalized, CONTEXT_TITLE_PREFIX_CHARS);
-  const suffix = trimAtWordBoundaryEnd(normalized, CONTEXT_TITLE_SUFFIX_CHARS);
-  return `"${prefix} ... ${suffix}"`;
 }
 
 export function buildEmptyScopeModel({

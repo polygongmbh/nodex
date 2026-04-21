@@ -100,9 +100,7 @@ describe("TaskTree focus sync", () => {
       </>
     );
 
-    const composerInput = screen.getByRole("textbox", {
-      name: /create a task with #channels and @mentions/i,
-    });
+    const composerInput = screen.getByRole("textbox");
     fireEvent.focus(composerInput);
 
     const taskButton = screen.getByText("Child task").closest('[role="button"]');

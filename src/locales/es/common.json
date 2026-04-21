@@ -26,10 +26,29 @@
   },
   "composer": {
     "placeholders": {
-      "task": "Crea una tarea con #canales y @menciones...",
-      "comment": "Añade tu comentario con #canales y @menciones...",
-      "offer": "Publica una oferta con #canales y @menciones...",
-      "request": "Publica una solicitud con #canales y @menciones...",
+      "base": {
+        "task": {
+          "withContext": "Crea una subtarea de {{title}}",
+          "withoutContext": "Crea una tarea"
+        },
+        "comment": {
+          "withContext": "Añade un comentario a {{title}}",
+          "withoutContext": "Añade un comentario"
+        },
+        "offer": {
+          "withContext": "Publica una oferta bajo {{title}}",
+          "withoutContext": "Publica una oferta"
+        },
+        "request": {
+          "withContext": "Publica una solicitud bajo {{title}}",
+          "withoutContext": "Publica una solicitud"
+        }
+      },
+      "parts": {
+        "inChannels": "en {{channels}}",
+        "mentioningPeople": "mencionando a {{people}}",
+        "fallbackGuidance": "usa #channels y @mentions"
+      },
       "mobileTask": "Buscar o crear tarea... #tags",
       "mobileComment": "Buscar o añadir comentario... #tags",
       "geohash": "Introducir geohash (p. ej. u4pruyd)"

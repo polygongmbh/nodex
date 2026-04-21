@@ -4,6 +4,7 @@ import { TaskComposerRuntimeProvider, useResolvedTaskComposerEnvironment } from 
 import { useComposerRelayBlock } from "./use-composer-relay-block";
 import { useComposerFilterSync } from "./use-composer-filter-sync";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import type { ComposeRestoreRequest, TaskInitialStatus } from "@/types";
 
 interface TaskCreateComposerProps {
@@ -53,10 +54,14 @@ export function TaskCreateComposer({
   composeRestoreRequest = null,
 }: TaskCreateComposerProps) {
   const { createHttpAuthHeader } = useNDK();
+  const { allTasks } = useFeedTaskViewModel();
   const environment = useResolvedTaskComposerEnvironment({});
   const { shouldHideComposer, effectiveWritableRelayIds, canCreateContent, externalSubmitBlockByType } =
     useComposerRelayBlock(focusedTaskId);
   const filterSync = useComposerFilterSync(environment);
+  const contextTaskTitle = focusedTaskId
+    ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
+    : "";
   const handleSubmit = useComposerSubmitHandler({
     focusedTaskId,
     initialStatus,
@@ -91,6 +96,7 @@ export function TaskCreateComposer({
         allowComment={allowComment}
         allowFeedMessageTypes={allowFeedMessageTypes}
         composeRestoreRequest={composeRestoreRequest}
+        contextTaskTitle={contextTaskTitle}
       />
     </TaskComposerRuntimeProvider>
   );

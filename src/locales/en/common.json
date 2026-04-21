@@ -26,10 +26,29 @@
   },
   "composer": {
     "placeholders": {
-      "task": "Create a task with #channels and @mentions...",
-      "comment": "Add your comment with #channels and @mentions...",
-      "offer": "Post an offer with #channels and @mentions...",
-      "request": "Post a request with #channels and @mentions...",
+      "base": {
+        "task": {
+          "withContext": "Create a subtask of {{title}}",
+          "withoutContext": "Create a task"
+        },
+        "comment": {
+          "withContext": "Add a comment to {{title}}",
+          "withoutContext": "Add a comment"
+        },
+        "offer": {
+          "withContext": "Post an offer under {{title}}",
+          "withoutContext": "Post an offer"
+        },
+        "request": {
+          "withContext": "Post a request under {{title}}",
+          "withoutContext": "Post a request"
+        }
+      },
+      "parts": {
+        "inChannels": "in {{channels}}",
+        "mentioningPeople": "mentioning {{people}}",
+        "fallbackGuidance": "use #channels and @mentions"
+      },
       "mobileTask": "Search or create task... #tags",
       "mobileComment": "Search or add comment... #tags",
       "geohash": "Enter geohash (e.g. u4pruyd)"

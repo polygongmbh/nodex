@@ -28,6 +28,7 @@ import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAtta
 import { loadAutoCaptionEnabled } from "@/infrastructure/preferences/user-preferences-storage";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
+import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
 import { countHashtagsInContent, extractHashtagsFromContent, getHashtagQueryAtCursor } from "@/lib/hashtags";
 import { filterChannelsForAutocomplete, getComposerAutocompleteMatch, hasMentionQueryAtCursor } from "@/lib/composer-autocomplete";
@@ -83,6 +84,7 @@ interface TaskComposerProps {
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  contextTaskTitle?: string;
 }
 
 type ComposerMessageType = PostType;
@@ -194,9 +196,10 @@ export function TaskComposer({
   allowComment = true,
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
+  contextTaskTitle = "",
 }: TaskComposerProps) {
   const canCreateContent = canCreateContentProp;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     channelOptions,
     mentionOptions,
@@ -754,6 +757,29 @@ export function TaskComposer({
     }
     return taskType;
   };
+
+  const composerPlaceholder = useMemo(() => {
+    const mentionLabels = (filterMentionPubkeys ?? [])
+      .map((pubkey) => mentionOptionByPubkey.get(pubkey.trim().toLowerCase())?.mentionDisplay ?? "")
+      .filter(Boolean);
+    return buildComposerPlaceholder({
+      postType: taskType,
+      contextTaskTitle,
+      channelNames: filterTagNames ?? [],
+      mentionLabels,
+      locale: i18n.resolvedLanguage || i18n.language || "en",
+      t,
+    });
+  }, [
+    contextTaskTitle,
+    filterMentionPubkeys,
+    filterTagNames,
+    i18n.language,
+    i18n.resolvedLanguage,
+    mentionOptionByPubkey,
+    t,
+    taskType,
+  ]);
 
   const updateNip99 = (patch: Partial<Nip99Metadata>) => {
     setNip99((previous) => ({ ...previous, ...patch }));
@@ -1453,22 +1479,10 @@ export function TaskComposer({
             setIsExpanded(false);
           }}
           aria-label={
-            taskType === "task"
-              ? t("composer.placeholders.task")
-              : taskType === "offer"
-                ? t("composer.placeholders.offer")
-                : taskType === "request"
-                  ? t("composer.placeholders.request")
-                  : t("composer.placeholders.comment")
+            composerPlaceholder
           }
           placeholder={
-            taskType === "task"
-              ? t("composer.placeholders.task")
-              : taskType === "offer"
-                ? t("composer.placeholders.offer")
-                : taskType === "request"
-                  ? t("composer.placeholders.request")
-                  : t("composer.placeholders.comment")
+            composerPlaceholder
           }
           className={cn(
             "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
