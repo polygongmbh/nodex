@@ -183,17 +183,78 @@ export function useIndexFilters({
     });
   }, [normalizeInteractivePerson, setPeople]);
 
-  const filterHandlers: FeedInteractionHandlerMap = useMemo(() => ({
-    "sidebar.channel.toggle": (intent) => {
+  const toggleChannel = useCallback((channelId: string) => {
+    setChannelFilterStates((prev) => {
+      const next = new Map(prev);
+      const currentState = next.get(channelId) || "neutral";
+      const states: Channel["filterState"][] = ["neutral", "included", "excluded"];
+      const currentIndex = states.indexOf(currentState);
+      next.set(channelId, states[(currentIndex + 1) % states.length]);
+      return next;
+    });
+  }, [setChannelFilterStates]);
+
+  const showOnlyChannel = useCallback((channelId: string) => {
+    const shouldToggleOff = shouldToggleOffExclusiveChannel(channels, channelFilterStates, channelId);
+    if (shouldToggleOff) {
       setChannelFilterStates((prev) => {
         const next = new Map(prev);
-        const currentState = next.get(intent.channelId) || "neutral";
-        const states: Channel["filterState"][] = ["neutral", "included", "excluded"];
-        const currentIndex = states.indexOf(currentState);
-        next.set(intent.channelId, states[(currentIndex + 1) % states.length]);
+        next.set(channelId, "neutral");
         return next;
       });
-    },
+      return;
+    }
+    setChannelFilterStates(() => setExclusiveChannelFilter(channels, channelId));
+    const channel = channelsWithState.find((entry) => entry.id === channelId);
+    notifyShowingOnlyChannel(channel?.name || channelId);
+  }, [channels, channelFilterStates, channelsWithState, setChannelFilterStates]);
+
+  const toggleAllChannels = useCallback(() => {
+    const hasActiveFilters =
+      channelFilterStates.size > 0 &&
+      Array.from(channelFilterStates.values()).some((state) => state !== "neutral");
+    if (!hasActiveFilters) return;
+    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
+    notifyAllChannelsReset();
+  }, [channels, channelFilterStates, setChannelFilterStates]);
+
+  const togglePerson = useCallback((personId: string) => {
+    setPeople((prev) =>
+      prev.map((person) =>
+        person.id === personId ? { ...person, isSelected: !person.isSelected } : person
+      )
+    );
+  }, [setPeople]);
+
+  const showOnlyPerson = useCallback((personId: string) => {
+    if (shouldToggleOffExclusivePerson(people, personId)) {
+      setPeople((prev) => mapPeopleSelection(prev, () => false));
+      return;
+    }
+    setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === personId));
+    const person = people.find((entry) => entry.id === personId);
+    notifyShowingOnlyPersonExclusive(person);
+  }, [people, setPeople]);
+
+  const toggleAllPeople = useCallback(() => {
+    if (sidebarPeople.length === 0) {
+      notifyNoFrequentPeople();
+      return;
+    }
+    const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
+    const hasSelectedPeople = people.some((person) => sidebarIds.has(person.id) && person.isSelected);
+    if (!hasSelectedPeople) return;
+    setPeople((prev) =>
+      prev.map((person) =>
+        sidebarIds.has(person.id)
+          ? { ...person, isSelected: false }
+          : person
+      )
+    );
+    notifyFrequentPeopleDeselected();
+  }, [people, setPeople, sidebarPeople]);
+
+  const filterHandlers: FeedInteractionHandlerMap = useMemo(() => ({
     "filter.clearChannel": (intent) => {
       setChannelFilterStates((prev) => {
         if ((prev.get(intent.channelId) || "neutral") === "neutral") return prev;
@@ -201,31 +262,6 @@ export function useIndexFilters({
         next.set(intent.channelId, "neutral");
         return next;
       });
-    },
-    "sidebar.channel.exclusive": (intent) => {
-      const shouldToggleOff = shouldToggleOffExclusiveChannel(channels, channelFilterStates, intent.channelId);
-      if (shouldToggleOff) {
-        setChannelFilterStates((prev) => {
-          const next = new Map(prev);
-          next.set(intent.channelId, "neutral");
-          return next;
-        });
-        return;
-      }
-      setChannelFilterStates(() => setExclusiveChannelFilter(channels, intent.channelId));
-      const channel = channelsWithState.find((entry) => entry.id === intent.channelId);
-      notifyShowingOnlyChannel(channel?.name || intent.channelId);
-    },
-    "sidebar.channel.toggleAll": () => {
-      const hasActiveFilters =
-        channelFilterStates.size > 0 &&
-        Array.from(channelFilterStates.values()).some((state) => state !== "neutral");
-      if (!hasActiveFilters) return;
-      setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-      notifyAllChannelsReset();
-    },
-    "sidebar.channel.matchMode.change": (intent) => {
-      setChannelMatchMode(intent.mode);
     },
     "filter.applyHashtagExclusive": (intent) => {
       const normalizedTag = intent.tag.trim().toLowerCase();
@@ -250,45 +286,12 @@ export function useIndexFilters({
 
       notifyShowingOnlyTag(normalizedTag);
     },
-    "sidebar.person.toggle": (intent) => {
-      setPeople((prev) =>
-        prev.map((person) =>
-          person.id === intent.personId ? { ...person, isSelected: !person.isSelected } : person
-        )
-      );
-    },
     "filter.clearPerson": (intent) => {
       setPeople((prev) =>
         prev.map((person) =>
           person.id === intent.personId && person.isSelected ? { ...person, isSelected: false } : person
         )
       );
-    },
-    "sidebar.person.exclusive": (intent) => {
-      if (shouldToggleOffExclusivePerson(people, intent.personId)) {
-        setPeople((prev) => mapPeopleSelection(prev, () => false));
-        return;
-      }
-      setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === intent.personId));
-      const person = people.find((entry) => entry.id === intent.personId);
-      notifyShowingOnlyPersonExclusive(person);
-    },
-    "sidebar.person.toggleAll": () => {
-      if (sidebarPeople.length === 0) {
-        notifyNoFrequentPeople();
-        return;
-      }
-      const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
-      const hasSelectedPeople = people.some((person) => sidebarIds.has(person.id) && person.isSelected);
-      if (!hasSelectedPeople) return;
-      setPeople((prev) =>
-        prev.map((person) =>
-          sidebarIds.has(person.id)
-            ? { ...person, isSelected: false }
-            : person
-        )
-      );
-      notifyFrequentPeopleDeselected();
     },
     "person.filter.exclusive": (intent) => {
       applyExclusivePersonFilter(intent.person);
@@ -348,18 +351,14 @@ export function useIndexFilters({
     },
   }), [
     channels,
-    channelFilterStates,
-    channelsWithState,
     relays,
     setPostedTags,
     people,
     setPeople,
-    sidebarPeople,
     applyExclusivePersonFilter,
     queueMentionForPerson,
     setQuickFilters,
     setChannelFilterStates,
-    setChannelMatchMode,
     toggleInteractivePerson,
   ]);
 
@@ -386,5 +385,11 @@ export function useIndexFilters({
     setQuickFilters,
     handlers: filterHandlers,
     resetFiltersToDefault,
+    toggleChannel,
+    showOnlyChannel,
+    toggleAllChannels,
+    togglePerson,
+    showOnlyPerson,
+    toggleAllPeople,
   };
 }

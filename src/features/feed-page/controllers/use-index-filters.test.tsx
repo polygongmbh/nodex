@@ -89,11 +89,11 @@ function Harness({
   return (
     <>
       <button onClick={() => relayState.handleRelayExclusive("relay-one")}>RelayExclusive</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.toggle", channelId: "general" })}>ChannelToggle</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.toggleAll" })}>ChannelClearAll</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.matchMode.change", mode: "or" })}>ModeOr</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.person.exclusive", personId: "alice" })}>PersonExclusive</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.person.toggleAll" })}>PersonClearAll</button>
+      <button onClick={() => filters.toggleChannel("general")}>ChannelToggle</button>
+      <button onClick={() => filters.toggleAllChannels()}>ChannelClearAll</button>
+      <button onClick={() => filters.setChannelMatchMode("or")}>ModeOr</button>
+      <button onClick={() => filters.showOnlyPerson("alice")}>PersonExclusive</button>
+      <button onClick={() => filters.toggleAllPeople()}>PersonClearAll</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagExclusive", tag: "urgent" })}>HashtagExclusive</button>
       <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralSidebarChannel</button>
       <button onClick={() => {

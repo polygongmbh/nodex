@@ -109,7 +109,7 @@ function Harness() {
 
   return (
     <>
-      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.toggle", channelId: "ops" })}>ToggleOps</button>
+      <button onClick={() => filters.toggleChannel("ops")}>ToggleOps</button>
       <button onClick={() => setActiveRelayIds(new Set(["relay-one"]))}>RelayOne</button>
       <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagExclusive", tag: "urgent" })}>HashtagExclusive</button>

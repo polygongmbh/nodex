@@ -5,7 +5,6 @@ import {
   type FeedInteractionBus,
   type FeedInteractionEffect,
   type FeedInteractionHandlerMap,
-  type FeedInteractionPipelineApi,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedSidebarCommands } from "./feed-sidebar-commands-context";
 
@@ -21,14 +20,6 @@ interface UseIndexFeedInteractionBusOptions {
   setKanbanDepthMode: (mode: "1" | "2" | "3" | "all" | "leaves" | "projects") => void;
   setManageRouteActive: (isActive: boolean) => void;
   filterHandlers: FeedInteractionHandlerMap;
-  handleRelaySelectIntent: (relayId: string, mode: "toggle" | "exclusive") => string | null;
-  handleRelayToggle: (relayId: string) => void;
-  handleRelayExclusive: (relayId: string) => void;
-  handleToggleAllRelays: () => void;
-  handleAddRelay: (url: string) => void;
-  reorderRelays: (orderedUrls: string[]) => void;
-  handleRemoveRelay: (url: string) => void;
-  reconnectRelay: (url: string) => void;
   sidebarCommands: FeedSidebarCommands;
   savedFilterController: {
     onApplyConfiguration: (configurationId: string) => void;
@@ -84,14 +75,6 @@ export function useIndexFeedInteractionBus({
   setKanbanDepthMode,
   setManageRouteActive,
   filterHandlers,
-  handleRelaySelectIntent,
-  handleRelayToggle,
-  handleRelayExclusive,
-  handleToggleAllRelays,
-  handleAddRelay,
-  reorderRelays,
-  handleRemoveRelay,
-  reconnectRelay,
   sidebarCommands,
   savedFilterController,
   setFocusedTaskId,
@@ -149,35 +132,17 @@ export function useIndexFeedInteractionBus({
         setManageRouteActive(intent.isActive);
       },
       ...filterHandlers,
-      "sidebar.relay.select": (intent, api: FeedInteractionPipelineApi) => {
-        const reconnectRelayUrl = handleRelaySelectIntent(intent.relayId, intent.mode);
-        if (reconnectRelayUrl) {
-          return api.dispatch({
-            type: "sidebar.relay.reconnect",
-            url: reconnectRelayUrl,
-          });
-        }
+      "sidebar.channel.toggle": (intent) => {
+        sidebarCommands.toggleChannel(intent.channelId);
       },
-      "sidebar.relay.toggle": (intent) => {
-        handleRelayToggle(intent.relayId);
+      "sidebar.channel.exclusive": (intent) => {
+        sidebarCommands.showOnlyChannel(intent.channelId);
       },
-      "sidebar.relay.exclusive": (intent) => {
-        handleRelayExclusive(intent.relayId);
+      "sidebar.channel.toggleAll": () => {
+        sidebarCommands.toggleAllChannels();
       },
-      "sidebar.relay.toggleAll": () => {
-        handleToggleAllRelays();
-      },
-      "sidebar.relay.add": (intent) => {
-        handleAddRelay(intent.url);
-      },
-      "sidebar.relay.reorder": (intent) => {
-        reorderRelays(intent.orderedUrls);
-      },
-      "sidebar.relay.remove": (intent) => {
-        handleRemoveRelay(intent.url);
-      },
-      "sidebar.relay.reconnect": (intent) => {
-        reconnectRelay(intent.url);
+      "sidebar.channel.matchMode.change": (intent) => {
+        sidebarCommands.setChannelMatchMode(intent.mode);
       },
       "sidebar.channel.pin": (intent) => {
         sidebarCommands.pinChannel(intent.channelId);
@@ -185,11 +150,44 @@ export function useIndexFeedInteractionBus({
       "sidebar.channel.unpin": (intent) => {
         sidebarCommands.unpinChannel(intent.channelId);
       },
+      "sidebar.person.toggle": (intent) => {
+        sidebarCommands.togglePerson(intent.personId);
+      },
+      "sidebar.person.exclusive": (intent) => {
+        sidebarCommands.showOnlyPerson(intent.personId);
+      },
+      "sidebar.person.toggleAll": () => {
+        sidebarCommands.toggleAllPeople();
+      },
       "sidebar.person.pin": (intent) => {
         sidebarCommands.pinPerson(intent.personId);
       },
       "sidebar.person.unpin": (intent) => {
         sidebarCommands.unpinPerson(intent.personId);
+      },
+      "sidebar.relay.select": (intent) => {
+        sidebarCommands.selectRelay(intent.relayId, intent.mode);
+      },
+      "sidebar.relay.toggle": (intent) => {
+        sidebarCommands.toggleRelay(intent.relayId);
+      },
+      "sidebar.relay.exclusive": (intent) => {
+        sidebarCommands.showOnlyRelay(intent.relayId);
+      },
+      "sidebar.relay.toggleAll": () => {
+        sidebarCommands.toggleAllRelays();
+      },
+      "sidebar.relay.add": (intent) => {
+        sidebarCommands.addRelay(intent.url);
+      },
+      "sidebar.relay.reorder": (intent) => {
+        sidebarCommands.reorderRelays(intent.orderedUrls);
+      },
+      "sidebar.relay.remove": (intent) => {
+        sidebarCommands.removeRelay(intent.url);
+      },
+      "sidebar.relay.reconnect": (intent) => {
+        sidebarCommands.reconnectRelay(intent.url);
       },
       "sidebar.savedFilter.apply": (intent) => {
         savedFilterController.onApplyConfiguration(intent.configurationId);
@@ -259,7 +257,6 @@ export function useIndexFeedInteractionBus({
     [
       filterHandlers,
       guardInteraction,
-      handleAddRelay,
       handleDismissAllFailedPublish,
       handleDismissFailedPublish,
       handleDueDateChange,
@@ -270,19 +267,12 @@ export function useIndexFeedInteractionBus({
       handleOpenAuthModal,
       handleOpenGuide,
       handlePriorityChange,
-      handleRelayExclusive,
-      handleRelaySelectIntent,
-      handleRelayToggle,
-      handleRemoveRelay,
       handleRepostFailedPublish,
       handleRetryFailedPublish,
       handleStatusChange,
-      handleToggleAllRelays,
       handleToggleComplete,
       handleUndoPendingPublish,
       openShortcutsHelp,
-      reconnectRelay,
-      reorderRelays,
       savedFilterController,
       sidebarCommands,
       setCurrentView,
