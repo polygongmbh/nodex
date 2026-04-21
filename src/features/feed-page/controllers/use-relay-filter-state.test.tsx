@@ -12,7 +12,6 @@ const relays: Relay[] = [
   {
     id: "relay-one",
     name: "Relay One",
-    icon: "radio",
     isActive: false,
     connectionStatus: "disconnected",
     url: "wss://relay.one",
@@ -20,7 +19,6 @@ const relays: Relay[] = [
   {
     id: "relay-two",
     name: "Relay Two",
-    icon: "radio",
     isActive: false,
     connectionStatus: "disconnected",
     url: "wss://relay.two",
@@ -31,7 +29,6 @@ const connectedRelays: Relay[] = [
   {
     id: "relay-one",
     name: "Relay One",
-    icon: "radio",
     isActive: false,
     connectionStatus: "connected",
     url: "wss://relay.one",
@@ -39,7 +36,6 @@ const connectedRelays: Relay[] = [
   {
     id: "relay-two",
     name: "Relay Two",
-    icon: "radio",
     isActive: false,
     connectionStatus: "disconnected",
     url: "wss://relay.two",

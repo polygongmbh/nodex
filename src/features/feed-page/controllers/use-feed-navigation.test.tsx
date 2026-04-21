@@ -162,7 +162,6 @@ describe("useFeedNavigation", () => {
     const relay: Relay = {
       id: "relay-b",
       name: "Relay B",
-      icon: "radio",
       isActive: true,
       connectionStatus: "connected",
       url: "wss://relay.b",

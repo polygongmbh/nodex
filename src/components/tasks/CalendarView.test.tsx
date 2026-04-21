@@ -19,7 +19,6 @@ const relays: Relay[] = [
   {
     id: "demo",
     name: "Demo",
-    icon: "R",
     isActive: true,
     url: "wss://demo.test",
   },

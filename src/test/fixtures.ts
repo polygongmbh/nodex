@@ -19,7 +19,6 @@ export function makeRelay(overrides: Partial<Relay> = {}): Relay {
   return {
     id: "demo",
     name: "Demo",
-    icon: "D",
     isActive: true,
     url: "wss://demo.test",
     ...overrides,

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, MapPin, AlertTriangle } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, HandHelping, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, TaskCreateResult, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
 import type { Person } from "@/types/person";
@@ -51,6 +51,7 @@ import {
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 import { isWritableRelay } from "@/components/tasks/task-composer-runtime";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
+import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
@@ -68,15 +69,6 @@ interface UnifiedBottomBarProps {
 }
 
 type SelectorType = "relay" | "channel" | "person" | "date" | null;
-
-const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  "building-2": Building2,
-  users: Users,
-  "gamepad-2": Gamepad2,
-  cpu: Cpu,
-  radio: Radio,
-  "play-circle": PlayCircle,
-};
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 const NIP99_TITLE_MAX_LENGTH = 80;
@@ -1111,7 +1103,7 @@ export function UnifiedBottomBar({
           {activeSelector === "relay" && (
             <div className="flex flex-wrap gap-2">
               {relays.map((relay) => {
-                const RelayIcon = relayIconMap[relay.icon] || Building2;
+                const RelayIcon = resolveRelayIcon(relay.url);
                 return (
                   <button
                     key={relay.id}

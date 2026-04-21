@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown, Mail } from "lucide-react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Sparkles, LogIn, Trash2, Pencil, ChevronDown, Mail } from "lucide-react";
 import { Relay, Channel, ChannelMatchMode } from "@/types";
 import type { Person } from "@/types/person";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
+import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 
@@ -29,15 +30,6 @@ interface MobileFiltersProps {
   people?: Person[];
   profileEditorOpenSignal?: number;
 }
-
-const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  "building-2": Building2,
-  users: Users,
-  "gamepad-2": Gamepad2,
-  cpu: Cpu,
-  radio: Radio,
-  "play-circle": PlayCircle,
-};
 
 export function MobileFilters({
   relays: relaysProp,
@@ -424,7 +416,7 @@ export function MobileFilters({
           </div>
           <div className="flex flex-wrap gap-2">
             {relays.map((relay) => {
-              const RelayIcon = relayIconMap[relay.icon] || Building2;
+              const RelayIcon = resolveRelayIcon(relay.url);
               const relayDisplayName = relayUrlToName(relay.url);
               const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
               const isConnectionActive = resolvedConnectionStatus === "connected";

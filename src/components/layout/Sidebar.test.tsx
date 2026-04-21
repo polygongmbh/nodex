@@ -9,7 +9,6 @@ const baseRelays: Relay[] = [
   {
     id: "relay-one",
     name: "Relay One",
-    icon: "radio",
     isActive: true,
     connectionStatus: "connected",
     url: "wss://relay.one",
@@ -19,7 +18,6 @@ const baseRelays: Relay[] = [
 const extraRelay: Relay = {
   id: "relay-two",
   name: "Relay Two",
-  icon: "radio",
   isActive: true,
   connectionStatus: "connected",
   url: "wss://relay.two",

@@ -1,7 +1,6 @@
 export interface Relay {
   id: string;
   name: string;
-  icon: string;
   isActive: boolean;
   connectionStatus?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   url: string;

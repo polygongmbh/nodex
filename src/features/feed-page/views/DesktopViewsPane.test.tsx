@@ -34,7 +34,7 @@ function renderPane(currentView: "feed" | "tree" | "kanban" | "calendar" | "list
   return render(
     <FeedSurfaceProvider
       value={{
-        relays: [{ id: "demo", name: "Demo", icon: "D", isActive: true, connectionStatus: "connected", url: "wss://demo.test" }],
+        relays: [{ id: "demo", name: "Demo", isActive: true, connectionStatus: "connected", url: "wss://demo.test" }],
         channels: [],
         composeChannels: [],
         people: [],

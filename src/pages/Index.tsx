@@ -130,7 +130,6 @@ const Index = () => {
     const nostrRelayItems: Relay[] = ndkRelays.map((r): Relay => ({
       id: getRelayIdFromUrl(r.url),
       name: getRelayNameFromUrl(r.url),
-      icon: "radio",
       isActive: r.status === "connected" || r.status === "read-only",
       connectionStatus: r.status,
       url: r.url,
@@ -424,6 +423,7 @@ const Index = () => {
       }),
     [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
   );
+
   const { savedFilterController } = useSavedFilterConfigs({
     currentFilterSnapshot,
     relays,
@@ -585,7 +585,6 @@ const Index = () => {
     setPeople,
     setIsAuthModalOpen,
   });
-
 
   const { handleListingStatusChange } = useListingStatusPublish({
     allTasks,
@@ -794,7 +793,6 @@ const Index = () => {
       relays: relaysWithActiveState.map((relay) => ({
         id: relay.id,
         name: relay.name,
-        icon: relay.icon,
         isActive: relay.isActive,
         connectionStatus: relay.connectionStatus,
         url: relay.url,

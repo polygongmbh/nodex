@@ -10,7 +10,6 @@ import {
 const makeRelay = (id: string, url?: string): Relay => ({
   id,
   name: id,
-  icon: "R",
   isActive: true,
   url,
   connectionStatus: "connected",

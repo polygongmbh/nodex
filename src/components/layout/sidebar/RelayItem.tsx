@@ -1,4 +1,3 @@
-import { Building2, Users, Gamepad2, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
@@ -7,13 +6,7 @@ import { getRelayStatusDotClass, getRelayStatusSurfaceClass } from "@/components
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { relayUrlToName, stripRelayProtocol } from "@/infrastructure/nostr/relay-url";
-
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  "building-2": Building2,
-  users: Users,
-  "gamepad-2": Gamepad2,
-  cpu: Cpu,
-};
+import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 
 interface RelayItemProps {
   relay: Relay;
@@ -43,7 +36,7 @@ function resolveRelayIssueTooltip(
 export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const Icon = iconMap[relay.icon] || Building2;
+  const Icon = resolveRelayIcon(relay.url);
   const relayDisplayName = relayUrlToName(relay.url);
   const relayTooltipName = stripRelayProtocol(relay.url);
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;

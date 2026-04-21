@@ -109,7 +109,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 }));
 
 const relays: Relay[] = [
-  { id: "demo", name: "Demo", icon: "D", isActive: true, url: "wss://demo.test" },
+  { id: "demo", name: "Demo", isActive: true, url: "wss://demo.test" },
 ];
 
 const channels: Channel[] = [

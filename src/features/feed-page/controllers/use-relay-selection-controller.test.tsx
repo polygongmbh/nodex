@@ -20,7 +20,6 @@ function buildRelay(overrides: Partial<Relay> = {}): Relay {
   return {
     id: "relay-one",
     name: "Relay One",
-    icon: "radio",
     isActive: false,
     connectionStatus: "disconnected",
     url: "wss://relay.one",

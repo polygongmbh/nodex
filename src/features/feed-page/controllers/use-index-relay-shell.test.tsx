@@ -77,7 +77,6 @@ describe("useIndexRelayShell", () => {
             {
               id: "relay-one",
               name: "Relay One",
-              icon: "radio",
               isActive: false,
               connectionStatus: "connected",
               url: "wss://relay.one",
@@ -85,7 +84,6 @@ describe("useIndexRelayShell", () => {
             {
               id: "demo",
               name: "Demo",
-              icon: "radio",
               isActive: false,
               connectionStatus: "connected",
               url: "wss://demo.invalid",
@@ -93,7 +91,6 @@ describe("useIndexRelayShell", () => {
             {
               id: "relay-two",
               name: "Relay Two",
-              icon: "radio",
               isActive: false,
               connectionStatus: "connected",
               url: "wss://relay.two",
@@ -129,7 +126,6 @@ describe("deriveSelectedRelayUrls", () => {
           {
             id: "demo",
             name: "Demo",
-            icon: "radio",
             isActive: true,
             connectionStatus: "connected",
             url: "wss://demo.invalid",
@@ -137,7 +133,6 @@ describe("deriveSelectedRelayUrls", () => {
           {
             id: "relay-one",
             name: "Relay One",
-            icon: "radio",
             isActive: false,
             connectionStatus: "connected",
             url: "wss://relay.one",
@@ -145,7 +140,6 @@ describe("deriveSelectedRelayUrls", () => {
           {
             id: "relay-two",
             name: "Relay Two",
-            icon: "radio",
             isActive: false,
             connectionStatus: "connected",
             url: "wss://relay.two",

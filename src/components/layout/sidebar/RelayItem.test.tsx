@@ -7,7 +7,6 @@ import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-
 const baseRelay: Relay = {
   id: "relay-1",
   name: "Main Relay",
-  icon: "cpu",
   isActive: true,
   url: "wss://relay.damus.io",
 };

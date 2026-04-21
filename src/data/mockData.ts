@@ -16,7 +16,7 @@ const MOCK_PUBKEYS = {
 };
 
 export const mockRelays: Relay[] = [
-  { id: "demo", name: "Demo", icon: "play-circle", isActive: true, url: DEMO_RELAY_URL },
+  { id: "demo", name: "Demo", isActive: true, url: DEMO_RELAY_URL },
 ];
 
 export const mockChannels: Channel[] = [

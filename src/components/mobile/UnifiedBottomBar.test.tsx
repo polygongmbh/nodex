@@ -38,7 +38,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 }));
 
 const relays: Relay[] = [
-  { id: "demo", name: "Demo", icon: "D", isActive: true, url: "wss://demo.test" },
+  { id: "demo", name: "Demo", isActive: true, url: "wss://demo.test" },
 ];
 
 const channels: Channel[] = [
@@ -360,8 +360,8 @@ describe("UnifiedBottomBar auth gating", () => {
         searchQuery=""
         currentView="tree"
         relays={[
-          { id: "relay-one", name: "Relay One", icon: "D", isActive: true },
-          { id: "relay-two", name: "Relay Two", icon: "D", isActive: true },
+          { id: "relay-one", name: "Relay One", isActive: true, url: "wss://relay-one.test" },
+          { id: "relay-two", name: "Relay Two", isActive: true, url: "wss://relay-two.test" },
         ]}
         channels={channels}
         people={people}
@@ -384,8 +384,8 @@ describe("UnifiedBottomBar auth gating", () => {
         searchQuery=""
         currentView="tree"
         relays={[
-          { id: "relay-one", name: "Relay One", icon: "D", isActive: true, connectionStatus: "connected" },
-          { id: "relay-two", name: "Relay Two", icon: "D", isActive: true, connectionStatus: "read-only" },
+          { id: "relay-one", name: "Relay One", isActive: true, connectionStatus: "connected", url: "wss://relay-one.test" },
+          { id: "relay-two", name: "Relay Two", isActive: true, connectionStatus: "read-only", url: "wss://relay-two.test" },
         ]}
         channels={channels}
         people={people}
@@ -415,7 +415,7 @@ describe("UnifiedBottomBar auth gating", () => {
         searchQuery=""
         currentView="tree"
         relays={[
-          { id: "relay-one", name: "Relay One", icon: "D", isActive: false, connectionStatus: "connected" },
+          { id: "relay-one", name: "Relay One", isActive: false, connectionStatus: "connected", url: "wss://relay-one.test" },
         ]}
         channels={channels}
         people={people}
@@ -1236,8 +1236,8 @@ describe("UnifiedBottomBar auth gating", () => {
         currentView="feed"
         focusedTaskId="parent-task"
         relays={[
-          { id: "relay-one", name: "Relay One", icon: "D", isActive: true, connectionStatus: "connected" },
-          { id: "relay-two", name: "Relay Two", icon: "D", isActive: true, connectionStatus: "connected" },
+          { id: "relay-one", name: "Relay One", isActive: true, connectionStatus: "connected", url: "wss://relay-one.test" },
+          { id: "relay-two", name: "Relay Two", isActive: true, connectionStatus: "connected", url: "wss://relay-two.test" },
         ]}
         channels={channels}
         people={people}
@@ -1269,8 +1269,8 @@ describe("UnifiedBottomBar auth gating", () => {
         currentView="tree"
         focusedTaskId="parent-task"
         relays={[
-          { id: "relay-one", name: "Relay One", icon: "D", isActive: true, connectionStatus: "connected" },
-          { id: "relay-two", name: "Relay Two", icon: "D", isActive: true, connectionStatus: "connected" },
+          { id: "relay-one", name: "Relay One", isActive: true, connectionStatus: "connected", url: "wss://relay-one.test" },
+          { id: "relay-two", name: "Relay Two", isActive: true, connectionStatus: "connected", url: "wss://relay-two.test" },
         ]}
         channels={channels}
         people={people}
