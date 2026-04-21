@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.13.0] - 2026-04-21
+Minor release for focused composer publishing, search focus alignment, and reliability fixes across startup and presence.
+
 - Mobile now focuses the unified search/create composer on page load, while desktop focuses the dedicated bottom search bar instead of the shared composer.
 
 - Focused post composers (tree view with a parent task open, or feed reply context) no longer require a space to be manually selected before submitting comments, offers, or requests; the parent task's origin relay is used automatically.
