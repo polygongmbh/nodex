@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Root URLs with filter query params now preserve those params when redirecting to `/feed`, so localhost/dev deep links like `/?ch=general` keep their channel and people filters on first load.
+- Active channel filters now survive feed-specific channel list changes, so scoped feeds no longer strip URL-driven `?ch=` filters just because that channel lacks recent visible posts in the current inventory.
 
 ## [2.13.1] - 2026-04-21
 Patch release for search and composer polish.

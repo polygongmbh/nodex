@@ -102,7 +102,8 @@ export function useIndexFilters({
       let changed = false;
       const next = new Map(prev);
 
-      for (const [id] of prev) {
+      for (const [id, state] of prev) {
+        if (state !== "neutral") continue;
         if (availableChannelIds.has(id)) continue;
         next.delete(id);
         changed = true;

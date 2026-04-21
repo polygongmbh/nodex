@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useIndexFilters } from "./use-index-filters";
 import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
@@ -85,6 +86,7 @@ function Harness({
     hasLiveHydratedScope,
     isHydrating,
   });
+  const location = useLocation();
 
   return (
     <>
@@ -134,6 +136,7 @@ function Harness({
       <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
       <output data-testid="mention-request">{filters.mentionRequest?.mention ?? ""}</output>
       <output data-testid="search-query">{searchQuery}</output>
+      <output data-testid="location-search">{location.search}</output>
     </>
   );
 }
@@ -197,8 +200,8 @@ describe("useIndexFilters", () => {
 
   it.each([
     ["KeepGeneralComposeRealOnly", "included"],
-    ["HideGeneralEverywhere", "neutral"],
-    ["KeepGeneralComposeForcedOnly", "neutral"],
+    ["HideGeneralEverywhere", "included"],
+    ["KeepGeneralComposeForcedOnly", "included"],
   ] as const)(
     "resolves selected channel state for scoped availability source %s",
     (scopeActionButtonName, expectedState) => {
@@ -212,6 +215,20 @@ describe("useIndexFilters", () => {
       expect(screen.getByTestId("channel-state-general")).toHaveTextContent(expectedState);
     }
   );
+
+  it("does not discard URL-hydrated channel params when a scoped feed hides that channel", () => {
+    renderHarness({
+      initialEntries: ["/?ch=general"],
+    });
+
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+    expect(screen.getByTestId("location-search")).toHaveTextContent("?ch=general");
+
+    fireEvent.click(screen.getByRole("button", { name: "HideGeneralEverywhere" }));
+
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+    expect(screen.getByTestId("location-search")).toHaveTextContent("?ch=general");
+  });
 
   it("deselects people who are no longer available in the current sidebar scope", () => {
     renderHarness();
