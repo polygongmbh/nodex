@@ -68,7 +68,7 @@ vi.mock("@hello-pangea/dnd", () => ({
       {
         innerRef: () => {},
         draggableProps: { "data-draggable-id": draggableId },
-        dragHandleProps: {},
+        dragHandleProps: { "data-drag-handle-id": draggableId },
       },
       { isDragging: false }
     ),
@@ -441,5 +441,27 @@ describe("KanbanView closed column", () => {
     });
     expect(doneDropTargetAfter?.querySelector('[data-draggable-id="drag-task"]')).toBeInTheDocument();
     expect(todoDropTargetAfter?.querySelector('[data-draggable-id="drag-task"]')).not.toBeInTheDocument();
+  });
+
+  it("keeps the card draggable while exempting task text from drag start", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const task = makeTask({ id: "selectable-task", author, status: "todo", content: "Selectable task body #general" });
+
+    const { container } = render(
+      <KanbanView
+        tasks={[task]}
+        allTasks={[task]}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    const cardWrapper = container.querySelector('[data-draggable-id="selectable-task"]');
+    const cardHandle = screen.getByTestId("kanban-card-handle-selectable-task");
+    const cardText = screen.getByTestId("kanban-card-text-selectable-task");
+
+    expect(cardWrapper).toBeInTheDocument();
+    expect(cardHandle).toHaveAttribute("data-drag-handle-id", "selectable-task");
+    expect(cardText).not.toHaveAttribute("data-drag-handle-id");
   });
 });

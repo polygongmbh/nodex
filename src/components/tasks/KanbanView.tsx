@@ -394,13 +394,11 @@ export function KanbanView({
                               draggableId={task.id}
                               index={index}
                               isDragDisabled={!canChangeStatus}
-                              disableInteractiveElementBlocking={canChangeStatus}
                             >
                               {(provided, snapshot) => (
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
                                   className={cn(snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "")}
                                 >
                                   <KanbanTaskCard
@@ -415,6 +413,7 @@ export function KanbanView({
                                     isInteractionBlocked={isInteractionBlocked}
                                     isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
                                     hasChildren={hasChildren}
+                                    dragHandleProps={canChangeStatus ? provided.dragHandleProps : undefined}
                                   />
                                 </div>
                               )}

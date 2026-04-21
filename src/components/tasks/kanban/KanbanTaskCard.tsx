@@ -1,4 +1,5 @@
 import { Calendar, Clock, Layers, Lock } from "lucide-react";
+import type { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
 import { ScrollableTaskTagChipRow, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskPrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
@@ -31,6 +32,7 @@ interface KanbanTaskCardProps {
   isInteractionBlocked: boolean;
   isPendingPublish: boolean;
   hasChildren: (taskId: string) => boolean;
+  dragHandleProps?: DraggableProvidedDragHandleProps;
 }
 
 export function KanbanTaskCard({
@@ -45,6 +47,7 @@ export function KanbanTaskCard({
   isInteractionBlocked,
   isPendingPublish,
   hasChildren,
+  dragHandleProps,
 }: KanbanTaskCardProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -73,98 +76,116 @@ export function KanbanTaskCard({
         isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background"
       )}
     >
+      {dragHandleProps ? (
+        <div
+          {...dragHandleProps}
+          aria-hidden="true"
+          data-testid={`kanban-card-handle-${task.id}`}
+          className="absolute inset-0 rounded-lg"
+        />
+      ) : null}
       {!canChangeStatus ? (
         <div
-          className="absolute right-2 top-2 rounded-full bg-muted/80 p-1 text-muted-foreground"
+          className="absolute right-2 top-2 z-20 rounded-full bg-muted/80 p-1 text-muted-foreground"
           title={t("tasks.readOnly")}
           aria-label={t("tasks.readOnly")}
         >
           <Lock className="h-3 w-3" />
         </div>
       ) : null}
-      {!compactTaskCardsEnabled && showContext ? (
-        <TaskBreadcrumbRow
-          breadcrumbs={ancestorChain}
-          onFocusTask={focusTask}
-          className="mb-2"
-        />
-      ) : null}
-      <div className="flex items-start gap-2">
-        <div
-          className={cn(
-            `min-w-0 flex-1 text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
-            isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
-          )}
-        >
-          {linkifyContent(task.content, (tag) => {
-            void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-          }, {
-            plainHashtags: isTaskTerminalStatus(displayStatus),
-            people,
-            disableStandaloneEmbeds: true,
-          })}
-        </div>
-        {typeof task.priority === "number" ? (
-          <TaskPrioritySelect
-            id={`kanban-priority-${task.id}`}
-            taskId={task.id}
-            priority={task.priority}
-            ariaLabel={t("composer.labels.priority")}
-            disabled={!canChangeStatus}
-            stopPropagation
-            className={cn(
-              "ml-auto h-6 rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
-              canChangeStatus && "cursor-pointer hover:bg-warning/20",
-              !canChangeStatus && "cursor-not-allowed opacity-60"
-            )}
-          />
+      <div className="relative z-10">
+        {!compactTaskCardsEnabled && showContext ? (
+          <div {...dragHandleProps}>
+            <TaskBreadcrumbRow
+              breadcrumbs={ancestorChain}
+              onFocusTask={focusTask}
+              className="mb-2"
+            />
+          </div>
         ) : null}
-      </div>
-      {task.dueDate ? (
-        <div
-          className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}
-          data-testid={`kanban-due-row-${task.id}`}
-        >
-          <Calendar className="w-3 h-3" />
-          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-          <span>{format(task.dueDate, "MMM d")}</span>
-          {task.dueTime ? (
-            <>
-              <Clock className="w-3 h-3" />
-              <span>{task.dueTime}</span>
-            </>
+        <div className="flex items-start gap-2">
+          <div
+            data-testid={`kanban-card-text-${task.id}`}
+            className={cn(
+              `min-w-0 flex-1 cursor-text select-text text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
+              isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
+            )}
+          >
+            {linkifyContent(task.content, (tag) => {
+              void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+            }, {
+              plainHashtags: isTaskTerminalStatus(displayStatus),
+              people,
+              disableStandaloneEmbeds: true,
+            })}
+          </div>
+          {typeof task.priority === "number" ? (
+            <div {...dragHandleProps}>
+              <TaskPrioritySelect
+                id={`kanban-priority-${task.id}`}
+                taskId={task.id}
+                priority={task.priority}
+                ariaLabel={t("composer.labels.priority")}
+                disabled={!canChangeStatus}
+                stopPropagation
+                className={cn(
+                  "ml-auto h-6 rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+                  canChangeStatus && "cursor-pointer hover:bg-warning/20",
+                  !canChangeStatus && "cursor-not-allowed opacity-60"
+                )}
+              />
+            </div>
           ) : null}
         </div>
-      ) : null}
-      {hasMetadataChips ? (
-        <ScrollableTaskTagChipRow
-          task={task}
-          className="mt-2"
-          showEmptyPlaceholder={false}
-          testId={`kanban-chip-row-${task.id}`}
-        />
-      ) : null}
-      {isPendingPublish ? (
-        <div className="mt-2">
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
-            }}
-            className="text-xs font-medium text-warning hover:text-warning/80"
-            title={t("toasts.actions.undo")}
+        {task.dueDate ? (
+          <div
+            {...dragHandleProps}
+            className={cn("mt-2 flex items-center gap-1.5 text-xs", dueDateColor)}
+            data-testid={`kanban-due-row-${task.id}`}
           >
-            {t("toasts.actions.undo")}
-          </button>
-        </div>
-      ) : null}
-      {!compactTaskCardsEnabled && hasChildren(task.id) ? (
-        <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-          <Layers className="w-3 h-3" />
-          <span>{t("kanban.hasSubtasks")}</span>
-        </div>
-      ) : null}
+            <Calendar className="w-3 h-3" />
+            <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+            <span>{format(task.dueDate, "MMM d")}</span>
+            {task.dueTime ? (
+              <>
+                <Clock className="w-3 h-3" />
+                <span>{task.dueTime}</span>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+        {hasMetadataChips ? (
+          <div {...dragHandleProps}>
+            <ScrollableTaskTagChipRow
+              task={task}
+              className="mt-2"
+              showEmptyPlaceholder={false}
+              testId={`kanban-chip-row-${task.id}`}
+            />
+          </div>
+        ) : null}
+        {isPendingPublish ? (
+          <div className="mt-2" {...dragHandleProps}>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
+              }}
+              className="text-xs font-medium text-warning hover:text-warning/80"
+              title={t("toasts.actions.undo")}
+            >
+              {t("toasts.actions.undo")}
+            </button>
+          </div>
+        ) : null}
+        {!compactTaskCardsEnabled && hasChildren(task.id) ? (
+          <div {...dragHandleProps} className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+            <Layers className="w-3 h-3" />
+            <span>{t("kanban.hasSubtasks")}</span>
+          </div>
+        ) : null}
+      </div>
     </TaskSurface>
   );
 }
