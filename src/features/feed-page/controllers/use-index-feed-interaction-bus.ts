@@ -7,6 +7,7 @@ import {
   type FeedInteractionHandlerMap,
   type FeedInteractionPipelineApi,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
+import type { FeedSidebarCommands } from "./feed-sidebar-commands-context";
 
 interface UseIndexFeedInteractionBusOptions {
   handleOpenAuthModal: (initialStep?: "choose" | "noas" | "noasSignUp") => void;
@@ -28,10 +29,7 @@ interface UseIndexFeedInteractionBusOptions {
   reorderRelays: (orderedUrls: string[]) => void;
   handleRemoveRelay: (url: string) => void;
   reconnectRelay: (url: string) => void;
-  handleChannelPin: (channelId: string) => void;
-  handleChannelUnpin: (channelId: string) => void;
-  handlePersonPin: (personId: string) => void;
-  handlePersonUnpin: (personId: string) => void;
+  sidebarCommands: FeedSidebarCommands;
   savedFilterController: {
     onApplyConfiguration: (configurationId: string) => void;
     onSaveCurrentConfiguration: (name: string) => void;
@@ -94,10 +92,7 @@ export function useIndexFeedInteractionBus({
   reorderRelays,
   handleRemoveRelay,
   reconnectRelay,
-  handleChannelPin,
-  handleChannelUnpin,
-  handlePersonPin,
-  handlePersonUnpin,
+  sidebarCommands,
   savedFilterController,
   setFocusedTaskId,
   handleNewTask,
@@ -185,16 +180,16 @@ export function useIndexFeedInteractionBus({
         reconnectRelay(intent.url);
       },
       "sidebar.channel.pin": (intent) => {
-        handleChannelPin(intent.channelId);
+        sidebarCommands.pinChannel(intent.channelId);
       },
       "sidebar.channel.unpin": (intent) => {
-        handleChannelUnpin(intent.channelId);
+        sidebarCommands.unpinChannel(intent.channelId);
       },
       "sidebar.person.pin": (intent) => {
-        handlePersonPin(intent.personId);
+        sidebarCommands.pinPerson(intent.personId);
       },
       "sidebar.person.unpin": (intent) => {
-        handlePersonUnpin(intent.personId);
+        sidebarCommands.unpinPerson(intent.personId);
       },
       "sidebar.savedFilter.apply": (intent) => {
         savedFilterController.onApplyConfiguration(intent.configurationId);
@@ -265,8 +260,6 @@ export function useIndexFeedInteractionBus({
       filterHandlers,
       guardInteraction,
       handleAddRelay,
-      handleChannelPin,
-      handleChannelUnpin,
       handleDismissAllFailedPublish,
       handleDismissFailedPublish,
       handleDueDateChange,
@@ -276,8 +269,6 @@ export function useIndexFeedInteractionBus({
       handleNewTask,
       handleOpenAuthModal,
       handleOpenGuide,
-      handlePersonPin,
-      handlePersonUnpin,
       handlePriorityChange,
       handleRelayExclusive,
       handleRelaySelectIntent,
@@ -293,6 +284,7 @@ export function useIndexFeedInteractionBus({
       reconnectRelay,
       reorderRelays,
       savedFilterController,
+      sidebarCommands,
       setCurrentView,
       setFocusedTaskId,
       setKanbanDepthMode,

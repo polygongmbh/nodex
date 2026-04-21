@@ -30,8 +30,7 @@ import { useTaskPublishControls } from "@/features/feed-page/controllers/use-tas
 import { useTaskStatusController } from "@/features/feed-page/controllers/use-task-status-controller";
 import { useKind0People } from "@/infrastructure/nostr/use-kind0-people";
 import { useIndexDerivedData } from "@/features/feed-page/controllers/use-index-derived-data";
-import { usePinnedSidebarChannels } from "@/features/feed-page/controllers/use-pinned-sidebar-channels";
-import { usePinnedSidebarPeople } from "@/features/feed-page/controllers/use-pinned-sidebar-people";
+import { useFeedSidebarCommandsController } from "@/features/feed-page/controllers/use-feed-sidebar-commands-controller";
 import { useFeedInteractionFrecency } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import { deriveSelectedRelayUrls, useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
 import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
@@ -437,25 +436,15 @@ const Index = () => {
   }, [channelFilterStates, channels, composeChannels]);
 
   const {
+    commands: sidebarCommands,
     channelsWithState,
-    handleChannelPin,
-    handleChannelUnpin,
-  } = usePinnedSidebarChannels({
-    userPubkey: user?.pubkey,
-    effectiveActiveRelayIds,
-    channels: sidebarChannels,
-    channelFilterStates,
-    allTasks,
-  });
-
-  const {
     peopleWithState,
-    handlePersonPin,
-    handlePersonUnpin,
-  } = usePinnedSidebarPeople({
+  } = useFeedSidebarCommandsController({
     userPubkey: user?.pubkey,
     effectiveActiveRelayIds,
-    people: sidebarPeopleWithSelected,
+    sidebarChannels,
+    channelFilterStates,
+    sidebarPeople: sidebarPeopleWithSelected,
     allTasks,
   });
 
@@ -712,10 +701,7 @@ const Index = () => {
     reorderRelays,
     handleRemoveRelay,
     reconnectRelay,
-    handleChannelPin,
-    handleChannelUnpin,
-    handlePersonPin,
-    handlePersonUnpin,
+    sidebarCommands,
     savedFilterController,
     setFocusedTaskId,
     handleNewTask,
@@ -868,6 +854,7 @@ const Index = () => {
         surfaceState={feedSurfaceState}
         taskViewModel={feedTaskViewModel}
         viewState={feedViewState}
+        sidebarCommands={sidebarCommands}
       >
         <MotdBanner />
         <FeedPageMobileShell
@@ -890,6 +877,7 @@ const Index = () => {
       surfaceState={feedSurfaceState}
       taskViewModel={feedTaskViewModel}
       viewState={feedViewState}
+      sidebarCommands={sidebarCommands}
       sidebarController={desktopSidebarController}
     >
       <MotdBanner />

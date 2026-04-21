@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { FeedSidebarControllerProvider, type FeedSidebarState } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
+import { FeedSidebarCommandsProvider, type FeedSidebarCommands } from "@/features/feed-page/controllers/feed-sidebar-commands-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import type { FeedInteractionBus } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-context";
@@ -13,6 +14,7 @@ interface FeedPageProvidersProps extends PropsWithChildren {
   surfaceState: FeedSurfaceState;
   taskViewModel: FeedTaskViewModel;
   viewState: FeedViewState;
+  sidebarCommands: FeedSidebarCommands;
   sidebarController?: FeedSidebarState;
 }
 
@@ -22,6 +24,7 @@ export function FeedPageProviders({
   surfaceState,
   taskViewModel,
   viewState,
+  sidebarCommands,
   sidebarController,
   children,
 }: FeedPageProvidersProps) {
@@ -31,13 +34,15 @@ export function FeedPageProviders({
 
   return (
     <FeedInteractionProvider bus={interactionBus}>
-      <FeedPageUiConfigProvider value={uiConfig}>
-        <FeedSurfaceProvider value={surfaceState}>
-          <FeedViewStateProvider value={viewState}>
-            <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
-          </FeedViewStateProvider>
-        </FeedSurfaceProvider>
-      </FeedPageUiConfigProvider>
+      <FeedSidebarCommandsProvider value={sidebarCommands}>
+        <FeedPageUiConfigProvider value={uiConfig}>
+          <FeedSurfaceProvider value={surfaceState}>
+            <FeedViewStateProvider value={viewState}>
+              <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
+            </FeedViewStateProvider>
+          </FeedSurfaceProvider>
+        </FeedPageUiConfigProvider>
+      </FeedSidebarCommandsProvider>
     </FeedInteractionProvider>
   );
 }
