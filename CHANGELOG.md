@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Mobile now focuses the unified search/create composer on page load, while desktop focuses the dedicated bottom search bar instead of the shared composer.
+
 - Focused post composers (tree view with a parent task open, or feed reply context) no longer require a space to be manually selected before submitting comments, offers, or requests; the parent task's origin relay is used automatically.
 
 - Message-of-the-day banners now stay pinned at the top without shrinking the app shell, use a centered full-width layout with a right-side close affordance, and can be dismissed with either the `X` or a short tap that still preserves text selection/copying.

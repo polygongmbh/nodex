@@ -87,6 +87,7 @@ export function SharedViewComposer({
         mentionRequest={mentionRequest}
         onMentionRequestConsumed={onMentionRequestConsumed}
         defaultContent={defaultContent}
+        focusOnMount={false}
         collapseOnSuccess={collapseOnSuccess}
         allowComment={allowComment}
         allowFeedMessageTypes={allowFeedMessageTypes}

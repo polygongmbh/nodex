@@ -14,6 +14,7 @@ interface TaskCreateComposerProps {
   focusedTaskId: string | null;
   initialStatus?: TaskInitialStatus;
   adaptiveSize?: boolean;
+  focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   draftStorageKey?: string;
   forceExpanded?: boolean;
@@ -38,6 +39,7 @@ export function TaskCreateComposer({
   focusedTaskId,
   initialStatus,
   adaptiveSize = false,
+  focusOnMount = true,
   onExpandedChange,
   draftStorageKey,
   forceExpanded = false,
@@ -80,6 +82,7 @@ export function TaskCreateComposer({
           defaultContent,
           allowEmptyTags: Boolean(focusedTaskId),
           adaptiveSize,
+          focusOnMount,
           onExpandedChange,
           forceExpanded,
           forceExpandSignal,

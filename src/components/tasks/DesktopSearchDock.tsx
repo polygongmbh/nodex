@@ -29,6 +29,7 @@ export function DesktopSearchDock() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             data-onboarding="search-bar"
+            autoFocus
             type="text"
             value={searchQuery}
             onChange={(e) => {

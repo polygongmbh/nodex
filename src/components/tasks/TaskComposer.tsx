@@ -59,6 +59,7 @@ export interface TaskComposerOptions {
   defaultContent?: string;
   allowEmptyTags?: boolean;
   adaptiveSize?: boolean;
+  focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   forceExpanded?: boolean;
   forceExpandSignal?: number;
@@ -91,6 +92,7 @@ interface TaskComposerProps {
   defaultContent?: string;
   allowEmptyTags?: boolean;
   adaptiveSize?: boolean;
+  focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   forceExpanded?: boolean;
   forceExpandSignal?: number;
@@ -205,6 +207,7 @@ export function TaskComposer({
   defaultContent,
   allowEmptyTags,
   adaptiveSize,
+  focusOnMount,
   onExpandedChange,
   forceExpanded,
   forceExpandSignal,
@@ -221,6 +224,7 @@ export function TaskComposer({
   defaultContent = resolvedOptions.defaultContent ?? defaultContent ?? "";
   allowEmptyTags = resolvedOptions.allowEmptyTags ?? allowEmptyTags ?? false;
   adaptiveSize = resolvedOptions.adaptiveSize ?? adaptiveSize ?? false;
+  focusOnMount = resolvedOptions.focusOnMount ?? focusOnMount ?? true;
   onExpandedChange = resolvedOptions.onExpandedChange ?? onExpandedChange;
   forceExpanded = resolvedOptions.forceExpanded ?? forceExpanded ?? false;
   forceExpandSignal = resolvedOptions.forceExpandSignal ?? forceExpandSignal;
@@ -254,6 +258,7 @@ export function TaskComposer({
       }),
     [allowFeedMessageTypes, defaultContent, defaultDueDate, draftStorageKey]
   );
+  const shouldFocusOnMount = focusOnMount || initialComposerState.content.trim().length > 0;
   
   const [content, setContent] = useState(initialComposerState.content);
   const [taskType, setTaskType] = useState<ComposerMessageType>(initialComposerState.taskType);
@@ -372,10 +377,10 @@ export function TaskComposer({
   }, []);
 
   useEffect(() => {
-    if (!adaptiveSize) {
+    if (!adaptiveSize && shouldFocusOnMount) {
       textareaRef.current?.focus();
     }
-  }, [adaptiveSize]);
+  }, [adaptiveSize, shouldFocusOnMount]);
 
   useEffect(() => {
     onExpandedChange?.(isExpanded);

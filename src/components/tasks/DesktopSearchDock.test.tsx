@@ -18,6 +18,12 @@ vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
 }));
 
 describe("DesktopSearchDock", () => {
+  it("focuses the desktop search input on mount", () => {
+    render(<DesktopSearchDock />);
+
+    expect(screen.getByRole("textbox")).toHaveFocus();
+  });
+
   it("shows a clear button only when search has content and clears it on click", () => {
     mockUseFeedSurfaceState.mockReturnValue({ searchQuery: "" });
     const { rerender } = render(<DesktopSearchDock />);

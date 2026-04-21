@@ -206,6 +206,31 @@ describe("TaskComposer", () => {
     expect(screen.getByRole("button", { name: /add comment/i })).toBeInTheDocument();
   });
 
+  it("focuses the composer on mount by default in non-adaptive mode", () => {
+    renderComposer();
+
+    expect(getComposerInput()).toHaveFocus();
+  });
+
+  it("can skip mount autofocus in non-adaptive mode", () => {
+    render(
+      <button type="button">Before</button>
+    );
+    const beforeButton = screen.getByRole("button", { name: "Before" });
+    beforeButton.focus();
+
+    renderComposer({ focusOnMount: false });
+
+    expect(getComposerInput()).not.toHaveFocus();
+    expect(beforeButton).toHaveFocus();
+  });
+
+  it("still focuses on mount when autofocus is disabled but initial content exists", () => {
+    renderComposer({ focusOnMount: false, defaultContent: "#backend draft" });
+
+    expect(getComposerInput()).toHaveFocus();
+  });
+
   it("restores the full draft payload from the provided storage key", () => {
     localStorage.setItem("composer-draft", JSON.stringify({
       content: "",

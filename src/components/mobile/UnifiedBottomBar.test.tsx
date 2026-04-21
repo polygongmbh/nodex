@@ -122,6 +122,23 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.queryByRole("button", { name: /add file attachment/i })).not.toBeInTheDocument();
   });
 
+  it("focuses the unified composer on mount", async () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        canCreateContent={true}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/search or create task/i)).toHaveFocus();
+    });
+  });
+
   it("uses shared visible people in the selector and prefers display names over usernames", () => {
     render(
       <FeedSurfaceProvider

@@ -780,6 +780,17 @@ export function UnifiedBottomBar({
     };
   }, []);
 
+  useEffect(() => {
+    scheduleTrackedAnimationFrame(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      const end = textarea.value.length;
+      textarea.setSelectionRange(end, end);
+      cursorPositionRef.current = end;
+    });
+  }, []);
+
   const pulseTarget = (target: "input" | "attachments") => {
     setHighlightedTarget(target);
     clearTrackedTimeout(remediationHighlightTimeoutRef.current);
