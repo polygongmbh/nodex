@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Search, Layers, Leaf, CircleDot, Workflow, Network, FolderOpen, X } from "lucide-react";
 import {
   Select,
@@ -9,18 +10,42 @@ import {
 import { VersionHint } from "@/components/layout/VersionHint";
 import { LegalDialog } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
+import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { getCompactPersonLabel } from "@/types/person";
 
 export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
 export function DesktopSearchDock() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { searchQuery } = useFeedSurfaceState();
+  const { searchQuery, channels = [], people = [] } = useFeedSurfaceState();
+  const { allTasks, focusedTaskId } = useFeedTaskViewModel();
   const { currentView, kanbanDepthMode } = useFeedViewState();
   const showKanbanLevels = currentView === "kanban" || currentView === "list";
+  const contextTaskTitle = focusedTaskId
+    ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
+    : "";
+  const searchPlaceholder = useMemo(() => {
+    const channelNames = channels
+      .filter((channel) => channel.filterState === "included")
+      .map((channel) => channel.name);
+    const mentionLabels = people
+      .filter((person) => person.isSelected)
+      .map((person) => getCompactPersonLabel(person));
+    return buildComposerPlaceholder({
+      baseKey: "search.desktop.placeholder",
+      contextTaskTitle,
+      channelNames,
+      mentionLabels,
+      includeFallbackGuidance: false,
+      locale: i18n.resolvedLanguage || i18n.language || "en",
+      t,
+    });
+  }, [channels, contextTaskTitle, i18n.language, i18n.resolvedLanguage, people, t]);
   return (
     <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
       <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -35,7 +60,7 @@ export function DesktopSearchDock() {
             onChange={(e) => {
               void dispatchFeedInteraction({ type: "ui.search.change", query: e.target.value });
             }}
-            placeholder={t("search.desktop.placeholder")}
+            placeholder={searchPlaceholder}
             className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
           />
           {searchQuery.length > 0 && (

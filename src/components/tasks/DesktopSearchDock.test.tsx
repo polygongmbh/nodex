@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DesktopSearchDock } from "./DesktopSearchDock";
+import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
+import { makeTask } from "@/test/fixtures";
 
 const mockDispatch = vi.fn();
 
@@ -19,22 +21,71 @@ vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
 
 describe("DesktopSearchDock", () => {
   it("focuses the desktop search input on mount", () => {
-    render(<DesktopSearchDock />);
+    render(
+      <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+        <DesktopSearchDock />
+      </FeedTaskViewModelProvider>
+    );
 
     expect(screen.getByRole("textbox")).toHaveFocus();
   });
 
   it("shows a clear button only when search has content and clears it on click", () => {
     mockUseFeedSurfaceState.mockReturnValue({ searchQuery: "" });
-    const { rerender } = render(<DesktopSearchDock />);
+    const { rerender } = render(
+      <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+        <DesktopSearchDock />
+      </FeedTaskViewModelProvider>
+    );
 
     expect(screen.queryByRole("button", { name: /clear search/i })).not.toBeInTheDocument();
 
     mockUseFeedSurfaceState.mockReturnValue({ searchQuery: "meeting" });
-    rerender(<DesktopSearchDock />);
+    rerender(
+      <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+        <DesktopSearchDock />
+      </FeedTaskViewModelProvider>
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /clear search/i }));
 
     expect(mockDispatch).toHaveBeenCalledWith({ type: "ui.search.change", query: "" });
+  });
+
+  it("builds a search-only placeholder with dynamic suffixes and no fallback guidance", () => {
+    mockUseFeedSurfaceState.mockReturnValue({
+      searchQuery: "",
+      channels: [{ id: "general", name: "general", filterState: "included" }],
+      people: [{ id: "p1", name: "alice", displayName: "Alice", avatar: "", isOnline: true, isSelected: true }],
+    });
+
+    render(
+      <FeedTaskViewModelProvider
+        value={{
+          tasks: [],
+          allTasks: [makeTask({ id: "focused-task", content: "Coordinate launch copy" })],
+          focusedTaskId: "focused-task",
+        }}
+      >
+        <DesktopSearchDock />
+      </FeedTaskViewModelProvider>
+    );
+
+    expect(screen.getByRole("textbox")).toHaveAttribute(
+      "placeholder",
+      'Search posts under "Coordinate launch copy" in #general mentioning @Alice...'
+    );
+  });
+
+  it("omits fallback guidance when no scope suffixes are active", () => {
+    mockUseFeedSurfaceState.mockReturnValue({ searchQuery: "", channels: [], people: [] });
+
+    render(
+      <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+        <DesktopSearchDock />
+      </FeedTaskViewModelProvider>
+    );
+
+    expect(screen.getByRole("textbox")).toHaveAttribute("placeholder", "Search posts...");
   });
 });

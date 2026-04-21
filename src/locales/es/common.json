@@ -781,7 +781,10 @@
   },
   "search": {
     "desktop": {
-      "placeholder": "Buscar tareas...",
+      "placeholder": {
+        "withContext": "Buscar publicaciones en {{title}}",
+        "withoutContext": "Buscar publicaciones"
+      },
       "clear": "Borrar búsqueda"
     },
     "kanban": {

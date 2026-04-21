@@ -11,6 +11,7 @@ interface BuildComposerPlaceholderParams {
   contextTaskTitle?: string;
   channelNames?: string[];
   mentionLabels?: string[];
+  includeFallbackGuidance?: boolean;
   locale: string;
   t: TranslateFn;
 }
@@ -54,6 +55,7 @@ export function buildComposerPlaceholder({
   contextTaskTitle = "",
   channelNames = [],
   mentionLabels = [],
+  includeFallbackGuidance = true,
   locale,
   t,
 }: BuildComposerPlaceholderParams): string {
@@ -73,7 +75,7 @@ export function buildComposerPlaceholder({
     placeholder += ` ${t("composer.placeholders.parts.mentioningPeople", { people: formattedPeople })}`;
   }
 
-  if (!formattedChannels && !formattedPeople) {
+  if (includeFallbackGuidance && !formattedChannels && !formattedPeople) {
     placeholder += `, ${t("composer.placeholders.parts.fallbackGuidance")}`;
   }
 

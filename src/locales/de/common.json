@@ -781,7 +781,10 @@
   },
   "search": {
     "desktop": {
-      "placeholder": "Aufgaben suchen...",
+      "placeholder": {
+        "withContext": "Beiträge unter {{title}} suchen",
+        "withoutContext": "Beiträge suchen"
+      },
       "clear": "Suche löschen"
     },
     "kanban": {
