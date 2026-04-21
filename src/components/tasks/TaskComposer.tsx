@@ -222,8 +222,8 @@ export function TaskComposer({
       }),
     [allowFeedMessageTypes, defaultContent, defaultDueDate, draftStorageKey]
   );
-  const shouldFocusOnMount = focusOnMount || initialComposerState.content.trim().length > 0;
-  
+  const shouldFocusOnMount = focusOnMount;
+
   const [content, setContent] = useState(initialComposerState.content);
   const [taskType, setTaskType] = useState<ComposerMessageType>(initialComposerState.taskType);
   const [dueDate, setDueDate] = useState<Date | undefined>(initialComposerState.dueDate);
@@ -284,7 +284,7 @@ export function TaskComposer({
   const prevFilterMentionPubkeysRef = useRef<string[]>([]);
   const autoManagedFilterTagNamesRef = useRef<Set<string>>(new Set());
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
-  const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
+  const lastForceExpandSignalRef = useRef<number | undefined>(forceExpandSignal);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const lastAppliedMentionRequestIdRef = useRef<number | null>(null);
   const dragDepthRef = useRef(0);
@@ -454,13 +454,6 @@ export function TaskComposer({
     if (adaptiveSize) {
       setIsExpanded(true);
     }
-    requestAnimationFrame(() => {
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-      textarea.focus();
-      const end = textarea.value.length;
-      textarea.setSelectionRange(end, end);
-    });
   }, [adaptiveSize, allowComment, allowFeedMessageTypes, composeRestoreRequest]);
 
   useEffect(() => {

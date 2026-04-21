@@ -211,10 +211,8 @@ describe("TaskComposer", () => {
     expect(getComposerInput()).toHaveFocus();
   });
 
-  it("can skip mount autofocus in non-adaptive mode", () => {
-    render(
-      <button type="button">Before</button>
-    );
+  it("does not focus on mount when focusOnMount is false", () => {
+    render(<button type="button">Before</button>);
     const beforeButton = screen.getByRole("button", { name: "Before" });
     beforeButton.focus();
 
@@ -222,12 +220,6 @@ describe("TaskComposer", () => {
 
     expect(getComposerInput()).not.toHaveFocus();
     expect(beforeButton).toHaveFocus();
-  });
-
-  it("still focuses on mount when autofocus is disabled but initial content exists", () => {
-    renderComposer({ focusOnMount: false, defaultContent: "#backend draft" });
-
-    expect(getComposerInput()).toHaveFocus();
   });
 
   it("restores the full draft payload from the provided storage key", () => {
