@@ -2,7 +2,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { NDKProvider } from "@/infrastructure/nostr/ndk-context";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -12,6 +12,21 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+function RootFeedRedirect() {
+  const location = useLocation();
+
+  return (
+    <Navigate
+      to={{
+        pathname: "/feed",
+        search: location.search,
+        hash: location.hash,
+      }}
+      replace
+    />
+  );
+}
 
 function NostrBootstrapProvider({ children }: { children: ReactNode }) {
   const initialBootstrap = readStartupRelayBootstrap();
@@ -78,7 +93,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/feed" replace />} />
+              <Route path="/" element={<RootFeedRedirect />} />
               <Route path="/signin" element={<Index />} />
               <Route path="/signup" element={<Index />} />
               <Route path="/:view" element={<Index />} />

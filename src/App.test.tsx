@@ -90,6 +90,16 @@ describe("App routes", () => {
     await screen.findByTestId("index-page");
   });
 
+  it("preserves filter query params when redirecting from root to /feed", async () => {
+    window.history.pushState({}, "", "/?ch=general&p=alice");
+
+    render(<App />);
+
+    await screen.findByTestId("index-page");
+    expect(window.location.pathname).toBe("/feed");
+    expect(window.location.search).toBe("?ch=general&p=alice");
+  });
+
   it("mounts immediately while async fallback relay bootstrap continues in the background", async () => {
     let resolveBootstrap!: (value: {
       relayUrls: string[];
