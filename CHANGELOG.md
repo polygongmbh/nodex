@@ -6,35 +6,43 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.13.1] - 2026-04-21
+Patch release for search and composer polish.
+
+- Desktop search now uses search-specific placeholder copy, while the mobile composer uses matching create/search wording that better reflects the active context, channels, and people filters.
+- Empty shared composers no longer steal focus on load, reducing accidental cursor jumps and surprise keyboard popups.
+- Relay icons are now derived more consistently from relay URLs, giving relay lists and filters more stable, recognizable visual cues across the app.
+
 ## [2.13.0] - 2026-04-21
-Minor release for focused composer publishing, search focus alignment, and reliability fixes across startup and presence.
+Minor release for better touchscreen interactions, smoother posting, and more reliable startup and presence handling.
 
-- Mobile now focuses the unified search/create composer on page load, while desktop focuses the dedicated bottom search bar instead of the shared composer.
-
-- Focused post composers (tree view with a parent task open, or feed reply context) no longer require a space to be manually selected before submitting comments, offers, or requests; the parent task's origin relay is used automatically.
-
-- Message-of-the-day banners now stay pinned at the top without shrinking the app shell, use a centered full-width layout with a right-side close affordance, and can be dismissed with either the `X` or a short tap that still preserves text selection/copying.
+- Touch drag-and-drop now behaves more reliably on tablets and touchscreens, including horizontal Kanban board scrolling near the screen edge.
+- Mobile and desktop now focus the right search or composer surface on load, reducing accidental cursor jumps into the wrong input.
+- Focused replies now inherit the parent task's relay automatically, so comments, offers, and requests no longer require a manual space pick in that context.
+- Message-of-the-day banners now stay pinned at the top in a centered full-width layout, with easier dismissal that still preserves text selection.
 - Relay status no longer gets stuck as read-rejected when an older failed websocket emits a late auth denial after a newer connection has already recovered.
-- Presence events now expire after 30 minutes instead of 60, and the sidebar yellow-dot window aligns with this threshold; idle users (no re-navigation) are now shown as offline once their last presence event expires rather than remaining shown as online indefinitely.
+- Presence events now expire after 30 minutes, the sidebar activity window matches that threshold, and idle users now fall offline once their latest presence event expires.
 - Fatal startup and uncaught runtime failures now render a dedicated recovery page with reload and home actions instead of collapsing to a blank screen.
-- Root task posting no longer forces a manual space pick when exactly one connected space is writable, while still blocking creation when multiple writable spaces remain selected.
-- Task creators can now keep editing assigned tasks even when their identity is represented as an `npub` in one place and a hex pubkey in another, so creator permissions no longer silently fail on mixed-format identities.
+- Root task posting now auto-uses the only writable connected space when exactly one is available, while still blocking creation when multiple writable spaces remain selected.
+- Task creators can now keep editing assigned tasks even when identity data mixes `npub` and hex pubkey formats.
 
 ## [2.12.2] - 2026-04-12
+Patch release for safer parsing, better draft/session restore, and cleaner sign-in defaults.
 
-- Mentions and hashtags now only parse and linkify when they start at the beginning of content or after whitespace, so `foo#bar`, `foo@bar`, and `(#tag)` no longer become channels or mentions while composing or reading tasks.
-- Private-key and Noas sign-ins now survive a same-tab reload via `sessionStorage` without becoming durable browser sessions, and Noas no longer leaves behind the unused persisted username key.
-- Noas sign-in and sign-up now prefill a newly detected default host immediately during the current app run instead of waiting until the next startup.
+- Mentions and hashtags now only parse and linkify at the start of content or after whitespace, so `foo#bar`, `foo@bar`, and `(#tag)` no longer become channels or mentions while composing or reading tasks.
+- Private-key and Noas sign-ins now survive same-tab reloads via `sessionStorage` without becoming durable browser sessions, and Noas no longer leaves behind the unused persisted username key.
+- Noas sign-in and sign-up now prefill a newly detected default host immediately during the current app run instead of waiting for the next startup.
 - Operators can now switch task editing between assignee-or-creator-only and all signed-in users with the `VITE_TASK_EDIT_MODE` runtime setting.
-- Shared composer reloads now restore the full local draft payload, including task scheduling details, metadata-only chips, listing metadata, and uploaded attachments.
+- Shared composer reloads now restore the full local draft payload, including scheduling details, metadata-only chips, listing metadata, and uploaded attachments.
 - Guests who already have local `name` and `displayName` profile fields no longer get a false profile-completion prompt on mobile `/feed` before the kind-0 cache catches up.
 
 ## [2.12.1] - 2026-04-04
+Patch release for mobile navigation and toast behavior.
 
-- Mobile toast notifications now keep their top offset across the full mobile breakpoint range, so success and error toasts no longer slide up under the navigation chrome on larger mobile layouts.
-- Mobile profile editing now resets from the current profile only when the source profile actually changes, preventing the editor from unexpectedly reverting while you are using it.
+- Mobile toast notifications now keep their top offset across the full mobile breakpoint range, so success and error toasts no longer slide under the navigation chrome on larger mobile layouts.
+- Mobile profile editing now resets from the current profile only when the source profile actually changes, preventing the editor from reverting while you are using it.
 - The mobile top-nav pill now remeasures immediately when leaving Manage, preventing the first menu-to-view transition from rendering a stretched or offset active tab.
-- Mobile top-nav view switches now begin as soon as you press a different view tab, instead of waiting for release before changing views.
+- Mobile top-nav view switches now begin on press instead of waiting for release.
 
 ## [2.12.0] - 2026-04-04
 Minor release for feed hydration recovery, relay/publish reliability, and cross-view mobile/search fixes.
