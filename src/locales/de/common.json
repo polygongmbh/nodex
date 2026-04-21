@@ -49,6 +49,10 @@
         "mentioningPeople": "mit Erwähnung von {{people}}",
         "fallbackGuidance": "nutze #channels und @mentions"
       },
+      "mobileSearchCreatePosts": {
+        "withContext": "Finde und erstelle Beiträge unter {{title}}",
+        "withoutContext": "Finde und erstelle Beiträge"
+      },
       "mobileTask": "Suchen oder Aufgabe erstellen... #tags",
       "mobileComment": "Suchen oder Kommentar hinzufügen... #tags",
       "geohash": "Geohash eingeben (z. B. u4pruyd)"

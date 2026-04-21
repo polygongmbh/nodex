@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, HandHelping, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, TaskCreateResult, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
@@ -41,8 +41,10 @@ import {
   hasMentionQueryAtCursor,
 } from "@/lib/composer-autocomplete";
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
+import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
@@ -104,9 +106,10 @@ export function UnifiedBottomBar({
   canCreateContent,
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
+  const { allTasks } = useFeedTaskViewModel();
   const relays = relaysProp ?? surface.relays;
   const channels = channelsProp ?? surface.visibleChannels ?? surface.channels;
   const people = peopleProp ?? surface.people;
@@ -120,6 +123,20 @@ export function UnifiedBottomBar({
   );
   const { createHttpAuthHeader } = useNDK();
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
+  const contextTaskTitle = focusedTaskId
+    ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
+    : "";
+  const composerPlaceholder = useMemo(() => {
+    const mentionLabels = people.filter((person) => person.isSelected).map((person) => getCompactPersonLabel(person));
+    return buildComposerPlaceholder({
+      baseKey: "composer.placeholders.mobileSearchCreatePosts",
+      contextTaskTitle,
+      channelNames: includedChannels,
+      mentionLabels,
+      locale: i18n.resolvedLanguage || i18n.language || "en",
+      t,
+    });
+  }, [contextTaskTitle, i18n.language, i18n.resolvedLanguage, includedChannels, people, t]);
   const [sharedText, setSharedText] = useState(() => searchQuery || defaultContent);
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
   const [isBottomBarFocused, setIsBottomBarFocused] = useState(false);
@@ -1599,7 +1616,7 @@ export function UnifiedBottomBar({
                     handleCancel();
                   }
                 }}
-                placeholder={t("composer.placeholders.mobileTask")}
+                placeholder={composerPlaceholder}
                 className={cn(
                   "block min-h-[2.75rem] w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none focus:outline-none focus:ring-2 focus:ring-primary/50",
                   highlightedTarget === "input" && "ring-2 ring-amber-400 border-amber-400/70"

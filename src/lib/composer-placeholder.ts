@@ -6,7 +6,8 @@ interface TranslateFn {
 }
 
 interface BuildComposerPlaceholderParams {
-  postType: PostType;
+  baseKey?: string;
+  postType?: PostType;
   contextTaskTitle?: string;
   channelNames?: string[];
   mentionLabels?: string[];
@@ -48,6 +49,7 @@ function formatMentionLabels(mentionLabels: string[], locale: string): string {
 }
 
 export function buildComposerPlaceholder({
+  baseKey,
   postType,
   contextTaskTitle = "",
   channelNames = [],
@@ -60,8 +62,8 @@ export function buildComposerPlaceholder({
   const formattedPeople = formatMentionLabels(mentionLabels, locale);
 
   let placeholder = formattedTitle
-    ? t(`composer.placeholders.base.${postType}.withContext`, { title: formattedTitle })
-    : t(`composer.placeholders.base.${postType}.withoutContext`);
+    ? t(baseKey ? `${baseKey}.withContext` : `composer.placeholders.base.${postType}.withContext`, { title: formattedTitle })
+    : t(baseKey ? `${baseKey}.withoutContext` : `composer.placeholders.base.${postType}.withoutContext`);
 
   if (formattedChannels) {
     placeholder += ` ${t("composer.placeholders.parts.inChannels", { channels: formattedChannels })}`;

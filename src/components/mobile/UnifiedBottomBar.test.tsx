@@ -15,7 +15,9 @@ import {
   getMobileSubmitBlockPanel,
   openMobileComposeOptions,
 } from "@/test/ui";
+import { makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
+import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
@@ -135,8 +137,42 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/search or create task/i)).toHaveFocus();
+      expect(screen.getByRole("textbox")).toHaveFocus();
     });
+  });
+
+  it("builds the mobile placeholder from shared context and filters", () => {
+    render(
+      <FeedTaskViewModelProvider
+        value={{
+          tasks: [],
+          allTasks: [makeTask({ id: "focused-task", content: "Coordinate launch copy" })],
+          focusedTaskId: "focused-task",
+        }}
+      >
+        <UnifiedBottomBar
+          searchQuery=""
+          currentView="tree"
+          focusedTaskId="focused-task"
+          relays={relays}
+          channels={[
+            { id: "general", name: "general", filterState: "included" },
+          ]}
+          people={[
+            {
+              ...people[0],
+              isSelected: true,
+            },
+          ]}
+          canCreateContent={true}
+        />
+      </FeedTaskViewModelProvider>
+    );
+
+    expect(screen.getByRole("textbox")).toHaveAttribute(
+      "placeholder",
+      'Find and create posts under "Coordinate launch copy" in #general mentioning @Alice...'
+    );
   });
 
   it("uses shared visible people in the selector and prefers display names over usernames", () => {
@@ -201,7 +237,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
@@ -236,7 +272,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "hello #general" } });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "ui.search.change",
@@ -263,7 +299,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     Object.defineProperty(field, "scrollHeight", {
       configurable: true,
       get: () => 520,
@@ -294,7 +330,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship update" } });
     openMobileComposeOptions();
 
@@ -317,7 +353,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "#general @alice@example.com" } });
     const sendButton = getMobilePrimaryAction();
     expect(sendButton).toBeEnabled();
@@ -348,7 +384,7 @@ describe("UnifiedBottomBar auth gating", () => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     expect(field).toHaveFocus();
     expect(screen.getByText(format(dueDate, "MMM d"))).toBeInTheDocument();
     expect(screen.getByLabelText("Priority")).toHaveValue("2");
@@ -369,7 +405,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(getMobilePrimaryAction());
 
@@ -393,7 +429,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(getMobilePrimaryAction());
 
@@ -423,7 +459,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(getMobilePrimaryAction());
 
@@ -452,7 +488,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Follow-up details for parent task" } });
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
 
@@ -485,7 +521,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
 
@@ -507,7 +543,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Ship #general now" } });
 
     fireEvent.keyDown(composeField, { key: "Enter", altKey: true });
@@ -532,7 +568,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Ship #general" } });
 
     fireEvent.keyDown(composeField, { key: "Enter", ctrlKey: true });
@@ -567,7 +603,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Reply #general" } });
     openMobileComposeOptions();
     fireEvent.click(getMobileCommentAction());
@@ -593,7 +629,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Need help #general" } });
     openMobileComposeOptions();
 
@@ -651,7 +687,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.queryByRole("button", { name: /create task$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^add comment$/i })).not.toBeInTheDocument();
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Reply #general" } });
     openMobileComposeOptions();
     expect(getMobileCommentAction()).toBeInTheDocument();
@@ -778,7 +814,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(<StatefulBar />);
 
-    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Ship #general " } });
     expect(toggleCalls).toEqual(["general"]);
 
@@ -826,7 +862,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(<StatefulBar />);
 
-    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Ship #general " } });
     fireEvent.change(composeField, { target: { value: "Ship " } });
 
@@ -846,7 +882,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "ping @al", selectionStart: 8 } });
 
     expect(screen.getByText("@alice")).toBeInTheDocument();
@@ -872,7 +908,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "ping @al", selectionStart: 8 } });
 
     const panel = screen.getByTestId("mobile-autocomplete-panel");
@@ -892,7 +928,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #ge", selectionStart: 8 } });
 
     expect(screen.getByText("general")).toBeInTheDocument();
@@ -918,7 +954,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "ping @al", selectionStart: 8 } });
     expect(screen.getByText("@alice")).toBeInTheDocument();
 
@@ -938,7 +974,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #ge", selectionStart: 8 } });
     expect(screen.getByText("general")).toBeInTheDocument();
 
@@ -959,7 +995,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general @al", selectionStart: 16 } });
 
     fireEvent.keyDown(field, { key: "Enter", altKey: true });
@@ -994,7 +1030,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general @al", selectionStart: 16 } });
 
     const mentionOption = screen.getByText("@alice").closest("button");
@@ -1032,7 +1068,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     const draft = "Ship #general @al";
     fireEvent.change(field, { target: { value: draft, selectionStart: draft.length } });
 
@@ -1056,7 +1092,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     const draft = "Ship #brandnew";
     fireEvent.change(field, { target: { value: draft, selectionStart: draft.length } });
 
@@ -1091,7 +1127,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #ge", selectionStart: 8 } });
 
     const hashtagOption = screen.getByText("general").closest("button");
@@ -1167,7 +1203,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /location/i }));
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
 
@@ -1210,7 +1246,7 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.click(locationButton);
     fireEvent.click(locationButton);
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
 
@@ -1245,7 +1281,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Looks good #general" } });
     openMobileComposeOptions();
     fireEvent.click(getMobileCommentAction());
@@ -1278,7 +1314,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Follow up for this thread" } });
 
     const sendButton = getMobilePrimaryAction();
@@ -1329,7 +1365,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
 

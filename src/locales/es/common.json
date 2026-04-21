@@ -49,6 +49,10 @@
         "mentioningPeople": "mencionando a {{people}}",
         "fallbackGuidance": "usa #channels y @mentions"
       },
+      "mobileSearchCreatePosts": {
+        "withContext": "Encontrar y crear publicaciones en {{title}}",
+        "withoutContext": "Encontrar y crear publicaciones"
+      },
       "mobileTask": "Buscar o crear tarea... #tags",
       "mobileComment": "Buscar o añadir comentario... #tags",
       "geohash": "Introducir geohash (p. ej. u4pruyd)"
