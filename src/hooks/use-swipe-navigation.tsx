@@ -20,6 +20,16 @@ const triggerHaptic = (style: "light" | "medium" | "heavy" = "light") => {
 };
 
 const HORIZONTAL_SCROLL_OVERFLOW_VALUES = new Set(["auto", "scroll", "overlay"]);
+
+/** Returns true when the touch target is inside a @hello-pangea/dnd drag handle. */
+function isInsideDndDragHandle(target: EventTarget | null): boolean {
+  let el = target instanceof HTMLElement ? target : null;
+  while (el) {
+    if (el.hasAttribute("data-rbd-drag-handle-draggable-id")) return true;
+    el = el.parentElement;
+  }
+  return false;
+}
 const WHEEL_GESTURE_IDLE_MS = 220;
 
 function getHorizontalScrollableAncestor(target: EventTarget | null) {
@@ -82,7 +92,11 @@ export function useSwipeNavigation({
   const lastWheelSwipeAt = useRef(0);
   const wheelGestureMode = useRef<"idle" | "scroll" | "navigate">("idle");
 
+  const isDndTouch = useRef(false);
+
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    // When touch starts inside a DnD drag handle, let @hello-pangea/dnd own the gesture entirely.
+    isDndTouch.current = isInsideDndDragHandle(e.target);
     touchStartX.current = e.targetTouches[0].clientX;
     touchStartY.current = e.targetTouches[0].clientY;
     touchEndX.current = null;
@@ -95,6 +109,13 @@ export function useSwipeNavigation({
   }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (isDndTouch.current) {
+      isDndTouch.current = false;
+      touchStartX.current = null;
+      touchStartY.current = null;
+      touchEndX.current = null;
+      return;
+    }
     if (touchStartX.current === null || touchEndX.current === null || touchStartY.current === null) {
       return;
     }
