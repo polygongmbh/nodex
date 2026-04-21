@@ -124,7 +124,60 @@ export function KanbanView({
     },
     [dispatchFeedInteraction]
   );
+  // Scroll container ref — declared early so edge-scroll callbacks can close over it
+  const columnsContainerRef = useRef<HTMLDivElement>(null);
+
+  // Edge-scroll during drag: scroll the board when the pointer nears the horizontal edges
+  const isDraggingRef = useRef(false);
+  const pointerXRef = useRef(0);
+  const rafIdRef = useRef<number | null>(null);
+
+  const handlePointerMove = useCallback((e: MouseEvent | TouchEvent) => {
+    pointerXRef.current = "touches" in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+  }, []);
+
+  const startEdgeScroll = useCallback(() => {
+    const container = columnsContainerRef.current;
+    if (!container) return;
+    const EDGE_ZONE = 120;
+    const MAX_SPEED = 16;
+    const tick = () => {
+      if (!isDraggingRef.current) return;
+      const rect = container.getBoundingClientRect();
+      const x = pointerXRef.current;
+      const leftDist = x - rect.left;
+      const rightDist = rect.right - x;
+      if (leftDist < EDGE_ZONE && leftDist >= 0) {
+        container.scrollLeft -= Math.round(MAX_SPEED * (1 - leftDist / EDGE_ZONE));
+      } else if (rightDist < EDGE_ZONE && rightDist >= 0) {
+        container.scrollLeft += Math.round(MAX_SPEED * (1 - rightDist / EDGE_ZONE));
+      }
+      rafIdRef.current = requestAnimationFrame(tick);
+    };
+    rafIdRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  const stopEdgeScroll = useCallback(() => {
+    isDraggingRef.current = false;
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    window.removeEventListener("mousemove", handlePointerMove);
+    window.removeEventListener("touchmove", handlePointerMove as EventListener);
+  }, [handlePointerMove]);
+
+  const handleDragStart = useCallback(() => {
+    isDraggingRef.current = true;
+    window.addEventListener("mousemove", handlePointerMove);
+    window.addEventListener("touchmove", handlePointerMove as EventListener);
+    startEdgeScroll();
+  }, [handlePointerMove, startEdgeScroll]);
+
+  useEffect(() => () => { stopEdgeScroll(); }, [stopEdgeScroll]);
+
   const handleDragEnd = (result: DropResult) => {
+    stopEdgeScroll();
     if (!result.destination) return;
     if (isInteractionBlocked) {
       guardModify();
@@ -249,7 +302,6 @@ export function KanbanView({
   }, [tasksByStatus, setFocusByTaskId]);
 
   // Scroll focused task into view
-  const columnsContainerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (keyboardFocusedTaskId && columnsContainerRef.current) {
       const element = columnsContainerRef.current.querySelector(
@@ -269,7 +321,7 @@ export function KanbanView({
         className="scrollbar-auto relative flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4"
         data-onboarding="kanban-board"
       >
-        <DragDropContext onDragEnd={handleDragEnd}>
+        <DragDropContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
           <div className="flex gap-4 h-full min-w-max" data-onboarding="kanban-columns">
             {columns.map((column) => (
               <div

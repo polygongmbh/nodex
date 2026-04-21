@@ -11,8 +11,10 @@ const dndMockState: {
     source: { droppableId: string; index: number };
     destination: { droppableId: string; index: number } | null;
   }) => void) | null;
+  onDragStart: (() => void) | null;
 } = {
   onDragEnd: null,
+  onDragStart: null,
 };
 const dispatchFeedInteraction = vi.fn();
 
@@ -25,12 +27,13 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 }));
 
 vi.mock("@hello-pangea/dnd", () => ({
-  DragDropContext: ({ children, onDragEnd }: { children: ReactNode; onDragEnd: (result: {
+  DragDropContext: ({ children, onDragEnd, onDragStart }: { children: ReactNode; onDragEnd: (result: {
     draggableId: string;
     source: { droppableId: string; index: number };
     destination: { droppableId: string; index: number } | null;
-  }) => void }) => {
+  }) => void; onDragStart?: () => void }) => {
     dndMockState.onDragEnd = onDragEnd;
+    dndMockState.onDragStart = onDragStart ?? null;
     return <div>{children}</div>;
   },
   Droppable: ({
@@ -359,6 +362,44 @@ describe("KanbanView closed column", () => {
     fireEvent.click(leafCard!);
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "leaf-task" });
+  });
+
+  it("scrolls the board right when dragging near the right edge", () => {
+    const rafCallbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+
+    try {
+      const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+      const task = makeTask({ id: "edge-scroll-task", author, status: "todo", content: "Task #general" });
+
+      const { container } = render(
+        <KanbanView tasks={[task]} allTasks={[task]} currentUser={author} depthMode="leaves" />
+      );
+
+      const board = container.querySelector('[data-onboarding="kanban-board"]') as HTMLElement;
+      vi.spyOn(board, "getBoundingClientRect").mockReturnValue({
+        left: 0, right: 800, top: 0, bottom: 600, width: 800, height: 600, x: 0, y: 0,
+        toJSON: () => ({}),
+      } as DOMRect);
+
+      act(() => { dndMockState.onDragStart?.(); });
+
+      // Near the right edge: 800 - 720 = 80px inside the 120px zone
+      fireEvent.mouseMove(window, { clientX: 720, clientY: 300 });
+
+      act(() => {
+        const pending = rafCallbacks.splice(0);
+        pending.forEach(cb => cb(0));
+      });
+
+      expect(board.scrollLeft).toBeGreaterThan(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("optimistically places dropped cards in destination column before parent props refresh", () => {
