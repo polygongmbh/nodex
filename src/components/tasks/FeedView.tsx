@@ -175,10 +175,10 @@ export function FeedView({
   const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
+    event.stopPropagation();
     const shortcutIntent = getPersonShortcutIntent(event);
     if (!shortcutIntent) return;
     event.preventDefault();
-    event.stopPropagation();
     void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
   };
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();

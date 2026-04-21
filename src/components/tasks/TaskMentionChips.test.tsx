@@ -65,6 +65,23 @@ describe("TaskMentionChips", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", person: alice });
   });
 
+  it("stops plain mention clicks from bubbling to parent containers", () => {
+    const parentClick = vi.fn();
+
+    renderWithDispatch(
+      <div onClick={parentClick}>
+        <TaskMentionChips
+          task={{ ...baseTask, mentions: [alice.id] }}
+          people={[alice]}
+        />
+      </div>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Person actions for alice" }));
+
+    expect(parentClick).not.toHaveBeenCalled();
+  });
+
   it("renders npub fallback when mention has no matched person", () => {
     const unmatchedPubkey = "b".repeat(64);
 

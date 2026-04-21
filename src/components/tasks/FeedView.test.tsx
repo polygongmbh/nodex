@@ -869,6 +869,29 @@ describe("FeedView", () => {
     });
   });
 
+  it("does not focus the task on a plain author click", () => {
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+      />
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: /person actions for/i })[0]);
+
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
+      type: "task.focus.change",
+      taskId: "task-1",
+    });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "person.filter.exclusive" })
+    );
+  });
+
   it("supports Ctrl/Cmd+Alt author shortcuts for filter and mention", () => {
     render(
       <FeedView

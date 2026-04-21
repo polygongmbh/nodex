@@ -293,6 +293,32 @@ describe("TreeTaskItem status actions", () => {
     });
   });
 
+  it("does not focus the task on a plain comment author click", () => {
+    const commentTask: Task = {
+      ...baseTask,
+      id: "c-plain-author",
+      taskType: "comment",
+      content: "Looks good",
+      author: makePerson({
+        id: "plain-author",
+        name: "alice",
+        displayName: "Alice",
+      }),
+    };
+
+    renderTreeTaskItem({ task: commentTask });
+
+    fireEvent.click(screen.getAllByRole("button", { name: /person actions for alice/i })[0]);
+
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
+      type: "task.focus.change",
+      taskId: "c-plain-author",
+    });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "person.filter.exclusive" })
+    );
+  });
+
   it("hides comment author actions and tag chips in compact mode while keeping the due date", () => {
     const commentTask: Task = {
       ...baseTask,

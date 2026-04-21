@@ -93,10 +93,10 @@ export function TreeTaskItem({
   const people = peopleProp ?? contextPeople;
   const authorProfiles = useTaskAuthorProfiles();
   const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
+    event.stopPropagation();
     const shortcutIntent = getPersonShortcutIntent(event);
     if (!shortcutIntent) return;
     event.preventDefault();
-    event.stopPropagation();
     void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
   };
   const getStatusToggleHint = (status?: TaskStatus): string => {

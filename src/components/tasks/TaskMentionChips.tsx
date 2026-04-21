@@ -76,10 +76,10 @@ export function TaskMentionChips({
             className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
             aria-label={`Person actions for ${label}`}
             onClick={(event) => {
+              event.stopPropagation();
               const shortcutIntent = getPersonShortcutIntent(event);
               if (!shortcutIntent) return;
               event.preventDefault();
-              event.stopPropagation();
               void dispatchFeedInteraction(toPersonShortcutInteraction(clickablePerson, shortcutIntent));
             }}
           >
