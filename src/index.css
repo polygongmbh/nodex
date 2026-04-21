@@ -171,6 +171,7 @@
 
   * {
     @apply border-border;
+    touch-action: manipulation;
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground) / 0.6) hsl(var(--foreground) / 0.03);
   }
