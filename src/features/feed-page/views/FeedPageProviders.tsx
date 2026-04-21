@@ -1,6 +1,8 @@
 import type { PropsWithChildren } from "react";
 import { FeedSidebarControllerProvider, type FeedSidebarState } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
 import { FeedSidebarCommandsProvider, type FeedSidebarCommands } from "@/features/feed-page/controllers/feed-sidebar-commands-context";
+import { FeedViewCommandsProvider, type FeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
+import { FeedTaskCommandsProvider, type FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import type { FeedInteractionBus } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-context";
@@ -15,6 +17,8 @@ interface FeedPageProvidersProps extends PropsWithChildren {
   taskViewModel: FeedTaskViewModel;
   viewState: FeedViewState;
   sidebarCommands: FeedSidebarCommands;
+  viewCommands: FeedViewCommands;
+  taskCommands: FeedTaskCommands;
   sidebarController?: FeedSidebarState;
 }
 
@@ -25,6 +29,8 @@ export function FeedPageProviders({
   taskViewModel,
   viewState,
   sidebarCommands,
+  viewCommands,
+  taskCommands,
   sidebarController,
   children,
 }: FeedPageProvidersProps) {
@@ -35,13 +41,17 @@ export function FeedPageProviders({
   return (
     <FeedInteractionProvider bus={interactionBus}>
       <FeedSidebarCommandsProvider value={sidebarCommands}>
-        <FeedPageUiConfigProvider value={uiConfig}>
-          <FeedSurfaceProvider value={surfaceState}>
-            <FeedViewStateProvider value={viewState}>
-              <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
-            </FeedViewStateProvider>
-          </FeedSurfaceProvider>
-        </FeedPageUiConfigProvider>
+        <FeedViewCommandsProvider value={viewCommands}>
+          <FeedTaskCommandsProvider value={taskCommands}>
+            <FeedPageUiConfigProvider value={uiConfig}>
+              <FeedSurfaceProvider value={surfaceState}>
+                <FeedViewStateProvider value={viewState}>
+                  <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
+                </FeedViewStateProvider>
+              </FeedSurfaceProvider>
+            </FeedPageUiConfigProvider>
+          </FeedTaskCommandsProvider>
+        </FeedViewCommandsProvider>
       </FeedSidebarCommandsProvider>
     </FeedInteractionProvider>
   );

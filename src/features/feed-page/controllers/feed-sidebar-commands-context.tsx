@@ -26,6 +26,11 @@ export interface FeedSidebarCommands {
   reorderRelays(orderedUrls: string[]): void;
   removeRelay(url: string): void;
   reconnectRelay(url: string): void;
+  // Saved filters
+  applySavedFilter(configurationId: string): void;
+  saveCurrentFilter(name: string): void;
+  renameSavedFilter(configurationId: string, name: string): void;
+  deleteSavedFilter(configurationId: string): void;
 }
 
 const defaultCommands: FeedSidebarCommands = {
@@ -48,6 +53,10 @@ const defaultCommands: FeedSidebarCommands = {
   reorderRelays: () => {},
   removeRelay: () => {},
   reconnectRelay: () => {},
+  applySavedFilter: () => {},
+  saveCurrentFilter: () => {},
+  renameSavedFilter: () => {},
+  deleteSavedFilter: () => {},
 };
 
 const FeedSidebarCommandsContext = createContext<FeedSidebarCommands>(defaultCommands);

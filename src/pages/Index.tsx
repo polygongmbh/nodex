@@ -31,6 +31,8 @@ import { useTaskStatusController } from "@/features/feed-page/controllers/use-ta
 import { useKind0People } from "@/infrastructure/nostr/use-kind0-people";
 import { useIndexDerivedData } from "@/features/feed-page/controllers/use-index-derived-data";
 import { useFeedSidebarCommandsController } from "@/features/feed-page/controllers/use-feed-sidebar-commands-controller";
+import type { FeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
+import type { FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { useFeedInteractionFrecency } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import { deriveSelectedRelayUrls, useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
 import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
@@ -422,6 +424,16 @@ const Index = () => {
       }),
     [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
   );
+  const { savedFilterController } = useSavedFilterConfigs({
+    currentFilterSnapshot,
+    relays,
+    setActiveRelayIds,
+    setChannelFilterStates,
+    setChannelMatchMode,
+    setPeople,
+    setQuickFilters,
+    resetFiltersToDefault,
+  });
 
   const sidebarChannels = useMemo(() => {
     const activeChannelIds = new Set(
@@ -467,6 +479,10 @@ const Index = () => {
     onReorderRelays: reorderRelays,
     onRemoveRelay: handleRemoveRelay,
     onReconnectRelay: reconnectRelay,
+    onApplySavedFilter: savedFilterController.onApplyConfiguration,
+    onSaveCurrentFilter: savedFilterController.onSaveCurrentConfiguration,
+    onRenameSavedFilter: savedFilterController.onRenameConfiguration,
+    onDeleteSavedFilter: savedFilterController.onDeleteConfiguration,
   });
 
   const focusedTaskCollapsedSidebarPreview = useFocusedTaskCollapsedSidebarPreview({
@@ -570,16 +586,6 @@ const Index = () => {
     setIsAuthModalOpen,
   });
 
-  const { savedFilterController } = useSavedFilterConfigs({
-    currentFilterSnapshot,
-    relays,
-    setActiveRelayIds,
-    setChannelFilterStates,
-    setChannelMatchMode,
-    setPeople,
-    setQuickFilters,
-    resetFiltersToDefault,
-  });
 
   const { handleListingStatusChange } = useListingStatusPublish({
     allTasks,
@@ -702,32 +708,50 @@ const Index = () => {
     }),
     [completionSoundEnabled, handleToggleCompletionSound]
   );
+  const viewCommands = useMemo<FeedViewCommands>(
+    () => ({
+      focusSidebar: () => setIsSidebarFocused(true),
+      focusTasks: () => setIsSidebarFocused(false),
+      setCurrentView,
+      setSearchQuery,
+      setKanbanDepthMode,
+      setManageRouteActive,
+    }),
+    [setCurrentView, setSearchQuery, setKanbanDepthMode, setManageRouteActive]
+  );
+
+  const taskCommands = useMemo<FeedTaskCommands>(
+    () => ({
+      focusTask: setFocusedTaskId,
+      createTask: handleNewTask,
+      toggleComplete: handleToggleComplete,
+      changeStatus: handleStatusChange,
+      updateDueDate: handleDueDateChange,
+      updatePriority: handlePriorityChange,
+      changeListingStatus: handleListingStatusChange,
+      undoPendingPublish: handleUndoPendingPublish,
+      retryFailedPublish: handleRetryFailedPublish,
+      repostFailedPublish: handleRepostFailedPublish,
+      dismissFailedPublish: handleDismissFailedPublish,
+      dismissAllFailedPublish: handleDismissAllFailedPublish,
+    }),
+    [
+      setFocusedTaskId, handleNewTask, handleToggleComplete, handleStatusChange,
+      handleDueDateChange, handlePriorityChange, handleListingStatusChange,
+      handleUndoPendingPublish, handleRetryFailedPublish, handleRepostFailedPublish,
+      handleDismissFailedPublish, handleDismissAllFailedPublish,
+    ]
+  );
+
   const feedInteractionBus = useIndexFeedInteractionBus({
     handleOpenAuthModal,
     openShortcutsHelp: shortcutsHelp.open,
     handleOpenGuide,
-    handleFocusSidebar: () => setIsSidebarFocused(true),
-    handleFocusTasks: () => setIsSidebarFocused(false),
     guardInteraction,
-    setCurrentView,
-    setSearchQuery,
-    setKanbanDepthMode,
-    setManageRouteActive,
     filterHandlers,
     sidebarCommands,
-    savedFilterController,
-    setFocusedTaskId,
-    handleNewTask,
-    handleToggleComplete,
-    handleStatusChange,
-    handleDueDateChange,
-    handlePriorityChange,
-    handleListingStatusChange,
-    handleUndoPendingPublish,
-    handleRetryFailedPublish,
-    handleRepostFailedPublish,
-    handleDismissFailedPublish,
-    handleDismissAllFailedPublish,
+    viewCommands,
+    taskCommands,
     interactionEffects: frecencyInteractionEffects,
   });
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
@@ -868,6 +892,8 @@ const Index = () => {
         taskViewModel={feedTaskViewModel}
         viewState={feedViewState}
         sidebarCommands={sidebarCommands}
+        viewCommands={viewCommands}
+        taskCommands={taskCommands}
       >
         <MotdBanner />
         <FeedPageMobileShell
@@ -891,6 +917,8 @@ const Index = () => {
       taskViewModel={feedTaskViewModel}
       viewState={feedViewState}
       sidebarCommands={sidebarCommands}
+      viewCommands={viewCommands}
+      taskCommands={taskCommands}
       sidebarController={desktopSidebarController}
     >
       <MotdBanner />

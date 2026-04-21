@@ -7,59 +7,18 @@ import {
   type FeedInteractionHandlerMap,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedSidebarCommands } from "./feed-sidebar-commands-context";
+import type { FeedViewCommands } from "./feed-view-commands-context";
+import type { FeedTaskCommands } from "./feed-task-commands-context";
 
 interface UseIndexFeedInteractionBusOptions {
   handleOpenAuthModal: (initialStep?: "choose" | "noas" | "noasSignUp") => void;
   openShortcutsHelp: () => void;
   handleOpenGuide: () => void;
-  handleFocusSidebar: () => void;
-  handleFocusTasks: () => void;
   guardInteraction: (mode: "create" | "modify") => boolean;
-  setCurrentView: (view: "tree" | "feed" | "kanban" | "calendar" | "list") => void;
-  setSearchQuery: (query: string) => void;
-  setKanbanDepthMode: (mode: "1" | "2" | "3" | "all" | "leaves" | "projects") => void;
-  setManageRouteActive: (isActive: boolean) => void;
   filterHandlers: FeedInteractionHandlerMap;
   sidebarCommands: FeedSidebarCommands;
-  savedFilterController: {
-    onApplyConfiguration: (configurationId: string) => void;
-    onSaveCurrentConfiguration: (name: string) => void;
-    onRenameConfiguration: (configurationId: string, name: string) => void;
-    onDeleteConfiguration: (configurationId: string) => void;
-  };
-  setFocusedTaskId: (taskId: string | null) => void;
-  handleNewTask: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: import("@/types").PostType,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: import("@/types").TaskDateType,
-    focusedTaskId?: string | null,
-    initialStatus?: import("@/types").TaskInitialStatus,
-    explicitMentionPubkeys?: string[],
-    mentionIdentifiers?: string[],
-    priority?: number,
-    attachments?: import("@/types").PublishedAttachment[],
-    nip99?: import("@/types").Nip99Metadata,
-    locationGeohash?: string
-  ) => Promise<void>;
-  handleToggleComplete: (taskId: string) => void;
-  handleStatusChange: (taskId: string, status: import("@/types").TaskStatus) => void;
-  handleDueDateChange: (
-    taskId: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: import("@/types").TaskDateType
-  ) => void;
-  handlePriorityChange: (taskId: string, priority: number) => void;
-  handleListingStatusChange: (taskId: string, status: import("@/types").Nip99ListingStatus) => void;
-  handleUndoPendingPublish: (taskId: string) => void;
-  handleRetryFailedPublish: (draftId: string) => void;
-  handleRepostFailedPublish: (draftId: string) => void;
-  handleDismissFailedPublish: (draftId: string) => void;
-  handleDismissAllFailedPublish: () => void;
+  viewCommands: FeedViewCommands;
+  taskCommands: FeedTaskCommands;
   interactionEffects: FeedInteractionEffect[];
 }
 
@@ -67,28 +26,11 @@ export function useIndexFeedInteractionBus({
   handleOpenAuthModal,
   openShortcutsHelp,
   handleOpenGuide,
-  handleFocusSidebar,
-  handleFocusTasks,
   guardInteraction,
-  setCurrentView,
-  setSearchQuery,
-  setKanbanDepthMode,
-  setManageRouteActive,
   filterHandlers,
   sidebarCommands,
-  savedFilterController,
-  setFocusedTaskId,
-  handleNewTask,
-  handleToggleComplete,
-  handleStatusChange,
-  handleDueDateChange,
-  handlePriorityChange,
-  handleListingStatusChange,
-  handleUndoPendingPublish,
-  handleRetryFailedPublish,
-  handleRepostFailedPublish,
-  handleDismissFailedPublish,
-  handleDismissAllFailedPublish,
+  viewCommands,
+  taskCommands,
   interactionEffects,
 }: UseIndexFeedInteractionBusOptions): FeedInteractionBus {
   const handlers: FeedInteractionHandlerMap = useMemo(
@@ -110,26 +52,26 @@ export function useIndexFeedInteractionBus({
       "ui.openGuide": () => {
         handleOpenGuide();
       },
-      "ui.focusSidebar": () => {
-        handleFocusSidebar();
-      },
-      "ui.focusTasks": () => {
-        handleFocusTasks();
-      },
       "ui.interaction.guardModify": () => {
         guardInteraction("modify");
       },
+      "ui.focusSidebar": () => {
+        viewCommands.focusSidebar();
+      },
+      "ui.focusTasks": () => {
+        viewCommands.focusTasks();
+      },
       "ui.view.change": (intent) => {
-        setCurrentView(intent.view);
+        viewCommands.setCurrentView(intent.view);
       },
       "ui.search.change": (intent) => {
-        setSearchQuery(intent.query);
+        viewCommands.setSearchQuery(intent.query);
       },
       "ui.kanbanDepth.change": (intent) => {
-        setKanbanDepthMode(intent.mode);
+        viewCommands.setKanbanDepthMode(intent.mode);
       },
       "ui.manageRoute.change": (intent) => {
-        setManageRouteActive(intent.isActive);
+        viewCommands.setManageRouteActive(intent.isActive);
       },
       ...filterHandlers,
       "sidebar.channel.toggle": (intent) => {
@@ -190,22 +132,22 @@ export function useIndexFeedInteractionBus({
         sidebarCommands.reconnectRelay(intent.url);
       },
       "sidebar.savedFilter.apply": (intent) => {
-        savedFilterController.onApplyConfiguration(intent.configurationId);
+        sidebarCommands.applySavedFilter(intent.configurationId);
       },
       "sidebar.savedFilter.saveCurrent": (intent) => {
-        savedFilterController.onSaveCurrentConfiguration(intent.name);
+        sidebarCommands.saveCurrentFilter(intent.name);
       },
       "sidebar.savedFilter.rename": (intent) => {
-        savedFilterController.onRenameConfiguration(intent.configurationId, intent.name);
+        sidebarCommands.renameSavedFilter(intent.configurationId, intent.name);
       },
       "sidebar.savedFilter.delete": (intent) => {
-        savedFilterController.onDeleteConfiguration(intent.configurationId);
+        sidebarCommands.deleteSavedFilter(intent.configurationId);
       },
       "task.focus.change": (intent) => {
-        setFocusedTaskId(intent.taskId);
+        taskCommands.focusTask(intent.taskId);
       },
       "task.create": (intent) => {
-        return handleNewTask(
+        return taskCommands.createTask(
           intent.content,
           intent.tags,
           intent.relays,
@@ -224,62 +166,45 @@ export function useIndexFeedInteractionBus({
         );
       },
       "task.toggleComplete": (intent) => {
-        handleToggleComplete(intent.taskId);
+        taskCommands.toggleComplete(intent.taskId);
       },
       "task.changeStatus": (intent) => {
-        handleStatusChange(intent.taskId, intent.status);
+        taskCommands.changeStatus(intent.taskId, intent.status);
       },
       "task.updateDueDate": (intent) => {
-        handleDueDateChange(intent.taskId, intent.dueDate, intent.dueTime, intent.dateType);
+        taskCommands.updateDueDate(intent.taskId, intent.dueDate, intent.dueTime, intent.dateType);
       },
       "task.updatePriority": (intent) => {
-        handlePriorityChange(intent.taskId, intent.priority);
+        taskCommands.updatePriority(intent.taskId, intent.priority);
       },
       "task.listingStatus.change": (intent) => {
-        handleListingStatusChange(intent.taskId, intent.status);
+        taskCommands.changeListingStatus(intent.taskId, intent.status);
       },
       "task.undoPendingPublish": (intent) => {
-        handleUndoPendingPublish(intent.taskId);
+        taskCommands.undoPendingPublish(intent.taskId);
       },
       "publish.failed.retry": (intent) => {
-        handleRetryFailedPublish(intent.draftId);
+        taskCommands.retryFailedPublish(intent.draftId);
       },
       "publish.failed.repost": (intent) => {
-        handleRepostFailedPublish(intent.draftId);
+        taskCommands.repostFailedPublish(intent.draftId);
       },
       "publish.failed.dismiss": (intent) => {
-        handleDismissFailedPublish(intent.draftId);
+        taskCommands.dismissFailedPublish(intent.draftId);
       },
       "publish.failed.dismissAll": () => {
-        handleDismissAllFailedPublish();
+        taskCommands.dismissAllFailedPublish();
       },
     }),
     [
       filterHandlers,
       guardInteraction,
-      handleDismissAllFailedPublish,
-      handleDismissFailedPublish,
-      handleDueDateChange,
-      handleFocusSidebar,
-      handleFocusTasks,
-      handleListingStatusChange,
-      handleNewTask,
       handleOpenAuthModal,
       handleOpenGuide,
-      handlePriorityChange,
-      handleRepostFailedPublish,
-      handleRetryFailedPublish,
-      handleStatusChange,
-      handleToggleComplete,
-      handleUndoPendingPublish,
       openShortcutsHelp,
-      savedFilterController,
       sidebarCommands,
-      setCurrentView,
-      setFocusedTaskId,
-      setKanbanDepthMode,
-      setManageRouteActive,
-      setSearchQuery,
+      viewCommands,
+      taskCommands,
     ]
   );
 

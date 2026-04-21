@@ -32,6 +32,11 @@ export interface UseFeedSidebarCommandsControllerOptions {
   onReorderRelays: (orderedUrls: string[]) => void;
   onRemoveRelay: (url: string) => void;
   onReconnectRelay: (url: string) => void;
+  // Saved filter commands
+  onApplySavedFilter: (configurationId: string) => void;
+  onSaveCurrentFilter: (name: string) => void;
+  onRenameSavedFilter: (configurationId: string, name: string) => void;
+  onDeleteSavedFilter: (configurationId: string) => void;
 }
 
 export interface UseFeedSidebarCommandsControllerResult {
@@ -62,6 +67,10 @@ export function useFeedSidebarCommandsController({
   onReorderRelays,
   onRemoveRelay,
   onReconnectRelay,
+  onApplySavedFilter,
+  onSaveCurrentFilter,
+  onRenameSavedFilter,
+  onDeleteSavedFilter,
 }: UseFeedSidebarCommandsControllerOptions): UseFeedSidebarCommandsControllerResult {
   const {
     channelsWithState,
@@ -114,6 +123,10 @@ export function useFeedSidebarCommandsController({
       reorderRelays: onReorderRelays,
       removeRelay: onRemoveRelay,
       reconnectRelay: onReconnectRelay,
+      applySavedFilter: onApplySavedFilter,
+      saveCurrentFilter: onSaveCurrentFilter,
+      renameSavedFilter: onRenameSavedFilter,
+      deleteSavedFilter: onDeleteSavedFilter,
     }),
     [
       handleChannelPin, handleChannelUnpin,
@@ -122,6 +135,7 @@ export function useFeedSidebarCommandsController({
       onTogglePerson, onShowOnlyPerson, onToggleAllPeople,
       selectRelay, onRelayToggle, onRelayExclusive, onToggleAllRelays,
       onAddRelay, onReorderRelays, onRemoveRelay, onReconnectRelay,
+      onApplySavedFilter, onSaveCurrentFilter, onRenameSavedFilter, onDeleteSavedFilter,
     ]
   );
 
