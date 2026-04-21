@@ -53,33 +53,11 @@ import {
   type TaskComposerDraftState,
 } from "./task-composer-runtime";
 
-export interface TaskComposerOptions {
-  compact?: boolean;
-  defaultDueDate?: Date;
-  defaultContent?: string;
-  allowEmptyTags?: boolean;
-  adaptiveSize?: boolean;
-  focusOnMount?: boolean;
-  onExpandedChange?: (expanded: boolean) => void;
-  forceExpanded?: boolean;
-  forceExpandSignal?: number;
-  mentionRequest?: {
-    mention: string;
-    id: number;
-  } | null;
-  onMentionRequestConsumed?: (requestId: number) => void;
-  collapseOnSuccess?: boolean;
-  allowComment?: boolean;
-  allowFeedMessageTypes?: boolean;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
-}
-
 interface TaskComposerProps {
   onSubmit: (data: TaskComposerFormData) => void;
   channels?: Channel[];
   people?: Person[];
   onCancel: () => void;
-  options?: TaskComposerOptions;
   externalSubmitBlockByType?: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
   filterTagNames?: string[];
   filterMentionPubkeys?: string[];
@@ -194,7 +172,6 @@ export function TaskComposer({
   channels: channelsProp,
   people: peopleProp,
   onCancel,
-  options,
   externalSubmitBlockByType,
   filterTagNames,
   filterMentionPubkeys,
@@ -202,38 +179,22 @@ export function TaskComposer({
   onRemoveFilterMention,
   getUploadAuthHeader,
   canCreateContent: canCreateContentProp = true,
-  compact,
+  compact = false,
   defaultDueDate,
-  defaultContent,
-  allowEmptyTags,
-  adaptiveSize,
-  focusOnMount,
+  defaultContent = "",
+  allowEmptyTags = false,
+  adaptiveSize = false,
+  focusOnMount = true,
   onExpandedChange,
-  forceExpanded,
+  forceExpanded = false,
   forceExpandSignal,
-  mentionRequest,
+  mentionRequest = null,
   onMentionRequestConsumed,
-  collapseOnSuccess,
-  allowComment,
-  allowFeedMessageTypes,
-  composeRestoreRequest,
+  collapseOnSuccess = false,
+  allowComment = true,
+  allowFeedMessageTypes = false,
+  composeRestoreRequest = null,
 }: TaskComposerProps) {
-  const resolvedOptions = options ?? {};
-  compact = resolvedOptions.compact ?? compact ?? false;
-  defaultDueDate = resolvedOptions.defaultDueDate ?? defaultDueDate;
-  defaultContent = resolvedOptions.defaultContent ?? defaultContent ?? "";
-  allowEmptyTags = resolvedOptions.allowEmptyTags ?? allowEmptyTags ?? false;
-  adaptiveSize = resolvedOptions.adaptiveSize ?? adaptiveSize ?? false;
-  focusOnMount = resolvedOptions.focusOnMount ?? focusOnMount ?? true;
-  onExpandedChange = resolvedOptions.onExpandedChange ?? onExpandedChange;
-  forceExpanded = resolvedOptions.forceExpanded ?? forceExpanded ?? false;
-  forceExpandSignal = resolvedOptions.forceExpandSignal ?? forceExpandSignal;
-  mentionRequest = resolvedOptions.mentionRequest ?? mentionRequest ?? null;
-  onMentionRequestConsumed = resolvedOptions.onMentionRequestConsumed ?? onMentionRequestConsumed;
-  collapseOnSuccess = resolvedOptions.collapseOnSuccess ?? collapseOnSuccess ?? false;
-  allowComment = resolvedOptions.allowComment ?? allowComment ?? true;
-  allowFeedMessageTypes = resolvedOptions.allowFeedMessageTypes ?? allowFeedMessageTypes ?? false;
-  composeRestoreRequest = resolvedOptions.composeRestoreRequest ?? composeRestoreRequest ?? null;
   const canCreateContent = canCreateContentProp;
   const { t } = useTranslation();
   const {

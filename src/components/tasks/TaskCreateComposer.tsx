@@ -76,23 +76,21 @@ export function TaskCreateComposer({
         canCreateContent={canCreateContent}
         getUploadAuthHeader={createHttpAuthHeader}
         {...filterSync}
-        options={{
-          compact,
-          defaultDueDate,
-          defaultContent,
-          allowEmptyTags: Boolean(focusedTaskId),
-          adaptiveSize,
-          focusOnMount,
-          onExpandedChange,
-          forceExpanded,
-          forceExpandSignal,
-          mentionRequest,
-          onMentionRequestConsumed,
-          collapseOnSuccess,
-          allowComment,
-          allowFeedMessageTypes,
-          composeRestoreRequest,
-        }}
+        compact={compact}
+        defaultDueDate={defaultDueDate}
+        defaultContent={defaultContent}
+        allowEmptyTags={Boolean(focusedTaskId)}
+        adaptiveSize={adaptiveSize}
+        focusOnMount={focusOnMount}
+        onExpandedChange={onExpandedChange}
+        forceExpanded={forceExpanded}
+        forceExpandSignal={forceExpandSignal}
+        mentionRequest={mentionRequest}
+        onMentionRequestConsumed={onMentionRequestConsumed}
+        collapseOnSuccess={collapseOnSuccess}
+        allowComment={allowComment}
+        allowFeedMessageTypes={allowFeedMessageTypes}
+        composeRestoreRequest={composeRestoreRequest}
       />
     </TaskComposerRuntimeProvider>
   );
