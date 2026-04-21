@@ -41,7 +41,7 @@ import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-rela
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
 import { useRelayScopedPresence } from "@/features/feed-page/controllers/use-relay-scoped-presence";
 import { useRelaySelectionController } from "@/features/feed-page/controllers/use-relay-selection-controller";
-import { useIndexFeedInteractionBus } from "@/features/feed-page/controllers/use-index-feed-interaction-bus";
+import { type FeedPageCoreHandlers } from "@/features/feed-page/views/FeedPageProviders";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
@@ -743,17 +743,17 @@ const Index = () => {
     ]
   );
 
-  const feedInteractionBus = useIndexFeedInteractionBus({
-    handleOpenAuthModal,
-    openShortcutsHelp: shortcutsHelp.open,
-    handleOpenGuide,
-    guardInteraction,
-    filterHandlers,
-    sidebarCommands,
-    viewCommands,
-    taskCommands,
-    interactionEffects: frecencyInteractionEffects,
-  });
+  const coreHandlers = useMemo<FeedPageCoreHandlers>(
+    () => ({
+      onOpenAuthModal: handleOpenAuthModal,
+      onOpenShortcutsHelp: shortcutsHelp.open,
+      onOpenGuide: handleOpenGuide,
+      onGuardInteraction: guardInteraction,
+      filterHandlers,
+      interactionEffects: frecencyInteractionEffects,
+    }),
+    [handleOpenAuthModal, shortcutsHelp.open, handleOpenGuide, guardInteraction, filterHandlers, frecencyInteractionEffects]
+  );
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
     () => ({
       tasks: relayScopedTasks,
@@ -886,7 +886,7 @@ const Index = () => {
   if (isMobile) {
     return (
       <FeedPageProviders
-        interactionBus={feedInteractionBus}
+        coreHandlers={coreHandlers}
         uiConfig={uiConfig}
         surfaceState={feedSurfaceState}
         taskViewModel={feedTaskViewModel}
@@ -911,7 +911,7 @@ const Index = () => {
   // Desktop layout
   return (
     <FeedPageProviders
-      interactionBus={feedInteractionBus}
+      coreHandlers={coreHandlers}
       uiConfig={uiConfig}
       surfaceState={feedSurfaceState}
       taskViewModel={feedTaskViewModel}
