@@ -274,4 +274,33 @@ describe("TaskCreateComposer", () => {
       }));
     });
   });
+
+  it("allows focused comment submit with multiple writable relays and no single selected space", async () => {
+    const parentTask = makeTask({ id: "parent-task", relays: ["relay-a"] });
+
+    renderCreateComposer({
+      feedRelays: multiRelays,
+      tasks: [parentTask],
+      allTasks: [parentTask],
+      focusedTaskId: "parent-task",
+      allowComment: true,
+    });
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: /add your comment/i }), {
+      target: { value: "Great progress" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
+
+    await waitFor(() => {
+      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
+        type: "task.create",
+        content: "Great progress",
+        taskType: "comment",
+        focusedTaskId: "parent-task",
+      }));
+    });
+  });
 });

@@ -1212,6 +1212,63 @@ describe("UnifiedBottomBar auth gating", () => {
     });
   });
 
+  it("allows focused comment submit with multiple active relays and no single selected space", async () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        currentView="feed"
+        focusedTaskId="parent-task"
+        relays={[
+          { id: "relay-one", name: "Relay One", icon: "D", isActive: true, connectionStatus: "connected" },
+          { id: "relay-two", name: "Relay Two", icon: "D", isActive: true, connectionStatus: "connected" },
+        ]}
+        channels={channels}
+        people={people}
+        canCreateContent={true}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Looks good #general" } });
+    openMobileComposeOptions();
+    fireEvent.click(getMobileCommentAction());
+
+    await waitFor(() => {
+      expect(getTaskCreateCalls()).toHaveLength(1);
+    });
+    expectLatestTaskCreateCall({
+      type: "task.create",
+      content: "Looks good #general",
+      tags: ["general"],
+      taskType: "comment",
+      focusedTaskId: "parent-task",
+    });
+  });
+
+  it("does not surface selectRelayOrParent copy in the send button title when focused", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        currentView="tree"
+        focusedTaskId="parent-task"
+        relays={[
+          { id: "relay-one", name: "Relay One", icon: "D", isActive: true, connectionStatus: "connected" },
+          { id: "relay-two", name: "Relay Two", icon: "D", isActive: true, connectionStatus: "connected" },
+        ]}
+        channels={channels}
+        people={people}
+        canCreateContent={true}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Follow up for this thread" } });
+
+    const sendButton = getMobilePrimaryAction();
+    expect(sendButton.title).not.toContain("select");
+    expect(sendButton.title).not.toContain("relay");
+  });
+
   it("removes the document pointerdown listener on unmount", () => {
     const addEventListenerSpy = vi.spyOn(document, "addEventListener");
     const removeEventListenerSpy = vi.spyOn(document, "removeEventListener");

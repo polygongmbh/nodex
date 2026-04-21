@@ -10,7 +10,6 @@ import type { PostType } from "@/types";
 
 export interface ComposerRelayBlock {
   shouldHideComposer: boolean;
-  activeWritableRelayIds: string[];
   effectiveWritableRelayIds: string[];
   canCreateContent: boolean;
   externalSubmitBlockByType: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
@@ -60,7 +59,7 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
       canInheritParentTags: true,
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
-      hasInvalidRootCommentRelaySelection: effectiveWritableRelayIds.length === 0,
+      hasInvalidRootCommentRelaySelection: !focusedTaskId && effectiveWritableRelayIds.length === 0,
       t,
     });
     return { task: taskBlock, comment: replyBlock, offer: replyBlock, request: replyBlock };
@@ -73,7 +72,6 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
 
   return {
     shouldHideComposer,
-    activeWritableRelayIds,
     effectiveWritableRelayIds,
     canCreateContent: authPolicy.canCreateContent,
     externalSubmitBlockByType,

@@ -744,9 +744,7 @@ export function UnifiedBottomBar({
         ? taskSubmitBlock.reason
         : canOfferComment
           ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}`
-          : hasInvalidRootTaskRelaySelection
-            ? t("toasts.errors.selectRelayOrParent")
-            : t("composer.hints.createFromText");
+          : t("composer.hints.createFromText");
   const filteredChannels = filterChannelsForAutocomplete(channels, hashtagFilter, 8);
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);

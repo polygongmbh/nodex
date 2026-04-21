@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Focused post composers (tree view with a parent task open, or feed reply context) no longer require a space to be manually selected before submitting comments, offers, or requests; the parent task's origin relay is used automatically.
+
 - Message-of-the-day banners now stay pinned at the top without shrinking the app shell, use a centered full-width layout with a right-side close affordance, and can be dismissed with either the `X` or a short tap that still preserves text selection/copying.
 - Relay status no longer gets stuck as read-rejected when an older failed websocket emits a late auth denial after a newer connection has already recovered.
 - Presence events now expire after 30 minutes instead of 60, and the sidebar yellow-dot window aligns with this threshold; idle users (no re-navigation) are now shown as offline once their last presence event expires rather than remaining shown as online indefinitely.
