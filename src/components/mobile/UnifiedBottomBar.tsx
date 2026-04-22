@@ -1308,7 +1308,7 @@ export function UnifiedBottomBar({
               <div className="flex items-center gap-1">
                 <div
                   className={cn(
-                    "h-8 inline-flex items-center gap-1 pl-2 pr-0.5 rounded-md border transition-colors text-xs leading-none",
+                    "h-8 inline-flex items-center gap-1.5 pl-2 pr-0.5 rounded-md border transition-colors text-xs leading-none",
                     typeof priority === "number"
                       ? "border-border text-foreground hover:bg-muted/60"
                       : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
@@ -1318,7 +1318,7 @@ export function UnifiedBottomBar({
                   <PrioritySelect
                     priority={priority}
                     onPriorityChange={setPriority}
-                    className="h-7 cursor-pointer rounded-md border-none bg-transparent pl-1 pr-0 text-xs text-inherit shadow-none focus:outline-none appearance-none max-[420px]:w-[2.5rem] max-[420px]:text-[11px] truncate"
+                    className="h-7 cursor-pointer rounded-md border-none bg-transparent px-0 text-xs leading-none text-inherit shadow-none focus:outline-none appearance-none max-[420px]:w-[2.5rem] truncate"
                   />
                 </div>
                 <button
