@@ -1234,7 +1234,7 @@ export function UnifiedBottomBar({
           {activeSelector === "date" && (
             <div
               ref={dateScrollerRef}
-              className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+              className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               <div className="w-max min-w-full flex gap-3">
                 {inlineDateMonths.map((month) => {
@@ -1245,14 +1245,15 @@ export function UnifiedBottomBar({
                       ref={(node) => {
                         dateMonthRefs.current[monthKey] = node;
                       }}
-                      className="snap-start shrink-0 w-[calc(100vw-2rem)] max-w-[20rem]"
+                      className="shrink-0 w-[calc(100vw-2rem)] max-w-[20rem]"
                     >
                       <CalendarComponent
                         mode="single"
                         selected={dueDate}
                         onSelect={setDueDate}
                         month={month}
-                        className="pointer-events-auto !p-0"
+                        fixedWeeks
+                        className="pointer-events-auto !p-0 [&_tbody_tr:nth-child(n+6)]:hidden"
                         classNames={{
                           nav: "hidden",
                         }}
