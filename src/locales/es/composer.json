@@ -146,7 +146,8 @@
       "clearCompose": "Borrar redacción",
       "createFromText": "Crear desde el texto actual",
       "signInToCreate": "Inicia sesión para crear",
-      "clearDueDate": "Quitar fecha"
+      "clearDueDate": "Quitar fecha",
+      "clearTime": "Quitar hora"
     },
     "dates": {
       "setOptional": "Establecer fecha de {{dateType}} (opcional)",

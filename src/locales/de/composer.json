@@ -146,7 +146,8 @@
       "clearCompose": "Eingabe leeren",
       "createFromText": "Aus aktuellem Text erstellen",
       "signInToCreate": "Zum Erstellen anmelden",
-      "clearDueDate": "Fälligkeitsdatum entfernen"
+      "clearDueDate": "Fälligkeitsdatum entfernen",
+      "clearTime": "Uhrzeit entfernen"
     },
     "dates": {
       "setOptional": "{{dateType}}-Datum setzen (optional)",

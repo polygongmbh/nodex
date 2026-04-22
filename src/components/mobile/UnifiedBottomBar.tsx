@@ -1234,7 +1234,7 @@ export function UnifiedBottomBar({
           {activeSelector === "date" && (
             <div
               ref={dateScrollerRef}
-              className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
+              className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               <div className="w-max min-w-full flex gap-3">
                 {inlineDateMonths.map((month) => {
@@ -1245,14 +1245,15 @@ export function UnifiedBottomBar({
                       ref={(node) => {
                         dateMonthRefs.current[monthKey] = node;
                       }}
-                      className="snap-start shrink-0 w-[calc(100vw-2rem)] max-w-[20rem]"
+                      className="shrink-0 w-[calc(100vw-2rem)] max-w-[20rem]"
                     >
                       <CalendarComponent
                         mode="single"
                         selected={dueDate}
                         onSelect={setDueDate}
                         month={month}
-                        className="pointer-events-auto !p-0"
+                        fixedWeeks
+                        className="pointer-events-auto !p-0 [&_tbody_tr:nth-child(n+6)]:hidden"
                         classNames={{
                           nav: "hidden",
                         }}
@@ -1316,7 +1317,7 @@ export function UnifiedBottomBar({
                     const parsed = Number.parseInt(value, 10);
                     setPriority(Number.isFinite(parsed) ? parsed : undefined);
                   }}
-                  className="h-8 max-[360px]:px-1 max-[360px]:text-[11px] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  className="h-8 rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 appearance-none max-[420px]:w-[3.25rem] max-[420px]:px-1 max-[420px]:text-[11px] truncate"
                 >
                   <option value="">{t("composer.labels.priorityShort")}</option>
                   {DISPLAY_PRIORITY_OPTIONS.map((option) => (
@@ -1370,7 +1371,7 @@ export function UnifiedBottomBar({
                     <option value="end">{t("composer.dates.end")}</option>
                     <option value="milestone">{t("composer.dates.milestone")}</option>
                   </select>
-                  <div className="h-8 flex items-center gap-1.5 px-2 rounded-md border border-border bg-muted/30 text-foreground">
+                  <div className="h-8 flex items-center gap-0.5 pl-2 pr-1 rounded-md border border-border bg-muted/30 text-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     <input
                       type="time"
@@ -1378,6 +1379,16 @@ export function UnifiedBottomBar({
                       onChange={(e) => setDueTime(e.target.value)}
                       className="w-[4.1rem] bg-transparent text-xs text-foreground focus:outline-none"
                     />
+                    {dueTime && (
+                      <button
+                        type="button"
+                        onClick={() => setDueTime("")}
+                        className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={t("composer.hints.clearTime", { defaultValue: "Clear time" })}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                   <button
                     onClick={() => {
