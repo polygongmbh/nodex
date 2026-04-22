@@ -1406,21 +1406,8 @@ export function UnifiedBottomBar({
                   {activePeopleCount}
                 </span>
               )}
-            </button>
-            <button
-              onClick={handleLocationToggle}
-              className={cn(
-                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
-                locationGeohash
-                  ? "bg-primary/20 text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              aria-label={t("composer.actions.location")}
-              title={t("composer.actions.location")}
-            >
-              <MapPin className="w-4 h-4" />
-            </button>
           </div>
+
         </div>
         </div>
       </div>
