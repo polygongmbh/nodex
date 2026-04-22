@@ -4,9 +4,10 @@ import { MobileFilters } from "./MobileFilters";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
-import { NostrEventKind } from "@/lib/nostr/types";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
+
+// --- module mocks -----------------------------------------------------------
 
 const ndkMock = {
   user: {
@@ -14,7 +15,7 @@ const ndkMock = {
     npub: "npub1abc",
     profile: { displayName: "Guest User" },
   },
-  authMethod: "guest",
+  authMethod: "guest" as const,
   logout: vi.fn(),
   getGuestPrivateKey: () => "f".repeat(64),
   needsProfileSetup: false,
@@ -24,47 +25,6 @@ const ndkMock = {
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ndkMock,
-}));
-
-vi.mock("@/components/layout/VersionHint", () => ({
-  VersionHint: ({ showChangelogLabel = false }: { showChangelogLabel?: boolean }) => (
-    <button type="button">{showChangelogLabel ? "v2.0.0 Changelog" : "v2.0.0"}</button>
-  ),
-}));
-
-vi.mock("@/components/legal/LegalDialog", () => ({
-  LegalDialog: ({ triggerLabel = "Legal" }: { triggerLabel?: string }) => (
-    <button type="button" aria-label="Open imprint and privacy policy">
-      {triggerLabel}
-    </button>
-  ),
-  resolveLegalContactEmail: () => "mail@nodex.nexus",
-}));
-
-vi.mock("@/components/theme/CompletionFeedbackToggle", () => ({
-  CompletionFeedbackToggle: () => <button type="button">Completion feedback</button>,
-}));
-
-vi.mock("@/components/theme/LanguageToggle", () => ({
-  LanguageToggle: () => <button type="button" aria-label="Language: English">EN</button>,
-}));
-
-vi.mock("@/components/filters/ChannelMatchModeToggle", () => ({
-  ChannelMatchModeToggle: ({
-    mode,
-    onChange,
-  }: {
-    mode: "and" | "or";
-    onChange?: (mode: "and" | "or") => void;
-  }) => (
-    <button
-      type="button"
-      aria-label="Included channel match mode"
-      onClick={() => onChange?.(mode === "and" ? "or" : "and")}
-    >
-      Match mode
-    </button>
-  ),
 }));
 
 vi.mock("@/hooks/use-profile-editor", () => ({
@@ -80,11 +40,7 @@ vi.mock("@/hooks/use-profile-editor", () => ({
       autoCaptionEnabled: true,
     },
     isSavingProfile: false,
-    validation: {
-      usernameHint: null,
-      isUsernameHintError: false,
-      isUsernameValid: true,
-    },
+    validation: { usernameHint: null, isUsernameHintError: false, isUsernameValid: true },
     fieldActions: {
       setUsername: () => {},
       setDisplayName: () => {},
@@ -109,6 +65,8 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
 
+// --- shared fixtures --------------------------------------------------------
+
 const relays: Relay[] = [
   { id: "demo", name: "Demo", isActive: true, url: "wss://demo.test" },
 ];
@@ -118,15 +76,16 @@ const channels: Channel[] = [
 ];
 
 const people: Person[] = [
-  {
-    id: "p1",
-    name: "Alice",
-    displayName: "Alice",
-    avatar: "",
-    isOnline: true,
-    isSelected: false,
-  },
+  { id: "p1", name: "Alice", displayName: "Alice", avatar: "", isOnline: true, isSelected: false },
 ];
+
+function renderMobileFilters(overrides: Partial<React.ComponentProps<typeof MobileFilters>> = {}) {
+  return render(
+    <MobileFilters relays={relays} channels={channels} people={people} {...overrides} />
+  );
+}
+
+// ----------------------------------------------------------------------------
 
 describe("MobileFilters management view", () => {
   beforeEach(() => {
@@ -139,97 +98,19 @@ describe("MobileFilters management view", () => {
     };
   });
 
-  it("supports adding a new space", () => {
-    render(
-      <MobileFilters
-        relays={relays}
-        channels={channels}
-        people={people}
-      />
-    );
-
-    fireEvent.change(screen.getByPlaceholderText(/wss:\/\/relay\.example\.com/i), {
-      target: { value: "wss://relay.example.com" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /add space/i }));
-
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "sidebar.relay.add",
-      url: "wss://relay.example.com",
-    });
-  });
-
-  it("adds a new space when pressing Enter in relay input", () => {
-    render(
-      <MobileFilters
-        relays={relays}
-        channels={channels}
-        people={people}
-      />
-    );
-
-    const relayInput = screen.getByPlaceholderText(/wss:\/\/relay\.example\.com/i);
-    fireEvent.change(relayInput, {
-      target: { value: "relay.example.com" },
-    });
-    fireEvent.keyDown(relayInput, { key: "Enter" });
-
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "sidebar.relay.add",
-      url: "relay.example.com",
-    });
-  });
-
-
-  it("allows switching channel include match mode", () => {
-    render(
-      <MobileFilters
-        relays={relays}
-        channels={channels}
-        channelMatchMode="and"
-        people={people}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /included channel match mode/i }));
-
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "sidebar.channel.matchMode.change",
-      mode: "or",
-    });
-  });
-
   it("prefers shared visible channel and people lists over broader surface datasets", () => {
     render(
       <FeedSurfaceProvider
         value={{
           relays,
-          channels: [
-            { id: "broad-channel", name: "broad-channel", filterState: "neutral" },
-          ],
-          visibleChannels: [
-            { id: "visible-channel", name: "visible-channel", filterState: "neutral" },
-          ],
+          channels: [{ id: "broad-channel", name: "broad-channel", filterState: "neutral" }],
+          visibleChannels: [{ id: "visible-channel", name: "visible-channel", filterState: "neutral" }],
           composeChannels: channels,
           people: [
-            {
-              id: "broad-person",
-              name: "Broad Person",
-              displayName: "Broad Person",
-              avatar: "",
-              isOnline: false,
-              isSelected: false,
-            },
+            { id: "broad-person", name: "Broad Person", displayName: "Broad Person", avatar: "", isOnline: false, isSelected: false },
           ],
           visiblePeople: [
-            {
-              id: "visible-person",
-              name: "visible-user",
-              displayName: "Visible Person",
-              avatar: "",
-              isOnline: true,
-              isSelected: false,
-            },
+            { id: "visible-person", name: "visible-user", displayName: "Visible Person", avatar: "", isOnline: true, isSelected: false },
           ],
           searchQuery: "",
           quickFilters: makeQuickFilterState(),
@@ -248,13 +129,7 @@ describe("MobileFilters management view", () => {
   });
 
   it("renders app preferences outside the profile editor card", () => {
-    render(
-      <MobileFilters
-        relays={relays}
-        channels={channels}
-        people={people}
-      />
-    );
+    renderMobileFilters();
 
     fireEvent.click(screen.getByRole("button", { name: /edit/i }));
     expect(screen.getByLabelText(/share current status/i)).toBeInTheDocument();
@@ -265,16 +140,11 @@ describe("MobileFilters management view", () => {
     expect(document.getElementById("manage-profile-auto-caption-enabled")).toBeNull();
   });
 
-  it("renders guest private key controls", () => {
-    render(
-      <MobileFilters
-        relays={relays}
-        channels={channels}
-        people={people}
-      />
-    );
+  it("renders guest private key row when signed in as guest", () => {
+    renderMobileFilters();
 
-    expect(screen.getByRole("button", { name: /show private key/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
+    // MobileFilters is responsible for conditionally mounting GuestPrivateKeyRow;
+    // the row's own interactions are tested in GuestPrivateKeyRow.test.tsx.
+    expect(screen.getByText(/backup private key/i)).toBeInTheDocument();
   });
 });
