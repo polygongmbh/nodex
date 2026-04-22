@@ -738,7 +738,11 @@ export function UnifiedBottomBar({
     t,
   });
   const taskSubmitBlockedReason = taskSubmitBlock?.reason ?? null;
-  const showTaskSubmitBlockBanner = taskSubmitBlock?.code !== "write";
+  // Hide the banner for "signin" too — the submit button already conveys the
+  // signed-out state, so the extra "Can't post yet / Sign in required" panel
+  // is redundant and visually heavy on mobile.
+  const showTaskSubmitBlockBanner =
+    taskSubmitBlock?.code !== "write" && taskSubmitBlock?.code !== "signin";
   const showTaskSubmitBlockDetail = taskSubmitBlock?.code === "relay"
     || taskSubmitBlock?.code === "selectTask"
     || taskSubmitBlock?.code === "uploading"
