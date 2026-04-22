@@ -22,11 +22,7 @@ function Harness({
 }: {
   initialFocusedTaskId?: string | null;
   restoreTimeoutMs?: number;
-  shouldRestoreSnapshot?: (typeof useTaskScopeSpecificFilters extends (
-    options: infer T
-  ) => unknown
-    ? T["shouldRestoreSnapshot"]
-    : never);
+  shouldRestoreSnapshot?: Parameters<typeof useTaskScopeSpecificFilters>[0]["shouldRestoreSnapshot"];
 }) {
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(initialFocusedTaskId);
   const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
@@ -44,7 +40,7 @@ function Harness({
       makeFilterSnapshot({
         channelStates: Object.fromEntries(
           Array.from(channelFilterStates.entries()).filter(([, state]) => state === "included" || state === "excluded")
-        ),
+        ) as Record<string, "included" | "excluded">,
         selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.id).sort(),
         channelMatchMode,
       }),

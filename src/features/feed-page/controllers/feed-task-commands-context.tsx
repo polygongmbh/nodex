@@ -7,6 +7,7 @@ import type {
   PublishedAttachment,
   Nip99Metadata,
   Nip99ListingStatus,
+  TaskCreateResult,
 } from "@/types";
 
 export interface FeedTaskCommands {

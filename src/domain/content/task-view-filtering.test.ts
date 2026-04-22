@@ -222,6 +222,7 @@ describe("task view filtering", () => {
         people: [],
       },
       scope: {
+        focusedTaskId: null,
         hideClosedTasks: true,
       },
       criteria: {

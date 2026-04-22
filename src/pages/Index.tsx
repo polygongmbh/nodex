@@ -692,7 +692,7 @@ function FeedIndexContent() {
       onOpenAuthModal: handleOpenAuthModal,
       onOpenShortcutsHelp: shortcutsHelp.open,
       onOpenGuide: handleOpenGuide,
-      onGuardInteraction: guardInteraction,
+      onGuardInteraction: (mode) => guardInteraction(mode === "create" ? "post" : mode),
       filterHandlers,
       interactionEffects: frecencyInteractionEffects,
     }),

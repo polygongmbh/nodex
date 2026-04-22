@@ -63,7 +63,7 @@ const nostrEvents: CachedNostrEvent[] = [
 function Harness() {
   const [people, setPeople] = useState<Person[]>([]);
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [, setSearchQuery] = useState("");
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
   const relaysWithActiveState = relays.map((relay) => ({
     ...relay,
@@ -97,9 +97,6 @@ function Harness() {
     people,
     setPeople,
     sidebarPeople: [],
-    isMobile: false,
-    setSearchQuery,
-    t: (key, values) => values ? `${key}:${JSON.stringify(values)}` : key,
   });
 
   const composeIncludedChannels = filters.composeChannelsWithState

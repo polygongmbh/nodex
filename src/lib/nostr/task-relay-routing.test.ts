@@ -7,7 +7,7 @@ import {
   resolveRelaySelectionForSubmission,
 } from "./task-relay-routing";
 
-const makeRelay = (id: string, url?: string): Relay => ({
+const makeRelay = (id: string, url: string = `wss://${id}.example`): Relay => ({
   id,
   name: id,
   isActive: true,
@@ -142,9 +142,9 @@ describe("resolveRelaySelectionForSubmission", () => {
   });
 
   it("defaults to the only active postable relay when none is explicitly selected", () => {
-    const singleActiveRelays = [
+    const singleActiveRelays: Relay[] = [
       makeRelay("relay-a", "wss://a.example"),
-      { ...makeRelay("relay-b", "wss://b.example"), isActive: false, connectionStatus: "connected" },
+      { ...makeRelay("relay-b", "wss://b.example"), isActive: false, connectionStatus: "connected" as const },
     ];
     const taskResult = resolveRelaySelectionForSubmission({
       taskType: "task",

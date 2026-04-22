@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
-import { getNip05For } from "@nostr-dev-kit/ndk/src/user/nip05";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { filterAutoAddRelayUrls } from "./relay-list";
@@ -80,8 +79,8 @@ export function useRelayEnrichment(
 
       let nip05RelayUrls: string[] = [];
       if (nip65RelayUrls.length === 0 && normalizedNip05) {
-        const pointer = await getNip05For(ndk, normalizedNip05);
-        nip05RelayUrls = pointer?.pubkey === user.pubkey ? (pointer.relays ?? []) : [];
+        const profile = await user.fetchProfile();
+        nip05RelayUrls = profile?.nip05 === normalizedNip05 ? (profile?.relayUrls ?? []) : [];
       }
       if (cancelled) return;
 
