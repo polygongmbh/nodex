@@ -92,6 +92,7 @@ const Index = () => {
     publishEvent,
     setPresenceRelayUrls,
     user,
+    defaultNoasHostUrl,
   } = useNDK();
 
   const {
@@ -667,7 +668,7 @@ const Index = () => {
     <>
       <OnboardingIntroPopover
         isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
-        showCreateAccount={Boolean(import.meta.env.VITE_NOAS_HOST_URL)}
+        showCreateAccount={Boolean(import.meta.env.VITE_NOAS_HOST_URL || defaultNoasHostUrl)}
         onStartTour={() => {
           if (!demoFeedActive && allTasks.length === 0) {
             setDemoTasks(initializeDemoFeedData());
