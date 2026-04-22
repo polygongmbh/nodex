@@ -20,6 +20,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 import { MobileRelaysSection } from "./MobileRelaysSection";
+import type { TFunction } from "i18next";
 
 interface MobileFiltersProps {
   relays?: Relay[];
@@ -37,14 +38,14 @@ export function MobileFilters({
   profileEditorOpenSignal = 0,
 }: MobileFiltersProps) {
   const { t } = useTranslation("filters");
-  const translateMixedKey = (key: string, values?: Record<string, unknown>) => {
+  const translateMixedKey = ((key: string, values?: Record<string, unknown>) => {
     if (key.startsWith("auth.")) return t(`auth:${key}`, values);
     if (key.startsWith("relay.")) return t(`relay:${key}`, values);
     if (key.startsWith("sidebar.")) return t(`shell:${key}`, values);
     if (key.startsWith("navigation.")) return t(`shell:${key}`, values);
     if (key.startsWith("legal.")) return t(`shell:${key}`, values);
     return t(key, values);
-  };
+  }) as TFunction;
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const relays = relaysProp ?? surface.relays;

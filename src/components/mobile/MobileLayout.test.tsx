@@ -43,9 +43,9 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", async () =
   };
 });
 
-const mockViewState = vi.fn<[], FeedViewState>();
-const mockTaskViewModel = vi.fn<[], FeedTaskViewModel>();
-const mockSurfaceState = vi.fn<[], FeedSurfaceState>();
+const mockViewState = vi.fn(() => baseFeedViewState as FeedViewState);
+const mockTaskViewModel = vi.fn(() => baseTaskViewModel as FeedTaskViewModel);
+const mockSurfaceState = vi.fn(() => baseSurfaceState as FeedSurfaceState);
 
 vi.mock("@/features/feed-page/views/feed-view-state-context", () => ({
   useFeedViewState: () => mockViewState(),
@@ -173,6 +173,7 @@ const baseFeedViewState: FeedViewState = {
 const baseTaskViewModel: FeedTaskViewModel = {
   tasks,
   allTasks: tasks,
+  focusedTaskId: null,
   relays,
   channels,
   composeChannels: channels,
