@@ -52,7 +52,11 @@ interface FeedViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
+  relays?: never;
+  channels?: never;
+  people?: never;
+  searchQuery?: never;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isMobile?: boolean;
@@ -155,7 +159,7 @@ export function FeedView({
   tasks,
   allTasks,
   currentUser,
-  focusedTaskId,
+  focusedTaskId = null,
   searchQueryOverride,
   isMobile = false,
   forceShowComposer,
