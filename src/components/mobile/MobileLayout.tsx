@@ -292,7 +292,7 @@ export function MobileLayout() {
         </div>
       </main>
 
-      <div hidden={showFilters}>
+      <div hidden={showFilters || activePrimaryView === "calendar"}>
         <UnifiedBottomBar
           currentView={activePrimaryView}
           focusedTaskId={focusedTaskId}
