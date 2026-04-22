@@ -233,17 +233,11 @@ export function MobileFilters({
               ) : (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsProfileEditorOpen((prev) => !prev)}
+                    onClick={() => setIsProfileEditorOpen(true)}
                     className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     {t("auth:auth.profile.edit")}
-                    <ChevronDown
-                      className={cn(
-                        "w-3.5 h-3.5 transition-transform",
-                        isProfileEditorOpen && "rotate-180"
-                      )}
-                    />
                   </button>
                   <button
                     onClick={logout}
@@ -255,38 +249,6 @@ export function MobileFilters({
                 </div>
               )}
             </div>
-
-            {user && isProfileEditorOpen && (
-              <>
-                <ProfileEditorFields
-                  fields={fields}
-                  validation={validation}
-                  fieldActions={fieldActions}
-                  t={translateMixedKey}
-                />
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  {!needsProfileSetup && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsProfileEditorOpen(false)}
-                      className="touch-target-sm"
-                      disabled={isSavingProfile}
-                    >
-                      {t("auth:auth.profile.cancel")}
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={handleSaveProfile}
-                    className="touch-target-sm"
-                    disabled={isSavingProfile || !isUsernameValid}
-                  >
-                    {isSavingProfile ? t("auth:auth.profile.saving") : t("auth:auth.profile.save")}
-                  </Button>
-                </div>
-              </>
-            )}
 
             {authMethod === "guest" && guestPrivateKey && (
               <GuestPrivateKeyRow
