@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
+import { TaskDateTypeSelect } from "@/components/tasks/TaskDateTypeSelect";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
@@ -54,6 +55,7 @@ import {
   writeTaskComposerDraft,
   type TaskComposerDraftState,
 } from "./task-composer-runtime";
+import { getTaskDateTypeLabel } from "@/lib/task-dates";
 
 interface TaskComposerProps {
   onSubmit: (data: TaskComposerFormData) => void;
@@ -1781,18 +1783,12 @@ export function TaskComposer({
 
           <div className="inline-flex min-w-[20rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <select
+            <TaskDateTypeSelect
               aria-label={t("composer.labels.dateType")}
               value={dateType}
-              onChange={(event) => setDateType(event.target.value as TaskDateType)}
+              onChange={setDateType}
               className="h-8 w-24 cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
-            >
-              <option value="due">{t("tasks:tasks.dates.due")}</option>
-              <option value="scheduled">{t("tasks:tasks.dates.scheduled")}</option>
-              <option value="start">{t("tasks:tasks.dates.start")}</option>
-              <option value="end">{t("tasks:tasks.dates.end")}</option>
-              <option value="milestone">{t("tasks:tasks.dates.milestone")}</option>
-            </select>
+            />
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -1804,7 +1800,7 @@ export function TaskComposer({
                   {dueDate
                     ? format(dueDate, "MMM d, yyyy")
                     : t("composer.dates.setOptional", {
-                        dateType: t(`tasks:tasks.dates.${dateType}`),
+                        dateType: getTaskDateTypeLabel(dateType),
                       })}
                 </button>
               </PopoverTrigger>

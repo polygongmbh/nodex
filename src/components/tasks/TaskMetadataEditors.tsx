@@ -4,19 +4,12 @@ import { useTranslation } from "react-i18next";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { TaskDateType } from "@/types";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { TaskDateTypeSelect } from "./TaskDateTypeSelect";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
-
-const TASK_DATE_TYPE_OPTION_KEYS: Array<{ value: TaskDateType; labelKey: string }> = [
-  { value: "due", labelKey: "tasks.dates.due" },
-  { value: "scheduled", labelKey: "tasks.dates.scheduled" },
-  { value: "start", labelKey: "tasks.dates.start" },
-  { value: "end", labelKey: "tasks.dates.end" },
-  { value: "milestone", labelKey: "tasks.dates.milestone" },
-];
 
 interface TaskDueDateEditorFormProps {
   taskId: string;
@@ -65,25 +58,18 @@ export function TaskDueDateEditorForm({
         <label className="text-xs text-muted-foreground" htmlFor={`${idPrefix}-date-type-${taskId}`}>
           {t("listView.dates.type")}
         </label>
-        <select
+        <TaskDateTypeSelect
           id={`${idPrefix}-date-type-${taskId}`}
           aria-label={t("listView.dates.type")}
           value={localDateType}
-          onChange={(event) => {
-            const nextType = event.target.value as TaskDateType;
+          onChange={(nextType) => {
             setLocalDateType(nextType);
             if (dueDate) {
               dispatchDueDateUpdate(dueDate, localDueTime || undefined, nextType);
             }
           }}
           className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
-        >
-          {TASK_DATE_TYPE_OPTION_KEYS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {t(option.labelKey)}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       <CalendarComponent
         mode="single"

@@ -46,6 +46,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
+import { TaskDateTypeSelect } from "@/components/tasks/TaskDateTypeSelect";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
@@ -1354,18 +1355,12 @@ export function UnifiedBottomBar({
               </div>
               {dueDate && (
                 <div className="flex items-center gap-1">
-                  <select
+                  <TaskDateTypeSelect
                     aria-label={t("composer.labels.dateType")}
                     value={dateType}
-                    onChange={(event) => setDateType(event.target.value as TaskDateType)}
+                    onChange={setDateType}
                     className="h-8 w-[5.2rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
-                  >
-                    <option value="due">{t("tasks:tasks.dates.due")}</option>
-                    <option value="scheduled">{t("tasks:tasks.dates.scheduled")}</option>
-                    <option value="start">{t("tasks:tasks.dates.start")}</option>
-                    <option value="end">{t("tasks:tasks.dates.end")}</option>
-                    <option value="milestone">{t("tasks:tasks.dates.milestone")}</option>
-                  </select>
+                  />
                   <div className="h-8 flex items-center gap-0.5 pl-2 pr-1 rounded-md border border-border bg-muted/30 text-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     <input
