@@ -6,7 +6,10 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.13.5] - 2026-04-23
+
 - Task date labels and saved-filter copy now resolve from app-wide task/filter locales instead of composer-only keys, fixing broken table-view date translations and keeping shared UI copy scoped correctly across English, German, and Spanish.
+- Calendar date updates now treat the latest calendar event as the source of truth, preventing stale due-time and date-type values from reappearing after publishing date-only changes.
 
 ## [2.13.4] - 2026-04-22
 
