@@ -118,7 +118,7 @@ type PrioritySelectBaseProps = Omit<
 >;
 
 interface TaskPrioritySelectProps extends PrioritySelectBaseProps {
-  taskId: string;
+  taskId?: string;
   priority?: number;
   stopPropagation?: boolean;
 }
@@ -188,27 +188,23 @@ export function TaskPrioritySelect({
   taskId,
   priority,
   className,
-  disabled = false,
   stopPropagation = false,
   ...selectProps
 }: TaskPrioritySelectProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const value = (() => {
-    const displayPriority = displayPriorityFromStored(priority);
-    return typeof displayPriority === "number" ? String(displayPriority) : "";
-  })();
 
   return (
     <PrioritySelect
       priority={displayPriorityFromStored(priority)}
       onPriorityChange={(next) => {
+        if (!taskId) return;
         const storedPriority = storedPriorityFromDisplay(next);
         if (typeof storedPriority === "number") {
           void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: storedPriority });
         }
       }}
       className={className}
-      disabled={disabled}
+      disabled={!taskId}
       stopPropagation={stopPropagation}
       {...selectProps}
     />

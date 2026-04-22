@@ -139,9 +139,8 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
   return (
     <TaskPrioritySelect
       id={`feed-priority-${task.id}`}
-      taskId={task.id}
+      taskId={editable ? task.id : undefined}
       priority={task.priority}
-      disabled={!editable}
       stopPropagation
       className={cn(
         "rounded bg-warning/15 px-1.5 py-0.5 text-xs text-warning transition-colors focus:outline-none",

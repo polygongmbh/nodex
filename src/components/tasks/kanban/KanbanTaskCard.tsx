@@ -107,9 +107,8 @@ export function KanbanTaskCard({
         {typeof task.priority === "number" ? (
           <TaskPrioritySelect
             id={`kanban-priority-${task.id}`}
-            taskId={task.id}
+            taskId={canChangeStatus ? task.id : undefined}
             priority={task.priority}
-            disabled={!canChangeStatus}
             stopPropagation
             className={cn(
               "ml-auto h-6 rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",

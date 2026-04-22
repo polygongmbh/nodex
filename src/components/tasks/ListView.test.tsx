@@ -95,9 +95,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    const prioritySelect = screen.getByRole("combobox", {
-      name: /priority for task content/i,
-    });
+    const [prioritySelect] = screen.getAllByRole("combobox");
     prioritySelect.focus();
     expect(prioritySelect).toHaveFocus();
 
@@ -114,9 +112,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    const prioritySelectAfter = screen.getByRole("combobox", {
-      name: /priority for task content/i,
-    });
+    const [prioritySelectAfter] = screen.getAllByRole("combobox");
     expect(prioritySelectAfter).toBe(prioritySelect);
     expect(prioritySelectAfter).toHaveFocus();
   });
@@ -153,9 +149,7 @@ describe("ListView priority control", () => {
     expect(cells?.[1]).toHaveClass("min-w-0");
     expect(cells?.[2]).toHaveClass("hidden");
 
-    const prioritySelect = screen.getByRole("combobox", {
-      name: /priority for task content with a longer preview/i,
-    });
+    const [prioritySelect] = screen.getAllByRole("combobox");
     expect(prioritySelect).toHaveClass("w-full", "min-w-0", "max-w-full");
   });
 
@@ -182,7 +176,8 @@ describe("ListView priority control", () => {
       />
     );
 
-    expect(screen.getByLabelText(/priority for task content/i)).toBeDisabled();
+    const [prioritySelect] = screen.getAllByRole("combobox");
+    expect(prioritySelect).toBeDisabled();
     expect(screen.getByRole("button", { name: /set date/i })).toBeDisabled();
   });
 

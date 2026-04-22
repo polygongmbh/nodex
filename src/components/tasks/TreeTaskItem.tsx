@@ -630,9 +630,8 @@ export function TreeTaskItem({
             <div className={cn(task.dueDate ? "mt-1.5" : "mt-1")}>
               <TaskPrioritySelect
                 id={`task-priority-${task.id}`}
-                taskId={task.id}
+                taskId={editableMetadata ? task.id : undefined}
                 priority={task.priority}
-                disabled={!editableMetadata}
                 stopPropagation
                 className={cn(
                   "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
@@ -648,9 +647,8 @@ export function TreeTaskItem({
               {typeof task.priority === "number" && !isComment && (
                 <TaskPrioritySelect
                   id={`task-priority-${task.id}`}
-                  taskId={task.id}
+                  taskId={editableMetadata ? task.id : undefined}
                   priority={task.priority}
-                  disabled={!editableMetadata}
                   stopPropagation
                   className={cn(
                     "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",

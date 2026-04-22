@@ -88,9 +88,8 @@ const PriorityCell = memo(function PriorityCell({
 }: PriorityCellProps) {
   return (
     <TaskPrioritySelect
-      taskId={taskId}
+      taskId={editable ? taskId : undefined}
       priority={priority}
-      disabled={!editable}
       className="h-7 w-full min-w-0 max-w-full rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
     />
   );
