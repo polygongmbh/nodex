@@ -6,8 +6,13 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-- Kanban and calendar composers now restore the same shared draft state as the feed, tree, and list composers instead of dropping in-progress content when those inline composers close.
-- Task-card priority chips now resolve their localized priority labels from the composer locale correctly instead of showing raw translation keys in feed and shared card surfaces.
+## [2.13.4] - 2026-04-22
+
+- Noas sign-in now keeps its step state in sync and shows the create-account path as soon as a runtime-discovered Noas host is available.
+- Feed, list, kanban, and calendar composers now share draft restoration consistently, while the refreshed task controls also fix localized priority labels, priority picker behavior, and kanban drag handling across shared task surfaces.
+- Mobile compose and onboarding flows now use tighter layouts, corrected step guidance, aligned profile relay warning copy, and updated locale coverage across English, German, and Spanish.
+- Shared overlays, popovers, and muted utility controls now use the same interaction styling tokens, reducing visual drift across desktop and mobile surfaces.
+- Runtime resilience improved with safer iOS script-error handling during app startup and interaction flows.
 
 ## [2.13.3] - 2026-04-22
 

@@ -210,6 +210,11 @@ policies:
     changelog_release_scope_includes:
       - unpushed_commits
       - already_pushed_but_unreleased_changes
+      - first_parent_git_history_since_latest_tag
+    changelog_release_reconciliation_required_inputs:
+      - CHANGELOG.md Unreleased
+      - git log --first-parent <latest-tag>..HEAD
+      - git diff --stat <latest-tag>..HEAD
     minor_requires_any:
       - at_least_two_feat_commits
       - production_code_line_churn_at_or_above_minor_threshold
@@ -269,7 +274,7 @@ policies:
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
 - For major/minor releases (for example `2.0.0`, `1.7.0`), include a concise update summary line directly under the version heading before any bullet lists/subsections.
 - On release, move grouped entries from `Unreleased` into the new versioned section.
-- Determine release scope from `CHANGELOG.md` `Unreleased`, not only from `origin/<branch>..HEAD`; already-pushed changes that remain unreleased still belong to the pending version unless explicitly deferred.
+- Determine release scope by reconciling `CHANGELOG.md` `Unreleased` with `git log --first-parent <latest-tag>..HEAD` and `git diff --stat <latest-tag>..HEAD`; already-pushed changes that remain unreleased still belong to the pending version unless explicitly deferred.
 - Before every push, prune redundant or iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` while keeping refinements and regressions under `### Changed` or `### Fixed`.
 
 ### Release Scope
@@ -324,7 +329,7 @@ When asked to create a plan to fix or implement something:
 - update user-facing guides before release or push when behavior changed
 - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
 - provide one high-level summary across all unpushed commits
-- also reconcile the pending release against `CHANGELOG.md` `Unreleased` so already-pushed-but-unreleased entries are included in the version scope unless explicitly deferred
+- reconcile the pending release against `CHANGELOG.md` `Unreleased`, `git log --first-parent <latest-tag>..HEAD`, and `git diff --stat <latest-tag>..HEAD` so already-pushed-but-unreleased entries are included in the version scope unless explicitly deferred
 - omit cosmetic-only low-level details unless asked
 - update `package.json` version semantically based on the release policy above
 - when bumping a patch/minor version, include a short explicit rationale in release/push notes (for example: "patch for fixes only" or "minor for broader user-facing feature scope")
