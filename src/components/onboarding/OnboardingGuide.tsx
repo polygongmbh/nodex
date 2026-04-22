@@ -340,31 +340,45 @@ export function OnboardingGuide({
       return;
     }
 
-    const resolveTarget = () => {
+    let lastTarget: HTMLElement | null = null;
+    const resolveTarget = (force = false) => {
+      // If we already have a target and it is still in the DOM, keep it stable
+      // so the highlight does not jitter between equally-visible candidates.
+      if (!force && lastTarget && document.contains(lastTarget)) {
+        return true;
+      }
       const target = getBestVisibleTarget(current.target!);
-      if (!target) return false;
+      if (!target) {
+        // Lost our previously resolved target (DOM re-rendered). Clear it so
+        // the highlight effect tears down cleanly while we wait for a new one.
+        if (lastTarget) {
+          lastTarget = null;
+          setResolvedTarget(null);
+          setTargetRect(null);
+        }
+        return false;
+      }
+      lastTarget = target;
       setResolvedTarget((prev) => (prev === target ? prev : target));
       setTargetRect(target.getBoundingClientRect());
       return true;
     };
 
-    if (resolveTarget()) return;
+    resolveTarget();
 
     const intervalId = window.setInterval(() => {
-      if (resolveTarget()) {
-        window.clearInterval(intervalId);
-      }
+      resolveTarget();
     }, 120);
     const timeoutId = window.setTimeout(() => {
+      // Stop the polling fallback after a while; the MutationObserver below
+      // continues to react to DOM changes for the rest of the step lifetime.
       window.clearInterval(intervalId);
     }, 5000);
 
     let observer: MutationObserver | null = null;
     if (typeof MutationObserver !== "undefined") {
       observer = new MutationObserver(() => {
-        if (resolveTarget()) {
-          window.clearInterval(intervalId);
-        }
+        resolveTarget();
       });
       observer.observe(document.body, {
         childList: true,
