@@ -7,6 +7,14 @@ import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
 import type { AuthMethod, NDKUser } from "@/infrastructure/nostr/ndk-context";
 import { resolveAuthRouteStep } from "@/lib/auth-routes";
 
+const createMockNdkUser = (overrides: Partial<NDKUser> = {}): NDKUser =>
+  ({
+    npub: "npub1test",
+    pubkey: "a".repeat(64),
+    profile: {},
+    ...overrides,
+  } as NDKUser);
+
 const loginWithExtension = vi.fn(() => new Promise<boolean>(() => {}));
 const ndkMock = {
   loginWithExtension,
@@ -421,7 +429,7 @@ describe("NostrUserMenu", () => {
   });
 
   it("renders safely when user signs out after profile setup was required", () => {
-    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "Alice" } };
+    ndkMock.user = createMockNdkUser({ profile: { name: "Alice" } });
     ndkMock.authMethod = "extension";
     ndkMock.needsProfileSetup = true;
 
@@ -436,7 +444,7 @@ describe("NostrUserMenu", () => {
   });
 
   it("does not auto-open setup profile dialog while profile sync is in progress", () => {
-    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "" } };
+    ndkMock.user = createMockNdkUser({ profile: { name: "" } });
     ndkMock.authMethod = "extension";
     ndkMock.needsProfileSetup = true;
     ndkMock.isProfileSyncing = true;
@@ -452,7 +460,7 @@ describe("NostrUserMenu", () => {
   });
 
   it("does not auto-open setup profile dialog when no relay is connected", () => {
-    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "" } };
+    ndkMock.user = createMockNdkUser({ profile: { name: "" } });
     ndkMock.authMethod = "extension";
     ndkMock.needsProfileSetup = true;
     ndkMock.isConnected = false;
@@ -463,7 +471,7 @@ describe("NostrUserMenu", () => {
   });
 
   it("does not auto-open setup profile dialog when only read-only relays are available", () => {
-    ndkMock.user = { npub: "npub1test", pubkey: "b".repeat(64), profile: { name: "" } };
+    ndkMock.user = createMockNdkUser({ pubkey: "b".repeat(64), profile: { name: "" } });
     ndkMock.authMethod = "guest";
     ndkMock.needsProfileSetup = true;
     ndkMock.hasWritableRelayConnection = false;
@@ -474,7 +482,7 @@ describe("NostrUserMenu", () => {
   });
 
   it("only auto-opens mandatory profile setup once per required setup cycle", () => {
-    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "" } };
+    ndkMock.user = createMockNdkUser({ profile: { name: "" } });
     ndkMock.authMethod = "extension";
     ndkMock.needsProfileSetup = true;
 
@@ -489,7 +497,7 @@ describe("NostrUserMenu", () => {
   });
 
   it("keeps the dismiss button available after a mandatory profile setup save fails", async () => {
-    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "" } };
+    ndkMock.user = createMockNdkUser({ profile: { name: "" } });
     ndkMock.authMethod = "extension";
     ndkMock.needsProfileSetup = true;
     ndkMock.updateUserProfile = vi.fn(async () => false);

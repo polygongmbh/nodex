@@ -53,10 +53,10 @@ interface FeedViewProps {
   allTasks: Task[];
   currentUser?: Person;
   focusedTaskId?: string | null;
-  relays?: never;
-  channels?: never;
-  people?: never;
-  searchQuery?: never;
+  relays?: unknown;
+  channels?: unknown;
+  people?: unknown;
+  searchQuery?: string;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isMobile?: boolean;
