@@ -17,7 +17,7 @@ export function CompletionFeedbackToggle({ enabled, onToggle, className }: Compl
       type="button"
       variant="ghost"
       size="icon"
-      className={cn("h-9 w-9 hover:bg-accent/60 hover:text-accent-foreground xl:h-10 xl:w-10", className)}
+      className={cn("h-9 w-9 hover:bg-muted hover:text-foreground xl:h-10 xl:w-10", className)}
       onClick={onToggle}
       aria-label={enabled ? t("feedback.sound.on") : t("feedback.sound.off")}
       title={enabled ? t("feedback.sound.on") : t("feedback.sound.off")}

@@ -667,7 +667,7 @@ interface NostrUserMenuProps {
 }
 
 const desktopTopbarControlClassName =
-  "h-9 w-auto max-w-[14rem] rounded-md bg-transparent px-2 gap-2 justify-end whitespace-nowrap hover:bg-accent/60 hover:text-accent-foreground data-[state=open]:bg-accent/60 data-[state=open]:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0 xl:h-10";
+  "h-9 w-auto max-w-[14rem] rounded-md bg-transparent px-2 gap-2 justify-end whitespace-nowrap hover:bg-muted hover:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 xl:h-10";
 
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const { t } = useTranslation();
@@ -778,7 +778,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         variant="ghost"
         size="sm"
         onClick={onSignInClick}
-        className={cn(desktopTopbarControlClassName, "text-muted-foreground hover:text-accent-foreground")}
+        className={cn(desktopTopbarControlClassName, "text-muted-foreground")}
       >
         <LogIn className="w-4 h-4" />
         <span className="hidden xl:inline">{t("auth.menu.signInToPost")}</span>

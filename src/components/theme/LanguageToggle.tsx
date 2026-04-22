@@ -30,7 +30,7 @@ export function LanguageToggle({ className, showLabelOnMobile = false }: Languag
       <SelectTrigger
         hideIndicator
         className={cn(
-          "h-9 w-9 min-w-0 rounded-md border-transparent bg-transparent px-1.5 text-xs shadow-none hover:bg-accent/60 hover:text-accent-foreground data-[state=open]:bg-accent/60 data-[state=open]:text-accent-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 lg:w-auto xl:h-10 xl:w-[8.25rem] xl:px-2 xl:text-sm",
+          "h-9 w-9 min-w-0 rounded-md border-transparent bg-transparent px-1.5 text-xs shadow-none hover:bg-muted hover:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 lg:w-auto xl:h-10 xl:w-[8.25rem] xl:px-2 xl:text-sm",
           className,
         )}
         aria-label={`${t("language.label")}: ${currentLabel}`}
