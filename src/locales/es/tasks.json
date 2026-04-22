@@ -65,7 +65,8 @@
         "showingOnlyScope": "Esto es todo {{scope}}.",
         "mobileFallback": "Aún no hay nada en el alcance actual; se muestra todo.",
         "mobileFallbackScoped": "Aún no hay nada {{scope}}; se muestra todo.",
-        "action": "Amplía el alcance o rompe el silencio."
+        "action": "Amplía el alcance o rompe el silencio.",
+        "clearAll": "Borrar todos los filtros"
       },
       "loading": {
         "scopeOnly": "Cargando publicaciones {{scope}}.",
