@@ -68,8 +68,8 @@
       },
       "navigationBreadcrumb": {
         "title": "Step Back Up",
-        "description": "Each item in the breadcrumb row jumps directly to that level in the hierarchy.",
-        "action": "Click your way back to the root to continue."
+        "description": "Breadcrumbs keep track of where you are and let you navigate to broader contexts.",
+        "action": "Use the breadcrumbs to return to the full overview."
       },
       "filtersRelays": {
         "title": "Pick Your Spaces",

@@ -68,8 +68,8 @@
       },
       "navigationBreadcrumb": {
         "title": "Volver Hacia Arriba",
-        "description": "Cada elemento de la fila de breadcrumbs salta directamente a ese nivel de la jerarquía.",
-        "action": "Vuelve clicando hasta la raíz para continuar."
+        "description": "Los breadcrumbs muestran el contexto actual y permiten navegar a contextos más amplios.",
+        "action": "Usa los breadcrumbs para volver a la vista completa."
       },
       "filtersRelays": {
         "title": "Elige tus Spaces",

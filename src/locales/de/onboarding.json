@@ -68,8 +68,8 @@
       },
       "navigationBreadcrumb": {
         "title": "Zurück Nach Oben",
-        "description": "Jedes Element in der Breadcrumb-Leiste springt direkt zu dieser Ebene in der Hierarchie.",
-        "action": "Klicke dich bis zur Wurzel zurück, um fortzufahren."
+        "description": "Breadcrumbs zeigen den aktuellen Kontext und ermöglichen die Navigation zur größeren Übersicht.",
+        "action": "Nutze die Breadcrumbs, um zur Gesamtansicht zurückzukehren."
       },
       "filtersRelays": {
         "title": "Spaces Auswählen",
