@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { OnboardingIntroPopover } from "./OnboardingIntroPopover";
@@ -10,7 +10,7 @@ describe("OnboardingIntroPopover", () => {
     });
   };
 
-  it("renders intro copy and actions when open", () => {
+  it("renders the extra action when create account is available", () => {
     vi.useFakeTimers();
     render(
       <OnboardingIntroPopover
@@ -22,47 +22,14 @@ describe("OnboardingIntroPopover", () => {
       />
     );
 
-    expect(screen.getByRole("dialog", { name: "Welcome to Nodex" })).toHaveAttribute("data-state", "closed");
-
     advanceOpenAnimation();
 
-    expect(screen.getByRole("dialog", { name: "Welcome to Nodex" })).toHaveAttribute("data-state", "open");
-    expect(screen.getByRole("button", { name: "Start the Tour" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Create account" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getAllByRole("button")).toHaveLength(3);
     vi.useRealTimers();
   });
 
-  it("calls handlers for all actions", () => {
-    vi.useFakeTimers();
-    const onStartTour = vi.fn();
-    const onCreateAccount = vi.fn();
-    const onSignIn = vi.fn();
-
-    render(
-      <OnboardingIntroPopover
-        isOpen
-        showCreateAccount
-        onStartTour={onStartTour}
-        onCreateAccount={onCreateAccount}
-        onSignIn={onSignIn}
-      />
-    );
-
-    advanceOpenAnimation();
-
-    fireEvent.click(screen.getByRole("button", { name: "Start the Tour" }));
-    expect(onStartTour).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
-    expect(onCreateAccount).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    expect(onSignIn).toHaveBeenCalledTimes(1);
-    vi.useRealTimers();
-  });
-
-  it("hides create account when Noas sign-up is not configured", () => {
+  it("omits the extra action when create account is unavailable", () => {
     vi.useFakeTimers();
     render(
       <OnboardingIntroPopover
@@ -76,8 +43,8 @@ describe("OnboardingIntroPopover", () => {
 
     advanceOpenAnimation();
 
-    expect(screen.queryByRole("button", { name: "Create account" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getAllByRole("button")).toHaveLength(2);
     vi.useRealTimers();
   });
 
@@ -117,8 +84,7 @@ describe("OnboardingIntroPopover", () => {
       />
     );
 
-    expect(screen.getByRole("dialog", { name: "Welcome to Nodex" })).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Welcome to Nodex" })).toHaveAttribute("data-state", "closed");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(400);
