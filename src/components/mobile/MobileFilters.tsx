@@ -153,7 +153,8 @@ export function MobileFilters({
   };
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4" data-onboarding="mobile-filters">
+    <>
+      <div className="h-full overflow-y-auto p-4 space-y-4" data-onboarding="mobile-filters">
         <section>
           <div className="flex items-center gap-2">
             <button
