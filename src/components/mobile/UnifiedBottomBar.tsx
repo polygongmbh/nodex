@@ -1406,6 +1406,7 @@ export function UnifiedBottomBar({
                   {activePeopleCount}
                 </span>
               )}
+            </button>
           </div>
 
         </div>
