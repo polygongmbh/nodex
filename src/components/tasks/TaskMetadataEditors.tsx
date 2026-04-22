@@ -117,6 +117,7 @@ interface PrioritySelectProps {
   stopPropagation?: boolean;
   onOpenChange?: (open: boolean) => void;
   onCloseAutoFocus?: React.ComponentPropsWithoutRef<typeof SelectContent>["onCloseAutoFocus"];
+  leadingIcon?: React.ReactNode;
   "aria-label"?: string;
   title?: string;
 }
