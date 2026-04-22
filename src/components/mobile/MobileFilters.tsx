@@ -4,17 +4,18 @@ import { Relay, Channel, ChannelMatchMode } from "@/types";
 import type { Person } from "@/types/person";
 import { cn } from "@/lib/utils";
 import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { toast } from "sonner";
-import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
 import { LegalDialog, resolveLegalContactEmail } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { GuestPrivateKeyRow } from "@/components/auth/GuestPrivateKeyRow";
+import { ProfileEditorFields } from "@/components/auth/ProfileEditorFields";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -53,28 +54,10 @@ export function MobileFilters({
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
   const {
-    fields: {
-      profileName,
-      profileDisplayName,
-      profilePicture,
-      profileNip05,
-      profileAbout,
-      presencePublishingEnabled,
-      publishDelayEnabled,
-      autoCaptionEnabled,
-    },
+    fields,
+    fieldActions,
     isSavingProfile,
-    validation: {
-      showProfileNameRequired,
-      showProfileNameInvalid,
-      showProfileNameTaken,
-      isProfileNameValid,
-    },
-    setProfileName,
-    setProfileDisplayName,
-    setProfilePicture,
-    setProfileNip05,
-    setProfileAbout,
+    validation,
     resetFromProfile,
     handleSaveProfile,
     handlePresencePublishingChange,
@@ -90,6 +73,8 @@ export function MobileFilters({
     publishEvent,
     onSaved: () => setIsProfileEditorOpen(false),
   });
+  const { presencePublishingEnabled, publishDelayEnabled, autoCaptionEnabled } = fields;
+  const { isUsernameValid } = validation;
 
   const displayName = useMemo(() => {
     if (!user) return t("filters.profile.notSignedIn");
@@ -261,89 +246,35 @@ export function MobileFilters({
             </div>
 
             {user && isProfileEditorOpen && (
-              <div className="space-y-2 rounded-md border border-border/70 bg-muted/20 p-2.5">
-                <div className="space-y-1">
-                  <label htmlFor="manage-profile-display-name" className="text-xs text-muted-foreground">{t("filters.profile.displayName")}</label>
-                  <Input
-                    id="manage-profile-display-name"
-                    value={profileDisplayName}
-                    onChange={(e) => setProfileDisplayName(e.target.value)}
-                    className="h-8"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="manage-profile-name" className="text-xs text-muted-foreground">{t("filters.profile.name")}</label>
-                  <Input
-                    id="manage-profile-name"
-                    value={profileName}
-                    onChange={(e) => setProfileName(e.target.value)}
-                    className="h-8"
-                    aria-invalid={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken}
-                    aria-describedby={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken ? "manage-profile-name-error" : undefined}
-                  />
-                  {showProfileNameRequired && (
-                    <p id="manage-profile-name-error" className="text-xs text-destructive">
-                      {t("filters.profile.nameRequired")}
-                    </p>
-                  )}
-                  {!showProfileNameRequired && showProfileNameInvalid && (
-                    <p id="manage-profile-name-error" className="text-xs text-destructive">
-                      {t("filters.profile.nameInvalidNip05")}
-                    </p>
-                  )}
-                  {!showProfileNameRequired && !showProfileNameInvalid && showProfileNameTaken && (
-                    <p id="manage-profile-name-error" className="text-xs text-destructive">
-                      {t("filters.profile.nameTaken")}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="manage-profile-picture" className="text-xs text-muted-foreground">{t("filters.profile.picture")}</label>
-                  <Input
-                    id="manage-profile-picture"
-                    value={profilePicture}
-                    onChange={(e) => setProfilePicture(e.target.value)}
-                    className="h-8"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="manage-profile-nip05" className="text-xs text-muted-foreground">{t("filters.profile.nip05")}</label>
-                  <Input
-                    id="manage-profile-nip05"
-                    value={profileNip05}
-                    onChange={(e) => setProfileNip05(e.target.value)}
-                    className="h-8"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="manage-profile-about" className="text-xs text-muted-foreground">{t("filters.profile.about")}</label>
-                  <Textarea
-                    id="manage-profile-about"
-                    value={profileAbout}
-                    onChange={(e) => setProfileAbout(e.target.value)}
-                    rows={3}
-                    className="min-h-20"
-                  />
-                </div>
+              <>
+                <ProfileEditorFields
+                  fields={fields}
+                  validation={validation}
+                  fieldActions={fieldActions}
+                  t={t}
+                />
                 <div className="flex items-center justify-end gap-2 pt-2">
                   {!needsProfileSetup && (
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setIsProfileEditorOpen(false)}
-                      className="px-4 py-2 rounded-lg text-sm border border-border touch-target-sm active:bg-muted transition-colors"
+                      className="touch-target-sm"
                       disabled={isSavingProfile}
                     >
                       {t("filters.profile.cancel")}
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
+                    size="sm"
                     onClick={handleSaveProfile}
-                    className="px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground touch-target-sm active:scale-95 transition-transform"
-                    disabled={isSavingProfile || !isProfileNameValid}
+                    className="touch-target-sm"
+                    disabled={isSavingProfile || !isUsernameValid}
                   >
                     {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </>
             )}
 
             {authMethod === "guest" && guestPrivateKey && (

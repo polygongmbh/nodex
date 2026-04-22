@@ -679,7 +679,7 @@
       },
       "mobileFiltersProperties": {
         "title": "Profile properties",
-        "description": "In *Manage*, open the profile editor to review and set your key identity fields: name, display name, picture URL, NIP-05, and about text."
+        "description": "In *Manage*, open the profile editor to review and set your key identity fields: username, display name, profile picture URL, verified identity address, and about text."
       },
       "mobileFiltersUse": {
         "title": "Use filters",
@@ -731,9 +731,14 @@
       "edit": "Edit",
       "name": "Username *",
       "displayName": "Display name",
-      "picture": "Picture URL",
-      "nip05": "NIP-05",
-      "about": "About",
+      "displayNamePlaceholder": "How your name appears",
+      "namePlaceholder": "your_username",
+      "picture": "Profile picture URL",
+      "picturePlaceholder": "https://example.com/avatar.jpg",
+      "nip05": "Verified identity address",
+      "nip05Placeholder": "Your NIP-05 identifier name@domain.com verified by domain",
+      "about": "About you",
+      "aboutPlaceholder": "Tell people a little about yourself",
       "appPreferencesTitle": "App Preferences",
       "cancel": "Cancel",
       "saving": "Saving...",

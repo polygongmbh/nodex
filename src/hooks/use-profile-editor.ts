@@ -46,6 +46,20 @@ interface UseProfileEditorOptions {
   onSaved?: () => void;
 }
 
+export interface ProfileEditorValidation {
+  usernameHint: string | null;
+  isUsernameHintError: boolean;
+  isUsernameValid: boolean;
+}
+
+export interface ProfileEditorFieldActions {
+  setUsername: (value: string) => void;
+  setDisplayName: (value: string) => void;
+  setPicture: (value: string) => void;
+  setNip05: (value: string) => void;
+  setAbout: (value: string) => void;
+}
+
 export function useProfileEditor({
   userPubkey,
   knownProfileNames = [],
@@ -55,12 +69,12 @@ export function useProfileEditor({
   onSaved,
 }: UseProfileEditorOptions) {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileName, setProfileName] = useState("");
-  const [profileDisplayName, setProfileDisplayName] = useState("");
-  const [profilePicture, setProfilePicture] = useState("");
-  const [profileNip05, setProfileNip05] = useState("");
-  const [profileAbout, setProfileAbout] = useState("");
-  const [isProfileNameAutoFilled, setIsProfileNameAutoFilled] = useState(false);
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [picture, setPicture] = useState("");
+  const [nip05, setNip05] = useState("");
+  const [about, setAbout] = useState("");
+  const [isUsernameAutoFilled, setIsUsernameAutoFilled] = useState(false);
   const [initialProfileSnapshot, setInitialProfileSnapshot] = useState<Required<ProfileEditorSnapshot>>({
     name: "",
     displayName: "",
@@ -78,19 +92,27 @@ export function useProfileEditor({
     loadAutoCaptionEnabled()
   );
 
-  const trimmedProfileName = profileName.trim();
-  const hasTypedProfileName = profileName.length > 0;
-  const showProfileNameRequired = hasTypedProfileName && !trimmedProfileName;
-  const showProfileNameInvalid =
-    Boolean(trimmedProfileName) && !isNip05CompatibleName(trimmedProfileName);
-  const showProfileNameTaken =
-    Boolean(trimmedProfileName) &&
-    !showProfileNameInvalid &&
-    isProfileNameTaken(trimmedProfileName, {
+  const trimmedUsername = username.trim();
+  const hasTypedUsername = username.length > 0;
+  const showUsernameRequired = hasTypedUsername && !trimmedUsername;
+  const showUsernameInvalid =
+    Boolean(trimmedUsername) && !isNip05CompatibleName(trimmedUsername);
+  const showUsernameTaken =
+    Boolean(trimmedUsername) &&
+    !showUsernameInvalid &&
+    isProfileNameTaken(trimmedUsername, {
       currentPubkey: userPubkey,
       additionalKnownNames: knownProfileNames,
     });
-  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid && !showProfileNameTaken;
+  const isUsernameValid = Boolean(trimmedUsername) && !showUsernameInvalid && !showUsernameTaken;
+  const usernameHint = showUsernameRequired
+    ? t("filters.profile.nameRequired")
+    : showUsernameInvalid
+      ? t("filters.profile.nameInvalidNip05")
+      : showUsernameTaken
+        ? t("filters.profile.nameTaken")
+        : null;
+  const isUsernameHintError = Boolean(usernameHint);
 
   const resetFromProfile = useCallback((profile: ProfileEditorSnapshot) => {
     const nextSnapshot = {
@@ -101,41 +123,41 @@ export function useProfileEditor({
       about: normalizeSnapshotValue(profile.about),
     };
     setInitialProfileSnapshot(nextSnapshot);
-    setProfileName(nextSnapshot.name);
-    setProfileDisplayName(nextSnapshot.displayName);
-    setProfilePicture(nextSnapshot.picture);
-    setProfileNip05(nextSnapshot.nip05);
-    setProfileAbout(nextSnapshot.about);
-    setIsProfileNameAutoFilled(false);
+    setUsername(nextSnapshot.name);
+    setDisplayName(nextSnapshot.displayName);
+    setPicture(nextSnapshot.picture);
+    setNip05(nextSnapshot.nip05);
+    setAbout(nextSnapshot.about);
+    setIsUsernameAutoFilled(false);
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
     setPublishDelayEnabled(loadPublishDelayEnabled());
     setAutoCaptionEnabled(loadAutoCaptionEnabled());
   }, []);
 
-  const handleProfileNameChange = (value: string) => {
-    setProfileName(value);
-    setIsProfileNameAutoFilled(false);
-  };
+  const handleUsernameChange = useCallback((value: string) => {
+    setUsername(value);
+    setIsUsernameAutoFilled(false);
+  }, []);
 
-  const handleProfileDisplayNameChange = (value: string) => {
-    const nextAutoFilledName = sanitizeProfileUsername(value);
-    const canAutoFillProfileName = !profileName.trim() || isProfileNameAutoFilled;
+  const handleDisplayNameChange = useCallback((value: string) => {
+    const nextAutoFilledUsername = sanitizeProfileUsername(value);
+    const canAutoFillUsername = !username.trim() || isUsernameAutoFilled;
 
-    setProfileDisplayName(value);
+    setDisplayName(value);
 
-    if (!canAutoFillProfileName) {
+    if (!canAutoFillUsername) {
       return;
     }
 
-    setProfileName(nextAutoFilledName);
-    setIsProfileNameAutoFilled(Boolean(nextAutoFilledName));
+    setUsername(nextAutoFilledUsername);
+    setIsUsernameAutoFilled(Boolean(nextAutoFilledUsername));
 
     featureDebugLog("profile", "Auto-filled username from display name", {
       displayName: value,
-      username: nextAutoFilledName || null,
+      username: nextAutoFilledUsername || null,
       userPubkey: userPubkey || null,
     });
-  };
+  }, [isUsernameAutoFilled, username, userPubkey]);
 
   const handlePresencePublishingChange = (enabled: boolean) => {
     setPresencePublishingEnabled(enabled);
@@ -168,12 +190,12 @@ export function useProfileEditor({
   };
 
   const handleSaveProfile = async () => {
-    if (!trimmedProfileName) {
+    if (!trimmedUsername) {
       toast.error(t("filters.profile.nameRequired"));
       return false;
     }
-    if (!isProfileNameValid) {
-      toast.error(showProfileNameTaken
+    if (!isUsernameValid) {
+      toast.error(showUsernameTaken
         ? t("filters.profile.nameTaken")
         : t("filters.profile.nameInvalidNip05"));
       return false;
@@ -181,11 +203,11 @@ export function useProfileEditor({
     setIsSavingProfile(true);
     try {
       const success = await updateUserProfile({
-        name: trimmedProfileName,
-        displayName: profileDisplayName || undefined,
-        picture: profilePicture || undefined,
-        nip05: profileNip05 || undefined,
-        about: profileAbout || undefined,
+        name: trimmedUsername,
+        displayName: displayName || undefined,
+        picture: picture || undefined,
+        nip05: nip05 || undefined,
+        about: about || undefined,
       });
       if (success) {
         toast.success(t("filters.profile.updated"));
@@ -201,63 +223,84 @@ export function useProfileEditor({
 
   const fields = useMemo(
     () => ({
-      profileName,
-      profileDisplayName,
-      profilePicture,
-      profileNip05,
-      profileAbout,
+      username,
+      displayName,
+      picture,
+      nip05,
+      about,
       presencePublishingEnabled,
       publishDelayEnabled,
       autoCaptionEnabled,
     }),
     [
-      profileAbout,
-      profileDisplayName,
-      profileName,
-      profileNip05,
-      profilePicture,
+      about,
+      displayName,
+      username,
+      nip05,
+      picture,
       presencePublishingEnabled,
       publishDelayEnabled,
       autoCaptionEnabled,
     ]
   );
 
+  const fieldActions = useMemo<ProfileEditorFieldActions>(
+    () => ({
+      setUsername: handleUsernameChange,
+      setDisplayName: handleDisplayNameChange,
+      setPicture,
+      setNip05,
+      setAbout,
+    }),
+    [
+      handleDisplayNameChange,
+      handleUsernameChange,
+      setAbout,
+      setNip05,
+      setPicture,
+    ]
+  );
+
+  const validation = useMemo<ProfileEditorValidation>(
+    () => ({
+      usernameHint,
+      isUsernameHintError,
+      isUsernameValid,
+    }),
+    [
+      isUsernameHintError,
+      isUsernameValid,
+      usernameHint,
+    ]
+  );
+
   const isProfileDirty = useMemo(
     () =>
-      profileName !== initialProfileSnapshot.name ||
-      profileDisplayName !== initialProfileSnapshot.displayName ||
-      profilePicture !== initialProfileSnapshot.picture ||
-      profileNip05 !== initialProfileSnapshot.nip05 ||
-      profileAbout !== initialProfileSnapshot.about,
+      username !== initialProfileSnapshot.name ||
+      displayName !== initialProfileSnapshot.displayName ||
+      picture !== initialProfileSnapshot.picture ||
+      nip05 !== initialProfileSnapshot.nip05 ||
+      about !== initialProfileSnapshot.about,
     [
       initialProfileSnapshot.about,
       initialProfileSnapshot.displayName,
       initialProfileSnapshot.name,
       initialProfileSnapshot.nip05,
       initialProfileSnapshot.picture,
-      profileAbout,
-      profileDisplayName,
-      profileName,
-      profileNip05,
-      profilePicture,
+      about,
+      displayName,
+      username,
+      nip05,
+      picture,
     ]
   );
 
   return {
     fields,
+    fieldActions,
     isProfileDirty,
     isSavingProfile,
-    validation: {
-      showProfileNameRequired,
-      showProfileNameInvalid,
-      showProfileNameTaken,
-      isProfileNameValid,
-    },
-    setProfileName: handleProfileNameChange,
-    setProfileDisplayName: handleProfileDisplayNameChange,
-    setProfilePicture,
-    setProfileNip05,
-    setProfileAbout,
+    validation,
     resetFromProfile,
     handleSaveProfile,
     handlePresencePublishingChange,

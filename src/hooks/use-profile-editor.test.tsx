@@ -12,11 +12,13 @@ vi.mock("sonner", () => ({
 function ProfileEditorHarness() {
   const {
     fields: {
-      profileName,
-      profileDisplayName,
+      username,
+      displayName,
     },
-    setProfileName,
-    setProfileDisplayName,
+    fieldActions: {
+      setUsername,
+      setDisplayName,
+    },
   } = useProfileEditor({
     t: ((key: string) => key) as never,
     updateUserProfile: vi.fn(async () => true),
@@ -27,13 +29,13 @@ function ProfileEditorHarness() {
     <div>
       <input
         aria-label="Username"
-        value={profileName}
-        onChange={(event) => setProfileName(event.target.value)}
+        value={username}
+        onChange={(event) => setUsername(event.target.value)}
       />
       <input
         aria-label="Display name"
-        value={profileDisplayName}
-        onChange={(event) => setProfileDisplayName(event.target.value)}
+        value={displayName}
+        onChange={(event) => setDisplayName(event.target.value)}
       />
     </div>
   );

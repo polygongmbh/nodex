@@ -19,7 +19,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { toast } from "sonner";
@@ -34,6 +33,7 @@ import { DropdownTriggerContent } from "@/components/ui/dropdown-trigger-content
 import { GuestPrivateKeyRow } from "./GuestPrivateKeyRow";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
+import { ProfileEditorFields } from "./ProfileEditorFields";
 import type { NoasAuthErrorCode } from "@/lib/nostr/noas-client";
 import { resolveNoasHostDisplayValue } from "./noas-form-helpers";
 
@@ -688,29 +688,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const [hasForcedProfileSetupOpen, setHasForcedProfileSetupOpen] = useState(false);
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
   const {
-    fields: {
-      profileName,
-      profileDisplayName,
-      profilePicture,
-      profileNip05,
-      profileAbout,
-      presencePublishingEnabled,
-      publishDelayEnabled,
-      autoCaptionEnabled,
-    },
+    fields,
+    fieldActions,
     isProfileDirty,
     isSavingProfile,
-    validation: {
-      showProfileNameRequired,
-      showProfileNameInvalid,
-      showProfileNameTaken,
-      isProfileNameValid,
-    },
-    setProfileName,
-    setProfileDisplayName,
-    setProfilePicture,
-    setProfileNip05,
-    setProfileAbout,
+    validation,
     resetFromProfile,
     handleSaveProfile,
     handlePresencePublishingChange,
@@ -723,6 +705,8 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     publishEvent,
     onSaved: () => setIsProfileEditorOpen(false),
   });
+  const { presencePublishingEnabled, publishDelayEnabled, autoCaptionEnabled } = fields;
+  const { isUsernameValid } = validation;
 
   const openProfileEditor = useCallback(() => {
     if (!isConnected) {
@@ -980,48 +964,13 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 {t("auth.menu.profileDescription")}
               </DialogDescription>
             </DialogHeader>
-            <DialogScrollBody className="mt-3" innerClassName="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
-                <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
-                <Input
-                  id="profile-name"
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  aria-invalid={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken}
-                  aria-describedby={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken ? "profile-name-error" : undefined}
-                />
-                {showProfileNameRequired && (
-                  <p id="profile-name-error" className="text-xs text-destructive">
-                    {t("filters.profile.nameRequired")}
-                  </p>
-                )}
-                {!showProfileNameRequired && showProfileNameInvalid && (
-                  <p id="profile-name-error" className="text-xs text-destructive">
-                    {t("filters.profile.nameInvalidNip05")}
-                  </p>
-                )}
-                {!showProfileNameRequired && !showProfileNameInvalid && showProfileNameTaken && (
-                  <p id="profile-name-error" className="text-xs text-destructive">
-                    {t("filters.profile.nameTaken")}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="profile-picture">{t("filters.profile.picture")}</Label>
-                <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="profile-nip05">{t("filters.profile.nip05")}</Label>
-                <Input id="profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
-                <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
-              </div>
+            <DialogScrollBody className="mt-3">
+              <ProfileEditorFields
+                fields={fields}
+                validation={validation}
+                fieldActions={fieldActions}
+                t={t}
+              />
             </DialogScrollBody>
             <div className="mt-3 flex shrink-0 justify-end gap-2 bg-background/95 pt-2">
               {!needsProfileSetup && (
@@ -1029,7 +978,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   {t("filters.profile.cancel")}
                 </Button>
               )}
-              <Button onClick={handleSaveProfile} disabled={isSavingProfile || !isProfileNameValid}>
+              <Button onClick={handleSaveProfile} disabled={isSavingProfile || !isUsernameValid}>
                 {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
               </Button>
             </div>

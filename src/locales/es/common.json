@@ -679,7 +679,7 @@
       },
       "mobileFiltersProperties": {
         "title": "Propiedades del perfil",
-        "description": "En *Gestionar*, abre el editor de perfil para revisar y establecer campos clave de identidad: nombre, nombre para mostrar, URL de imagen, NIP-05 y texto sobre ti."
+        "description": "En *Gestionar*, abre el editor de perfil para revisar y establecer campos clave de identidad: nombre de usuario, nombre para mostrar, URL de la foto de perfil, dirección de identidad verificada y texto sobre ti."
       },
       "mobileFiltersUse": {
         "title": "Usar filtros",
@@ -731,9 +731,14 @@
       "edit": "Editar",
       "name": "Nombre de usuario *",
       "displayName": "Nombre para mostrar",
-      "picture": "URL de imagen",
-      "nip05": "NIP-05",
-      "about": "Acerca de",
+      "displayNamePlaceholder": "Cómo se muestra tu nombre",
+      "namePlaceholder": "tu_nombre_de_usuario",
+      "picture": "URL de la foto de perfil",
+      "picturePlaceholder": "https://example.com/avatar.jpg",
+      "nip05": "Dirección de identidad verificada",
+      "nip05Placeholder": "name@domain.com",
+      "about": "Sobre ti",
+      "aboutPlaceholder": "Cuéntale a la gente un poco sobre ti",
       "appPreferencesTitle": "Preferencias de la app",
       "cancel": "Cancelar",
       "saving": "Guardando...",

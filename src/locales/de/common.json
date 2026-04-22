@@ -678,8 +678,8 @@
         "action": "Tippe auf *Verwalten*, um fortzufahren."
       },
       "mobileFiltersProperties": {
-        "title": "Profil-Eigenschaften",
-        "description": "Öffne in *Verwalten* den Profil-Editor und pflege die wichtigsten Felder: Name, Anzeigename, Bild-URL, NIP-05 und Über-mich-Text."
+        "title": "Profilangaben",
+        "description": "Im Profil-Editor kannst du dein Profil bearbeiten."
       },
       "mobileFiltersUse": {
         "title": "Filter nutzen",
@@ -731,9 +731,14 @@
       "edit": "Bearbeiten",
       "name": "Benutzername *",
       "displayName": "Anzeigename",
-      "picture": "Bild-URL",
-      "nip05": "NIP-05",
-      "about": "Über",
+      "displayNamePlaceholder": "So wird dein Name angezeigt",
+      "namePlaceholder": "dein_benutzername",
+      "picture": "Profilbild-URL",
+      "picturePlaceholder": "https://example.com/avatar.jpg",
+      "nip05": "Verifizierte Identitätsadresse",
+      "nip05Placeholder": "name@domain.com",
+      "about": "Über dich",
+      "aboutPlaceholder": "Erzähl etwas über dich",
       "appPreferencesTitle": "App-Einstellungen",
       "cancel": "Abbrechen",
       "saving": "Speichern...",
