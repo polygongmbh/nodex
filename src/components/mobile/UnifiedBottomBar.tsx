@@ -1316,7 +1316,7 @@ export function UnifiedBottomBar({
                     const parsed = Number.parseInt(value, 10);
                     setPriority(Number.isFinite(parsed) ? parsed : undefined);
                   }}
-                  className="h-8 min-w-[4.5rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  className="h-8 max-[360px]:px-1 max-[360px]:text-[11px] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
                 >
                   <option value="">{t("composer.labels.priorityShort")}</option>
                   {DISPLAY_PRIORITY_OPTIONS.map((option) => (
