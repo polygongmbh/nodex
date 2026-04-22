@@ -156,6 +156,7 @@ export function UnifiedBottomBar({
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
   const [locationGeohash, setLocationGeohash] = useState<string | undefined>();
+  const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -852,11 +853,9 @@ export function UnifiedBottomBar({
     }
   };
 
-  useEffect(() => {
-    if (taskSubmitBlockedReason && activeSelector === "date") {
-      setActiveSelector(null);
-    }
-  }, [activeSelector, taskSubmitBlockedReason]);
+  // Note: the date picker stays open even when the submit block reason is set
+  // (e.g. empty content / missing tag). Closing it on every keystroke before
+  // a hashtag was added caused the picker to flash open for a split second.
 
   useEffect(() => {
     if (!canOfferComment || !hasComposeText) {
@@ -993,25 +992,55 @@ export function UnifiedBottomBar({
     featureDebugLog("compose-location", "Attempting mobile location capture");
     if (!navigator.geolocation) {
       featureDebugLog("compose-location", "Mobile location capture unavailable: geolocation API missing");
+      console.warn("[compose-location] Geolocation API is unavailable on this device");
       toast.error(t("composer:toasts.errors.locationUnavailable"));
       return;
     }
+    setIsCapturingLocation(true);
+    toast.info(t("composer:toasts.info.locationCapturing"));
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const geohash = encodeGeohash(position.coords.latitude, position.coords.longitude, DEFAULT_GEOHASH_PRECISION);
         setLocationGeohash(geohash);
+        setIsCapturingLocation(false);
         featureDebugLog("compose-location", "Mobile location capture succeeded", { geohash });
         toast.success(t("composer:toasts.success.locationCaptured", { geohash }));
       },
-      () => {
-        featureDebugLog("compose-location", "Mobile location capture failed");
-        toast.error(t("composer:toasts.errors.locationCaptureFailed"));
+      (error) => {
+        setIsCapturingLocation(false);
+        const errorDetails = {
+          code: error.code,
+          message: error.message,
+          PERMISSION_DENIED: error.PERMISSION_DENIED,
+          POSITION_UNAVAILABLE: error.POSITION_UNAVAILABLE,
+          TIMEOUT: error.TIMEOUT,
+        };
+        featureDebugLog("compose-location", "Mobile location capture failed", errorDetails);
+        console.warn("[compose-location] Geolocation request failed", errorDetails);
+
+        let reasonKey: string;
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            reasonKey = "composer:toasts.errors.locationPermissionDenied";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            reasonKey = "composer:toasts.errors.locationPositionUnavailable";
+            break;
+          case error.TIMEOUT:
+            reasonKey = "composer:toasts.errors.locationTimeout";
+            break;
+          default:
+            reasonKey = "composer:toasts.errors.locationCaptureFailed";
+        }
+        const reason = t(reasonKey);
+        toast.error(error.message ? `${reason} (${error.message})` : reason);
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     );
   };
 
   const handleLocationToggle = () => {
+    if (isCapturingLocation) return;
     if (locationGeohash) {
       featureDebugLog("compose-location", "Clearing mobile location toggle state", { geohash: locationGeohash });
       setLocationGeohash(undefined);
