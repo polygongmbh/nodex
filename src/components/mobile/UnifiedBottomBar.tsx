@@ -1307,21 +1307,17 @@ export function UnifiedBottomBar({
           ) : canCreateContent ? (
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
-                <div
+                <PrioritySelect
+                  priority={priority}
+                  onPriorityChange={setPriority}
+                  leadingIcon={<Flag className="w-3.5 h-3.5" />}
                   className={cn(
-                    "h-8 inline-flex items-center gap-1.5 pl-2 pr-0.5 rounded-md border transition-colors text-xs leading-none",
+                    "h-8 inline-flex items-center gap-1.5 pl-2 pr-2 rounded-md border bg-transparent text-xs leading-none shadow-none transition-colors cursor-pointer focus:outline-none max-[420px]:max-w-[5.5rem]",
                     typeof priority === "number"
                       ? "border-border text-foreground hover:bg-muted/60"
                       : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   )}
-                >
-                  <Flag className="w-3.5 h-3.5" />
-                  <PrioritySelect
-                    priority={priority}
-                    onPriorityChange={setPriority}
-                    className="h-7 cursor-pointer rounded-md border-none bg-transparent px-0 text-xs leading-none text-inherit shadow-none focus:outline-none appearance-none max-[420px]:w-[2.5rem] truncate"
-                  />
-                </div>
+                />
                 <button
                   onClick={() => toggleSelector("date")}
                   className={cn(
