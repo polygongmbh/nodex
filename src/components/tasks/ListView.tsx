@@ -86,11 +86,15 @@ const PriorityCell = memo(function PriorityCell({
   priority,
   editable,
 }: PriorityCellProps) {
+  const hasPriority = typeof priority === "number";
   return (
     <TaskPrioritySelect
       taskId={editable ? taskId : undefined}
       priority={priority}
-      className="h-7 w-full min-w-0 max-w-full rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
+      className={cn(
+        "h-7 w-full min-w-0 max-w-full rounded-md border-none bg-transparent px-2 text-xs shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground",
+        hasPriority ? "text-foreground" : "text-muted-foreground"
+      )}
     />
   );
 }, (prev, next) =>
