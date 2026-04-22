@@ -146,7 +146,8 @@
       "clearCompose": "Clear compose",
       "createFromText": "Create from current text",
       "signInToCreate": "Sign in to create",
-      "clearDueDate": "Clear due date"
+      "clearDueDate": "Clear due date",
+      "clearTime": "Clear time"
     },
     "dates": {
       "setOptional": "Set {{dateType}} date (optional)",
