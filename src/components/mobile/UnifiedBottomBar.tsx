@@ -1241,7 +1241,7 @@ export function UnifiedBottomBar({
       <div className="px-3 pt-2">
         <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pt-1">
-          {uploadEnabled && (
+          {uploadEnabled && canCreateContent && (
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
