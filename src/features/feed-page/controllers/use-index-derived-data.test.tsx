@@ -61,6 +61,7 @@ const nostrEvents: CachedNostrEvent[] = [
 ];
 
 function Harness() {
+  const [people, setPeople] = useState<Person[]>([]);
   const [searchQuery] = useState("");
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
