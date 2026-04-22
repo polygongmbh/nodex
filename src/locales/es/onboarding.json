@@ -3,8 +3,8 @@
     "intro": {
       "ariaLabel": "Bienvenido a Nodex",
       "title": "Bienvenido a Nodex",
-      "description": "Nodex es un espacio de trabajo nativo de Nostr para tareas y conversaciones.",
-      "features": "Usa canales, filtros de personas y controles de spaces para moldear tu vista mientras publicas tareas y comentarios en un solo flujo.",
+      "description": "Nodex convierte Nostr en un espacio de trabajo compartido — tareas, comentarios y discusiones en hilo que viven entre relays en lugar de un solo servidor.",
+      "features": "Organiza el trabajo con canales, spaces y filtros de personas; captura ideas como tareas o comentarios con #tags y @menciones; y alterna entre Cronología, Árbol, Kanban, Tabla y Calendario para ver el mismo contenido desde cualquier ángulo.",
       "startTour": "Iniciar tour",
       "createAccount": "Crear cuenta",
       "signIn": "Iniciar sesión"
@@ -57,110 +57,110 @@
     },
     "steps": {
       "navigationSwitcher": {
-        "title": "Cambiar vistas",
-        "description": "Usa el selector de vista para pasar entre Cronología, Árbol, Kanban, Tabla y Calendario.",
-        "action": "Haz clic en cualquier pestaña de vista para continuar."
+        "title": "Cambiar de Vista",
+        "description": "Cronología, Árbol, Kanban, Tabla y Calendario muestran las mismas tareas desde un ángulo diferente.",
+        "action": "Cambia a cualquier vista para continuar."
       },
       "navigationFocus": {
-        "title": "Abrir hilo",
-        "description": "Haz clic en cualquier publicación para ver sus subelementos y comentarla o crear subtareas.",
+        "title": "Abrir un Hilo",
+        "description": "Haz clic en una publicación para entrar a sus subelementos, comentarla o crear subtareas.",
         "action": "Haz clic en una publicación para continuar."
       },
       "navigationBreadcrumb": {
-        "title": "Usar breadcrumbs",
-        "description": "Usa la fila de breadcrumbs para subir en la jerarquía.",
-        "action": "Haz clic en un elemento del breadcrumb para continuar."
+        "title": "Volver Hacia Arriba",
+        "description": "Cada elemento de la fila de breadcrumbs salta directamente a ese nivel de la jerarquía.",
+        "action": "Vuelve clicando hasta la raíz para continuar."
       },
       "filtersRelays": {
-        "title": "Selección de space",
-        "description": "Usa *Spaces* para seleccionar qué spaces son visibles. Haz clic en el icono de space para alternarlo, o en su nombre para enfoque exclusivo.",
-        "action": "Haz clic en un control de space para continuar."
+        "title": "Elige tus Spaces",
+        "description": "Usa la sección *Spaces* para elegir qué spaces son visibles. Haz clic en el icono de un space para alternar la visibilidad de sus publicaciones, o en el nombre para mostrar solo sus publicaciones. Los puntos de color reflejan el estado de conexión, y el botón + abre la gestión de relays.",
+        "action": "Alterna un space para continuar."
       },
       "filtersChannels": {
-        "title": "Filtros de canales",
-        "description": "En *Canales*, haz clic en el nombre de un canal para mostrar solo publicaciones con ese canal. Haz clic en el icono # para alternar neutral -> incluir -> excluir para ese canal. Haz clic en el icono hashtag a la izquierda de *Canales* para restablecer filtros de canal."
+        "title": "Filtrar por Canal",
+        "description": "Usa la sección *Canales* para acotar publicaciones por tema. Haz clic en el nombre de un canal para enfocarte en él, o en el icono # para alternar neutral -> incluir -> excluir. El icono hashtag a la izquierda de *Canales* limpia todos los filtros de canal."
       },
       "filtersPeople": {
-        "title": "Filtros de personas",
-        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo contenido que involucre a esa persona. Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
+        "title": "Filtrar por Persona",
+        "description": "Usa la sección *Personas* para enfocarte en quién participa. Haz clic en un nombre para mostrar solo contenido que involucre a esa persona, o en el avatar para activar o desactivar contenido que la involucre. El icono a la izquierda de *Personas* limpia todos los filtros de personas."
       },
       "filtersSearch": {
-        "title": "Barra de búsqueda",
-        "description": "Usa la barra inferior de búsqueda para acotar tareas visibles por texto en todas las vistas."
+        "title": "Buscar en Todas las Vistas",
+        "description": "La barra inferior acota las tareas visibles por texto en cada vista."
       },
       "filtersHashtagContent": {
-        "title": "Hashtags en contenido",
-        "description": "Haz clic en un hashtag en una tarea para enfocarte en esa etiqueta. Limpia el filtro para volver a la lista completa.",
-        "action": "Haz clic en un chip de hashtag en un elemento de tarea."
+        "title": "Hashtags Dentro de las Publicaciones",
+        "description": "Haz clic en un chip de hashtag de cualquier publicación para enfocarte en esa etiqueta. Limpia el filtro para volver a la lista completa.",
+        "action": "Haz clic en un chip de hashtag en una publicación."
       },
       "composeKind": {
-        "title": "Tarea vs comentario",
-        "description": "Usa el selector de tipo para elegir si publicar una tarea o un comentario.",
-        "action": "Enfoca el selector de tipo para continuar."
+        "title": "Tarea o Comentario",
+        "description": "El selector de tipo decide si tu publicación es una tarea independiente o un comentario al elemento padre.",
+        "action": "Abre el selector de tipo para continuar."
       },
       "composeInput": {
-        "title": "Etiquetas y menciones",
-        "description": "Usa #tags para organizar elementos y @menciones para referenciar personas en el cuadro de redacción. Los canales incluidos se precompletan automáticamente como hashtags. Puedes establecer un tipo de fecha (Vencimiento, Programada, Inicio, Fin o Hito) para que las tareas aparezcan en Calendario; las fechas futuras de Inicio se muestran como no realizables todavía.",
-        "action": "Consejo avanzado: {{alternateModifier}}+Enter envía como el otro tipo cuando no hay autocompletado abierto; con autocompletado abierto, usa {{alternateModifier}}+Enter o {{alternateModifier}}+clic para añadir la etiqueta/mención seleccionada como metadatos sin insertar texto del token."
+        "title": "Escribe con #Tags y @Menciones",
+        "description": "Usa #tags para organizar y @menciones para referenciar personas. Los canales incluidos se añaden automáticamente. Establecer un tipo de fecha hace que una tarea aparezca en el Calendario; las fechas de Inicio futuras se muestran como aún no realizables.",
+        "action": "Consejo: {{alternateModifier}}+Enter envía como el otro tipo. Con autocompletado abierto, {{alternateModifier}}+Enter o {{alternateModifier}}+clic adjunta la sugerencia como metadatos sin insertar su texto."
       },
       "mobile": {
         "navigationNav": {
-          "title": "Vistas móviles",
-          "description": "Usa la navegación superior para cambiar entre Cronología, Árbol, Próximas y Calendario.",
-          "action": "Toca una pestaña de navegación para continuar."
+          "title": "Cambiar de Vista",
+          "description": "Usa la navegación superior para moverte entre Cronología, Árbol, Próximas y Calendario.",
+          "action": "Toca una vista para continuar."
         },
         "navigationFocus": {
           "action": "Toca una publicación para continuar."
         },
         "navigationBreadcrumb": {
-          "action": "Toca un elemento del breadcrumb para continuar."
+          "action": "Vuelve tocando hasta la raíz para continuar."
         },
         "filtersOpen": {
-          "title": "Abrir menú",
+          "title": "Abrir el Menú",
           "description": "Usa el menú para gestionar spaces, ajustar filtros con precisión y actualizar tu perfil y ajustes.",
-          "action": "Toca el menú hamburguesa de arriba a la izquierda para continuar."
+          "action": "Toca el icono de menú arriba a la izquierda para continuar."
         },
         "filtersProperties": {
-          "title": "Editar perfil",
-          "description": "En *Gestionar*, abre el editor de perfil para actualizar tu nombre de usuario, nombre para mostrar, URL de la foto de perfil, dirección de identidad verificada y texto sobre ti."
+          "title": "Editar tu Perfil",
+          "description": "Abre el editor de perfil para actualizar tu nombre de usuario, nombre para mostrar, foto, dirección verificada y texto sobre ti."
         },
         "filtersUse": {
-          "title": "Usar filtros",
-          "description": "En *Gestionar*, toca chips de space para seleccionar spaces, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad."
+          "title": "Ajustar tus Filtros",
+          "description": "Toca chips de space para elegir spaces, chips de canal para alternar entre neutral -> incluir -> excluir, y chips de personas para activar o desactivar individuos. Combínalos para enfocar la cronología."
         },
         "composeCombobox": {
-          "title": "Caja combinada búsqueda/redacción",
-          "description": "Usa la barra inferior combinada para buscar mientras escribes y crear tareas/comentarios desde el mismo texto con el botón de envío.",
-          "action": "Toca la barra combinada para continuar."
+          "title": "Buscar y Redactar",
+          "description": "La barra inferior busca mientras escribes y convierte el mismo texto en una tarea o comentario con el botón de envío.",
+          "action": "Toca la barra para continuar."
         }
       },
       "kanbanColumnsStatus": {
-        "title": "Columnas y estado",
-        "description": "Usa las columnas Por hacer, En progreso, Hecho y Cerrado para seguir el estado. Mover una tarea entre columnas cambia su estado.",
-        "action": "Haz clic o arrastra una tarjeta en el tablero para continuar."
+        "title": "Estado por Columna",
+        "description": "Por hacer, En progreso, Hecho y Cerrado siguen el estado. Arrastrar una tarjeta entre columnas actualiza su estado.",
+        "action": "Mueve o abre una tarjeta para continuar."
       },
       "kanbanCreateInColumn": {
-        "title": "Crear en una columna específica",
-        "description": "Usa el botón + en el encabezado de columna para crear una nueva tarea directamente en el estado de esa columna.",
-        "action": "Haz clic en un botón + de columna para continuar."
+        "title": "Crear en el Sitio",
+        "description": "El + en el encabezado de una columna crea una tarea directamente con el estado de esa columna.",
+        "action": "Usa el + de una columna para continuar."
       },
       "kanbanDepth": {
-        "title": "Niveles de profundidad",
-        "description": "Usa Niveles junto a la búsqueda para alternar entre tareas padre y nodos finales ejecutables: Nivel superior muestra solo tareas raíz, los niveles limitados incluyen subtareas y Solo hojas muestra tareas sin subtareas.",
-        "action": "Abre Niveles y prueba Nivel superior, luego Solo hojas."
+        "title": "Elige qué Ver",
+        "description": "Niveles (junto a la búsqueda) alterna entre tareas raíz, profundidades limitadas de subtareas y solo hojas — tareas sin subtareas propias.",
+        "action": "Prueba Nivel superior, luego Solo hojas."
       },
       "calendarMonths": {
-        "title": "Línea temporal de meses",
-        "description": "Desplázate por meses apilados continuamente para moverte en el tiempo."
+        "title": "Desplazarse por los Meses",
+        "description": "Los meses se apilan verticalmente — desplázate de forma continua para moverte en el tiempo."
       },
       "calendarPickDay": {
-        "title": "Elegir un día",
-        "description": "Haz clic en cualquier celda de día para cargar esa fecha en el panel de detalle.",
-        "action": "Haz clic en un día de la cuadrícula de calendario para continuar."
+        "title": "Elegir un Día",
+        "description": "Haz clic en cualquier día para cargarlo en el panel de detalle.",
+        "action": "Haz clic en un día para continuar."
       },
       "calendarDayPanel": {
-        "title": "Detalles del día",
-        "description": "Usa el panel derecho para revisar tareas de la fecha seleccionada, cambiar su estado y crear una nueva tarea/evento para ese día."
+        "title": "El Panel del Día",
+        "description": "Revisa las tareas de la fecha seleccionada, cambia su estado y crea una nueva tarea o evento para ese día."
       }
     }
   }
