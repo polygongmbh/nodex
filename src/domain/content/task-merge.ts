@@ -1,4 +1,5 @@
 import type { Task } from "@/types";
+import { getLastEditedAt } from "@/types";
 
 function mergeStateUpdates(existing: Task["stateUpdates"], incoming: Task["stateUpdates"]): Task["stateUpdates"] {
   const combined = [...(existing || []), ...(incoming || [])];
@@ -15,10 +16,11 @@ function mergeStateUpdates(existing: Task["stateUpdates"], incoming: Task["state
 
 function getLatestEditedAt(task: Task): Date {
   const latestStateTimestamp = task.stateUpdates?.[0]?.timestamp;
-  if (!latestStateTimestamp) return task.lastEditedAt;
-  return latestStateTimestamp.getTime() >= task.lastEditedAt.getTime()
+  const editedAt = getLastEditedAt(task);
+  if (!latestStateTimestamp) return editedAt;
+  return latestStateTimestamp.getTime() >= editedAt.getTime()
     ? latestStateTimestamp
-    : task.lastEditedAt;
+    : editedAt;
 }
 
 export function mergeTasks(existingTasks: Task[], newTasks: Task[]): Task[] {

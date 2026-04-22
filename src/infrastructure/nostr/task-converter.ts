@@ -1,4 +1,4 @@
-import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, Task } from "@/types";
+import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, Task, getLastEditedAt } from "@/types";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
@@ -442,7 +442,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       dueTime: due.dueTime ?? task.dueTime,
       dateType: due.dateType ?? task.dateType,
       lastEditedAt:
-        due.createdAt * 1000 > task.lastEditedAt.getTime()
+        due.createdAt * 1000 > getLastEditedAt(task).getTime()
           ? new Date(due.createdAt * 1000)
           : task.lastEditedAt,
     });
@@ -472,7 +472,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       ...task,
       priority: update.priority,
       lastEditedAt:
-        update.createdAt * 1000 > task.lastEditedAt.getTime()
+        update.createdAt * 1000 > getLastEditedAt(task).getTime()
           ? new Date(update.createdAt * 1000)
           : task.lastEditedAt,
     });

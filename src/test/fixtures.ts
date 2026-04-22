@@ -37,7 +37,7 @@ export function makeChannel(overrides: Partial<Channel> = {}): Channel {
 export function makeTask(overrides: Partial<Task> = {}): Task {
   const author = overrides.author ?? makePerson({ id: "author-id", name: "author", displayName: "Author" });
   const timestamp = overrides.timestamp ?? DEFAULT_TIME;
-  const task: Task = {
+  return {
     id: "task-1",
     author,
     content: "Task content #general",
@@ -45,13 +45,9 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     relays: ["demo"],
     taskType: "task",
     timestamp,
-    lastEditedAt: timestamp,
     likes: 0,
     replies: 0,
     reposts: 0,
     ...overrides,
   };
-  // Enforce invariant: lastEditedAt must not precede the event timestamp
-  if (task.lastEditedAt < task.timestamp) task.lastEditedAt = task.timestamp;
-  return task;
 }

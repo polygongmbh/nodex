@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task, TaskStatus } from "@/types";
+import { getLastEditedAt } from "@/types";
 import type { Person } from "@/types/person";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/domain/content/task-status";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
@@ -89,7 +90,7 @@ export function useTaskStatusController({
       pendingTaskStatusesRef.current.set(taskId, status);
       setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
       if (existingTask) {
-        const currentSortDate = existingTask.lastEditedAt;
+        const currentSortDate = getLastEditedAt(existingTask);
         setSortModifiedAtHoldByTaskId((previous) => ({
           ...previous,
           [taskId]: currentSortDate.toISOString(),

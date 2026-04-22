@@ -153,7 +153,7 @@ export interface Task {
   likes: number;
   replies: number;
   reposts: number;
-  lastEditedAt: Date;
+  lastEditedAt?: Date;
   isLiked?: boolean;
   isReposted?: boolean;
   status?: TaskStatus;
@@ -171,6 +171,10 @@ export interface Task {
   pendingPublishToken?: string;
   pendingPublishUntil?: Date;
   rawNostrEvent?: RawNostrEvent;
+}
+
+export function getLastEditedAt(task: Task): Date {
+  return task.lastEditedAt ?? task.timestamp;
 }
 
 export interface SharedTaskViewContext {

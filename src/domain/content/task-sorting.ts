@@ -1,4 +1,4 @@
-import { Task, TaskStatus } from "@/types";
+import { Task, TaskStatus, getLastEditedAt } from "@/types";
 import { isTaskTerminalStatus } from "./task-status";
 import { isToday, isTomorrow, isPast, startOfDay, differenceInDays } from "date-fns";
 
@@ -78,7 +78,7 @@ export function hasDueTodayOrPastInTree(taskId: string, context: SortContext): b
 function getLatestModifiedMs(task: Task | undefined): number {
   if (!task) return Number.NEGATIVE_INFINITY;
   const sortAwareTask = task as SortAwareTask;
-  return (sortAwareTask.sortLastEditedAt || task.lastEditedAt).getTime();
+  return (sortAwareTask.sortLastEditedAt || getLastEditedAt(task)).getTime();
 }
 
 export function getTaskLatestModifiedMs(task: Task): number {

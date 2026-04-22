@@ -1,4 +1,5 @@
 import type { QuickFilterState, Task } from "@/types";
+import { getLastEditedAt } from "@/types";
 
 export const DEFAULT_RECENT_DAYS = 7;
 export const DEFAULT_MIN_PRIORITY = 50;
@@ -34,7 +35,7 @@ export function taskMatchesQuickFilters(
   nowMs = Date.now()
 ): boolean {
   if (quickFilters.recentEnabled) {
-    const activityTimestampMs = task.lastEditedAt.getTime();
+    const activityTimestampMs = getLastEditedAt(task).getTime();
     const ageMs = Math.max(0, nowMs - activityTimestampMs);
     const ageDays = ageMs / DAY_MS;
     if (ageDays > quickFilters.recentDays) {
