@@ -28,9 +28,9 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   }),
 }));
 
-const buildDispatchEvent = (intent: FeedInteractionIntent) => ({
+const buildDispatchEvent = (intent: FeedInteractionIntent, result: TaskCreateResult = successResult) => ({
   envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
-  outcome: { status: "handled" as const, result: successResult },
+  outcome: { status: "handled" as const, result },
 });
 
 const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
@@ -506,10 +506,9 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("keeps compose text when submit returns a failure result", async () => {
-    dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => ({
-      envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
-      outcome: { status: "handled" as const, result: { ok: false as const, reason: "relay-selection" as const } },
-    }));
+    dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) =>
+      buildDispatchEvent(intent, { ok: false as const, reason: "relay-selection" as const })
+    );
     render(
       <UnifiedBottomBar
         searchQuery=""

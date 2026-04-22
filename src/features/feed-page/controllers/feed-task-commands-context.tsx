@@ -27,7 +27,7 @@ export interface FeedTaskCommands {
     attachments?: PublishedAttachment[],
     nip99?: Nip99Metadata,
     locationGeohash?: string
-  ): Promise<void>;
+  ): Promise<TaskCreateResult>;
   toggleComplete(taskId: string): void;
   changeStatus(taskId: string, status: TaskStatus): void;
   updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;
