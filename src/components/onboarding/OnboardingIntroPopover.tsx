@@ -75,7 +75,7 @@ export function OnboardingIntroPopover({
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-black/40 transition-opacity"
+        className="absolute inset-0 bg-overlay-scrim transition-opacity"
         data-state={state}
         style={overlayStyle}
       />
