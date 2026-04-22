@@ -69,6 +69,7 @@ export function MobileFilters({
   const {
     fields,
     fieldActions,
+    isProfileDirty,
     isSavingProfile,
     validation,
     resetFromProfile,
@@ -87,6 +88,7 @@ export function MobileFilters({
     onSaved: () => setIsProfileEditorOpen(false),
   });
   const { presencePublishingEnabled, publishDelayEnabled, autoCaptionEnabled } = fields;
+  const canDismissProfileEditor = !needsProfileSetup;
   const { isUsernameValid } = validation;
 
   const displayName = useMemo(() => {
