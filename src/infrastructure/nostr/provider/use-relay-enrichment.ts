@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
+import getNip05For from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { filterAutoAddRelayUrls } from "./relay-list";
-import { getNip05For } from "@nostr-dev-kit/ndk";
 import {
   extractRelayUrlsFromNip65Tags,
   selectComplementaryRelayUrls,

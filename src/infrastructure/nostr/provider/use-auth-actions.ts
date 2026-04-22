@@ -6,7 +6,6 @@ import NDK, {
   NDKNip46Signer,
   NDKPrivateKeySigner,
   NDKRelaySet,
-  NDKUser,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {

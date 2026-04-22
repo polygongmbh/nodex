@@ -466,7 +466,7 @@ export function useTaskPublishFlow({
       dueDate: submissionDueDate ? submissionDueDate.toISOString() : undefined,
       dueTime: submissionDueTime,
       dateType: submissionDateType,
-      parentId: submissionParentId,
+      parentId: submissionParentId ?? undefined,
       initialStatus,
       mentionPubkeys,
       assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
@@ -510,7 +510,7 @@ export function useTaskPublishFlow({
       dueDate: submissionDueDate,
       dueTime: submissionDueTime,
       dateType: submissionDateType,
-      parentId: submissionParentId,
+      parentId: submissionParentId ?? undefined,
       mentions: Array.from(new Set([...normalizedMentionIdentifiers, ...mentionPubkeys])),
       assigneePubkeys:
         normalizedTaskType === "task" && (assigneePubkeys?.length || 0) > 0
