@@ -34,7 +34,7 @@ export function taskMatchesQuickFilters(
   nowMs = Date.now()
 ): boolean {
   if (quickFilters.recentEnabled) {
-    const activityTimestampMs = task.lastEditedAt?.getTime() ?? task.timestamp.getTime();
+    const activityTimestampMs = task.lastEditedAt.getTime();
     const ageMs = Math.max(0, nowMs - activityTimestampMs);
     const ageDays = ageMs / DAY_MS;
     if (ageDays > quickFilters.recentDays) {

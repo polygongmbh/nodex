@@ -17,7 +17,7 @@ const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
   relays: ["demo"],
   taskType: "task",
   timestamp,
-  lastEditedAt,
+  lastEditedAt: lastEditedAt ?? timestamp,
   likes: 0,
   replies: 0,
   reposts: 0,
@@ -33,7 +33,7 @@ describe("sortByLatestModified", () => {
     expect(sorted.map((task) => task.id)).toEqual(["newer", "old"]);
   });
 
-  it("falls back to timestamp when lastEditedAt is missing", () => {
+  it("sorts by lastEditedAt descending when it equals timestamp", () => {
     const older = makeTask("older", new Date("2024-01-01T00:00:00.000Z"));
     const newer = makeTask("newer", new Date("2024-01-02T00:00:00.000Z"));
 

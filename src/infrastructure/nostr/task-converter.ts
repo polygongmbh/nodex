@@ -442,7 +442,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       dueTime: due.dueTime ?? task.dueTime,
       dateType: due.dateType ?? task.dateType,
       lastEditedAt:
-        !task.lastEditedAt || due.createdAt * 1000 > task.lastEditedAt.getTime()
+        due.createdAt * 1000 > task.lastEditedAt.getTime()
           ? new Date(due.createdAt * 1000)
           : task.lastEditedAt,
     });
@@ -472,7 +472,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       ...task,
       priority: update.priority,
       lastEditedAt:
-        !task.lastEditedAt || update.createdAt * 1000 > task.lastEditedAt.getTime()
+        update.createdAt * 1000 > task.lastEditedAt.getTime()
           ? new Date(update.createdAt * 1000)
           : task.lastEditedAt,
     });

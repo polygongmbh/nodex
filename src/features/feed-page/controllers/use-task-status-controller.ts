@@ -89,7 +89,7 @@ export function useTaskStatusController({
       pendingTaskStatusesRef.current.set(taskId, status);
       setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
       if (existingTask) {
-        const currentSortDate = existingTask.lastEditedAt || existingTask.timestamp;
+        const currentSortDate = existingTask.lastEditedAt;
         setSortModifiedAtHoldByTaskId((previous) => ({
           ...previous,
           [taskId]: currentSortDate.toISOString(),

@@ -78,7 +78,7 @@ export function hasDueTodayOrPastInTree(taskId: string, context: SortContext): b
 function getLatestModifiedMs(task: Task | undefined): number {
   if (!task) return Number.NEGATIVE_INFINITY;
   const sortAwareTask = task as SortAwareTask;
-  return (sortAwareTask.sortLastEditedAt || task.lastEditedAt || task.timestamp).getTime();
+  return (sortAwareTask.sortLastEditedAt || task.lastEditedAt).getTime();
 }
 
 export function getTaskLatestModifiedMs(task: Task): number {

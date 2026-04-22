@@ -43,6 +43,7 @@ describe("mergeTasks", () => {
     const existing = {
       id: "task-1",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
+      lastEditedAt: new Date("2026-02-17T10:01:00.000Z"),
       relays: ["relay-a"],
       status: "todo",
       stateUpdates: [
@@ -78,7 +79,7 @@ describe("mergeTasks", () => {
       "relay-state-1",
       "local-state-1",
     ]);
-    expect(merged[0].lastEditedAt?.toISOString()).toBe("2026-02-17T10:02:00.000Z");
+    expect(merged[0].lastEditedAt.toISOString()).toBe("2026-02-17T10:02:00.000Z");
     expect(merged[0].relays).toEqual(["relay-a", "relay-b"]);
   });
 });

@@ -13,10 +13,9 @@ function mergeStateUpdates(existing: Task["stateUpdates"], incoming: Task["state
   return Array.from(byId.values()).sort((left, right) => right.timestamp.getTime() - left.timestamp.getTime());
 }
 
-function getLatestEditedAt(task: Task): Date | undefined {
+function getLatestEditedAt(task: Task): Date {
   const latestStateTimestamp = task.stateUpdates?.[0]?.timestamp;
   if (!latestStateTimestamp) return task.lastEditedAt;
-  if (!task.lastEditedAt) return latestStateTimestamp;
   return latestStateTimestamp.getTime() >= task.lastEditedAt.getTime()
     ? latestStateTimestamp
     : task.lastEditedAt;

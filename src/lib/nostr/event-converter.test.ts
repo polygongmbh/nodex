@@ -459,7 +459,7 @@ describe("nostrEventsToTasks", () => {
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
     expect(tasks[0].status).toBe("in-progress");
-    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000002 * 1000);
+    expect(tasks[0].lastEditedAt.getTime()).toBe(1700000002 * 1000);
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-new",
@@ -529,7 +529,7 @@ describe("nostrEventsToTasks", () => {
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
     expect(tasks[0].status).toBe("todo");
-    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000000 * 1000);
+    expect(tasks[0].lastEditedAt.getTime()).toBe(1700000000 * 1000);
     expect(tasks[0].stateUpdates).toBeUndefined();
   });
 
@@ -558,7 +558,7 @@ describe("nostrEventsToTasks", () => {
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
     expect(tasks[0].status).toBe("done");
-    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000015 * 1000);
+    expect(tasks[0].lastEditedAt.getTime()).toBe(1700000015 * 1000);
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-assignee",
@@ -632,7 +632,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].dueDate).toBeUndefined();
     expect(tasks[0].priority).toBe(20);
-    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000020 * 1000);
+    expect(tasks[0].lastEditedAt.getTime()).toBe(1700000020 * 1000);
   });
 
   it("hydrates latest priority from property update notes and does not render them as tasks", () => {
@@ -669,7 +669,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].id).toBe("task-priority");
     expect(tasks[0].priority).toBe(90);
-    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000020 * 1000);
+    expect(tasks[0].lastEditedAt.getTime()).toBe(1700000020 * 1000);
   });
 
   it("hydrates priority from state events carrying priority property tags", () => {

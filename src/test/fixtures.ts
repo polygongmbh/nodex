@@ -36,6 +36,7 @@ export function makeChannel(overrides: Partial<Channel> = {}): Channel {
 
 export function makeTask(overrides: Partial<Task> = {}): Task {
   const author = overrides.author ?? makePerson({ id: "author-id", name: "author", displayName: "Author" });
+  const timestamp = overrides.timestamp ?? DEFAULT_TIME;
   return {
     id: "task-1",
     author,
@@ -43,7 +44,8 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     tags: ["general"],
     relays: ["demo"],
     taskType: "task",
-    timestamp: DEFAULT_TIME,
+    timestamp,
+    lastEditedAt: timestamp,
     likes: 0,
     replies: 0,
     reposts: 0,
