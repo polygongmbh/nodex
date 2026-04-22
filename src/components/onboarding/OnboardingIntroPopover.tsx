@@ -81,7 +81,7 @@ export function OnboardingIntroPopover({
           style={dialogStyle}
         >
           <div className="space-y-3">
-            <h2 className="text-xl font-semibold">{t("onboarding.intro.title")}</h2>
+            <h2 className="text-center text-xl font-semibold">{t("onboarding.intro.title")}</h2>
             <p className="text-sm text-muted-foreground">{t("onboarding.intro.description")}</p>
             <p className="text-sm text-muted-foreground">{t("onboarding.intro.features")}</p>
           </div>

@@ -3,8 +3,8 @@
     "intro": {
       "ariaLabel": "Willkommen bei Nodex",
       "title": "Willkommen bei Nodex",
-      "description": "Nodex ist ein Nostr-nativer Workspace für Aufgaben und Diskussionen.",
-      "features": "Nutze Kanäle, Personenfilter und Space-Steuerung, um deine Ansicht zu formen und Aufgaben sowie Kommentare im selben Ablauf zu verfassen.",
+      "description": "Nodex macht Nostr zu einem geteilten Workspace — Aufgaben, Kommentare und verschachtelte Diskussionen, die über Relays statt auf einem einzelnen Server leben.",
+      "features": "Organisiere mit Kanälen, Spaces und Personenfiltern; halte Ideen als Aufgaben oder Kommentare mit #tags und @mentions fest; und wechsle zwischen Timeline, Hierarchisch, Kanban, Tabelle und Kalender, um dieselben Inhalte aus jedem Blickwinkel zu sehen.",
       "startTour": "Tour starten",
       "createAccount": "Konto erstellen",
       "signIn": "Anmelden"
@@ -57,110 +57,110 @@
     },
     "steps": {
       "navigationSwitcher": {
-        "title": "Ansicht wechseln",
-        "description": "Wechsle über die Ansichtsleiste zwischen Timeline, Hierarchisch, Kanban, Tabelle und Kalender.",
-        "action": "Klicke auf einen Ansichtstab, um fortzufahren."
+        "title": "Ansicht Wechseln",
+        "description": "Timeline, Hierarchisch, Kanban, Tabelle und Kalender zeigen dieselben Aufgaben aus unterschiedlichen Blickwinkeln.",
+        "action": "Wechsle zu einer beliebigen Ansicht, um fortzufahren."
       },
       "navigationFocus": {
-        "title": "Thread öffnen",
-        "description": "Klicke auf einen beliebigen Beitrag, um seine Unterelemente zu sehen und ihn zu kommentieren oder Unteraufgaben zu erstellen.",
+        "title": "Thread Öffnen",
+        "description": "Klicke auf einen Beitrag, um seine Unterelemente zu sehen, ihn zu kommentieren oder Unteraufgaben zu erstellen.",
         "action": "Klicke auf einen Beitrag, um fortzufahren."
       },
       "navigationBreadcrumb": {
-        "title": "Breadcrumbs nutzen",
-        "description": "Mit der Breadcrumb-Leiste gehst du in der Hierarchie nach oben.",
-        "action": "Klicke auf ein Breadcrumb-Element, um fortzufahren."
+        "title": "Zurück Nach Oben",
+        "description": "Jedes Element in der Breadcrumb-Leiste springt direkt zu dieser Ebene in der Hierarchie.",
+        "action": "Klicke dich bis zur Wurzel zurück, um fortzufahren."
       },
       "filtersRelays": {
-        "title": "Space-Auswahl",
-        "description": "Nutze *Spaces*, um sichtbare Spaces auszuwählen. Klicke auf ein Space-Icon zum Umschalten oder auf den Namen für exklusiven Fokus.",
-        "action": "Klicke auf ein Space-Steuerelement, um fortzufahren."
+        "title": "Spaces Auswählen",
+        "description": "Nutze den Bereich *Spaces*, um sichtbare Spaces auszuwählen. Klicke auf das Icon eines Space, um die Sichtbarkeit seiner Beiträge umzuschalten, oder auf den Namen, um nur dessen Beiträge anzuzeigen. Farbige Punkte zeigen den Verbindungsstatus, und der +-Button öffnet die Relay-Verwaltung.",
+        "action": "Schalte einen Space um, um fortzufahren."
       },
       "filtersChannels": {
-        "title": "Kanalfilter",
-        "description": "In *Kanäle* zeigt ein Klick auf den Kanalnamen nur Beiträge mit diesem Kanal. Klicke auf das #-Icon, um neutral -> einschließen -> ausschließen zu wechseln. Klicke auf das Hashtag-Icon links von *Kanäle*, um Kanalfilter zurückzusetzen."
+        "title": "Nach Kanal Filtern",
+        "description": "Nutze den Bereich *Kanäle*, um Beiträge nach Thema einzugrenzen. Klicke auf einen Kanalnamen, um darauf zu fokussieren, oder auf das #-Icon, um zwischen neutral -> einschließen -> ausschließen zu wechseln. Das Hashtag-Icon links von *Kanäle* setzt alle Kanalfilter zurück."
       },
       "filtersPeople": {
-        "title": "Personenfilter",
-        "description": "In *Personen* zeigt ein Klick auf einen Namen nur Inhalte mit Beteiligung dieser Person. Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen."
+        "title": "Nach Person Filtern",
+        "description": "Nutze den Bereich *Personen*, um auf Beteiligte zu fokussieren. Klicke auf einen Namen, um nur Inhalte mit Beteiligung dieser Person zu zeigen, oder auf den Avatar, um Inhalte mit dieser Person ein- oder auszublenden. Das Icon links von *Personen* setzt alle Personenfilter zurück."
       },
       "filtersSearch": {
-        "title": "Suchleiste",
-        "description": "Nutze die untere Suchleiste, um sichtbare Aufgaben in allen Ansichten per Text einzugrenzen."
+        "title": "Suche Über Alle Ansichten",
+        "description": "Die untere Leiste grenzt sichtbare Aufgaben in jeder Ansicht per Text ein."
       },
       "filtersHashtagContent": {
-        "title": "Hashtags im Inhalt",
-        "description": "Klicke auf einen Hashtag in einer Aufgabe, um auf diesen Tag zu fokussieren. Entferne den Tag-Filter, um zur vollen Liste zurückzukehren.",
-        "action": "Klicke auf ein Hashtag-Chip in einer Aufgabe."
+        "title": "Hashtags in Beiträgen",
+        "description": "Klicke in einem Beitrag auf einen Hashtag-Chip, um auf dieses Tag zu fokussieren. Entferne den Tag-Filter, um zur vollen Liste zurückzukehren.",
+        "action": "Klicke auf ein Hashtag-Chip in einem Beitrag."
       },
       "composeKind": {
-        "title": "Aufgabe vs. Kommentar",
-        "description": "Mit der Typ-Auswahl legst du fest, ob du eine Aufgabe oder einen Kommentar veröffentlichst.",
-        "action": "Fokussiere die Typ-Auswahl, um fortzufahren."
+        "title": "Aufgabe oder Kommentar",
+        "description": "Mit der Typ-Auswahl legst du fest, ob dein Beitrag eine eigenständige Aufgabe oder ein Kommentar zum übergeordneten Element ist.",
+        "action": "Öffne die Typ-Auswahl, um fortzufahren."
       },
       "composeInput": {
-        "title": "Tags und Mentions",
-        "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.",
-        "action": "Power-User-Hinweis: {{alternateModifier}}+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete fügt {{alternateModifier}}+Enter oder {{alternateModifier}}+Klick den gewählten Tag/Mention nur als Metadaten hinzu, ohne Tokentext einzufügen."
+        "title": "Mit #Tags und @Mentions Schreiben",
+        "description": "Nutze #tags zur Organisation und @mentions, um Personen zu referenzieren. Eingeschlossene Kanäle werden automatisch hinzugefügt. Ein Datumstyp lässt eine Aufgabe im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.",
+        "action": "Tipp: {{alternateModifier}}+Enter sendet als anderen Typ. Bei offenem Autocomplete fügt {{alternateModifier}}+Enter oder {{alternateModifier}}+Klick den Vorschlag nur als Metadaten hinzu, ohne den Text einzufügen."
       },
       "mobile": {
         "navigationNav": {
-          "title": "Mobile Ansichten",
-          "description": "Navigiere oben zwischen Timeline, Hierarchisch, Anstehend und Kalender.",
-          "action": "Tippe auf einen Navigations-Tab, um fortzufahren."
+          "title": "Ansichten Wechseln",
+          "description": "Nutze die obere Navigation, um zwischen Timeline, Hierarchisch, Anstehend und Kalender zu wechseln.",
+          "action": "Tippe auf eine Ansicht, um fortzufahren."
         },
         "navigationFocus": {
           "action": "Tippe auf einen Beitrag, um fortzufahren."
         },
         "navigationBreadcrumb": {
-          "action": "Tippe auf ein Breadcrumb-Element, um fortzufahren."
+          "action": "Tippe dich bis zur Wurzel zurück, um fortzufahren."
         },
         "filtersOpen": {
-          "title": "Menü öffnen",
+          "title": "Menü Öffnen",
           "description": "Nutze das Menü, um Spaces zu verwalten, Filter fein abzustimmen und dein Profil sowie deine Einstellungen zu aktualisieren.",
-          "action": "Tippe auf das Burger-Menü oben links, um fortzufahren."
+          "action": "Tippe auf das Menü-Icon oben links, um fortzufahren."
         },
         "filtersProperties": {
-          "title": "Profil bearbeiten",
-          "description": "Öffne in *Verwalten* den Profil-Editor, um Benutzername, Anzeigename, Profilbild-URL, verifizierte Identitätsadresse und deinen Infotext zu aktualisieren."
+          "title": "Profil Bearbeiten",
+          "description": "Öffne den Profil-Editor, um Benutzername, Anzeigename, Profilbild, verifizierte Adresse und Infotext zu aktualisieren."
         },
         "filtersUse": {
-          "title": "Filter nutzen",
-          "description": "In *Verwalten* kannst du Space-Chips für Spaces wählen, Kanal-Chips durch neutral -> einschließen -> ausschließen schalten und Personen-Chips umschalten. Kombiniere diese Optionen, um die Timeline gezielt einzugrenzen."
+          "title": "Filter Anpassen",
+          "description": "Tippe auf Space-Chips, um Spaces zu wählen, auf Kanal-Chips, um zwischen neutral -> einschließen -> ausschließen zu wechseln, und auf Personen-Chips, um einzelne Personen umzuschalten. Kombiniere sie, um die Timeline zu fokussieren."
         },
         "composeCombobox": {
-          "title": "Suchen/Erstellen-Kombobox",
-          "description": "Nutze die kombinierte untere Leiste, um beim Tippen zu suchen und aus demselben Text Aufgaben/Kommentare über den Senden-Button zu erstellen.",
-          "action": "Tippe in die kombinierte Leiste, um fortzufahren."
+          "title": "Suchen und Erstellen",
+          "description": "Die untere Leiste sucht beim Tippen und macht aus demselben Text mit dem Senden-Button eine Aufgabe oder einen Kommentar.",
+          "action": "Tippe in die Leiste, um fortzufahren."
         }
       },
       "kanbanColumnsStatus": {
-        "title": "Spalten und Status",
-        "description": "Nutze die Spalten Offen, In Arbeit, Erledigt und Geschlossen zur Statusverfolgung. Beim Verschieben zwischen Spalten ändert sich der Status.",
-        "action": "Klicke oder ziehe eine Karte im Board, um fortzufahren."
+        "title": "Status nach Spalte",
+        "description": "Offen, In Arbeit, Erledigt und Geschlossen verfolgen den Status. Beim Verschieben einer Karte zwischen Spalten ändert sich ihr Status.",
+        "action": "Verschiebe oder öffne eine Karte, um fortzufahren."
       },
       "kanbanCreateInColumn": {
-        "title": "In bestimmter Spalte erstellen",
-        "description": "Nutze den + Button im Spaltenkopf, um eine neue Aufgabe direkt mit dem Status dieser Spalte zu erstellen.",
-        "action": "Klicke einen + Button in einer Spalte, um fortzufahren."
+        "title": "Direkt in der Spalte Erstellen",
+        "description": "Das + im Spaltenkopf erstellt eine Aufgabe direkt mit dem Status dieser Spalte.",
+        "action": "Nutze das + einer Spalte, um fortzufahren."
       },
       "kanbanDepth": {
-        "title": "Tiefenstufen",
-        "description": "Nutze Levels neben der Suche, um zwischen Elternaufgaben und ausführbaren Endknoten zu wechseln: Oberste Ebene zeigt nur Root-Aufgaben, begrenzte Stufen schließen Unteraufgaben ein und Nur Blätter zeigt Aufgaben ohne Unteraufgaben.",
-        "action": "Öffne Levels und probiere erst Oberste Ebene, dann Nur Blätter."
+        "title": "Wähle, was du Siehst",
+        "description": "Levels (neben der Suche) wechselt zwischen Root-Aufgaben, begrenzten Unteraufgaben-Tiefen und Nur Blättern — Aufgaben ohne eigene Unteraufgaben.",
+        "action": "Probiere Oberste Ebene, dann Nur Blätter."
       },
       "calendarMonths": {
-        "title": "Monats-Zeitleiste",
-        "description": "Scrolle durch gestapelte Monate, um dich kontinuierlich durch die Zeit zu bewegen."
+        "title": "Durch Monate Scrollen",
+        "description": "Monate stapeln sich vertikal — scrolle kontinuierlich, um dich durch die Zeit zu bewegen."
       },
       "calendarPickDay": {
-        "title": "Tag auswählen",
-        "description": "Klicke auf eine Tageszelle, um dieses Datum im Detailbereich zu laden.",
-        "action": "Klicke auf einen Tag im Kalendergitter, um fortzufahren."
+        "title": "Tag Auswählen",
+        "description": "Klicke auf einen Tag, um ihn im Detailbereich zu laden.",
+        "action": "Klicke auf einen Tag, um fortzufahren."
       },
       "calendarDayPanel": {
-        "title": "Tagesdetails",
-        "description": "Nutze den rechten Bereich, um Aufgaben für das gewählte Datum zu prüfen, ihren Status zu ändern und neue Aufgaben/Events für diesen Tag zu erstellen."
+        "title": "Der Tagesbereich",
+        "description": "Prüfe Aufgaben für das gewählte Datum, ändere ihren Status und erstelle eine neue Aufgabe oder ein Event für diesen Tag."
       }
     }
   }
