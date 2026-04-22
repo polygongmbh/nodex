@@ -21,11 +21,41 @@ const showFatalAppError = (error: unknown) => {
 };
 
 window.addEventListener("error", (event) => {
+  // Ignore resource load failures (img/script/link) — event.target is an Element, not Window.
+  // These are not fatal app errors and should not trigger the full-screen error.
+  if (event.target && event.target !== window) {
+    return;
+  }
+
+  // Ignore opaque cross-origin "Script error." reports. Browsers sanitize cross-origin
+  // script errors to a bare message with no error object, filename, or line info.
+  // These are typically third-party (extensions, injected scripts) and not actionable;
+  // crashing the entire app on them — as observed on iOS Firefox — is worse than ignoring.
+  const hasNoErrorObject = !event.error;
+  const isOpaqueScriptError =
+    hasNoErrorObject &&
+    (!event.filename || event.filename === "") &&
+    (!event.message || /^Script error\.?$/i.test(event.message));
+  if (isOpaqueScriptError) {
+    console.warn("Ignoring opaque cross-origin script error", {
+      message: event.message,
+      filename: event.filename,
+    });
+    return;
+  }
+
   showFatalAppError(event.error ?? event.message);
 });
 
 window.addEventListener("unhandledrejection", (event) => {
-  showFatalAppError(event.reason);
+  // Same guard for opaque cross-origin promise rejections.
+  const reason = event.reason;
+  const reasonMessage = typeof reason === "string" ? reason : reason?.message;
+  if (!reason || (typeof reasonMessage === "string" && /^Script error\.?$/i.test(reasonMessage))) {
+    console.warn("Ignoring opaque unhandled rejection", { reason });
+    return;
+  }
+  showFatalAppError(reason);
 });
 
 root.render(
