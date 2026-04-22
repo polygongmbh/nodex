@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,7 @@ interface LegalDialogProps {
   triggerLabel?: string;
   triggerClassName?: string;
   defaultSection?: LegalSection;
+  triggerIcon?: ReactNode;
   showMailIcon?: boolean;
   mailIconClassName?: string;
 }
@@ -32,6 +33,7 @@ export function LegalDialog({
   triggerLabel,
   triggerClassName,
   defaultSection = "imprint",
+  triggerIcon,
   showMailIcon = false,
   mailIconClassName,
 }: LegalDialogProps) {
@@ -55,7 +57,10 @@ export function LegalDialog({
             aria-label={t("legal.hints.openImprintAndPrivacy")}
             title={t("legal.hints.openImprintAndPrivacy")}
           >
-            {resolvedTriggerLabel}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              {triggerIcon}
+              <span>{resolvedTriggerLabel}</span>
+            </span>
           </button>
         </DialogTrigger>
         {showMailIcon ? (

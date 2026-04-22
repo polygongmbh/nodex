@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/app-version";
 import { APP_CHANGELOG } from "@/lib/changelog";
@@ -15,9 +16,10 @@ import {
 interface VersionHintProps {
   className?: string;
   showChangelogLabel?: boolean;
+  triggerIcon?: ReactNode;
 }
 
-export function VersionHint({ className, showChangelogLabel = false }: VersionHintProps) {
+export function VersionHint({ className, showChangelogLabel = false, triggerIcon }: VersionHintProps) {
   const { t } = useTranslation();
   const version = APP_VERSION || "0.0.0";
   const releases = APP_CHANGELOG.slice(0, 16);
@@ -38,7 +40,10 @@ export function VersionHint({ className, showChangelogLabel = false }: VersionHi
           title={openChangelogLabel}
           aria-label={openChangelogLabel}
         >
-          {buttonText}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            {triggerIcon}
+            <span>{buttonText}</span>
+          </span>
         </button>
       </DialogTrigger>
       <DialogContent className="w-[calc(100%-1rem)] max-w-3xl p-0">

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Sparkles, LogIn, Trash2, Pencil, ChevronDown, Mail } from "lucide-react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Sparkles, LogIn, Trash2, Pencil, ChevronDown, Mail, Scale, ShieldCheck, History } from "lucide-react";
 import { Relay, Channel, ChannelMatchMode } from "@/types";
 import type { Person } from "@/types/person";
 import { cn } from "@/lib/utils";
@@ -169,11 +169,13 @@ export function MobileFilters({
               triggerLabel={t("legal.buttons.imprint")}
               triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
               defaultSection="imprint"
+              triggerIcon={<Scale className="h-3.5 w-3.5 shrink-0" />}
             />
             <LegalDialog
               triggerLabel={t("legal.buttons.privacy")}
               triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
               defaultSection="privacy"
+              triggerIcon={<ShieldCheck className="h-3.5 w-3.5 shrink-0" />}
             />
             <a
               href={`mailto:${legalContactEmail}`}
@@ -187,6 +189,7 @@ export function MobileFilters({
             <VersionHint
               className="w-full rounded-lg border border-border px-2 py-2 text-xs text-center text-muted-foreground/80 hover:bg-muted/50 hover:text-foreground touch-target-sm"
               showChangelogLabel
+              triggerIcon={<History className="h-3.5 w-3.5 shrink-0" />}
             />
           </div>
         </section>
