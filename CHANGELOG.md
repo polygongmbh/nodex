@@ -6,8 +6,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.13.2] - 2026-04-22
+
 - Root URLs with filter query params now preserve those params when redirecting to `/feed`, so localhost/dev deep links like `/?ch=general` keep their channel and people filters on first load.
 - Active channel filters now survive feed-specific channel list changes, so scoped feeds no longer strip URL-driven `?ch=` filters just because that channel lacks recent visible posts in the current inventory.
+- Placeholder copy across shared inputs is now less visually dominant, reducing UI noise while keeping the existing affordances intact.
+- Mobile and desktop now share the same profile editor field model and validation flow, keeping profile editing behavior and copy aligned across both surfaces.
 
 ## [2.13.1] - 2026-04-21
 Patch release for search and composer polish.
