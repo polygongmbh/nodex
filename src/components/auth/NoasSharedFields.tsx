@@ -103,6 +103,7 @@ export function NoasSharedFields({
               onChange={(e) => onUsernameChange(e.target.value.toLowerCase())}
               placeholder={usernamePlaceholder}
               disabled={isLoading}
+              autoFocus
               autoComplete="username"
               autoCapitalize="none"
               autoCorrect="off"

@@ -927,6 +927,7 @@ const Index = () => {
           isOpen: isAuthModalOpen,
           onClose: handleCloseAuthModal,
           initialStep: authModalInitialStep,
+          onStepChange: handleOpenAuthModal,
         }}
         onboardingOverlays={onboardingOverlays}
       />

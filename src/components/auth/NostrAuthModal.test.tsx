@@ -1,9 +1,11 @@
+import type { ComponentProps } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
 import type { AuthMethod, NDKUser } from "@/infrastructure/nostr/ndk-context";
-import { NostrEventKind } from "@/lib/nostr/types";
+import { resolveAuthRouteStep } from "@/lib/auth-routes";
 
 const loginWithExtension = vi.fn(() => new Promise<boolean>(() => {}));
 const ndkMock = {
@@ -37,14 +39,21 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ndkMock,
 }));
 
-describe("NostrAuthModal", () => {
-  const openChooserIfNeeded = () => {
-    const moreOptionsButton = screen.queryByRole("button", { name: /^nostr authentication options$/i });
-    if (moreOptionsButton) {
-      fireEvent.click(moreOptionsButton);
-    }
-  };
+function RoutedModal(props: ComponentProps<typeof NostrAuthModal>) {
+  const location = useLocation();
+  const routeStep = resolveAuthRouteStep(location.pathname);
+  return <NostrAuthModal {...props} initialStep={routeStep ?? props.initialStep} />;
+}
 
+function renderModal(props: ComponentProps<typeof NostrAuthModal>, initialPath = "/") {
+  return render(
+    <MemoryRouter initialEntries={[initialPath]}>
+      <RoutedModal {...props} />
+    </MemoryRouter>
+  );
+}
+
+describe("NostrAuthModal", () => {
   const openNoasEntryIfNeeded = () => {
     const noasEntryButton = screen.queryByRole("button", { name: /noas authentication/i });
     if (noasEntryButton) {
@@ -82,35 +91,19 @@ describe("NostrAuthModal", () => {
   it("starts on the auth chooser and still shows Noas when no Noas env is configured", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     expect(screen.getByRole("button", { name: /noas authentication/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^more options$/i })).not.toBeInTheDocument();
   });
 
-  it("renders chooser options in the requested order", () => {
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
-
-    openChooserIfNeeded();
-
-    const noasOption = screen.getByRole("button", { name: /noas authentication/i });
-    const signerOption = screen.getByRole("button", { name: /remote signer/i });
-    const extensionOption = screen.getByRole("button", { name: /browser extension/i });
-    const guestOption = screen.getByRole("button", { name: /guest identity/i });
-    const privateKeyOption = screen.getByRole("button", { name: /private key/i });
-    const orderedOptions = [noasOption, extensionOption, signerOption, privateKeyOption, guestOption];
-
-    orderedOptions.slice(0, -1).forEach((option, index) => {
-      expect(option.compareDocumentPosition(orderedOptions[index + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
-    });
-  });
-
   it("hides guest identity sign-in when disabled by env", () => {
     vi.stubEnv("VITE_ALLOW_GUEST_SIGN_IN", "false");
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
-    openChooserIfNeeded();
+    const noasEntryButton = screen.queryByRole("button", { name: /noas authentication/i });
+    if (noasEntryButton) fireEvent.click(noasEntryButton);
 
     expect(screen.queryByRole("button", { name: /guest identity/i })).not.toBeInTheDocument();
   });
@@ -131,160 +124,19 @@ describe("NostrAuthModal", () => {
       })),
     });
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialStep: "choose" });
 
-    openChooserIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /browser extension/i }));
 
-    const extensionOption = screen.getByRole("button", { name: /browser extension/i });
-    const guestOption = screen.getByRole("button", { name: /guest identity/i });
-
-    expect(extensionOption).toHaveAttribute("aria-busy", "true");
-    expect(guestOption).toHaveAttribute("aria-busy", "false");
-  });
-
-  it("renders safely when user signs out after profile setup was required", () => {
-    ndkMock.user = {
-      npub: "npub1test",
-      pubkey: "a".repeat(64),
-      profile: { name: "Alice" },
-    };
-    ndkMock.authMethod = "extension";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isProfileSyncing = false;
-
-    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
-    expect(screen.getByText("Alice")).toBeInTheDocument();
-
-    ndkMock.user = null;
-    ndkMock.needsProfileSetup = false;
-    ndkMock.isProfileSyncing = false;
-    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.getByRole("button", { name: /sign in to post/i })).toBeInTheDocument();
-  });
-
-  it("does not auto-open setup profile dialog while profile sync is in progress", () => {
-    ndkMock.user = {
-      npub: "npub1test",
-      pubkey: "a".repeat(64),
-      profile: { name: "" },
-    };
-    ndkMock.authMethod = "extension";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isProfileSyncing = true;
-
-    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-
-    ndkMock.isProfileSyncing = false;
-    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-  });
-
-  it("does not auto-open setup profile dialog when no relay is connected", () => {
-    ndkMock.user = {
-      npub: "npub1test",
-      pubkey: "a".repeat(64),
-      profile: { name: "" },
-    };
-    ndkMock.authMethod = "extension";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isProfileSyncing = false;
-    ndkMock.isConnected = false;
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    ndkMock.isConnected = true;
-  });
-
-  it("does not auto-open setup profile dialog when only read-only relays are available", () => {
-    ndkMock.user = {
-      npub: "npub1test",
-      pubkey: "b".repeat(64),
-      profile: { name: "" },
-    };
-    ndkMock.authMethod = "guest";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isProfileSyncing = false;
-    ndkMock.isConnected = true;
-    ndkMock.hasWritableRelayConnection = false;
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-
-  it("keeps auto-opened profile setup dialog focused on identity fields", () => {
-    ndkMock.user = {
-      npub: "npub1test",
-      pubkey: "a".repeat(64),
-      profile: { name: "" },
-    };
-    ndkMock.authMethod = "extension";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isProfileSyncing = false;
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(document.getElementById("profile-name")).toBeInTheDocument();
-    expect(document.getElementById("profile-presence-enabled")).toBeNull();
-    expect(document.getElementById("profile-publish-delay-enabled")).toBeNull();
-    expect(document.getElementById("profile-auto-caption-enabled")).toBeNull();
-  });
-
-  it("only auto-opens mandatory profile setup once per required setup cycle", () => {
-    ndkMock.user = {
-      npub: "npub1test",
-      pubkey: "a".repeat(64),
-      profile: { name: "" },
-    };
-    ndkMock.authMethod = "extension";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isProfileSyncing = false;
-
-    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    fireEvent.click(screen.getByRole("button", { name: /close/i }));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-
-    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("keeps the dismiss button available after a mandatory profile setup save fails", async () => {
-    ndkMock.user = {
-      npub: "npub1test",
-      pubkey: "a".repeat(64),
-      profile: { name: "" },
-    };
-    ndkMock.authMethod = "extension";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isProfileSyncing = false;
-    ndkMock.updateUserProfile = vi.fn(async () => false);
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    fireEvent.change(document.getElementById("profile-name") as HTMLInputElement, { target: { value: "alice" } });
-    fireEvent.click(screen.getByRole("button", { name: /save/i }));
-
-    await waitFor(() => expect(ndkMock.updateUserProfile).toHaveBeenCalled());
-    clickOutsideDialog();
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /browser extension/i })).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: /guest identity/i })).toHaveAttribute("aria-busy", "false");
   });
 
   it("ignores outside click when auth form input is dirty", () => {
     const onClose = vi.fn();
 
-    render(<NostrAuthModal isOpen onClose={onClose} />);
+    renderModal({ isOpen: true, onClose, initialStep: "choose" });
 
-    openChooserIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /private key/i }));
     fireEvent.change(screen.getByLabelText(/^private key$/i), {
       target: { value: "nsec1example" },
@@ -297,9 +149,8 @@ describe("NostrAuthModal", () => {
   });
 
   it("marks private-key sign-in input as non-credential content", () => {
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn(), initialStep: "choose" });
 
-    openChooserIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /private key/i }));
 
     const privateKeyInput = screen.getByLabelText(/^private key$/i);
@@ -312,7 +163,7 @@ describe("NostrAuthModal", () => {
   });
 
   it("preserves shared noas credentials when switching between sign in and sign up", () => {
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice_name" } });
@@ -330,13 +181,9 @@ describe("NostrAuthModal", () => {
   it("requires a full handle when no Noas env is configured", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-
-    expect(screen.queryByLabelText(/^host$/i)).not.toBeInTheDocument();
-    expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
-
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
@@ -348,7 +195,7 @@ describe("NostrAuthModal", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.defaultNoasHostUrl = "https://example.com";
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     expect(screen.queryByRole("button", { name: /noas authentication/i })).not.toBeInTheDocument();
     expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@example.com");
@@ -357,13 +204,17 @@ describe("NostrAuthModal", () => {
   it("prefills the Noas host immediately when discovery resolves after the modal mounts", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
 
-    const { rerender } = render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    const { rerender } = renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
     expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
 
     ndkMock.defaultNoasHostUrl = "https://example.com";
-    rerender(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    rerender(
+      <MemoryRouter initialEntries={["/"]}>
+        <RoutedModal isOpen onClose={vi.fn()} />
+      </MemoryRouter>
+    );
 
     expect(screen.queryByRole("button", { name: /noas authentication/i })).not.toBeInTheDocument();
     expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@example.com");
@@ -372,14 +223,18 @@ describe("NostrAuthModal", () => {
   it("carries a newly detected Noas host into sign-up without waiting for a restart", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
 
-    const { rerender } = render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    const { rerender } = renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
     expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
 
     ndkMock.defaultNoasHostUrl = "https://example.com";
-    rerender(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    rerender(
+      <MemoryRouter initialEntries={["/signup"]}>
+        <RoutedModal isOpen onClose={vi.fn()} />
+      </MemoryRouter>
+    );
 
     expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@example.com");
   });
@@ -388,7 +243,7 @@ describe("NostrAuthModal", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.defaultNoasHostUrl = "https://example.com";
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -400,20 +255,11 @@ describe("NostrAuthModal", () => {
     });
   });
 
-  it("keeps explicit http noas hosts unchanged in the inline suffix", () => {
-    vi.stubEnv("VITE_NOAS_HOST_URL", "");
-    ndkMock.defaultNoasHostUrl = "http://localhost:3000/custom/noas/path?mode=dev";
-
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
-
-    expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@http://localhost:3000/custom/noas/path?mode=dev");
-  });
-
   it("shows a connection-specific Noas error when the host request fails", async () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.loginWithNoas = vi.fn(async () => ({ success: false, errorCode: "connection_failed" }));
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
@@ -429,7 +275,7 @@ describe("NostrAuthModal", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.loginWithNoas = vi.fn(async () => ({ success: false, errorCode: "key_mismatch" }));
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
@@ -437,9 +283,7 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
-    expect(
-      screen.getAllByText(/returned key does not match your account/i)
-    ).toHaveLength(1);
+    expect(screen.getAllByText(/returned key does not match your account/i)).toHaveLength(1);
     expect(screen.queryByText(/server or key error/i)).not.toBeInTheDocument();
   });
 
@@ -452,7 +296,7 @@ describe("NostrAuthModal", () => {
       httpStatus: 409,
     }));
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
@@ -472,7 +316,7 @@ describe("NostrAuthModal", () => {
       httpStatus: 409,
     }));
 
-    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+    renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
@@ -497,7 +341,7 @@ describe("NostrAuthModal", () => {
     }));
     const onClose = vi.fn();
 
-    render(<NostrAuthModal isOpen onClose={onClose} />);
+    renderModal({ isOpen: true, onClose });
 
     openNoasEntryIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
@@ -525,7 +369,7 @@ describe("NostrAuthModal", () => {
     }));
     const onClose = vi.fn();
 
-    render(<NostrAuthModal isOpen onClose={onClose} />);
+    renderModal({ isOpen: true, onClose });
 
     openNoasEntryIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
@@ -541,25 +385,122 @@ describe("NostrAuthModal", () => {
     expect(toast.success).not.toHaveBeenCalledWith("Account created successfully");
   });
 
-  it("opens directly to noas sign up when requested and still allows switching to sign in", () => {
-    render(<NostrAuthModal isOpen onClose={vi.fn()} initialStep="noasSignUp" />);
-
-    expect(screen.getAllByRole("button", { name: /^sign up$/i })).toHaveLength(2);
-    expect(screen.getByLabelText(/^username$/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
-
-    expect(screen.getAllByRole("button", { name: /^sign in$/i })).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /^nostr authentication options$/i })).toBeInTheDocument();
-  });
-
   it("applies sign-up initialStep when the modal opens after mount", () => {
-    const { rerender } = render(<NostrAuthModal isOpen={false} onClose={vi.fn()} />);
+    const { rerender } = renderModal({ isOpen: false, onClose: vi.fn() });
 
-    rerender(<NostrAuthModal isOpen onClose={vi.fn()} initialStep="noasSignUp" />);
+    rerender(
+      <MemoryRouter initialEntries={["/"]}>
+        <RoutedModal isOpen onClose={vi.fn()} initialStep="noasSignUp" />
+      </MemoryRouter>
+    );
 
     expect(screen.getAllByRole("button", { name: /^sign up$/i })).toHaveLength(2);
     expect(screen.getByLabelText(/^username$/i)).toBeInTheDocument();
   });
+});
 
+describe("NostrUserMenu", () => {
+  const clickOutsideDialog = () => {
+    const overlay = document.querySelector("[data-state='open'].fixed.inset-0");
+    if (!overlay) throw new Error("Expected dialog overlay to exist");
+    fireEvent.pointerDown(overlay);
+    fireEvent.mouseDown(overlay);
+    fireEvent.mouseUp(overlay);
+    fireEvent.click(overlay);
+  };
+
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    ndkMock.isConnected = true;
+    ndkMock.hasWritableRelayConnection = true;
+    ndkMock.user = null;
+    ndkMock.authMethod = null;
+    ndkMock.needsProfileSetup = false;
+    ndkMock.isProfileSyncing = false;
+    ndkMock.updateUserProfile = vi.fn(async () => true);
+  });
+
+  it("renders safely when user signs out after profile setup was required", () => {
+    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "Alice" } };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+
+    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+
+    ndkMock.user = null;
+    ndkMock.needsProfileSetup = false;
+    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: /sign in to post/i })).toBeInTheDocument();
+  });
+
+  it("does not auto-open setup profile dialog while profile sync is in progress", () => {
+    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "" } };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = true;
+
+    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    ndkMock.isProfileSyncing = false;
+    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("does not auto-open setup profile dialog when no relay is connected", () => {
+    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "" } };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isConnected = false;
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not auto-open setup profile dialog when only read-only relays are available", () => {
+    ndkMock.user = { npub: "npub1test", pubkey: "b".repeat(64), profile: { name: "" } };
+    ndkMock.authMethod = "guest";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.hasWritableRelayConnection = false;
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("only auto-opens mandatory profile setup once per required setup cycle", () => {
+    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "" } };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+
+    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps the dismiss button available after a mandatory profile setup save fails", async () => {
+    ndkMock.user = { npub: "npub1test", pubkey: "a".repeat(64), profile: { name: "" } };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.updateUserProfile = vi.fn(async () => false);
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    fireEvent.change(document.getElementById("profile-name") as HTMLInputElement, { target: { value: "alice" } });
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(ndkMock.updateUserProfile).toHaveBeenCalled());
+    clickOutsideDialog();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
 });

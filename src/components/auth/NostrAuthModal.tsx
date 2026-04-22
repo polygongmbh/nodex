@@ -24,6 +24,7 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { nip19 } from "nostr-tools";
+import { useNavigate } from "react-router-dom";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
@@ -36,6 +37,7 @@ import { NoasSignUpForm } from "./NoasSignUpForm";
 import { ProfileEditorFields } from "./ProfileEditorFields";
 import type { NoasAuthErrorCode } from "@/lib/nostr/noas-client";
 import { resolveNoasHostDisplayValue } from "./noas-form-helpers";
+import { buildAuthRoute } from "@/lib/auth-routes";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -159,9 +161,10 @@ function resolveBooleanEnvFlag(value: unknown, defaultValue: boolean): boolean {
 
 export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalProps) {
   const { t } = useTranslation();
-  const { 
-    loginWithExtension, 
-    loginWithPrivateKey, 
+  const navigate = useNavigate();
+  const {
+    loginWithExtension,
+    loginWithPrivateKey,
     loginAsGuest,
     loginWithNostrConnect,
     loginWithNoas,
@@ -586,7 +589,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             ) : step === "noas" ? (
               <NoasAuthForm
                 onLogin={handleNoasLogin}
-                onSignUp={() => setStep("noasSignUp")}
+                onSignUp={() => navigate(buildAuthRoute("noasSignUp"))}
                 onBack={() => setStep("choose")}
                 username={noasUsername}
                 password={noasPassword}
@@ -603,7 +606,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             ) : step === "noasSignUp" ? (
               <NoasSignUpForm
                 onSignUp={handleNoasSignUp}
-                onSignIn={() => setStep("noas")}
+                onSignIn={() => navigate(buildAuthRoute("noas"))}
                 username={noasUsername}
                 password={noasPassword}
                 isEditingHostUrl={isEditingNoasHost}
