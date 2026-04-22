@@ -153,12 +153,12 @@ Suggested JSON shape:
 3. Default bucket transition rule:
    - any `todo`-bucket state quick-toggles to the default `active` state
    - any `active`-bucket state quick-toggles to the default `done` state
-   - terminal states quick-toggle back to the default `todo` state unless product rules say otherwise
+   - terminal states do not quick-toggle; clicking them opens the state chooser
 4. Mobile quick toggle must skip the default active state:
    - `todo -> done`
-   - `done -> todo`
-5. If the current state is another active state like `blocked`, mobile toggle should move to `done`, then back to the configured default `todo`.
-6. Explicit dropdown selection remains state-specific; only quick-toggle is bucket-driven.
+5. If the current state is another active state like `blocked`, mobile toggle should move to `done`.
+6. For `done` or `closed`, quick interaction should open the popup/chooser so the user explicitly picks the next state.
+7. Explicit dropdown selection remains state-specific; only quick-toggle is bucket-driven.
 
 ## Nostr / Protocol Handling
 
