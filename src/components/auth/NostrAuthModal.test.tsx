@@ -238,6 +238,26 @@ describe("NostrAuthModal", () => {
     expect(document.getElementById("profile-auto-caption-enabled")).toBeNull();
   });
 
+  it("shows friendly profile field labels, placeholders, and verified identity help text", () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "a".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.getByLabelText(/^display name$/i)).toHaveAttribute("placeholder", "How your name appears");
+    expect(screen.getByLabelText(/^username \*$/i)).toHaveAttribute("placeholder", "your_username");
+    expect(screen.getByLabelText(/^profile picture url$/i)).toHaveAttribute("placeholder", "https://example.com/avatar.jpg");
+    expect(screen.getByLabelText(/^verified identity address$/i)).toHaveAttribute("placeholder", "name@domain.com");
+    expect(screen.getByText("Your Nostr NIP-05 identifier in the form name@domain.com as verified by domain.com")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^about you$/i)).toHaveAttribute("placeholder", "Tell people a little about yourself");
+  });
+
   it("only auto-opens mandatory profile setup once per required setup cycle", () => {
     ndkMock.user = {
       npub: "npub1test",

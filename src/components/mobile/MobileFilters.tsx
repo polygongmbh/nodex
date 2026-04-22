@@ -268,6 +268,7 @@ export function MobileFilters({
                     id="manage-profile-display-name"
                     value={profileDisplayName}
                     onChange={(e) => setProfileDisplayName(e.target.value)}
+                    placeholder={t("filters.profile.displayNamePlaceholder")}
                     className="h-8"
                   />
                 </div>
@@ -277,6 +278,7 @@ export function MobileFilters({
                     id="manage-profile-name"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
+                    placeholder={t("filters.profile.namePlaceholder")}
                     className="h-8"
                     aria-invalid={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken}
                     aria-describedby={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken ? "manage-profile-name-error" : undefined}
@@ -303,6 +305,7 @@ export function MobileFilters({
                     id="manage-profile-picture"
                     value={profilePicture}
                     onChange={(e) => setProfilePicture(e.target.value)}
+                    placeholder={t("filters.profile.picturePlaceholder")}
                     className="h-8"
                   />
                 </div>
@@ -312,8 +315,13 @@ export function MobileFilters({
                     id="manage-profile-nip05"
                     value={profileNip05}
                     onChange={(e) => setProfileNip05(e.target.value)}
+                    placeholder={t("filters.profile.nip05Placeholder")}
+                    aria-describedby="manage-profile-nip05-description"
                     className="h-8"
                   />
+                  <p id="manage-profile-nip05-description" className="text-xs text-muted-foreground">
+                    {t("filters.profile.nip05Description")}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <label htmlFor="manage-profile-about" className="text-xs text-muted-foreground">{t("filters.profile.about")}</label>
@@ -321,6 +329,7 @@ export function MobileFilters({
                     id="manage-profile-about"
                     value={profileAbout}
                     onChange={(e) => setProfileAbout(e.target.value)}
+                    placeholder={t("filters.profile.aboutPlaceholder")}
                     rows={3}
                     className="min-h-20"
                   />

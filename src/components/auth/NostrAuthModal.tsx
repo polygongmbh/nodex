@@ -983,7 +983,12 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             <DialogScrollBody className="mt-3" innerClassName="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
-                <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
+                <Input
+                  id="profile-display-name"
+                  value={profileDisplayName}
+                  onChange={(e) => setProfileDisplayName(e.target.value)}
+                  placeholder={t("filters.profile.displayNamePlaceholder")}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
@@ -991,6 +996,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   id="profile-name"
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
+                  placeholder={t("filters.profile.namePlaceholder")}
                   aria-invalid={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken}
                   aria-describedby={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken ? "profile-name-error" : undefined}
                 />
@@ -1012,15 +1018,35 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="profile-picture">{t("filters.profile.picture")}</Label>
-                <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
+                <Input
+                  id="profile-picture"
+                  value={profilePicture}
+                  onChange={(e) => setProfilePicture(e.target.value)}
+                  placeholder={t("filters.profile.picturePlaceholder")}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="profile-nip05">{t("filters.profile.nip05")}</Label>
-                <Input id="profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
+                <Input
+                  id="profile-nip05"
+                  value={profileNip05}
+                  onChange={(e) => setProfileNip05(e.target.value)}
+                  placeholder={t("filters.profile.nip05Placeholder")}
+                  aria-describedby="profile-nip05-description"
+                />
+                <p id="profile-nip05-description" className="text-xs text-muted-foreground">
+                  {t("filters.profile.nip05Description")}
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
-                <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
+                <Textarea
+                  id="profile-about"
+                  value={profileAbout}
+                  onChange={(e) => setProfileAbout(e.target.value)}
+                  placeholder={t("filters.profile.aboutPlaceholder")}
+                  rows={4}
+                />
               </div>
             </DialogScrollBody>
             <div className="mt-3 flex shrink-0 justify-end gap-2 bg-background/95 pt-2">
