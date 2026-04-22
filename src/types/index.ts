@@ -1,4 +1,6 @@
 import type { Person } from "./person";
+
+export interface Relay {
   id: string;
   name: string;
   isActive: boolean;
