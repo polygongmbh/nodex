@@ -166,7 +166,7 @@ export async function uploadAttachment(
 
   if (file.size > maxFileSizeBytes) {
     const maxSizeMb = Math.max(1, Math.ceil(maxFileSizeBytes / (1024 * 1024)));
-    throw new Error(i18n.t("composer.attachments.maxSizeExceeded", { maxSizeMb }));
+    throw new Error(i18n.t("composer:composer.attachments.maxSizeExceeded", { maxSizeMb }));
   }
 
   if (!isAttachmentUploadConfigured(uploadUrl)) {
@@ -174,7 +174,7 @@ export async function uploadAttachment(
       fileName: file.name,
       size: file.size,
     });
-    throw new Error(i18n.t("composer.attachments.uploadUrlMissing"));
+    throw new Error(i18n.t("composer:composer.attachments.uploadUrlMissing"));
   }
 
   const formData = new FormData();
@@ -213,7 +213,7 @@ export async function uploadAttachment(
       uploadUrl,
       error: error instanceof Error ? error.message : String(error),
     });
-    throw new Error(i18n.t("composer.attachments.networkError"));
+    throw new Error(i18n.t("composer:composer.attachments.networkError"));
   }
 
   if (!response.ok) {
@@ -230,7 +230,7 @@ export async function uploadAttachment(
       statusText: response.statusText,
       bodyPreview,
     });
-    throw new Error(i18n.t("composer.attachments.uploadFailedWithStatus", { status: response.status }));
+    throw new Error(i18n.t("composer:composer.attachments.uploadFailedWithStatus", { status: response.status }));
   }
 
   let payload: NIP96UploadResponse;
@@ -242,7 +242,7 @@ export async function uploadAttachment(
       uploadUrl,
       contentType: response.headers.get("content-type"),
     });
-    throw new Error(i18n.t("composer.attachments.invalidJson"));
+    throw new Error(i18n.t("composer:composer.attachments.invalidJson"));
   }
 
   let attachment: PublishedAttachment | null = null;
@@ -268,7 +268,7 @@ export async function uploadAttachment(
       payloadStatus: payload.status || null,
       payloadMessage: payload.message || null,
     });
-    throw new Error(payload.message || i18n.t("composer.attachments.missingFileUrl"));
+    throw new Error(payload.message || i18n.t("composer:composer.attachments.missingFileUrl"));
   }
 
   if (!attachment.sha256) {

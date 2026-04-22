@@ -190,7 +190,7 @@ export function TaskComposer({
   contextTaskTitle = "",
 }: TaskComposerProps) {
   const canCreateContent = canCreateContentProp;
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("composer");
   const {
     channelOptions,
     mentionOptions,

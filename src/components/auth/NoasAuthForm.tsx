@@ -39,7 +39,7 @@ export function NoasAuthForm({
   onNoasHostUrlChange,
   onToggleHostEdit,
 }: NoasAuthFormProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("auth");
   const [localError, setLocalError] = useState<string | null>(null);
   const displayedError = localError ?? error;
 

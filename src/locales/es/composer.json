@@ -1,0 +1,255 @@
+{
+  "composer": {
+    "placeholders": {
+      "base": {
+        "task": {
+          "withContext": "Crea una subtarea de {{title}}",
+          "withoutContext": "Crea una tarea"
+        },
+        "comment": {
+          "withContext": "Añade un comentario a {{title}}",
+          "withoutContext": "Añade un comentario"
+        },
+        "offer": {
+          "withContext": "Publica una oferta bajo {{title}}",
+          "withoutContext": "Publica una oferta"
+        },
+        "request": {
+          "withContext": "Publica una solicitud bajo {{title}}",
+          "withoutContext": "Publica una solicitud"
+        }
+      },
+      "parts": {
+        "inChannels": "en {{channels}}",
+        "mentioningPeople": "mencionando a {{people}}",
+        "fallbackGuidance": "usa #channels y @mentions"
+      },
+      "mobileSearchCreatePosts": {
+        "withContext": "Encontrar y crear publicaciones en {{title}}",
+        "withoutContext": "Encontrar y crear publicaciones"
+      },
+      "mobileTask": "Buscar o crear tarea... #tags",
+      "mobileComment": "Buscar o añadir comentario... #tags",
+      "geohash": "Introducir geohash (p. ej. u4pruyd)"
+    },
+    "blocked": {
+      "signin": "Se requiere iniciar sesión",
+      "write": "Escribe primero un mensaje",
+      "tag": "Añade o selecciona al menos un #canal",
+      "commentRelay": "Selecciona al menos un space verde para publicar un comentario",
+      "relay": "Selecciona un único space o una tarea padre para crear una nueva tarea",
+      "selectTask": "Selecciona una tarea para responder",
+      "publishing": "Publicando..."
+    },
+    "blockedDetail": {
+      "title": "Aún no se puede publicar",
+      "detail": {
+        "signin": "Inicia sesión para publicar esta entrada.",
+        "write": "Añade primero algo de texto y vuelve a intentarlo.",
+        "tag": "Añade al menos una etiqueta de canal como #design o usa un filtro de canal incluido.",
+        "commentRelay": "Los comentarios pueden publicarse en cualquier space verde.",
+        "relay": "Elige exactamente un space verde para una tarea nueva o publica desde una tarea existente.",
+        "selectTask": "Abre primero una tarea si quieres publicar un comentario.",
+        "uploading": "Tus archivos todavía se están subiendo. La publicación se habilitará automáticamente cuando terminen.",
+        "uploadFailed": "Reintenta o elimina los archivos fallidos antes de publicar.",
+        "publishing": "Esta entrada ya se está publicando."
+      },
+      "cta": {
+        "write": "Escribir mensaje",
+        "tag": "Añadir #canal",
+        "commentRelay": "Seleccionar space",
+        "relay": "Seleccionar space",
+        "selectTask": "Seleccionar tarea",
+        "uploading": "Esperar subidas",
+        "uploadFailed": "Corregir archivos",
+        "publishing": "Publicando..."
+      }
+    },
+    "actions": {
+      "createTask": "Crear tarea",
+      "addComment": "Añadir comentario",
+      "postOffer": "Publicar oferta",
+      "postRequest": "Publicar solicitud",
+      "signin": "Iniciar sesión",
+      "useCurrentLocation": "Usar ubicación actual",
+      "clearLocation": "Quitar ubicación",
+      "location": "Ubicación"
+    },
+    "attachments": {
+      "add": "Añadir archivo",
+      "remove": "Quitar archivo",
+      "altPlaceholder": "Texto alternativo (opcional)",
+      "altLabel": "Texto alternativo del archivo",
+      "uploading": "Subiendo...",
+      "retry": "Reintentar",
+      "failed": "Falló",
+      "ready": "Listo",
+      "uploadFailed": "La subida falló",
+      "uploadFailedWithStatus": "La subida falló ({{status}})",
+      "uploadUrlMissing": "La URL de subida de archivos no está configurada",
+      "networkError": "La solicitud de subida falló (red o CORS)",
+      "invalidJson": "La respuesta de subida no contenía JSON válido",
+      "missingFileUrl": "La respuesta de subida no incluyó una URL de archivo",
+      "maxSizeExceeded": "El archivo supera el tamaño máximo de subida de {{maxSizeMb}} MB",
+      "waitForUploads": "Espera a que terminen de subirse los archivos",
+      "retryFailed": "Reintenta o elimina los archivos fallidos",
+      "dropOrPasteHint": "Suelta archivos o pega imágenes",
+      "dropFiles": "Suelta archivos para adjuntarlos"
+    },
+    "nip99": {
+      "title": "Título del anuncio",
+      "location": "Ubicación",
+      "price": "Precio",
+      "currency": "Moneda",
+      "frequency": "Frecuencia del precio",
+      "status": "Estado del anuncio",
+      "summary": "Resumen",
+      "defaultTitle": "Anuncio",
+      "frequencyOptions": {
+        "oneTime": "Una vez",
+        "hour": "hora",
+        "day": "día",
+        "week": "semana",
+        "month": "mes",
+        "year": "año"
+      },
+      "statusOptions": {
+        "active": "Activo",
+        "sold": "Vendido"
+      }
+    },
+    "labels": {
+      "dateType": "Tipo de fecha",
+      "priority": "Prioridad",
+      "priorityShort": "⚑ Prioridad",
+      "kind": "Tipo",
+      "task": "Tarea",
+      "comment": "Comentario",
+      "offer": "Oferta",
+      "request": "Solicitud",
+      "mentions": "Menciones",
+      "date": "Fecha"
+    },
+    "priorityLevels": {
+      "1": "P1 - Menor",
+      "2": "P2 - Moderada",
+      "3": "P3 - Significativa",
+      "4": "P4 - Grave",
+      "5": "P5 - Crítica"
+    },
+    "hints": {
+      "composeField": "Usa etiquetas #canal y @menciones en este campo",
+      "insertHashtag": "Insertar hashtag",
+      "insertHashtagOpen": "Insertar hashtag y abrir sugerencias de canales",
+      "insertMention": "Insertar mención",
+      "insertMentionOpen": "Insertar @mención y abrir sugerencias de personas",
+      "clearCompose": "Borrar redacción",
+      "createFromText": "Crear desde el texto actual",
+      "signInToCreate": "Inicia sesión para crear",
+      "clearDueDate": "Quitar fecha"
+    },
+    "dates": {
+      "setOptional": "Establecer fecha de {{dateType}} (opcional)",
+      "due": "Limite",
+      "scheduled": "Programado",
+      "start": "Inicio",
+      "end": "Fin",
+      "milestone": "Meta"
+    },
+    "savedFilters": {
+      "actions": {
+        "saveCurrent": "Guardar filtros",
+        "rename": "Renombrar",
+        "delete": "Eliminar",
+        "menu": "Opciones de filtros guardados"
+      },
+      "prompts": {
+        "save": "Nombre para este preset de filtros",
+        "rename": "Renombrar este preset de filtros"
+      }
+    }
+  },
+  "toasts": {
+    "errors": {
+      "needTag": "Añade al menos un #canal antes de publicar",
+      "needSigninPost": "Se requiere iniciar sesión para publicar",
+      "needSigninModify": "Se requiere iniciar sesión para modificar tareas",
+      "statusRestricted": "Las actualizaciones de tareas están restringidas a los asignados etiquetados y al creador",
+      "selectRelayOrParent": "Selecciona un único space o una tarea padre para crear una nueva tarea",
+      "publishStatusFailed": "No se pudo publicar la actualización de estado en los relays",
+      "publishDateFailed": "No se pudo publicar la actualización de fecha en el relay",
+      "publishPriorityFailed": "No se pudo publicar la actualización de prioridad en el relay",
+      "taskCreationFailed": "No se pudo crear la tarea. Inténtalo de nuevo.",
+      "publishSavedForRetry": "No se pudo publicar en Nostr; se guardó para reintento",
+      "publishSavedForRetryWithReason": "No se pudo publicar en Nostr; se guardó para reintento ({{reason}})",
+      "publishSavedForRetryWithRelayReason": "No se pudo publicar en {{relayUrl}}; se guardó para reintento ({{reason}})",
+      "retryRelayMissing": "Reintento fallido: el space ya no está configurado",
+      "retryRejectedByRelay": "Reintento fallido: el space no aceptó la publicación",
+      "retryRejectedByRelayWithReason": "Reintento fallido: el space no aceptó la publicación ({{reason}})",
+      "publishListingStatusFailed": "No se pudo publicar la actualización del estado del anuncio en el relay",
+      "locationUnavailable": "Los servicios de ubicación no están disponibles en este dispositivo",
+      "locationCaptureFailed": "No se pudo obtener tu ubicación actual",
+      "relayVerificationReadFailed": "La verificación del relay para lectura falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
+      "relayVerificationWriteFailed": "La verificación del relay para publicación falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
+      "relayVerificationUnknownFailed": "La verificación del relay falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
+      "relayReconnectFailedDeselected": "No se pudo reconectar {{relayDomain}}. El space volvió a deseleccionarse."
+    },
+    "success": {
+      "publishedTask": "Tarea publicada en Nostr y añadida localmente",
+      "publishedComment": "Comentario publicado en Nostr y añadido localmente",
+      "publishedToSpaces": "Publicado en el space {{spaceNames}}",
+      "localTask": "Tarea añadida localmente (solo demo)",
+      "localComment": "Comentario añadido localmente (solo demo)",
+      "publishUndone": "Publicación cancelada antes de enviar",
+      "relayFilterEnabled": "Mostrando el space {{relayDomain}}",
+      "relayFilterDisabled": "Ocultando el space {{relayDomain}}",
+      "showingOnlyRelay": "Mostrando el space {{relayDomain}}",
+      "relayFiltersCleared": "Se limpiaron los spaces activos",
+      "allRelaysSelected": "Mostrando todos los spaces conectados",
+      "showingOnlyChannel": "Mostrando el canal #{{channelName}}",
+      "allChannelsIncluded": "Mostrando todos los canales",
+      "allChannelsReset": "Se limpiaron los canales activos",
+      "showingOnlyTag": "Mostrando #{{tag}}",
+      "showingOnlyPerson": "Mostrando publicaciones que involucran a {{personName}}",
+      "showingOnlyPersonExclusive": "Mostrando solo publicaciones con {{personName}}",
+      "removedPersonFilter": "Se quitó el filtro de {{personName}}",
+      "selectedUserFallback": "persona seleccionada",
+      "noFrequentPeople": "No hay personas frecuentes para seleccionar",
+      "frequentPeopleSelected": "Personas frecuentes seleccionadas",
+      "frequentPeopleDeselected": "Se limpiaron las personas seleccionadas",
+      "locationCaptured": "Ubicación establecida en {{geohash}}",
+      "relayVerificationRead": "Verificación del relay para lectura completada en {{relayUrl}}",
+      "relayVerificationWrite": "Verificación del relay para publicación completada en {{relayUrl}}",
+      "relayVerificationUnknown": "Verificación del relay completada en {{relayUrl}}"
+    },
+    "info": {
+      "pendingPublish": "Enviando en {{seconds}} segundos",
+      "relayReconnectAttempt": "Intentando reconectar {{relayDomain}}"
+    },
+    "actions": {
+      "undo": "Deshacer"
+    },
+    "warnings": {
+      "parentLocalOnly": "La referencia al padre es solo local; se publicará la tarea sin enlace al padre",
+      "disconnectedSelectedFeeds": "Vuelve a conectar los spaces seleccionados antes de modificar o publicar",
+      "partialPublish": "Publicado en {{publishedCount}} de {{targetCount}} spaces seleccionados",
+      "readOnlyParentReplyHidden": "Este hilo está en un space de solo lectura, así que las respuestas están deshabilitadas aquí."
+    }
+  },
+  "publishQueue": {
+    "failedCount": "{{count}} publicación no se pudo enviar",
+    "retry": "Reintentar",
+    "retrying": "Reintentando...",
+    "retryHint": "Reintentar en los relays de destino originales",
+    "retryUnavailable": "Selecciona un space original para habilitar reintentar",
+    "repost": "Republicar",
+    "reposting": "Republicando...",
+    "repostHint": "Republicar en los relays de spaces seleccionados actualmente",
+    "repostUnavailable": "Selecciona un space distinto para habilitar republicar",
+    "scopeSelected": "Spaces seleccionados",
+    "scopeAll": "Todas fallidas",
+    "hiddenCount": "{{count}} ocultas",
+    "dismissAll": "Descartar todas",
+    "dismiss": "Descartar publicación fallida"
+  }
+}

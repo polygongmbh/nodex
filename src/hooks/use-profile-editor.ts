@@ -106,11 +106,11 @@ export function useProfileEditor({
     });
   const isUsernameValid = Boolean(trimmedUsername) && !showUsernameInvalid && !showUsernameTaken;
   const usernameHint = showUsernameRequired
-    ? t("filters.profile.nameRequired")
+    ? t("auth.profile.nameRequired")
     : showUsernameInvalid
-      ? t("filters.profile.nameInvalidNip05")
+      ? t("auth.profile.nameInvalidNip05")
       : showUsernameTaken
-        ? t("filters.profile.nameTaken")
+        ? t("auth.profile.nameTaken")
         : null;
   const isUsernameHintError = Boolean(usernameHint);
 
@@ -191,13 +191,13 @@ export function useProfileEditor({
 
   const handleSaveProfile = async () => {
     if (!trimmedUsername) {
-      toast.error(t("filters.profile.nameRequired"));
+      toast.error(t("auth.profile.nameRequired"));
       return false;
     }
     if (!isUsernameValid) {
       toast.error(showUsernameTaken
-        ? t("filters.profile.nameTaken")
-        : t("filters.profile.nameInvalidNip05"));
+        ? t("auth.profile.nameTaken")
+        : t("auth.profile.nameInvalidNip05"));
       return false;
     }
     setIsSavingProfile(true);
@@ -210,10 +210,10 @@ export function useProfileEditor({
         about: about || undefined,
       });
       if (success) {
-        toast.success(t("filters.profile.updated"));
+        toast.success(t("auth.profile.updated"));
         onSaved?.();
       } else {
-        toast.error(t("filters.profile.updateFailed"));
+        toast.error(t("auth.profile.updateFailed"));
       }
       return success;
     } finally {

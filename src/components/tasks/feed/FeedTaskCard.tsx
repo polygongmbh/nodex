@@ -76,7 +76,7 @@ export function FeedTaskCard({
   renderPriorityChip,
   renderDueDateChip,
 }: FeedTaskCardProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
@@ -386,9 +386,9 @@ export function FeedTaskCard({
                     void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
                   }}
                   className="ml-auto shrink-0 text-warning hover:text-warning/80 font-medium"
-                  title={t("toasts.actions.undo")}
+                  title={t("composer:toasts.actions.undo")}
                 >
-                  {t("toasts.actions.undo")}
+                  {t("composer:toasts.actions.undo")}
                 </button>
               ) : null}
             </div>

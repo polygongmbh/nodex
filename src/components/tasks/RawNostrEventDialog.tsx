@@ -19,7 +19,7 @@ interface RawNostrEventDialogProps {
 }
 
 export function RawNostrEventDialog({ open, onOpenChange, event }: RawNostrEventDialogProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const rawJson = useMemo(() => (event ? JSON.stringify(event, null, 2) : ""), [event]);
 
   const handleCopyJson = async () => {

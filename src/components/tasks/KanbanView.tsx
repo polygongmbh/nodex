@@ -49,7 +49,7 @@ export function KanbanView({
   composeRestoreRequest = null,
   isInteractionBlocked = false,
 }: KanbanViewProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, guardModify, focusSidebar, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();

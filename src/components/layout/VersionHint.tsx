@@ -20,7 +20,7 @@ interface VersionHintProps {
 }
 
 export function VersionHint({ className, showChangelogLabel = false, triggerIcon }: VersionHintProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const version = APP_VERSION || "0.0.0";
   const releases = APP_CHANGELOG.slice(0, 16);
   const openChangelogLabel = t("version.openChangelogAria", { version });

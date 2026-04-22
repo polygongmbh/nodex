@@ -55,7 +55,6 @@ import {
   TaskStatus,
 } from "@/types";
 import { toast } from "sonner";
-import { useTranslation } from "react-i18next";
 import {
   DesktopAppShell,
 } from "@/features/feed-page/views/DesktopAppShell";
@@ -76,7 +75,6 @@ import { featureDebugLog } from "@/lib/feature-debug";
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 const Index = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

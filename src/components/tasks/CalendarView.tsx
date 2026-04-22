@@ -82,7 +82,7 @@ export function CalendarView({
   composeRestoreRequest = null,
   isHydrating = false,
 }: CalendarViewProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();
   const activeRelays = relays.filter((relay) => relay.isActive);

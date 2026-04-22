@@ -39,7 +39,15 @@ export function MobileFilters({
   people: peopleProp,
   profileEditorOpenSignal = 0,
 }: MobileFiltersProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("filters");
+  const translateMixedKey = (key: string, values?: Record<string, unknown>) => {
+    if (key.startsWith("auth.")) return t(`auth:${key}`, values);
+    if (key.startsWith("relay.")) return t(`relay:${key}`, values);
+    if (key.startsWith("sidebar.")) return t(`shell:${key}`, values);
+    if (key.startsWith("navigation.")) return t(`shell:${key}`, values);
+    if (key.startsWith("legal.")) return t(`shell:${key}`, values);
+    return t(key, values);
+  };
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const relays = relaysProp ?? surface.relays;
@@ -68,7 +76,7 @@ export function MobileFilters({
     knownProfileNames: people
       .filter((person) => person.id !== user?.pubkey)
       .map((person) => person.name),
-    t,
+    t: translateMixedKey,
     updateUserProfile,
     publishEvent,
     onSaved: () => setIsProfileEditorOpen(false),
@@ -77,21 +85,21 @@ export function MobileFilters({
   const { isUsernameValid } = validation;
 
   const displayName = useMemo(() => {
-    if (!user) return t("filters.profile.notSignedIn");
+    if (!user) return t("auth:auth.profile.notSignedIn");
     return effectiveProfile.displayName || effectiveProfile.name || `${user.npub.slice(0, 8)}...`;
   }, [effectiveProfile.displayName, effectiveProfile.name, t, user]);
 
   const methodLabel = authMethod === "extension"
-    ? t("filters.authMethod.extension")
+    ? t("auth:auth.authMethod.extension")
     : authMethod === "guest"
-      ? t("filters.authMethod.guest")
+      ? t("auth:auth.authMethod.guest")
       : authMethod === "nostrConnect"
-        ? t("filters.authMethod.signer")
+        ? t("auth:auth.authMethod.signer")
         : authMethod === "noas"
-          ? t("filters.authMethod.noas")
+          ? t("auth:auth.authMethod.noas")
         : authMethod === "privateKey"
-          ? t("filters.authMethod.privateKey")
-          : t("filters.authMethod.unknown");
+          ? t("auth:auth.authMethod.privateKey")
+          : t("auth:auth.authMethod.unknown");
 
   const guestPrivateKey = getGuestPrivateKey();
   const preferenceState = {
@@ -112,8 +120,8 @@ export function MobileFilters({
     id: `manage-preference-${preference.id}`,
     checked: preferenceState[preference.key].checked,
     onChange: preferenceState[preference.key].onChange,
-    label: t(preference.labelKey),
-    description: t(preference.descriptionKey),
+    label: translateMixedKey(preference.labelKey),
+    description: translateMixedKey(preference.descriptionKey),
   }));
 
   useEffect(() => {
@@ -141,7 +149,7 @@ export function MobileFilters({
   const handleCopyPrivateKey = () => {
     if (!guestPrivateKey) return;
     navigator.clipboard.writeText(guestPrivateKey);
-    toast.success(t("filters.profile.copiedPrivateKey"));
+    toast.success(t("auth:auth.profile.copiedPrivateKey"));
   };
 
   return (
@@ -153,11 +161,11 @@ export function MobileFilters({
                 void dispatchFeedInteraction({ type: "ui.openGuide" });
               }}
               className="flex-1 rounded-lg border border-border px-3 py-2.5 text-sm text-left hover:bg-muted/50 active:bg-muted transition-colors inline-flex items-center gap-2 touch-target-sm"
-              aria-label={t("sidebar.actions.openGuide")}
-              title={t("sidebar.actions.openGuide")}
+              aria-label={t("shell:sidebar.actions.openGuide")}
+              title={t("shell:sidebar.actions.openGuide")}
             >
               <Sparkles className="w-4 h-4 text-primary" />
-              {t("navigation.mobile.openGuide")}
+              {t("shell:navigation.mobile.openGuide")}
             </button>
             <LanguageToggle
               className="h-10 flex-1 justify-between rounded-lg border border-border bg-background px-3 text-sm font-medium hover:bg-muted/70 data-[state=open]:bg-muted/70"
@@ -166,13 +174,13 @@ export function MobileFilters({
           </div>
           <div className="mt-2 grid grid-cols-4 gap-2">
             <LegalDialog
-              triggerLabel={t("legal.buttons.imprint")}
+              triggerLabel={t("shell:legal.buttons.imprint")}
               triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
               defaultSection="imprint"
               triggerIcon={<Scale className="h-3.5 w-3.5 shrink-0" />}
             />
             <LegalDialog
-              triggerLabel={t("legal.buttons.privacy")}
+              triggerLabel={t("shell:legal.buttons.privacy")}
               triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
               defaultSection="privacy"
               triggerIcon={<ShieldCheck className="h-3.5 w-3.5 shrink-0" />}
@@ -180,11 +188,11 @@ export function MobileFilters({
             <a
               href={`mailto:${legalContactEmail}`}
               className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2 text-xs text-center text-muted-foreground hover:bg-muted/50 active:bg-muted hover:text-foreground touch-target-sm"
-              aria-label={t("legal.hints.contactByEmail")}
-              title={t("legal.hints.contactByEmail")}
+              aria-label={t("shell:legal.hints.contactByEmail")}
+              title={t("shell:legal.hints.contactByEmail")}
             >
               <Mail className="h-3.5 w-3.5" />
-              {t("legal.buttons.contact")}
+              {t("shell:legal.buttons.contact")}
             </a>
             <VersionHint
               className="w-full rounded-lg border border-border px-2 py-2 text-xs text-center text-muted-foreground/80 hover:bg-muted/50 hover:text-foreground touch-target-sm"
@@ -198,7 +206,7 @@ export function MobileFilters({
         <section data-onboarding="mobile-filters-profile">
           <div className="flex items-center gap-2 mb-3">
             <User className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">{t("filters.profile.title")}</h2>
+            <h2 className="font-semibold text-sm">{t("auth:auth.profile.title")}</h2>
           </div>
           <div className="space-y-3 rounded-lg border border-border p-3">
             <div className="flex items-center justify-between gap-2">
@@ -207,8 +215,8 @@ export function MobileFilters({
                 {user && (
                   <p className="text-xs text-muted-foreground">
                     {authMethod === "guest"
-                      ? t("filters.profile.signedInAs", { method: methodLabel })
-                      : t("filters.profile.signedInVia", { method: methodLabel })}
+                      ? t("auth:auth.profile.signedInAs", { method: methodLabel })
+                      : t("auth:auth.profile.signedInVia", { method: methodLabel })}
                   </p>
                 )}
               </div>
@@ -220,7 +228,7 @@ export function MobileFilters({
                   className="px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5 touch-target-sm active:scale-95 transition-transform"
                 >
                   <LogIn className="w-4 h-4" />
-                  {t("filters.profile.signin")}
+                  {t("auth:auth.profile.signin")}
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
@@ -229,7 +237,7 @@ export function MobileFilters({
                     className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
-                    {t("filters.profile.edit")}
+                    {t("auth:auth.profile.edit")}
                     <ChevronDown
                       className={cn(
                         "w-3.5 h-3.5 transition-transform",
@@ -242,7 +250,7 @@ export function MobileFilters({
                     className="px-3 py-2 rounded-lg text-sm border border-destructive/40 text-destructive flex items-center gap-1.5 touch-target-sm active:bg-destructive/10 transition-colors"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    {t("filters.profile.signout")}
+                    {t("auth:auth.profile.signout")}
                   </button>
                 </div>
               )}
@@ -254,7 +262,7 @@ export function MobileFilters({
                   fields={fields}
                   validation={validation}
                   fieldActions={fieldActions}
-                  t={t}
+                  t={translateMixedKey}
                 />
                 <div className="flex items-center justify-end gap-2 pt-2">
                   {!needsProfileSetup && (
@@ -265,7 +273,7 @@ export function MobileFilters({
                       className="touch-target-sm"
                       disabled={isSavingProfile}
                     >
-                      {t("filters.profile.cancel")}
+                      {t("auth:auth.profile.cancel")}
                     </Button>
                   )}
                   <Button
@@ -274,7 +282,7 @@ export function MobileFilters({
                     className="touch-target-sm"
                     disabled={isSavingProfile || !isUsernameValid}
                   >
-                    {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
+                    {isSavingProfile ? t("auth:auth.profile.saving") : t("auth:auth.profile.save")}
                   </Button>
                 </div>
               </>
@@ -295,7 +303,7 @@ export function MobileFilters({
           <section data-onboarding="mobile-filters-preferences">
             <div className="flex items-center gap-2 mb-3">
               <User className="w-4 h-4 text-primary" />
-              <h2 className="font-semibold text-sm">{t("filters.profile.appPreferencesTitle")}</h2>
+              <h2 className="font-semibold text-sm">{t("auth:auth.profile.appPreferencesTitle")}</h2>
             </div>
             <div className="rounded-lg border border-border p-3">
               <div className="space-y-3">
@@ -379,8 +387,8 @@ export function MobileFilters({
                         "inline-block h-2 w-2 rounded-full shrink-0",
                         connectionDotClass
                       )}
-                      title={resolvedConnectionStatus === "read-only" ? t("relay.statusHints.readOnly") : resolvedConnectionStatus}
-                      aria-label={resolvedConnectionStatus === "read-only" ? t("relay.statusHints.readOnly") : resolvedConnectionStatus}
+                      title={resolvedConnectionStatus === "read-only" ? t("relay:relay.statusHints.readOnly") : resolvedConnectionStatus}
+                      aria-label={resolvedConnectionStatus === "read-only" ? t("relay:relay.statusHints.readOnly") : resolvedConnectionStatus}
                     />
                     {relay.isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
                   </button>

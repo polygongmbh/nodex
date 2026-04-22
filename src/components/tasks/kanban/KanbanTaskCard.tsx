@@ -46,7 +46,7 @@ export function KanbanTaskCard({
   isPendingPublish,
   hasChildren,
 }: KanbanTaskCardProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
@@ -109,7 +109,7 @@ export function KanbanTaskCard({
             id={`kanban-priority-${task.id}`}
             taskId={task.id}
             priority={task.priority}
-            ariaLabel={t("composer.labels.priority")}
+            ariaLabel={t("composer:composer.labels.priority")}
             disabled={!canChangeStatus}
             stopPropagation
             className={cn(
@@ -153,9 +153,9 @@ export function KanbanTaskCard({
               void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
             }}
             className="text-xs font-medium text-warning hover:text-warning/80"
-            title={t("toasts.actions.undo")}
+            title={t("composer:toasts.actions.undo")}
           >
-            {t("toasts.actions.undo")}
+            {t("composer:toasts.actions.undo")}
           </button>
         </div>
       ) : null}

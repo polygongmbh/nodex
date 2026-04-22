@@ -152,7 +152,7 @@ function renderStandaloneEmbed(url: string, key: string, options?: LinkifyOption
       <div key={key} className="max-w-xl overflow-hidden rounded-md border border-border/60 bg-muted/20 group">
         <iframe
           src={youtubeEmbedUrl}
-          title={i18n.t("linkify.embeddedVideo")}
+          title={i18n.t("tasks:linkify.embeddedVideo")}
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
@@ -183,7 +183,7 @@ function renderStandaloneEmbed(url: string, key: string, options?: LinkifyOption
       >
         <img
           src={url}
-          alt={caption || i18n.t("linkify.embeddedAttachment")}
+          alt={caption || i18n.t("tasks:linkify.embeddedAttachment")}
           loading="lazy"
           className="max-h-64 w-auto rounded-md border border-border/60 bg-muted/30 object-contain"
         />

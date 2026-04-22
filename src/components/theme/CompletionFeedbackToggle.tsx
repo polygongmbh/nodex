@@ -10,7 +10,7 @@ interface CompletionFeedbackToggleProps {
 }
 
 export function CompletionFeedbackToggle({ enabled, onToggle, className }: CompletionFeedbackToggleProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
 
   return (
     <Button

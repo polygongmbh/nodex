@@ -1,0 +1,255 @@
+{
+  "composer": {
+    "placeholders": {
+      "base": {
+        "task": {
+          "withContext": "Erstelle eine Unteraufgabe zu {{title}}",
+          "withoutContext": "Erstelle eine Aufgabe"
+        },
+        "comment": {
+          "withContext": "Füge einen Kommentar zu {{title}} hinzu",
+          "withoutContext": "Füge einen Kommentar hinzu"
+        },
+        "offer": {
+          "withContext": "Veröffentliche ein Angebot unter {{title}}",
+          "withoutContext": "Veröffentliche ein Angebot"
+        },
+        "request": {
+          "withContext": "Veröffentliche ein Gesuch unter {{title}}",
+          "withoutContext": "Veröffentliche ein Gesuch"
+        }
+      },
+      "parts": {
+        "inChannels": "in {{channels}}",
+        "mentioningPeople": "mit Erwähnung von {{people}}",
+        "fallbackGuidance": "nutze #channels und @mentions"
+      },
+      "mobileSearchCreatePosts": {
+        "withContext": "Finde und erstelle Beiträge unter {{title}}",
+        "withoutContext": "Finde und erstelle Beiträge"
+      },
+      "mobileTask": "Suchen oder Aufgabe erstellen... #tags",
+      "mobileComment": "Suchen oder Kommentar hinzufügen... #tags",
+      "geohash": "Geohash eingeben (z. B. u4pruyd)"
+    },
+    "blocked": {
+      "signin": "Anmeldung erforderlich",
+      "write": "Schreibe zuerst eine Nachricht",
+      "tag": "Mindestens einen #channel hinzufügen oder auswählen",
+      "commentRelay": "Wähle mindestens einen grünen Space, um einen Kommentar zu posten",
+      "relay": "Wähle einen einzelnen Space oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
+      "selectTask": "Wähle eine Aufgabe zum Antworten",
+      "publishing": "Wird veröffentlicht..."
+    },
+    "blockedDetail": {
+      "title": "Noch nicht sendebereit",
+      "detail": {
+        "signin": "Melde dich an, um diesen Beitrag zu veröffentlichen.",
+        "write": "Füge zuerst etwas Text hinzu und versuche es dann erneut.",
+        "tag": "Füge mindestens ein Channel-Tag wie #design hinzu oder nutze einen eingeschlossenen Channel-Filter.",
+        "commentRelay": "Kommentare können auf jedem grünen Space veröffentlicht werden.",
+        "relay": "Wähle für eine neue Aufgabe genau einen grünen Space oder poste aus einer bestehenden Aufgabe heraus.",
+        "selectTask": "Öffne zuerst eine Aufgabe, wenn du einen Kommentar posten willst.",
+        "uploading": "Deine Anhänge werden noch hochgeladen. Das Posten wird automatisch freigeschaltet, sobald sie fertig sind.",
+        "uploadFailed": "Versuche fehlgeschlagene Anhänge erneut oder entferne sie, bevor du postest.",
+        "publishing": "Dieser Beitrag wird bereits veröffentlicht."
+      },
+      "cta": {
+        "write": "Nachricht schreiben",
+        "tag": "#channel hinzufügen",
+        "commentRelay": "Space wählen",
+        "relay": "Space auswählen",
+        "selectTask": "Aufgabe wählen",
+        "uploading": "Auf Uploads warten",
+        "uploadFailed": "Anhänge korrigieren",
+        "publishing": "Wird veröffentlicht..."
+      }
+    },
+    "actions": {
+      "createTask": "Aufgabe erstellen",
+      "addComment": "Kommentar hinzufügen",
+      "postOffer": "Angebot inserieren",
+      "postRequest": "Gesuch inserieren",
+      "signin": "Anmelden",
+      "useCurrentLocation": "Aktuellen Standort verwenden",
+      "clearLocation": "Standort entfernen",
+      "location": "Standort"
+    },
+    "attachments": {
+      "add": "Anhang hinzufügen",
+      "remove": "Anhang entfernen",
+      "altPlaceholder": "Alternativtext (optional)",
+      "altLabel": "Alternativtext für Anhang",
+      "uploading": "Lädt hoch...",
+      "retry": "Erneut versuchen",
+      "failed": "Fehlgeschlagen",
+      "ready": "Bereit",
+      "uploadFailed": "Upload fehlgeschlagen",
+      "uploadFailedWithStatus": "Upload fehlgeschlagen ({{status}})",
+      "uploadUrlMissing": "Upload-URL für Anhänge ist nicht konfiguriert",
+      "networkError": "Upload-Anfrage fehlgeschlagen (Netzwerk oder CORS)",
+      "invalidJson": "Upload-Antwort war kein gültiges JSON",
+      "missingFileUrl": "Upload-Antwort enthielt keine Datei-URL",
+      "maxSizeExceeded": "Datei überschreitet die maximale Upload-Größe von {{maxSizeMb}} MB",
+      "waitForUploads": "Warte, bis Anhänge fertig hochgeladen sind",
+      "retryFailed": "Fehlgeschlagene Anhänge erneut versuchen oder entfernen",
+      "dropOrPasteHint": "Dateien ablegen oder Bilder einfügen",
+      "dropFiles": "Dateien zum Anhängen ablegen"
+    },
+    "nip99": {
+      "title": "Listing-Titel",
+      "location": "Ort",
+      "price": "Preis",
+      "currency": "Währung",
+      "frequency": "Preisintervall",
+      "status": "Listing-Status",
+      "summary": "Zusammenfassung",
+      "defaultTitle": "Listing",
+      "frequencyOptions": {
+        "oneTime": "Einmalig",
+        "hour": "Stunde",
+        "day": "Tag",
+        "week": "Woche",
+        "month": "Monat",
+        "year": "Jahr"
+      },
+      "statusOptions": {
+        "active": "Aktiv",
+        "sold": "Verkauft"
+      }
+    },
+    "labels": {
+      "dateType": "Datumstyp",
+      "priority": "Priorität",
+      "priorityShort": "⚑ Priorität",
+      "kind": "Typ",
+      "task": "Aufgabe",
+      "comment": "Kommentar",
+      "offer": "Angebot",
+      "request": "Gesuch",
+      "mentions": "Erwähnungen",
+      "date": "Datum"
+    },
+    "priorityLevels": {
+      "1": "P1 - Niedrig",
+      "2": "P2 - Normal",
+      "3": "P3 - Relevant",
+      "4": "P4 - Wichtig",
+      "5": "P5 - Kritisch"
+    },
+    "hints": {
+      "composeField": "#channel-Tags und @Erwähnungen in diesem Feld verwenden",
+      "insertHashtag": "Hashtag einfügen",
+      "insertHashtagOpen": "Hashtag einfügen und Kanalvorschläge öffnen",
+      "insertMention": "Erwähnung einfügen",
+      "insertMentionOpen": "@Erwähnung einfügen und Personenvorschläge öffnen",
+      "clearCompose": "Eingabe leeren",
+      "createFromText": "Aus aktuellem Text erstellen",
+      "signInToCreate": "Zum Erstellen anmelden",
+      "clearDueDate": "Fälligkeitsdatum entfernen"
+    },
+    "dates": {
+      "setOptional": "{{dateType}}-Datum setzen (optional)",
+      "due": "Fällig",
+      "scheduled": "Geplant",
+      "start": "Start",
+      "end": "Ende",
+      "milestone": "Meilenstein"
+    },
+    "savedFilters": {
+      "actions": {
+        "saveCurrent": "Filter speichern",
+        "rename": "Umbenennen",
+        "delete": "Löschen",
+        "menu": "Gespeicherte Filteroptionen"
+      },
+      "prompts": {
+        "save": "Name für dieses Filter-Preset",
+        "rename": "Dieses Filter-Preset umbenennen"
+      }
+    }
+  },
+  "toasts": {
+    "errors": {
+      "needTag": "Mindestens einen #channel vor dem Veröffentlichen hinzufügen",
+      "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
+      "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",
+      "statusRestricted": "Aufgaben-Updates sind auf markierte Zuständige und den Ersteller beschränkt",
+      "selectRelayOrParent": "Wähle einen einzelnen Space oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
+      "publishStatusFailed": "Status-Update konnte nicht an Relays veröffentlicht werden",
+      "publishDateFailed": "Datums-Update konnte nicht an Relay veröffentlicht werden",
+      "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden",
+      "taskCreationFailed": "Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
+      "publishSavedForRetry": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert",
+      "publishSavedForRetryWithReason": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert ({{reason}})",
+      "publishSavedForRetryWithRelayReason": "Veröffentlichung auf {{relayUrl}} fehlgeschlagen; für erneuten Versuch gespeichert ({{reason}})",
+      "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Space ist nicht mehr konfiguriert",
+      "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Space nicht akzeptiert",
+      "retryRejectedByRelayWithReason": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Space nicht akzeptiert ({{reason}})",
+      "publishListingStatusFailed": "Listing-Statusupdate konnte nicht an den Relay veröffentlicht werden",
+      "locationUnavailable": "Standortdienste sind auf diesem Gerät nicht verfügbar",
+      "locationCaptureFailed": "Aktueller Standort konnte nicht ermittelt werden",
+      "relayVerificationReadFailed": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
+      "relayVerificationWriteFailed": "Relay-Verifizierung fürs Veröffentlichen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
+      "relayVerificationUnknownFailed": "Relay-Verifizierung auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
+      "relayReconnectFailedDeselected": "Verbindung zu {{relayDomain}} konnte nicht wiederhergestellt werden. Der Space wurde wieder abgewählt."
+    },
+    "success": {
+      "publishedTask": "Aufgabe an Nostr veröffentlicht und lokal hinzugefügt",
+      "publishedComment": "Kommentar an Nostr veröffentlicht und lokal hinzugefügt",
+      "publishedToSpaces": "In Space {{spaceNames}} veröffentlicht",
+      "localTask": "Aufgabe lokal hinzugefügt (nur Demo)",
+      "localComment": "Kommentar lokal hinzugefügt (nur Demo)",
+      "publishUndone": "Beitrag vor dem Senden zurückgenommen",
+      "relayFilterEnabled": "Space {{relayDomain}} wird angezeigt",
+      "relayFilterDisabled": "Space {{relayDomain}} wird ausgeblendet",
+      "showingOnlyRelay": "Space {{relayDomain}} wird angezeigt",
+      "relayFiltersCleared": "Aktive Spaces gelöscht",
+      "allRelaysSelected": "Alle verbundenen Spaces werden angezeigt",
+      "showingOnlyChannel": "Kanal #{{channelName}} wird angezeigt",
+      "allChannelsIncluded": "Alle Kanäle werden angezeigt",
+      "allChannelsReset": "Aktive Kanäle zurückgesetzt",
+      "showingOnlyTag": "#{{tag}} wird angezeigt",
+      "showingOnlyPerson": "Zeige Inhalte mit {{personName}}",
+      "showingOnlyPersonExclusive": "Zeige nur Inhalte mit {{personName}}",
+      "removedPersonFilter": "Filter für {{personName}} entfernt",
+      "selectedUserFallback": "ausgewählte Person",
+      "noFrequentPeople": "Keine häufigen Personen zum Auswählen",
+      "frequentPeopleSelected": "Häufige Personen ausgewählt",
+      "frequentPeopleDeselected": "Ausgewählte Personen abgewählt",
+      "locationCaptured": "Standort auf {{geohash}} gesetzt",
+      "relayVerificationRead": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} erfolgreich",
+      "relayVerificationWrite": "Relay-Verifizierung fürs Veröffentlichen auf {{relayUrl}} erfolgreich",
+      "relayVerificationUnknown": "Relay-Verifizierung auf {{relayUrl}} erfolgreich"
+    },
+    "info": {
+      "pendingPublish": "Wird in {{seconds}} Sekunden gesendet",
+      "relayReconnectAttempt": "Verbindung zu {{relayDomain}} wird erneut versucht"
+    },
+    "actions": {
+      "undo": "Rückgängig"
+    },
+    "warnings": {
+      "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link veröffentlicht",
+      "disconnectedSelectedFeeds": "Verbinde die ausgewählten Spaces wieder, bevor du etwas änderst oder veröffentlichst",
+      "partialPublish": "Veröffentlicht auf {{publishedCount}} von {{targetCount}} ausgewählten Spaces",
+      "readOnlyParentReplyHidden": "Dieser Thread liegt auf einem schreibgeschützten Space, daher sind Antworten hier deaktiviert."
+    }
+  },
+  "publishQueue": {
+    "failedCount": "{{count}} Beitrag konnte nicht veröffentlicht werden",
+    "retry": "Erneut versuchen",
+    "retrying": "Wird erneut versucht...",
+    "retryHint": "Erneut auf den ursprünglichen Relay-Zielen veröffentlichen",
+    "retryUnavailable": "Wähle einen ursprünglichen Space, um den erneuten Versuch zu aktivieren",
+    "repost": "Neu auf Space posten",
+    "reposting": "Wird neu gepostet...",
+    "repostHint": "Auf aktuell ausgewählten Space-Relays neu veröffentlichen",
+    "repostUnavailable": "Wähle einen anderen Space, um Neu posten zu aktivieren",
+    "scopeSelected": "Ausgewählte Spaces",
+    "scopeAll": "Alle fehlgeschlagenen",
+    "hiddenCount": "{{count}} ausgeblendet",
+    "dismissAll": "Alle schließen",
+    "dismiss": "Fehlgeschlagenen Beitrag schließen"
+  }
+}

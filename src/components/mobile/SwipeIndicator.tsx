@@ -9,7 +9,7 @@ interface SwipeIndicatorProps {
 }
 
 export function SwipeIndicator({ views, currentView, showFilters = false }: SwipeIndicatorProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const currentIndex = showFilters ? -1 : views.indexOf(currentView);
   const totalDots = views.length + 1; // +1 for filters
 

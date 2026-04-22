@@ -19,7 +19,7 @@ export function ChannelItem({
   isKeyboardFocused = false,
   className,
 }: ChannelItemProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const nextFilterStateLabel =
     channel.filterState === "neutral"

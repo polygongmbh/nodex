@@ -1,0 +1,44 @@
+{
+  "filters": {
+    "feeds": {
+      "title": "Spaces",
+      "placeholder": "wss://relay.example.com",
+      "add": "Hinzufügen",
+      "addAria": "Space hinzufügen",
+      "remove": "Entfernen",
+      "removeAria": "Space {{name}} entfernen"
+    },
+    "channels": {
+      "title": "Kanäle",
+      "cycleHint": "Tippen zum Wechseln: neutral -> einschließen -> ausschließen",
+      "matchMode": "Beiträge anzeigen, die allen ausgewählten Kanälen (UND) oder einem beliebigen ausgewählten Kanal (ODER) entsprechen",
+      "modeAnd": "UND",
+      "modeOr": "ODER"
+    },
+    "people": {
+      "title": "Personen"
+    }
+  },
+  "search": {
+    "desktop": {
+      "placeholder": {
+        "withContext": "Beiträge unter {{title}} suchen",
+        "withoutContext": "Beiträge suchen"
+      },
+      "clear": "Suche löschen"
+    },
+    "kanban": {
+      "depthHint": "Kanban-Tiefenfilter: Root-Aufgaben, begrenzte Tiefe, alle Ebenen oder nur Blätter (Aufgaben ohne Unteraufgaben)",
+      "topLevel": "Oberste Ebene",
+      "topLevelHint": "Nur Root-Aufgaben anzeigen (ohne übergeordnete Aufgabe)",
+      "projectsOnly": "Nur Projekte",
+      "projectsOnlyHint": "Nur Root-Aufgaben mit Unteraufgaben anzeigen",
+      "levels": "{{count}} Ebenen",
+      "levelsHint": "Aufgaben bis zu {{count}} Hierarchieebenen anzeigen",
+      "allLevels": "Alle Ebenen",
+      "allLevelsHint": "Alle Eltern- und Unteraufgaben über jede Tiefe anzeigen",
+      "leavesOnly": "Nur Blätter",
+      "leavesOnlyHint": "Nur Blattaufgaben anzeigen (Aufgaben ohne Unteraufgaben)"
+    }
+  }
+}

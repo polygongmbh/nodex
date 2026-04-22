@@ -21,7 +21,7 @@ function resolveCurrentLanguage(language: string): SupportedLanguage {
 }
 
 export function LanguageToggle({ className, showLabelOnMobile = false }: LanguageToggleProps) {
-  const { i18n, t } = useTranslation();
+  const { i18n, t } = useTranslation("shell");
   const current = resolveCurrentLanguage(i18n.resolvedLanguage || i18n.language);
   const currentLabel = t(`language.${current}`);
 

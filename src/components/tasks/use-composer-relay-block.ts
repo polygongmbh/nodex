@@ -19,7 +19,7 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
   const { relays } = useFeedSurfaceState();
   const { allTasks } = useFeedTaskViewModel();
   const authPolicy = useAuthActionPolicy();
-  const { t } = useTranslation();
+  const { t } = useTranslation("composer");
 
   const parentTask = useMemo(
     () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) : undefined),

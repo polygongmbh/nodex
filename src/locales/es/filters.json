@@ -1,0 +1,44 @@
+{
+  "filters": {
+    "feeds": {
+      "title": "Spaces",
+      "placeholder": "wss://relay.example.com",
+      "add": "Añadir",
+      "addAria": "Añadir space",
+      "remove": "Eliminar",
+      "removeAria": "Eliminar space {{name}}"
+    },
+    "channels": {
+      "title": "Canales",
+      "cycleHint": "Toca para cambiar: neutral → incluir → excluir",
+      "matchMode": "Mostrar publicaciones que coincidan con todos los canales seleccionados (Y) o con cualquiera de los canales seleccionados (O)",
+      "modeAnd": "Y",
+      "modeOr": "O"
+    },
+    "people": {
+      "title": "Personas"
+    }
+  },
+  "search": {
+    "desktop": {
+      "placeholder": {
+        "withContext": "Buscar publicaciones en {{title}}",
+        "withoutContext": "Buscar publicaciones"
+      },
+      "clear": "Borrar búsqueda"
+    },
+    "kanban": {
+      "depthHint": "Filtro de profundidad Kanban: tareas raíz, profundidad limitada, todos los niveles o solo hojas (tareas sin subtareas)",
+      "topLevel": "Nivel superior",
+      "topLevelHint": "Mostrar solo tareas raíz (sin tarea padre)",
+      "projectsOnly": "Solo proyectos",
+      "projectsOnlyHint": "Mostrar solo tareas raíz que contienen subtareas",
+      "levels": "{{count}} niveles",
+      "levelsHint": "Mostrar tareas hasta {{count}} niveles de profundidad",
+      "allLevels": "Todos los niveles",
+      "allLevelsHint": "Mostrar todas las tareas padre y subtareas en cualquier profundidad",
+      "leavesOnly": "Solo hojas",
+      "leavesOnlyHint": "Mostrar solo tareas hoja (tareas sin subtareas)"
+    }
+  }
+}

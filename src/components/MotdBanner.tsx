@@ -32,7 +32,7 @@ function saveDismissedMotd(motd: string): void {
 }
 
 export function MotdBanner() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const motd = useMemo(() => resolveMotd(), []);
   const [dismissed, setDismissed] = useState(() => (motd ? loadDismissedMotd(motd) : false));
   const pointerGestureRef = useRef<PointerGestureState | null>(null);

@@ -1,0 +1,17 @@
+{
+  "app": {
+    "loadingView": "Ansicht wird geladen..."
+  },
+  "appError": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Die App ist auf einen unerwarteten Fehler gestoßen. Du kannst neu laden oder zur Hauptansicht zurückkehren.",
+    "reload": "App neu laden",
+    "goHome": "Zur Startseite",
+    "unexpected": "Unerwarteter Anwendungsfehler"
+  },
+  "notFound": {
+    "message": "Ups! Seite nicht gefunden",
+    "goHome": "Zur Startseite",
+    "goHomeTitle": "Zur Haupt-App"
+  }
+}

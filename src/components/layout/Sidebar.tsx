@@ -38,7 +38,7 @@ interface SidebarHeaderProps {
 }
 
 export function SidebarHeader({ className }: SidebarHeaderProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const appVersionHint = `Nodex v${APP_VERSION || "0.0.0"}`;
 
   return (
@@ -90,7 +90,7 @@ export function Sidebar({
   savedFilterConfigurations = [],
   activeSavedFilterConfigurationId = null,
 }: SidebarProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [expandedSections, setExpandedSections] = useState(() => sidebarExpandedSectionsSnapshot);
   const [screenHeight, setScreenHeight] = useState(() =>

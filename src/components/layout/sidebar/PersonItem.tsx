@@ -24,7 +24,7 @@ export function PersonItem({
   isKeyboardFocused = false,
   className,
 }: PersonItemProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const personName = person.id === "me" ? t("sidebar.filters.me") : person.displayName;
   const onlineStatus = person.onlineStatus ?? (person.isOnline ? "online" : "offline");
@@ -132,8 +132,8 @@ export function PersonItem({
           type="button"
           data-testid={`person-item-actions-${person.id}`}
           className="rounded p-1 text-sidebar-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-accent/70 hover:text-foreground"
-          aria-label={t("people.actions.openMenu", { name: personName })}
-          title={t("people.actions.openMenu", { name: personName })}
+          aria-label={t("tasks:people.actions.openMenu", { name: personName })}
+          title={t("tasks:people.actions.openMenu", { name: personName })}
         >
           <MoreHorizontal className="h-3.5 w-3.5" />
         </button>

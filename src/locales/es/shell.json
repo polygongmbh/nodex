@@ -1,0 +1,172 @@
+{
+  "language": {
+    "label": "Idioma",
+    "en": "English",
+    "de": "Deutsch",
+    "es": "Español"
+  },
+  "legal": {
+    "buttons": {
+      "imprint": "Aviso legal",
+      "privacy": "Privacidad",
+      "contact": "Contacto",
+      "imprintPrivacy": "Aviso legal y privacidad"
+    },
+    "hints": {
+      "openImprintAndPrivacy": "Abrir aviso legal y política de privacidad",
+      "contactByEmail": "Contactar por correo electrónico"
+    }
+  },
+  "version": {
+    "openChangelogAria": "Versión de Nodex {{version}} (abrir registro de cambios)",
+    "hintWithChangelog": "v{{version}} Cambios"
+  },
+  "motd": {
+    "dismiss": "Cerrar mensaje"
+  },
+  "navigation": {
+    "aria": {
+      "viewSwitcher": "Selector de vista",
+      "views": "Vistas de navegación"
+    },
+    "views": {
+      "manage": "Gestionar",
+      "tree": "Árbol",
+      "feed": "Cronología",
+      "kanban": "Kanban",
+      "calendar": "Calendario",
+      "list": "Tabla",
+      "upcoming": "Próximas",
+      "switchTo": "Cambiar a la vista {{view}}"
+    },
+    "mobile": {
+      "openGuide": "Abrir guía",
+      "currentViewPosition": "Posición de la vista actual"
+    }
+  },
+  "sidebar": {
+    "tagline": "Plataforma de colaboración",
+    "sections": {
+      "feeds": "Spaces",
+      "channels": "Canales",
+      "people": "Personas"
+    },
+    "hints": {
+      "relays": "Relays",
+      "clickToFilter": "Clic para filtrar"
+    },
+    "actions": {
+      "addRelay": "Añadir relay",
+      "openShortcuts": "Abrir ayuda de atajos de teclado",
+      "shortcuts": "Atajos",
+      "shortcutsTooltip": "Atajos de teclado (?)",
+      "openGuide": "Abrir guía de onboarding",
+      "guide": "Guía",
+      "clearChannelFilters": "Quitar filtros de canales",
+      "clearPeopleFilters": "Quitar filtros de personas",
+      "showAllChannels": "Mostrar todos los canales",
+      "hideChannels": "Contraer canales",
+      "showAllPeople": "Mostrar todas las personas",
+      "hidePeople": "Contraer personas",
+      "toggleAllConnectedSpaces": "Alternar todos los spaces conectados",
+      "toggleSidebar": "Mostrar/ocultar barra lateral"
+    },
+    "filterStates": {
+      "include": "incluir",
+      "exclude": "excluir",
+      "unfiltered": "sin filtrar"
+    },
+    "filters": {
+      "toggleRelay": "Mostrar u ocultar publicaciones de {{name}}",
+      "showOnlyRelay": "Mostrar solo publicaciones de {{name}}",
+      "toggleChannelTo": "Incluir, excluir o ignorar #{{name}}",
+      "toggleChannelFilter": "Incluir, excluir o ignorar #{{name}}",
+      "showOnlyChannel": "Mostrar solo publicaciones con #{{name}}",
+      "togglePerson": "Mostrar u ocultar publicaciones con {{name}}",
+      "showOnlyPerson": "Mostrar solo contenido que involucre a {{name}}",
+      "selected": "{{name}} seleccionado",
+      "me": "Yo",
+      "pinChannelToView": "Mantener #{{name}} visible en la barra lateral",
+      "unpinChannelFromView": "Dejar de mantener #{{name}} visible en la barra lateral",
+      "pinPersonToView": "Mantener {{name}} visible en la barra lateral",
+      "unpinPersonFromView": "Dejar de mantener {{name}} visible en la barra lateral"
+    },
+    "quickFilters": {
+      "chips": {
+        "recent": "Recientes {{days}}d",
+        "priority": "Prioridad P{{priority}}+"
+      },
+      "labels": {
+        "recent": "Recientes",
+        "recentDays": "Antigüedad en días",
+        "priority": "Prioridad",
+        "minPriority": "Prioridad mínima"
+      },
+      "actions": {
+        "add": "Añadir",
+        "edit": "Editar",
+        "clear": "Limpiar",
+        "remove": "Quitar {{filterName}}",
+        "toggleRecent": "Mostrar solo publicaciones de los últimos {{days}} días",
+        "togglePriority": "Ocultar tareas por debajo de la prioridad mínima"
+      }
+    }
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "groups": {
+      "views": "Vistas",
+      "taskNavigation": "Navegación de tareas",
+      "sidebarNavigation": "Navegación lateral",
+      "kanban": "Kanban",
+      "general": "General",
+      "compose": "Redacción"
+    },
+    "items": {
+      "treeView": "Vista de árbol",
+      "feedView": "Vista de cronología",
+      "kanbanView": "Vista kanban",
+      "calendarView": "Vista de calendario",
+      "tableView": "Vista de tabla",
+      "moveFocusDown": "Mover foco hacia abajo",
+      "moveFocusUp": "Mover foco hacia arriba",
+      "openSelectTask": "Abrir/seleccionar tarea",
+      "focusSidebarGoBack": "Enfocar barra lateral (arriba) / volver",
+      "jumpFirstTask": "Ir a la primera tarea",
+      "jumpLastTask": "Ir a la última tarea",
+      "clearFocus": "Quitar foco",
+      "navigateFilters": "Navegar filtros",
+      "toggleSelectedFilter": "Activar/desactivar filtro seleccionado",
+      "returnTaskList": "Volver a la lista de tareas",
+      "jumpFirstFilter": "Ir al primer filtro",
+      "jumpLastFilter": "Ir al último filtro",
+      "navigateColumns": "Navegar entre columnas",
+      "navigateWithinColumn": "Navegar dentro de la columna",
+      "moveTaskColumns": "Mover tarea entre columnas",
+      "toggleKeyboardShortcuts": "Mostrar/ocultar atajos de teclado",
+      "toggleChannelMatchMode": "Alternar coincidencia de canales entre Y y O",
+      "toggleRecentFilter": "Alternar el filtro de días recientes",
+      "togglePriorityFilter": "Alternar el filtro de prioridad mínima",
+      "toggleCompactCards": "Alternar tarjetas compactas en árbol y kanban",
+      "openRawEventJson": "Abrir el JSON bruto del evento Nostr de una publicación",
+      "submitCurrentKind": "Enviar como tipo actual",
+      "submitOppositeKind": "Enviar como tipo opuesto (cuando no hay autocompletado abierto)",
+      "insertHighlightedSuggestion": "Con autocompletado abierto: insertar sugerencia resaltada",
+      "addMetadataOnly": "Con autocompletado @/# abierto: añadir etiqueta/mención resaltada solo como metadatos de publicación (sin texto del token)"
+    }
+  },
+  "theme": {
+    "mode": {
+      "auto": "Tema automático",
+      "light": "Tema claro",
+      "dark": "Tema oscuro"
+    },
+    "switchTo": "Cambiar a {{mode}}."
+  },
+  "feedback": {
+    "sound": {
+      "on": "Sonido de finalización activado",
+      "off": "Sonido de finalización desactivado"
+    }
+  }
+}

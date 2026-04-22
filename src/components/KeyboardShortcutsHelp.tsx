@@ -26,7 +26,7 @@ interface KeyboardShortcutsHelpProps {
 }
 
 export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shortcutGroups: ShortcutGroup[] = [
     {
@@ -205,7 +205,7 @@ export function useKeyboardShortcutsHelp() {
 
 // Small button component to show in the UI
 export function KeyboardShortcutsButton({ onClick }: { onClick: () => void }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   return (
     <Button
       variant="ghost"

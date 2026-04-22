@@ -1,0 +1,255 @@
+{
+  "composer": {
+    "placeholders": {
+      "base": {
+        "task": {
+          "withContext": "Create a subtask of {{title}}",
+          "withoutContext": "Create a task"
+        },
+        "comment": {
+          "withContext": "Add a comment to {{title}}",
+          "withoutContext": "Add a comment"
+        },
+        "offer": {
+          "withContext": "Post an offer under {{title}}",
+          "withoutContext": "Post an offer"
+        },
+        "request": {
+          "withContext": "Post a request under {{title}}",
+          "withoutContext": "Post a request"
+        }
+      },
+      "parts": {
+        "inChannels": "in {{channels}}",
+        "mentioningPeople": "mentioning {{people}}",
+        "fallbackGuidance": "use #channels and @mentions"
+      },
+      "mobileSearchCreatePosts": {
+        "withContext": "Find and create posts under {{title}}",
+        "withoutContext": "Find and create posts"
+      },
+      "mobileTask": "Search or create task... #tags",
+      "mobileComment": "Search or add comment... #tags",
+      "geohash": "Enter geohash (e.g. u4pruyd)"
+    },
+    "blocked": {
+      "signin": "Sign in required",
+      "write": "Write a message first",
+      "tag": "Add or select at least one #channel",
+      "commentRelay": "Select at least one green space to post a comment",
+      "relay": "Select a single space or a parent task to create a new task",
+      "selectTask": "Select a task to reply to",
+      "publishing": "Publishing..."
+    },
+    "blockedDetail": {
+      "title": "Can't post yet",
+      "detail": {
+        "signin": "Sign in to publish this post.",
+        "write": "Add some text first, then try again.",
+        "tag": "Add at least one channel tag like #design, or use an included channel filter.",
+        "commentRelay": "Comments can be posted to any green space.",
+        "relay": "Choose exactly one green space for a new task, or post from inside an existing task.",
+        "selectTask": "Open a task first if you want to post a comment.",
+        "uploading": "Your attachments are still uploading. Posting will unlock automatically when they finish.",
+        "uploadFailed": "Retry or remove failed attachments before posting.",
+        "publishing": "This post is already on the way."
+      },
+      "cta": {
+        "write": "Write message",
+        "tag": "Add #channel",
+        "commentRelay": "Select space",
+        "relay": "Select space",
+        "selectTask": "Select task",
+        "uploading": "Wait for uploads",
+        "uploadFailed": "Fix attachments",
+        "publishing": "Publishing..."
+      }
+    },
+    "actions": {
+      "createTask": "Create Task",
+      "addComment": "Add Comment",
+      "postOffer": "Post Offer",
+      "postRequest": "Post Request",
+      "signin": "Sign in",
+      "useCurrentLocation": "Use current location",
+      "clearLocation": "Clear location",
+      "location": "Location"
+    },
+    "attachments": {
+      "add": "Add attachment",
+      "remove": "Remove attachment",
+      "altPlaceholder": "Alt text (optional)",
+      "altLabel": "Attachment alt text",
+      "uploading": "Uploading...",
+      "retry": "Retry",
+      "failed": "Failed",
+      "ready": "Ready",
+      "uploadFailed": "Upload failed",
+      "uploadFailedWithStatus": "Upload failed ({{status}})",
+      "uploadUrlMissing": "Attachment upload URL is not configured",
+      "networkError": "Upload request failed (network or CORS)",
+      "invalidJson": "Upload response was not valid JSON",
+      "missingFileUrl": "Upload response did not include a file URL",
+      "maxSizeExceeded": "File exceeds maximum upload size of {{maxSizeMb}} MB",
+      "waitForUploads": "Wait for attachments to finish uploading",
+      "retryFailed": "Retry or remove failed attachments",
+      "dropOrPasteHint": "Drop files or paste images",
+      "dropFiles": "Drop files to attach"
+    },
+    "nip99": {
+      "title": "Listing title",
+      "location": "Location",
+      "price": "Price",
+      "currency": "Currency",
+      "frequency": "Price frequency",
+      "status": "Listing status",
+      "summary": "Summary",
+      "defaultTitle": "Listing",
+      "frequencyOptions": {
+        "oneTime": "One-time",
+        "hour": "hour",
+        "day": "day",
+        "week": "week",
+        "month": "month",
+        "year": "year"
+      },
+      "statusOptions": {
+        "active": "Active",
+        "sold": "Sold"
+      }
+    },
+    "labels": {
+      "dateType": "Date type",
+      "priority": "Priority",
+      "priorityShort": "⚑ Priority",
+      "kind": "Kind",
+      "task": "Task",
+      "comment": "Comment",
+      "offer": "Offer",
+      "request": "Request",
+      "mentions": "Mentions",
+      "date": "Date"
+    },
+    "priorityLevels": {
+      "1": "P1 - Minor",
+      "2": "P2 - Moderate",
+      "3": "P3 - Significant",
+      "4": "P4 - Major",
+      "5": "P5 - Critical"
+    },
+    "hints": {
+      "composeField": "Use #channel tags and @mentions in this field",
+      "insertHashtag": "Insert hashtag",
+      "insertHashtagOpen": "Insert hashtag and open channel suggestions",
+      "insertMention": "Insert mention",
+      "insertMentionOpen": "Insert @mention and open people suggestions",
+      "clearCompose": "Clear compose",
+      "createFromText": "Create from current text",
+      "signInToCreate": "Sign in to create",
+      "clearDueDate": "Clear due date"
+    },
+    "dates": {
+      "setOptional": "Set {{dateType}} date (optional)",
+      "due": "Due",
+      "scheduled": "Scheduled",
+      "start": "Start",
+      "end": "End",
+      "milestone": "Milestone"
+    },
+    "savedFilters": {
+      "actions": {
+        "saveCurrent": "Save filters",
+        "rename": "Rename",
+        "delete": "Delete",
+        "menu": "Saved filter options"
+      },
+      "prompts": {
+        "save": "Name this filter preset",
+        "rename": "Rename this filter preset"
+      }
+    }
+  },
+  "toasts": {
+    "errors": {
+      "needTag": "Add at least one #channel before posting",
+      "needSigninPost": "Sign in required to post",
+      "needSigninModify": "Sign in required to modify tasks",
+      "statusRestricted": "Task updates are restricted to tagged assignees and the creator",
+      "selectRelayOrParent": "Select a single space or a parent task to create a new task",
+      "publishStatusFailed": "Failed to publish status update to relays",
+      "publishDateFailed": "Failed to publish date update to relay",
+      "publishPriorityFailed": "Failed to publish priority update to relay",
+      "taskCreationFailed": "Task creation failed. Please try again.",
+      "publishSavedForRetry": "Failed to publish to Nostr; saved for retry",
+      "publishSavedForRetryWithReason": "Failed to publish to Nostr; saved for retry ({{reason}})",
+      "publishSavedForRetryWithRelayReason": "Failed to publish to {{relayUrl}}; saved for retry ({{reason}})",
+      "retryRelayMissing": "Retry failed: space is no longer configured",
+      "retryRejectedByRelay": "Retry failed: publish was not accepted by space",
+      "retryRejectedByRelayWithReason": "Retry failed: publish was not accepted by space ({{reason}})",
+      "publishListingStatusFailed": "Failed to publish listing status update to relay",
+      "locationUnavailable": "Location services are unavailable on this device",
+      "locationCaptureFailed": "Unable to capture your current location",
+      "relayVerificationReadFailed": "Relay verification failed for reading on {{relayUrl}}. Check signer access and relay permissions.",
+      "relayVerificationWriteFailed": "Relay verification failed for publishing on {{relayUrl}}. Check signer access and relay permissions.",
+      "relayVerificationUnknownFailed": "Relay verification failed on {{relayUrl}}. Check signer access and relay permissions.",
+      "relayReconnectFailedDeselected": "Unable to connect to {{relayDomain}}. It was deselected again."
+    },
+    "success": {
+      "publishedTask": "Task published to Nostr and added locally",
+      "publishedComment": "Comment published to Nostr and added locally",
+      "publishedToSpaces": "Published to space {{spaceNames}}",
+      "localTask": "Task added locally (demo only)",
+      "localComment": "Comment added locally (demo only)",
+      "publishUndone": "Post canceled before publish",
+      "relayFilterEnabled": "Showing {{relayDomain}} space",
+      "relayFilterDisabled": "Hiding {{relayDomain}} space",
+      "showingOnlyRelay": "Showing {{relayDomain}} space",
+      "relayFiltersCleared": "Cleared active spaces",
+      "allRelaysSelected": "Showing all connected spaces",
+      "showingOnlyChannel": "Showing channel #{{channelName}}",
+      "allChannelsIncluded": "Showing all channels",
+      "allChannelsReset": "Cleared active channels",
+      "showingOnlyTag": "Showing #{{tag}}",
+      "showingOnlyPerson": "Showing posts involving {{personName}}",
+      "showingOnlyPersonExclusive": "Showing only posts with {{personName}}",
+      "removedPersonFilter": "Removed filter for {{personName}}",
+      "selectedUserFallback": "selected person",
+      "noFrequentPeople": "No frequent people to select",
+      "frequentPeopleSelected": "Selected frequent people",
+      "frequentPeopleDeselected": "Cleared selected people",
+      "locationCaptured": "Location set to {{geohash}}",
+      "relayVerificationRead": "Relay verification succeeded for reading on {{relayUrl}}",
+      "relayVerificationWrite": "Relay verification succeeded for publishing on {{relayUrl}}",
+      "relayVerificationUnknown": "Relay verification succeeded on {{relayUrl}}"
+    },
+    "info": {
+      "pendingPublish": "Sending in {{seconds}} seconds",
+      "relayReconnectAttempt": "Trying to reconnect {{relayDomain}}"
+    },
+    "actions": {
+      "undo": "Undo"
+    },
+    "warnings": {
+      "parentLocalOnly": "Parent reference is local-only; publishing task without parent link",
+      "disconnectedSelectedFeeds": "Reconnect selected spaces before modifying or posting",
+      "partialPublish": "Published to {{publishedCount}} of {{targetCount}} selected spaces",
+      "readOnlyParentReplyHidden": "This thread is on a read-only space, so replies are disabled here."
+    }
+  },
+  "publishQueue": {
+    "failedCount": "{{count}} post failed to publish",
+    "retry": "Retry",
+    "retrying": "Retrying...",
+    "retryHint": "Retry on original relay targets",
+    "retryUnavailable": "Select an original space to enable retry",
+    "repost": "Repost",
+    "reposting": "Reposting...",
+    "repostHint": "Repost to currently selected space relays",
+    "repostUnavailable": "Select a different space to enable repost",
+    "scopeSelected": "Selected spaces",
+    "scopeAll": "All failed",
+    "hiddenCount": "{{count}} hidden",
+    "dismissAll": "Dismiss all",
+    "dismiss": "Dismiss failed post"
+  }
+}

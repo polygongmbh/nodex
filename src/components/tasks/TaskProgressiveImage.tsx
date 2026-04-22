@@ -37,7 +37,7 @@ export function TaskProgressiveImage({
   imageClassName,
   onDisplayLoad,
 }: TaskProgressiveImageProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const reducedDataMode = useReducedDataMode();
   const [fullImageRequested, setFullImageRequested] = useState(false);
   const [displayedSrc, setDisplayedSrc] = useState(src);

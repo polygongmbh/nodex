@@ -1,0 +1,227 @@
+{
+  "tasks": {
+    "task": "Task",
+    "comment": "Comment",
+    "tags": "Tags",
+    "less": "less",
+    "readOnly": "Read-only task",
+    "completedBy": "Completed by @{{user}}",
+    "focusTaskAria": "{{type}}: {{title}}",
+    "focusTaskTitle": "Focus {{type}}",
+    "focusBreadcrumbTitle": "Focus task: {{title}}",
+    "tagsShowAll": "Show all tags",
+    "tagsShowLess": "Show fewer tags",
+    "tagsShowMoreAria": "Show {{count}} more tags",
+    "actions": {
+      "setStatus": "Set status",
+      "filterAndMention": "Filter for and mention {{authorName}}",
+      "filterTag": "Filter to #{{tag}}",
+      "collapse": "Collapse",
+      "collapseSubtasks": "Hide subtasks",
+      "expand": "Expand",
+      "expandAll": "Expand (all)",
+      "expandAllSubtasks": "Show all subtasks",
+      "expandMatchingOnly": "Show matching subtasks",
+      "expandOpenSubtasks": "Show open subtasks",
+      "showMore": "Show more",
+      "showLess": "Show less"
+    },
+    "rawEvent": {
+      "title": "Raw Nostr Event",
+      "description": "Inspect the full event payload from the relay cache.",
+      "empty": "Raw Nostr event data is unavailable for this post.",
+      "actions": {
+        "copyJson": "Copy JSON",
+        "copyEventId": "Copy event id",
+        "close": "Close"
+      },
+      "toasts": {
+        "copiedJson": "Raw JSON copied to clipboard.",
+        "copyJsonFailed": "Could not copy raw JSON.",
+        "copiedEventId": "Event id copied to clipboard.",
+        "copyEventIdFailed": "Could not copy event id."
+      }
+    },
+    "empty": {
+      "feed": "No tasks to show",
+      "notFound": "No tasks found",
+      "noUpcoming": "No upcoming tasks",
+      "noneScheduledForDay": "No tasks scheduled for this day",
+      "selectDay": "Select a day to view tasks",
+      "mobileQuickFilterFallback": "No matches for the quick filter, showing all posts.",
+      "mobileQuickFilterFallbackScoped": "No matches for the quick filter, showing all posts {{scope}}.",
+      "matchFilters": "No tasks match your filters",
+      "noSubtasks": "No subtasks yet",
+      "noneYet": "No tasks yet",
+      "filtered": {
+        "scopeOnly": "No post yet {{scope}}.",
+        "showingOnlyScope": "This is all {{scope}}.",
+        "mobileFallback": "Nothing yet in the current scope, showing everything.",
+        "mobileFallbackScoped": "Nothing yet {{scope}}, showing everything.",
+        "action": "Broaden the scope or break the silence."
+      },
+      "loading": {
+        "scopeOnly": "Loading posts {{scope}}.",
+        "none": "Loading posts...",
+        "waitingPrompts": {
+          "calmBreath": "One calm breath while we pull this in.",
+          "glanceAway": "Quick glance away from the screen.",
+          "smallPause": "Small pause, then back in.",
+          "shoulderRoll": "One shoulder roll and we continue.",
+          "syncBlinks": "While it syncs, give your eyes a couple blinks.",
+          "unclenchExhale": "Unclench, exhale, continue.",
+          "shortBeat": "A short beat while everything catches up.",
+          "postureSettle": "Sit up a touch, we're nearly there.",
+          "sipWater": "A sip of water fits here.",
+          "momentMore": "Just a moment more, then go time."
+        }
+      },
+      "error": {
+        "scopeOnly": "Could not load posts {{scope}}.",
+        "none": "Could not load posts from the selected space.",
+        "action": "The selected space is currently unavailable.",
+        "unableToConnect": "Unable to connect to the selected space.",
+        "readRejected": "Read access was rejected by the selected space.",
+        "mixed": "Some selected spaces are unavailable, and others rejected read access."
+      },
+      "options": [
+        "Silence lives here for now. Leave the first trace.",
+        "A quiet page awaits. Write the opening line.",
+        "Nothing has bloomed here yet. Plant the first seed.",
+        "This room is still untouched. Start its story.",
+        "Only open sky for now. Be the first star."
+      ],
+      "scope": {
+        "includedChannels": "in {{channels}}",
+        "includedChannelsLoading": "from {{channels}}",
+        "excludedChannels": "excluding {{channels}}",
+        "people": "with {{people}}",
+        "relays": "on {{relays}}",
+        "relaysError": "from {{relays}}",
+        "search": "matching “{{query}}”",
+        "recent": "from the last {{days}} days",
+        "priority": "at priority P{{priority}} or higher",
+        "contextUnder": "under {{title}}",
+        "listWithOthers": "{{items}}, and {{count}} others"
+      }
+    }
+  },
+  "listView": {
+    "sort": {
+      "task": "Task",
+      "status": "Status",
+      "dueDate": "Due Date",
+      "priority": "Priority",
+      "reset": "Reset to default sorting"
+    },
+    "status": {
+      "todo": "To Do",
+      "inProgress": "In Progress",
+      "done": "Done",
+      "closed": "Closed",
+      "inProgressShort": "Doing"
+    },
+    "dates": {
+      "setDate": "Set date...",
+      "type": "Type"
+    }
+  },
+  "feed": {
+    "hydrating": "Loading events from relay…",
+    "loadingMoreEvents": "Loading more events..."
+  },
+  "calendar": {
+    "tabs": {
+      "upcoming": "Upcoming",
+      "calendar": "Calendar"
+    },
+    "weekShort": "Wk",
+    "moreTasks": "+{{count}} more",
+    "nav": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
+    },
+    "actions": {
+      "addEvent": "Add Event",
+      "newEventOn": "New event on {{date}}"
+    }
+  },
+  "kanban": {
+    "newTaskIn": "New task in {{column}}",
+    "hasSubtasks": "Has subtasks"
+  },
+  "breadcrumbs": {
+    "up": "Up",
+    "goToParent": "Go to parent task",
+    "allTasks": "All",
+    "showAllTasks": "Show all tasks"
+  },
+  "hints": {
+    "statusToggle": {
+      "todo": "Mark task in progress. Hold {{alternateKey}} while clicking to select status.",
+      "inProgress": "Mark task done. Hold {{alternateKey}} while clicking to select status.",
+      "done": "Task is done. Click to select status.",
+      "closed": "Task is closed. Click to select status."
+    }
+  },
+  "people": {
+    "status": {
+      "online": "online",
+      "recent": "recent",
+      "offline": "offline"
+    },
+    "presence": {
+      "lastSeen": "Last Seen",
+      "viewing": "Viewing",
+      "unknownTask": "Unknown task"
+    },
+    "actions": {
+      "openMenu": "Person actions for {{name}}",
+      "showOnly": "Show only content involving {{name}}",
+      "mention": "Mention {{name}}",
+      "filterAndMention": "Filter for and mention {{name}}",
+      "copyPubkey": "Copy public key",
+      "privateChat": "Private chat (coming soon)"
+    },
+    "toasts": {
+      "pubkeyCopied": "Public key copied to clipboard.",
+      "pubkeyCopyFailed": "Could not copy the public key."
+    }
+  },
+  "mediaLightbox": {
+    "title": "Media preview",
+    "description": "Preview media and navigate between post attachments",
+    "openPost": "Open post",
+    "close": "Close media preview",
+    "previous": "Previous media",
+    "next": "Next media",
+    "imageAlt": "Media preview",
+    "loadFullImage": "Load full image",
+    "reducedDataPreview": "Reduced-data mode is showing a preview first."
+  },
+  "linkify": {
+    "embeddedVideo": "Embedded video",
+    "embeddedAttachment": "Embedded attachment"
+  },
+  "autoCaption": {
+    "warnings": {
+      "unsupported": "Auto-caption is experimental and unsupported in this browser or device.",
+      "timeout": "Caption generation timed out. You can still enter alt text manually.",
+      "failed": "Caption generation failed on this device. You can still enter alt text manually."
+    },
+    "toasts": {
+      "preparingModel": "Preparing local caption model...",
+      "downloadingModel": "Downloading local caption model... {{progress}}%",
+      "downloadFailed": "Local caption model download failed.",
+      "modelReady": "Local caption model ready.",
+      "generating": "Generating caption for {{fileName}}...",
+      "preparingImage": "Preparing image for captioning: {{fileName}}...",
+      "generatingWithModel": "Generating caption with local model: {{fileName}}...",
+      "generated": "Caption generated for {{fileName}}."
+    },
+    "errors": {
+      "pipelineUnavailable": "Caption pipeline unavailable",
+      "modelUnavailable": "Caption model unavailable"
+    }
+  }
+}

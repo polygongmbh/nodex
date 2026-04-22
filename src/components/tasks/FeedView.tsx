@@ -134,7 +134,7 @@ interface FeedPriorityChipProps {
 }
 
 function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
 
   if (typeof task.priority !== "number") return null;
 
@@ -143,7 +143,7 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
       id={`feed-priority-${task.id}`}
       taskId={task.id}
       priority={task.priority}
-      ariaLabel={t("composer.labels.priority")}
+      ariaLabel={t("composer:composer.labels.priority")}
       disabled={!editable}
       stopPropagation
       className={cn(
@@ -171,7 +171,7 @@ export function FeedView({
   isInteractionBlocked = false,
   isHydrating = false,
 }: FeedViewProps) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
     event.stopPropagation();

@@ -1,0 +1,172 @@
+{
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "de": "Deutsch",
+    "es": "Español"
+  },
+  "legal": {
+    "buttons": {
+      "imprint": "Imprint",
+      "privacy": "Privacy",
+      "contact": "Contact",
+      "imprintPrivacy": "Imprint & Privacy"
+    },
+    "hints": {
+      "openImprintAndPrivacy": "Open imprint and privacy policy",
+      "contactByEmail": "Contact by email"
+    }
+  },
+  "version": {
+    "openChangelogAria": "Nodex version {{version}} (open changelog)",
+    "hintWithChangelog": "v{{version}} Changelog"
+  },
+  "motd": {
+    "dismiss": "Dismiss message"
+  },
+  "navigation": {
+    "aria": {
+      "viewSwitcher": "View switcher",
+      "views": "Navigation views"
+    },
+    "views": {
+      "manage": "Manage",
+      "tree": "Tree",
+      "feed": "Timeline",
+      "kanban": "Kanban",
+      "calendar": "Calendar",
+      "list": "Table",
+      "upcoming": "Upcoming",
+      "switchTo": "Switch to {{view}} view"
+    },
+    "mobile": {
+      "openGuide": "Open Guide",
+      "currentViewPosition": "Current view position"
+    }
+  },
+  "sidebar": {
+    "tagline": "Collaboration Platform",
+    "sections": {
+      "feeds": "Spaces",
+      "channels": "Channels",
+      "people": "People"
+    },
+    "hints": {
+      "relays": "Relays",
+      "clickToFilter": "Click to filter"
+    },
+    "actions": {
+      "addRelay": "Add relay",
+      "openShortcuts": "Open keyboard shortcuts help",
+      "shortcuts": "Shortcuts",
+      "shortcutsTooltip": "Keyboard shortcuts (?)",
+      "openGuide": "Open onboarding guide",
+      "guide": "Guide",
+      "clearChannelFilters": "Clear channel filters",
+      "clearPeopleFilters": "Clear people filters",
+      "showAllChannels": "Show all channels",
+      "hideChannels": "Collapse channels",
+      "showAllPeople": "Show all people",
+      "hidePeople": "Collapse people",
+      "toggleAllConnectedSpaces": "Toggle all connected spaces",
+      "toggleSidebar": "Toggle sidebar"
+    },
+    "filterStates": {
+      "include": "include",
+      "exclude": "exclude",
+      "unfiltered": "unfiltered"
+    },
+    "filters": {
+      "toggleRelay": "Show or hide posts from {{name}}",
+      "showOnlyRelay": "Show only posts from {{name}}",
+      "toggleChannelTo": "Include, exclude, or ignore #{{name}}",
+      "toggleChannelFilter": "Include, exclude, or ignore #{{name}}",
+      "showOnlyChannel": "Show only posts tagged #{{name}}",
+      "togglePerson": "Show or hide posts involving {{name}}",
+      "showOnlyPerson": "Show only content involving {{name}}",
+      "selected": "{{name}} selected",
+      "me": "Me",
+      "pinChannelToView": "Keep #{{name}} visible in the sidebar",
+      "unpinChannelFromView": "Stop keeping #{{name}} visible in the sidebar",
+      "pinPersonToView": "Keep {{name}} visible in the sidebar",
+      "unpinPersonFromView": "Stop keeping {{name}} visible in the sidebar"
+    },
+    "quickFilters": {
+      "chips": {
+        "recent": "Recent {{days}}d",
+        "priority": "Priority P{{priority}}+"
+      },
+      "labels": {
+        "recent": "Recent",
+        "recentDays": "Age in days",
+        "priority": "Priority",
+        "minPriority": "Minimum priority"
+      },
+      "actions": {
+        "add": "Add",
+        "edit": "Edit",
+        "clear": "Clear",
+        "remove": "Remove {{filterName}}",
+        "toggleRecent": "Show only posts from the last {{days}} days",
+        "togglePriority": "Hide tasks below the minimum priority"
+      }
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "groups": {
+      "views": "Views",
+      "taskNavigation": "Task Navigation",
+      "sidebarNavigation": "Sidebar Navigation",
+      "kanban": "Kanban",
+      "general": "General",
+      "compose": "Compose"
+    },
+    "items": {
+      "treeView": "Tree view",
+      "feedView": "Timeline view",
+      "kanbanView": "Kanban view",
+      "calendarView": "Calendar view",
+      "tableView": "Table view",
+      "moveFocusDown": "Move focus down",
+      "moveFocusUp": "Move focus up",
+      "openSelectTask": "Open/select task",
+      "focusSidebarGoBack": "Focus sidebar (at top) / go back",
+      "jumpFirstTask": "Jump to first task",
+      "jumpLastTask": "Jump to last task",
+      "clearFocus": "Clear focus",
+      "navigateFilters": "Navigate filters",
+      "toggleSelectedFilter": "Toggle selected filter",
+      "returnTaskList": "Return to task list",
+      "jumpFirstFilter": "Jump to first filter",
+      "jumpLastFilter": "Jump to last filter",
+      "navigateColumns": "Navigate between columns",
+      "navigateWithinColumn": "Navigate within column",
+      "moveTaskColumns": "Move task between columns",
+      "toggleKeyboardShortcuts": "Toggle keyboard shortcuts",
+      "toggleChannelMatchMode": "Toggle channel matching between AND and OR",
+      "toggleRecentFilter": "Toggle the recent-days filter",
+      "togglePriorityFilter": "Toggle the minimum-priority filter",
+      "toggleCompactCards": "Toggle compact cards in tree and kanban",
+      "openRawEventJson": "Open raw Nostr event JSON for a post",
+      "submitCurrentKind": "Submit as current kind",
+      "submitOppositeKind": "Submit as opposite kind (when no autocomplete is open)",
+      "insertHighlightedSuggestion": "With autocomplete open: insert highlighted suggestion",
+      "addMetadataOnly": "With @/# autocomplete open: add highlighted tag/mention as publish metadata only (no token text)"
+    }
+  },
+  "theme": {
+    "mode": {
+      "auto": "Auto theme",
+      "light": "Light theme",
+      "dark": "Dark theme"
+    },
+    "switchTo": "Switch to {{mode}}."
+  },
+  "feedback": {
+    "sound": {
+      "on": "Completion sound on",
+      "off": "Completion sound off"
+    }
+  }
+}

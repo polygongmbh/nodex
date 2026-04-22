@@ -19,7 +19,7 @@ export function FailedPublishQueueBanner({
   selectedRelayIds = [],
   isMobile = false,
 }: FailedPublishQueueBannerProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("composer");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [scope, setScope] = useState<"selected" | "all">("selected");
   const [pendingActionByDraftId, setPendingActionByDraftId] = useState<Record<string, "retry" | "repost" | undefined>>({});

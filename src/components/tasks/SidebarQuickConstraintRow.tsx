@@ -19,7 +19,7 @@ export function SidebarQuickConstraintRow({
   quickFilters,
   className,
 }: SidebarQuickConstraintRowProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const displayedMinPriority = displayPriorityFromStored(quickFilters.minPriority) ?? 1;
   const getNumericInputWidth = (maxDigits: number, value: string) => `${Math.max(maxDigits, value.length) + 1.5}ch`;

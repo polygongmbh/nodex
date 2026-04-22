@@ -51,7 +51,7 @@ export function ListTaskRow({
   renderPriorityCell,
   renderTagsCell,
 }: ListTaskRowProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const {
     canCompleteTask,

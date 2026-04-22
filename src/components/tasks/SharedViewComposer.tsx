@@ -46,7 +46,7 @@ export function SharedViewComposer({
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
 }: SharedViewComposerProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("composer");
   const authPolicy = useAuthActionPolicy();
   const { relays } = useFeedSurfaceState();
   const { allTasks } = useFeedTaskViewModel();

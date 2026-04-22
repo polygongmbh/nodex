@@ -12,7 +12,7 @@ interface ThemeModeToggleProps {
 }
 
 export function ThemeModeToggle({ className }: ThemeModeToggleProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const { mode, setMode } = useThemeMode();
   const currentIndex = THEME_ORDER.indexOf(mode);
   const nextMode = THEME_ORDER[(currentIndex + 1) % THEME_ORDER.length];

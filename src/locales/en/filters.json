@@ -1,0 +1,44 @@
+{
+  "filters": {
+    "feeds": {
+      "title": "Spaces",
+      "placeholder": "wss://relay.example.com",
+      "add": "Add",
+      "addAria": "Add space",
+      "remove": "Remove",
+      "removeAria": "Remove space {{name}}"
+    },
+    "channels": {
+      "title": "Channels",
+      "cycleHint": "Tap to cycle: neutral -> include -> exclude",
+      "matchMode": "Show posts that match all selected channels (AND) or any selected channel (OR)",
+      "modeAnd": "AND",
+      "modeOr": "OR"
+    },
+    "people": {
+      "title": "People"
+    }
+  },
+  "search": {
+    "desktop": {
+      "placeholder": {
+        "withContext": "Search posts under {{title}}",
+        "withoutContext": "Search posts"
+      },
+      "clear": "Clear search"
+    },
+    "kanban": {
+      "depthHint": "Kanban depth filter: root tasks, limited-depth tasks, all levels, or leaves only (tasks with no subtasks)",
+      "topLevel": "Top-level",
+      "topLevelHint": "Show only root tasks (no parent task)",
+      "projectsOnly": "Projects only",
+      "projectsOnlyHint": "Show only root tasks that contain subtasks",
+      "levels": "{{count}} levels",
+      "levelsHint": "Show tasks up to {{count}} hierarchy levels deep",
+      "allLevels": "All levels",
+      "allLevelsHint": "Show all parent tasks and subtasks at every depth",
+      "leavesOnly": "Leaves only",
+      "leavesOnlyHint": "Show only leaf tasks (tasks without subtasks)"
+    }
+  }
+}

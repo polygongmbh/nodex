@@ -109,13 +109,13 @@ export function resolveLocalCaptionSupport(
 function mapInferenceFailureMessage(result: LocalImageCaptionResult): string | null {
   switch (result.status) {
     case "unsupported":
-      return i18n.t("autoCaption.warnings.unsupported");
+      return i18n.t("tasks:autoCaption.warnings.unsupported");
     case "initialization_timeout":
     case "inference_timeout":
-      return i18n.t("autoCaption.warnings.timeout");
+      return i18n.t("tasks:autoCaption.warnings.timeout");
     case "initialization_error":
     case "inference_error":
-      return i18n.t("autoCaption.warnings.failed");
+      return i18n.t("tasks:autoCaption.warnings.failed");
     default:
       return null;
   }
@@ -341,7 +341,7 @@ export async function preloadLocalImageCaptionModel(): Promise<LocalImageCaption
     return result;
   }
 
-  toast.loading(i18n.t("autoCaption.toasts.preparingModel"), { id: toastId });
+  toast.loading(i18n.t("tasks:autoCaption.toasts.preparingModel"), { id: toastId });
   let lastProgressBucket = -1;
   const preloadStartedAt = getNowMs();
   const pipeline = await loadImageCaptionPipeline(policy, {
@@ -351,7 +351,7 @@ export async function preloadLocalImageCaptionModel(): Promise<LocalImageCaption
         const bucket = Math.floor(percent / 5);
         if (bucket === lastProgressBucket) return;
         lastProgressBucket = bucket;
-        toast.loading(i18n.t("autoCaption.toasts.downloadingModel", {
+        toast.loading(i18n.t("tasks:autoCaption.toasts.downloadingModel", {
           progress: Math.max(0, Math.min(100, percent)),
         }), { id: toastId });
       }
@@ -373,14 +373,14 @@ export async function preloadLocalImageCaptionModel(): Promise<LocalImageCaption
       : {
           status: "initialization_error",
           caption: null,
-          error: i18n.t("autoCaption.errors.modelUnavailable"),
+          error: i18n.t("tasks:autoCaption.errors.modelUnavailable"),
         };
     notifyAutoCaptionFailureOnce(result);
-    toast.error(i18n.t("autoCaption.toasts.downloadFailed"), { id: toastId });
+    toast.error(i18n.t("tasks:autoCaption.toasts.downloadFailed"), { id: toastId });
     return result;
   }
 
-  toast.success(i18n.t("autoCaption.toasts.modelReady"), { id: toastId });
+  toast.success(i18n.t("tasks:autoCaption.toasts.modelReady"), { id: toastId });
   featureDebugLog("auto-caption", "Local caption model preload completed", {
     durationMs: formatDurationMs(getNowMs() - preloadStartedAt),
   });
@@ -391,7 +391,7 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
   if (!file.type.startsWith("image/")) return { status: "empty_result", caption: null };
   const inferenceStartedAt = getNowMs();
   const toastId = `auto-caption-generate-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  toast.loading(i18n.t("autoCaption.toasts.generating", { fileName: file.name }), { id: toastId });
+  toast.loading(i18n.t("tasks:autoCaption.toasts.generating", { fileName: file.name }), { id: toastId });
 
   const policy = resolveLocalCaptionPolicy();
   const capabilities = detectLocalCaptionCapabilities();
@@ -424,11 +424,11 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
       };
     }
     toast.dismiss(toastId);
-    return { status: "initialization_error", caption: null, error: i18n.t("autoCaption.errors.pipelineUnavailable") };
+    return { status: "initialization_error", caption: null, error: i18n.t("tasks:autoCaption.errors.pipelineUnavailable") };
   }
 
   try {
-    toast.loading(i18n.t("autoCaption.toasts.preparingImage", { fileName: file.name }), { id: toastId });
+    toast.loading(i18n.t("tasks:autoCaption.toasts.preparingImage", { fileName: file.name }), { id: toastId });
     const imageReadStartedAt = getNowMs();
     const dataUrl = await fileToDataUrl(file);
     featureDebugLog("auto-caption", "Image converted to data URL for caption inference", {
@@ -440,7 +440,7 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
       fileName: file.name,
       timeoutMs: DEFAULT_CAPTION_TIMEOUT_MS,
     });
-    toast.loading(i18n.t("autoCaption.toasts.generatingWithModel", { fileName: file.name }), { id: toastId });
+    toast.loading(i18n.t("tasks:autoCaption.toasts.generatingWithModel", { fileName: file.name }), { id: toastId });
     const modelInferenceStartedAt = getNowMs();
     const result = await withTimeout(
       pipeline(dataUrl, {
@@ -465,7 +465,7 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
       inferenceDurationMs: formatDurationMs(getNowMs() - modelInferenceStartedAt),
       totalDurationMs: formatDurationMs(getNowMs() - inferenceStartedAt),
     });
-    toast.success(i18n.t("autoCaption.toasts.generated", { fileName: file.name }), { id: toastId });
+    toast.success(i18n.t("tasks:autoCaption.toasts.generated", { fileName: file.name }), { id: toastId });
     return { status: "success", caption };
   } catch (error) {
     const classification = classifyInferenceFailure(error);

@@ -33,7 +33,7 @@ export function TaskDueDateEditorForm({
   dateType,
   idPrefix = "task",
 }: TaskDueDateEditorFormProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [localDueTime, setLocalDueTime] = useState(dueTime || "");
   const [localDateType, setLocalDateType] = useState<TaskDateType>(dateType || "due");
@@ -133,7 +133,7 @@ export function TaskPrioritySelect({
   ariaLabel,
   stopPropagation = false,
 }: TaskPrioritySelectProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const value = (() => {
     const displayPriority = displayPriorityFromStored(priority);

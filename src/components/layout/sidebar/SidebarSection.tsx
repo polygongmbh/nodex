@@ -42,7 +42,7 @@ export function SidebarSection({
   dataOnboarding,
   children,
 }: SidebarSectionProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [contentHeight, setContentHeight] = useState(0);

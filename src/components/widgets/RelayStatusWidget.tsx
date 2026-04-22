@@ -13,7 +13,7 @@ interface RelayStatusWidgetProps {
 }
 
 export function RelayStatusWidget({ relays }: RelayStatusWidgetProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("relay");
   const getStatusColor = (status: NDKRelayStatus["status"]) => {
     return getRelayStatusDotClass(status);
   };

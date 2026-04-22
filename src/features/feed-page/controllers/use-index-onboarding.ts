@@ -52,7 +52,7 @@ export function useIndexOnboarding({
   setPeople,
   setIsAuthModalOpen,
 }: UseIndexOnboardingOptions) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("onboarding");
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);

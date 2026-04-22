@@ -7,7 +7,7 @@ interface HydrationStatusRowProps {
 }
 
 export function HydrationStatusRow({ className }: HydrationStatusRowProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
 
   return (
     <div

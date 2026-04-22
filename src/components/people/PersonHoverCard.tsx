@@ -79,7 +79,7 @@ export function PersonHoverCard({
   triggerClassName,
   sideOffset = 8,
 }: PersonHoverCardProps) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("tasks");
   const { allTasks } = useFeedTaskViewModel();
   const hoverCardId = useId();
   const openSourceRef = useRef<HoverCardOpenSource>("focus");
@@ -108,7 +108,7 @@ export function PersonHoverCard({
       )
     : "";
   const presenceViewLabel = person.presenceView
-    ? t(`navigation.views.${person.presenceView}`, {
+    ? t(`shell:navigation.views.${person.presenceView}`, {
         defaultValue: person.presenceView,
       })
     : null;

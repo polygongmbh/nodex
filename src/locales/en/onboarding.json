@@ -1,0 +1,167 @@
+{
+  "onboarding": {
+    "intro": {
+      "ariaLabel": "Welcome to Nodex",
+      "title": "Welcome to Nodex",
+      "description": "Nodex is a Nostr-native workspace for tasks and discussions.",
+      "features": "Use channels, people filters, and relay controls to shape your space while composing tasks and comments in one flow.",
+      "startTour": "Start the Tour",
+      "createAccount": "Create account",
+      "signIn": "Sign in"
+    },
+    "picker": {
+      "helper": "Pick one highlighted area to begin its guide.",
+      "close": "Close",
+      "dismiss": "Dismiss guide section picker",
+      "chooseSection": "Choose a guide section",
+      "startSectionAria": "Start {{title}} onboarding section"
+    },
+    "dialog": {
+      "ariaLabel": "Onboarding guide",
+      "targetArrowIndicator": "Target indicator",
+      "emptyTitle": "No onboarding steps available",
+      "stepLabel": "Step {{current}} of {{total}}",
+      "skip": "Skip",
+      "back": "Back",
+      "finish": "Finish",
+      "next": "Next",
+      "breadcrumbFallback": {
+        "title": "Breadcrumb is not visible right now",
+        "description": "Open a thread first, skip this step, or end the guide.",
+        "openTask": "Open thread",
+        "skipStep": "Skip this step",
+        "endGuide": "End guide"
+      }
+    },
+    "sections": {
+      "navigation": {
+        "title": "Navigation",
+        "description": "Use view tabs and breadcrumbs to move through task contexts."
+      },
+      "filters": {
+        "title": "Filters",
+        "description": "Use include/exclude channel and people filters effectively."
+      },
+      "compose": {
+        "title": "Compose",
+        "description": "Post tasks/comments with #tags and @mentions."
+      },
+      "kanban": {
+        "title": "Kanban",
+        "description": "Use columns, status lanes, and depth controls to organize work."
+      },
+      "calendar": {
+        "title": "Calendar",
+        "description": "Plan tasks by date and review each day in the detail panel."
+      }
+    },
+    "steps": {
+      "navigationSwitcher": {
+        "title": "Switch views",
+        "description": "Use the view switcher to move between Timeline, Tree, Kanban, Table, and Calendar.",
+        "action": "Click any view tab to continue."
+      },
+      "navigationFocus": {
+        "title": "Open thread",
+        "description": "Click any post to view its subitems and comment on it or create subtasks.",
+        "action": "Click a post to continue."
+      },
+      "navigationBreadcrumb": {
+        "title": "Use breadcrumbs",
+        "description": "Use the breadcrumb row to move up the hierarchy.",
+        "action": "Click a breadcrumb item to continue."
+      },
+      "filtersRelays": {
+        "title": "Space selection",
+        "description": "Use *Spaces* to select which spaces are visible. Click a space icon to toggle it, or click its name for exclusive space focus.",
+        "action": "Click a space control to continue."
+      },
+      "filtersChannels": {
+        "title": "Channel filters",
+        "description": "In *Channels*, click a channel name to show only posts with that channel. Click the # icon to cycle neutral -> include -> exclude for that channel. Click the hashtag icon to the left of *Channels* to reset channel filters."
+      },
+      "filtersPeople": {
+        "title": "People filters",
+        "description": "In *People*, click a person name to show only content involving that person. Click the avatar/icon to toggle that person. Click the icon to the left of *People* to reset people filters."
+      },
+      "filtersSearch": {
+        "title": "Search bar",
+        "description": "Use the bottom search bar to narrow visible tasks by text across all views."
+      },
+      "filtersHashtagContent": {
+        "title": "Hashtags in content",
+        "description": "Click a hashtag in a task to focus on that tag. Clear the tag filter to return to the full list.",
+        "action": "Click a hashtag chip in a task item."
+      },
+      "composeKind": {
+        "title": "Task vs comment",
+        "description": "Use the Kind selector to choose whether to post a task or a comment.",
+        "action": "Focus the kind selector to continue."
+      },
+      "composeInput": {
+        "title": "Tags and mentions",
+        "description": "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags. You can set a date type (Due, Scheduled, Start, End, or Milestone) so tasks appear in Calendar view; future Start dates are shown as not yet doable.",
+        "action": "Power-user hint: {{alternateModifier}}+Enter submits as the other kind when no autocomplete is open; with autocomplete open, use {{alternateModifier}}+Enter or {{alternateModifier}}+click to add the selected tag/mention as metadata without inserting token text."
+      },
+      "mobile": {
+        "navigationNav": {
+          "title": "Mobile views",
+          "description": "Use the top navigation to switch between Timeline, Tree, Upcoming, and Calendar.",
+          "action": "Tap a navigation tab to continue."
+        },
+        "navigationFocus": {
+          "action": "Tap a post to continue."
+        },
+        "navigationBreadcrumb": {
+          "action": "Tap a breadcrumb item to continue."
+        },
+        "filtersOpen": {
+          "title": "Open menu",
+          "description": "Use the menu to manage spaces, fine-tune filters, and update your profile and settings.",
+          "action": "Tap the top-left burger menu to continue."
+        },
+        "filtersProperties": {
+          "title": "Edit profile",
+          "description": "In *Manage*, open the profile editor to update your username, display name, profile picture URL, verified identity address, and about text."
+        },
+        "filtersUse": {
+          "title": "Use filters",
+          "description": "In *Manage*, tap space chips to select spaces, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility."
+        },
+        "composeCombobox": {
+          "title": "Search/Compose combobox",
+          "description": "Use the combined bottom bar to search as you type and create tasks/comments from the same text using the submit button.",
+          "action": "Tap into the combined bar to continue."
+        }
+      },
+      "kanbanColumnsStatus": {
+        "title": "Columns and status",
+        "description": "Use To Do, In Progress, Done, and Closed columns to track status. Moving a task between columns changes its status.",
+        "action": "Click or drag a card in the board to continue."
+      },
+      "kanbanCreateInColumn": {
+        "title": "Create in a specific column",
+        "description": "Use the + button in a column header to create a new task directly in that column's status.",
+        "action": "Click a column + button to continue."
+      },
+      "kanbanDepth": {
+        "title": "Depth levels",
+        "description": "Use Levels next to search to switch between parent tasks and executable end nodes: Top-level shows only root tasks, limited levels include subtasks, and Leaves only shows tasks with no subtasks.",
+        "action": "Open Levels and try Top-level, then Leaves only."
+      },
+      "calendarMonths": {
+        "title": "Month timeline",
+        "description": "Scroll stacked months continuously to move through time."
+      },
+      "calendarPickDay": {
+        "title": "Pick a day",
+        "description": "Click any day cell to load that date in the detail panel.",
+        "action": "Click a day in the calendar grid to continue."
+      },
+      "calendarDayPanel": {
+        "title": "Day details",
+        "description": "Use the right panel to review tasks for the selected date, change their status, and create a new task/event for that day."
+      }
+    }
+  }
+}

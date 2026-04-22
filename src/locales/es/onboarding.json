@@ -1,0 +1,167 @@
+{
+  "onboarding": {
+    "intro": {
+      "ariaLabel": "Bienvenido a Nodex",
+      "title": "Bienvenido a Nodex",
+      "description": "Nodex es un espacio de trabajo nativo de Nostr para tareas y conversaciones.",
+      "features": "Usa canales, filtros de personas y controles de spaces para moldear tu vista mientras publicas tareas y comentarios en un solo flujo.",
+      "startTour": "Iniciar tour",
+      "createAccount": "Crear cuenta",
+      "signIn": "Iniciar sesión"
+    },
+    "picker": {
+      "helper": "Elige un área resaltada para comenzar su guía.",
+      "close": "Cerrar",
+      "dismiss": "Cerrar selector de secciones de guía",
+      "chooseSection": "Elegir una sección de guía",
+      "startSectionAria": "Iniciar sección de onboarding {{title}}"
+    },
+    "dialog": {
+      "ariaLabel": "Guía de onboarding",
+      "targetArrowIndicator": "Indicador de objetivo",
+      "emptyTitle": "No hay pasos de onboarding disponibles",
+      "stepLabel": "Paso {{current}} de {{total}}",
+      "skip": "Omitir",
+      "back": "Atrás",
+      "finish": "Finalizar",
+      "next": "Siguiente",
+      "breadcrumbFallback": {
+        "title": "El breadcrumb no está visible ahora",
+        "description": "Abre primero un hilo, omite este paso o finaliza la guía.",
+        "openTask": "Abrir hilo",
+        "skipStep": "Omitir este paso",
+        "endGuide": "Finalizar guía"
+      }
+    },
+    "sections": {
+      "navigation": {
+        "title": "Navegación",
+        "description": "Usa pestañas de vista y breadcrumbs para moverte entre contextos de tareas."
+      },
+      "filters": {
+        "title": "Filtros",
+        "description": "Usa eficazmente filtros de canales y personas (incluir/excluir)."
+      },
+      "compose": {
+        "title": "Redactar",
+        "description": "Publica tareas/comentarios con #tags y @menciones."
+      },
+      "kanban": {
+        "title": "Kanban",
+        "description": "Usa columnas, carriles de estado y control de profundidad para organizar el trabajo."
+      },
+      "calendar": {
+        "title": "Calendario",
+        "description": "Planifica tareas por fecha y revisa cada día en el panel de detalle."
+      }
+    },
+    "steps": {
+      "navigationSwitcher": {
+        "title": "Cambiar vistas",
+        "description": "Usa el selector de vista para pasar entre Cronología, Árbol, Kanban, Tabla y Calendario.",
+        "action": "Haz clic en cualquier pestaña de vista para continuar."
+      },
+      "navigationFocus": {
+        "title": "Abrir hilo",
+        "description": "Haz clic en cualquier publicación para ver sus subelementos y comentarla o crear subtareas.",
+        "action": "Haz clic en una publicación para continuar."
+      },
+      "navigationBreadcrumb": {
+        "title": "Usar breadcrumbs",
+        "description": "Usa la fila de breadcrumbs para subir en la jerarquía.",
+        "action": "Haz clic en un elemento del breadcrumb para continuar."
+      },
+      "filtersRelays": {
+        "title": "Selección de space",
+        "description": "Usa *Spaces* para seleccionar qué spaces son visibles. Haz clic en el icono de space para alternarlo, o en su nombre para enfoque exclusivo.",
+        "action": "Haz clic en un control de space para continuar."
+      },
+      "filtersChannels": {
+        "title": "Filtros de canales",
+        "description": "En *Canales*, haz clic en el nombre de un canal para mostrar solo publicaciones con ese canal. Haz clic en el icono # para alternar neutral -> incluir -> excluir para ese canal. Haz clic en el icono hashtag a la izquierda de *Canales* para restablecer filtros de canal."
+      },
+      "filtersPeople": {
+        "title": "Filtros de personas",
+        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo contenido que involucre a esa persona. Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
+      },
+      "filtersSearch": {
+        "title": "Barra de búsqueda",
+        "description": "Usa la barra inferior de búsqueda para acotar tareas visibles por texto en todas las vistas."
+      },
+      "filtersHashtagContent": {
+        "title": "Hashtags en contenido",
+        "description": "Haz clic en un hashtag en una tarea para enfocarte en esa etiqueta. Limpia el filtro para volver a la lista completa.",
+        "action": "Haz clic en un chip de hashtag en un elemento de tarea."
+      },
+      "composeKind": {
+        "title": "Tarea vs comentario",
+        "description": "Usa el selector de tipo para elegir si publicar una tarea o un comentario.",
+        "action": "Enfoca el selector de tipo para continuar."
+      },
+      "composeInput": {
+        "title": "Etiquetas y menciones",
+        "description": "Usa #tags para organizar elementos y @menciones para referenciar personas en el cuadro de redacción. Los canales incluidos se precompletan automáticamente como hashtags. Puedes establecer un tipo de fecha (Vencimiento, Programada, Inicio, Fin o Hito) para que las tareas aparezcan en Calendario; las fechas futuras de Inicio se muestran como no realizables todavía.",
+        "action": "Consejo avanzado: {{alternateModifier}}+Enter envía como el otro tipo cuando no hay autocompletado abierto; con autocompletado abierto, usa {{alternateModifier}}+Enter o {{alternateModifier}}+clic para añadir la etiqueta/mención seleccionada como metadatos sin insertar texto del token."
+      },
+      "mobile": {
+        "navigationNav": {
+          "title": "Vistas móviles",
+          "description": "Usa la navegación superior para cambiar entre Cronología, Árbol, Próximas y Calendario.",
+          "action": "Toca una pestaña de navegación para continuar."
+        },
+        "navigationFocus": {
+          "action": "Toca una publicación para continuar."
+        },
+        "navigationBreadcrumb": {
+          "action": "Toca un elemento del breadcrumb para continuar."
+        },
+        "filtersOpen": {
+          "title": "Abrir menú",
+          "description": "Usa el menú para gestionar spaces, ajustar filtros con precisión y actualizar tu perfil y ajustes.",
+          "action": "Toca el menú hamburguesa de arriba a la izquierda para continuar."
+        },
+        "filtersProperties": {
+          "title": "Editar perfil",
+          "description": "En *Gestionar*, abre el editor de perfil para actualizar tu nombre de usuario, nombre para mostrar, URL de la foto de perfil, dirección de identidad verificada y texto sobre ti."
+        },
+        "filtersUse": {
+          "title": "Usar filtros",
+          "description": "En *Gestionar*, toca chips de space para seleccionar spaces, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad."
+        },
+        "composeCombobox": {
+          "title": "Caja combinada búsqueda/redacción",
+          "description": "Usa la barra inferior combinada para buscar mientras escribes y crear tareas/comentarios desde el mismo texto con el botón de envío.",
+          "action": "Toca la barra combinada para continuar."
+        }
+      },
+      "kanbanColumnsStatus": {
+        "title": "Columnas y estado",
+        "description": "Usa las columnas Por hacer, En progreso, Hecho y Cerrado para seguir el estado. Mover una tarea entre columnas cambia su estado.",
+        "action": "Haz clic o arrastra una tarjeta en el tablero para continuar."
+      },
+      "kanbanCreateInColumn": {
+        "title": "Crear en una columna específica",
+        "description": "Usa el botón + en el encabezado de columna para crear una nueva tarea directamente en el estado de esa columna.",
+        "action": "Haz clic en un botón + de columna para continuar."
+      },
+      "kanbanDepth": {
+        "title": "Niveles de profundidad",
+        "description": "Usa Niveles junto a la búsqueda para alternar entre tareas padre y nodos finales ejecutables: Nivel superior muestra solo tareas raíz, los niveles limitados incluyen subtareas y Solo hojas muestra tareas sin subtareas.",
+        "action": "Abre Niveles y prueba Nivel superior, luego Solo hojas."
+      },
+      "calendarMonths": {
+        "title": "Línea temporal de meses",
+        "description": "Desplázate por meses apilados continuamente para moverte en el tiempo."
+      },
+      "calendarPickDay": {
+        "title": "Elegir un día",
+        "description": "Haz clic en cualquier celda de día para cargar esa fecha en el panel de detalle.",
+        "action": "Haz clic en un día de la cuadrícula de calendario para continuar."
+      },
+      "calendarDayPanel": {
+        "title": "Detalles del día",
+        "description": "Usa el panel derecho para revisar tareas de la fecha seleccionada, cambiar su estado y crear una nueva tarea/evento para ese día."
+      }
+    }
+  }
+}

@@ -129,14 +129,14 @@ export function useRelayVerification(
       return;
     }
     if (operation === "read") {
-      toast.success(i18n.t("toasts.success.relayVerificationRead", { relayUrl }));
+      toast.success(i18n.t("composer:toasts.success.relayVerificationRead", { relayUrl }));
       return;
     }
     if (operation === "write") {
-      toast.success(i18n.t("toasts.success.relayVerificationWrite", { relayUrl }));
+      toast.success(i18n.t("composer:toasts.success.relayVerificationWrite", { relayUrl }));
       return;
     }
-    toast.success(i18n.t("toasts.success.relayVerificationUnknown", { relayUrl }));
+    toast.success(i18n.t("composer:toasts.success.relayVerificationUnknown", { relayUrl }));
   }, [markRelayReadOutcome, markRelayWriteOutcome, shouldShowRelayVerificationToast]);
 
   const markRelayVerificationFailure = useCallback((
@@ -162,11 +162,11 @@ export function useRelayVerification(
       return;
     }
     if (operation === "read") {
-      toast.error(i18n.t("toasts.errors.relayVerificationReadFailed", { relayUrl }));
+      toast.error(i18n.t("composer:toasts.errors.relayVerificationReadFailed", { relayUrl }));
     } else if (operation === "write") {
-      toast.error(i18n.t("toasts.errors.relayVerificationWriteFailed", { relayUrl }));
+      toast.error(i18n.t("composer:toasts.errors.relayVerificationWriteFailed", { relayUrl }));
     } else {
-      toast.error(i18n.t("toasts.errors.relayVerificationUnknownFailed", { relayUrl }));
+      toast.error(i18n.t("composer:toasts.errors.relayVerificationUnknownFailed", { relayUrl }));
     }
   }, [markRelayReadOutcome, markRelayWriteOutcome, pendingRelayVerificationRef, shouldShowRelayVerificationToast]);
 

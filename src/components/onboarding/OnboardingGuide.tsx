@@ -86,7 +86,7 @@ export function OnboardingGuide({
   onActiveSectionChange,
   onStepChange,
 }: OnboardingGuideProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("onboarding");
   const [activeSection, setActiveSection] = useState<OnboardingInitialSection>(initialSection);
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);

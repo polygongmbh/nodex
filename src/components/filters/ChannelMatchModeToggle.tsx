@@ -16,7 +16,7 @@ export function ChannelMatchModeToggle({
   size = "sidebar",
   className,
 }: ChannelMatchModeToggleProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const isSidebar = size === "sidebar";
 

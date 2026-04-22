@@ -43,7 +43,7 @@ export function resolveSegmentFromClientX(
 }
 
 export function MobileNav({ currentView, onViewChange, onManageOpen, isManageActive = false }: MobileNavProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const containerRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);

@@ -22,7 +22,7 @@ export function TaskBreadcrumbRow({
   itemClassName,
   separator = "›",
 }: TaskBreadcrumbRowProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
 
   if (breadcrumbs.length === 0) return null;
 

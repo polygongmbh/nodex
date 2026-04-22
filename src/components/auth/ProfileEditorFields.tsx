@@ -49,26 +49,26 @@ export function ProfileEditorFields({
     <div className="space-y-2">
       <div>
         <Label htmlFor={displayNameId}>
-          {t("filters.profile.displayName")}
+          {t("auth.profile.displayName")}
         </Label>
         <Input
           id={displayNameId}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          placeholder={t("filters.profile.displayNamePlaceholder")}
+          placeholder={t("auth.profile.displayNamePlaceholder")}
           className="text-sm"
         />
       </div>
 
       <div>
         <Label htmlFor={nameId}>
-          {t("filters.profile.name")}
+          {t("auth.profile.name")}
         </Label>
         <Input
           id={nameId}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder={t("filters.profile.namePlaceholder")}
+          placeholder={t("auth.profile.namePlaceholder")}
           className="text-sm"
           aria-invalid={isUsernameHintError}
           aria-describedby={showUsernameHint ? nameErrorId : undefined}
@@ -82,39 +82,39 @@ export function ProfileEditorFields({
 
       <div>
         <Label htmlFor={pictureId}>
-          {t("filters.profile.picture")}
+          {t("auth.profile.picture")}
         </Label>
         <Input
           id={pictureId}
           value={picture}
           onChange={(e) => setPicture(e.target.value)}
-          placeholder={t("filters.profile.picturePlaceholder")}
+          placeholder={t("auth.profile.picturePlaceholder")}
           className="text-sm"
         />
       </div>
 
       <div>
         <Label htmlFor={nip05Id}>
-          {t("filters.profile.nip05")}
+          {t("auth.profile.nip05")}
         </Label>
         <Input
           id={nip05Id}
           value={nip05}
           onChange={(e) => setNip05(e.target.value)}
-          placeholder={t("filters.profile.nip05Placeholder")}
+          placeholder={t("auth.profile.nip05Placeholder")}
           className="text-sm"
         />
       </div>
 
       <div>
         <Label htmlFor={aboutId}>
-          {t("filters.profile.about")}
+          {t("auth.profile.about")}
         </Label>
         <Textarea
           id={aboutId}
           value={about}
           onChange={(e) => setAbout(e.target.value)}
-          placeholder={t("filters.profile.aboutPlaceholder")}
+          placeholder={t("auth.profile.aboutPlaceholder")}
           rows={4}
           className="text-sm"
         />

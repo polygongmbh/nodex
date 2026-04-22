@@ -11,7 +11,7 @@ export function getAppErrorMessage(error: unknown): string {
     return error;
   }
 
-  return i18n.t("appError.unexpected");
+  return i18n.t("app:appError.unexpected");
 }
 
 export function reloadAppWithCacheBypass() {

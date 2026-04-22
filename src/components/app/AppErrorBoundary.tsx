@@ -35,7 +35,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
   static getDerivedStateFromError(error: Error): AppErrorBoundaryState {
     return {
       hasError: true,
-      errorMessage: error?.message || i18n.t("appError.unexpected"),
+      errorMessage: error?.message || i18n.t("app:appError.unexpected"),
     };
   }
 

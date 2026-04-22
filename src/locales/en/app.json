@@ -1,0 +1,17 @@
+{
+  "app": {
+    "loadingView": "Loading view..."
+  },
+  "appError": {
+    "title": "Something went wrong",
+    "description": "The app hit an unexpected error. You can reload, or return to the main view.",
+    "reload": "Reload app",
+    "goHome": "Go to home",
+    "unexpected": "Unexpected application error"
+  },
+  "notFound": {
+    "message": "Oops! Page not found",
+    "goHome": "Return to Home",
+    "goHomeTitle": "Go to main app"
+  }
+}

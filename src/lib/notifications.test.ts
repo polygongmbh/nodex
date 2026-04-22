@@ -30,8 +30,8 @@ describe("notifyPublishSavedForRetry", () => {
   it("falls back to the generic retry toast without relay details", () => {
     notifyPublishSavedForRetry();
 
-    expect(i18n.t).toHaveBeenCalledWith("toasts.errors.publishSavedForRetry");
-    expect(toast.error).toHaveBeenCalledWith({ key: "toasts.errors.publishSavedForRetry", params: undefined });
+    expect(i18n.t).toHaveBeenCalledWith("composer:toasts.errors.publishSavedForRetry");
+    expect(toast.error).toHaveBeenCalledWith({ key: "composer:toasts.errors.publishSavedForRetry", params: undefined });
   });
 
   it("prefers the relay+reason retry toast when both details are known", () => {
@@ -40,12 +40,12 @@ describe("notifyPublishSavedForRetry", () => {
       reason: "auth-required: whitelist",
     });
 
-    expect(i18n.t).toHaveBeenCalledWith("toasts.errors.publishSavedForRetryWithRelayReason", {
+    expect(i18n.t).toHaveBeenCalledWith("composer:toasts.errors.publishSavedForRetryWithRelayReason", {
       relayUrl: "wss://relay.example.com",
       reason: "auth-required: whitelist",
     });
     expect(toast.error).toHaveBeenCalledWith({
-      key: "toasts.errors.publishSavedForRetryWithRelayReason",
+      key: "composer:toasts.errors.publishSavedForRetryWithRelayReason",
       params: {
         relayUrl: "wss://relay.example.com",
         reason: "auth-required: whitelist",
@@ -62,12 +62,12 @@ describe("notifyPartialPublish", () => {
   it("passes publish counts into the partial publish warning", () => {
     notifyPartialPublish({ publishedCount: 1, targetCount: 3 });
 
-    expect(i18n.t).toHaveBeenCalledWith("toasts.warnings.partialPublish", {
+    expect(i18n.t).toHaveBeenCalledWith("composer:toasts.warnings.partialPublish", {
       publishedCount: 1,
       targetCount: 3,
     });
     expect(toast.warning).toHaveBeenCalledWith({
-      key: "toasts.warnings.partialPublish",
+      key: "composer:toasts.warnings.partialPublish",
       params: { publishedCount: 1, targetCount: 3 },
     });
   });
@@ -87,11 +87,11 @@ describe("notifyPublished", () => {
     expect(getRelayNameFromUrl).toHaveBeenCalledTimes(2);
     expect(getRelayNameFromUrl).toHaveBeenNthCalledWith(1, "wss://relay.two");
     expect(getRelayNameFromUrl).toHaveBeenNthCalledWith(2, "wss://relay.three");
-    expect(i18n.t).toHaveBeenCalledWith("toasts.success.publishedToSpaces", {
+    expect(i18n.t).toHaveBeenCalledWith("composer:toasts.success.publishedToSpaces", {
       spaceNames: "relay.one, relay.two, relay.three",
     });
     expect(toast.success).toHaveBeenCalledWith({
-      key: "toasts.success.publishedToSpaces",
+      key: "composer:toasts.success.publishedToSpaces",
       params: { spaceNames: "relay.one, relay.two, relay.three" },
     });
   });
@@ -100,9 +100,9 @@ describe("notifyPublished", () => {
     notifyPublished("comment");
 
     expect(getRelayNameFromUrl).not.toHaveBeenCalled();
-    expect(i18n.t).toHaveBeenCalledWith("toasts.success.publishedComment");
+    expect(i18n.t).toHaveBeenCalledWith("composer:toasts.success.publishedComment");
     expect(toast.success).toHaveBeenCalledWith({
-      key: "toasts.success.publishedComment",
+      key: "composer:toasts.success.publishedComment",
       params: undefined,
     });
   });

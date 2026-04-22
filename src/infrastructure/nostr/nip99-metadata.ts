@@ -79,7 +79,7 @@ export function buildNip99PublishTags({
     clean(identifierSeed) ||
     `listing-${Date.now().toString(36)}`;
   const status = statusOverride || parseStatus(metadata?.status) || "active";
-  const title = clean(metadata?.title) || clean(fallbackTitle) || i18n.t("composer.nip99.defaultTitle");
+  const title = clean(metadata?.title) || clean(fallbackTitle) || i18n.t("composer:composer.nip99.defaultTitle");
   const summary = clean(metadata?.summary);
   const location = clean(metadata?.location);
   const price = clean(metadata?.price);

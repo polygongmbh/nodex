@@ -5,7 +5,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 
 export function FilteredEmptyState() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const surface = useFeedSurfaceState();
   const { isHydrating = false, focusedTaskId, allTasks } = useFeedTaskViewModel();
   const searchQuery = useDeferredValue(surface.searchQuery);

@@ -45,7 +45,7 @@ export function RelayManagement({
   relays,
   trigger,
 }: RelayManagementProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("relay");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [isOpen, setIsOpen] = useState(false);

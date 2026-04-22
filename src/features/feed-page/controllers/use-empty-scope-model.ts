@@ -27,7 +27,7 @@ export function useEmptyScopeModel({
   taskById,
   allTasks,
 }: UseEmptyScopeModelOptions): EmptyScopeModel {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("tasks");
   const locale = i18n.resolvedLanguage || i18n.language || "en";
 
   const resolvedContextTaskTitle = useMemo(() => {

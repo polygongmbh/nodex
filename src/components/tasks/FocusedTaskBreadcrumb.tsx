@@ -19,7 +19,7 @@ export function FocusedTaskBreadcrumb({
   className,
   rightSlot,
 }: FocusedTaskBreadcrumbProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });

@@ -87,7 +87,7 @@ export function TreeTaskItem({
   isInteractionBlocked = false,
   sortContext,
 }: TreeTaskItemProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;
@@ -546,9 +546,9 @@ export function TreeTaskItem({
                     void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
                   }}
                   className="ml-auto shrink-0 font-medium text-warning hover:text-warning/80"
-                  title={t("toasts.actions.undo")}
+                  title={t("composer:toasts.actions.undo")}
                 >
-                  {t("toasts.actions.undo")}
+                  {t("composer:toasts.actions.undo")}
                 </button>
               )}
             </div>
@@ -632,7 +632,7 @@ export function TreeTaskItem({
                 id={`task-priority-${task.id}`}
                 taskId={task.id}
                 priority={task.priority}
-                ariaLabel={t("composer.labels.priority")}
+                ariaLabel={t("composer:composer.labels.priority")}
                 disabled={!editableMetadata}
                 stopPropagation
                 className={cn(
@@ -651,7 +651,7 @@ export function TreeTaskItem({
                   id={`task-priority-${task.id}`}
                   taskId={task.id}
                   priority={task.priority}
-                  ariaLabel={t("composer.labels.priority")}
+                  ariaLabel={t("composer:composer.labels.priority")}
                   disabled={!editableMetadata}
                   stopPropagation
                   className={cn(
@@ -679,9 +679,9 @@ export function TreeTaskItem({
                   void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
                 }}
                 className="text-xs font-medium text-warning hover:text-warning/80"
-                title={t("toasts.actions.undo")}
+                title={t("composer:toasts.actions.undo")}
               >
-                {t("toasts.actions.undo")}
+                {t("composer:toasts.actions.undo")}
               </button>
             </div>
           )}

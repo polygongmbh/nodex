@@ -134,7 +134,7 @@ export function PersonActionMenuContent({
   onActionSelect,
   onCloseAutoFocus,
 }: PersonActionMenuContentProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const primaryShortcutLabel = getPlatformPrimaryShortcutLabel();
   const alternateShortcutLabel = getPlatformAlternateShortcutLabel();

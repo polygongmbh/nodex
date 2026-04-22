@@ -57,7 +57,7 @@ function TaskTagChipContent({
   includeRelayChip: boolean;
   includeLocationChip: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { relays, people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;

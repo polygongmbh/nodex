@@ -1,0 +1,172 @@
+{
+  "language": {
+    "label": "Sprache",
+    "en": "English",
+    "de": "Deutsch",
+    "es": "Español"
+  },
+  "legal": {
+    "buttons": {
+      "imprint": "Impressum",
+      "privacy": "Datenschutz",
+      "contact": "Kontakt",
+      "imprintPrivacy": "Impressum & Datenschutz"
+    },
+    "hints": {
+      "openImprintAndPrivacy": "Impressum und Datenschutzerklärung öffnen",
+      "contactByEmail": "Kontakt per E-Mail"
+    }
+  },
+  "version": {
+    "openChangelogAria": "Nodex-Version {{version}} (Changelog öffnen)",
+    "hintWithChangelog": "v{{version}} Changelog"
+  },
+  "motd": {
+    "dismiss": "Nachricht schließen"
+  },
+  "navigation": {
+    "aria": {
+      "viewSwitcher": "Ansichtsumschalter",
+      "views": "Navigationsansichten"
+    },
+    "views": {
+      "manage": "Verwalten",
+      "tree": "Hierarchisch",
+      "feed": "Timeline",
+      "kanban": "Kanban",
+      "calendar": "Kalender",
+      "list": "Tabelle",
+      "upcoming": "Anstehend",
+      "switchTo": "Zu {{view}}-Ansicht wechseln"
+    },
+    "mobile": {
+      "openGuide": "Guide öffnen",
+      "currentViewPosition": "Aktuelle Ansichtsposition"
+    }
+  },
+  "sidebar": {
+    "tagline": "Kollaborationsplattform",
+    "sections": {
+      "feeds": "Spaces",
+      "channels": "Kanäle",
+      "people": "Personen"
+    },
+    "hints": {
+      "relays": "Relays",
+      "clickToFilter": "Zum Filtern klicken"
+    },
+    "actions": {
+      "addRelay": "Relay hinzufügen",
+      "openShortcuts": "Hilfe zu Tastenkürzeln öffnen",
+      "shortcuts": "Tastenkürzel",
+      "shortcutsTooltip": "Tastenkürzel (?)",
+      "openGuide": "Onboarding-Guide öffnen",
+      "guide": "Leitfaden",
+      "clearChannelFilters": "Kanalfilter zurücksetzen",
+      "clearPeopleFilters": "Personenfilter zurücksetzen",
+      "showAllChannels": "Alle Kanäle anzeigen",
+      "hideChannels": "Kanäle einklappen",
+      "showAllPeople": "Alle Personen anzeigen",
+      "hidePeople": "Personen einklappen",
+      "toggleAllConnectedSpaces": "Alle verbundenen Spaces umschalten",
+      "toggleSidebar": "Seitenleiste umschalten"
+    },
+    "filterStates": {
+      "include": "einschließen",
+      "exclude": "ausschließen",
+      "unfiltered": "ungefiltert"
+    },
+    "filters": {
+      "toggleRelay": "Beiträge aus {{name}} ein- oder ausblenden",
+      "showOnlyRelay": "Nur Beiträge aus {{name}} anzeigen",
+      "toggleChannelTo": "#{{name}} einbeziehen, ausschließen oder ignorieren",
+      "toggleChannelFilter": "#{{name}} einbeziehen, ausschließen oder ignorieren",
+      "showOnlyChannel": "Nur Beiträge mit #{{name}} anzeigen",
+      "togglePerson": "Beiträge mit {{name}} ein- oder ausblenden",
+      "showOnlyPerson": "Nur Inhalte mit Beteiligung von {{name}} anzeigen",
+      "selected": "{{name}} ausgewählt",
+      "me": "Ich",
+      "pinChannelToView": "#{{name}} in der Seitenleiste sichtbar halten",
+      "unpinChannelFromView": "#{{name}} nicht mehr in der Seitenleiste sichtbar halten",
+      "pinPersonToView": "{{name}} in der Seitenleiste sichtbar halten",
+      "unpinPersonFromView": "{{name}} nicht mehr in der Seitenleiste sichtbar halten"
+    },
+    "quickFilters": {
+      "chips": {
+        "recent": "Neu {{days}}T",
+        "priority": "Priorität P{{priority}}+"
+      },
+      "labels": {
+        "recent": "Neu",
+        "recentDays": "Alter in Tagen",
+        "priority": "Priorität",
+        "minPriority": "Mindestpriorität"
+      },
+      "actions": {
+        "add": "Hinzufügen",
+        "edit": "Bearbeiten",
+        "clear": "Zurücksetzen",
+        "remove": "{{filterName}} entfernen",
+        "toggleRecent": "Nur Beiträge der letzten {{days}} Tage anzeigen",
+        "togglePriority": "Nur Aufgaben ab der Mindestpriorität anzeigen"
+      }
+    }
+  },
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "groups": {
+      "views": "Ansichten",
+      "taskNavigation": "Aufgaben-Navigation",
+      "sidebarNavigation": "Seitenleisten-Navigation",
+      "kanban": "Kanban",
+      "general": "Allgemein",
+      "compose": "Erstellen"
+    },
+    "items": {
+      "treeView": "Hierarchische Ansicht",
+      "feedView": "Timeline-Ansicht",
+      "kanbanView": "Kanban-Ansicht",
+      "calendarView": "Kalenderansicht",
+      "tableView": "Tabellenansicht",
+      "moveFocusDown": "Fokus nach unten bewegen",
+      "moveFocusUp": "Fokus nach oben bewegen",
+      "openSelectTask": "Aufgabe öffnen/auswählen",
+      "focusSidebarGoBack": "Seitenleiste fokussieren (oben) / zurückgehen",
+      "jumpFirstTask": "Zur ersten Aufgabe springen",
+      "jumpLastTask": "Zur letzten Aufgabe springen",
+      "clearFocus": "Fokus aufheben",
+      "navigateFilters": "Filter navigieren",
+      "toggleSelectedFilter": "Ausgewählten Filter umschalten",
+      "returnTaskList": "Zur Aufgabenliste zurückkehren",
+      "jumpFirstFilter": "Zum ersten Filter springen",
+      "jumpLastFilter": "Zum letzten Filter springen",
+      "navigateColumns": "Zwischen Spalten navigieren",
+      "navigateWithinColumn": "Innerhalb der Spalte navigieren",
+      "moveTaskColumns": "Aufgabe zwischen Spalten verschieben",
+      "toggleKeyboardShortcuts": "Tastenkürzel ein-/ausblenden",
+      "toggleChannelMatchMode": "Kanalabgleich zwischen UND und ODER umschalten",
+      "toggleRecentFilter": "Filter für letzte Tage umschalten",
+      "togglePriorityFilter": "Filter für Mindestpriorität umschalten",
+      "toggleCompactCards": "Kompakte Karten in Baum und Kanban umschalten",
+      "openRawEventJson": "Rohes Nostr-Event-JSON für einen Beitrag öffnen",
+      "submitCurrentKind": "Als aktuellen Typ senden",
+      "submitOppositeKind": "Als anderen Typ senden (wenn kein Autocomplete offen ist)",
+      "insertHighlightedSuggestion": "Bei offenem Autocomplete: markierten Vorschlag einfügen",
+      "addMetadataOnly": "Bei offenem @/#-Autocomplete: markierten Tag/Mention nur als Veröffentlichungs-Metadaten hinzufügen (ohne Tokentext)"
+    }
+  },
+  "theme": {
+    "mode": {
+      "auto": "Automatisches Theme",
+      "light": "Helles Theme",
+      "dark": "Dunkles Theme"
+    },
+    "switchTo": "Zu {{mode}} wechseln."
+  },
+  "feedback": {
+    "sound": {
+      "on": "Abschlusssound an",
+      "off": "Abschlusssound aus"
+    }
+  }
+}

@@ -22,7 +22,7 @@ export function useComposerSubmitHandler({
   onCancel,
 }: UseComposerSubmitHandlerOptions): (data: TaskComposerFormData) => void {
   const dispatch = useFeedInteractionDispatch();
-  const { t } = useTranslation();
+  const { t } = useTranslation("composer");
 
   return useCallback(
     (data: TaskComposerFormData) => {

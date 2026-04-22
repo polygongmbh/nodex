@@ -26,7 +26,7 @@ export function NoasAuthPanelShell({
   showBackAction = true,
   children,
 }: NoasAuthPanelShellProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("auth");
   const isSignIn = mode === "signIn";
 
   return (

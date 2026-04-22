@@ -220,7 +220,7 @@ Sidebar.displayName = "Sidebar";
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
   ({ className, onClick, ...props }, ref) => {
     const { toggleSidebar } = useSidebar();
-    const { t } = useTranslation();
+    const { t } = useTranslation("shell");
     const toggleSidebarLabel = t("sidebar.actions.toggleSidebar");
 
     return (
@@ -247,7 +247,7 @@ SidebarTrigger.displayName = "SidebarTrigger";
 const SidebarRail = React.forwardRef<HTMLButtonElement, React.ComponentProps<"button">>(
   ({ className, ...props }, ref) => {
     const { toggleSidebar } = useSidebar();
-    const { t } = useTranslation();
+    const { t } = useTranslation("shell");
     const toggleSidebarLabel = t("sidebar.actions.toggleSidebar");
 
     return (

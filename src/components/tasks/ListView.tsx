@@ -116,7 +116,7 @@ export function ListView({
   isInteractionBlocked = false,
   isHydrating = false,
 }: ListViewProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { channels, people } = useFeedSurfaceState();

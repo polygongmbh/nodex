@@ -1,0 +1,17 @@
+{
+  "app": {
+    "loadingView": "Cargando vista..."
+  },
+  "appError": {
+    "title": "Algo salió mal",
+    "description": "La app encontró un error inesperado. Puedes recargar o volver a la vista principal.",
+    "reload": "Recargar app",
+    "goHome": "Ir al inicio",
+    "unexpected": "Error inesperado de la aplicación"
+  },
+  "notFound": {
+    "message": "¡Vaya! Página no encontrada",
+    "goHome": "Volver al inicio",
+    "goHomeTitle": "Ir a la app principal"
+  }
+}

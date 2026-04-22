@@ -1,0 +1,56 @@
+{
+  "relay": {
+    "manage": "Manage relays ({{connectedCount}}/{{totalCount}})",
+    "managementTitle": "Relay Management",
+    "managementDescription": "View relay status, add or remove relays, and copy debug diagnostics.",
+    "placeholder": "wss://relay.example.com",
+    "noneConfigured": "No relays configured",
+    "connectedSummary": "{{connectedCount}} of {{totalCount}} relays connected",
+    "debugTitle": "Debug utilities",
+    "debugSummary": "connected {{connected}} · read-only {{readOnly}} · connecting {{connecting}} · disconnected {{disconnected}} · connection {{connectionError}} · read-rejected {{verificationFailed}}",
+    "status": {
+      "connected": "Connected",
+      "readOnly": "Read Only",
+      "connecting": "Connecting",
+      "disconnected": "Disconnected",
+      "connectionError": "Connection Issue",
+      "readRejected": "Read Rejected"
+    },
+    "statusHints": {
+      "readOnly": "This space is read-only."
+    },
+    "details": {
+      "show": "Show relay details",
+      "hide": "Hide relay details",
+      "title": "Relay capabilities",
+      "authRequired": "Auth required",
+      "supportsNip42": "Supports NIP-42",
+      "nip11Checked": "NIP-11 checked",
+      "yes": "yes",
+      "no": "no",
+      "unknown": "unknown"
+    },
+    "copyDebug": "Copy diagnostics",
+    "copyUrls": "Copy relay URLs",
+    "moveUp": "Move {{relay}} up",
+    "moveDown": "Move {{relay}} down",
+    "reconnect": "Reconnect relay",
+    "remove": "Remove relay",
+    "debugCopied": "Relay diagnostics copied",
+    "urlsCopied": "Relay URLs copied",
+    "copyFailed": "Could not copy relay debug data"
+  },
+  "widgets": {
+    "trending": {
+      "title": "Trending Tags",
+      "posts": "{{count}} posts",
+      "showMore": "Show more"
+    },
+    "relayStatus": {
+      "title": "Relay Status",
+      "noneConnected": "No relays connected",
+      "connected": "connected",
+      "readOnly": "read only"
+    }
+  }
+}

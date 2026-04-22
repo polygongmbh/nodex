@@ -11,7 +11,7 @@ const DATE_TYPE_LABEL_KEYS: Record<TaskDateType, string> = {
 
 export function getTaskDateTypeLabel(dateType: TaskDateType | undefined): string {
   const key = dateType ? DATE_TYPE_LABEL_KEYS[dateType] || DATE_TYPE_LABEL_KEYS.due : DATE_TYPE_LABEL_KEYS.due;
-  return i18n.t(key);
+  return i18n.t(`composer:${key}`);
 }
 
 export function isTaskLockedUntilStart(task: Task, now: Date = new Date()): boolean {

@@ -40,7 +40,7 @@ export function TaskMediaLightbox({
   onNextPost,
   onOpenTask,
 }: TaskMediaLightboxProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const reducedDataMode = useReducedDataMode();
   const previewAreaRef = useRef<HTMLDivElement | null>(null);
   const mediaBoundsRef = useRef<HTMLDivElement | null>(null);

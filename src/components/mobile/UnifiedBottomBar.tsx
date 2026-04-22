@@ -106,7 +106,7 @@ export function UnifiedBottomBar({
   canCreateContent,
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("composer");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const { allTasks } = useFeedTaskViewModel();
@@ -489,7 +489,7 @@ export function UnifiedBottomBar({
       relays,
     });
     if (submitType === "task" && !focusedTaskId && relayIds.length !== 1) {
-      toast.error(t("toasts.errors.selectRelayOrParent"));
+      toast.error(t("composer:toasts.errors.selectRelayOrParent"));
       return;
     }
     const listingMetadata: Nip99Metadata | undefined =
@@ -989,7 +989,7 @@ export function UnifiedBottomBar({
     featureDebugLog("compose-location", "Attempting mobile location capture");
     if (!navigator.geolocation) {
       featureDebugLog("compose-location", "Mobile location capture unavailable: geolocation API missing");
-      toast.error(t("toasts.errors.locationUnavailable"));
+      toast.error(t("composer:toasts.errors.locationUnavailable"));
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -997,11 +997,11 @@ export function UnifiedBottomBar({
         const geohash = encodeGeohash(position.coords.latitude, position.coords.longitude, DEFAULT_GEOHASH_PRECISION);
         setLocationGeohash(geohash);
         featureDebugLog("compose-location", "Mobile location capture succeeded", { geohash });
-        toast.success(t("toasts.success.locationCaptured", { geohash }));
+        toast.success(t("composer:toasts.success.locationCaptured", { geohash }));
       },
       () => {
         featureDebugLog("compose-location", "Mobile location capture failed");
-        toast.error(t("toasts.errors.locationCaptureFailed"));
+        toast.error(t("composer:toasts.errors.locationCaptureFailed"));
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     );
@@ -1377,7 +1377,7 @@ export function UnifiedBottomBar({
             </button>
             <button
               onClick={() => toggleSelector("person")}
-              aria-label={t("filters.people.title")}
+              aria-label={t("filters:filters.people.title")}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"

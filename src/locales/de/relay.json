@@ -1,0 +1,56 @@
+{
+  "relay": {
+    "manage": "Relays verwalten ({{connectedCount}}/{{totalCount}})",
+    "managementTitle": "Relay-Verwaltung",
+    "managementDescription": "Relay-Status anzeigen, Relays hinzufügen oder entfernen und Debug-Diagnosen kopieren.",
+    "placeholder": "wss://relay.example.com",
+    "noneConfigured": "Keine Relays konfiguriert",
+    "connectedSummary": "{{connectedCount}} von {{totalCount}} Relays verbunden",
+    "debugTitle": "Debug-Werkzeuge",
+    "debugSummary": "verbunden {{connected}} · nur lesen {{readOnly}} · verbindet {{connecting}} · getrennt {{disconnected}} · Verbindung {{connectionError}} · Lesen abgelehnt {{verificationFailed}}",
+    "status": {
+      "connected": "Verbunden",
+      "readOnly": "Schreibgeschützt",
+      "connecting": "Verbindet",
+      "disconnected": "Getrennt",
+      "connectionError": "Verbindungsproblem",
+      "readRejected": "Lesen abgelehnt"
+    },
+    "statusHints": {
+      "readOnly": "Dieser Space ist schreibgeschützt."
+    },
+    "details": {
+      "show": "Relay-Details anzeigen",
+      "hide": "Relay-Details ausblenden",
+      "title": "Relay-Fähigkeiten",
+      "authRequired": "Auth erforderlich",
+      "supportsNip42": "Unterstützt NIP-42",
+      "nip11Checked": "NIP-11 geprüft",
+      "yes": "ja",
+      "no": "nein",
+      "unknown": "unbekannt"
+    },
+    "copyDebug": "Diagnose kopieren",
+    "copyUrls": "Relay-URLs kopieren",
+    "moveUp": "{{relay}} nach oben verschieben",
+    "moveDown": "{{relay}} nach unten verschieben",
+    "reconnect": "Relay neu verbinden",
+    "remove": "Relay entfernen",
+    "debugCopied": "Relay-Diagnose kopiert",
+    "urlsCopied": "Relay-URLs kopiert",
+    "copyFailed": "Relay-Debugdaten konnten nicht kopiert werden"
+  },
+  "widgets": {
+    "trending": {
+      "title": "Trend-Tags",
+      "posts": "{{count}} Beiträge",
+      "showMore": "Mehr anzeigen"
+    },
+    "relayStatus": {
+      "title": "Relay-Status",
+      "noneConnected": "Keine Relays verbunden",
+      "connected": "verbunden",
+      "readOnly": "nur lesen"
+    }
+  }
+}

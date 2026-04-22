@@ -1,0 +1,56 @@
+{
+  "relay": {
+    "manage": "Gestionar relays ({{connectedCount}}/{{totalCount}})",
+    "managementTitle": "Gestión de relays",
+    "managementDescription": "Ver estado de relays, añadir o quitar relays y copiar diagnósticos de depuración.",
+    "placeholder": "wss://relay.example.com",
+    "noneConfigured": "No hay relays configurados",
+    "connectedSummary": "{{connectedCount}} de {{totalCount}} relays conectados",
+    "debugTitle": "Utilidades de depuración",
+    "debugSummary": "conectados {{connected}} · solo lectura {{readOnly}} · conectando {{connecting}} · desconectados {{disconnected}} · conexión {{connectionError}} · lectura rechazada {{verificationFailed}}",
+    "status": {
+      "connected": "Conectado",
+      "readOnly": "Solo Lectura",
+      "connecting": "Conectando",
+      "disconnected": "Desconectado",
+      "connectionError": "Problema de Conexión",
+      "readRejected": "Lectura Rechazada"
+    },
+    "statusHints": {
+      "readOnly": "Este space es de solo lectura."
+    },
+    "details": {
+      "show": "Mostrar detalles del relay",
+      "hide": "Ocultar detalles del relay",
+      "title": "Capacidades del relay",
+      "authRequired": "Auth requerida",
+      "supportsNip42": "Soporta NIP-42",
+      "nip11Checked": "NIP-11 comprobado",
+      "yes": "sí",
+      "no": "no",
+      "unknown": "desconocido"
+    },
+    "copyDebug": "Copiar diagnóstico",
+    "copyUrls": "Copiar URLs de relay",
+    "moveUp": "Mover {{relay}} hacia arriba",
+    "moveDown": "Mover {{relay}} hacia abajo",
+    "reconnect": "Reconectar relay",
+    "remove": "Eliminar relay",
+    "debugCopied": "Diagnóstico de relays copiado",
+    "urlsCopied": "URLs de relay copiadas",
+    "copyFailed": "No se pudieron copiar los datos de depuración de relay"
+  },
+  "widgets": {
+    "trending": {
+      "title": "Etiquetas en tendencia",
+      "posts": "{{count}} publicaciones",
+      "showMore": "Mostrar más"
+    },
+    "relayStatus": {
+      "title": "Estado de relays",
+      "noneConnected": "No hay relays conectados",
+      "connected": "conectado",
+      "readOnly": "solo lectura"
+    }
+  }
+}

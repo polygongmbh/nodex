@@ -20,7 +20,7 @@ import { getCompactPersonLabel } from "@/types/person";
 export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
 export function DesktopSearchDock() {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { searchQuery, channels = [], people = [] } = useFeedSurfaceState();
   const { allTasks, focusedTaskId } = useFeedTaskViewModel();
@@ -30,6 +30,10 @@ export function DesktopSearchDock() {
     ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
     : "";
   const searchPlaceholder = useMemo(() => {
+    const translatePlaceholder = (key: string, values?: Record<string, unknown>) =>
+      key.startsWith("composer.")
+        ? t(`composer:${key}`, values)
+        : t(key, values);
     const channelNames = channels
       .filter((channel) => channel.filterState === "included")
       .map((channel) => channel.name);
@@ -43,7 +47,7 @@ export function DesktopSearchDock() {
       mentionLabels,
       includeFallbackGuidance: false,
       locale: i18n.resolvedLanguage || i18n.language || "en",
-      t,
+      t: translatePlaceholder,
     });
   }, [channels, contextTaskTitle, i18n.language, i18n.resolvedLanguage, people, t]);
   return (
@@ -136,7 +140,7 @@ export function DesktopSearchDock() {
         )}
         <div className="flex flex-shrink-0 items-center gap-1.5">
           <LegalDialog
-            triggerLabel={t("legal.buttons.imprint")}
+            triggerLabel={t("shell:legal.buttons.imprint")}
             triggerClassName="rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60"
             showMailIcon
             mailIconClassName="rounded bg-background/70 backdrop-blur-sm border border-border/60"

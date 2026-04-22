@@ -10,7 +10,7 @@ interface ViewSwitcherProps {
 }
 
 export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const views: { id: ViewType; label: string; icon: React.ReactNode }[] = [
     { id: "feed", label: t("navigation.views.feed"), icon: <LayoutList className="w-4 h-4 xl:w-5 xl:h-5" /> },

@@ -160,7 +160,7 @@ function resolveBooleanEnvFlag(value: unknown, defaultValue: boolean): boolean {
 }
 
 export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("auth");
   const navigate = useNavigate();
   const {
     loginWithExtension,
@@ -548,13 +548,13 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                       onClick={() => setShowPrivateKeyInput((current) => !current)}
                       aria-label={
                         showPrivateKeyInput
-                          ? t("filters.profile.hidePrivateKey")
-                          : t("filters.profile.showPrivateKey")
+                          ? t("auth.profile.hidePrivateKey")
+                          : t("auth.profile.showPrivateKey")
                       }
                       title={
                         showPrivateKeyInput
-                          ? t("filters.profile.hidePrivateKey")
-                          : t("filters.profile.showPrivateKey")
+                          ? t("auth.profile.hidePrivateKey")
+                          : t("auth.profile.showPrivateKey")
                       }
                     >
                       {showPrivateKeyInput ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -673,7 +673,7 @@ const desktopTopbarControlClassName =
   "h-9 w-auto max-w-[14rem] rounded-md bg-transparent px-2 gap-2 justify-end whitespace-nowrap hover:bg-muted hover:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 xl:h-10";
 
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("auth");
   const {
     user,
     authMethod,
@@ -713,7 +713,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
 
   const openProfileEditor = useCallback(() => {
     if (!isConnected) {
-      toast.error(t("filters.profile.noRelayConnected"));
+      toast.error(t("auth.profile.noRelayConnected"));
       return;
     }
     resetFromProfile(effectiveProfile);
@@ -796,14 +796,14 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     pubkey: toUserFacingPubkey(user.npub || user.pubkey),
   });
   const methodLabel = authMethod === "extension"
-    ? t("filters.authMethod.extension")
+    ? t("auth.authMethod.extension")
     : authMethod === "guest"
-      ? t("filters.authMethod.guest")
+      ? t("auth.authMethod.guest")
       : authMethod === "nostrConnect"
-        ? t("filters.authMethod.signer")
+        ? t("auth.authMethod.signer")
         : authMethod === "noas"
-          ? t("filters.authMethod.noas")
-          : t("filters.authMethod.privateKey");
+          ? t("auth.authMethod.noas")
+          : t("auth.authMethod.privateKey");
   const preferenceState = {
     presence: {
       checked: presencePublishingEnabled,
@@ -978,11 +978,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             <div className="mt-3 flex shrink-0 justify-end gap-2 bg-background/95 pt-2">
               {!needsProfileSetup && (
                 <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>
-                  {t("filters.profile.cancel")}
+                  {t("auth.profile.cancel")}
                 </Button>
               )}
               <Button onClick={handleSaveProfile} disabled={isSavingProfile || !isUsernameValid}>
-                {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
+                {isSavingProfile ? t("auth.profile.saving") : t("auth.profile.save")}
               </Button>
             </div>
           </div>

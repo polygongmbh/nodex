@@ -15,7 +15,7 @@ export function GuestPrivateKeyRow({
   onToggleShow,
   onCopy,
 }: GuestPrivateKeyRowProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("auth");
 
   return (
     <div className="flex min-w-0 items-center gap-1.5 text-xs">
@@ -39,7 +39,7 @@ export function GuestPrivateKeyRow({
             variant="ghost"
             size="sm"
             onClick={onToggleShow}
-            aria-label={showKey ? t("filters.profile.hidePrivateKey") : t("filters.profile.showPrivateKey")}
+            aria-label={showKey ? t("auth.profile.hidePrivateKey") : t("auth.profile.showPrivateKey")}
             className="h-6 w-6 rounded-sm p-0 text-muted-foreground hover:text-foreground"
           >
             {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -49,7 +49,7 @@ export function GuestPrivateKeyRow({
             variant="ghost"
             size="sm"
             onClick={onCopy}
-            aria-label={t("filters.profile.copyPrivateKey")}
+            aria-label={t("auth.profile.copyPrivateKey")}
             className="h-6 w-6 rounded-sm p-0 text-muted-foreground hover:text-foreground"
           >
             <Copy className="h-3.5 w-3.5" />

@@ -21,7 +21,7 @@ export function SavedFilterPresetRow({
   activeConfigurationId = null,
   className,
 }: SavedFilterPresetRowProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("composer");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   const promptAndSaveCurrent = () => {

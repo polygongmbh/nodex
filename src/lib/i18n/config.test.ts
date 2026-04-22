@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LANGUAGE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
-import { DEFAULT_LANGUAGE, LANGUAGE_DETECTION_OPTIONS, SUPPORTED_LANGUAGES } from "./config";
+import { DEFAULT_LANGUAGE, I18N_NAMESPACES, LANGUAGE_DETECTION_OPTIONS, SUPPORTED_LANGUAGES } from "./config";
 
 describe("i18n config", () => {
   it("uses browser language detector with URL and local storage precedence", () => {
@@ -19,5 +19,18 @@ describe("i18n config", () => {
   it("keeps the supported language contract stable", () => {
     expect(SUPPORTED_LANGUAGES).toEqual(["en", "de", "es"]);
     expect(DEFAULT_LANGUAGE).toBe("en");
+  });
+
+  it("keeps the namespace contract stable", () => {
+    expect(I18N_NAMESPACES).toEqual([
+      "app",
+      "auth",
+      "composer",
+      "filters",
+      "onboarding",
+      "relay",
+      "shell",
+      "tasks",
+    ]);
   });
 });

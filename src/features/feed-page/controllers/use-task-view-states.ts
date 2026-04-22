@@ -747,7 +747,7 @@ export function useMobileFallbackNoticeState({
   showFilters,
   isHydrating = false,
 }: MobileScopedViewStateInput): MobileFallbackNoticeState {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tasks");
   const { relays, channels, people, quickFilters, searchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
   const hasSearchQuery = searchQuery.trim().length > 0;
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);

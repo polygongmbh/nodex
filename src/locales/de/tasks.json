@@ -1,0 +1,227 @@
+{
+  "tasks": {
+    "task": "Aufgabe",
+    "comment": "Kommentar",
+    "tags": "Tags",
+    "less": "weniger",
+    "readOnly": "Nur-Lese-Aufgabe",
+    "completedBy": "Erledigt von @{{user}}",
+    "focusTaskAria": "{{type}}: {{title}}",
+    "focusTaskTitle": "{{type}} fokussieren",
+    "focusBreadcrumbTitle": "Aufgabe fokussieren: {{title}}",
+    "tagsShowAll": "Alle Tags anzeigen",
+    "tagsShowLess": "Weniger Tags anzeigen",
+    "tagsShowMoreAria": "{{count}} weitere Tags anzeigen",
+    "actions": {
+      "setStatus": "Status setzen",
+      "filterAndMention": "Nach {{authorName}} filtern und {{authorName}} erwähnen",
+      "filterTag": "Auf #{{tag}} filtern",
+      "collapse": "Einklappen",
+      "collapseSubtasks": "Unteraufgaben ausblenden",
+      "expand": "Ausklappen",
+      "expandAll": "Ausklappen (alle)",
+      "expandAllSubtasks": "Alle Unteraufgaben anzeigen",
+      "expandMatchingOnly": "Nur gefilterte Unteraufgaben anzeigen",
+      "expandOpenSubtasks": "Offene Unteraufgaben anzeigen",
+      "showMore": "Mehr anzeigen",
+      "showLess": "Weniger anzeigen"
+    },
+    "rawEvent": {
+      "title": "Rohes Nostr-Event",
+      "description": "Prüfe die vollständige Event-Nutzlast aus dem Relay-Cache.",
+      "empty": "Für diesen Beitrag sind keine rohen Nostr-Event-Daten verfügbar.",
+      "actions": {
+        "copyJson": "JSON kopieren",
+        "copyEventId": "Event-ID kopieren",
+        "close": "Schließen"
+      },
+      "toasts": {
+        "copiedJson": "Rohes JSON in die Zwischenablage kopiert.",
+        "copyJsonFailed": "Rohes JSON konnte nicht kopiert werden.",
+        "copiedEventId": "Event-ID in die Zwischenablage kopiert.",
+        "copyEventIdFailed": "Event-ID konnte nicht kopiert werden."
+      }
+    },
+    "empty": {
+      "feed": "Keine Aufgaben zum Anzeigen",
+      "notFound": "Keine Aufgaben gefunden",
+      "noUpcoming": "Keine anstehenden Aufgaben",
+      "noneScheduledForDay": "Keine Aufgaben für diesen Tag geplant",
+      "selectDay": "Wähle einen Tag, um Aufgaben anzuzeigen",
+      "mobileQuickFilterFallback": "Keine Treffer für den Schnellfilter, alle Beiträge werden angezeigt.",
+      "mobileQuickFilterFallbackScoped": "Keine Treffer für den Schnellfilter, es werden alle Beiträge {{scope}} angezeigt.",
+      "matchFilters": "Keine Aufgaben entsprechen deinen Filtern",
+      "noSubtasks": "Noch keine Unteraufgaben",
+      "noneYet": "Noch keine Aufgaben",
+      "filtered": {
+        "scopeOnly": "Noch kein Beitrag {{scope}}.",
+        "showingOnlyScope": "Das ist alles {{scope}}.",
+        "mobileFallback": "Noch nichts im aktuellen Bereich, alles wird angezeigt.",
+        "mobileFallbackScoped": "Noch nichts {{scope}}, alles wird angezeigt.",
+        "action": "Lockere die Filter oder mach den Anfang."
+      },
+      "loading": {
+        "scopeOnly": "Lade Beiträge {{scope}}.",
+        "none": "Lade Beiträge ...",
+        "waitingPrompts": {
+          "calmBreath": "Einmal ruhig durchatmen, wir laden gerade.",
+          "glanceAway": "Kurz den Blick vom Bildschirm lösen.",
+          "smallPause": "Kurze Pause, dann geht's weiter.",
+          "shoulderRoll": "Schultern kurz lockern, dann geht's weiter.",
+          "syncBlinks": "Noch ein Augenblick, dann kommt alles ins Klick.",
+          "unclenchExhale": "Lockerlassen, ausatmen, weiter.",
+          "shortBeat": "Noch ein kurzer Schnauf, dann ist alles drauf.",
+          "postureSettle": "Kurz aufrichten, wir sind fast da.",
+          "sipWater": "Ein Schluck Wasser passt genau jetzt.",
+          "momentMore": "Nur noch einen Moment, dann geht's los."
+        }
+      },
+      "error": {
+        "scopeOnly": "Beiträge konnten nicht geladen werden {{scope}}.",
+        "none": "Beiträge aus dem ausgewählten Space konnten nicht geladen werden.",
+        "action": "Der ausgewählte Space ist derzeit nicht verfügbar.",
+        "unableToConnect": "Verbindung zum ausgewählten Space konnte nicht hergestellt werden.",
+        "readRejected": "Lesezugriff auf den ausgewählten Space wurde abgelehnt.",
+        "mixed": "Einige ausgewählte Spaces sind nicht erreichbar und andere lehnen Lesezugriff ab."
+      },
+      "options": [
+        "Hier ist es noch still. Setz den ersten Ton.",
+        "Hier fehlt nur noch ein erster Funke. Deiner.",
+        "Es ist noch leer zwischen den Zeilen. Schreib die erste.",
+        "Noch ruht dieser Raum. Bring ihn zum Klingen.",
+        "Alles bereit, nur der Anfang fehlt. Setz ihn jetzt."
+      ],
+      "scope": {
+        "includedChannels": "in {{channels}}",
+        "includedChannelsLoading": "aus {{channels}}",
+        "excludedChannels": "ohne {{channels}}",
+        "people": "mit {{people}}",
+        "relays": "auf {{relays}}",
+        "relaysError": "aus {{relays}}",
+        "search": "mit dem Text „{{query}}“",
+        "recent": "aus den letzten {{days}} Tagen",
+        "priority": "mit Priorität P{{priority}} oder höher",
+        "contextUnder": "unter {{title}}",
+        "listWithOthers": "{{items}} und {{count}} weitere"
+      }
+    }
+  },
+  "listView": {
+    "sort": {
+      "task": "Aufgabe",
+      "status": "Status",
+      "dueDate": "Datum",
+      "priority": "Priorität",
+      "reset": "Auf Standardsortierung zurücksetzen"
+    },
+    "status": {
+      "todo": "Offen",
+      "inProgress": "In Arbeit",
+      "done": "Erledigt",
+      "closed": "Geschlossen",
+      "inProgressShort": "Mache"
+    },
+    "dates": {
+      "setDate": "Datum setzen...",
+      "type": "Typ"
+    }
+  },
+  "feed": {
+    "hydrating": "Lade Ereignisse vom Relay…",
+    "loadingMoreEvents": "Lade weitere Ereignisse..."
+  },
+  "calendar": {
+    "tabs": {
+      "upcoming": "Anstehend",
+      "calendar": "Kalender"
+    },
+    "weekShort": "KW",
+    "moreTasks": "+{{count}} mehr",
+    "nav": {
+      "previousMonth": "Vorheriger Monat",
+      "nextMonth": "Nächster Monat"
+    },
+    "actions": {
+      "addEvent": "Ereignis hinzufügen",
+      "newEventOn": "Neues Ereignis am {{date}}"
+    }
+  },
+  "kanban": {
+    "newTaskIn": "Neue Aufgabe in {{column}}",
+    "hasSubtasks": "Hat Unteraufgaben"
+  },
+  "breadcrumbs": {
+    "up": "Hoch",
+    "goToParent": "Zur übergeordneten Aufgabe wechseln",
+    "allTasks": "Alle",
+    "showAllTasks": "Alle Aufgaben anzeigen"
+  },
+  "hints": {
+    "statusToggle": {
+      "todo": "Aufgabe als in Arbeit markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
+      "inProgress": "Aufgabe als erledigt markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
+      "done": "Aufgabe ist erledigt. Klicke, um den Status auszuwählen.",
+      "closed": "Aufgabe ist geschlossen. Klicke, um den Status auszuwählen."
+    }
+  },
+  "people": {
+    "status": {
+      "online": "online",
+      "recent": "kürzlich aktiv",
+      "offline": "offline"
+    },
+    "presence": {
+      "lastSeen": "Zuletzt gesehen",
+      "viewing": "Gerade in",
+      "unknownTask": "Unbekannte Aufgabe"
+    },
+    "actions": {
+      "openMenu": "Personenaktionen für {{name}}",
+      "showOnly": "Nur Inhalte mit Beteiligung von {{name}} anzeigen",
+      "mention": "{{name}} erwähnen",
+      "filterAndMention": "Nach {{name}} filtern und {{name}} erwähnen",
+      "copyPubkey": "Öffentlichen Schlüssel kopieren",
+      "privateChat": "Privater Chat (kommt bald)"
+    },
+    "toasts": {
+      "pubkeyCopied": "Öffentlicher Schlüssel in die Zwischenablage kopiert.",
+      "pubkeyCopyFailed": "Der öffentliche Schlüssel konnte nicht kopiert werden."
+    }
+  },
+  "mediaLightbox": {
+    "title": "Medienvorschau",
+    "description": "Medien ansehen und zwischen Anhängen eines Beitrags navigieren",
+    "openPost": "Beitrag öffnen",
+    "close": "Medienvorschau schließen",
+    "previous": "Vorheriges Medium",
+    "next": "Nächstes Medium",
+    "imageAlt": "Medienvorschau",
+    "loadFullImage": "Vollbild laden",
+    "reducedDataPreview": "Im Datensparmodus wird zuerst eine Vorschau gezeigt."
+  },
+  "linkify": {
+    "embeddedVideo": "Eingebettetes Video",
+    "embeddedAttachment": "Eingebetteter Anhang"
+  },
+  "autoCaption": {
+    "warnings": {
+      "unsupported": "Auto-Beschriftung ist experimentell und wird in diesem Browser oder auf diesem Gerät nicht unterstützt.",
+      "timeout": "Die Beschriftungserzeugung hat zu lange gedauert. Du kannst den Alternativtext weiterhin manuell eingeben.",
+      "failed": "Die Beschriftungserzeugung ist auf diesem Gerät fehlgeschlagen. Du kannst den Alternativtext weiterhin manuell eingeben."
+    },
+    "toasts": {
+      "preparingModel": "Lokales Beschriftungsmodell wird vorbereitet...",
+      "downloadingModel": "Lokales Beschriftungsmodell wird heruntergeladen... {{progress}}%",
+      "downloadFailed": "Der Download des lokalen Beschriftungsmodells ist fehlgeschlagen.",
+      "modelReady": "Lokales Beschriftungsmodell ist bereit.",
+      "generating": "Beschriftung für {{fileName}} wird erzeugt...",
+      "preparingImage": "Bild wird für die Beschriftung vorbereitet: {{fileName}}...",
+      "generatingWithModel": "Beschriftung mit lokalem Modell wird erzeugt: {{fileName}}...",
+      "generated": "Beschriftung für {{fileName}} wurde erzeugt."
+    },
+    "errors": {
+      "pipelineUnavailable": "Beschriftungs-Pipeline nicht verfügbar",
+      "modelUnavailable": "Beschriftungsmodell nicht verfügbar"
+    }
+  }
+}
