@@ -15,8 +15,8 @@ const baseStepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
   navigation: [
     {
       id: "navigation-focus",
-      title: "Open task context",
-      description: "Open a task context.",
+      title: "Open thread",
+      description: "Open thread.",
       target: '[data-onboarding="task-list"]',
       requiredAction: "click-target",
     },
@@ -111,7 +111,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         content: <div data-onboarding="task-list">Task list</div>,
       });
 
-      expect(screen.getByText("Open task context")).toBeInTheDocument();
+      expect(screen.getByText("Open thread")).toBeInTheDocument();
       fireEvent.click(screen.getByText("Task list"));
 
       act(() => {
@@ -580,7 +580,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         },
         {
           id: "navigation-focus",
-          title: "Open task context",
+          title: "Open thread",
           description: "Open task",
           target: '[data-onboarding="task-list"]',
           requiredAction: "click-target",
@@ -626,7 +626,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       vi.advanceTimersByTime(300);
     });
 
-    expect(screen.getByText("Open task context")).toBeInTheDocument();
+    expect(screen.getByText("Open thread")).toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -643,7 +643,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         },
         {
           id: "navigation-focus",
-          title: "Open task context",
+          title: "Open thread",
           description: "Open task",
           target: '[data-onboarding="task-list"]',
           requiredAction: "click-target",
@@ -690,7 +690,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     });
 
     expect(screen.getByText("Switch views")).toBeInTheDocument();
-    expect(screen.queryByText("Open task context")).not.toBeInTheDocument();
+    expect(screen.queryByText("Open thread")).not.toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -700,7 +700,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       navigation: [
         {
           id: "navigation-focus",
-          title: "Open task context",
+          title: "Open thread",
           description: "Open task",
           target: '[data-onboarding="task-list"]',
           requiredAction: "click-target",
@@ -750,7 +750,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       vi.advanceTimersByTime(400);
     });
 
-    expect(screen.getByText("Open task context")).toBeInTheDocument();
+    expect(screen.getByText("Open thread")).toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -760,8 +760,8 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       navigation: [
         {
           id: "navigation-focus",
-          title: "Open task context",
-          description: "Open task context.",
+          title: "Open thread",
+          description: "Open thread.",
           target: '[data-onboarding="task-list"]',
           requiredAction: "click-target",
         },
@@ -849,8 +849,8 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       navigation: [
         {
           id: "navigation-focus",
-          title: "Open task context",
-          description: "Open task context.",
+          title: "Open thread",
+          description: "Open thread.",
           target: '[data-onboarding="task-list"]',
           requiredAction: "click-target",
         },
@@ -938,8 +938,8 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       navigation: [
         {
           id: "navigation-focus",
-          title: "Open task context",
-          description: "Open task context.",
+          title: "Open thread",
+          description: "Open thread.",
           target: '[data-onboarding="task-list"]',
           requiredAction: "click-target",
         },
@@ -1133,7 +1133,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
 
     expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    expect(screen.getByText("Open task context")).toBeInTheDocument();
+    expect(screen.getByText("Open thread")).toBeInTheDocument();
 
     const nextButton = screen.getByRole("button", { name: "Next" });
     expect(nextButton).toBeEnabled();

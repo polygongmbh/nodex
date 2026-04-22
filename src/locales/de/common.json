@@ -581,8 +581,8 @@
       "next": "Weiter",
       "breadcrumbFallback": {
         "title": "Breadcrumb ist gerade nicht sichtbar",
-        "description": "Öffne zuerst einen Aufgabenkontext, überspringe diesen Schritt oder beende den Guide.",
-        "openTask": "Aufgabenkontext öffnen",
+        "description": "Öffne zuerst einen Thread, überspringe diesen Schritt oder beende den Guide.",
+        "openTask": "Thread öffnen",
         "skipStep": "Schritt überspringen",
         "endGuide": "Guide beenden"
       }
@@ -616,13 +616,13 @@
         "action": "Klicke auf einen Ansichtstab, um fortzufahren."
       },
       "navigationFocus": {
-        "title": "Aufgabenkontext öffnen",
+        "title": "Thread öffnen",
         "description": "Klicke auf einen beliebigen Beitrag, um seine Unterelemente zu sehen und ihn zu kommentieren oder Unteraufgaben zu erstellen.",
-        "action": "Klicke auf eine Aufgabe, um fortzufahren."
+        "action": "Klicke auf einen Beitrag, um fortzufahren."
       },
       "navigationBreadcrumb": {
         "title": "Breadcrumbs nutzen",
-        "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.",
+        "description": "Mit der Breadcrumb-Leiste gehst du in der Hierarchie nach oben.",
         "action": "Klicke auf ein Breadcrumb-Element, um fortzufahren."
       },
       "filtersRelays": {
@@ -657,38 +657,36 @@
         "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.",
         "action": "Power-User-Hinweis: {{alternateModifier}}+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete fügt {{alternateModifier}}+Enter oder {{alternateModifier}}+Klick den gewählten Tag/Mention nur als Metadaten hinzu, ohne Tokentext einzufügen."
       },
-      "mobileNavigationNav": {
-        "title": "Mobile Ansichten",
-        "description": "Navigiere oben zwischen Timeline, Hierarchisch, Anstehend und Kalender.",
-        "action": "Tippe auf einen Navigations-Tab, um fortzufahren."
-      },
-      "mobileNavigationFocus": {
-        "title": "In Aufgabe navigieren",
-        "description": "Tippe auf eine Aufgabe, um ihren fokussierten Kontext und den Navigationspfad zu öffnen.",
-        "action": "Tippe auf eine Aufgabe, um fortzufahren."
-      },
-      "mobileNavigationBreadcrumb": {
-        "title": "Breadcrumbs nutzen",
-        "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.",
-        "action": "Tippe auf ein Breadcrumb-Element, um fortzufahren."
-      },
-      "mobileFiltersOpen": {
-        "title": "Verwalten öffnen",
-        "description": "Tippe in der oberen Navigation auf *Verwalten*, um Space-, Kanal- und Personenfilter zu öffnen.",
-        "action": "Tippe auf *Verwalten*, um fortzufahren."
-      },
-      "mobileFiltersProperties": {
-        "title": "Profilangaben",
-        "description": "Im Profil-Editor kannst du dein Profil bearbeiten."
-      },
-      "mobileFiltersUse": {
-        "title": "Filter nutzen",
-        "description": "In *Verwalten* kannst du Space-Chips für Spaces wählen, Kanal-Chips durch neutral -> einschließen -> ausschließen schalten und Personen-Chips umschalten. Kombiniere diese Optionen, um die Timeline vor dem Verfassen gezielt einzugrenzen."
-      },
-      "mobileComposeCombobox": {
-        "title": "Suchen/Erstellen-Kombobox",
-        "description": "Nutze die kombinierte untere Leiste, um beim Tippen zu suchen und aus demselben Text Aufgaben/Kommentare über den Senden-Button zu erstellen.",
-        "action": "Tippe in die kombinierte Leiste, um fortzufahren."
+      "mobile": {
+        "navigationNav": {
+          "title": "Mobile Ansichten",
+          "description": "Navigiere oben zwischen Timeline, Hierarchisch, Anstehend und Kalender.",
+          "action": "Tippe auf einen Navigations-Tab, um fortzufahren."
+        },
+        "navigationFocus": {
+          "action": "Tippe auf einen Beitrag, um fortzufahren."
+        },
+        "navigationBreadcrumb": {
+          "action": "Tippe auf ein Breadcrumb-Element, um fortzufahren."
+        },
+        "filtersOpen": {
+          "title": "Menü öffnen",
+          "description": "Nutze das Menü, um Spaces zu verwalten, Filter fein abzustimmen und dein Profil sowie deine Einstellungen zu aktualisieren.",
+          "action": "Tippe auf das Burger-Menü oben links, um fortzufahren."
+        },
+        "filtersProperties": {
+          "title": "Profil bearbeiten",
+          "description": "Öffne in *Verwalten* den Profil-Editor, um Benutzername, Anzeigename, Profilbild-URL, verifizierte Identitätsadresse und deinen Infotext zu aktualisieren."
+        },
+        "filtersUse": {
+          "title": "Filter nutzen",
+          "description": "In *Verwalten* kannst du Space-Chips für Spaces wählen, Kanal-Chips durch neutral -> einschließen -> ausschließen schalten und Personen-Chips umschalten. Kombiniere diese Optionen, um die Timeline gezielt einzugrenzen."
+        },
+        "composeCombobox": {
+          "title": "Suchen/Erstellen-Kombobox",
+          "description": "Nutze die kombinierte untere Leiste, um beim Tippen zu suchen und aus demselben Text Aufgaben/Kommentare über den Senden-Button zu erstellen.",
+          "action": "Tippe in die kombinierte Leiste, um fortzufahren."
+        }
       },
       "kanbanColumnsStatus": {
         "title": "Spalten und Status",

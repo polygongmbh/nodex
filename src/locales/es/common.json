@@ -581,8 +581,8 @@
       "next": "Siguiente",
       "breadcrumbFallback": {
         "title": "El breadcrumb no está visible ahora",
-        "description": "Abre primero el contexto de una tarea, omite este paso o finaliza la guía.",
-        "openTask": "Abrir contexto de tarea",
+        "description": "Abre primero un hilo, omite este paso o finaliza la guía.",
+        "openTask": "Abrir hilo",
         "skipStep": "Omitir este paso",
         "endGuide": "Finalizar guía"
       }
@@ -616,13 +616,13 @@
         "action": "Haz clic en cualquier pestaña de vista para continuar."
       },
       "navigationFocus": {
-        "title": "Abrir contexto de tarea",
+        "title": "Abrir hilo",
         "description": "Haz clic en cualquier publicación para ver sus subelementos y comentarla o crear subtareas.",
-        "action": "Haz clic en una tarea para continuar."
+        "action": "Haz clic en una publicación para continuar."
       },
       "navigationBreadcrumb": {
         "title": "Usar breadcrumbs",
-        "description": "Usa la fila de breadcrumbs para subir en la jerarquía o saltar entre tareas padre.",
+        "description": "Usa la fila de breadcrumbs para subir en la jerarquía.",
         "action": "Haz clic en un elemento del breadcrumb para continuar."
       },
       "filtersRelays": {
@@ -657,38 +657,36 @@
         "description": "Usa #tags para organizar elementos y @menciones para referenciar personas en el cuadro de redacción. Los canales incluidos se precompletan automáticamente como hashtags. Puedes establecer un tipo de fecha (Vencimiento, Programada, Inicio, Fin o Hito) para que las tareas aparezcan en Calendario; las fechas futuras de Inicio se muestran como no realizables todavía.",
         "action": "Consejo avanzado: {{alternateModifier}}+Enter envía como el otro tipo cuando no hay autocompletado abierto; con autocompletado abierto, usa {{alternateModifier}}+Enter o {{alternateModifier}}+clic para añadir la etiqueta/mención seleccionada como metadatos sin insertar texto del token."
       },
-      "mobileNavigationNav": {
-        "title": "Vistas móviles",
-        "description": "Usa la navegación superior para cambiar entre Cronología, Árbol, Próximas y Calendario.",
-        "action": "Toca una pestaña de navegación para continuar."
-      },
-      "mobileNavigationFocus": {
-        "title": "Navegar dentro de una tarea",
-        "description": "Toca una tarea para abrir su contexto enfocado y ruta de navegación.",
-        "action": "Toca una tarea para continuar."
-      },
-      "mobileNavigationBreadcrumb": {
-        "title": "Usar breadcrumbs",
-        "description": "Usa la fila de breadcrumbs para subir en la jerarquía o saltar entre tareas padre.",
-        "action": "Toca un elemento del breadcrumb para continuar."
-      },
-      "mobileFiltersOpen": {
-        "title": "Abrir Gestionar",
-        "description": "Toca *Gestionar* en la navegación superior para abrir filtros de space, canal y personas.",
-        "action": "Toca *Gestionar* para continuar."
-      },
-      "mobileFiltersProperties": {
-        "title": "Propiedades del perfil",
-        "description": "En *Gestionar*, abre el editor de perfil para revisar y establecer campos clave de identidad: nombre de usuario, nombre para mostrar, URL de la foto de perfil, dirección de identidad verificada y texto sobre ti."
-      },
-      "mobileFiltersUse": {
-        "title": "Usar filtros",
-        "description": "En *Gestionar*, toca chips de space para seleccionar spaces, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad antes de redactar."
-      },
-      "mobileComposeCombobox": {
-        "title": "Caja combinada búsqueda/redacción",
-        "description": "Usa la barra inferior combinada para buscar mientras escribes y crear tareas/comentarios desde el mismo texto con el botón de envío.",
-        "action": "Toca la barra combinada para continuar."
+      "mobile": {
+        "navigationNav": {
+          "title": "Vistas móviles",
+          "description": "Usa la navegación superior para cambiar entre Cronología, Árbol, Próximas y Calendario.",
+          "action": "Toca una pestaña de navegación para continuar."
+        },
+        "navigationFocus": {
+          "action": "Toca una publicación para continuar."
+        },
+        "navigationBreadcrumb": {
+          "action": "Toca un elemento del breadcrumb para continuar."
+        },
+        "filtersOpen": {
+          "title": "Abrir menú",
+          "description": "Usa el menú para gestionar spaces, ajustar filtros con precisión y actualizar tu perfil y ajustes.",
+          "action": "Toca el menú hamburguesa de arriba a la izquierda para continuar."
+        },
+        "filtersProperties": {
+          "title": "Editar perfil",
+          "description": "En *Gestionar*, abre el editor de perfil para actualizar tu nombre de usuario, nombre para mostrar, URL de la foto de perfil, dirección de identidad verificada y texto sobre ti."
+        },
+        "filtersUse": {
+          "title": "Usar filtros",
+          "description": "En *Gestionar*, toca chips de space para seleccionar spaces, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad."
+        },
+        "composeCombobox": {
+          "title": "Caja combinada búsqueda/redacción",
+          "description": "Usa la barra inferior combinada para buscar mientras escribes y crear tareas/comentarios desde el mismo texto con el botón de envío.",
+          "action": "Toca la barra combinada para continuar."
+        }
       },
       "kanbanColumnsStatus": {
         "title": "Columnas y estado",

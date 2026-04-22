@@ -581,8 +581,8 @@
       "next": "Next",
       "breadcrumbFallback": {
         "title": "Breadcrumb is not visible right now",
-        "description": "Open a task context first, skip this step, or end the guide.",
-        "openTask": "Open a task context",
+        "description": "Open a thread first, skip this step, or end the guide.",
+        "openTask": "Open thread",
         "skipStep": "Skip this step",
         "endGuide": "End guide"
       }
@@ -616,13 +616,13 @@
         "action": "Click any view tab to continue."
       },
       "navigationFocus": {
-        "title": "Open task context",
+        "title": "Open thread",
         "description": "Click any post to view its subitems and comment on it or create subtasks.",
-        "action": "Click a task item to continue."
+        "action": "Click a post to continue."
       },
       "navigationBreadcrumb": {
         "title": "Use breadcrumbs",
-        "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.",
+        "description": "Use the breadcrumb row to move up the hierarchy.",
         "action": "Click a breadcrumb item to continue."
       },
       "filtersRelays": {
@@ -657,38 +657,36 @@
         "description": "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags. You can set a date type (Due, Scheduled, Start, End, or Milestone) so tasks appear in Calendar view; future Start dates are shown as not yet doable.",
         "action": "Power-user hint: {{alternateModifier}}+Enter submits as the other kind when no autocomplete is open; with autocomplete open, use {{alternateModifier}}+Enter or {{alternateModifier}}+click to add the selected tag/mention as metadata without inserting token text."
       },
-      "mobileNavigationNav": {
-        "title": "Mobile views",
-        "description": "Use the top navigation to switch between Timeline, Tree, Upcoming, and Calendar.",
-        "action": "Tap a navigation tab to continue."
-      },
-      "mobileNavigationFocus": {
-        "title": "Navigate into a task",
-        "description": "Tap a task item to open its focused context and navigation path.",
-        "action": "Tap a task item to continue."
-      },
-      "mobileNavigationBreadcrumb": {
-        "title": "Use breadcrumbs",
-        "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.",
-        "action": "Tap a breadcrumb item to continue."
-      },
-      "mobileFiltersOpen": {
-        "title": "Open Manage",
-        "description": "Tap *Manage* in the top navigation to open space, channel, and people filters.",
-        "action": "Tap *Manage* to continue."
-      },
-      "mobileFiltersProperties": {
-        "title": "Profile properties",
-        "description": "In *Manage*, open the profile editor to review and set your key identity fields: username, display name, profile picture URL, verified identity address, and about text."
-      },
-      "mobileFiltersUse": {
-        "title": "Use filters",
-        "description": "In *Manage*, tap space chips to select spaces, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility before composing."
-      },
-      "mobileComposeCombobox": {
-        "title": "Search/Compose combobox",
-        "description": "Use the combined bottom bar to search as you type and create tasks/comments from the same text using the submit button.",
-        "action": "Tap into the combined bar to continue."
+      "mobile": {
+        "navigationNav": {
+          "title": "Mobile views",
+          "description": "Use the top navigation to switch between Timeline, Tree, Upcoming, and Calendar.",
+          "action": "Tap a navigation tab to continue."
+        },
+        "navigationFocus": {
+          "action": "Tap a post to continue."
+        },
+        "navigationBreadcrumb": {
+          "action": "Tap a breadcrumb item to continue."
+        },
+        "filtersOpen": {
+          "title": "Open menu",
+          "description": "Use the menu to manage spaces, fine-tune filters, and update your profile and settings.",
+          "action": "Tap the top-left burger menu to continue."
+        },
+        "filtersProperties": {
+          "title": "Edit profile",
+          "description": "In *Manage*, open the profile editor to update your username, display name, profile picture URL, verified identity address, and about text."
+        },
+        "filtersUse": {
+          "title": "Use filters",
+          "description": "In *Manage*, tap space chips to select spaces, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility."
+        },
+        "composeCombobox": {
+          "title": "Search/Compose combobox",
+          "description": "Use the combined bottom bar to search as you type and create tasks/comments from the same text using the submit button.",
+          "action": "Tap into the combined bar to continue."
+        }
       },
       "kanbanColumnsStatus": {
         "title": "Columns and status",
