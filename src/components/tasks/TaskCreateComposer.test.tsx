@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
 import { getComposerPrimaryAction, getTaskComposerInput } from "@/test/ui";
@@ -112,6 +113,7 @@ function renderCreateComposer({
 describe("TaskCreateComposer", () => {
   beforeEach(() => {
     dispatchFeedInteraction.mockClear();
+    localStorage.clear();
   });
 
   it("dispatches task.create with compose config and closes on success", async () => {
@@ -168,6 +170,18 @@ describe("TaskCreateComposer", () => {
       "placeholder",
       expect.stringContaining("@alice")
     );
+  });
+
+  it("restores the shared draft by default", () => {
+    localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
+      content: "Persisted #backend",
+      messageType: "comment",
+    }));
+
+    renderCreateComposer();
+
+    expect(screen.getByRole("textbox")).toHaveValue("Persisted #backend");
+    expect(screen.getByRole("button", { name: /add comment/i })).toBeInTheDocument();
   });
 
   it("does not render the composer when the parent only lives on read-only relays", () => {

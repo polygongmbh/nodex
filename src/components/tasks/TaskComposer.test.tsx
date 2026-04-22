@@ -5,6 +5,7 @@ import { TaskComposer, type TaskComposerFormData } from "./TaskComposer";
 import {
   TaskComposerRuntimeProvider,
 } from "./task-composer-runtime";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
@@ -51,12 +52,10 @@ function buildRuntimeValue({
   channels = baseChannels,
   people = basePeople,
   mentionablePeople = people,
-  draftStorageKey,
 }: {
   channels?: Channel[];
   people?: Person[];
   mentionablePeople?: Person[];
-  draftStorageKey?: string;
 } = {}) {
   return {
     environment: {
@@ -71,7 +70,7 @@ function buildRuntimeValue({
         .filter((person) => person.isSelected)
         .map((person) => person.id.trim().toLowerCase()),
     },
-    draftStorageKey,
+    draftStorageKey: COMPOSE_DRAFT_STORAGE_KEY,
   };
 }
 
@@ -80,7 +79,6 @@ function renderComposer({
   channels,
   people,
   mentionablePeople,
-  draftStorageKey,
   canCreateContent = true,
   getUploadAuthHeader = vi.fn(async () => null),
   ...props
@@ -88,11 +86,10 @@ function renderComposer({
   channels?: Channel[];
   people?: Person[];
   mentionablePeople?: Person[];
-  draftStorageKey?: string;
 } = {}) {
   const renderResult = render(
     <TaskComposerRuntimeProvider
-      value={buildRuntimeValue({ channels, people, mentionablePeople, draftStorageKey })}
+      value={buildRuntimeValue({ channels, people, mentionablePeople })}
     >
       <TaskComposer
         onSubmit={onSubmit}
@@ -193,13 +190,13 @@ describe("TaskComposer", () => {
     }));
   });
 
-  it("restores draft content and kind from the provided storage key", () => {
-    localStorage.setItem("composer-draft", JSON.stringify({
+  it("restores draft content and kind from the shared draft key", () => {
+    localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "#persisted hello",
       messageType: "comment",
     }));
 
-    renderComposer({ draftStorageKey: "composer-draft" });
+    renderComposer();
 
     expect(getComposerInput("comment")).toHaveValue("#persisted hello");
     expect(screen.getByRole("button", { name: /add comment/i })).toBeInTheDocument();
@@ -222,8 +219,8 @@ describe("TaskComposer", () => {
     expect(beforeButton).toHaveFocus();
   });
 
-  it("restores the full draft payload from the provided storage key", () => {
-    localStorage.setItem("composer-draft", JSON.stringify({
+  it("restores the full draft payload from the shared draft key", () => {
+    localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "",
       messageType: "task",
       savedAt: new Date().toISOString(),
@@ -238,7 +235,7 @@ describe("TaskComposer", () => {
       locationGeohash: "u33db",
     }));
 
-    renderComposer({ draftStorageKey: "composer-draft" });
+    renderComposer();
 
     expect(getComposerInput()).toHaveValue("");
     expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
@@ -249,8 +246,8 @@ describe("TaskComposer", () => {
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();
   });
 
-  it("drops stale restored tags, mentions, date, and location from the provided storage key", () => {
-    localStorage.setItem("composer-draft", JSON.stringify({
+  it("drops stale restored tags, mentions, date, and location from the shared draft key", () => {
+    localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "keep this text",
       messageType: "task",
       savedAt: "2026-04-01T10:00:00.000Z",
@@ -265,7 +262,7 @@ describe("TaskComposer", () => {
       priority: 80,
     }));
 
-    renderComposer({ draftStorageKey: "composer-draft" });
+    renderComposer();
 
     expect(getComposerInput()).toHaveValue("keep this text");
     expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
@@ -276,8 +273,8 @@ describe("TaskComposer", () => {
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).toBeNull();
   });
 
-  it("restores listing metadata and attachments from the provided storage key", () => {
-    localStorage.setItem("composer-draft", JSON.stringify({
+  it("restores listing metadata and attachments from the shared draft key", () => {
+    localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "Need a designer #design",
       messageType: "request",
       savedAt: new Date().toISOString(),
@@ -298,7 +295,7 @@ describe("TaskComposer", () => {
       explicitMentionPubkeys: [alicePubkey],
     }));
 
-    renderComposer({ draftStorageKey: "composer-draft", allowFeedMessageTypes: true });
+    renderComposer({ allowFeedMessageTypes: true });
 
     expect(getComposerInput("request")).toHaveValue("Need a designer #design");
     expect(screen.getByLabelText("Listing title")).toHaveValue("Need designer for mobile UI");

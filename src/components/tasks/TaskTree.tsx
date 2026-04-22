@@ -4,7 +4,6 @@ import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import {
@@ -56,7 +55,6 @@ export function TaskTree({
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
-  const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const taskSource = useTaskViewSource({
     tasks,
     allTasks,
@@ -211,7 +209,6 @@ export function TaskTree({
       <SharedViewComposer
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onCancel={() => setIsComposerExpanded(false)}
-        draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         focusedTaskId={normalizedFocusedTaskId}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}

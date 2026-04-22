@@ -5,6 +5,7 @@ import { useComposerRelayBlock } from "./use-composer-relay-block";
 import { useComposerFilterSync } from "./use-composer-filter-sync";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import type { ComposeRestoreRequest, TaskInitialStatus } from "@/types";
 
 interface TaskCreateComposerProps {
@@ -17,7 +18,6 @@ interface TaskCreateComposerProps {
   adaptiveSize?: boolean;
   focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
-  draftStorageKey?: string;
   forceExpanded?: boolean;
   forceExpandSignal?: number;
   mentionRequest?: {
@@ -42,7 +42,6 @@ export function TaskCreateComposer({
   adaptiveSize = false,
   focusOnMount = true,
   onExpandedChange,
-  draftStorageKey,
   forceExpanded = false,
   forceExpandSignal,
   mentionRequest = null,
@@ -73,14 +72,14 @@ export function TaskCreateComposer({
   if (shouldHideComposer) return null;
 
   return (
-    <TaskComposerRuntimeProvider value={{ environment, draftStorageKey }}>
+    <TaskComposerRuntimeProvider value={{ environment, draftStorageKey: COMPOSE_DRAFT_STORAGE_KEY }}>
       <TaskComposer
         onSubmit={handleSubmit}
         onCancel={onCancel}
         externalSubmitBlockByType={externalSubmitBlockByType}
         canCreateContent={canCreateContent}
         getUploadAuthHeader={createHttpAuthHeader}
-        {...filterSync}
+        filterSync={filterSync}
         compact={compact}
         defaultDueDate={defaultDueDate}
         defaultContent={defaultContent}

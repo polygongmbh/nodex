@@ -22,7 +22,6 @@ import {
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
-import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
@@ -200,7 +199,6 @@ export function FeedView({
   const [isXLDesktop, setIsXLDesktop] = useState(false);
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
-  const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const {
     searchQuery,
     focusedTask,
@@ -545,7 +543,6 @@ export function FeedView({
       <SharedViewComposer
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onCancel={() => {}}
-        draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         focusedTaskId={focusedTaskId}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}

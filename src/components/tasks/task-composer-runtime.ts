@@ -142,13 +142,9 @@ export function useResolvedTaskComposerEnvironment({
   );
 }
 
-export function useTaskComposerEnvironment(fallback?: {
-  relays?: Relay[];
-  channels?: Channel[];
-  people?: Person[];
-}): ResolvedTaskComposerEnvironment {
+export function useTaskComposerEnvironment(): ResolvedTaskComposerEnvironment {
   const runtimeContext = useContext(TaskComposerRuntimeContext);
-  const fallbackEnvironment = useResolvedTaskComposerEnvironment(fallback ?? defaultTaskComposerEnvironment);
+  const fallbackEnvironment = useResolvedTaskComposerEnvironment(defaultTaskComposerEnvironment);
   return runtimeContext?.environment ?? fallbackEnvironment;
 }
 
@@ -156,12 +152,8 @@ export function useTaskComposerDraftStorageKey() {
   return useContext(TaskComposerRuntimeContext)?.draftStorageKey;
 }
 
-export function useTaskComposerModel(fallback?: {
-  relays?: Relay[];
-  channels?: Channel[];
-  people?: Person[];
-}): TaskComposerModel {
-  const environment = useTaskComposerEnvironment(fallback);
+export function useTaskComposerModel(): TaskComposerModel {
+  const environment = useTaskComposerEnvironment();
 
   return useMemo(() => {
     const channelOptions = environment.channels.map((channel) => ({

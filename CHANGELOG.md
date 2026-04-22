@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Kanban and calendar composers now restore the same shared draft state as the feed, tree, and list composers instead of dropping in-progress content when those inline composers close.
+
 ## [2.13.3] - 2026-04-22
 
 - Mobile Manage now shows dedicated legal/privacy/contact icons alongside the changelog action, making those footer actions easier to recognize and tap.

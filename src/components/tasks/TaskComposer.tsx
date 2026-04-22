@@ -2,8 +2,8 @@ import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, HandHelping, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
-import { Channel, Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
-import type { Person } from "@/types/person";
+import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
+import type { ComposerFilterSync } from "./use-composer-filter-sync";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -56,14 +56,10 @@ import {
 
 interface TaskComposerProps {
   onSubmit: (data: TaskComposerFormData) => void;
-  channels?: Channel[];
-  people?: Person[];
   onCancel: () => void;
   externalSubmitBlockByType?: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
-  filterTagNames?: string[];
-  filterMentionPubkeys?: string[];
-  onRemoveFilterTag?: (name: string) => void;
-  onRemoveFilterMention?: (pubkey: string) => void;
+  /** Filter-sync state injected by the wrapper (TaskCreateComposer). Leaf does not construct this. */
+  filterSync?: ComposerFilterSync;
   getUploadAuthHeader?: (url: string, method: string) => Promise<string | null>;
   canCreateContent?: boolean;
   compact?: boolean;
@@ -171,14 +167,9 @@ function extractPlainTextFromDataTransfer(dataTransfer: DataTransfer | null | un
 
 export function TaskComposer({
   onSubmit,
-  channels: channelsProp,
-  people: peopleProp,
   onCancel,
   externalSubmitBlockByType,
-  filterTagNames,
-  filterMentionPubkeys,
-  onRemoveFilterTag,
-  onRemoveFilterMention,
+  filterSync,
   getUploadAuthHeader,
   canCreateContent: canCreateContentProp = true,
   compact = false,
@@ -207,10 +198,7 @@ export function TaskComposer({
     selectedPeoplePubkeys,
     mentionOptionByPubkey,
     mentionOptionByAlias,
-  } = useTaskComposerModel({
-    channels: channelsProp,
-    people: peopleProp,
-  });
+  } = useTaskComposerModel();
   const draftStorageKey = useTaskComposerDraftStorageKey();
   const initialComposerState = useMemo(
     () =>
@@ -685,6 +673,9 @@ export function TaskComposer({
     delete attachmentFileRef.current[attachmentId];
     setAttachments((previous) => previous.filter((attachment) => attachment.id !== attachmentId));
   };
+
+  const filterTagNames = filterSync?.filterTagNames;
+  const filterMentionPubkeys = filterSync?.filterMentionPubkeys;
 
   useEffect(() => {
     if (!filterTagNames) return;
@@ -1340,7 +1331,7 @@ export function TaskComposer({
     if (!normalizedTag) return;
     if (autoManagedFilterTagNamesRef.current.has(normalizedTag)) {
       autoManagedFilterTagNamesRef.current.delete(normalizedTag);
-      onRemoveFilterTag?.(normalizedTag);
+      filterSync?.onRemoveFilterTag(normalizedTag);
     }
     setExplicitTagNames((previous) => previous.filter((tag) => tag !== normalizedTag));
   };
@@ -1350,7 +1341,7 @@ export function TaskComposer({
     const normalizedPubkey = pubkey.trim().toLowerCase();
     if (autoManagedFilterMentionPubkeysRef.current.has(normalizedPubkey)) {
       autoManagedFilterMentionPubkeysRef.current.delete(normalizedPubkey);
-      onRemoveFilterMention?.(normalizedPubkey);
+      filterSync?.onRemoveFilterMention(normalizedPubkey);
     }
     setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
   };

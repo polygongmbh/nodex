@@ -11,7 +11,6 @@ import type { ComposeRestoreRequest, TaskInitialStatus } from "@/types";
 interface SharedViewComposerProps {
   visible: boolean;
   onCancel?: () => void;
-  draftStorageKey: string;
   focusedTaskId: string | null;
   initialStatus?: TaskInitialStatus;
   forceExpanded?: boolean;
@@ -33,7 +32,6 @@ interface SharedViewComposerProps {
 export function SharedViewComposer({
   visible,
   onCancel,
-  draftStorageKey,
   focusedTaskId,
   initialStatus,
   forceExpanded = false,
@@ -77,7 +75,6 @@ export function SharedViewComposer({
       <TaskCreateComposer
         onCancel={onCancel ?? (() => {})}
         compact
-        draftStorageKey={draftStorageKey}
         focusedTaskId={focusedTaskId}
         initialStatus={initialStatus}
         adaptiveSize
