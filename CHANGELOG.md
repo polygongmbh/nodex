@@ -6,6 +6,11 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.13.3] - 2026-04-22
+
+- Mobile Manage now shows dedicated legal/privacy/contact icons alongside the changelog action, making those footer actions easier to recognize and tap.
+- Mobile onboarding guidance now uses simpler, more direct copy across English, German, and Spanish.
+
 ## [2.13.2] - 2026-04-22
 
 - Root URLs with filter query params now preserve those params when redirecting to `/feed`, so localhost/dev deep links like `/?ch=general` keep their channel and people filters on first load.
