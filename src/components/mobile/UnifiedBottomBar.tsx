@@ -1360,11 +1360,11 @@ export function UnifiedBottomBar({
                     onChange={(event) => setDateType(event.target.value as TaskDateType)}
                     className="h-8 w-[5.2rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
                   >
-                    <option value="due">{t("composer.dates.due")}</option>
-                    <option value="scheduled">{t("composer.dates.scheduled")}</option>
-                    <option value="start">{t("composer.dates.start")}</option>
-                    <option value="end">{t("composer.dates.end")}</option>
-                    <option value="milestone">{t("composer.dates.milestone")}</option>
+                    <option value="due">{t("tasks:tasks.dates.due")}</option>
+                    <option value="scheduled">{t("tasks:tasks.dates.scheduled")}</option>
+                    <option value="start">{t("tasks:tasks.dates.start")}</option>
+                    <option value="end">{t("tasks:tasks.dates.end")}</option>
+                    <option value="milestone">{t("tasks:tasks.dates.milestone")}</option>
                   </select>
                   <div className="h-8 flex items-center gap-0.5 pl-2 pr-1 rounded-md border border-border bg-muted/30 text-foreground">
                     <Clock className="w-3.5 h-3.5" />

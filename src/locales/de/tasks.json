@@ -1,5 +1,12 @@
 {
   "tasks": {
+    "dates": {
+      "due": "Fällig",
+      "scheduled": "Geplant",
+      "start": "Beginn",
+      "end": "Ende",
+      "milestone": "Meilenstein"
+    },
     "task": "Aufgabe",
     "comment": "Kommentar",
     "tags": "Tags",

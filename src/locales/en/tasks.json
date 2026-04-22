@@ -1,5 +1,12 @@
 {
   "tasks": {
+    "dates": {
+      "due": "Due",
+      "scheduled": "Scheduled",
+      "start": "Start",
+      "end": "End",
+      "milestone": "Milestone"
+    },
     "task": "Task",
     "comment": "Comment",
     "tags": "Tags",

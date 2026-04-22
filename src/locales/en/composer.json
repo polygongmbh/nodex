@@ -142,24 +142,7 @@
       "clearTime": "Clear time"
     },
     "dates": {
-      "setOptional": "Set {{dateType}} date (optional)",
-      "due": "Due",
-      "scheduled": "Scheduled",
-      "start": "Start",
-      "end": "End",
-      "milestone": "Milestone"
-    },
-    "savedFilters": {
-      "actions": {
-        "saveCurrent": "Save filters",
-        "rename": "Rename",
-        "delete": "Delete",
-        "menu": "Saved filter options"
-      },
-      "prompts": {
-        "save": "Name this filter preset",
-        "rename": "Rename this filter preset"
-      }
+      "setOptional": "Set {{dateType}} date (optional)"
     }
   },
   "toasts": {

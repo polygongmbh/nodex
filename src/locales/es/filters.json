@@ -17,6 +17,18 @@
     },
     "people": {
       "title": "Personas"
+    },
+    "savedFilters": {
+      "actions": {
+        "saveCurrent": "Guardar filtros",
+        "rename": "Renombrar",
+        "delete": "Eliminar",
+        "menu": "Opciones de filtros guardados"
+      },
+      "prompts": {
+        "save": "Nombre para este preset de filtros",
+        "rename": "Renombrar este preset de filtros"
+      }
     }
   },
   "search": {

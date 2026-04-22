@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Task date labels and saved-filter copy now resolve from app-wide task/filter locales instead of composer-only keys, fixing broken table-view date translations and keeping shared UI copy scoped correctly across English, German, and Spanish.
+
 ## [2.13.4] - 2026-04-22
 
 - Noas sign-in now keeps its step state in sync and shows the create-account path as soon as a runtime-discovered Noas host is available.

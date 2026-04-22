@@ -11,11 +11,11 @@ import {
 } from "@/domain/content/task-priority";
 
 const TASK_DATE_TYPE_OPTION_KEYS: Array<{ value: TaskDateType; labelKey: string }> = [
-  { value: "due", labelKey: "composer.dates.due" },
-  { value: "scheduled", labelKey: "composer.dates.scheduled" },
-  { value: "start", labelKey: "composer.dates.start" },
-  { value: "end", labelKey: "composer.dates.end" },
-  { value: "milestone", labelKey: "composer.dates.milestone" },
+  { value: "due", labelKey: "tasks.dates.due" },
+  { value: "scheduled", labelKey: "tasks.dates.scheduled" },
+  { value: "start", labelKey: "tasks.dates.start" },
+  { value: "end", labelKey: "tasks.dates.end" },
+  { value: "milestone", labelKey: "tasks.dates.milestone" },
 ];
 
 interface TaskDueDateEditorFormProps {

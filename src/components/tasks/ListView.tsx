@@ -412,7 +412,7 @@ export function ListView({
           <>
             <Calendar className="w-3.5 h-3.5" />
             <span className="hidden 2xl:inline uppercase tracking-wide">
-              {t(`composer.dates.${task.dateType || "due"}`)}
+              {t(`tasks.dates.${task.dateType || "due"}`)}
             </span>
             <span className="truncate">{format(task.dueDate, "MMM d, yyyy")}</span>
             {task.dueTime && (

@@ -1,5 +1,12 @@
 {
   "tasks": {
+    "dates": {
+      "due": "Vence",
+      "scheduled": "Programada",
+      "start": "Inicio",
+      "end": "Fin",
+      "milestone": "Hito"
+    },
     "task": "Tarea",
     "comment": "Comentario",
     "tags": "Etiquetas",

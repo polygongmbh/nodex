@@ -142,24 +142,7 @@
       "clearTime": "Uhrzeit entfernen"
     },
     "dates": {
-      "setOptional": "{{dateType}}-Datum setzen (optional)",
-      "due": "Fällig",
-      "scheduled": "Geplant",
-      "start": "Start",
-      "end": "Ende",
-      "milestone": "Meilenstein"
-    },
-    "savedFilters": {
-      "actions": {
-        "saveCurrent": "Filter speichern",
-        "rename": "Umbenennen",
-        "delete": "Löschen",
-        "menu": "Gespeicherte Filteroptionen"
-      },
-      "prompts": {
-        "save": "Name für dieses Filter-Preset",
-        "rename": "Dieses Filter-Preset umbenennen"
-      }
+      "setOptional": "{{dateType}}-Datum setzen (optional)"
     }
   },
   "toasts": {

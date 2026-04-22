@@ -17,6 +17,18 @@
     },
     "people": {
       "title": "People"
+    },
+    "savedFilters": {
+      "actions": {
+        "saveCurrent": "Save filters",
+        "rename": "Rename",
+        "delete": "Delete",
+        "menu": "Saved filter options"
+      },
+      "prompts": {
+        "save": "Name this filter preset",
+        "rename": "Rename this filter preset"
+      }
     }
   },
   "search": {

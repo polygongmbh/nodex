@@ -21,12 +21,12 @@ export function SavedFilterPresetRow({
   activeConfigurationId = null,
   className,
 }: SavedFilterPresetRowProps) {
-  const { t } = useTranslation("composer");
+  const { t } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   const promptAndSaveCurrent = () => {
     const initialName = `Preset ${configurations.length + 1}`;
-    const name = window.prompt(t("composer.savedFilters.prompts.save"), initialName);
+    const name = window.prompt(t("filters.savedFilters.prompts.save"), initialName);
     if (!name) return;
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -34,7 +34,7 @@ export function SavedFilterPresetRow({
   };
 
   const promptAndRename = (configuration: SavedFilterConfiguration) => {
-    const name = window.prompt(t("composer.savedFilters.prompts.rename"), configuration.name);
+    const name = window.prompt(t("filters.savedFilters.prompts.rename"), configuration.name);
     if (!name) return;
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -53,7 +53,7 @@ export function SavedFilterPresetRow({
         className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-dashed border-primary/40 bg-primary/5 px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
       >
         <Bookmark className="h-3.5 w-3.5" />
-        <span>{t("composer.savedFilters.actions.saveCurrent")}</span>
+        <span>{t("filters.savedFilters.actions.saveCurrent")}</span>
       </button>
       {configurations.map((configuration) => {
         const isActive = configuration.id === activeConfigurationId;
@@ -84,7 +84,7 @@ export function SavedFilterPresetRow({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  aria-label={t("composer.savedFilters.actions.menu")}
+                  aria-label={t("filters.savedFilters.actions.menu")}
                   className="ml-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full hover:bg-black/10"
                 >
                   <EllipsisVertical className="h-3.5 w-3.5" />
@@ -92,7 +92,7 @@ export function SavedFilterPresetRow({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-36">
                 <DropdownMenuItem onSelect={() => promptAndRename(configuration)}>
-                  {t("composer.savedFilters.actions.rename")}
+                  {t("filters.savedFilters.actions.rename")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => {
@@ -103,7 +103,7 @@ export function SavedFilterPresetRow({
                   }}
                   className="text-destructive focus:text-destructive"
                 >
-                  {t("composer.savedFilters.actions.delete")}
+                  {t("filters.savedFilters.actions.delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -17,6 +17,18 @@
     },
     "people": {
       "title": "Personen"
+    },
+    "savedFilters": {
+      "actions": {
+        "saveCurrent": "Filter speichern",
+        "rename": "Umbenennen",
+        "delete": "Löschen",
+        "menu": "Gespeicherte Filteroptionen"
+      },
+      "prompts": {
+        "save": "Name für dieses Filter-Preset",
+        "rename": "Dieses Filter-Preset umbenennen"
+      }
     }
   },
   "search": {

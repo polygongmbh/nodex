@@ -1787,11 +1787,11 @@ export function TaskComposer({
               onChange={(event) => setDateType(event.target.value as TaskDateType)}
               className="h-8 w-24 cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
             >
-              <option value="due">{t("composer.dates.due")}</option>
-              <option value="scheduled">{t("composer.dates.scheduled")}</option>
-              <option value="start">{t("composer.dates.start")}</option>
-              <option value="end">{t("composer.dates.end")}</option>
-              <option value="milestone">{t("composer.dates.milestone")}</option>
+              <option value="due">{t("tasks:tasks.dates.due")}</option>
+              <option value="scheduled">{t("tasks:tasks.dates.scheduled")}</option>
+              <option value="start">{t("tasks:tasks.dates.start")}</option>
+              <option value="end">{t("tasks:tasks.dates.end")}</option>
+              <option value="milestone">{t("tasks:tasks.dates.milestone")}</option>
             </select>
             <Popover>
               <PopoverTrigger asChild>
@@ -1804,7 +1804,7 @@ export function TaskComposer({
                   {dueDate
                     ? format(dueDate, "MMM d, yyyy")
                     : t("composer.dates.setOptional", {
-                        dateType: t(`composer.dates.${dateType}`),
+                        dateType: t(`tasks:tasks.dates.${dateType}`),
                       })}
                 </button>
               </PopoverTrigger>
