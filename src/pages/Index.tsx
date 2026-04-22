@@ -11,7 +11,6 @@ import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
-import { getRelayIdFromUrl, getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
@@ -21,7 +20,6 @@ import {
   saveCompactTaskCardsEnabled,
 } from "@/infrastructure/preferences/user-preferences-storage";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
-import type { Nip99ListingStatus } from "@/types";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
@@ -34,27 +32,18 @@ import { useFeedSidebarCommandsController } from "@/features/feed-page/controlle
 import type { FeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
 import type { FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { useFeedInteractionFrecency } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
-import { deriveSelectedRelayUrls, useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
+import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
 import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
-import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
 import { useRelayScopedPresence } from "@/features/feed-page/controllers/use-relay-scoped-presence";
-import { useRelaySelectionController } from "@/features/feed-page/controllers/use-relay-selection-controller";
 import { type FeedPageCoreHandlers } from "@/features/feed-page/views/FeedPageProviders";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
-import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
+import { DEMO_RELAY_ID } from "@/lib/demo-feed-config";
 import { initializeDemoFeedData } from "@/data/demo-feed";
-import { mockRelays as demoRelays } from "@/data/mockData";
-import {
-  Relay,
-  PostedTag,
-  Task,
-  TaskStatus,
-} from "@/types";
-import { toast } from "sonner";
+import { PostedTag, Task } from "@/types";
 import {
   DesktopAppShell,
 } from "@/features/feed-page/views/DesktopAppShell";
@@ -68,30 +57,15 @@ import {
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
 import { FeedPageProviders } from "@/features/feed-page/views/FeedPageProviders";
+import { FeedRelayProvider, useFeedRelayState } from "@/features/feed-page/views/FeedRelayProvider";
 import { MotdBanner } from "@/components/MotdBanner";
 import { featureDebugLog } from "@/lib/feature-debug";
 
-// Demo relay constant
-const DEMO_RELAY_ID = "demo";
-const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
-const Index = () => {
+function FeedIndexContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // NDK Nostr integration
-  const {
-    relays: ndkRelays,
-    isConnected: isNostrConnected,
-    addRelay,
-    reorderRelays,
-    removeRelay,
-    reconnectRelay,
-    subscribe,
-    publishEvent,
-    setPresenceRelayUrls,
-    user,
-    defaultNoasHostUrl,
-  } = useNDK();
+  const { publishEvent, setPresenceRelayUrls, user, defaultNoasHostUrl } = useNDK();
 
   const {
     isAuthModalOpen,
@@ -100,11 +74,32 @@ const Index = () => {
     handleOpenAuthModal,
     handleCloseAuthModal,
   } = useAuthModalRoute();
+
+  const {
+    relays,
+    ndkRelays,
+    demoFeedActive,
+    demoTasks,
+    setDemoTasks,
+    isConnected,
+    subscribe,
+    activeRelayIds,
+    setActiveRelayIds,
+    effectiveActiveRelayIds,
+    selectedRelayUrls,
+    nostrRelayIdSet,
+    allRelayIds,
+    handleRelayToggle,
+    handleRelayExclusive,
+    handleRelaySelectIntent,
+    handleToggleAllRelays,
+    reconnectRelay,
+    reorderRelays,
+    addRelay,
+    removeRelay,
+  } = useFeedRelayState();
+
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
-  const [demoTasks, setDemoTasks] = useState<Task[]>(() => (
-    DEMO_FEED_ENABLED ? initializeDemoFeedData() : []
-  ));
-  const demoFeedActive = demoTasks.some((task) => task.relays.includes(DEMO_RELAY_ID));
 
   const subscribedKinds = useMemo<NostrEventKind[]>(
     () => [
@@ -124,67 +119,18 @@ const Index = () => {
     []
   );
 
-  // Convert relay statuses to app Relay format - combine demo relay with nostr relays
-  const relays: Relay[] = useMemo(() => {
-    const nostrRelayItems: Relay[] = ndkRelays.map((r): Relay => ({
-      id: getRelayIdFromUrl(r.url),
-      name: getRelayNameFromUrl(r.url),
-      isActive: r.status === "connected" || r.status === "read-only",
-      connectionStatus: r.status,
-      url: r.url,
-    }));
-
-    if (!demoFeedActive) return nostrRelayItems;
-
-    // Include demo relay
-    return [...demoRelays, ...nostrRelayItems];
-  }, [demoFeedActive, ndkRelays]);
-
   const isMobile = useIsMobile();
-  const {
-    activeRelayIds,
-    setActiveRelayIds,
-    effectiveActiveRelayIds,
-    handleRelayToggle,
-    handleRelayExclusive,
-    handleRelaySelectIntent,
-    handleToggleAllRelays,
-  } = useRelaySelectionController({
-    relays,
-  });
-  useRelayAutoReconnect({
-    relays,
-    activeRelayIds,
-    reconnectRelay,
-  });
-
-  const nostrRelayIds = useMemo(
-    () => relays.map((relay) => relay.id).filter((id) => id !== DEMO_RELAY_ID),
-    [relays]
-  );
-  const nostrRelayIdSet = useMemo(() => new Set(nostrRelayIds), [nostrRelayIds]);
-  const allRelayIds = useMemo(() => relays.map((relay) => relay.id), [relays]);
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
     isHydrating,
   } = useNostrEventCache({
-    isConnected: isNostrConnected,
+    isConnected,
     subscribedKinds,
     activeRelayIds: nostrRelayIdSet,
     availableRelayIds: allRelayIds,
     subscribe,
   });
-  // NOTE: useIndexRelayShell already computes selectedRelayUrls internally and returns it.
-  // This page-local copy exists only because useKind0People (below) needs it before
-  // useIndexRelayShell can be called — useIndexRelayShell depends on removeCachedRelayProfile
-  // which comes from useKind0People, creating a circular dependency.
-  // Fix: extract removeCachedRelayProfile from useKind0People so useIndexRelayShell
-  // can be called first and its selectedRelayUrls used directly.
-  const selectedRelayUrls = useMemo(
-    () => deriveSelectedRelayUrls(relays, effectiveActiveRelayIds),
-    [effectiveActiveRelayIds, relays]
-  );
 
   const {
     people,
@@ -925,12 +871,17 @@ const Index = () => {
           isOpen: isAuthModalOpen,
           onClose: handleCloseAuthModal,
           initialStep: authModalInitialStep,
-          onStepChange: handleOpenAuthModal,
         }}
         onboardingOverlays={onboardingOverlays}
       />
     </FeedPageProviders>
   );
-};
+}
+
+const Index = () => (
+  <FeedRelayProvider>
+    <FeedIndexContent />
+  </FeedRelayProvider>
+);
 
 export default Index;
