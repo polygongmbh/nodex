@@ -3,6 +3,15 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { OVERLAY_SCRIM_FADE_MS } from "@/components/ui/overlay-scrim";
+
+/** Inline style applied to overlay/content so all dialog surfaces share the
+ * same gentle fade timing as the onboarding intro popover, keeping
+ * cross-overlay transitions visually consistent. */
+const dialogFadeStyle: React.CSSProperties = {
+  animationDuration: `${OVERLAY_SCRIM_FADE_MS}ms`,
+  animationTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
+};
 
 type PointerDownOutsideHandler = NonNullable<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>["onPointerDownOutside"]
