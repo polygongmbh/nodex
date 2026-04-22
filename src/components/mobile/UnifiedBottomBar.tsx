@@ -1272,7 +1272,7 @@ export function UnifiedBottomBar({
                 )}
               </div>
             </div>
-          ) : (
+          ) : canCreateContent ? (
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
                 <select
@@ -1309,6 +1309,19 @@ export function UnifiedBottomBar({
                 >
                   <Calendar className="w-3.5 h-3.5" />
                   {dueDate ? format(dueDate, "MMM d") : t("composer.labels.date")}
+                </button>
+                <button
+                  onClick={handleLocationToggle}
+                  className={cn(
+                    "h-8 flex items-center gap-1.5 px-2 rounded-md border transition-colors text-xs leading-none",
+                    locationGeohash
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  )}
+                  aria-label={t("composer.actions.location")}
+                  title={t("composer.actions.location")}
+                >
+                  <MapPin className="w-3.5 h-3.5" />
                 </button>
               </div>
               {dueDate && (
