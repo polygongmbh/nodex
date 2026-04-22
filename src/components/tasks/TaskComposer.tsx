@@ -344,10 +344,19 @@ export function TaskComposer({
   useEffect(() => {
     if (!adaptiveSize || !isExpanded || content.trim()) return;
 
+    const isInsideRadixPortal = (node: Node) => {
+      if (!(node instanceof Element)) {
+        const parent = node.parentElement;
+        return parent ? Boolean(parent.closest("[data-radix-popper-content-wrapper], [data-radix-portal], [role='listbox'], [role='dialog']")) : false;
+      }
+      return Boolean(node.closest("[data-radix-popper-content-wrapper], [data-radix-portal], [role='listbox'], [role='dialog']"));
+    };
+
     const isOutsideComposer = (target: EventTarget | null) => {
       if (!(target instanceof Node)) return false;
       if (composerRef.current?.contains(target)) return false;
       if (dueDatePopoverContentRef.current?.contains(target)) return false;
+      if (isInsideRadixPortal(target)) return false;
       return true;
     };
 
@@ -1462,6 +1471,12 @@ export function TaskComposer({
             if (!nextFocusedElement || hadInternalMouseDown) return;
             if (composerRef.current?.contains(nextFocusedElement)) return;
             if (dueDatePopoverContentRef.current?.contains(nextFocusedElement)) return;
+            if (
+              nextFocusedElement instanceof Element &&
+              nextFocusedElement.closest("[data-radix-popper-content-wrapper], [data-radix-portal], [role='listbox'], [role='dialog']")
+            ) {
+              return;
+            }
             if (pendingOutsidePointerInteractionRef.current) return;
             setIsExpanded(false);
           }}
