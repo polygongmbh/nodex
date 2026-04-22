@@ -211,7 +211,7 @@ export function NoasSignUpForm({
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              style={{ WebkitTextSecurity: showPrivateKey ? "none" : "disc" }}
+              style={{ ["WebkitTextSecurity" as const]: showPrivateKey ? "none" : "disc" }}
               className="w-full min-w-0 font-mono text-[11px] sm:text-xs"
             />
             <div className="flex shrink-0 items-center gap-1">
