@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, HandHelping, MapPin, AlertTriangle } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, HandHelping, MapPin, AlertTriangle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, TaskCreateResult, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
 import type { Person } from "@/types/person";
@@ -1306,11 +1306,21 @@ export function UnifiedBottomBar({
           ) : canCreateContent ? (
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
-                <PrioritySelect
-                  priority={priority}
-                  onPriorityChange={setPriority}
-                  className="h-8 rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 appearance-none max-[420px]:w-[3.25rem] max-[420px]:px-1 max-[420px]:text-[11px] truncate"
-                />
+                <div
+                  className={cn(
+                    "h-8 inline-flex items-center gap-1 pl-2 pr-0.5 rounded-md border transition-colors text-xs leading-none",
+                    typeof priority === "number"
+                      ? "border-border text-foreground hover:bg-muted/60"
+                      : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  )}
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                  <PrioritySelect
+                    priority={priority}
+                    onPriorityChange={setPriority}
+                    className="h-7 cursor-pointer rounded-md border-none bg-transparent pl-1 pr-0 text-xs text-inherit shadow-none focus:outline-none appearance-none max-[420px]:w-[2.5rem] max-[420px]:text-[11px] truncate"
+                  />
+                </div>
                 <button
                   onClick={() => toggleSelector("date")}
                   className={cn(
