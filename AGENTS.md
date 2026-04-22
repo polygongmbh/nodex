@@ -144,6 +144,7 @@ policies:
     test_first_default: true
     skip_test_first_for:
       - minor visual changes
+    disallow_copy_specific_assertions_by_default: true
     high_impact_required_coverage:
       - compose parsing and submission behavior
       - channel/tag include/exclude filtering
@@ -239,6 +240,7 @@ policies:
 - Keep UI tests focused on key flows and accessibility contracts.
 - Do not add cosmetic-only assertions unless explicitly required; any class/style assertion must include a short comment explaining the protected product contract.
 - Prefer semantics-based queries (`getByRole` with accessible names or stable `data-testid`) instead of literal text searches and keep copy-specific assertions inside dedicated i18n/messaging suites. Avoid adding new `data-testid` selectors when stable semantic queries (`getByRole`, labels, landmarks, accessible names) are available. Use `data-testid` only when semantics are genuinely unstable or absent, and keep those usages narrowly scoped and documented in the related test or review notes.
+- Do not add copy-specific assertions for labels, placeholders, helper text, or other user-facing strings in feature tests by default. Cover those only in dedicated i18n/messaging suites or when the exact text is itself the product contract under test.
 - Avoid test assertions that depend on importing or mutating the shared i18n runtime just to obtain translated copy. Prefer semantics-based assertions, stable `data-testid` hooks, or narrow translation mocks. Keep direct i18n-import assertions only for dedicated i18n/config coverage or when the translation behavior itself is the product contract under test.
 - Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
 - Treat lint warnings as actionable backlog; do not introduce new warnings. If a lint rule is intentionally relaxed or disabled, document scope and rationale in the same commit.
