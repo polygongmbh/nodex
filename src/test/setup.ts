@@ -400,6 +400,41 @@ Object.defineProperty(window, "WebSocket", {
   value: MockWebSocket,
 });
 
+// Polyfill PointerEvent / pointer-capture APIs missing from JSDOM.
+// Required by Radix UI primitives (e.g. Select) when interacting via fireEvent.
+if (typeof window.PointerEvent === "undefined") {
+  // @ts-expect-error - polyfilling missing PointerEvent in JSDOM
+  window.PointerEvent = class PointerEvent extends MouseEvent {
+    pointerId: number;
+    pointerType: string;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 0;
+      this.pointerType = init.pointerType ?? "";
+    }
+  };
+}
+if (typeof Element.prototype.hasPointerCapture !== "function") {
+  Element.prototype.hasPointerCapture = function () {
+    return false;
+  };
+}
+if (typeof Element.prototype.setPointerCapture !== "function") {
+  Element.prototype.setPointerCapture = function () {
+    /* noop */
+  };
+}
+if (typeof Element.prototype.releasePointerCapture !== "function") {
+  Element.prototype.releasePointerCapture = function () {
+    /* noop */
+  };
+}
+if (typeof Element.prototype.scrollIntoView !== "function") {
+  Element.prototype.scrollIntoView = function () {
+    /* noop */
+  };
+}
+
 const originalConsoleError = console.error;
 const shouldSuppressConsoleError = (value: unknown): boolean => {
   if (typeof value !== "string") return false;
