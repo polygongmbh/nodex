@@ -189,6 +189,9 @@
       "publishListingStatusFailed": "Failed to publish listing status update to relay",
       "locationUnavailable": "Location services are unavailable on this device",
       "locationCaptureFailed": "Unable to capture your current location",
+      "locationPermissionDenied": "Location permission was denied",
+      "locationPositionUnavailable": "Your current location could not be determined",
+      "locationTimeout": "Location request timed out",
       "relayVerificationReadFailed": "Relay verification failed for reading on {{relayUrl}}. Check signer access and relay permissions.",
       "relayVerificationWriteFailed": "Relay verification failed for publishing on {{relayUrl}}. Check signer access and relay permissions.",
       "relayVerificationUnknownFailed": "Relay verification failed on {{relayUrl}}. Check signer access and relay permissions.",
@@ -224,7 +227,8 @@
     },
     "info": {
       "pendingPublish": "Sending in {{seconds}} seconds",
-      "relayReconnectAttempt": "Trying to reconnect {{relayDomain}}"
+      "relayReconnectAttempt": "Trying to reconnect {{relayDomain}}",
+      "locationCapturing": "Capturing current location…"
     },
     "actions": {
       "undo": "Undo"

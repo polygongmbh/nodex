@@ -189,6 +189,9 @@
       "publishListingStatusFailed": "Listing-Statusupdate konnte nicht an den Relay veröffentlicht werden",
       "locationUnavailable": "Standortdienste sind auf diesem Gerät nicht verfügbar",
       "locationCaptureFailed": "Aktueller Standort konnte nicht ermittelt werden",
+      "locationPermissionDenied": "Standortzugriff wurde verweigert",
+      "locationPositionUnavailable": "Dein aktueller Standort konnte nicht bestimmt werden",
+      "locationTimeout": "Standortabfrage hat zu lange gedauert",
       "relayVerificationReadFailed": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
       "relayVerificationWriteFailed": "Relay-Verifizierung fürs Veröffentlichen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
       "relayVerificationUnknownFailed": "Relay-Verifizierung auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
@@ -224,7 +227,8 @@
     },
     "info": {
       "pendingPublish": "Wird in {{seconds}} Sekunden gesendet",
-      "relayReconnectAttempt": "Verbindung zu {{relayDomain}} wird erneut versucht"
+      "relayReconnectAttempt": "Verbindung zu {{relayDomain}} wird erneut versucht",
+      "locationCapturing": "Aktueller Standort wird ermittelt…"
     },
     "actions": {
       "undo": "Rückgängig"

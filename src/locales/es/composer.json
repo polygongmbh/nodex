@@ -189,6 +189,9 @@
       "publishListingStatusFailed": "No se pudo publicar la actualización del estado del anuncio en el relay",
       "locationUnavailable": "Los servicios de ubicación no están disponibles en este dispositivo",
       "locationCaptureFailed": "No se pudo obtener tu ubicación actual",
+      "locationPermissionDenied": "Se denegó el permiso de ubicación",
+      "locationPositionUnavailable": "No se pudo determinar tu ubicación actual",
+      "locationTimeout": "La solicitud de ubicación expiró",
       "relayVerificationReadFailed": "La verificación del relay para lectura falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
       "relayVerificationWriteFailed": "La verificación del relay para publicación falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
       "relayVerificationUnknownFailed": "La verificación del relay falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
@@ -224,7 +227,8 @@
     },
     "info": {
       "pendingPublish": "Enviando en {{seconds}} segundos",
-      "relayReconnectAttempt": "Intentando reconectar {{relayDomain}}"
+      "relayReconnectAttempt": "Intentando reconectar {{relayDomain}}",
+      "locationCapturing": "Obteniendo tu ubicación actual…"
     },
     "actions": {
       "undo": "Deshacer"
