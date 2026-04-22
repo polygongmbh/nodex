@@ -1341,13 +1341,16 @@ export function UnifiedBottomBar({
                 </button>
                 <button
                   onClick={handleLocationToggle}
+                  disabled={isCapturingLocation}
                   className={cn(
                     "h-8 flex items-center gap-1.5 px-2 rounded-md border transition-colors text-xs leading-none",
                     locationGeohash
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                      : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                    isCapturingLocation && "opacity-60 cursor-wait animate-pulse"
                   )}
                   aria-label={t("composer.actions.location")}
+                  aria-busy={isCapturingLocation}
                   title={t("composer.actions.location")}
                 >
                   <MapPin className="w-3.5 h-3.5" />
