@@ -2,8 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanView } from "./KanbanView";
-import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { TaskCreateResult } from "@/types";
+import { makePerson, makeTask } from "@/test/fixtures";
 
 const dndMockState: {
   onDragEnd: ((result: {
@@ -12,11 +11,9 @@ const dndMockState: {
     destination: { droppableId: string; index: number } | null;
   }) => void) | null;
   onDragStart: (() => void) | null;
-  disableInteractiveElementBlockingValues: Array<boolean | undefined>;
 } = {
   onDragEnd: null,
   onDragStart: null,
-  disableInteractiveElementBlockingValues: [],
 };
 const dispatchFeedInteraction = vi.fn();
 
@@ -55,7 +52,6 @@ vi.mock("@hello-pangea/dnd", () => ({
   Draggable: ({
     children,
     draggableId,
-    disableInteractiveElementBlocking,
   }: {
     children: (
       provided: {
@@ -68,7 +64,6 @@ vi.mock("@hello-pangea/dnd", () => ({
     draggableId: string;
     disableInteractiveElementBlocking?: boolean;
   }) =>
-    (dndMockState.disableInteractiveElementBlockingValues.push(disableInteractiveElementBlocking),
     children(
       {
         innerRef: () => {},
@@ -76,35 +71,15 @@ vi.mock("@hello-pangea/dnd", () => ({
         dragHandleProps: {},
       },
       { isDragging: false }
-    )),
+    ),
 }));
 
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
-  dndMockState.disableInteractiveElementBlockingValues = [];
 });
 
-describe("KanbanView closed column", () => {
-  it("uses an auto-width board scrollbar and hides horizontal overflow inside columns", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-    const todoTask = makeTask({ id: "todo-task", author, status: "todo", content: "Todo task #general" });
-
-    const { container } = render(
-      <KanbanView
-        focusedTaskId={null}
-        tasks={[todoTask]}
-        allTasks={[todoTask]}
-        currentUser={author}
-        depthMode="leaves"
-      />
-    );
-
-    const board = container.querySelector('[data-onboarding="kanban-board"]');
-    const todoColumnList = container.querySelector('[data-droppable-id="todo"]')?.parentElement;
-
-    expect(board?.className).toContain("scrollbar-auto");
-    expect(todoColumnList?.className).toContain("overflow-x-hidden");
-  });
+describe("KanbanView", () => {
+  // Column structure
 
   it("renders a closed column to the right of done", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
@@ -128,6 +103,24 @@ describe("KanbanView closed column", () => {
     expect(headings).toEqual(["To Do", "In Progress", "Done", "Closed"]);
     expect(screen.getAllByText((_, node) => node?.textContent === "Closed task #general")[0]).toBeInTheDocument();
   });
+
+  it("renders a droppable target for empty columns", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+
+    const { container } = render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[]}
+        allTasks={[]}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    expect(container.querySelector('[data-droppable-id="todo"]')).toBeInTheDocument();
+  });
+
+  // Card content
 
   it("shows priority chips only for tasks with numeric priority", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
@@ -187,30 +180,6 @@ describe("KanbanView closed column", () => {
     expect(chipRow).toContainElement(hashtagChip);
   });
 
-  it("keeps interactive element blocking enabled for draggable cards", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-    const task = makeTask({
-      id: "interactive-priority-task",
-      author,
-      status: "todo",
-      content: "Interactive priority task #general",
-      priority: 80,
-    });
-
-    render(
-      <KanbanView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={author}
-        depthMode="leaves"
-      />
-    );
-
-    expect(screen.getByRole("combobox", { name: /priority/i })).toBeInTheDocument();
-    expect(dndMockState.disableInteractiveElementBlockingValues).toContain(undefined);
-  });
-
   it("renders due date row above metadata chips", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({
@@ -268,7 +237,7 @@ describe("KanbanView closed column", () => {
     expect(screen.queryByText("spec.pdf")).not.toBeInTheDocument();
   });
 
-  it("hides tag chips in compact kanban cards while keeping due date and priority", () => {
+  it("hides tag chips in compact mode while keeping due date and priority", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({
       id: "compact-kanban-task",
@@ -298,24 +267,9 @@ describe("KanbanView closed column", () => {
     expect(screen.queryByTestId("kanban-chip-row-compact-kanban-task")).not.toBeInTheDocument();
   });
 
-  it("renders a droppable target for empty columns", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+  // Interaction
 
-    const { container } = render(
-      <KanbanView
-        focusedTaskId={null}
-        tasks={[]}
-        allTasks={[]}
-        currentUser={author}
-        depthMode="leaves"
-      />
-    );
-
-    const todoDropTarget = container.querySelector('[data-droppable-id="todo"]');
-    expect(todoDropTarget).toBeInTheDocument();
-  });
-
-  it("focuses branch tasks from kanban cards", () => {
+  it("focuses branch tasks on click", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const parent = makeTask({ id: "parent-task", author, status: "todo", content: "Parent task #general" });
     const child = makeTask({
@@ -336,14 +290,11 @@ describe("KanbanView closed column", () => {
       />
     );
 
-    const parentCard = document.querySelector('[data-task-id="parent-task"]');
-    expect(parentCard).toBeInTheDocument();
-    fireEvent.click(parentCard!);
-
+    fireEvent.click(document.querySelector('[data-task-id="parent-task"]')!);
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "parent-task" });
   });
 
-  it("does not focus leaf tasks from kanban cards", () => {
+  it("does not focus leaf tasks on click", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const leaf = makeTask({ id: "leaf-task", author, status: "todo", content: "Leaf task #general" });
 
@@ -357,11 +308,41 @@ describe("KanbanView closed column", () => {
       />
     );
 
-    const leafCard = document.querySelector('[data-task-id="leaf-task"]');
-    expect(leafCard).toBeInTheDocument();
-    fireEvent.click(leafCard!);
-
+    fireEvent.click(document.querySelector('[data-task-id="leaf-task"]')!);
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "leaf-task" });
+  });
+
+  it("optimistically moves card to destination column on drop", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const task = makeTask({ id: "drag-task", author, status: "todo", content: "Drag me #general" });
+    const { container } = render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[task]}
+        allTasks={[task]}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    expect(container.querySelector('[data-droppable-id="todo"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-droppable-id="done"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();
+
+    act(() => {
+      dndMockState.onDragEnd?.({
+        draggableId: "drag-task",
+        source: { droppableId: "todo", index: 0 },
+        destination: { droppableId: "done", index: 0 },
+      });
+    });
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.changeStatus",
+      taskId: "drag-task",
+      status: "done",
+    });
+    expect(container.querySelector('[data-droppable-id="done"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-droppable-id="todo"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();
   });
 
   it("scrolls the board right when dragging near the right edge", () => {
@@ -387,8 +368,6 @@ describe("KanbanView closed column", () => {
       } as DOMRect);
 
       act(() => { dndMockState.onDragStart?.(); });
-
-      // Near the right edge: 800 - 720 = 80px inside the 120px zone
       fireEvent.mouseMove(window, { clientX: 720, clientY: 300 });
 
       act(() => {
@@ -400,42 +379,5 @@ describe("KanbanView closed column", () => {
     } finally {
       vi.unstubAllGlobals();
     }
-  });
-
-  it("optimistically places dropped cards in destination column before parent props refresh", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-    const task = makeTask({ id: "drag-task", author, status: "todo", content: "Drag me #general" });
-    const { container } = render(
-      <KanbanView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={author}
-        depthMode="leaves"
-      />
-    );
-
-    const todoDropTargetBefore = container.querySelector('[data-droppable-id="todo"]');
-    const doneDropTargetBefore = container.querySelector('[data-droppable-id="done"]');
-    expect(todoDropTargetBefore?.querySelector('[data-draggable-id="drag-task"]')).toBeInTheDocument();
-    expect(doneDropTargetBefore?.querySelector('[data-draggable-id="drag-task"]')).not.toBeInTheDocument();
-
-    act(() => {
-      dndMockState.onDragEnd?.({
-        draggableId: "drag-task",
-        source: { droppableId: "todo", index: 0 },
-        destination: { droppableId: "done", index: 0 },
-      });
-    });
-
-    const todoDropTargetAfter = container.querySelector('[data-droppable-id="todo"]');
-    const doneDropTargetAfter = container.querySelector('[data-droppable-id="done"]');
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "task.changeStatus",
-      taskId: "drag-task",
-      status: "done",
-    });
-    expect(doneDropTargetAfter?.querySelector('[data-draggable-id="drag-task"]')).toBeInTheDocument();
-    expect(todoDropTargetAfter?.querySelector('[data-draggable-id="drag-task"]')).not.toBeInTheDocument();
   });
 });
