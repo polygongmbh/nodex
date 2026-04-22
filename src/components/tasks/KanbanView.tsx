@@ -20,12 +20,7 @@ interface KanbanViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId?: string | null;
-  relays?: unknown;
-  channels?: unknown;
-  people?: unknown;
-  searchQuery?: string;
-  onStatusChange?: unknown;
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode: KanbanDepthMode;
@@ -48,7 +43,7 @@ export function KanbanView({
   currentUser,
   searchQueryOverride,
   depthMode,
-  focusedTaskId = null,
+  focusedTaskId,
   compactTaskCardsEnabled = false,
   isPendingPublishTask,
   composeRestoreRequest = null,
