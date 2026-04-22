@@ -608,7 +608,7 @@ export function CalendarView({
             ref={desktopScrollerRef}
             className={cn(
               "flex-1 overflow-auto min-w-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-              isMobile ? "p-2 space-y-2" : "p-4 space-y-2"
+              isMobile ? "p-2 space-y-0" : "p-4 space-y-2"
             )}
             data-onboarding="calendar-month-stack"
           >
@@ -620,7 +620,10 @@ export function CalendarView({
                 }}
                 className={cn("space-y-0.5", isMobile ? "pt-1" : "pt-1.5")}
               >
-                <h2 className="py-1 text-sm font-semibold text-foreground/90">
+                <h2 className={cn(
+                  "py-1 text-sm font-semibold text-foreground/90",
+                  isMobile && "text-center"
+                )}>
                   {format(section.month, "MMMM yyyy")}
                 </h2>
 
