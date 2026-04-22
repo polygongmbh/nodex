@@ -217,9 +217,6 @@ export function TaskPrioritySelect({
         const storedPriority = storedPriorityFromDisplay(next);
         if (typeof storedPriority === "number") {
           void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: storedPriority });
-        } else {
-          // Allow clearing the priority
-          void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: 0 });
         }
       }}
       className={className}
