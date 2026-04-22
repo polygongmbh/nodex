@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
+import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -10,6 +10,14 @@ import {
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface TaskDueDateEditorFormProps {
   taskId: string;
@@ -68,7 +76,7 @@ export function TaskDueDateEditorForm({
               dispatchDueDateUpdate(dueDate, localDueTime || undefined, nextType);
             }
           }}
-          className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
+          className="h-7 border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:ring-0"
         />
       </div>
       <CalendarComponent
@@ -98,110 +106,127 @@ export function TaskDueDateEditorForm({
   );
 }
 
-type PrioritySelectBaseProps = Omit<
-  ComponentPropsWithoutRef<"select">,
-  "children" | "defaultValue" | "onChange" | "value"
->;
+const PRIORITY_NONE_VALUE = "__none__";
 
-interface TaskPrioritySelectProps extends PrioritySelectBaseProps {
-  taskId?: string;
-  priority?: number;
-  stopPropagation?: boolean;
-}
-
-function PrioritySelectOptions() {
-  const { t } = useTranslation(["app", "composer"]);
-
-  return (
-    <>
-      <option value="">{t("composer:composer.labels.priority")}</option>
-      {DISPLAY_PRIORITY_OPTIONS.map((option) => (
-        <option key={option} value={String(option)}>
-          {t(`priorityLevels.${option}`, { ns: "app" })}
-        </option>
-      ))}
-    </>
-  );
-}
-
-interface PrioritySelectProps extends PrioritySelectBaseProps {
+interface PrioritySelectProps {
+  id?: string;
   priority?: number;
   onPriorityChange: (priority?: number) => void;
+  className?: string;
+  disabled?: boolean;
   stopPropagation?: boolean;
+  "aria-label"?: string;
+  title?: string;
 }
 
 export function PrioritySelect({
+  id,
   priority,
   onPriorityChange,
   className,
   disabled = false,
   stopPropagation = false,
-  ...selectProps
+  title,
+  ...rest
 }: PrioritySelectProps) {
-  const { t } = useTranslation("composer");
-  const value = typeof priority === "number" ? String(priority) : "";
+  const { t } = useTranslation(["app", "composer"]);
+  const ariaLabel = rest["aria-label"] ?? t("composer:composer.labels.priority");
+  const value = typeof priority === "number" ? String(priority) : PRIORITY_NONE_VALUE;
+  const placeholder = t("composer:composer.labels.priority");
+
+  const stopProps = stopPropagation
+    ? {
+        onClick: (event: React.MouseEvent) => event.stopPropagation(),
+        onPointerDown: (event: React.PointerEvent) => event.stopPropagation(),
+        onMouseDown: (event: React.MouseEvent) => event.stopPropagation(),
+        onTouchStart: (event: React.TouchEvent) => event.stopPropagation(),
+        onKeyDown: (event: React.KeyboardEvent) => event.stopPropagation(),
+      }
+    : {};
 
   return (
-    <select
-      aria-label={t("composer.labels.priority")}
+    <Select
       value={value}
       disabled={disabled}
-      {...selectProps}
-      onChange={(event) => {
-        const next = event.target.value;
-        if (!next) {
+      onValueChange={(next) => {
+        if (next === PRIORITY_NONE_VALUE) {
           onPriorityChange(undefined);
           return;
         }
-
         const parsed = Number.parseInt(next, 10);
         onPriorityChange(Number.isFinite(parsed) ? parsed : undefined);
       }}
-      onClick={(event) => {
-        if (stopPropagation) event.stopPropagation();
-      }}
-      onPointerDown={(event) => {
-        if (stopPropagation) event.stopPropagation();
-      }}
-      onMouseDown={(event) => {
-        if (stopPropagation) event.stopPropagation();
-      }}
-      onTouchStart={(event) => {
-        if (stopPropagation) event.stopPropagation();
-      }}
-      onKeyDown={(event) => {
-        if (stopPropagation) event.stopPropagation();
-      }}
-      className={className}
     >
-      <PrioritySelectOptions />
-    </select>
+      <SelectTrigger
+        id={id}
+        aria-label={ariaLabel}
+        title={title}
+        hideIndicator
+        className={cn("h-8 w-auto gap-1 text-xs", className)}
+        {...stopProps}
+      >
+        <SelectValue placeholder={placeholder}>
+          {typeof priority === "number"
+            ? t(`priorityLevels.${priority}`, { ns: "app" })
+            : placeholder}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent
+        className="pointer-events-auto"
+        onCloseAutoFocus={(event) => {
+          if (stopPropagation) event.preventDefault();
+        }}
+      >
+        <SelectItem value={PRIORITY_NONE_VALUE}>{placeholder}</SelectItem>
+        {DISPLAY_PRIORITY_OPTIONS.map((option) => (
+          <SelectItem key={option} value={String(option)}>
+            {t(`priorityLevels.${option}`, { ns: "app" })}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
+interface TaskPrioritySelectProps {
+  id?: string;
+  taskId?: string;
+  priority?: number;
+  className?: string;
+  stopPropagation?: boolean;
+  "aria-label"?: string;
+  title?: string;
+}
+
 export function TaskPrioritySelect({
+  id,
   taskId,
   priority,
   className,
   stopPropagation = false,
-  ...selectProps
+  ...rest
 }: TaskPrioritySelectProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   return (
     <PrioritySelect
+      id={id}
       priority={displayPriorityFromStored(priority)}
       onPriorityChange={(next) => {
         if (!taskId) return;
         const storedPriority = storedPriorityFromDisplay(next);
         if (typeof storedPriority === "number") {
           void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: storedPriority });
+        } else {
+          // Allow clearing the priority
+          void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: 0 });
         }
       }}
       className={className}
       disabled={!taskId}
       stopPropagation={stopPropagation}
-      {...selectProps}
+      aria-label={rest["aria-label"]}
+      title={rest.title}
     />
   );
 }
