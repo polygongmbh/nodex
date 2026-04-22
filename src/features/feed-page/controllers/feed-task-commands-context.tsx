@@ -43,7 +43,7 @@ export interface FeedTaskCommands {
 
 const defaultCommands: FeedTaskCommands = {
   focusTask: () => {},
-  createTask: async () => {},
+  createTask: async () => ({ ok: false, reason: "unexpected-error" }),
   toggleComplete: () => {},
   changeStatus: () => {},
   updateDueDate: () => {},

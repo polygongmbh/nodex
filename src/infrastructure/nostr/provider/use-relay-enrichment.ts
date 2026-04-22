@@ -80,7 +80,7 @@ export function useRelayEnrichment(
       let nip05RelayUrls: string[] = [];
       if (nip65RelayUrls.length === 0 && normalizedNip05) {
         const profile = await user.fetchProfile();
-        nip05RelayUrls = profile?.nip05 === normalizedNip05 ? (profile?.relayUrls ?? []) : [];
+        nip05RelayUrls = profile?.nip05 === normalizedNip05 && Array.isArray(profile?.relayUrls) ? profile.relayUrls : [];
       }
       if (cancelled) return;
 

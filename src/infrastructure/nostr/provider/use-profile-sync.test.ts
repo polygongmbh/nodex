@@ -68,7 +68,7 @@ describe("useProfileSync – updateUserProfile", () => {
     });
 
     expect(success).toBe(true);
-    const calledRelayUrls = publishEvent.mock.calls[0]?.[4] as string[] | undefined;
+    const calledRelayUrls = publishEvent.mock.calls.at(0)?.[4] as string[] | undefined;
     expect(calledRelayUrls).toContain("wss://relay.one");
     expect(calledRelayUrls).toContain("wss://relay.two");
     expect(calledRelayUrls).toContain("wss://relay.three");
