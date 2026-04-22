@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Kanban and calendar composers now restore the same shared draft state as the feed, tree, and list composers instead of dropping in-progress content when those inline composers close.
+- Task-card priority chips now resolve their localized priority labels from the composer locale correctly instead of showing raw translation keys in feed and shared card surfaces.
 
 ## [2.13.3] - 2026-04-22
 

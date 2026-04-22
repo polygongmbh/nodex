@@ -133,7 +133,7 @@ export function TaskPrioritySelect({
   ariaLabel,
   stopPropagation = false,
 }: TaskPrioritySelectProps) {
-  const { t } = useTranslation("tasks");
+  const { t } = useTranslation(["tasks", "composer"]);
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const value = (() => {
     const displayPriority = displayPriorityFromStored(priority);
@@ -165,7 +165,7 @@ export function TaskPrioritySelect({
       {includeEmptyOption && <option value="">—</option>}
       {DISPLAY_PRIORITY_OPTIONS.map((option) => (
         <option key={option} value={String(option)}>
-          {t(`composer.priorityLevels.${option}`)}
+          {t(`composer.priorityLevels.${option}`, { ns: "composer" })}
         </option>
       ))}
     </select>

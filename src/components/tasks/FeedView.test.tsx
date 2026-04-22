@@ -1335,6 +1335,8 @@ describe("FeedView", () => {
       />
     );
 
+    expect(screen.getByRole("option", { name: "P4 - Major" })).toBeInTheDocument();
+
     fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
       target: { value: "4" },
     });
