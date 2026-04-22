@@ -131,6 +131,7 @@ export function PrioritySelect({
   stopPropagation = false,
   onOpenChange,
   onCloseAutoFocus,
+  leadingIcon,
   title,
   ...rest
 }: PrioritySelectProps) {
@@ -171,6 +172,7 @@ export function PrioritySelect({
         className={cn("h-8 w-auto gap-1 text-xs", className)}
         {...stopProps}
       >
+        {leadingIcon}
         <SelectValue placeholder={placeholder}>
           {typeof priority === "number"
             ? t(`priorityLevels.${priority}`, { ns: "app" })
