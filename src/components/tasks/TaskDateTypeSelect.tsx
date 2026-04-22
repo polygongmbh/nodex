@@ -16,6 +16,8 @@ type TaskDateTypeSelectProps = {
   onChange: (value: TaskDateType) => void;
   className?: string;
   disabled?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onCloseAutoFocus?: ComponentPropsWithoutRef<typeof SelectContent>["onCloseAutoFocus"];
   "aria-label"?: string;
 } & Pick<ComponentPropsWithoutRef<"button">, "title">;
 
@@ -25,12 +27,19 @@ export function TaskDateTypeSelect({
   onChange,
   className,
   disabled,
+  onOpenChange,
+  onCloseAutoFocus,
   title,
   ...rest
 }: TaskDateTypeSelectProps) {
   const ariaLabel = rest["aria-label"];
   return (
-    <Select value={value} onValueChange={(next) => onChange(next as TaskDateType)} disabled={disabled}>
+    <Select
+      value={value}
+      onValueChange={(next) => onChange(next as TaskDateType)}
+      disabled={disabled}
+      onOpenChange={onOpenChange}
+    >
       <SelectTrigger
         id={id}
         aria-label={ariaLabel}
@@ -39,7 +48,7 @@ export function TaskDateTypeSelect({
       >
         <SelectValue>{getTaskDateTypeLabel(value)}</SelectValue>
       </SelectTrigger>
-      <SelectContent className="pointer-events-auto">
+      <SelectContent className="pointer-events-auto" onCloseAutoFocus={onCloseAutoFocus}>
         {TASK_DATE_TYPES.map((dateType) => (
           <SelectItem key={dateType} value={dateType}>
             {getTaskDateTypeLabel(dateType)}

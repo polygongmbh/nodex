@@ -115,6 +115,8 @@ interface PrioritySelectProps {
   className?: string;
   disabled?: boolean;
   stopPropagation?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onCloseAutoFocus?: React.ComponentPropsWithoutRef<typeof SelectContent>["onCloseAutoFocus"];
   "aria-label"?: string;
   title?: string;
 }
@@ -126,6 +128,8 @@ export function PrioritySelect({
   className,
   disabled = false,
   stopPropagation = false,
+  onOpenChange,
+  onCloseAutoFocus,
   title,
   ...rest
 }: PrioritySelectProps) {
@@ -148,6 +152,7 @@ export function PrioritySelect({
     <Select
       value={value}
       disabled={disabled}
+      onOpenChange={onOpenChange}
       onValueChange={(next) => {
         if (next === PRIORITY_NONE_VALUE) {
           onPriorityChange(undefined);
@@ -174,6 +179,7 @@ export function PrioritySelect({
       <SelectContent
         className="pointer-events-auto"
         onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
           if (stopPropagation) event.preventDefault();
         }}
       >

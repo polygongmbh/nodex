@@ -1,5 +1,5 @@
 import { defineConfig, loadEnv } from "vite";
-import type { RollupLog } from "rollup";
+
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
@@ -65,7 +65,7 @@ export default defineConfig(({ mode }) => {
             return undefined;
           },
         },
-        onwarn(warning: RollupLog, warn) {
+        onwarn(warning, warn) {
           if (
             warning.code === "EVAL" &&
             typeof warning.id === "string" &&

@@ -4,9 +4,9 @@ export function formatBreadcrumbLabel(content: string): string {
   const firstLine = getTrimmedFirstTaskContentLine(content);
   const withoutMentions = firstLine.replace(/(^|\s)(?:@[^\s]+|nostr:npub1[0-9a-z]+)/gi, "$1 ");
   return withoutMentions
-    .replaceAll("#", "")
-    .replaceAll("~~", "")
-    .replaceAll("*", "")
+    .replace(/#/g, "")
+    .replace(/~~/g, "")
+    .replace(/\*/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }

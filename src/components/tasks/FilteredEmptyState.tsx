@@ -19,6 +19,7 @@ export function FilteredEmptyState() {
     quickFilters: surface.quickFilters,
     searchQuery,
     contextTaskTitle,
+    focusedTaskId,
   });
   const loadingSubtitle = useMemo(() => {
     const waitingPromptKeys = [

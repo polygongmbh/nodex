@@ -18,11 +18,10 @@ function Harness(props: HarnessProps): null {
   return null;
 }
 
-function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id">): Relay {
+function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id" | "url">): Relay {
   return {
     id: overrides.id,
     name: overrides.name ?? overrides.id,
-    icon: overrides.icon ?? "radio",
     isActive: overrides.isActive ?? false,
     connectionStatus: overrides.connectionStatus ?? "connected",
     url: overrides.url,

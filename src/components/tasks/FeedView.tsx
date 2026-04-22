@@ -392,7 +392,7 @@ export function FeedView({
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
 
   const renderFeedEntry = (entry: FeedEntry) => {
-    if (entry.type === "state-update") {
+    if (entry.type === "state-update" && entry.update) {
       const { task, update } = entry;
       const resolvedUpdateAuthor =
         peopleById.get(update.authorPubkey.toLowerCase()) ||

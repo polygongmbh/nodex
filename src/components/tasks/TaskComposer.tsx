@@ -269,6 +269,8 @@ export function TaskComposer({
   const attachmentFileRef = useRef<Record<string, File>>({});
   const internalMouseDownWithinComposerRef = useRef(false);
   const pendingOutsidePointerInteractionRef = useRef(false);
+  const activeDropdownOverlayCountRef = useRef(0);
+  const suppressComposerCollapseUntilRef = useRef(0);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
   const remediationHighlightTimeoutRef = useRef<number | null>(null);
   const prevFilterTagNamesRef = useRef<string[]>([]);
@@ -341,6 +343,20 @@ export function TaskComposer({
     onExpandedChange?.(isExpanded);
   }, [isExpanded, onExpandedChange]);
 
+  const shouldPreserveExpandedComposer = () =>
+    activeDropdownOverlayCountRef.current > 0 || suppressComposerCollapseUntilRef.current > Date.now();
+
+  const handleComposerDropdownOpenChange = (open: boolean) => {
+    activeDropdownOverlayCountRef.current = Math.max(0, activeDropdownOverlayCountRef.current + (open ? 1 : -1));
+    pendingOutsidePointerInteractionRef.current = false;
+    if (!open) {
+      suppressComposerCollapseUntilRef.current = Date.now() + 200;
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
+    }
+  };
+
   useEffect(() => {
     if (!adaptiveSize || !isExpanded || content.trim()) return;
 
@@ -374,7 +390,7 @@ export function TaskComposer({
       if (composerRef.current?.contains(target)) return false;
       if (dueDatePopoverContentRef.current?.contains(target)) return false;
       if (isInsideRadixPortal(target)) return false;
-      if (hasOpenRadixOverlay()) return false;
+      if (hasOpenRadixOverlay() || shouldPreserveExpandedComposer()) return false;
       return true;
     };
 
@@ -386,7 +402,7 @@ export function TaskComposer({
       const shouldCollapse = pendingOutsidePointerInteractionRef.current;
       pendingOutsidePointerInteractionRef.current = false;
       if (!shouldCollapse) return;
-      if (hasOpenRadixOverlay()) return;
+      if (hasOpenRadixOverlay() || shouldPreserveExpandedComposer()) return;
       setIsExpanded(false);
     };
 
@@ -1496,7 +1512,7 @@ export function TaskComposer({
             ) {
               return;
             }
-            if (pendingOutsidePointerInteractionRef.current) return;
+            if (pendingOutsidePointerInteractionRef.current || shouldPreserveExpandedComposer()) return;
             setIsExpanded(false);
           }}
           aria-label={
@@ -1811,6 +1827,14 @@ export function TaskComposer({
             <PrioritySelect
               priority={priority}
               onPriorityChange={setPriority}
+              onOpenChange={handleComposerDropdownOpenChange}
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                suppressComposerCollapseUntilRef.current = Date.now() + 200;
+                requestAnimationFrame(() => {
+                  textareaRef.current?.focus();
+                });
+              }}
               className="h-8 w-full cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
             />
           </div>
@@ -1821,6 +1845,14 @@ export function TaskComposer({
               aria-label={t("composer.labels.dateType")}
               value={dateType}
               onChange={setDateType}
+              onOpenChange={handleComposerDropdownOpenChange}
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                suppressComposerCollapseUntilRef.current = Date.now() + 200;
+                requestAnimationFrame(() => {
+                  textareaRef.current?.focus();
+                });
+              }}
               className="h-8 w-24 cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
             />
             <Popover>

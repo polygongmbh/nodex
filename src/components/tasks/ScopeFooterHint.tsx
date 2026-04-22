@@ -15,6 +15,7 @@ export function ScopeFooterHint() {
     quickFilters: surface.quickFilters,
     searchQuery: surface.searchQuery,
     contextTaskTitle,
+    focusedTaskId,
   });
 
   if (!scopeModel.hasSelectedScope || !scopeModel.scopeFooterSentence) {

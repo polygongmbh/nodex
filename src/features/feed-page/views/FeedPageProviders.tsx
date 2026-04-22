@@ -18,7 +18,7 @@ export interface FeedPageCoreHandlers {
   onOpenAuthModal: (initialStep?: "choose" | "noas" | "noasSignUp") => void;
   onOpenShortcutsHelp: () => void;
   onOpenGuide: () => void;
-  onGuardInteraction: (mode: "create" | "modify") => boolean;
+  onGuardInteraction: (mode: "create" | "modify" | "post") => boolean;
   filterHandlers: FeedInteractionHandlerMap;
   interactionEffects: FeedInteractionEffect[];
 }

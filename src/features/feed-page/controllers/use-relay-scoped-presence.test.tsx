@@ -10,7 +10,6 @@ function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id" | "url">): Rela
   return {
     id: overrides.id,
     name: overrides.name ?? overrides.id,
-    icon: overrides.icon ?? "radio",
     isActive: overrides.isActive ?? true,
     connectionStatus: overrides.connectionStatus ?? "connected",
     url: overrides.url,

@@ -37,7 +37,7 @@ function Harness() {
         relayIds: Array.from(activeRelayIds).sort(),
         channelStates: Object.fromEntries(
           Array.from(channelFilterStates.entries()).filter(([, state]) => state === "included" || state === "excluded")
-        ),
+        ) as Record<string, "included" | "excluded">,
         selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.id).sort(),
         channelMatchMode,
         quickFilters,

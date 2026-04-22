@@ -74,12 +74,12 @@ describe("mergeTasks", () => {
     const merged = mergeTasks([existing], [incoming]);
 
     expect(merged).toHaveLength(1);
-    expect(merged[0].status).toBe("done");
-    expect(merged[0].stateUpdates?.map((update) => update.id)).toEqual([
+    expect(merged[0]?.status).toBe("done");
+    expect(merged[0]?.stateUpdates?.map((update) => update.id)).toEqual([
       "relay-state-1",
       "local-state-1",
     ]);
-    expect(merged[0].lastEditedAt.toISOString()).toBe("2026-02-17T10:02:00.000Z");
-    expect(merged[0].relays).toEqual(["relay-a", "relay-b"]);
+    expect(merged[0]?.lastEditedAt?.toISOString()).toBe("2026-02-17T10:02:00.000Z");
+    expect(merged[0]?.relays).toEqual(["relay-a", "relay-b"]);
   });
 });

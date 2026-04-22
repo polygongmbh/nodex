@@ -1,5 +1,6 @@
 import type { FilterSnapshot } from "@/domain/content/filter-snapshot";
-import type { Person, QuickFilterState } from "@/types";
+import type { QuickFilterState } from "@/types";
+import type { Person } from "@/types/person";
 
 export function makeFilterSnapshot(overrides: Partial<FilterSnapshot> = {}): FilterSnapshot {
   return {

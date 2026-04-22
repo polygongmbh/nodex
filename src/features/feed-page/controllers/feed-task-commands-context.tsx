@@ -7,6 +7,7 @@ import type {
   PublishedAttachment,
   Nip99Metadata,
   Nip99ListingStatus,
+  TaskCreateResult,
 } from "@/types";
 
 export interface FeedTaskCommands {
@@ -27,7 +28,7 @@ export interface FeedTaskCommands {
     attachments?: PublishedAttachment[],
     nip99?: Nip99Metadata,
     locationGeohash?: string
-  ): Promise<void>;
+  ): Promise<TaskCreateResult>;
   toggleComplete(taskId: string): void;
   changeStatus(taskId: string, status: TaskStatus): void;
   updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;
@@ -42,7 +43,7 @@ export interface FeedTaskCommands {
 
 const defaultCommands: FeedTaskCommands = {
   focusTask: () => {},
-  createTask: async () => {},
+  createTask: async () => ({ ok: false, reason: "unexpected-error" }),
   toggleComplete: () => {},
   changeStatus: () => {},
   updateDueDate: () => {},

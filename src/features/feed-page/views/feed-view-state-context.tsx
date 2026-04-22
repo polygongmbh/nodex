@@ -1,7 +1,7 @@
 import { createContext, useContext, type HTMLAttributes, type PropsWithChildren } from "react";
 import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
-import type { FailedPublishDraft } from "@/types";
+import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 
 export interface FeedViewState {
   currentView: ViewType;

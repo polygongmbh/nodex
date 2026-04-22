@@ -78,7 +78,7 @@ export function TaskCreateComposer({
         onCancel={onCancel}
         externalSubmitBlockByType={externalSubmitBlockByType}
         canCreateContent={canCreateContent}
-        getUploadAuthHeader={createHttpAuthHeader}
+        getUploadAuthHeader={async (url, method) => createHttpAuthHeader(url, method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE")}
         filterSync={filterSync}
         compact={compact}
         defaultDueDate={defaultDueDate}

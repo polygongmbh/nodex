@@ -25,6 +25,7 @@ describe("filterTasksByDepthMode", () => {
     const filtered = filterTasksByDepthMode({
       tasks,
       depthMode: "projects",
+      focusedTaskId: null,
       getDepth,
       hasChildren,
     });
@@ -41,6 +42,7 @@ describe("filterTasksByDepthMode", () => {
     const filtered = filterTasksByDepthMode({
       tasks: noProjectTasks,
       depthMode: "projects",
+      focusedTaskId: null,
       getDepth: () => 1,
       hasChildren: () => false,
     });
@@ -52,6 +54,7 @@ describe("filterTasksByDepthMode", () => {
     const filtered = filterTasksByDepthMode({
       tasks,
       depthMode: "1",
+      focusedTaskId: null,
       getDepth,
       hasChildren,
     });
