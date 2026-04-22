@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Hash, Users, Check, X, Minus, User, LogOut, Sparkles, LogIn, Pencil, ChevronDown, Mail, Scale, ShieldCheck, History } from "lucide-react";
+import { Hash, Users, Check, X, Minus, User, LogOut, Sparkles, LogIn, Pencil, Mail, Scale, ShieldCheck, History } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogScrollBody,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Relay, Channel, ChannelMatchMode } from "@/types";
 import type { Person } from "@/types/person";
 import { cn } from "@/lib/utils";
