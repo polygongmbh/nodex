@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DesktopSearchDock } from "./DesktopSearchDock";
 import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
+import type { FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { makeTask } from "@/test/fixtures";
 
 const mockDispatch = vi.fn();
@@ -14,7 +15,7 @@ vi.mock("@/features/feed-page/views/feed-view-state-context", () => ({
   useFeedViewState: () => ({ currentView: "feed", kanbanDepthMode: "leaves" }),
 }));
 
-const mockUseFeedSurfaceState = vi.fn(() => ({ searchQuery: "" }));
+const mockUseFeedSurfaceState = vi.fn(() => ({ searchQuery: "" })) as ReturnType<typeof vi.fn<() => Partial<FeedSurfaceState>>>;
 vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
   useFeedSurfaceState: () => mockUseFeedSurfaceState(),
 }));

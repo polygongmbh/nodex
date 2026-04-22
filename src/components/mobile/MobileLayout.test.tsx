@@ -174,12 +174,7 @@ const baseTaskViewModel: FeedTaskViewModel = {
   tasks,
   allTasks: tasks,
   focusedTaskId: null,
-  relays,
-  channels,
-  composeChannels: channels,
-  people,
   currentUser: people[0],
-  searchQuery: "",
 };
 
 const baseSurfaceState: FeedSurfaceState = {
@@ -202,13 +197,7 @@ function setMocks(overrides: MobileLayoutOverrides = {}) {
   const taskViewModel: FeedTaskViewModel = { ...baseTaskViewModel, ...overrides.taskViewModel };
   const surfaceState: FeedSurfaceState = {
     ...baseSurfaceState,
-    relays: taskViewModel.relays ?? baseSurfaceState.relays,
-    channels: taskViewModel.channels ?? baseSurfaceState.channels,
-    composeChannels: taskViewModel.composeChannels ?? taskViewModel.channels ?? baseSurfaceState.composeChannels,
-    people: taskViewModel.people ?? baseSurfaceState.people,
-    searchQuery: taskViewModel.searchQuery ?? "",
     quickFilters: makeQuickFilterState(),
-    channelMatchMode: taskViewModel.channelMatchMode ?? "and",
     ...overrides.surfaceState,
   };
   mockViewState.mockReturnValue({ ...baseFeedViewState, ...overrides.viewState });
@@ -377,7 +366,8 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, searchQuery: "nomatchquery" },
+      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      surfaceState: { searchQuery: "nomatchquery" },
     });
 
     const status = screen.getByRole("status");
@@ -396,14 +386,12 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      surfaceState: { channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })] },
-      taskViewModel: {
-        tasks: sampleTasks,
-        allTasks: sampleTasks,
+      surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
         composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
         searchQuery: "nomatchquery",
       },
+      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
     });
 
     const status = screen.getByRole("status");
@@ -422,8 +410,8 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      surfaceState: { people: [alice] },
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, people: [alice], searchQuery: "nomatchquery" },
+      surfaceState: { people: [alice], searchQuery: "nomatchquery" },
+      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
     });
 
     const status = screen.getByRole("status");
@@ -441,7 +429,8 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, searchQuery: "nomatchquery", isHydrating: true },
+      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, isHydrating: true },
+      surfaceState: { searchQuery: "nomatchquery" },
     });
 
     expect(screen.getByRole("status")).toHaveTextContent(/loading/i);
@@ -463,8 +452,9 @@ describe("MobileLayout auth wiring", () => {
           makeChannel({ id: "nostr", name: "nostr", filterState: "included" }),
           makeChannel({ id: "tech", name: "tech", filterState: "excluded" }),
         ],
+        searchQuery: "nomatchquery",
       },
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, searchQuery: "nomatchquery" },
+      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
     });
 
     const status = screen.getByRole("status");
@@ -489,8 +479,11 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout({
       viewState: { currentView: "list" },
-      surfaceState: { channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })] },
-      taskViewModel: { tasks: datedTasks, allTasks: datedTasks, searchQuery: "nomatchquery" },
+      surfaceState: {
+        channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+        searchQuery: "nomatchquery",
+      },
+      taskViewModel: { tasks: datedTasks, allTasks: datedTasks },
     });
 
     const status = screen.getByRole("status");
@@ -554,7 +547,7 @@ describe("MobileLayout auth wiring", () => {
         composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
         people: [selectedPerson, otherPerson],
       },
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, people: [selectedPerson, otherPerson] },
+      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
     });
 
     const status = screen.getByRole("status");

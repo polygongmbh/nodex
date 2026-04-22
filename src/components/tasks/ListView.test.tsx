@@ -28,13 +28,10 @@ describe("ListView priority control", () => {
     const people = [makePerson({ id: root.author.id, name: root.author.name, displayName: root.author.displayName })];
     render(
       <ListView
+        focusedTaskId={null}
         tasks={[child]}
         allTasks={[root, child]}
-        relays={relays}
-        channels={channels}
-        people={people}
         currentUser={people[0]}
-        searchQuery=""
       />
     );
 
@@ -54,14 +51,10 @@ describe("ListView priority control", () => {
 
     render(
       <ListView
+        focusedTaskId="middle"
         tasks={[leaf]}
         allTasks={[root, middle, leaf]}
-        relays={relays}
-        channels={channels}
-        people={people}
         currentUser={people[0]}
-        searchQuery=""
-        focusedTaskId="middle"
       />
     );
 
@@ -84,14 +77,10 @@ describe("ListView priority control", () => {
 
     const { rerender } = render(
       <ListView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={people}
         currentUser={people[0]}
-        searchQuery=""
-        onUpdatePriority={onUpdatePriority}
       />
     );
 
@@ -101,14 +90,10 @@ describe("ListView priority control", () => {
 
     rerender(
       <ListView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={people}
         currentUser={people[0]}
-        searchQuery=""
-        onUpdatePriority={onUpdatePriority}
       />
     );
 
@@ -127,13 +112,10 @@ describe("ListView priority control", () => {
 
     const { container } = render(
       <ListView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })]}
         currentUser={task.author}
-        searchQuery=""
       />
     );
 
@@ -166,13 +148,9 @@ describe("ListView priority control", () => {
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
     render(
       <ListView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
-        onUpdatePriority={vi.fn()}
       />
     );
 
@@ -193,13 +171,10 @@ describe("ListView priority control", () => {
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
     render(
       <ListView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={relays}
-        channels={channels}
-        people={people}
         currentUser={people[0]}
-        searchQuery=""
       />
     );
 
@@ -225,14 +200,10 @@ describe("ListView priority control", () => {
 
     render(
       <ListView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={relays}
-        channels={channels}
-        people={people}
         currentUser={people[0]}
-        searchQuery=""
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -253,14 +224,10 @@ describe("ListView priority control", () => {
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
     render(
       <ListView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={relays}
-        channels={channels}
-        people={people}
         currentUser={people[0]}
-        searchQuery=""
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -288,14 +255,10 @@ describe("ListView priority control", () => {
 
     render(
       <ListView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={relays}
-        channels={channels}
-        people={people}
         currentUser={people[0]}
-        searchQuery=""
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -314,13 +277,10 @@ describe("ListView priority control", () => {
 
     render(
       <ListView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })]}
         currentUser={task.author}
-        searchQuery=""
       />
     );
 
@@ -340,13 +300,10 @@ describe("ListView priority control", () => {
 
     render(
       <ListView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })]}
         currentUser={task.author}
-        searchQuery=""
       />
     );
 

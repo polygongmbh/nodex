@@ -51,6 +51,7 @@ describe("CalendarView responsiveness", () => {
       relays: ["demo"],
       taskType: "task",
       timestamp: new Date("2026-02-17T09:00:00.000Z"),
+      lastEditedAt: new Date("2026-02-17T09:00:00.000Z"),
       likes: 0,
       replies: 0,
       reposts: 0,
@@ -66,12 +67,9 @@ describe("CalendarView responsiveness", () => {
     };
     render(
       <CalendarView
+        focusedTaskId={null}
         tasks={[child]}
         allTasks={[root, child]}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
         isMobile
         mobileView="calendar"
         selectedDate={new Date("2026-02-18T10:00:00.000Z")}
@@ -89,12 +87,9 @@ describe("CalendarView responsiveness", () => {
 
     render(
       <CalendarView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
       />
     );
 
@@ -112,12 +107,9 @@ describe("CalendarView responsiveness", () => {
 
     render(
       <CalendarView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
         isMobile
         mobileView="calendar"
       />
@@ -133,12 +125,9 @@ describe("CalendarView responsiveness", () => {
   it("renders core month navigation controls", () => {
     render(
       <CalendarView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
       />
     );
 
@@ -171,12 +160,9 @@ describe("CalendarView responsiveness", () => {
 
     const { container } = render(
       <CalendarView
+        focusedTaskId={null}
         tasks={[openTask, doneTask, closedTask]}
         allTasks={[openTask, doneTask, closedTask]}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
         selectedDate={new Date("2026-02-18T00:00:00.000Z")}
       />
     );
@@ -199,12 +185,9 @@ describe("CalendarView responsiveness", () => {
 
     render(
       <CalendarView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
         selectedDate={new Date("2026-02-18T00:00:00.000Z")}
       />
     );
@@ -234,6 +217,7 @@ describe("CalendarView responsiveness", () => {
 
     const { container } = render(
       <CalendarView
+        focusedTaskId={null}
         tasks={[parent, child]}
         allTasks={[parent, child]}
         selectedDate={new Date("2026-02-18T00:00:00.000Z")}
@@ -259,6 +243,7 @@ describe("CalendarView responsiveness", () => {
 
     const { container } = render(
       <CalendarView
+        focusedTaskId={null}
         tasks={[leaf]}
         allTasks={[leaf]}
         selectedDate={new Date("2026-02-18T00:00:00.000Z")}

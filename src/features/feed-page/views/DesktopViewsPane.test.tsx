@@ -78,6 +78,7 @@ describe("DesktopViewsPane overlay", () => {
     renderPane("tree", {
       tasks: [],
       allTasks: [],
+      focusedTaskId: null,
     });
 
     expect(screen.getByTestId("tree-view")).toBeInTheDocument();
@@ -88,6 +89,7 @@ describe("DesktopViewsPane overlay", () => {
     renderPane("kanban", {
       tasks: [],
       allTasks: [],
+      focusedTaskId: null,
     });
 
     await waitFor(() => expect(screen.getByTestId("kanban-view")).toBeInTheDocument());
@@ -106,6 +108,7 @@ describe("DesktopViewsPane overlay", () => {
     const { container } = renderPane("list", {
       tasks: [task],
       allTasks: [task],
+      focusedTaskId: null,
     });
 
     await waitFor(() => expect(screen.getByTestId("list-view")).toBeInTheDocument());

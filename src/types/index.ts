@@ -176,13 +176,7 @@ export interface Task {
 export interface SharedTaskViewContext {
   tasks: Task[];
   allTasks: Task[];
-  relays?: Relay[];
-  channels?: Channel[];
-  channelMatchMode?: ChannelMatchMode;
-  composeChannels?: Channel[];
-  people?: Person[];
   currentUser?: Person;
-  searchQuery?: string;
   focusedTaskId: string | null;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }

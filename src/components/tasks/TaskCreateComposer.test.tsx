@@ -10,6 +10,7 @@ import type { Person } from "@/types/person";
 import { getComposerPrimaryAction, getTaskComposerInput } from "@/test/ui";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { makeTask } from "@/test/fixtures";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" }, createHttpAuthHeader: vi.fn(async () => null) }),
@@ -100,11 +101,12 @@ function renderCreateComposer({
         channels,
         people,
         searchQuery: "",
+        quickFilters: makeQuickFilterState(),
         channelMatchMode: "and",
       }}
     >
       <FeedTaskViewModelProvider value={{ tasks, allTasks, focusedTaskId: null }}>
-        <TaskCreateComposer onCancel={() => {}} {...props} />
+        <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} {...props} />
       </FeedTaskViewModelProvider>
     </FeedSurfaceProvider>
   );

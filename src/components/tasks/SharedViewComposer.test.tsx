@@ -4,6 +4,7 @@ import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-con
 import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { toast } from "sonner";
 
 let mockUser: { id: string } | null = { id: "me" };
@@ -51,6 +52,7 @@ describe("SharedViewComposer", () => {
           channels: [makeChannel({ id: "backend", name: "backend" })],
           people: [makePerson()],
           searchQuery: "",
+          quickFilters: makeQuickFilterState(),
           channelMatchMode: "and",
         }}
       >
@@ -88,6 +90,7 @@ describe("SharedViewComposer", () => {
           channels: [makeChannel({ id: "backend", name: "backend" })],
           people: [makePerson()],
           searchQuery: "",
+          quickFilters: makeQuickFilterState(),
           channelMatchMode: "and",
         }}
       >
@@ -124,6 +127,7 @@ describe("SharedViewComposer", () => {
           channels: [makeChannel({ id: "backend", name: "backend" })],
           people: [makePerson()],
           searchQuery: "",
+          quickFilters: makeQuickFilterState(),
           channelMatchMode: "and",
         }}
       >

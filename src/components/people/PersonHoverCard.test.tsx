@@ -124,6 +124,7 @@ describe("PersonHoverCard", () => {
         value={{
           tasks: [],
           allTasks: [makeTask({ id: "task-123", content: "Fix relay reconnect jitter" })],
+          focusedTaskId: null,
         }}
       >
         <PersonHoverCard

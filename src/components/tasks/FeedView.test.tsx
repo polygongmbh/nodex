@@ -48,9 +48,10 @@ beforeEach(() => {
 });
 
 type FeedViewProps = ComponentProps<typeof FeedView>;
+type TestFeedViewProps = Omit<FeedViewProps, "focusedTaskId"> & { focusedTaskId?: string | null };
 
 function renderFeedView(
-  props: FeedViewProps,
+  { focusedTaskId = null, ...rest }: TestFeedViewProps,
   surfaceOverrides: Partial<FeedSurfaceState> = {}
 ) {
   const surfaceState: FeedSurfaceState = {
@@ -67,7 +68,7 @@ function renderFeedView(
 
   return render(
     <FeedSurfaceProvider value={surfaceState}>
-      <FeedView {...props} />
+      <FeedView focusedTaskId={focusedTaskId} {...rest} />
     </FeedSurfaceProvider>
   );
 }
@@ -84,12 +85,9 @@ describe("FeedView", () => {
     });
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[child]}
         allTasks={[root, child]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -116,12 +114,9 @@ describe("FeedView", () => {
 
     const { container } = render(
       <FeedView
+        focusedTaskId={null}
         tasks={[rawTask]}
         allTasks={[rawTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -147,12 +142,9 @@ describe("FeedView", () => {
 
     const { container } = render(
       <FeedView
+        focusedTaskId={null}
         tasks={manyTasks}
         allTasks={manyTasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -173,6 +165,7 @@ describe("FeedView", () => {
 
     const { container } = render(
       <FeedView
+        focusedTaskId={null}
         tasks={manyTasks}
         allTasks={manyTasks}
         searchQueryOverride=""
@@ -214,6 +207,7 @@ describe("FeedView", () => {
 
     const { container } = render(
       <FeedView
+        focusedTaskId={null}
         tasks={manyTasks}
         allTasks={manyTasks}
         searchQueryOverride=""
@@ -341,6 +335,7 @@ describe("FeedView", () => {
         }}
       >
         <FeedView
+        focusedTaskId={null}
           tasks={manyTasks}
           allTasks={manyTasks}
           searchQueryOverride=""
@@ -412,6 +407,7 @@ describe("FeedView", () => {
         }}
       >
         <FeedView
+        focusedTaskId={null}
           tasks={manyTasks.filter((task) => task.relays.includes("relay-one"))}
           allTasks={manyTasks}
           searchQueryOverride=""
@@ -478,6 +474,7 @@ describe("FeedView", () => {
         }}
       >
         <FeedView
+        focusedTaskId={null}
           tasks={manyTasks}
           allTasks={manyTasks}
           searchQueryOverride=""
@@ -500,12 +497,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[child]}
         allTasks={[root, child]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -532,12 +526,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[leaf]}
         allTasks={[root, middle, leaf]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -566,13 +557,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId="middle"
         tasks={[leaf]}
         allTasks={[root, middle, leaf]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
-        focusedTaskId="middle"
       />
     );
 
@@ -604,12 +591,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[pubkeyTask]}
         allTasks={[pubkeyTask]}
-        relays={relays}
-        channels={channels}
-        people={[pubkeyOnlyAuthor]}
-        searchQuery=""
       />
     );
 
@@ -647,12 +631,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[pubkeyTask]}
         allTasks={[pubkeyTask]}
-        relays={relays}
-        channels={channels}
-        people={[pubkeyOnlyAuthor]}
-        searchQuery=""
       />
     );
 
@@ -680,12 +661,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -715,12 +693,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -736,12 +711,9 @@ describe("FeedView", () => {
   it("shows author metadata label with username and feed-truncated npub", () => {
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -777,12 +749,9 @@ describe("FeedView", () => {
 
       render(
         <FeedView
+        focusedTaskId={null}
           tasks={[taskWithStateUpdates]}
           allTasks={[taskWithStateUpdates]}
-          relays={relays}
-          channels={channels}
-          people={[author]}
-          searchQuery=""
         />
       );
 
@@ -799,12 +768,9 @@ describe("FeedView", () => {
   it("hides secondary author metadata on mobile for a denser header row", () => {
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
         isMobile
       />
     );
@@ -821,12 +787,9 @@ describe("FeedView", () => {
     });
     const { container, rerender } = render(
       <FeedView
+        focusedTaskId={null}
         tasks={[longTask]}
         allTasks={[longTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -835,13 +798,9 @@ describe("FeedView", () => {
 
     rerender(
       <FeedView
+        focusedTaskId="task-long-active"
         tasks={[longTask]}
         allTasks={[longTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
-        focusedTaskId="task-long-active"
       />
     );
 
@@ -852,12 +811,9 @@ describe("FeedView", () => {
   it("supports modifier-based author filtering from the author label", () => {
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -872,12 +828,9 @@ describe("FeedView", () => {
   it("does not focus the task on a plain author click", () => {
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -895,12 +848,9 @@ describe("FeedView", () => {
   it("supports Ctrl/Cmd+Alt author shortcuts for filter and mention", () => {
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={tasks}
         allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -955,12 +905,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[mentionTask]}
         allTasks={[mentionTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -1022,12 +969,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[taskWithStateUpdates]}
         allTasks={[taskWithStateUpdates]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -1060,12 +1004,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[taskWithLongMultilineTitle]}
         allTasks={[taskWithLongMultilineTitle]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -1104,12 +1045,9 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[taskWithStateUpdate]}
         allTasks={[taskWithStateUpdate]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -1138,12 +1076,9 @@ describe("FeedView", () => {
 
     const { container } = render(
       <FeedView
+        focusedTaskId={null}
         tasks={[openTask, doneTask, closedTask]}
         allTasks={[openTask, doneTask, closedTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -1162,13 +1097,9 @@ describe("FeedView", () => {
 
     const { container } = render(
       <FeedView
+        focusedTaskId="task-closed-focused"
         tasks={[closedTask]}
         allTasks={[closedTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        focusedTaskId="task-closed-focused"
-        searchQuery=""
       />
     );
 
@@ -1199,12 +1130,9 @@ describe("FeedView", () => {
 
     const { container } = render(
       <FeedView
+        focusedTaskId={null}
         tasks={[openTask, closedTask]}
         allTasks={[openTask, closedTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
       />
     );
 
@@ -1325,13 +1253,10 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[taskWithPriority]}
         allTasks={[taskWithPriority]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
       />
     );
 
@@ -1360,13 +1285,10 @@ describe("FeedView", () => {
 
     render(
       <FeedView
+        focusedTaskId={null}
         tasks={[taskWithDueDate]}
         allTasks={[taskWithDueDate]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
       />
     );
 

@@ -91,15 +91,11 @@ describe("KanbanView closed column", () => {
 
     const { container } = render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[todoTask]}
         allTasks={[todoTask]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -118,15 +114,11 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[todoTask, doneTask, closedTask]}
         allTasks={[todoTask, doneTask, closedTask]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -155,15 +147,11 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[prioritizedTask, nonPrioritizedTask]}
         allTasks={[prioritizedTask, nonPrioritizedTask]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -184,15 +172,11 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -215,15 +199,11 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -246,15 +226,11 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -281,15 +257,11 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -311,16 +283,12 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
         compactTaskCardsEnabled
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -335,15 +303,11 @@ describe("KanbanView closed column", () => {
 
     const { container } = render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[]}
         allTasks={[]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 
@@ -364,6 +328,7 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[parent, child]}
         allTasks={[parent, child]}
         currentUser={author}
@@ -384,6 +349,7 @@ describe("KanbanView closed column", () => {
 
     render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[leaf]}
         allTasks={[leaf]}
         currentUser={author}
@@ -411,7 +377,7 @@ describe("KanbanView closed column", () => {
       const task = makeTask({ id: "edge-scroll-task", author, status: "todo", content: "Task #general" });
 
       const { container } = render(
-        <KanbanView tasks={[task]} allTasks={[task]} currentUser={author} depthMode="leaves" />
+        <KanbanView tasks={[task]} allTasks={[task]} currentUser={author} focusedTaskId={null} depthMode="leaves" />
       );
 
       const board = container.querySelector('[data-onboarding="kanban-board"]') as HTMLElement;
@@ -441,15 +407,11 @@ describe("KanbanView closed column", () => {
     const task = makeTask({ id: "drag-task", author, status: "todo", content: "Drag me #general" });
     const { container } = render(
       <KanbanView
+        focusedTaskId={null}
         tasks={[task]}
         allTasks={[task]}
-        relays={[makeRelay()]}
-        channels={[makeChannel()]}
-        people={[author]}
         currentUser={author}
-        searchQuery=""
         depthMode="leaves"
-        onStatusChange={vi.fn()}
       />
     );
 

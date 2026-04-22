@@ -52,6 +52,7 @@ describe("FeedView kind:0 author labels", () => {
         <FeedView
           tasks={tasks}
           allTasks={tasks}
+          focusedTaskId={null}
           searchQueryOverride=""
         />
       </FeedSurfaceProvider>
