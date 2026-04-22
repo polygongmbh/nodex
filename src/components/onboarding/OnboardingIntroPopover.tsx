@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogIn, Sparkles, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { OverlayScrim, OVERLAY_SCRIM_FADE_MS } from "@/components/ui/overlay-scrim";
 
-const INTRO_FADE_DURATION_MS = 400;
+const INTRO_FADE_DURATION_MS = OVERLAY_SCRIM_FADE_MS;
 
 interface OnboardingIntroPopoverProps {
   isOpen: boolean;
@@ -57,10 +58,6 @@ export function OnboardingIntroPopover({
   if (!isRendered) return null;
 
   const state = isVisible ? "open" : "closed";
-  const overlayStyle = {
-    opacity: isVisible ? 1 : 0,
-    transitionDuration: `${INTRO_FADE_DURATION_MS}ms`,
-  } as const;
   const dialogStyle = {
     opacity: isVisible ? 1 : 0,
     transform: isVisible ? "translateY(0)" : "translateY(12px)",
@@ -68,47 +65,44 @@ export function OnboardingIntroPopover({
   } as const;
 
   return (
-    <div
-      className="fixed inset-0 z-[135] flex items-center justify-center pointer-events-auto"
-      data-state={state}
-      role="presentation"
-    >
+    <>
+      <OverlayScrim isOpen={isVisible} zIndex={134} />
       <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-overlay-scrim transition-opacity"
+        className="fixed inset-0 z-[135] flex items-center justify-center pointer-events-none"
         data-state={state}
-        style={overlayStyle}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={t("onboarding.intro.ariaLabel")}
-        className="relative mx-2 w-full max-w-lg rounded-xl border border-border bg-card/95 p-6 text-card-foreground shadow-xl backdrop-blur-md transition-all"
-        data-state={state}
-        style={dialogStyle}
+        role="presentation"
       >
-        <div className="space-y-3">
-          <h2 className="text-xl font-semibold">{t("onboarding.intro.title")}</h2>
-          <p className="text-sm text-muted-foreground">{t("onboarding.intro.description")}</p>
-          <p className="text-sm text-muted-foreground">{t("onboarding.intro.features")}</p>
-        </div>
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-          {showCreateAccount ? (
-            <Button variant="outline" onClick={onCreateAccount}>
-              <UserPlus className="h-4 w-4" />
-              {t("onboarding.intro.createAccount")}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("onboarding.intro.ariaLabel")}
+          className="relative mx-2 w-full max-w-lg rounded-xl border border-border bg-card/95 p-6 text-card-foreground shadow-xl backdrop-blur-md transition-all pointer-events-auto"
+          data-state={state}
+          style={dialogStyle}
+        >
+          <div className="space-y-3">
+            <h2 className="text-xl font-semibold">{t("onboarding.intro.title")}</h2>
+            <p className="text-sm text-muted-foreground">{t("onboarding.intro.description")}</p>
+            <p className="text-sm text-muted-foreground">{t("onboarding.intro.features")}</p>
+          </div>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            {showCreateAccount ? (
+              <Button variant="outline" onClick={onCreateAccount}>
+                <UserPlus className="h-4 w-4" />
+                {t("onboarding.intro.createAccount")}
+              </Button>
+            ) : null}
+            <Button variant="outline" onClick={onSignIn}>
+              <LogIn className="h-4 w-4" />
+              {t("onboarding.intro.signIn")}
             </Button>
-          ) : null}
-          <Button variant="outline" onClick={onSignIn}>
-            <LogIn className="h-4 w-4" />
-            {t("onboarding.intro.signIn")}
-          </Button>
-          <Button onClick={onStartTour}>
-            <Sparkles className="h-4 w-4" />
-            {t("onboarding.intro.startTour")}
-          </Button>
+            <Button onClick={onStartTour}>
+              <Sparkles className="h-4 w-4" />
+              {t("onboarding.intro.startTour")}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

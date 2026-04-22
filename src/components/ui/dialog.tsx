@@ -3,6 +3,15 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { OVERLAY_SCRIM_FADE_MS } from "@/components/ui/overlay-scrim";
+
+/** Inline style applied to overlay/content so all dialog surfaces share the
+ * same gentle fade timing as the onboarding intro popover, keeping
+ * cross-overlay transitions visually consistent. */
+const dialogFadeStyle: React.CSSProperties = {
+  animationDuration: `${OVERLAY_SCRIM_FADE_MS}ms`,
+  animationTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
+};
 
 type PointerDownOutsideHandler = NonNullable<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>["onPointerDownOutside"]
@@ -36,13 +45,14 @@ const DialogClose = DialogPrimitive.Close;
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
+>(({ className, style, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
       "fixed inset-0 z-[200] bg-overlay-scrim data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
+    style={{ ...dialogFadeStyle, ...style }}
     {...props}
   />
 ));
@@ -54,7 +64,7 @@ const DialogContent = React.forwardRef<
     showCloseButton?: boolean;
     dismissOnOutsideInteract?: boolean;
   }
->(({ className, children, showCloseButton = true, dismissOnOutsideInteract = true, onInteractOutside, onPointerDownOutside, ...props }, ref) => (
+>(({ className, children, showCloseButton = true, dismissOnOutsideInteract = true, onInteractOutside, onPointerDownOutside, style, ...props }, ref) => (
   <DialogPortal>
     {dismissOnOutsideInteract ? (
       <DialogPrimitive.Close asChild>
@@ -66,9 +76,10 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "motion-popup fixed left-[50%] top-[50%] z-[210] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+        "motion-popup fixed left-[50%] top-[50%] z-[210] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className,
       )}
+      style={{ ...dialogFadeStyle, ...style }}
       onPointerDownOutside={(event) =>
         handleDialogOutsideInteraction(dismissOnOutsideInteract, event, onPointerDownOutside)
       }
