@@ -65,7 +65,8 @@
         "showingOnlyScope": "Das ist alles {{scope}}.",
         "mobileFallback": "Noch nichts im aktuellen Bereich, alles wird angezeigt.",
         "mobileFallbackScoped": "Noch nichts {{scope}}, alles wird angezeigt.",
-        "action": "Lockere die Filter oder mach den Anfang."
+        "action": "Lockere die Filter oder mach den Anfang.",
+        "clearAll": "Alle Filter zurücksetzen"
       },
       "loading": {
         "scopeOnly": "Lade Beiträge {{scope}}.",

@@ -65,7 +65,8 @@
         "showingOnlyScope": "This is all {{scope}}.",
         "mobileFallback": "Nothing yet in the current scope, showing everything.",
         "mobileFallbackScoped": "Nothing yet {{scope}}, showing everything.",
-        "action": "Broaden the scope or break the silence."
+        "action": "Broaden the scope or break the silence.",
+        "clearAll": "Clear all filters"
       },
       "loading": {
         "scopeOnly": "Loading posts {{scope}}.",

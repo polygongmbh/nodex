@@ -255,6 +255,17 @@ export function useIndexFilters({
     notifyFrequentPeopleDeselected();
   }, [people, setPeople, sidebarPeople]);
 
+  const resetFiltersToDefault = useCallback(() => {
+    setActiveRelayIds(new Set());
+    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
+    setChannelMatchMode("and");
+    setPeople((prev) => mapPeopleSelection(prev, () => false));
+    setQuickFilters(normalizeQuickFilterState());
+    featureDebugLog("quick-filters", "Reset filters to defaults with all feeds deactivated", {
+      availableRelayCount: relays.length,
+    });
+  }, [channels, relays, setActiveRelayIds, setChannelFilterStates, setChannelMatchMode, setPeople, setQuickFilters]);
+
   const filterHandlers: FeedInteractionHandlerMap = useMemo(() => ({
     "filter.clearChannel": (intent) => {
       setChannelFilterStates((prev) => {
@@ -350,6 +361,9 @@ export function useIndexFilters({
         return next;
       });
     },
+    "filter.resetAll": () => {
+      resetFiltersToDefault();
+    },
   }), [
     channels,
     relays,
@@ -361,18 +375,8 @@ export function useIndexFilters({
     setQuickFilters,
     setChannelFilterStates,
     toggleInteractivePerson,
+    resetFiltersToDefault,
   ]);
-
-  const resetFiltersToDefault = useCallback(() => {
-    setActiveRelayIds(new Set());
-    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-    setChannelMatchMode("and");
-    setPeople((prev) => mapPeopleSelection(prev, () => false));
-    setQuickFilters(normalizeQuickFilterState());
-    featureDebugLog("quick-filters", "Reset filters to defaults with all feeds deactivated", {
-      availableRelayCount: relays.length,
-    });
-  }, [channels, relays, setActiveRelayIds, setChannelFilterStates, setChannelMatchMode, setPeople, setQuickFilters]);
 
   return {
     mentionRequest,
