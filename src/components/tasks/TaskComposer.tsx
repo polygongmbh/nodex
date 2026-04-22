@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { PrioritySelectOptions } from "@/components/tasks/TaskMetadataEditors";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
@@ -39,7 +40,6 @@ import {
   type ComposeSubmitBlockState,
 } from "@/lib/compose-submit-block";
 import {
-  DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
@@ -1786,11 +1786,7 @@ export function TaskComposer({
               className="h-8 w-full cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
             >
               <option value="">{t("composer.labels.priority")}</option>
-              {DISPLAY_PRIORITY_OPTIONS.map((option) => (
-                <option key={option} value={String(option)}>
-                  {t(`composer.priorityLevels.${option}`)}
-                </option>
-              ))}
+              <PrioritySelectOptions />
             </select>
           </div>
 

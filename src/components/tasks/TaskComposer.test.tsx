@@ -239,6 +239,7 @@ describe("TaskComposer", () => {
 
     expect(getComposerInput()).toHaveValue("");
     expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(screen.getByRole("option", { name: "P4 - Major" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: /date type/i })).toHaveValue("start");
     expect(screen.getByDisplayValue("10:00")).toBeInTheDocument();
     expect(screen.getByLabelText(/geohash/i)).toHaveValue("u33db");

@@ -130,13 +130,6 @@
       "mentions": "Erwähnungen",
       "date": "Datum"
     },
-    "priorityLevels": {
-      "1": "P1 - Niedrig",
-      "2": "P2 - Normal",
-      "3": "P3 - Relevant",
-      "4": "P4 - Wichtig",
-      "5": "P5 - Kritisch"
-    },
     "hints": {
       "composeField": "#channel-Tags und @Erwähnungen in diesem Feld verwenden",
       "insertHashtag": "Hashtag einfügen",

@@ -130,13 +130,6 @@
       "mentions": "Menciones",
       "date": "Fecha"
     },
-    "priorityLevels": {
-      "1": "P1 - Menor",
-      "2": "P2 - Moderada",
-      "3": "P3 - Significativa",
-      "4": "P4 - Grave",
-      "5": "P5 - Crítica"
-    },
     "hints": {
       "composeField": "Usa etiquetas #canal y @menciones en este campo",
       "insertHashtag": "Insertar hashtag",

@@ -45,8 +45,8 @@ import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { PrioritySelectOptions } from "@/components/tasks/TaskMetadataEditors";
 import {
-  DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
@@ -1320,11 +1320,7 @@ export function UnifiedBottomBar({
                   className="h-8 rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 appearance-none max-[420px]:w-[3.25rem] max-[420px]:px-1 max-[420px]:text-[11px] truncate"
                 >
                   <option value="">{t("composer.labels.priorityShort")}</option>
-                  {DISPLAY_PRIORITY_OPTIONS.map((option) => (
-                    <option key={option} value={String(option)}>
-                      {t(`composer.priorityLevels.${option}`)}
-                    </option>
-                  ))}
+                  <PrioritySelectOptions />
                 </select>
                 <button
                   onClick={() => toggleSelector("date")}

@@ -1,4 +1,11 @@
 {
+  "priorityLevels": {
+    "1": "P1 - Minor",
+    "2": "P2 - Moderate",
+    "3": "P3 - Significant",
+    "4": "P4 - Major",
+    "5": "P5 - Critical"
+  },
   "app": {
     "loadingView": "Loading view..."
   },

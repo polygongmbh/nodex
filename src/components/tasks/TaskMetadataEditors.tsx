@@ -123,6 +123,20 @@ interface TaskPrioritySelectProps {
   stopPropagation?: boolean;
 }
 
+export function PrioritySelectOptions() {
+  const { t } = useTranslation("app");
+
+  return (
+    <>
+      {DISPLAY_PRIORITY_OPTIONS.map((option) => (
+        <option key={option} value={String(option)}>
+          {t(`priorityLevels.${option}`)}
+        </option>
+      ))}
+    </>
+  );
+}
+
 export function TaskPrioritySelect({
   taskId,
   priority,
@@ -133,7 +147,6 @@ export function TaskPrioritySelect({
   ariaLabel,
   stopPropagation = false,
 }: TaskPrioritySelectProps) {
-  const { t } = useTranslation(["tasks", "composer"]);
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const value = (() => {
     const displayPriority = displayPriorityFromStored(priority);
@@ -163,11 +176,7 @@ export function TaskPrioritySelect({
       className={className}
     >
       {includeEmptyOption && <option value="">—</option>}
-      {DISPLAY_PRIORITY_OPTIONS.map((option) => (
-        <option key={option} value={String(option)}>
-          {t(`composer.priorityLevels.${option}`, { ns: "composer" })}
-        </option>
-      ))}
+      <PrioritySelectOptions />
     </select>
   );
 }
