@@ -61,7 +61,7 @@ export function DesktopSearchDock() {
               void dispatchFeedInteraction({ type: "ui.search.change", query: e.target.value });
             }}
             placeholder={searchPlaceholder}
-            className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
+            className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-10 py-2 text-sm placeholder:text-muted-foreground/65 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
           />
           {searchQuery.length > 0 && (
             <button
