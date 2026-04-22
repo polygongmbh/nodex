@@ -163,6 +163,14 @@ export function useIndexOnboarding({
     if (lastHandledOnboardingStepRef.current === stepKey) return;
     lastHandledOnboardingStepRef.current = stepKey;
 
+    // Re-pulse the compose activation signal whenever a compose-guide step is
+    // (re-)entered, so the composer re-expands even if the previous step had
+    // already pre-opened it (e.g. user clicked outside, collapsing it).
+    const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
+    if (isComposeGuideStep(payload.id) && !isDedicatedViewGuide) {
+      setComposeGuideActivationSignal((previous) => previous + 1);
+    }
+
     if (shouldForceFeedAndResetFiltersOnStep(payload.id, isMobile)) {
       setCurrentView("feed");
       onBeforeResetFocusedTaskScope?.();
@@ -188,6 +196,7 @@ export function useIndexOnboarding({
     setPeople((prev) => mapPeopleSelection(prev, () => false));
   }, [
     channels,
+    currentView,
     isMobile,
     onBeforeResetFocusedTaskScope,
     setActiveRelayIds,
