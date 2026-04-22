@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Plus, X, Circle, CircleDot, CheckCircle2 } from "lucide-react";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { DragDropContext, Droppable, Draggable, DropResult, useKeyboardSensor, useTouchSensor } from "@hello-pangea/dnd";
+import { useSelectableMouseSensor } from "@/lib/kanban-mouse-sensor";
 import {   Task, TaskInitialStatus, TaskStatus, ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
@@ -321,7 +322,12 @@ export function KanbanView({
         className="scrollbar-auto relative flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4"
         data-onboarding="kanban-board"
       >
-        <DragDropContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+        <DragDropContext
+          onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
+          sensors={[useSelectableMouseSensor, useKeyboardSensor, useTouchSensor]}
+          enableDefaultSensors={false}
+        >
           <div className="flex gap-4 h-full min-w-max" data-onboarding="kanban-columns">
             {columns.map((column) => (
               <div
