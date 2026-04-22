@@ -8,6 +8,7 @@ import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-s
 import { shouldAutoStartOnboarding } from "@/lib/onboarding-autostart";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import {
+  isComposeGuideStep,
   isFilterResetStep,
   isNavigationFocusStep,
   shouldForceFeedAndResetFiltersOnStep,
