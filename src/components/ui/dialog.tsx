@@ -66,13 +66,11 @@ const DialogContent = React.forwardRef<
   }
 >(({ className, children, showCloseButton = true, dismissOnOutsideInteract = true, onInteractOutside, onPointerDownOutside, style, ...props }, ref) => (
   <DialogPortal>
-    {dismissOnOutsideInteract ? (
-      <DialogPrimitive.Close asChild>
-        <DialogOverlay />
-      </DialogPrimitive.Close>
-    ) : (
-      <DialogOverlay />
-    )}
+    {/* Overlay is rendered identically regardless of dismissOnOutsideInteract so that
+     * toggling that flag (e.g. as form dirtiness changes) does not unmount/remount the
+     * overlay and re-trigger its fade-in animation, which would look like a background blink.
+     * Outside-click dismissal is handled via onPointerDownOutside / onInteractOutside below. */}
+    <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
