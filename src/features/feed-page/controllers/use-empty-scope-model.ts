@@ -11,7 +11,7 @@ interface UseEmptyScopeModelOptions {
   quickFilters?: QuickFilterState;
   searchQuery?: string;
   contextTaskTitle?: string;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
   taskById?: Map<string, Pick<Task, "content">>;
   allTasks?: Pick<Task, "id" | "content">[];
 }
@@ -23,7 +23,7 @@ export function useEmptyScopeModel({
   quickFilters,
   searchQuery = "",
   contextTaskTitle,
-  focusedTaskId,
+  focusedTaskId = null,
   taskById,
   allTasks,
 }: UseEmptyScopeModelOptions): EmptyScopeModel {
