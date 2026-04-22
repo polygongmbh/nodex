@@ -78,6 +78,7 @@ export default {
           excluded: "hsl(var(--channel-excluded))",
           neutral: "hsl(var(--channel-neutral))",
         },
+        "overlay-scrim": "hsl(var(--overlay-scrim))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

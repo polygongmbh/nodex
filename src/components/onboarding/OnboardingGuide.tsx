@@ -969,7 +969,7 @@ export function OnboardingGuide({
 
   const renderGuideBackdrop = () => {
     if (showSectionPicker || !anchoredTargetRect) {
-      return <div className="absolute inset-0 bg-black/30" aria-hidden="true" />;
+      return <div className="absolute inset-0 bg-overlay-scrim" aria-hidden="true" />;
     }
 
     const viewportWidth = window.innerWidth;
@@ -984,15 +984,15 @@ export function OnboardingGuide({
 
     return (
       <>
-        <div className="absolute left-0 top-0 bg-black/30" style={{ width: "100%", height: spotlightTop, transition: guideBackdropTransition }} aria-hidden="true" />
-        <div className="absolute left-0 bg-black/30" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight, transition: guideBackdropTransition }} aria-hidden="true" />
+        <div className="absolute left-0 top-0 bg-overlay-scrim" style={{ width: "100%", height: spotlightTop, transition: guideBackdropTransition }} aria-hidden="true" />
+        <div className="absolute left-0 bg-overlay-scrim" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight, transition: guideBackdropTransition }} aria-hidden="true" />
         <div
-          className="absolute bg-black/30"
+          className="absolute bg-overlay-scrim"
           style={{ top: spotlightTop, left: spotlightRight, width: Math.max(0, viewportWidth - spotlightRight), height: spotlightHeight, transition: guideBackdropTransition }}
           aria-hidden="true"
         />
         <div
-          className="absolute left-0 bg-black/30"
+          className="absolute left-0 bg-overlay-scrim"
           style={{ top: spotlightBottom, width: "100%", height: Math.max(0, viewportHeight - spotlightBottom), transition: guideBackdropTransition }}
           aria-hidden="true"
         />
