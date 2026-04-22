@@ -236,7 +236,7 @@ export function MobileLayout() {
       case "list":
         return <CalendarView {...effectiveTaskViewModel} isMobile mobileView="upcoming" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       case "calendar":
-        return <CalendarView {...effectiveTaskViewModel} isMobile mobileView="calendar" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView {...effectiveTaskViewModel} searchQueryOverride="" isMobile mobileView="calendar" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
         return <TaskTree {...effectiveTaskViewModel} isMobile />;
     }
@@ -292,7 +292,7 @@ export function MobileLayout() {
         </div>
       </main>
 
-      <div hidden={showFilters}>
+      <div hidden={showFilters || activePrimaryView === "calendar"}>
         <UnifiedBottomBar
           currentView={activePrimaryView}
           focusedTaskId={focusedTaskId}
