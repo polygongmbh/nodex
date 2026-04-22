@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Hash, Users, Check, X, Minus, User, LogOut, Sparkles, LogIn, Pencil, ChevronDown, Mail, Scale, ShieldCheck, History } from "lucide-react";
+import { Hash, Users, Check, X, Minus, User, LogOut, Sparkles, LogIn, Pencil, Mail, Scale, ShieldCheck, History } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogScrollBody,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Relay, Channel, ChannelMatchMode } from "@/types";
 import type { Person } from "@/types/person";
 import { cn } from "@/lib/utils";
@@ -61,6 +69,7 @@ export function MobileFilters({
   const {
     fields,
     fieldActions,
+    isProfileDirty,
     isSavingProfile,
     validation,
     resetFromProfile,
@@ -79,6 +88,7 @@ export function MobileFilters({
     onSaved: () => setIsProfileEditorOpen(false),
   });
   const { presencePublishingEnabled, publishDelayEnabled, autoCaptionEnabled } = fields;
+  const canDismissProfileEditor = !needsProfileSetup;
   const { isUsernameValid } = validation;
 
   const displayName = useMemo(() => {
@@ -143,7 +153,8 @@ export function MobileFilters({
   };
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4" data-onboarding="mobile-filters">
+    <>
+      <div className="h-full overflow-y-auto p-4 space-y-4" data-onboarding="mobile-filters">
         <section>
           <div className="flex items-center gap-2">
             <button
@@ -223,17 +234,11 @@ export function MobileFilters({
               ) : (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsProfileEditorOpen((prev) => !prev)}
+                    onClick={() => setIsProfileEditorOpen(true)}
                     className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     {t("auth:auth.profile.edit")}
-                    <ChevronDown
-                      className={cn(
-                        "w-3.5 h-3.5 transition-transform",
-                        isProfileEditorOpen && "rotate-180"
-                      )}
-                    />
                   </button>
                   <button
                     onClick={logout}
@@ -245,38 +250,6 @@ export function MobileFilters({
                 </div>
               )}
             </div>
-
-            {user && isProfileEditorOpen && (
-              <>
-                <ProfileEditorFields
-                  fields={fields}
-                  validation={validation}
-                  fieldActions={fieldActions}
-                  t={translateMixedKey}
-                />
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  {!needsProfileSetup && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsProfileEditorOpen(false)}
-                      className="touch-target-sm"
-                      disabled={isSavingProfile}
-                    >
-                      {t("auth:auth.profile.cancel")}
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={handleSaveProfile}
-                    className="touch-target-sm"
-                    disabled={isSavingProfile || !isUsernameValid}
-                  >
-                    {isSavingProfile ? t("auth:auth.profile.saving") : t("auth:auth.profile.save")}
-                  </Button>
-                </div>
-              </>
-            )}
 
             {authMethod === "guest" && guestPrivateKey && (
               <GuestPrivateKeyRow
@@ -398,6 +371,61 @@ export function MobileFilters({
           </div>
         </section>
 
-    </div>
+      </div>
+
+      {user && (
+        <Dialog
+          open={isProfileEditorOpen}
+          onOpenChange={(open) => {
+            if (!open && !canDismissProfileEditor) return;
+            setIsProfileEditorOpen(open);
+          }}
+        >
+          <DialogContent
+            showCloseButton={canDismissProfileEditor}
+            dismissOnOutsideInteract={canDismissProfileEditor && !isProfileDirty}
+            className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg"
+          >
+            <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-4 sm:p-6">
+              <DialogHeader className="shrink-0">
+                <DialogTitle>
+                  {needsProfileSetup
+                    ? t("auth:auth.menu.profileSetupTitle")
+                    : t("auth:auth.menu.profileEditTitle")}
+                </DialogTitle>
+                <DialogDescription>
+                  {t("auth:auth.menu.profileDescription")}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogScrollBody className="mt-3">
+                <ProfileEditorFields
+                  fields={fields}
+                  validation={validation}
+                  fieldActions={fieldActions}
+                  t={translateMixedKey}
+                />
+              </DialogScrollBody>
+              <div className="mt-3 flex shrink-0 justify-end gap-2 bg-background/95 pt-2">
+                {!needsProfileSetup && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsProfileEditorOpen(false)}
+                    disabled={isSavingProfile}
+                  >
+                    {t("auth:auth.profile.cancel")}
+                  </Button>
+                )}
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={isSavingProfile || !isUsernameValid}
+                >
+                  {isSavingProfile ? t("auth:auth.profile.saving") : t("auth:auth.profile.save")}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
