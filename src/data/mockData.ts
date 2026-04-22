@@ -89,6 +89,7 @@ function createTask(
     reposts?: number;
   } = {}
 ): Task {
+  const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 14);
   return {
     id: generateMockEventId(),
     author,
@@ -96,8 +97,8 @@ function createTask(
     tags,
     relays: ["demo"],
     taskType: "task",
-    timestamp: options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 14),
-    lastEditedAt: options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 14),
+    timestamp,
+    lastEditedAt: timestamp,
     likes: options.likes || 0,
     replies: options.replies || 0,
     reposts: options.reposts || 0,
@@ -122,6 +123,7 @@ function createComment(
     reposts?: number;
   } = {}
 ): Task {
+  const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7);
   return {
     id: generateMockEventId(),
     author,
@@ -129,8 +131,8 @@ function createComment(
     tags,
     relays: ["demo"],
     taskType: "comment",
-    timestamp: options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7),
-    lastEditedAt: options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7),
+    timestamp,
+    lastEditedAt: timestamp,
     likes: options.likes || 0,
     replies: options.replies || 0,
     reposts: options.reposts || 0,
