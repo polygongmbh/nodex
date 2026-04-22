@@ -344,30 +344,49 @@ export function TaskComposer({
   useEffect(() => {
     if (!adaptiveSize || !isExpanded || content.trim()) return;
 
-    const isInsideRadixPortal = (node: Node) => {
-      if (!(node instanceof Element)) {
-        const parent = node.parentElement;
-        return parent ? Boolean(parent.closest("[data-radix-popper-content-wrapper], [data-radix-portal], [role='listbox'], [role='dialog']")) : false;
-      }
-      return Boolean(node.closest("[data-radix-popper-content-wrapper], [data-radix-portal], [role='listbox'], [role='dialog']"));
+    const RADIX_OVERLAY_SELECTOR =
+      "[data-radix-popper-content-wrapper], [data-radix-portal], [data-radix-select-viewport], [role='listbox'], [role='option'], [role='dialog'], [role='menu'], [data-radix-select-content], [data-radix-popover-content]";
+
+    const isInsideRadixPortal = (node: Node | null): boolean => {
+      if (!node) return false;
+      const element = node instanceof Element ? node : node.parentElement;
+      if (!element) return false;
+      return Boolean(element.closest(RADIX_OVERLAY_SELECTOR));
     };
 
-    const isOutsideComposer = (target: EventTarget | null) => {
+    const hasOpenRadixOverlay = () =>
+      Boolean(
+        document.querySelector(
+          "[data-radix-select-viewport], [data-state='open'][role='listbox'], [data-state='open'][role='dialog'], [data-state='open'][role='menu']"
+        )
+      );
+
+    const isOutsideComposer = (event: MouseEvent) => {
+      const target = event.target;
       if (!(target instanceof Node)) return false;
+      const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+      for (const node of path) {
+        if (!(node instanceof Node)) continue;
+        if (composerRef.current?.contains(node)) return false;
+        if (dueDatePopoverContentRef.current?.contains(node)) return false;
+        if (isInsideRadixPortal(node)) return false;
+      }
       if (composerRef.current?.contains(target)) return false;
       if (dueDatePopoverContentRef.current?.contains(target)) return false;
       if (isInsideRadixPortal(target)) return false;
+      if (hasOpenRadixOverlay()) return false;
       return true;
     };
 
     const handleDocumentMouseDown = (event: MouseEvent) => {
-      pendingOutsidePointerInteractionRef.current = isOutsideComposer(event.target);
+      pendingOutsidePointerInteractionRef.current = isOutsideComposer(event);
     };
 
     const handleDocumentClick = () => {
       const shouldCollapse = pendingOutsidePointerInteractionRef.current;
       pendingOutsidePointerInteractionRef.current = false;
       if (!shouldCollapse) return;
+      if (hasOpenRadixOverlay()) return;
       setIsExpanded(false);
     };
 
