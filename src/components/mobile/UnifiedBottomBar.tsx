@@ -59,7 +59,7 @@ import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 interface UnifiedBottomBarProps {
   searchQuery?: string;
   currentView: ViewType;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
   selectedCalendarDate?: Date | null;
   relays?: Relay[];
   channels?: Channel[];
