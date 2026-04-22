@@ -45,8 +45,9 @@ import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
-import { PrioritySelectOptions } from "@/components/tasks/TaskMetadataEditors";
+import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import {
+  DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
@@ -1305,23 +1306,11 @@ export function UnifiedBottomBar({
           ) : canCreateContent ? (
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
-                <select
-                  aria-label={t("composer.labels.priority")}
-                  value={priority === undefined ? "" : String(priority)}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    if (!value) {
-                      setPriority(undefined);
-                      return;
-                    }
-                    const parsed = Number.parseInt(value, 10);
-                    setPriority(Number.isFinite(parsed) ? parsed : undefined);
-                  }}
+                <PrioritySelect
+                  priority={priority}
+                  onPriorityChange={setPriority}
                   className="h-8 rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 appearance-none max-[420px]:w-[3.25rem] max-[420px]:px-1 max-[420px]:text-[11px] truncate"
-                >
-                  <option value="">{t("composer.labels.priorityShort")}</option>
-                  <PrioritySelectOptions />
-                </select>
+                />
                 <button
                   onClick={() => toggleSelector("date")}
                   className={cn(

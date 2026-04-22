@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
 import { Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -112,60 +112,64 @@ export function TaskDueDateEditorForm({
   );
 }
 
-interface TaskPrioritySelectProps {
+type PrioritySelectBaseProps = Omit<
+  ComponentPropsWithoutRef<"select">,
+  "children" | "defaultValue" | "onChange" | "value"
+>;
+
+interface TaskPrioritySelectProps extends PrioritySelectBaseProps {
   taskId: string;
   priority?: number;
-  className?: string;
-  disabled?: boolean;
-  includeEmptyOption?: boolean;
-  id?: string;
-  ariaLabel?: string;
   stopPropagation?: boolean;
 }
 
-export function PrioritySelectOptions() {
-  const { t } = useTranslation("app");
+function PrioritySelectOptions() {
+  const { t } = useTranslation(["app", "composer"]);
 
   return (
     <>
+      <option value="">{t("composer:composer.labels.priority")}</option>
       {DISPLAY_PRIORITY_OPTIONS.map((option) => (
         <option key={option} value={String(option)}>
-          {t(`priorityLevels.${option}`)}
+          {t(`priorityLevels.${option}`, { ns: "app" })}
         </option>
       ))}
     </>
   );
 }
 
-export function TaskPrioritySelect({
-  taskId,
+interface PrioritySelectProps extends PrioritySelectBaseProps {
+  priority?: number;
+  onPriorityChange: (priority?: number) => void;
+  stopPropagation?: boolean;
+}
+
+export function PrioritySelect({
   priority,
+  onPriorityChange,
   className,
   disabled = false,
-  includeEmptyOption = false,
-  id,
-  ariaLabel,
   stopPropagation = false,
-}: TaskPrioritySelectProps) {
-  const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const value = (() => {
-    const displayPriority = displayPriorityFromStored(priority);
-    return typeof displayPriority === "number" ? String(displayPriority) : "";
-  })();
+  ...selectProps
+}: PrioritySelectProps) {
+  const { t } = useTranslation("composer");
+  const value = typeof priority === "number" ? String(priority) : "";
+
   return (
     <select
-      id={id}
-      aria-label={ariaLabel}
+      aria-label={t("composer.labels.priority")}
       value={value}
       disabled={disabled}
+      {...selectProps}
       onChange={(event) => {
         const next = event.target.value;
-        if (!next) return;
-        const parsed = Number.parseInt(next, 10);
-        const storedPriority = storedPriorityFromDisplay(parsed);
-        if (typeof storedPriority === "number") {
-          void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: storedPriority });
+        if (!next) {
+          onPriorityChange(undefined);
+          return;
         }
+
+        const parsed = Number.parseInt(next, 10);
+        onPriorityChange(Number.isFinite(parsed) ? parsed : undefined);
       }}
       onClick={(event) => {
         if (stopPropagation) event.stopPropagation();
@@ -175,8 +179,38 @@ export function TaskPrioritySelect({
       }}
       className={className}
     >
-      {includeEmptyOption && <option value="">—</option>}
       <PrioritySelectOptions />
     </select>
+  );
+}
+
+export function TaskPrioritySelect({
+  taskId,
+  priority,
+  className,
+  disabled = false,
+  stopPropagation = false,
+  ...selectProps
+}: TaskPrioritySelectProps) {
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const value = (() => {
+    const displayPriority = displayPriorityFromStored(priority);
+    return typeof displayPriority === "number" ? String(displayPriority) : "";
+  })();
+
+  return (
+    <PrioritySelect
+      priority={displayPriorityFromStored(priority)}
+      onPriorityChange={(next) => {
+        const storedPriority = storedPriorityFromDisplay(next);
+        if (typeof storedPriority === "number") {
+          void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: storedPriority });
+        }
+      }}
+      className={className}
+      disabled={disabled}
+      stopPropagation={stopPropagation}
+      {...selectProps}
+    />
   );
 }

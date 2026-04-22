@@ -121,7 +121,6 @@
     "labels": {
       "dateType": "Date type",
       "priority": "Priority",
-      "priorityShort": "⚑ Priority",
       "kind": "Kind",
       "task": "Task",
       "comment": "Comment",

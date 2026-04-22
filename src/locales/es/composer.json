@@ -121,7 +121,6 @@
     "labels": {
       "dateType": "Tipo de fecha",
       "priority": "Prioridad",
-      "priorityShort": "⚑ Prioridad",
       "kind": "Tipo",
       "task": "Tarea",
       "comment": "Comentario",

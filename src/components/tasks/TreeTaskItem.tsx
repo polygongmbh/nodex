@@ -632,7 +632,6 @@ export function TreeTaskItem({
                 id={`task-priority-${task.id}`}
                 taskId={task.id}
                 priority={task.priority}
-                ariaLabel={t("composer:composer.labels.priority")}
                 disabled={!editableMetadata}
                 stopPropagation
                 className={cn(
@@ -651,7 +650,6 @@ export function TreeTaskItem({
                   id={`task-priority-${task.id}`}
                   taskId={task.id}
                   priority={task.priority}
-                  ariaLabel={t("composer:composer.labels.priority")}
                   disabled={!editableMetadata}
                   stopPropagation
                   className={cn(

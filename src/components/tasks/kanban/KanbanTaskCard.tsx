@@ -109,7 +109,6 @@ export function KanbanTaskCard({
             id={`kanban-priority-${task.id}`}
             taskId={task.id}
             priority={task.priority}
-            ariaLabel={t("composer:composer.labels.priority")}
             disabled={!canChangeStatus}
             stopPropagation
             className={cn(

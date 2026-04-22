@@ -134,8 +134,6 @@ interface FeedPriorityChipProps {
 }
 
 function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
-  const { t } = useTranslation("tasks");
-
   if (typeof task.priority !== "number") return null;
 
   return (
@@ -143,7 +141,6 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
       id={`feed-priority-${task.id}`}
       taskId={task.id}
       priority={task.priority}
-      ariaLabel={t("composer:composer.labels.priority")}
       disabled={!editable}
       stopPropagation
       className={cn(

@@ -90,9 +90,7 @@ const PriorityCell = memo(function PriorityCell({
     <TaskPrioritySelect
       taskId={taskId}
       priority={priority}
-      ariaLabel={`Priority for ${taskContent}`}
       disabled={!editable}
-      includeEmptyOption
       className="h-7 w-full min-w-0 max-w-full rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
     />
   );

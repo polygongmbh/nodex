@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { PrioritySelectOptions } from "@/components/tasks/TaskMetadataEditors";
+import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
@@ -40,6 +40,7 @@ import {
   type ComposeSubmitBlockState,
 } from "@/lib/compose-submit-block";
 import {
+  DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
@@ -1771,23 +1772,11 @@ export function TaskComposer({
         <div className={cn("order-6 flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <div className="inline-flex min-w-[5.5rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Flag className="h-4 w-4 text-muted-foreground" />
-            <select
-              aria-label={t("composer.labels.priority")}
-              value={priority === undefined ? "" : String(priority)}
-              onChange={(event) => {
-                const value = event.target.value;
-                if (!value) {
-                  setPriority(undefined);
-                  return;
-                }
-                const parsed = Number.parseInt(value, 10);
-                setPriority(Number.isFinite(parsed) ? parsed : undefined);
-              }}
+            <PrioritySelect
+              priority={priority}
+              onPriorityChange={setPriority}
               className="h-8 w-full cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
-            >
-              <option value="">{t("composer.labels.priority")}</option>
-              <PrioritySelectOptions />
-            </select>
+            />
           </div>
 
           <div className="inline-flex min-w-[20rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
