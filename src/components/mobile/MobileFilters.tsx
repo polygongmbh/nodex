@@ -370,6 +370,61 @@ export function MobileFilters({
           </div>
         </section>
 
-    </div>
+      </div>
+
+      {user && (
+        <Dialog
+          open={isProfileEditorOpen}
+          onOpenChange={(open) => {
+            if (!open && !canDismissProfileEditor) return;
+            setIsProfileEditorOpen(open);
+          }}
+        >
+          <DialogContent
+            showCloseButton={canDismissProfileEditor}
+            dismissOnOutsideInteract={canDismissProfileEditor && !isProfileDirty}
+            className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg"
+          >
+            <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-4 sm:p-6">
+              <DialogHeader className="shrink-0">
+                <DialogTitle>
+                  {needsProfileSetup
+                    ? t("auth:auth.menu.profileSetupTitle")
+                    : t("auth:auth.menu.profileEditTitle")}
+                </DialogTitle>
+                <DialogDescription>
+                  {t("auth:auth.menu.profileDescription")}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogScrollBody className="mt-3">
+                <ProfileEditorFields
+                  fields={fields}
+                  validation={validation}
+                  fieldActions={fieldActions}
+                  t={translateMixedKey}
+                />
+              </DialogScrollBody>
+              <div className="mt-3 flex shrink-0 justify-end gap-2 bg-background/95 pt-2">
+                {!needsProfileSetup && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsProfileEditorOpen(false)}
+                    disabled={isSavingProfile}
+                  >
+                    {t("auth:auth.profile.cancel")}
+                  </Button>
+                )}
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={isSavingProfile || !isUsernameValid}
+                >
+                  {isSavingProfile ? t("auth:auth.profile.saving") : t("auth:auth.profile.save")}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
