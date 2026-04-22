@@ -570,7 +570,13 @@ export function CalendarView({
                                 }}
                                 className={`text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`}
                               >
-                                {task.content}
+                                {linkifyContent(task.content, (tag) => {
+                                  void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+                                }, {
+                                  plainHashtags: isTaskTerminalStatus(task.status),
+                                  people,
+                                  disableStandaloneEmbeds: true,
+                                })}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs flex items-center gap-2">
