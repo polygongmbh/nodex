@@ -19,6 +19,7 @@ import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallbac
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useEmptyScopeModel } from "./use-empty-scope-model";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
+import { sortByLatestModified } from "@/lib/kanban-sorting";
 import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import type { EmptyScopeModel } from "@/lib/empty-scope";
 import type { Channel, ChannelMatchMode, Relay, Task, TaskStateUpdate, TaskStatus } from "@/types";
@@ -158,6 +159,10 @@ export interface MobileFallbackNoticeState {
   mobileFallbackMessage: string | null;
   shouldShowMobileFallbackNotice: boolean;
   mobileShellFocusedTaskId: string | null;
+}
+
+export function sortKanbanColumnTasks(tasks: Task[], status: TaskStatus, sortContext: SortContext): Task[] {
+  return isTaskTerminalStatus(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
 }
 
 function clearSelectedPeople(people: Person[]): Person[] {
@@ -724,10 +729,10 @@ export function useKanbanViewState({
     kanbanTasks.forEach((task) => {
       grouped[task.status || "todo"].push(task);
     });
-    grouped.todo = sortTasks(grouped.todo, sortContext);
-    grouped["in-progress"] = sortTasks(grouped["in-progress"], sortContext);
-    grouped.done = [...grouped.done].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    grouped.closed = [...grouped.closed].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    grouped.todo = sortKanbanColumnTasks(grouped.todo, "todo", sortContext);
+    grouped["in-progress"] = sortKanbanColumnTasks(grouped["in-progress"], "in-progress", sortContext);
+    grouped.done = sortKanbanColumnTasks(grouped.done, "done", sortContext);
+    grouped.closed = sortKanbanColumnTasks(grouped.closed, "closed", sortContext);
     return grouped;
   }, [kanbanTasks, sortContext]);
   return {

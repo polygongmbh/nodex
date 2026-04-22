@@ -3,8 +3,10 @@ import {
   buildTreeVisibilityState,
   createTreeSelectors,
   getAncestorChainFromSource,
+  sortKanbanColumnTasks,
 } from "./use-task-view-states";
 import { buildTaskViewFilterIndex } from "@/domain/content/task-view-filtering";
+import { buildChildrenMap } from "@/domain/content/task-sorting";
 import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
@@ -137,5 +139,37 @@ describe("createTreeSelectors", () => {
     expect(selectors.hasMatchingFilters()).toBe(true);
     expect(selectors.getVisibleTasks().map((task) => task.id)).toEqual(["alice-task"]);
     expect(selectors.getDisplayedTasks({ useMobileFallback: true }).map((task) => task.id)).toEqual(["alice-task"]);
+  });
+});
+
+describe("sortKanbanColumnTasks", () => {
+  it("uses latest edit time for done and closed columns", () => {
+    const olderDone = makeTask({
+      id: "older-done",
+      status: "done",
+      timestamp: new Date("2026-02-17T09:00:00.000Z"),
+      lastEditedAt: new Date("2026-02-17T10:00:00.000Z"),
+    });
+    const newerDone = makeTask({
+      id: "newer-done",
+      status: "done",
+      timestamp: new Date("2026-02-17T08:00:00.000Z"),
+      lastEditedAt: new Date("2026-02-17T11:00:00.000Z"),
+    });
+    const tasks = [olderDone, newerDone];
+    const sortContext = {
+      allTasks: tasks,
+      childrenMap: buildChildrenMap(tasks),
+      taskById: new Map(tasks.map((task) => [task.id, task] as const)),
+    };
+
+    expect(sortKanbanColumnTasks(tasks, "done", sortContext).map((task) => task.id)).toEqual([
+      "newer-done",
+      "older-done",
+    ]);
+    expect(sortKanbanColumnTasks(tasks, "closed", sortContext).map((task) => task.id)).toEqual([
+      "newer-done",
+      "older-done",
+    ]);
   });
 });
