@@ -12,9 +12,11 @@ const dndMockState: {
     destination: { droppableId: string; index: number } | null;
   }) => void) | null;
   onDragStart: (() => void) | null;
+  disableInteractiveElementBlockingValues: Array<boolean | undefined>;
 } = {
   onDragEnd: null,
   onDragStart: null,
+  disableInteractiveElementBlockingValues: [],
 };
 const dispatchFeedInteraction = vi.fn();
 
@@ -53,6 +55,7 @@ vi.mock("@hello-pangea/dnd", () => ({
   Draggable: ({
     children,
     draggableId,
+    disableInteractiveElementBlocking,
   }: {
     children: (
       provided: {
@@ -63,7 +66,9 @@ vi.mock("@hello-pangea/dnd", () => ({
       snapshot: { isDragging: boolean }
     ) => ReactNode;
     draggableId: string;
+    disableInteractiveElementBlocking?: boolean;
   }) =>
+    (dndMockState.disableInteractiveElementBlockingValues.push(disableInteractiveElementBlocking),
     children(
       {
         innerRef: () => {},
@@ -71,11 +76,12 @@ vi.mock("@hello-pangea/dnd", () => ({
         dragHandleProps: {},
       },
       { isDragging: false }
-    ),
+    )),
 }));
 
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
+  dndMockState.disableInteractiveElementBlockingValues = [];
 });
 
 describe("KanbanView closed column", () => {
@@ -195,6 +201,34 @@ describe("KanbanView closed column", () => {
     expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
     expect(chipRow).not.toHaveTextContent("P4");
     expect(chipRow).toContainElement(hashtagChip);
+  });
+
+  it("keeps interactive element blocking enabled for draggable cards", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const task = makeTask({
+      id: "interactive-priority-task",
+      author,
+      status: "todo",
+      content: "Interactive priority task #general",
+      priority: 80,
+    });
+
+    render(
+      <KanbanView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        depthMode="leaves"
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("combobox", { name: /priority/i })).toBeInTheDocument();
+    expect(dndMockState.disableInteractiveElementBlockingValues).toContain(undefined);
   });
 
   it("renders due date row above metadata chips", () => {

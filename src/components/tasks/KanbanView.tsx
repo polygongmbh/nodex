@@ -20,7 +20,12 @@ interface KanbanViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
+  relays?: unknown;
+  channels?: unknown;
+  people?: unknown;
+  searchQuery?: string;
+  onStatusChange?: unknown;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode: KanbanDepthMode;
@@ -43,7 +48,7 @@ export function KanbanView({
   currentUser,
   searchQueryOverride,
   depthMode,
-  focusedTaskId,
+  focusedTaskId = null,
   compactTaskCardsEnabled = false,
   isPendingPublishTask,
   composeRestoreRequest = null,
@@ -394,7 +399,6 @@ export function KanbanView({
                               draggableId={task.id}
                               index={index}
                               isDragDisabled={!canChangeStatus}
-                              disableInteractiveElementBlocking={canChangeStatus}
                             >
                               {(provided, snapshot) => (
                                 <div

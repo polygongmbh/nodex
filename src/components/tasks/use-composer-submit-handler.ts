@@ -56,7 +56,7 @@ export function useComposerSubmitHandler({
           };
         } catch (error) {
           console.error("Task submit failed", error);
-          notifyTaskCreationFailed(t);
+          notifyTaskCreationFailed();
           toast.dismiss(publishingToastId);
           return;
         }

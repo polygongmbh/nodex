@@ -59,7 +59,7 @@ import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 interface UnifiedBottomBarProps {
   searchQuery?: string;
   currentView: ViewType;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
   selectedCalendarDate?: Date | null;
   relays?: Relay[];
   channels?: Channel[];
@@ -468,7 +468,7 @@ export function UnifiedBottomBar({
     const extractedChannels = extractHashtagsFromContent(sharedText);
     const submitChannels = Array.from(new Set([...extractedChannels, ...explicitTagNames]));
     if (submitChannels.length === 0 && !focusedTaskId) {
-      notifyNeedTag(t);
+      notifyNeedTag();
       return;
     }
     const uploadedAttachments: PublishedAttachment[] = attachments
@@ -525,7 +525,7 @@ export function UnifiedBottomBar({
       result = (event.outcome.result as TaskCreateResult | undefined) ?? { ok: false, reason: "unexpected-error" };
     } catch (error) {
       console.error("Mobile task submit failed", error);
-      notifyTaskCreationFailed(t);
+      notifyTaskCreationFailed();
       return;
     }
     if (!result.ok) {

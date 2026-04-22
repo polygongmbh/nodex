@@ -538,7 +538,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                       autoCapitalize="none"
                       autoCorrect="off"
                       spellCheck={false}
-                      style={{ WebkitTextSecurity: showPrivateKeyInput ? "none" : "disc" }}
+                      style={{ WebkitTextSecurity: showPrivateKeyInput ? "none" : "disc" } as React.CSSProperties}
                       className="font-mono"
                     />
                     <Button

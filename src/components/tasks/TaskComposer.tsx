@@ -822,7 +822,7 @@ export function TaskComposer({
     const extractedTags = extractHashtagsFromContent(content);
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
     if (submitTags.length === 0 && !allowEmptyTags) {
-      notifyNeedTag(t);
+      notifyNeedTag();
       return;
     }
     const listingMetadata =

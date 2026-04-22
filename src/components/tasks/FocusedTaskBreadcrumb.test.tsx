@@ -23,6 +23,7 @@ const baseTask: Task = {
   relays: [],
   taskType: "task",
   timestamp: new Date(),
+  lastEditedAt: new Date(),
   likes: 0,
   replies: 0,
   reposts: 0,

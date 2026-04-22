@@ -42,7 +42,12 @@ interface ListViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
+  relays?: unknown;
+  channels?: unknown;
+  people?: unknown;
+  searchQuery?: string;
+  onUpdatePriority?: unknown;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode?: KanbanDepthMode;

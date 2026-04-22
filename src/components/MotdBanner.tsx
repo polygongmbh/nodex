@@ -39,6 +39,7 @@ export function MotdBanner() {
   const isVisible = Boolean(motd) && !dismissed;
 
   const dismissBanner = () => {
+    if (!motd) return;
     saveDismissedMotd(motd);
     setDismissed(true);
     featureDebugLog("motd", "Dismissed MOTD banner");

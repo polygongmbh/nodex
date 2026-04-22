@@ -7,6 +7,7 @@ import {
 } from "@/lib/mentions";
 import type {
   Channel,
+  ComposeRestoreRequest,
   Nip99Metadata,
   PostType,
   PublishedAttachment,

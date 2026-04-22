@@ -67,6 +67,7 @@ export interface SidebarProps {
   relays: Relay[];
   channels: Channel[];
   collapsedPreviewChannels?: Channel[];
+  pinnedChannelIds?: string[];
   channelMatchMode?: ChannelMatchMode;
   people: Person[];
   collapsedPreviewPeople?: Person[];
@@ -81,6 +82,7 @@ export function Sidebar({
   relays,
   channels,
   collapsedPreviewChannels,
+  pinnedChannelIds,
   channelMatchMode = "and",
   people,
   collapsedPreviewPeople,
@@ -132,7 +134,14 @@ export function Sidebar({
       new Set(
         buildCollapsedPreviewItems(
           {
-            items: [...(collapsedPreviewChannels ?? channels)].sort((a, b) => {
+            items: [...(collapsedPreviewChannels ?? channels)].map((channel) => ({
+              ...channel,
+              pinIndex:
+                channel.pinIndex ??
+                (pinnedChannelIds ? pinnedChannelIds.indexOf(channel.id) : -1) >= 0
+                  ? pinnedChannelIds?.indexOf(channel.id)
+                  : undefined,
+            })).sort((a, b) => {
               const usageDiff = (b.usageCount ?? 0) - (a.usageCount ?? 0);
               if (usageDiff !== 0) return usageDiff;
               return a.name.localeCompare(b.name);

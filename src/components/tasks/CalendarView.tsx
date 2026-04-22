@@ -48,6 +48,7 @@ import {
   createCalendarSelectors,
   useTaskViewSource,
 } from "@/features/feed-page/controllers/use-task-view-states";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { TaskCreateComposer } from "./TaskCreateComposer";
@@ -57,7 +58,11 @@ interface CalendarViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
+  relays?: unknown;
+  channels?: unknown;
+  people?: unknown;
+  searchQuery?: string;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   selectedDate?: Date | null;
@@ -74,7 +79,7 @@ export function CalendarView({
   allTasks,
   currentUser,
   searchQueryOverride,
-  focusedTaskId,
+  focusedTaskId = null,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
   isMobile = false,
@@ -83,6 +88,7 @@ export function CalendarView({
   isHydrating = false,
 }: CalendarViewProps) {
   const { t } = useTranslation("tasks");
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();
   const activeRelays = relays.filter((relay) => relay.isActive);
