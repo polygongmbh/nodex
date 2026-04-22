@@ -177,6 +177,15 @@ export function PrioritySelect({
       onPointerDown={(event) => {
         if (stopPropagation) event.stopPropagation();
       }}
+      onMouseDown={(event) => {
+        if (stopPropagation) event.stopPropagation();
+      }}
+      onTouchStart={(event) => {
+        if (stopPropagation) event.stopPropagation();
+      }}
+      onKeyDown={(event) => {
+        if (stopPropagation) event.stopPropagation();
+      }}
       className={className}
     >
       <PrioritySelectOptions />
