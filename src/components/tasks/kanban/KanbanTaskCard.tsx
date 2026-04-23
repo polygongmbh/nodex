@@ -112,7 +112,8 @@ export function KanbanTaskCard({
             priority={task.priority}
             stopPropagation
             className={cn(
-              "ml-auto h-6 rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+              "ml-auto focus:outline-none",
+              TASK_CHIP_STYLES.priority,
               canChangeStatus && "cursor-pointer hover:bg-warning/20",
               !canChangeStatus && "cursor-not-allowed opacity-60"
             )}

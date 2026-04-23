@@ -634,7 +634,8 @@ export function TreeTaskItem({
                 priority={task.priority}
                 stopPropagation
                 className={cn(
-                  "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+                  TASK_CHIP_STYLES.priority,
+                  "focus:outline-none",
                   editableMetadata && "cursor-pointer hover:bg-warning/20",
                   !editableMetadata && "cursor-not-allowed opacity-60"
                 )}
@@ -651,7 +652,8 @@ export function TreeTaskItem({
                   priority={task.priority}
                   stopPropagation
                   className={cn(
-                    "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+                    TASK_CHIP_STYLES.priority,
+                    "focus:outline-none",
                     editableMetadata && "cursor-pointer hover:bg-warning/20",
                     !editableMetadata && "cursor-not-allowed opacity-60"
                   )}
