@@ -10,6 +10,17 @@ const DEFAULT_COLLAPSED_LINE_COUNT = 3;
 const DEFAULT_COLLAPSE_THRESHOLD_LINE_COUNT = 4;
 const DEFAULT_COLLAPSE_CHARACTER_COUNT = 500;
 
+export const TASK_TOOLTIP_PREVIEW_MAX = 160;
+
+export function getTaskTooltipPreview(
+  content: string | null | undefined,
+  max: number = TASK_TOOLTIP_PREVIEW_MAX
+): string {
+  const collapsed = (content ?? "").replace(/\s+/g, " ").trim();
+  if (collapsed.length <= max) return collapsed;
+  return `${collapsed.slice(0, max - 1).trimEnd()}…`;
+}
+
 export function getTaskContentLines(content: string): string[] {
   return content.split(LINE_BREAK_REGEX);
 }

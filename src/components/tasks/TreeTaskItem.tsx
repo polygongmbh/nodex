@@ -37,7 +37,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
-import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
@@ -299,11 +299,20 @@ export function TreeTaskItem({
             handleSelect();
           }
         }}
-        aria-label={t("tasks.focusTaskAria", {
-          type: isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase(),
-          title: task.content.slice(0, 50),
-        })}
-        title={t("tasks.focusTaskTitle", { type: isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase() })}
+        aria-label={(() => {
+          const typeLabel = isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase();
+          const preview = getTaskTooltipPreview(task.content);
+          return preview
+            ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
+            : t("tasks.focusTaskAria", { type: typeLabel, title: "" });
+        })()}
+        title={(() => {
+          const typeLabel = isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase();
+          const preview = getTaskTooltipPreview(task.content);
+          return preview
+            ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
+            : t("tasks.focusTaskTitle", { type: typeLabel });
+        })()}
       >
         {/* Expand/Collapse Toggle - three states */}
         {hasChildren && !isComment ? (

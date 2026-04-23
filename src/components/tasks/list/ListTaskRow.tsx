@@ -17,6 +17,7 @@ import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import { getTaskStatus, type Task } from "@/types";
+import { getTaskTooltipPreview } from "@/lib/task-content-preview";
 import type { Person } from "@/types/person";
 
 interface ListTaskRowProps {
@@ -132,7 +133,13 @@ export function ListTaskRow({
               `text-sm cursor-pointer break-words whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
               isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
             )}
-            title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
+            title={(() => {
+              const typeLabel = t("tasks.task").toLowerCase();
+              const preview = getTaskTooltipPreview(task.content);
+              return preview
+                ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
+                : t("tasks.focusTaskTitle", { type: typeLabel });
+            })()}
           >
             {contentPreview}
           </div>

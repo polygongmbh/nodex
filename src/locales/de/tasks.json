@@ -14,6 +14,7 @@
     "readOnly": "Nur-Lese-Aufgabe",
     "focusTaskAria": "{{type}}: {{title}}",
     "focusTaskTitle": "{{type}} fokussieren",
+    "focusTaskWithPreview": "{{type}} fokussieren: {{preview}}",
     "focusBreadcrumbTitle": "Aufgabe fokussieren: {{title}}",
     "tagsShowAll": "Alle Tags anzeigen",
     "tagsShowLess": "Weniger Tags anzeigen",

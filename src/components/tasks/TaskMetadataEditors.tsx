@@ -169,7 +169,10 @@ export function PrioritySelect({
         aria-label={ariaLabel}
         title={title}
         hideIndicator
-        className={cn("h-8 w-auto gap-1 text-xs", className)}
+        className={cn(
+          "h-8 w-auto min-w-0 max-w-full justify-start gap-1 overflow-hidden text-xs [&>span]:block [&>span]:min-w-0 [&>span]:max-w-full [&>span]:truncate",
+          className
+        )}
         {...stopProps}
       >
         {leadingIcon}

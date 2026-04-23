@@ -23,7 +23,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
-import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { formatAuthorMetaParts } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
@@ -175,9 +175,16 @@ export function FeedTaskCard({
     return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
   });
 
+  const tooltipPreview = getTaskTooltipPreview(task.content);
+  const tooltipTypeLabel = isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase();
+  const surfaceTitle = tooltipPreview
+    ? t("tasks.focusTaskWithPreview", { type: tooltipTypeLabel, preview: tooltipPreview })
+    : t("tasks.focusTaskTitle", { type: tooltipTypeLabel });
+
   return (
     <TaskSurface
       taskId={task.id}
+      title={surfaceTitle}
       onClick={(event) => {
         if (task.rawNostrEvent && isRawNostrEventShortcutClick(event)) {
           event.preventDefault();
