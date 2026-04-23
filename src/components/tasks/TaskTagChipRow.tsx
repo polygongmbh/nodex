@@ -3,7 +3,7 @@ import { Task } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { TaskLocationChip } from "./TaskLocationChip";
-import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { TASK_CHIP_STYLES, TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
