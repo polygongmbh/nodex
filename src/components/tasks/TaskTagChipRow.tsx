@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { formatPriorityLabel } from "@/domain/content/task-priority";
+import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 
 interface BaseTaskTagChipProps {
   task: Task;
@@ -62,10 +63,16 @@ function TaskTagChipContent({
   const { relays, people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;
   const activeRelays = relays.filter((relay) => relay.isActive);
-  const relayLabel =
+  const matchingRelays =
     includeRelayChip && activeRelays.length > 1 && task.relays.length > 0
-      ? activeRelays.find((relay) => task.relays.includes(relay.id))?.name || task.relays[0]
-      : null;
+      ? activeRelays.filter((relay) => task.relays.includes(relay.id))
+      : [];
+  const relayChips =
+    matchingRelays.length > 0
+      ? matchingRelays
+      : includeRelayChip && activeRelays.length > 1 && task.relays.length > 0
+        ? [{ id: task.relays[0], name: task.relays[0], url: task.relays[0] }]
+        : [];
 
   if (!hasTaskChipContent(task, activeRelays.length, includeRelayChip, includeLocationChip)) {
     return showEmptyPlaceholder ? <span className="shrink-0 text-xs text-muted-foreground">—</span> : null;
@@ -73,9 +80,16 @@ function TaskTagChipContent({
 
   return (
     <>
-      {relayLabel ? (
+      {relayChips.length === 1 ? (
         <span className={TASK_CHIP_STYLES.muted}>
-          {relayLabel}
+          {relayChips[0].name || relayChips[0].url}
+        </span>
+      ) : relayChips.length > 1 ? (
+        <span className={cn(TASK_CHIP_STYLES.muted, "gap-1")} title={relayChips.map((r) => r.name || r.url).join(", ")}>
+          {relayChips.map((relay) => {
+            const RelayIcon = resolveRelayIcon(relay.url || relay.id);
+            return <RelayIcon key={relay.id} className="w-3 h-3" aria-label={relay.name || relay.url} />;
+          })}
         </span>
       ) : null}
       {includeLocationChip && task.locationGeohash ? (
