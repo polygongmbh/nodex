@@ -1,4 +1,4 @@
-import { TaskStateIcon } from "@/components/tasks/task-state-ui";
+import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import type { ReactNode } from "react";
 import {
@@ -16,7 +16,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
-import type { Task, TaskStatus } from "@/types";
+import { getTaskStatus, type Task } from "@/types";
 import type { Person } from "@/types/person";
 
 interface ListTaskRowProps {
@@ -99,7 +99,7 @@ export function ListTaskRow({
                 canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
               )}
             >
-              <TaskStateIcon status={task.status} />
+              <TaskStateIcon status={getTaskStatus(task)} />
             </button>
           </DropdownMenuTrigger>
           {canCompleteTask ? (
@@ -109,12 +109,12 @@ export function ListTaskRow({
                   key={state.id}
                   onClick={(event) => {
                     event.stopPropagation();
-                    dispatchStatusChange(state.id as TaskStatus);
+                    dispatchStatusChange(state.id);
                   }}
                   className={cn((task.status || "open") === state.id && "bg-muted")}
                 >
-                  <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-                  {t(`status.${state.id}`)}
+                  <TaskStateDefIcon state={state} className="mr-2" />
+                  {state.label}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>

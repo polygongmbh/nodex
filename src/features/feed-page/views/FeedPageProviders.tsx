@@ -184,7 +184,7 @@ function FeedInteractionBusFromContexts({
         taskCommands.toggleComplete(intent.taskId);
       },
       "task.changeStatus": (intent) => {
-        taskCommands.changeStatus(intent.taskId, intent.status);
+        taskCommands.changeStatus(intent.taskId, intent.stateId);
       },
       "task.updateDueDate": (intent) => {
         taskCommands.updateDueDate(intent.taskId, intent.dueDate, intent.dueTime, intent.dateType);

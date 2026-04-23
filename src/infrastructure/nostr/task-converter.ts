@@ -1,4 +1,4 @@
-import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, Task, getLastEditedAt } from "@/types";
+import { type FeedMessageType, type TaskStateUpdate, type TaskStatusType, Task, getLastEditedAt } from "@/types";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
@@ -167,7 +167,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const nip99 = feedMessageType ? parseNip99MetadataFromTags(event.tags) : undefined;
   const locationGeohash = parseFirstGeohashTag(event.tags);
 
-  let status: TaskStatus = "open";
+  let status: TaskStatusType = "open";
   const statusTag = event.tags.find((tag) => tag[0] === "status");
   if (statusTag) {
     const statusValue = statusTag[1].toLowerCase();
@@ -379,16 +379,15 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     if (!prev || stateEvent.created_at >= prev.createdAt) {
       latestStateByTaskId.set(targetTaskId, {
         createdAt: stateEvent.created_at,
-        status: mapped.status,
-        statusDescription: mapped.statusDescription,
+        status: mapped.type,
+        statusDescription: mapped.description,
       });
     }
 
     const existingUpdates = stateUpdatesByTaskId.get(targetTaskId) || [];
     existingUpdates.push({
       id: stateEvent.id,
-      status: mapped.status,
-      statusDescription: mapped.statusDescription,
+      status: mapped,
       timestamp: new Date(stateEvent.created_at * 1000),
       authorPubkey: stateEvent.pubkey,
     });

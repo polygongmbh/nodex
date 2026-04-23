@@ -53,8 +53,12 @@ export type TaskCreateFailureReason =
 export type TaskCreateResult =
   | { ok: true; mode: "published" | "local" | "queued" }
   | { ok: false; reason: TaskCreateFailureReason };
-export type TaskStatus = "open" | "active" | "done" | "closed";
-export type TaskInitialStatus = Exclude<TaskStatus, "closed">;
+export type TaskStatusType = "open" | "active" | "done" | "closed";
+export interface TaskStatus {
+  type: TaskStatusType;
+  description?: string;
+}
+export type TaskInitialStatus = Exclude<TaskStatusType, "closed">;
 export type OnNewTask = (
   content: string,
   tags: string[],
@@ -76,7 +80,6 @@ export type OnNewTask = (
 export interface TaskStateUpdate {
   id: string;
   status: TaskStatus;
-  statusDescription?: string;
   timestamp: Date;
   authorPubkey: string;
 }
@@ -158,7 +161,7 @@ export interface Task {
   lastEditedAt?: Date;
   isLiked?: boolean;
   isReposted?: boolean;
-  status?: TaskStatus;
+  status?: TaskStatusType;
   statusDescription?: string;
   stateUpdates?: TaskStateUpdate[];
   completedBy?: string;
@@ -173,6 +176,14 @@ export interface Task {
   pendingPublishToken?: string;
   pendingPublishUntil?: Date;
   rawNostrEvent?: RawNostrEvent;
+}
+
+export function getTaskStatus(task: Pick<Task, "status" | "statusDescription">): TaskStatus | undefined {
+  if (!task.status) return undefined;
+  return {
+    type: task.status,
+    description: task.statusDescription,
+  };
 }
 
 export function getLastEditedAt(task: Task): Date {

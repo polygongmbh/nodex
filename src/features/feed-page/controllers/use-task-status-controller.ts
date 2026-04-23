@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { Task, TaskStatus } from "@/types";
+import type { Task, TaskStatus, TaskStatusType } from "@/types";
 import { getLastEditedAt } from "@/types";
 import type { Person } from "@/types/person";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/domain/content/task-status";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
+import { resolveTaskStateDefinition, getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import { notifyStatusRestricted } from "@/lib/notifications";
 import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";
 import { playCompletionPopSound } from "@/lib/completion-feedback";
@@ -19,15 +20,15 @@ export interface UseTaskStatusControllerOptions {
   allTasks: Task[];
   currentUser: Person | undefined;
   guardInteraction: (mode: "post" | "modify") => boolean;
-  publishTaskStateUpdate: (taskId: string, status: TaskStatus) => Promise<unknown>;
+  publishTaskStateUpdate: (taskId: string, status: TaskStatus, relayUrls?: string[]) => Promise<unknown>;
 }
 
 export interface UseTaskStatusControllerResult {
   completionSoundEnabled: boolean;
   handleToggleCompletionSound: () => void;
   handleToggleComplete: (taskId: string) => void;
-  handleStatusChange: (taskId: string, newStatus: TaskStatus) => void;
-  sortStatusHoldByTaskId: Record<string, TaskStatus>;
+  handleStatusChange: (taskId: string, stateId: string) => void;
+  sortStatusHoldByTaskId: Record<string, TaskStatusType>;
   sortModifiedAtHoldByTaskId: Record<string, string>;
 }
 
@@ -42,14 +43,14 @@ export function useTaskStatusController({
     loadCompletionSoundEnabled()
   );
   const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<
-    Record<string, TaskStatus>
+    Record<string, TaskStatusType>
   >({});
   const [sortModifiedAtHoldByTaskId, setSortModifiedAtHoldByTaskId] = useState<
     Record<string, string>
   >({});
 
   const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
-  const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
+  const pendingTaskStatusesRef = useRef<Map<string, TaskStatusType>>(new Map());
   const completionConfettiLastAtRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export function useTaskStatusController({
   }, []);
 
   const scheduleTaskStatusReorderUpdate = useCallback(
-    (taskId: string, status: TaskStatus) => {
+    (taskId: string, status: TaskStatusType) => {
       clearPendingStatusUpdate(taskId);
       const existingTask = allTasks.find((task) => task.id === taskId);
       const currentStatus =
@@ -126,7 +127,7 @@ export function useTaskStatusController({
   }, []);
 
   const triggerCompletionFeedback = useCallback(
-    (taskId: string, status: TaskStatus) => {
+    (taskId: string, status: TaskStatusType) => {
       if (status !== "done") return;
       triggerCompletionCheer(taskId);
       playCompletionPopSound(completionSoundEnabled);
@@ -149,7 +150,7 @@ export function useTaskStatusController({
       const nextStatus = cycleTaskStatus(currentStatus);
       scheduleTaskStatusReorderUpdate(taskId, nextStatus);
       triggerCompletionFeedback(taskId, nextStatus);
-      void publishTaskStateUpdate(taskId, nextStatus);
+      void publishTaskStateUpdate(taskId, { type: nextStatus });
     },
     [
       allTasks,
@@ -162,7 +163,7 @@ export function useTaskStatusController({
   );
 
   const handleStatusChange = useCallback(
-    (taskId: string, newStatus: TaskStatus) => {
+    (taskId: string, stateId: string) => {
       if (guardInteraction("modify")) return;
 
       const existingTask = allTasks.find((task) => task.id === taskId);
@@ -172,9 +173,18 @@ export function useTaskStatusController({
         return;
       }
 
-      scheduleTaskStatusReorderUpdate(taskId, newStatus);
-      triggerCompletionFeedback(taskId, newStatus);
-      void publishTaskStateUpdate(taskId, newStatus);
+      const registry = getTaskStateRegistry();
+      const stateDef = resolveTaskStateDefinition(stateId, registry);
+      const resolvedType = stateDef.type as TaskStatusType;
+      // Only pass a description when using a custom sub-state (id differs from its type)
+      const description = stateDef.id !== stateDef.type ? stateDef.label : undefined;
+
+      scheduleTaskStatusReorderUpdate(taskId, resolvedType);
+      triggerCompletionFeedback(taskId, resolvedType);
+      void publishTaskStateUpdate(
+        taskId,
+        description ? { type: resolvedType, description } : { type: resolvedType }
+      );
     },
     [
       allTasks,

@@ -9,19 +9,19 @@ import {
 
 describe("task-state-events", () => {
   it("maps active to Open kind with description", () => {
-    const mapped = mapTaskStatusToStateEvent("active");
+    const mapped = mapTaskStatusToStateEvent({ type: "active" });
     expect(mapped.kind).toBe(NostrEventKind.GitStatusOpen);
     expect(mapped.content).toBe("In Progress");
   });
 
   it("maps done to Applied kind", () => {
-    const mapped = mapTaskStatusToStateEvent("done");
+    const mapped = mapTaskStatusToStateEvent({ type: "done" });
     expect(mapped.kind).toBe(NostrEventKind.GitStatusApplied);
     expect(mapped.content).toBe("");
   });
 
   it("maps closed to Closed kind", () => {
-    const mapped = mapTaskStatusToStateEvent("closed");
+    const mapped = mapTaskStatusToStateEvent({ type: "closed" });
     expect(mapped.kind).toBe(NostrEventKind.GitStatusClosed);
     expect(mapped.content).toBe("");
   });
@@ -39,8 +39,8 @@ describe("task-state-events", () => {
       NostrEventKind.GitStatusOpen,
       ""
     );
-    expect(mapped.status).toBe("open");
-    expect(mapped.statusDescription).toBeUndefined();
+    expect(mapped.type).toBe("open");
+    expect(mapped.description).toBeUndefined();
   });
 
   it("maps Open with description to active", () => {
@@ -48,8 +48,8 @@ describe("task-state-events", () => {
       NostrEventKind.GitStatusOpen,
       "Working on this now"
     );
-    expect(mapped.status).toBe("active");
-    expect(mapped.statusDescription).toBe("Working on this now");
+    expect(mapped.type).toBe("active");
+    expect(mapped.description).toBe("Working on this now");
   });
 
   it("maps Closed kind to closed", () => {
@@ -57,8 +57,8 @@ describe("task-state-events", () => {
       NostrEventKind.GitStatusClosed,
       ""
     );
-    expect(mapped.status).toBe("closed");
-    expect(mapped.statusDescription).toBeUndefined();
+    expect(mapped.type).toBe("closed");
+    expect(mapped.description).toBeUndefined();
   });
 
   it("classifies only task-state kinds as state events", () => {

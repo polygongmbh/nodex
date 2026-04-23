@@ -1,5 +1,5 @@
 import { HandHelping, MessageSquare, Package } from "lucide-react";
-import { TaskStateIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
+import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import type { ReactNode } from "react";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -30,7 +30,7 @@ import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { useTranslation } from "react-i18next";
-import type { Nip99ListingStatus, RawNostrEvent, Task, TaskStatus } from "@/types";
+import { getTaskStatus, type Nip99ListingStatus, type RawNostrEvent, type Task } from "@/types";
 import type { Person } from "@/types/person";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
@@ -222,15 +222,18 @@ export function FeedTaskCard({
                     canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                   )}
                 >
-                  <TaskStateIcon status={task.status} size={isMobile ? "w-4 h-4" : "w-5 h-5"} />
+                  <TaskStateIcon
+                    status={getTaskStatus(task)}
+                    size={isMobile ? "w-4 h-4" : "w-5 h-5"}
+                  />
                 </button>
               </DropdownMenuTrigger>
               {canCompleteTask ? (
                 <DropdownMenuContent align="start">
                   {getTaskStateRegistry().map((state) => (
-                    <DropdownMenuItem key={state.id} onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id as TaskStatus); }}>
-                      <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-                      {t(`status.${state.id}`)}
+                    <DropdownMenuItem key={state.id} onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id); }}>
+                      <TaskStateDefIcon state={state} className="mr-2" />
+                      {state.label}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

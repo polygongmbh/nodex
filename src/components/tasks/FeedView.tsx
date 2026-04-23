@@ -402,10 +402,10 @@ export function FeedView({
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
-      const stateLabel = getStateLabel(update.status);
-      const statusDescription = update.statusDescription?.trim();
+      const stateLabel = getStateLabel(update.status.type);
+      const statusDescription = update.status.description?.trim();
       const isDefaultInProgressDescription =
-        update.status === "active" &&
+        update.status.type === "active" &&
         normalizeLabelText(statusDescription) === normalizeLabelText("In Progress");
       const showStatusDescription =
         Boolean(statusDescription) &&
@@ -423,7 +423,11 @@ export function FeedView({
         >
           <div className={cn(isMobile ? "px-3" : DESKTOP_FEED_ROW_CONTENT_PADDING)}>
             <div className="flex items-center gap-2 min-w-0">
-              <TaskStateIcon status={update.status} size={isMobile ? "w-3 h-3" : "w-3.5 h-3.5"} className="flex-shrink-0" />
+              <TaskStateIcon
+                status={update.status}
+                size={isMobile ? "w-3 h-3" : "w-3.5 h-3.5"}
+                className="flex-shrink-0"
+              />
               <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-2">
                 <div className="min-w-0 inline-flex flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
                   <span className="shrink-0">{stateLabel}</span>

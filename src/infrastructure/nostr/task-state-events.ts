@@ -21,40 +21,40 @@ export function extractTaskStateTargetId(tags: string[][]): string | undefined {
 }
 
 export function mapTaskStatusToStateEvent(
-  status: TaskStatus,
-  description?: string
+  status: TaskStatus
 ): { kind: NostrEventKind; content: string } {
-  if (status === "done") {
-    return { kind: NostrEventKind.GitStatusApplied, content: description?.trim() || "" };
+  const description = status.description?.trim();
+  if (status.type === "done") {
+    return { kind: NostrEventKind.GitStatusApplied, content: description || "" };
   }
-  if (status === "closed") {
-    return { kind: NostrEventKind.GitStatusClosed, content: description?.trim() || "" };
+  if (status.type === "closed") {
+    return { kind: NostrEventKind.GitStatusClosed, content: description || "" };
   }
   // Both "open" and "active" map to GitStatusOpen;
   // active states carry a label as content to distinguish from plain open.
-  if (status === "active") {
+  if (status.type === "active") {
     return {
       kind: NostrEventKind.GitStatusOpen,
-      content: description?.trim() || "In Progress",
+      content: description || "In Progress",
     };
   }
-  return { kind: NostrEventKind.GitStatusOpen, content: description?.trim() || "" };
+  return { kind: NostrEventKind.GitStatusOpen, content: description || "" };
 }
 
 export function mapTaskStateEventToTaskStatus(
   kind: number,
   content: string
-): { status: TaskStatus; statusDescription?: string } {
-  const statusDescription = content.trim() || undefined;
+): TaskStatus {
+  const description = content.trim() || undefined;
   if (kind === NostrEventKind.GitStatusApplied) {
-    return { status: "done", statusDescription };
+    return { type: "done", description };
   }
   if (kind === NostrEventKind.GitStatusClosed) {
-    return { status: "closed", statusDescription };
+    return { type: "closed", description };
   }
   if (kind === NostrEventKind.GitStatusOpen || kind === NostrEventKind.GitStatusDraft || kind === NostrEventKind.Procedure) {
-    if (!statusDescription) return { status: "open" };
-    return { status: "active", statusDescription };
+    if (!description) return { type: "open" };
+    return { type: "active", description };
   }
-  return { status: "open", statusDescription };
+  return { type: "open", description };
 }

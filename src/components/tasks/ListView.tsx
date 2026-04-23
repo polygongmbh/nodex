@@ -1,8 +1,8 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
-import { TaskStateIcon, getTaskStateBadgeClasses } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
-import {   Task, ComposeRestoreRequest, TaskStatus } from "@/types";
+import { TaskStateIcon, TaskStateDefIcon, getTaskStateBadgeClasses } from "@/components/tasks/task-state-ui";
+import { getTaskStateRegistry, resolveTaskState } from "@/domain/task-states/task-state-config";
+import {   Task, ComposeRestoreRequest, TaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { TaskMentionTagChipRow } from "./TaskTagChipRow";
@@ -219,7 +219,7 @@ export function ListView({
           comparison = a.content.localeCompare(b.content);
           break;
         case "status": {
-          const statusOrder: Record<TaskStatus, number> = {
+          const statusOrder: Record<TaskStatusType, number> = {
             "active": 0,
             "open": 1,
             "done": 2,
@@ -280,8 +280,8 @@ export function ListView({
   const canCompleteTask = (task: Task) => {
     return authPolicy.canModifyContent && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
-  const dispatchStatusChange = (taskId: string, status: TaskStatus) => {
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
+  const dispatchStatusChange = (taskId: string, stateId: string) => {
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, stateId });
   };
   const dispatchToggleComplete = (taskId: string) => {
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
@@ -335,7 +335,8 @@ export function ListView({
       getTaskStateBadgeClasses(status)
     );
 
-    const statusLabel = t(`status.${status}`);
+    const stateDef = resolveTaskState(status, task.statusDescription);
+    const statusLabel = stateDef.label;
 
     if (!editable) {
       return (
@@ -356,11 +357,11 @@ export function ListView({
           {getTaskStateRegistry().map((state) => (
             <DropdownMenuItem
               key={state.id}
-              onClick={() => dispatchStatusChange(task.id, state.id as TaskStatus)}
+              onClick={() => dispatchStatusChange(task.id, state.id)}
               className={cn(status === state.id && "bg-muted")}
             >
-              <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-              {t(`status.${state.id}`)}
+              <TaskStateDefIcon state={state} className="mr-2" />
+              {state.label}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>

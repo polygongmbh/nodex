@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
-import { TaskStateIcon } from "@/components/tasks/task-state-ui";
+import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import { cn } from "@/lib/utils";
-import { Task, TaskStatus, Relay } from "@/types";
+import { Task, TaskStatusType, Relay, getTaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -101,7 +101,7 @@ export function TreeTaskItem({
     event.preventDefault();
     void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
   };
-  const getStatusToggleHint = (status?: TaskStatus): string => {
+  const getStatusToggleHint = (status?: TaskStatusType): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "active") return t("hints.statusToggle.active", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
@@ -415,7 +415,9 @@ export function TreeTaskItem({
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                 )}
               >
-                <TaskStateIcon status={task.status} />
+                <TaskStateIcon
+                  status={getTaskStatus(task)}
+                />
               </button>
             </DropdownMenuTrigger>
             {canCompleteTask() && (
@@ -425,12 +427,12 @@ export function TreeTaskItem({
                     key={state.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: state.id as TaskStatus });
+                      void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, stateId: state.id });
                     }}
                     className={cn((task.status || "open") === state.id && "bg-muted")}
                   >
-                    <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-                    {t(`status.${state.id}`)}
+                    <TaskStateDefIcon state={state} className="mr-2" />
+                    {state.label}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

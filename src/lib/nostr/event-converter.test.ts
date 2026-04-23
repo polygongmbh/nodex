@@ -463,12 +463,11 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-new",
-        status: "active",
-        statusDescription: "In Progress",
+        status: { type: "active", description: "In Progress" },
       }),
       expect.objectContaining({
         id: "state-old",
-        status: "done",
+        status: { type: "done" },
       }),
     ]);
   });
@@ -499,7 +498,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-closed",
-        status: "closed",
+        status: { type: "closed" },
       }),
     ]);
   });
@@ -562,7 +561,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-assignee",
-        status: "done",
+        status: { type: "done" },
         authorPubkey: "assignee-pubkey",
       }),
     ]);

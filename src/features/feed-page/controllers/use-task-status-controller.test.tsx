@@ -12,7 +12,7 @@ const initialTask = makeTask({
   stateUpdates: [
     {
       id: "relay-state-1",
-      status: "open",
+      status: { type: "open" },
       timestamp: new Date("2026-01-01T00:00:00.000Z"),
       authorPubkey: author.id,
     },
@@ -71,7 +71,7 @@ describe("useTaskStatusController", () => {
     expect(screen.getByTestId("status")).toHaveTextContent("done");
     expect(screen.getByTestId("state-update-count")).toHaveTextContent("1");
     expect(screen.getByTestId("sort-hold")).toHaveTextContent("open");
-    expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", "done");
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", { type: "done" });
 
     act(() => {
       vi.advanceTimersByTime(300);
@@ -91,8 +91,8 @@ describe("useTaskStatusController", () => {
 
     expect(screen.getByTestId("status")).toHaveTextContent("active");
     expect(screen.getByTestId("sort-hold")).toHaveTextContent("done");
-    expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(1, "task-1", "done");
-    expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(2, "task-1", "active");
+    expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(1, "task-1", { type: "done" });
+    expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(2, "task-1", { type: "active" });
 
     act(() => {
       vi.advanceTimersByTime(300);

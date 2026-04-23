@@ -339,7 +339,7 @@ describe("KanbanView", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "drag-task",
-      status: "done",
+      stateId: "done",
     });
     expect(container.querySelector('[data-droppable-id="done"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
     expect(container.querySelector('[data-droppable-id="open"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();

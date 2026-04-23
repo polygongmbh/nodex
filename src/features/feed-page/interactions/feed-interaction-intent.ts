@@ -6,7 +6,6 @@ import type {
   PostType,
   TaskInitialStatus,
   TaskDateType,
-  TaskStatus,
 } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -80,7 +79,7 @@ export type FeedInteractionIntent =
       locationGeohash?: string;
     }
   | { type: "task.toggleComplete"; taskId: string }
-  | { type: "task.changeStatus"; taskId: string; status: TaskStatus }
+  | { type: "task.changeStatus"; taskId: string; stateId: string }
   | { type: "task.updateDueDate"; taskId: string; dueDate?: Date; dueTime?: string; dateType?: TaskDateType }
   | { type: "task.updatePriority"; taskId: string; priority: number }
   | { type: "task.listingStatus.change"; taskId: string; status: Nip99ListingStatus }

@@ -4,7 +4,7 @@ import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
-import type { Task, TaskStatus } from "@/types";
+import type { Task } from "@/types";
 import type { Person } from "@/types/person";
 
 interface UseTaskStatusMenuOptions {
@@ -47,8 +47,8 @@ export function useTaskStatusMenu({
   }, []);
 
   const dispatchStatusChange = useCallback(
-    (status: TaskStatus) => {
-      void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status });
+    (stateId: string) => {
+      void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, stateId });
     },
     [dispatchFeedInteraction, task.id]
   );

@@ -299,9 +299,9 @@ When asked to create a plan to fix or implement something:
 - ALWAYS write the plan to `plans/` at repo root.
 - NEVER commit plans to git.
 - Use descriptive kebab-case filenames (for example `fix-position-healing.md`).
-- After making a plan, give a concise summary that emphasizes the opinionated path, key choices made, and the reasoning behind them so assumptions can be corrected early.
+- After making a plan, give a concise summary that emphasizes the key choices made and the reasoning behind them so assumptions can be corrected early.
 - When implementing a plan, use elaborated commit messages that detail the concrete changes made for each step.
-- After implementing a plan, you MUST delete the plan file before handoff/final response.
+- After fully implementing a plan, delete the plan file.
 - Before deleting untracked text artifacts (for example files in `plans/`), run this sequence so there is a recoverable hash reference:
   - `git add -f <file>`
   - `git stash push -m \"archive <file>\" -- <file>`

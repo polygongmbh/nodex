@@ -1,4 +1,4 @@
-import { Task, TaskStatus, getLastEditedAt } from "@/types";
+import { Task, TaskStatusType, getLastEditedAt } from "@/types";
 import { isTaskTerminalStatus } from "./task-status";
 import { getTaskStateUiType } from "@/domain/task-states/task-state-config";
 import { isToday, isTomorrow, isPast, startOfDay, differenceInDays } from "date-fns";
@@ -23,9 +23,9 @@ export interface SortContext {
   taskById?: Map<string, Task>;
 }
 
-type SortAwareTask = Task & { sortStatus?: TaskStatus; sortLastEditedAt?: Date };
+type SortAwareTask = Task & { sortStatus?: TaskStatusType; sortLastEditedAt?: Date };
 
-function getStatusForSort(task: Task | undefined): TaskStatus | undefined {
+function getStatusForSort(task: Task | undefined): TaskStatusType | undefined {
   if (!task) return undefined;
   return (task as SortAwareTask).sortStatus ?? task.status;
 }
@@ -208,7 +208,7 @@ export function buildChildrenMap(allTasks: Task[]): Map<string | undefined, Task
 
 // Get due date color class based on urgency
 export function getDueDateColorClass(dueDate: Date | undefined, status?: string): string {
-  if (!dueDate || isTaskTerminalStatus(status as TaskStatus | undefined)) return "text-muted-foreground";
+  if (!dueDate || isTaskTerminalStatus(status as TaskStatusType | undefined)) return "text-muted-foreground";
   
   const today = startOfDay(new Date());
   const dueDay = startOfDay(dueDate);

@@ -22,7 +22,7 @@ import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import type { EmptyScopeModel } from "@/lib/empty-scope";
-import type { Channel, ChannelMatchMode, Relay, Task, TaskStateUpdate, TaskStatus } from "@/types";
+import type { Channel, ChannelMatchMode, Relay, Task, TaskStateUpdate, TaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 
 interface BaseViewStateInput {
@@ -76,7 +76,7 @@ export interface ListViewState {
 export interface KanbanViewState {
   kanbanTasks: Task[];
   orderedKanbanTasks: Task[];
-  tasksByStatus: Record<TaskStatus, Task[]>;
+  tasksByStatus: Record<TaskStatusType, Task[]>;
   getAncestorChain: (taskId: string) => { id: string; text: string }[];
   showContext: boolean;
 }
@@ -161,7 +161,7 @@ export interface MobileFallbackNoticeState {
   mobileShellFocusedTaskId: string | null;
 }
 
-export function sortKanbanColumnTasks(tasks: Task[], status: TaskStatus, sortContext: SortContext): Task[] {
+export function sortKanbanColumnTasks(tasks: Task[], status: TaskStatusType, sortContext: SortContext): Task[] {
   return isTaskTerminalStatus(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
 }
 
@@ -724,8 +724,8 @@ export function useKanbanViewState({
     () => filterTasksByDepthMode({ tasks: filteredTaskCandidates, depthMode, focusedTaskId, getDepth, hasChildren }),
     [depthMode, filteredTaskCandidates, focusedTaskId, getDepth, hasChildren]
   );
-  const tasksByStatus = useMemo<Record<TaskStatus, Task[]>>(() => {
-    const grouped: Record<TaskStatus, Task[]> = { open: [], active: [], done: [], closed: [] };
+  const tasksByStatus = useMemo<Record<TaskStatusType, Task[]>>(() => {
+    const grouped: Record<TaskStatusType, Task[]> = { open: [], active: [], done: [], closed: [] };
     kanbanTasks.forEach((task) => {
       grouped[task.status || "open"].push(task);
     });

@@ -158,7 +158,7 @@ describe("TreeTaskItem status actions", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "t1",
-      status: "active",
+      stateId: "active",
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });
@@ -171,7 +171,7 @@ describe("TreeTaskItem status actions", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "t1",
-      status: "done",
+      stateId: "done",
     });
   });
 
@@ -183,7 +183,7 @@ describe("TreeTaskItem status actions", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "t1",
-      status: "closed",
+      stateId: "closed",
     });
   });
 

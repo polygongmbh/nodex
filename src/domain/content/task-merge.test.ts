@@ -49,7 +49,7 @@ describe("mergeTasks", () => {
       stateUpdates: [
         {
           id: "local-state-1",
-          status: "active",
+          status: { type: "active" },
           timestamp: new Date("2026-02-17T10:01:00.000Z"),
           authorPubkey: "local-author",
         },
@@ -63,7 +63,7 @@ describe("mergeTasks", () => {
       stateUpdates: [
         {
           id: "relay-state-1",
-          status: "done",
+          status: { type: "done" },
           timestamp: new Date("2026-02-17T10:02:00.000Z"),
           authorPubkey: "relay-author",
         },

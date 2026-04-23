@@ -237,7 +237,7 @@ describe("ListView priority control", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "task-dropdown",
-      status: "active",
+      stateId: "active",
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-dropdown" });
   });

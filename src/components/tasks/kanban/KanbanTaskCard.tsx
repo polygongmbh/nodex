@@ -17,14 +17,14 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import type { Task, TaskStatus } from "@/types";
+import type { Task, TaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 
 interface KanbanTaskCardProps {
   task: Task;
   currentUser?: Person;
   people: Person[];
-  displayStatus: TaskStatus;
+  displayStatus: TaskStatusType;
   ancestorChain: { id: string; text: string }[];
   showContext: boolean;
   compactTaskCardsEnabled: boolean;

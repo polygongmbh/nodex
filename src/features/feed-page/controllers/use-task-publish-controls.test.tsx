@@ -40,7 +40,7 @@ function Harness({
   return (
     <>
       <button onClick={() => controls.guardInteraction("modify")}>GuardModify</button>
-      <button onClick={() => controls.publishTaskStateUpdate("a".repeat(64), "done")}>PublishState</button>
+      <button onClick={() => controls.publishTaskStateUpdate("a".repeat(64), { type: "done" })}>PublishState</button>
       <button
         onClick={() =>
           controls.publishTaskCreateFollowUps({

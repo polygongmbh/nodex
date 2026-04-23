@@ -1,4 +1,4 @@
-import { Task, TaskStatus } from "@/types";
+import { Task, TaskStatusType } from "@/types";
 import {
   isTaskCompletedState,
   isTaskTerminalState as registryIsTerminal,
@@ -6,26 +6,26 @@ import {
   getTaskStateRegistry,
 } from "@/domain/task-states/task-state-config";
 
-export function isTaskCompletedStatus(status: TaskStatus | undefined): boolean {
+export function isTaskCompletedStatus(status: TaskStatusType | undefined): boolean {
   return isTaskCompletedState(status);
 }
 
-export function isTaskTerminalStatus(status: TaskStatus | undefined): boolean {
+export function isTaskTerminalStatus(status: TaskStatusType | undefined): boolean {
   return registryIsTerminal(status);
 }
 
-export function cycleTaskStatus(current: TaskStatus | undefined): TaskStatus {
+export function cycleTaskStatus(current: TaskStatusType | undefined): TaskStatusType {
   const next = getQuickToggleNextState(current);
-  if (next !== null) return next as TaskStatus;
+  if (next !== null) return next as TaskStatusType;
   // Terminal states cycle back to first state
-  return (getTaskStateRegistry()[0]?.id ?? "open") as TaskStatus;
+  return (getTaskStateRegistry()[0]?.id ?? "open") as TaskStatusType;
 }
 
 export function applyTaskStatusUpdate(
   localTasks: Task[],
   allTasks: Task[],
   taskId: string,
-  newStatus: TaskStatus,
+  newStatus: TaskStatusType,
   completedBy?: string
 ): Task[] {
   const now = new Date();

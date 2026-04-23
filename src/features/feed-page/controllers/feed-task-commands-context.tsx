@@ -1,7 +1,6 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
 import type {
   PostType,
-  TaskStatus,
   TaskDateType,
   TaskInitialStatus,
   PublishedAttachment,
@@ -30,7 +29,7 @@ export interface FeedTaskCommands {
     locationGeohash?: string
   ): Promise<TaskCreateResult>;
   toggleComplete(taskId: string): void;
-  changeStatus(taskId: string, status: TaskStatus): void;
+  changeStatus(taskId: string, stateId: string): void;
   updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;
   updatePriority(taskId: string, priority: number): void;
   changeListingStatus(taskId: string, status: Nip99ListingStatus): void;

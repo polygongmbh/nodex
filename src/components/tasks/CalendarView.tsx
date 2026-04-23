@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
-import { TaskStateIcon } from "@/components/tasks/task-state-ui";
+import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
-import {   Task, ComposeRestoreRequest, TaskStatus } from "@/types";
+import {   Task, ComposeRestoreRequest, TaskStatusType, getTaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import {
   format,
@@ -332,8 +332,8 @@ export function CalendarView({
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);
   };
-  const dispatchStatusChange = (taskId: string, status: TaskStatus) => {
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
+  const dispatchStatusChange = (taskId: string, stateId: string) => {
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, stateId });
   };
   const dispatchToggleComplete = (taskId: string) => {
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
@@ -521,7 +521,7 @@ export function CalendarView({
                                     canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
                                   )}
                                 >
-                                  <TaskStateIcon status={task.status} size="w-4 h-4" />
+                                  <TaskStateIcon status={getTaskStatus(task)} size="w-4 h-4" />
                                 </button>
                               </DropdownMenuTrigger>
                               {canCompleteTask(task) && (
@@ -531,11 +531,11 @@ export function CalendarView({
                                       key={state.id}
                                       onClick={(event) => {
                                         event.stopPropagation();
-                                        dispatchStatusChange(task.id, state.id as TaskStatus);
+                                        dispatchStatusChange(task.id, state.id);
                                       }}
                                     >
-                                      <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-                                      {t(`status.${state.id}`)}
+                                      <TaskStateDefIcon state={state} className="mr-2" />
+                                      {state.label}
                                     </DropdownMenuItem>
                                   ))}
                                 </DropdownMenuContent>
@@ -945,7 +945,7 @@ export function CalendarView({
                                   canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                                 )}
                               >
-                                <TaskStateIcon status={task.status} size="w-4 h-4" />
+                                <TaskStateIcon status={getTaskStatus(task)} size="w-4 h-4" />
                               </button>
                             </DropdownMenuTrigger>
                             {canCompleteTask(task) && (
@@ -955,11 +955,11 @@ export function CalendarView({
                                     key={state.id}
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      dispatchStatusChange(task.id, state.id as TaskStatus);
+                                      dispatchStatusChange(task.id, state.id);
                                     }}
                                   >
-                                    <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-                                    {t(`status.${state.id}`)}
+                                    <TaskStateDefIcon state={state} className="mr-2" />
+                                    {state.label}
                                   </DropdownMenuItem>
                                 ))}
                               </DropdownMenuContent>

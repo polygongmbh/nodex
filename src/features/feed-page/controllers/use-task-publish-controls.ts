@@ -132,7 +132,8 @@ export function useTaskPublishControls({
     const mapped = mapTaskStatusToStateEvent(status);
     nostrDevLog("publish-state", "Publishing task state update", {
       taskId,
-      status,
+      status: status.type,
+      statusDescription: status.description,
       kind: mapped.kind,
       relayUrls,
     });
@@ -247,7 +248,7 @@ export function useTaskPublishControls({
     ).slice(0, 1);
 
     if (initialStatus && initialStatus !== "open") {
-      await publishTaskStateUpdate(publishedEventId, initialStatus, followUpRelayUrls);
+      await publishTaskStateUpdate(publishedEventId, { type: initialStatus }, followUpRelayUrls);
     }
     if (dueDate) {
       await publishTaskDueUpdate(

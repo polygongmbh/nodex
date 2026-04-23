@@ -1,4 +1,4 @@
-import { Relay, Channel, Task, TaskStatus } from "@/types";
+import { Relay, Channel, Task, TaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 import { addDays, subDays } from "date-fns";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -79,7 +79,7 @@ function createTask(
   tags: string[],
   options: {
     parentId?: string;
-    status?: TaskStatus;
+    status?: TaskStatusType;
     completedBy?: string;
     dueDate?: Date;
     dueTime?: string;

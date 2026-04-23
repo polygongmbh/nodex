@@ -739,8 +739,7 @@ describe("FeedView", () => {
         stateUpdates: [
           {
             id: "state-timestamp-yesterday",
-            status: "active",
-            statusDescription: "Working on relay reconnect",
+            status: { type: "active", description: "Working on relay reconnect" },
             timestamp: new Date("2026-04-02T18:45:00.000Z"),
             authorPubkey: author.id,
           },
@@ -952,15 +951,13 @@ describe("FeedView", () => {
       stateUpdates: [
         {
           id: "state-2",
-          status: "active",
-          statusDescription: "Working on relay reconnect",
+          status: { type: "active", description: "Working on relay reconnect" },
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
           authorPubkey: author.id,
         },
         {
           id: "state-1",
-          status: "open",
-          statusDescription: "Unblocked",
+          status: { type: "open", description: "Unblocked" },
           timestamp: new Date(Date.now() - 20 * 60 * 1000),
           authorPubkey: author.id,
         },
@@ -994,8 +991,7 @@ describe("FeedView", () => {
       stateUpdates: [
         {
           id: "state-title-tooltip",
-          status: "active",
-          statusDescription: "Working on relay reconnect",
+          status: { type: "active", description: "Working on relay reconnect" },
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
           authorPubkey: author.id,
         },
@@ -1035,8 +1031,7 @@ describe("FeedView", () => {
       stateUpdates: [
         {
           id: "state-dedupe",
-          status: "active",
-          statusDescription: "In Progress",
+          status: { type: "active", description: "In Progress" },
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
           authorPubkey: author.id,
         },
@@ -1121,7 +1116,7 @@ describe("FeedView", () => {
       stateUpdates: [
         {
           id: "close-update-1",
-          status: "closed",
+          status: { type: "closed" },
           timestamp: new Date(Date.now() - 30_000),
           authorPubkey: author.id,
         },

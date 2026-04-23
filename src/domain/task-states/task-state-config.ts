@@ -1,7 +1,7 @@
-import type { TaskStatus } from "@/types";
+import type { TaskStatus, TaskStatusType } from "@/types";
 
-/** Semantic type for grouping, sorting, and protocol mapping — identical to TaskStatus. */
-export type TaskStateType = TaskStatus;
+/** Semantic type for grouping, sorting, and protocol mapping — identical to TaskStatusType. */
+export type TaskStateType = TaskStatusType;
 
 export interface TaskStateDefinition {
   id: string;
@@ -91,11 +91,11 @@ const DEFAULT_TYPE_DEFINITIONS: Record<TaskStateType, Omit<TaskStateDefinition, 
  * Matches configured states by label first, then falls back to the built-in for the status.
  */
 export function resolveTaskState(
-  status: TaskStatus | undefined,
+  status: TaskStatusType | undefined,
   label?: string,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
-  const effectiveStatus: TaskStatus = status ?? "open";
+  const effectiveStatus: TaskStatusType = status ?? "open";
   if (label) {
     // Match a configured state whose label matches (case-insensitive) and whose type is compatible
     const byLabel = registry.find(
@@ -117,6 +117,13 @@ export function resolveTaskState(
   const firstOfType = registry.find((def) => def.type === effectiveStatus);
   if (firstOfType) return firstOfType;
   return { id: effectiveStatus, ...DEFAULT_TYPE_DEFINITIONS[effectiveStatus], visibleByDefault: false };
+}
+
+export function resolveTaskStateFromStatus(
+  status: TaskStatus | undefined,
+  registry: TaskStateDefinition[] = getTaskStateRegistry()
+): TaskStateDefinition {
+  return resolveTaskState(status?.type, status?.description, registry);
 }
 
 export function resolveTaskStateDefinition(
