@@ -74,7 +74,7 @@ export function TaskMentionChips({
         <PersonHoverCard key={pubkey} person={clickablePerson}>
           <button
             type="button"
-            className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+            className={cn(TASK_CHIP_STYLES.mention, "transition-colors hover:bg-primary/15", className)}
             aria-label={`Person actions for ${label}`}
             onClick={(event) => {
               event.stopPropagation();
@@ -94,7 +94,7 @@ export function TaskMentionChips({
     return (
       <span
         key={pubkey}
-        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+        className={cn(TASK_CHIP_STYLES.mention, className)}
         title={`@${toUserFacingPubkey(pubkey)}`}
       >
         <AtSign className="w-3 h-3" />

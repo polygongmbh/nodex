@@ -74,14 +74,14 @@ function TaskTagChipContent({
   return (
     <>
       {relayLabel ? (
-        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+        <span className={TASK_CHIP_STYLES.muted}>
           {relayLabel}
         </span>
       ) : null}
       {includeLocationChip && task.locationGeohash ? (
         <TaskLocationChip
           geohash={task.locationGeohash}
-          className="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+          className={TASK_CHIP_STYLES.muted}
         />
       ) : null}
       <TaskMentionChips
@@ -98,7 +98,7 @@ function TaskTagChipContent({
             void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
           }}
           className={cn(
-            "inline-flex shrink-0 items-center whitespace-nowrap px-1.5 py-0.5 rounded text-xs font-medium leading-none",
+            TASK_CHIP_STYLES.base,
             TASK_INTERACTION_STYLES.hashtagChip,
             tagClassName
           )}
@@ -156,7 +156,7 @@ function TaskChipRow({
   return (
     <div className={cn("flex flex-wrap gap-1", className)} data-testid={testId}>
       {hasPriority ? (
-        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium leading-none text-warning">
+        <span className={TASK_CHIP_STYLES.priority}>
           {formatPriorityLabel(priority)}
         </span>
       ) : null}
@@ -197,7 +197,7 @@ export function ScrollableTaskTagChipRow({
       data-testid={testId}
     >
       {hasPriority ? (
-        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium leading-none text-warning">
+        <span className={TASK_CHIP_STYLES.priority}>
           {formatPriorityLabel(priority)}
         </span>
       ) : null}
