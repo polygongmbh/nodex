@@ -65,7 +65,7 @@ const LIST_GRID_LG_CLASS =
 const LIST_GRID_XL_CLASS =
   "xl:grid-cols-[2.5rem_minmax(0,3fr)_fit-content(10.75rem)_8rem_minmax(0,2fr)]";
 const LIST_GRID_2XL_CLASS =
-  "2xl:grid-cols-[2.5rem_minmax(0,2fr)_fit-content(8.75rem)_minmax(0,1fr)_9.5rem_minmax(0,1fr)]";
+  "2xl:grid-cols-[2.5rem_minmax(0,2fr)_fit-content(8.75rem)_minmax(0,1fr)_8.5rem_minmax(0,1fr)]";
 const LIST_GRID_TEMPLATE_CLASS = `grid ${LIST_GRID_BASE_CLASS} ${LIST_GRID_LG_CLASS} ${LIST_GRID_XL_CLASS} ${LIST_GRID_2XL_CLASS}`;
 const LIST_SUBGRID_ROW_CLASS = "col-span-full grid grid-cols-subgrid";
 
