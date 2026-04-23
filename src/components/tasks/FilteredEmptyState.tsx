@@ -68,7 +68,7 @@ export function FilteredEmptyState() {
         ? t("tasks.empty.filtered.action")
         : null;
 
-  const showClearFiltersAction = !isLoading && !isError && scopeModel.hasActiveFilters;
+  const showClearFiltersAction = !isLoading && !isError && (scopeModel.hasActiveFilters || Boolean(focusedTaskId));
 
   const handleClearFilters = () => {
     void dispatchFeedInteraction({ type: "filter.resetAll" });
