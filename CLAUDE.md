@@ -36,7 +36,7 @@ The `useNDK()` hook exposes the entire app state: authenticated user, relay list
 
 ### Key Types (`src/types/index.ts`)
 - `Task` — core task entity with id, content, status, tags, relayIds, parentId, dates
-- `TaskStatus` — `"todo" | "in-progress" | "done"`
+- `TaskStatus` — `"open" | "active" | "done" | "closed"`, driven by `task-state-config.ts` registry
 - `Person` — Nostr profile with online/presence status
 - `Channel` — hashtag-based filter with `included | excluded | neutral` state
 - `Relay` — relay connection with status

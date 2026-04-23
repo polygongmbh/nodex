@@ -6,6 +6,10 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Task states are now driven by a config registry instead of hard-coded values, enabling custom workflow states via `VITE_TASK_STATE_CONFIG`. The built-in states (Open, In Progress, Done, Closed) remain the default.
+- Mobile quick-toggle now skips the "In Progress" state, going directly from Open to Done.
+
 ## [2.13.5] - 2026-04-23
 
 - Task date labels and saved-filter copy now resolve from app-wide task/filter locales instead of composer-only keys, fixing broken table-view date translations and keeping shared UI copy scoped correctly across English, German, and Spanish.
