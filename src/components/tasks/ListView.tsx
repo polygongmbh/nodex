@@ -92,7 +92,7 @@ const PriorityCell = memo(function PriorityCell({
       taskId={editable ? taskId : undefined}
       priority={priority}
       className={cn(
-        "h-7 w-full min-w-0 max-w-full rounded-md border-none bg-transparent px-2 text-xs shadow-none transition-colors hover:bg-muted/60 focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent",
+        "h-7 rounded-md border-none bg-transparent px-2 text-xs shadow-none transition-colors hover:bg-muted/60 focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent",
         hasPriority ? "text-foreground" : "text-muted-foreground"
       )}
     />
