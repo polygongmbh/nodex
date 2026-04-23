@@ -13,6 +13,7 @@ import {
   saveCompletionSoundEnabled,
 } from "@/infrastructure/preferences/user-preferences-storage";
 import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 
@@ -39,6 +40,7 @@ export function useTaskStatusController({
   publishTaskStateUpdate,
 }: UseTaskStatusControllerOptions): UseTaskStatusControllerResult {
   const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
+  const isMobile = useIsMobile();
   const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() =>
     loadCompletionSoundEnabled()
   );
@@ -146,8 +148,9 @@ export function useTaskStatusController({
       const currentStatus =
         pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask.status) ?? "open";
       if (isTaskTerminalStatus(currentStatus)) return;
-      const nextStatus = getQuickToggleNextState(currentStatus);
-      if (nextStatus === null) return;
+      const nextStateId = getQuickToggleNextState(currentStatus, { mobile: isMobile });
+      if (nextStateId === null) return;
+      const nextStatus = nextStateId as TaskStatusType;
       scheduleTaskStatusReorderUpdate(taskId, nextStatus);
       triggerCompletionFeedback(taskId, nextStatus);
       void publishTaskStateUpdate(taskId, { type: nextStatus });
@@ -156,6 +159,7 @@ export function useTaskStatusController({
       allTasks,
       currentUser,
       guardInteraction,
+      isMobile,
       publishTaskStateUpdate,
       scheduleTaskStatusReorderUpdate,
       triggerCompletionFeedback,
