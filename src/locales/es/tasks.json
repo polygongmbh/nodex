@@ -12,7 +12,6 @@
     "tags": "Etiquetas",
     "less": "menos",
     "readOnly": "Tarea de solo lectura",
-    "completedBy": "Completada por @{{user}}",
     "focusTaskAria": "{{type}}: {{title}}",
     "focusTaskTitle": "Enfocar {{type}}",
     "focusBreadcrumbTitle": "Enfocar tarea: {{title}}",

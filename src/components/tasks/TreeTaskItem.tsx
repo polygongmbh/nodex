@@ -653,14 +653,6 @@ export function TreeTaskItem({
               </button>
             </div>
           )}
-
-          {/* Completed indicator */}
-          {isTaskCompletedStatus(task.status) && task.completedBy && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              <CheckSquare className="w-3 h-3" />
-              <span>{t("tasks.completedBy", { user: task.completedBy })}</span>
-            </div>
-          )}
         </div>
       </div>
 

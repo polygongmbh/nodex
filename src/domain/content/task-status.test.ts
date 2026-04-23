@@ -24,11 +24,11 @@ const baseTask: Task = {
 };
 
 describe("applyTaskStatusUpdate", () => {
-  it("keeps the click cycle three-state even when closed exists", () => {
+  it("cycles terminal states back to the first configured state", () => {
     expect(cycleTaskStatus("open")).toBe("active");
     expect(cycleTaskStatus("active")).toBe("done");
-    expect(cycleTaskStatus("done")).toBe("open");
-    expect(cycleTaskStatus("closed")).toBe("open");
+    expect(cycleTaskStatus("done")).toBe("backlog");
+    expect(cycleTaskStatus("closed")).toBe("backlog");
   });
 
   it("creates a local override for non-local tasks so status does not revert", () => {
@@ -54,14 +54,13 @@ describe("applyTaskStatusUpdate", () => {
     expect(editedAt!.getTime()).toBeGreaterThanOrEqual(before);
   });
 
-  it("clears completedBy when moved to closed", () => {
-    const localTasks: Task[] = [{ ...baseTask, status: "done", completedBy: "me" }];
+  it("updates done tasks to closed without storing completion attribution", () => {
+    const localTasks: Task[] = [{ ...baseTask, status: "done" }];
     const allTasks: Task[] = localTasks;
 
-    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "closed", "me");
+    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "closed");
 
     expect(updated.find((t) => t.id === "n1")?.status).toBe("closed");
-    expect(updated.find((t) => t.id === "n1")?.completedBy).toBeUndefined();
   });
 
   it("does not synthesize a local state update when updating an existing local task", () => {

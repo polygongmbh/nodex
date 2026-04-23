@@ -12,7 +12,6 @@
     "tags": "Tags",
     "less": "less",
     "readOnly": "Read-only task",
-    "completedBy": "Completed by @{{user}}",
     "focusTaskAria": "{{type}}: {{title}}",
     "focusTaskTitle": "Focus {{type}}",
     "focusBreadcrumbTitle": "Focus task: {{title}}",

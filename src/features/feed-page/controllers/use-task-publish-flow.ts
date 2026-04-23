@@ -502,9 +502,6 @@ export function useTaskPublishFlow({
       taskType: normalizedTaskType,
       timestamp: createdAt,
       status: normalizedTaskType === "task" ? (initialStatus || "open") : undefined,
-      likes: 0,
-      replies: 0,
-      reposts: 0,
       dueDate: submissionDueDate,
       dueTime: submissionDueTime,
       dateType: submissionDateType,
@@ -580,13 +577,11 @@ export function useTaskPublishFlow({
 
     if (loadPublishDelayEnabled()) {
       const pendingTaskId = `pending-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-      const pendingUntil = new Date(Date.now() + PUBLISH_UNDO_DELAY_MS);
       setLocalTasks((prev) => [
         {
           ...baseTask,
           id: pendingTaskId,
           pendingPublishToken: pendingTaskId,
-          pendingPublishUntil: pendingUntil,
         },
         ...prev,
       ]);
@@ -631,7 +626,6 @@ export function useTaskPublishFlow({
                   id: publishResult.eventId || task.id,
                   relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
                   pendingPublishToken: undefined,
-                  pendingPublishUntil: undefined,
                 }
               : task
           )
@@ -764,9 +758,6 @@ export function useTaskPublishFlow({
       taskType: draft.taskType,
       timestamp: parseStoredDate(draft.createdAt) || new Date(),
       status: draft.taskType === "task" ? (draft.initialStatus || "open") : undefined,
-      likes: 0,
-      replies: 0,
-      reposts: 0,
       dueDate,
       dueTime: draft.dueTime,
       dateType: draft.dateType,

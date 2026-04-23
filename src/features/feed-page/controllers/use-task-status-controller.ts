@@ -98,9 +98,7 @@ export function useTaskStatusController({
         }));
       }
 
-      setLocalTasks((previous) =>
-        applyTaskStatusUpdate(previous, allTasks, taskId, status, currentUser?.name)
-      );
+      setLocalTasks((previous) => applyTaskStatusUpdate(previous, allTasks, taskId, status));
 
       const timeoutId = window.setTimeout(() => {
         pendingTaskStatusesRef.current.delete(taskId);
@@ -119,7 +117,7 @@ export function useTaskStatusController({
 
       pendingStatusUpdateTimeoutsRef.current.set(taskId, timeoutId);
     },
-    [allTasks, clearPendingStatusUpdate, currentUser?.name, setLocalTasks]
+    [allTasks, clearPendingStatusUpdate, setLocalTasks]
   );
 
   const triggerCompletionCheer = useCallback((taskId: string) => {

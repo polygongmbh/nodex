@@ -25,8 +25,7 @@ export function applyTaskStatusUpdate(
   localTasks: Task[],
   allTasks: Task[],
   taskId: string,
-  newStatus: TaskStatusType,
-  completedBy?: string
+  newStatus: TaskStatusType
 ): Task[] {
   const now = new Date();
   const toLocalStatusUpdatedTask = (task: Task): Task => {
@@ -34,7 +33,6 @@ export function applyTaskStatusUpdate(
       ...task,
       status: newStatus,
       lastEditedAt: now,
-      completedBy: isTaskCompletedStatus(newStatus) ? completedBy : undefined,
     };
   };
   const existingIndex = localTasks.findIndex((task) => task.id === taskId);

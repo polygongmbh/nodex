@@ -80,7 +80,6 @@ function createTask(
   options: {
     parentId?: string;
     status?: TaskStatusType;
-    completedBy?: string;
     dueDate?: Date;
     dueTime?: string;
     timestamp?: Date;
@@ -102,7 +101,6 @@ function createTask(
     replies: options.replies || 0,
     reposts: options.reposts || 0,
     status: options.status,
-    completedBy: options.completedBy,
     dueDate: options.dueDate,
     dueTime: options.dueTime,
     parentId: options.parentId,
@@ -155,7 +153,6 @@ const task1a = createTask(mockPeople[2], "Create wireframes for homepage and lan
   replies: 2,
   parentId: task1.id,
   status: "done",
-  completedBy: MOCK_PUBKEYS.bob,
   dueDate: subDays(today, 2),
 });
 
@@ -181,7 +178,6 @@ const task1b2 = createTask(mockPeople[1], "Add keyboard navigation support #fron
   likes: 2,
   parentId: task1b.id,
   status: "done",
-  completedBy: MOCK_PUBKEYS.alice,
 });
 
 // Comment on navigation task (kind 1 text note with "e" tag reply per NIP-01)
@@ -216,7 +212,6 @@ const task2a = createTask(mockPeople[4], "Design database schema #backend #plann
   replies: 2,
   parentId: task2.id,
   status: "done",
-  completedBy: MOCK_PUBKEYS.david,
   dueDate: subDays(today, 5),
 });
 
@@ -275,7 +270,6 @@ const task3b = createTask(mockPeople[1], "Resolve memory leak in dashboard compo
   replies: 1,
   parentId: task3.id,
   status: "done",
-  completedBy: MOCK_PUBKEYS.alice,
   dueDate: subDays(today, 1),
 });
 
@@ -295,7 +289,6 @@ const task4b = createTask(mockPeople[0], "Research kitchen cabinet styles #desig
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12),
   parentId: task4.id,
   status: "done",
-  completedBy: MOCK_PUBKEYS.me,
 });
 
 // Personal productivity
@@ -361,7 +354,6 @@ const task10 = createTask(mockPeople[4], "Prepare monthly expense report #docs #
   likes: 1,
   dueDate: addDays(today, 1),
   status: "done",
-  completedBy: MOCK_PUBKEYS.david,
 });
 
 const task11 = createTask(mockPeople[2], "Clean up old branches in repository #backend", ["backend"], {

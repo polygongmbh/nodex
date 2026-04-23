@@ -155,16 +155,10 @@ export interface Task {
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   timestamp: Date;
-  likes: number;
-  replies: number;
-  reposts: number;
   lastEditedAt?: Date;
-  isLiked?: boolean;
-  isReposted?: boolean;
   status: TaskStatusType;
   statusDescription?: string;
   stateUpdates?: TaskStateUpdate[];
-  completedBy?: string;
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
@@ -174,7 +168,6 @@ export interface Task {
   priority?: number;
   attachments?: PublishedAttachment[];
   pendingPublishToken?: string;
-  pendingPublishUntil?: Date;
   rawNostrEvent?: RawNostrEvent;
 }
 
