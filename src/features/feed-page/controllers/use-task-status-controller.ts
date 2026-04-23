@@ -148,8 +148,9 @@ export function useTaskStatusController({
       const currentStatus =
         pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask.status) ?? "open";
       if (isTaskTerminalStatus(currentStatus)) return;
-      const nextStatus = getQuickToggleNextState(currentStatus);
-      if (nextStatus === null) return;
+      const nextStateId = getQuickToggleNextState(currentStatus, { mobile: isMobile });
+      if (nextStateId === null) return;
+      const nextStatus = nextStateId as TaskStatusType;
       scheduleTaskStatusReorderUpdate(taskId, nextStatus);
       triggerCompletionFeedback(taskId, nextStatus);
       void publishTaskStateUpdate(taskId, { type: nextStatus });
@@ -158,6 +159,7 @@ export function useTaskStatusController({
       allTasks,
       currentUser,
       guardInteraction,
+      isMobile,
       publishTaskStateUpdate,
       scheduleTaskStatusReorderUpdate,
       triggerCompletionFeedback,
