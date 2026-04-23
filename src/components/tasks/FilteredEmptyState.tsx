@@ -75,6 +75,9 @@ export function FilteredEmptyState() {
     if (surface.searchQuery) {
       void dispatchFeedInteraction({ type: "ui.search.change", query: "" });
     }
+    if (focusedTaskId) {
+      void dispatchFeedInteraction({ type: "task.focus.change", taskId: null });
+    }
   };
 
   return (
