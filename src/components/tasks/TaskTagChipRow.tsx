@@ -98,7 +98,7 @@ function TaskTagChipContent({
             void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
           }}
           className={cn(
-            "shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-xs font-medium",
+            "inline-flex shrink-0 items-center whitespace-nowrap px-1.5 py-0.5 rounded text-xs font-medium leading-none",
             TASK_INTERACTION_STYLES.hashtagChip,
             tagClassName
           )}
@@ -156,7 +156,7 @@ function TaskChipRow({
   return (
     <div className={cn("flex flex-wrap gap-1", className)} data-testid={testId}>
       {hasPriority ? (
-        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
+        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium leading-none text-warning">
           {formatPriorityLabel(priority)}
         </span>
       ) : null}
@@ -197,7 +197,7 @@ export function ScrollableTaskTagChipRow({
       data-testid={testId}
     >
       {hasPriority ? (
-        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
+        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium leading-none text-warning">
           {formatPriorityLabel(priority)}
         </span>
       ) : null}
