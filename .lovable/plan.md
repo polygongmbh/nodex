@@ -1,106 +1,96 @@
-## Onboarding copy overhaul — revision 3
 
-Final pass incorporating all feedback. Only locale files and the intro popover header alignment change.
 
-### Intro popover (app intro, centered title)
+## Goal
 
-- title: "Welcome to Nodex"
-- description: "Nodex turns Nostr into a shared workspace — tasks, comments, and threaded discussions that live across relays instead of any single server."
-- features: "Organize work with channels, spaces, and people filters; capture ideas as tasks or comments with #tags and @mentions; and switch between Timeline, Tree, Kanban, Table, and Calendar to see the same content from any angle."
-- Layout: add `text-center` to the `<h2>` only; description/features and buttons stay as-is.
+Make task card hover tooltips (`title`) more informative across all views by including an extended-but-bounded preview of the task content, instead of the generic "Focus task" / "Focus comment".
 
-### Title Case for all step titles
+## Current Behavior
 
-Capitalize content words; keep articles/short prepositions/conjunctions lowercase unless first/last.
+| View | Hover tooltip today |
+|---|---|
+| Tree (`TreeTaskItem`) | "Focus task" / "Focus comment" — no content |
+| List (`ListTaskRow`) | "Focus task" — no content |
+| Feed (`FeedTaskCard`) | No tooltip on the body at all |
+| Kanban (`KanbanTaskCard`) | No tooltip on the body |
+| Calendar (`CalendarView`) | No tooltip on the task body |
 
-### Navigation
+Only the Tree aria-label uses `task.content.slice(0, 50)`. Tooltips themselves are content-less.
 
-- **navigationSwitcher** — "Switch Views"  
-"Timeline, Tree, Kanban, Table, and Calendar each show the same tasks from a different angle."  
-action: "Switch to any view to continue."
-- **navigationFocus** — "Open a Thread"
-"Click a post to drill into its subitems, comment on it, or add subtasks."
-action: "Click a post to continue."
-- **navigationBreadcrumb** — "Step Back Up"
-"Each item in the breadcrumb row jumps directly to that level in the hierarchy."
-action: "Click your way back to the root to continue."
+## Proposed Behavior
 
-### Sidebar (purposeful section framing kept)
+Hover any task card surface (Tree row, List row, Feed card, Kanban card, Calendar entry) → native browser tooltip shows:
 
-- **filtersRelays** — "Pick Your Spaces"
-"Use the *Spaces* section to choose which spaces are visible. Click the icon of a space to toggle visibility of its posts, or click the name to show its posts exclusively. Colored dots reflect connection status, and the + button opens relay management."
-action: "Toggle a space to continue."
-- **filtersChannels** — "Filter by Channel"
-"Use the *Channels* section to narrow posts by topic. Click a channel name to focus on it, or click the # icon to cycle neutral → include → exclude. The hashtag icon to the left of *Channels* clears all channel filters."
-- **filtersPeople** — "Filter by Person"
-"Use the *People* section to focus on who's involved. Click a name to show only content involving that person, or click the avatar to toggle content involving them on or off. The icon to the left of *People* clears all people filters."
-- **filtersSearch** — "Search Across Views"
-"The bar at the bottom narrows visible tasks by text in every view."
-- **filtersHashtagContent** — "Hashtags Inside Posts"
-"Click a hashtag chip in any post to focus on that tag. Clear the tag filter to return to the full list."
-action: "Click a hashtag chip in a post."
+```
+Focus task: <preview>
+Focus comment: <preview>
+```
 
-### Compose
+Where `<preview>` is:
+- A single-line, whitespace-collapsed version of `task.content`
+- Capped at ~160 characters (extended, not unlimited)
+- Truncated with `…` when longer
+- Falls back to the existing generic label when content is empty (e.g. listings rendered from metadata only)
 
-- **composeKind** — "Task or Comment"
-"The kind selector decides whether what you post is a standalone task or a comment on the parent."
-action: "Open the kind selector to continue."
-- **composeInput** — "Write with #Tags and @Mentions"
-"Use #tags to organize and @mentions to reference people. Included channels are added automatically. Setting a date type makes a task appear on the Calendar; future Start dates are shown as not yet doable."
-action: "Tip: {{alternateModifier}}+Enter submits as the other kind. With autocomplete open, {{alternateModifier}}+Enter or {{alternateModifier}}+click attaches the suggestion as metadata without inserting its text."
+## Implementation
 
-### Mobile
+### 1. New helper: `src/lib/task-content-preview.ts`
 
-- **mobile.navigationNav** — "Switch Views"
-"Use the top navigation to move between Timeline, Tree, Upcoming, and Calendar."
-action: "Tap a view to continue."
-- **mobile.navigationFocus.action**: "Tap a post to continue."
-- **mobile.navigationBreadcrumb.action**: "Tap your way back to the root to continue."
-- **mobile.filtersOpen** — "Open the Menu"
-"Use the menu to manage spaces, fine-tune filters, and update your profile and settings."
-action: "Tap the top-left menu icon to continue."
-- **mobile.filtersProperties** — "Edit Your Profile"
-"Open the profile editor to update your username, display name, picture, verified address, and about text."
-- **mobile.filtersUse** — "Tune Your Filters"
-"Tap space chips to pick spaces, channel chips to cycle neutral → include → exclude, and people chips to toggle individuals. Combine them to focus the timeline."
-- **mobile.composeCombobox** — "Search and Compose"
-"The bottom bar searches as you type and turns the same text into a task or comment with the submit button."
-action: "Tap the bar to continue."
+Add a sibling to the existing `shouldCollapseTaskContent` util:
 
-### Kanban / Calendar
+```ts
+export const TASK_TOOLTIP_PREVIEW_MAX = 160;
 
-- **kanbanColumnsStatus** — "Status by Column"
-"To Do, In Progress, Done, and Closed track status. Dragging a card across columns updates its status."
-action: "Move or open a card to continue."
-- **kanbanCreateInColumn** — "Create in Place"
-"The + in a column header creates a task directly with that column's status."
-action: "Use a column's + to continue."
-- **kanbanDepth** — "Choose What to See"
-"Levels (next to search) toggles between root tasks, limited subtask depths, and leaves-only — tasks with no subtasks of their own."
-action: "Try Top-level, then Leaves only."
-- **calendarMonths** — "Scroll Through Months"
-"Months stack vertically — scroll continuously to move through time."
-- **calendarPickDay** — "Pick a Day"
-"Click any day to load it in the detail panel."
-action: "Click a day to continue."
-- **calendarDayPanel** — "The Day Panel"
-"Review tasks for the selected date, change their status, and create a new task or event for that day."
+export function getTaskTooltipPreview(content: string, max = TASK_TOOLTIP_PREVIEW_MAX): string {
+  const collapsed = content.replace(/\s+/g, " ").trim();
+  if (collapsed.length <= max) return collapsed;
+  return `${collapsed.slice(0, max - 1).trimEnd()}…`;
+}
+```
 
-### Files touched
+### 2. Locale strings (en, de, es)
 
-- `src/locales/en/onboarding.json` — all of the above
-- `src/locales/de/onboarding.json` — translated equivalents
-- `src/locales/es/onboarding.json` — translated equivalents
-- `src/components/onboarding/OnboardingIntroPopover.tsx` — add `text-center` to the title `<h2>`
-- Onboarding tests asserting removed substrings (e.g. "In *Manage*", old titles) — update strings; prefer semantic queries where feasible
+Reuse the existing `focusBreadcrumbTitle` pattern (already includes `{{title}}`) by adding a parallel key for comments and switching the empty-content fallback:
 
-### Verification
+```json
+"focusTaskTitle": "Focus {{type}}",
+"focusTaskWithPreview": "Focus {{type}}: {{preview}}"
+```
 
-- `npx vitest run src/components/onboarding`
-- `npm run build` (type-check)
-- Visual spot-check at 625×1153 and desktop: confirm popovers wrap cleanly without truncation
+(Translate "Focus {{type}}: {{preview}}" / "{{type}} fokussieren: {{preview}}" / "Enfocar {{type}}: {{preview}}".)
 
-### Out of scope
+### 3. Wire previews into each view
 
-- Step ordering, targets, requiredAction logic, scrim/timing work — unchanged
-- Pre-existing unrelated build errors (auth tests, MotdBanner, mobile fixtures) — not addressed here
+Apply the same pattern in five places — compute `preview = getTaskTooltipPreview(task.content)` once, then set `title` to `focusTaskWithPreview` when non-empty, otherwise the existing `focusTaskTitle`.
+
+| File | Change |
+|---|---|
+| `src/components/tasks/TreeTaskItem.tsx` | Replace `title` on the row button (line 303). Also enrich `aria-label` to use the same preview length. |
+| `src/components/tasks/list/ListTaskRow.tsx` | Replace `title` on the content div (line 169). |
+| `src/components/tasks/feed/FeedTaskCard.tsx` | Add `title` to the `TaskSurface` (currently none). |
+| `src/components/tasks/kanban/KanbanTaskCard.tsx` | Add `title` to the `TaskSurface` (currently none). |
+| `src/components/tasks/CalendarView.tsx` | Add `title` to the clickable task row in both the day cell and the "more tasks" popover. |
+
+Tree-specific note: keep using `t("tasks.task")` / `t("tasks.comment")` for the `{{type}}` placeholder so comments still read "Focus comment: …".
+
+### 4. Tests
+
+- Add a small unit test for `getTaskTooltipPreview` covering: short content, long content truncation, multi-line whitespace collapse, empty string.
+- No UI snapshot/copy tests added (per project policy on copy assertions); existing aria-label tests in `FeedView.test.tsx` / `ListView.test.tsx` continue to work because they use regex matching against the title prefix.
+
+## Out of Scope
+
+- Visual hover styling (already handled by `task-card-surface` / `task-hover-text` classes).
+- Any change to the focused/keyboard-ring treatment.
+- Mobile long-press tooltips (browsers don't surface `title` on touch; no change needed).
+
+## Files Touched
+
+- `src/lib/task-content-preview.ts` (add export + test)
+- `src/lib/task-content-preview.test.ts` (new)
+- `src/locales/{en,de,es}/tasks.json`
+- `src/components/tasks/TreeTaskItem.tsx`
+- `src/components/tasks/list/ListTaskRow.tsx`
+- `src/components/tasks/feed/FeedTaskCard.tsx`
+- `src/components/tasks/kanban/KanbanTaskCard.tsx`
+- `src/components/tasks/CalendarView.tsx`
+
