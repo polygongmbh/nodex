@@ -40,6 +40,7 @@ export function useTaskStatusController({
   publishTaskStateUpdate,
 }: UseTaskStatusControllerOptions): UseTaskStatusControllerResult {
   const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
+  const isMobile = useIsMobile();
   const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() =>
     loadCompletionSoundEnabled()
   );
