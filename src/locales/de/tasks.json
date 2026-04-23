@@ -15,6 +15,7 @@
     "completedBy": "Erledigt von @{{user}}",
     "focusTaskAria": "{{type}}: {{title}}",
     "focusTaskTitle": "{{type}} fokussieren",
+    "focusTaskWithPreview": "{{type}} fokussieren: {{preview}}",
     "focusBreadcrumbTitle": "Aufgabe fokussieren: {{title}}",
     "tagsShowAll": "Alle Tags anzeigen",
     "tagsShowLess": "Weniger Tags anzeigen",

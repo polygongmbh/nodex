@@ -15,6 +15,7 @@
     "completedBy": "Completada por @{{user}}",
     "focusTaskAria": "{{type}}: {{title}}",
     "focusTaskTitle": "Enfocar {{type}}",
+    "focusTaskWithPreview": "Enfocar {{type}}: {{preview}}",
     "focusBreadcrumbTitle": "Enfocar tarea: {{title}}",
     "tagsShowAll": "Mostrar todas las etiquetas",
     "tagsShowLess": "Mostrar menos etiquetas",

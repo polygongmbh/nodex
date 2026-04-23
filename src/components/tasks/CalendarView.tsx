@@ -43,7 +43,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
-import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import {
   createCalendarSelectors,
   useTaskViewSource,
@@ -570,6 +570,13 @@ export function CalendarView({
                                   }
                                 }}
                                 className={`text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`}
+                                title={(() => {
+                                  const typeLabel = t("tasks.task").toLowerCase();
+                                  const preview = getTaskTooltipPreview(task.content);
+                                  return preview
+                                    ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
+                                    : t("tasks.focusTaskTitle", { type: typeLabel });
+                                })()}
                               >
                                 {linkifyContent(task.content, (tag) => {
                                   void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
@@ -851,6 +858,13 @@ export function CalendarView({
                             focusTask(task.id);
                           }
                         }}
+                        title={(() => {
+                          const typeLabel = t("tasks.task").toLowerCase();
+                          const preview = getTaskTooltipPreview(task.content);
+                          return preview
+                            ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
+                            : t("tasks.focusTaskTitle", { type: typeLabel });
+                        })()}
                         className={cn(
                           `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                           isTaskTerminalStatus(task.status) && "opacity-60",
