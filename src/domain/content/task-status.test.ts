@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Task } from "@/types";
-import { applyTaskStatusUpdate, cycleTaskStatus } from "./task-status";
+import { applyTaskStatusUpdate } from "./task-status";
 
 const baseTask: Task = {
   id: "n1",
@@ -24,13 +24,6 @@ const baseTask: Task = {
 };
 
 describe("applyTaskStatusUpdate", () => {
-  it("cycles terminal states back to the first configured state", () => {
-    expect(cycleTaskStatus("open")).toBe("active");
-    expect(cycleTaskStatus("active")).toBe("done");
-    expect(cycleTaskStatus("done")).toBe("backlog");
-    expect(cycleTaskStatus("closed")).toBe("backlog");
-  });
-
   it("creates a local override for non-local tasks so status does not revert", () => {
     const localTasks: Task[] = [];
     const allTasks: Task[] = [baseTask];

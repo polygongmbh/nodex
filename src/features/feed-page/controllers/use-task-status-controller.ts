@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task, TaskStatus, TaskStatusType } from "@/types";
 import { getLastEditedAt } from "@/types";
 import type { Person } from "@/types/person";
-import { applyTaskStatusUpdate, cycleTaskStatus } from "@/domain/content/task-status";
+import { applyTaskStatusUpdate, isTaskTerminalStatus } from "@/domain/content/task-status";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import { resolveTaskStateDefinition, getTaskStateRegistry } from "@/domain/task-states/task-state-config";
+import { resolveTaskStateDefinition, getQuickToggleNextState, getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import { notifyStatusRestricted } from "@/lib/notifications";
 import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";
 import { playCompletionPopSound } from "@/lib/completion-feedback";
@@ -145,7 +145,9 @@ export function useTaskStatusController({
       }
       const currentStatus =
         pendingTaskStatusesRef.current.get(taskId) ?? existingTask.status ?? "open";
-      const nextStatus = cycleTaskStatus(currentStatus);
+      if (isTaskTerminalStatus(currentStatus)) return;
+      const nextStatus = getQuickToggleNextState(currentStatus);
+      if (nextStatus === null) return;
       scheduleTaskStatusReorderUpdate(taskId, nextStatus);
       triggerCompletionFeedback(taskId, nextStatus);
       void publishTaskStateUpdate(taskId, { type: nextStatus });
