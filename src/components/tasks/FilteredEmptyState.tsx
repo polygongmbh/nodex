@@ -68,12 +68,15 @@ export function FilteredEmptyState() {
         ? t("tasks.empty.filtered.action")
         : null;
 
-  const showClearFiltersAction = !isLoading && !isError && scopeModel.hasActiveFilters;
+  const showClearFiltersAction = !isLoading && !isError && (scopeModel.hasActiveFilters || Boolean(focusedTaskId));
 
   const handleClearFilters = () => {
     void dispatchFeedInteraction({ type: "filter.resetAll" });
     if (surface.searchQuery) {
       void dispatchFeedInteraction({ type: "ui.search.change", query: "" });
+    }
+    if (focusedTaskId) {
+      void dispatchFeedInteraction({ type: "task.focus.change", taskId: null });
     }
   };
 
