@@ -2,6 +2,7 @@ import { Calendar, Clock, Layers, Lock } from "lucide-react";
 import { ScrollableTaskTagChipRow, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskPrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
+import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -111,7 +112,8 @@ export function KanbanTaskCard({
             priority={task.priority}
             stopPropagation
             className={cn(
-              "ml-auto h-6 rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+              "ml-auto focus:outline-none",
+              TASK_CHIP_STYLES.priority,
               canChangeStatus && "cursor-pointer hover:bg-warning/20",
               !canChangeStatus && "cursor-not-allowed opacity-60"
             )}

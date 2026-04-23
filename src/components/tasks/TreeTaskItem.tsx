@@ -10,7 +10,7 @@ import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
-import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { TASK_CHIP_STYLES, TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
@@ -634,7 +634,8 @@ export function TreeTaskItem({
                 priority={task.priority}
                 stopPropagation
                 className={cn(
-                  "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+                  TASK_CHIP_STYLES.priority,
+                  "focus:outline-none",
                   editableMetadata && "cursor-pointer hover:bg-warning/20",
                   !editableMetadata && "cursor-not-allowed opacity-60"
                 )}
@@ -651,7 +652,8 @@ export function TreeTaskItem({
                   priority={task.priority}
                   stopPropagation
                   className={cn(
-                    "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+                    TASK_CHIP_STYLES.priority,
+                    "focus:outline-none",
                     editableMetadata && "cursor-pointer hover:bg-warning/20",
                     !editableMetadata && "cursor-not-allowed opacity-60"
                   )}
