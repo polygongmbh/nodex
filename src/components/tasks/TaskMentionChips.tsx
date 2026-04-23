@@ -1,6 +1,5 @@
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
-import { AtSign } from "lucide-react";
 import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
