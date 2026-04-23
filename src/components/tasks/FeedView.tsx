@@ -1,5 +1,6 @@
 import { useEffect, useRef, useMemo, useState, type UIEvent } from "react";
-import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
+import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
+import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import {   Task, ComposeRestoreRequest, RawNostrEvent } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -372,12 +373,7 @@ export function FeedView({
   const canCompleteTask = (task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
-  const getStateLabel = (status: Task["status"]) => {
-    if (status === "done") return t("listView.status.done");
-    if (status === "closed") return t("listView.status.closed");
-    if (status === "active") return t("listView.status.active");
-    return t("listView.status.open");
-  };
+  const getStateLabel = (status: Task["status"]) => t(`listView.status.${status || "open"}`);
   const normalizeLabelText = (value?: string) =>
     (value || "")
       .toLowerCase()
@@ -427,15 +423,7 @@ export function FeedView({
         >
           <div className={cn(isMobile ? "px-3" : DESKTOP_FEED_ROW_CONTENT_PADDING)}>
             <div className="flex items-center gap-2 min-w-0">
-              {update.status === "done" ? (
-                <CheckCircle2 className={cn("text-primary flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-              ) : update.status === "closed" ? (
-                <X className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-              ) : update.status === "active" ? (
-                <CircleDot className={cn("text-warning flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-              ) : (
-                <Circle className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-              )}
+              <TaskStateIcon status={update.status} size={isMobile ? "w-3 h-3" : "w-3.5 h-3.5"} className="flex-shrink-0" />
               <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-2">
                 <div className="min-w-0 inline-flex flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
                   <span className="shrink-0">{stateLabel}</span>

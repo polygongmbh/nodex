@@ -1,4 +1,6 @@
-import { Circle, CircleDot, CheckCircle2, HandHelping, MessageSquare, Package, X } from "lucide-react";
+import { HandHelping, MessageSquare, Package } from "lucide-react";
+import { TaskStateIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
+import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import type { ReactNode } from "react";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
@@ -28,7 +30,7 @@ import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { useTranslation } from "react-i18next";
-import type { Nip99ListingStatus, RawNostrEvent, Task } from "@/types";
+import type { Nip99ListingStatus, RawNostrEvent, Task, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
@@ -220,35 +222,17 @@ export function FeedTaskCard({
                     canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                   )}
                 >
-                  {task.status === "done" ? (
-                    <CheckCircle2 className={cn("text-primary", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  ) : task.status === "closed" ? (
-                    <X className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  ) : task.status === "active" ? (
-                    <CircleDot className={cn("text-warning", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  ) : (
-                    <Circle className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  )}
+                  <TaskStateIcon status={task.status} size={isMobile ? "w-4 h-4" : "w-5 h-5"} />
                 </button>
               </DropdownMenuTrigger>
               {canCompleteTask ? (
                 <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("open"); }}>
-                    <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                    {t("listView.status.open")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("active"); }}>
-                    <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                    {t("listView.status.active")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("done"); }}>
-                    <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                    {t("listView.status.done")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("closed"); }}>
-                    <X className="w-4 h-4 mr-2 text-muted-foreground" />
-                    {t("listView.status.closed")}
-                  </DropdownMenuItem>
+                  {getTaskStateRegistry().map((state) => (
+                    <DropdownMenuItem key={state.id} onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id as TaskStatus); }}>
+                      <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
+                      {t(`listView.status.${state.id}`)}
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               ) : null}
             </DropdownMenu>

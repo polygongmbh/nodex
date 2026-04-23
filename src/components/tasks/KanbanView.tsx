@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Plus, X, Circle, CircleDot, CheckCircle2 } from "lucide-react";
+import { Plus } from "lucide-react";
+import { TaskStateIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
+import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import {   Task, TaskInitialStatus, TaskStatus, ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
@@ -30,12 +32,13 @@ interface KanbanViewProps {
   isHydrating?: boolean;
 }
 
-const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
-  { id: "open", label: t("listView.status.open"), icon: <Circle className="w-4 h-4" />, color: "text-muted-foreground" },
-  { id: "active", label: t("listView.status.active"), icon: <CircleDot className="w-4 h-4" />, color: "text-warning" },
-  { id: "done", label: t("listView.status.done"), icon: <CheckCircle2 className="w-4 h-4" />, color: "text-primary" },
-  { id: "closed", label: t("listView.status.closed"), icon: <X className="w-4 h-4" />, color: "text-muted-foreground" },
-];
+const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] =>
+  getTaskStateRegistry().map((state) => ({
+    id: state.type as TaskStatus,
+    label: t(`listView.status.${state.id}`),
+    icon: <TaskStateIcon status={state.type} size="w-4 h-4" />,
+    color: getTaskStateToneClass(state.type),
+  }));
 
 export function KanbanView({
   tasks,

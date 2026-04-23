@@ -129,7 +129,7 @@
       "inProgress": "En progreso",
       "done": "Hecho",
       "closed": "Cerrado",
-      "inProgressShort": "Haciendo"
+      "activeShort": "Haciendo"
     },
     "dates": {
       "setDate": "Establecer fecha...",

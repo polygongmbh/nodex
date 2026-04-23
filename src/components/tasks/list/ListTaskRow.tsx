@@ -1,4 +1,5 @@
-import { Circle, CircleDot, CheckCircle2, X } from "lucide-react";
+import { TaskStateIcon } from "@/components/tasks/task-state-ui";
+import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import type { ReactNode } from "react";
 import {
   DropdownMenu,
@@ -15,7 +16,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
-import type { Task } from "@/types";
+import type { Task, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 
 interface ListTaskRowProps {
@@ -98,59 +99,24 @@ export function ListTaskRow({
                 canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
               )}
             >
-              {task.status === "done" ? (
-                <CheckCircle2 className="w-5 h-5 text-primary" />
-              ) : task.status === "closed" ? (
-                <X className="w-5 h-5 text-muted-foreground" />
-              ) : task.status === "active" ? (
-                <CircleDot className="w-5 h-5 text-warning" />
-              ) : (
-                <Circle className="w-5 h-5 text-muted-foreground" />
-              )}
+              <TaskStateIcon status={task.status} />
             </button>
           </DropdownMenuTrigger>
           {canCompleteTask ? (
             <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                onClick={(event) => {
-                  event.stopPropagation();
-                  dispatchStatusChange("open");
-                }}
-                className={cn((task.status || "open") === "open" && "bg-muted")}
-              >
-                <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                {t("listView.status.open")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(event) => {
-                  event.stopPropagation();
-                  dispatchStatusChange("active");
-                }}
-                className={cn(task.status === "active" && "bg-muted")}
-              >
-                <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                {t("listView.status.active")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(event) => {
-                  event.stopPropagation();
-                  dispatchStatusChange("done");
-                }}
-                className={cn(task.status === "done" && "bg-muted")}
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                {t("listView.status.done")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(event) => {
-                  event.stopPropagation();
-                  dispatchStatusChange("closed");
-                }}
-                className={cn(task.status === "closed" && "bg-muted")}
-              >
-                <X className="w-4 h-4 mr-2 text-muted-foreground" />
-                {t("listView.status.closed")}
-              </DropdownMenuItem>
+              {getTaskStateRegistry().map((state) => (
+                <DropdownMenuItem
+                  key={state.id}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    dispatchStatusChange(state.id as TaskStatus);
+                  }}
+                  className={cn((task.status || "open") === state.id && "bg-muted")}
+                >
+                  <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
+                  {t(`listView.status.${state.id}`)}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           ) : null}
         </DropdownMenu>

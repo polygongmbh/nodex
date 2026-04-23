@@ -1,5 +1,7 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags, X } from "lucide-react";
+import { Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
+import { TaskStateIcon, getTaskStateBadgeClasses } from "@/components/tasks/task-state-ui";
+import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import {   Task, ComposeRestoreRequest, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -330,66 +332,42 @@ export function ListView({
     const editable = canCompleteTask(task);
     const statusClassName = cn(
       "text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap",
-      status === "done" ? "bg-primary/10 text-primary" :
-      status === "closed" ? "bg-muted/80 text-muted-foreground" :
-      status === "active" ? "bg-warning/15 text-warning" :
-      "bg-muted text-muted-foreground"
+      getTaskStateBadgeClasses(status)
     );
+
+    const statusLabel = status === "active" ? (
+      <>
+        <span className="lg:hidden">{t("listView.status.activeShort")}</span>
+        <span className="hidden lg:inline">{t("listView.status.active")}</span>
+      </>
+    ) : t(`listView.status.${status}`);
 
     if (!editable) {
       return (
         <span className={cn(statusClassName, "opacity-60 cursor-not-allowed")}>
-          {status === "active" ? (
-            <>
-              <span className="lg:hidden">{t("listView.status.activeShort")}</span>
-              <span className="hidden lg:inline">{t("listView.status.active")}</span>
-            </>
-          ) : status === "done" ? t("listView.status.done") : status === "closed" ? t("listView.status.closed") : t("listView.status.open")}
+          {statusLabel}
         </span>
       );
     }
-    
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className={cn(statusClassName, "cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all")}>
-            {status === "active" ? (
-              <>
-                <span className="lg:hidden">{t("listView.status.activeShort")}</span>
-                <span className="hidden lg:inline">{t("listView.status.active")}</span>
-              </>
-            ) : status === "done" ? t("listView.status.done") : status === "closed" ? t("listView.status.closed") : t("listView.status.open")}
+            {statusLabel}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem
-            onClick={() => dispatchStatusChange(task.id, "open")}
-            className={cn(status === "open" && "bg-muted")}
-          >
-            <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-            {t("listView.status.open")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => dispatchStatusChange(task.id, "active")}
-            className={cn(status === "active" && "bg-muted")}
-          >
-            <CircleDot className="w-4 h-4 mr-2 text-warning" />
-            {t("listView.status.active")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => dispatchStatusChange(task.id, "done")}
-            className={cn(status === "done" && "bg-muted")}
-          >
-            <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-            {t("listView.status.done")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => dispatchStatusChange(task.id, "closed")}
-            className={cn(status === "closed" && "bg-muted")}
-          >
-            <X className="w-4 h-4 mr-2 text-muted-foreground" />
-            {t("listView.status.closed")}
-          </DropdownMenuItem>
+          {getTaskStateRegistry().map((state) => (
+            <DropdownMenuItem
+              key={state.id}
+              onClick={() => dispatchStatusChange(task.id, state.id as TaskStatus)}
+              className={cn(status === state.id && "bg-muted")}
+            >
+              <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
+              {t(`listView.status.${state.id}`)}
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
     );

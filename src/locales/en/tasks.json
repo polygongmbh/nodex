@@ -129,7 +129,7 @@
       "inProgress": "In Progress",
       "done": "Done",
       "closed": "Closed",
-      "inProgressShort": "Doing"
+      "activeShort": "Doing"
     },
     "dates": {
       "setDate": "Set date...",

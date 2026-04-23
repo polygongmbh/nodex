@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck, X } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
+import { TaskStateIcon } from "@/components/tasks/task-state-ui";
+import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import { cn } from "@/lib/utils";
 import { Task, TaskStatus, Relay } from "@/types";
 import type { Person } from "@/types/person";
@@ -413,59 +415,24 @@ export function TreeTaskItem({
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                 )}
               >
-                {task.status === "done" ? (
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                ) : task.status === "closed" ? (
-                  <X className="w-5 h-5 text-muted-foreground" />
-                ) : task.status === "active" ? (
-                  <CircleDot className="w-5 h-5 text-warning" />
-                ) : (
-                  <Circle className="w-5 h-5 text-muted-foreground" />
-                )}
+                <TaskStateIcon status={task.status} />
               </button>
             </DropdownMenuTrigger>
             {canCompleteTask() && (
               <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "open" });
-                  }}
-                  className={cn((task.status || "open") === "open" && "bg-muted")}
-                >
-                  <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                  {t("listView.status.open")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "active" });
-                  }}
-                  className={cn(task.status === "active" && "bg-muted")}
-                >
-                  <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                  {t("listView.status.active")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "done" });
-                  }}
-                  className={cn(task.status === "done" && "bg-muted")}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                  {t("listView.status.done")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "closed" });
-                  }}
-                  className={cn(task.status === "closed" && "bg-muted")}
-                >
-                  <X className="w-4 h-4 mr-2 text-muted-foreground" />
-                  {t("listView.status.closed")}
-                </DropdownMenuItem>
+                {getTaskStateRegistry().map((state) => (
+                  <DropdownMenuItem
+                    key={state.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: state.id as TaskStatus });
+                    }}
+                    className={cn((task.status || "open") === state.id && "bg-muted")}
+                  >
+                    <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
+                    {t(`listView.status.${state.id}`)}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             )}
           </DropdownMenu>
