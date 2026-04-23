@@ -30,7 +30,7 @@ const peopleAuthor: Person = {
   isSelected: false,
 };
 
-const tasks: Task[] = [makeTask({ id: "task-1", author: taskAuthor, status: "todo" })];
+const tasks: Task[] = [makeTask({ id: "task-1", author: taskAuthor, status: "open" })];
 const channels: Channel[] = [makeChannel()];
 const relays: Relay[] = [makeRelay()];
 

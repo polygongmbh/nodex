@@ -101,10 +101,10 @@ export function TreeTaskItem({
   };
   const getStatusToggleHint = (status?: TaskStatus): string => {
     const alternateKey = getAlternateModifierLabel();
-    if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
+    if (status === "active") return t("hints.statusToggle.active", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
     if (status === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.todo", { alternateKey });
+    return t("hints.statusToggle.open", { alternateKey });
   };
   const hasMatchingChildren = matchingChildren.length > 0;
 
@@ -158,7 +158,7 @@ export function TreeTaskItem({
     const currentStatus = task.status;
     
     if (prevStatus !== currentStatus) {
-      if (currentStatus === "in-progress") {
+      if (currentStatus === "active") {
         setLocalFoldState(getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren));
         setHasLocalFoldOverride(false);
       } else if (isTaskTerminalStatus(currentStatus)) {
@@ -417,7 +417,7 @@ export function TreeTaskItem({
                   <CheckCircle2 className="w-5 h-5 text-primary" />
                 ) : task.status === "closed" ? (
                   <X className="w-5 h-5 text-muted-foreground" />
-                ) : task.status === "in-progress" ? (
+                ) : task.status === "active" ? (
                   <CircleDot className="w-5 h-5 text-warning" />
                 ) : (
                   <Circle className="w-5 h-5 text-muted-foreground" />
@@ -429,22 +429,22 @@ export function TreeTaskItem({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "todo" });
+                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "open" });
                   }}
-                  className={cn((task.status || "todo") === "todo" && "bg-muted")}
+                  className={cn((task.status || "open") === "open" && "bg-muted")}
                 >
                   <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                  {t("listView.status.todo")}
+                  {t("listView.status.open")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "in-progress" });
+                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "active" });
                   }}
-                  className={cn(task.status === "in-progress" && "bg-muted")}
+                  className={cn(task.status === "active" && "bg-muted")}
                 >
                   <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                  {t("listView.status.inProgress")}
+                  {t("listView.status.active")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {

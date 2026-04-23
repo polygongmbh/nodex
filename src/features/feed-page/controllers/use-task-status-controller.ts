@@ -86,7 +86,7 @@ export function useTaskStatusController({
       clearPendingStatusUpdate(taskId);
       const existingTask = allTasks.find((task) => task.id === taskId);
       const currentStatus =
-        pendingTaskStatusesRef.current.get(taskId) ?? existingTask?.status ?? "todo";
+        pendingTaskStatusesRef.current.get(taskId) ?? existingTask?.status ?? "open";
       pendingTaskStatusesRef.current.set(taskId, status);
       setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
       if (existingTask) {
@@ -145,7 +145,7 @@ export function useTaskStatusController({
         return;
       }
       const currentStatus =
-        pendingTaskStatusesRef.current.get(taskId) ?? existingTask.status ?? "todo";
+        pendingTaskStatusesRef.current.get(taskId) ?? existingTask.status ?? "open";
       const nextStatus = cycleTaskStatus(currentStatus);
       scheduleTaskStatusReorderUpdate(taskId, nextStatus);
       triggerCompletionFeedback(taskId, nextStatus);

@@ -55,7 +55,7 @@ describe("CalendarView responsiveness", () => {
       likes: 0,
       replies: 0,
       reposts: 0,
-      status: "todo",
+      status: "open",
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     };
     const child: Task = {
@@ -140,7 +140,7 @@ describe("CalendarView responsiveness", () => {
       id: "open-calendar-task",
       author: people[0],
       content: "Open calendar task #general",
-      status: "todo",
+      status: "open",
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });
     const doneTask = makeTask({
@@ -178,7 +178,7 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Calendar priority task #general",
       tags: ["general"],
-      status: "todo",
+      status: "open",
       dueDate: new Date("2026-02-18T12:00:00.000Z"),
       priority: 80,
     });
@@ -203,14 +203,14 @@ describe("CalendarView responsiveness", () => {
       id: "calendar-parent",
       author: people[0],
       content: "Calendar parent #general",
-      status: "todo",
+      status: "open",
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });
     const child = makeTask({
       id: "calendar-child",
       author: people[0],
       content: "Calendar child #general",
-      status: "todo",
+      status: "open",
       dueDate: new Date("2026-02-18T11:00:00.000Z"),
       parentId: "calendar-parent",
     });
@@ -237,7 +237,7 @@ describe("CalendarView responsiveness", () => {
       id: "calendar-leaf",
       author: people[0],
       content: "Calendar leaf #general",
-      status: "todo",
+      status: "open",
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });
 

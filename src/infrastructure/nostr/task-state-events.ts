@@ -30,7 +30,9 @@ export function mapTaskStatusToStateEvent(
   if (status === "closed") {
     return { kind: NostrEventKind.GitStatusClosed, content: description?.trim() || "" };
   }
-  if (status === "in-progress") {
+  // Both "open" and "active" map to GitStatusOpen;
+  // active states carry a label as content to distinguish from plain open.
+  if (status === "active") {
     return {
       kind: NostrEventKind.GitStatusOpen,
       content: description?.trim() || "In Progress",
@@ -51,8 +53,8 @@ export function mapTaskStateEventToTaskStatus(
     return { status: "closed", statusDescription };
   }
   if (kind === NostrEventKind.GitStatusOpen || kind === NostrEventKind.GitStatusDraft || kind === NostrEventKind.Procedure) {
-    if (!statusDescription) return { status: "todo" };
-    return { status: "in-progress", statusDescription };
+    if (!statusDescription) return { status: "open" };
+    return { status: "active", statusDescription };
   }
-  return { status: "todo", statusDescription };
+  return { status: "open", statusDescription };
 }

@@ -9,18 +9,18 @@ describe("getDueDateColorClass", () => {
   it("uses red for overdue and muted for missing/done", () => {
     expect(getDueDateColorClass(undefined)).toBe("text-muted-foreground");
     expect(getDueDateColorClass(addDays(today, 3), "done")).toBe("text-muted-foreground");
-    expect(getDueDateColorClass(subDays(today, 1), "todo")).toBe("text-destructive");
+    expect(getDueDateColorClass(subDays(today, 1), "open")).toBe("text-destructive");
   });
 
   it("keeps near dates yellow and shifts gradually greener farther away", () => {
-    expect(getDueDateColorClass(today, "todo")).toBe("text-warning");
-    expect(getDueDateColorClass(addDays(today, 1), "todo")).toBe("text-due-near");
-    expect(getDueDateColorClass(addDays(today, 2), "todo")).toBe("text-due-near");
-    expect(getDueDateColorClass(addDays(today, 3), "todo")).toBe("text-due-mid");
-    expect(getDueDateColorClass(addDays(today, 5), "todo")).toBe("text-due-mid");
-    expect(getDueDateColorClass(addDays(today, 6), "todo")).toBe("text-due-far");
-    expect(getDueDateColorClass(addDays(today, 14), "todo")).toBe("text-due-far");
-    expect(getDueDateColorClass(addDays(today, 21), "todo")).toBe("text-due-distant");
+    expect(getDueDateColorClass(today, "open")).toBe("text-warning");
+    expect(getDueDateColorClass(addDays(today, 1), "open")).toBe("text-due-near");
+    expect(getDueDateColorClass(addDays(today, 2), "open")).toBe("text-due-near");
+    expect(getDueDateColorClass(addDays(today, 3), "open")).toBe("text-due-mid");
+    expect(getDueDateColorClass(addDays(today, 5), "open")).toBe("text-due-mid");
+    expect(getDueDateColorClass(addDays(today, 6), "open")).toBe("text-due-far");
+    expect(getDueDateColorClass(addDays(today, 14), "open")).toBe("text-due-far");
+    expect(getDueDateColorClass(addDays(today, 21), "open")).toBe("text-due-distant");
   });
 });
 
@@ -35,8 +35,8 @@ describe("sortTasks", () => {
         lastEditedAt: new Date("2026-02-18T10:00:00.000Z"),
       }),
       makeTask({
-        id: "in-progress",
-        status: "in-progress",
+        id: "active",
+        status: "active",
         lastEditedAt: new Date("2026-02-18T12:00:00.000Z"),
       }),
       makeTask({
@@ -79,7 +79,7 @@ describe("sortTasks", () => {
 
     expect(sorted.map((task) => task.id)).toEqual([
       "due-now",
-      "in-progress",
+      "active",
       "high-priority",
       "upcoming-due",
       "medium-priority",

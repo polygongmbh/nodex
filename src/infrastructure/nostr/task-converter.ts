@@ -167,7 +167,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const nip99 = feedMessageType ? parseNip99MetadataFromTags(event.tags) : undefined;
   const locationGeohash = parseFirstGeohashTag(event.tags);
 
-  let status: TaskStatus = "todo";
+  let status: TaskStatus = "open";
   const statusTag = event.tags.find((tag) => tag[0] === "status");
   if (statusTag) {
     const statusValue = statusTag[1].toLowerCase();
@@ -176,7 +176,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     } else if (statusValue === "closed") {
       status = "closed";
     } else if (statusValue === "in-progress" || statusValue === "active") {
-      status = "in-progress";
+      status = "active";
     }
   }
 

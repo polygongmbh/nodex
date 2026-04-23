@@ -164,7 +164,7 @@ const task1b = createTask(mockPeople[3], "Implement responsive navigation compon
   likes: 3,
   replies: 1,
   parentId: task1.id,
-  status: "in-progress",
+  status: "active",
   dueDate: today,
   dueTime: "14:00",
 });
@@ -265,7 +265,7 @@ const task3a = createTask(mockPeople[4], "Fix login redirect loop on mobile Safa
   likes: 3,
   replies: 2,
   parentId: task3.id,
-  status: "in-progress",
+  status: "active",
   dueDate: today,
 });
 
@@ -348,7 +348,7 @@ const task8 = createTask(mockPeople[3], "Update project dependencies to latest v
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
   likes: 2,
   replies: 1,
-  status: "in-progress",
+  status: "active",
 });
 
 const task9 = createTask(mockPeople[0], "Buy groceries for the week #planning", ["planning"], {

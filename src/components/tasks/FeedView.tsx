@@ -183,10 +183,10 @@ export function FeedView({
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
+    if (status === "active") return t("hints.statusToggle.active", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
     if (status === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.todo", { alternateKey });
+    return t("hints.statusToggle.open", { alternateKey });
   };
 
   const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1023px)";
@@ -375,8 +375,8 @@ export function FeedView({
   const getStateLabel = (status: Task["status"]) => {
     if (status === "done") return t("listView.status.done");
     if (status === "closed") return t("listView.status.closed");
-    if (status === "in-progress") return t("listView.status.inProgress");
-    return t("listView.status.todo");
+    if (status === "active") return t("listView.status.active");
+    return t("listView.status.open");
   };
   const normalizeLabelText = (value?: string) =>
     (value || "")
@@ -409,7 +409,7 @@ export function FeedView({
       const stateLabel = getStateLabel(update.status);
       const statusDescription = update.statusDescription?.trim();
       const isDefaultInProgressDescription =
-        update.status === "in-progress" &&
+        update.status === "active" &&
         normalizeLabelText(statusDescription) === normalizeLabelText("In Progress");
       const showStatusDescription =
         Boolean(statusDescription) &&
@@ -431,7 +431,7 @@ export function FeedView({
                 <CheckCircle2 className={cn("text-primary flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
               ) : update.status === "closed" ? (
                 <X className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-              ) : update.status === "in-progress" ? (
+              ) : update.status === "active" ? (
                 <CircleDot className={cn("text-warning flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
               ) : (
                 <Circle className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />

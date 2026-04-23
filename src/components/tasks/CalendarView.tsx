@@ -90,10 +90,10 @@ export function CalendarView({
   const activeRelays = relays.filter((relay) => relay.isActive);
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
+    if (status === "active") return t("hints.statusToggle.active", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
     if (status === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.todo", { alternateKey });
+    return t("hints.statusToggle.open", { alternateKey });
   };
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -523,7 +523,7 @@ export function CalendarView({
                                     <CheckCircle2 className="w-4 h-4 text-primary" />
                                   ) : task.status === "closed" ? (
                                     <X className="w-4 h-4 text-muted-foreground" />
-                                  ) : task.status === "in-progress" ? (
+                                  ) : task.status === "active" ? (
                                     <CircleDot className="w-4 h-4 text-warning" />
                                   ) : (
                                     <Circle className="w-4 h-4 text-muted-foreground" />
@@ -535,20 +535,20 @@ export function CalendarView({
                                   <DropdownMenuItem
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      dispatchStatusChange(task.id, "todo");
+                                      dispatchStatusChange(task.id, "open");
                                     }}
                                   >
                                     <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                                    {t("listView.status.todo")}
+                                    {t("listView.status.open")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      dispatchStatusChange(task.id, "in-progress");
+                                      dispatchStatusChange(task.id, "active");
                                     }}
                                   >
                                     <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                                    {t("listView.status.inProgress")}
+                                    {t("listView.status.active")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={(event) => {
@@ -709,7 +709,7 @@ export function CalendarView({
                                           "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
                                           isTaskTerminalStatus(task.status)
                                             ? "bg-muted text-muted-foreground line-through"
-                                            : task.status === "in-progress"
+                                            : task.status === "active"
                                               ? "bg-warning/15 text-warning"
                                               : "bg-primary/10"
                                         )}
@@ -970,7 +970,7 @@ export function CalendarView({
                                   <CheckCircle2 className="w-4 h-4 text-primary" />
                                 ) : task.status === "closed" ? (
                                   <X className="w-4 h-4 text-muted-foreground" />
-                                ) : task.status === "in-progress" ? (
+                                ) : task.status === "active" ? (
                                   <CircleDot className="w-4 h-4 text-warning" />
                                 ) : (
                                   <Circle className="w-4 h-4 text-muted-foreground" />
@@ -982,20 +982,20 @@ export function CalendarView({
                                 <DropdownMenuItem
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    dispatchStatusChange(task.id, "todo");
+                                    dispatchStatusChange(task.id, "open");
                                   }}
                                 >
                                   <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                                  {t("listView.status.todo")}
+                                  {t("listView.status.open")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    dispatchStatusChange(task.id, "in-progress");
+                                    dispatchStatusChange(task.id, "active");
                                   }}
                                 >
                                   <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                                  {t("listView.status.inProgress")}
+                                  {t("listView.status.active")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={(event) => {

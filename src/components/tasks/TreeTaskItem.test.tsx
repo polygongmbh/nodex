@@ -45,7 +45,7 @@ const baseTask: Task = makeTask({
   author: makePerson({ id: "me", name: "me", displayName: "Me" }),
   content: "Ship feature #frontend",
   tags: ["frontend"],
-  status: "todo",
+  status: "open",
 });
 
 beforeEach(() => {
@@ -68,7 +68,7 @@ function renderTreeTaskItem(props: Partial<ComponentProps<typeof TreeTaskItem>> 
 describe("TreeTaskItem status actions", () => {
   it("cycles between matching, collapsed, and all-visible child states", () => {
     const doneChild = makeTask({ id: "done-child", parentId: "t1", content: "Done child", status: "done" });
-    const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", status: "todo" });
+    const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", status: "open" });
     const childrenMap = new Map<string | undefined, Task[]>([["t1", [openChild, doneChild]]]);
 
     renderTreeTaskItem({
@@ -106,7 +106,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when toggling from in progress to done", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: "in-progress" } });
+    renderTreeTaskItem({ task: { ...baseTask, status: "active" } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
@@ -158,7 +158,7 @@ describe("TreeTaskItem status actions", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "t1",
-      status: "in-progress",
+      status: "active",
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });

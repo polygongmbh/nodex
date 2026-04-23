@@ -9,7 +9,7 @@ import { makeTask } from "@/test/fixtures";
 describe("deriveTreeTaskItemChildren", () => {
   it("separates task children from comment children and counts completed subtasks", () => {
     const parent = makeTask({ id: "parent" });
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "todo" });
+    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "open" });
     const doneChild = makeTask({ id: "done-child", parentId: "parent", status: "done" });
     const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
 
@@ -27,7 +27,7 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("uses non-terminal task children as the default matching set when filters are inactive", () => {
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "todo" });
+    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "open" });
     const closedChild = makeTask({ id: "closed-child", parentId: "parent", status: "closed" });
     const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
 
@@ -44,8 +44,8 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("uses filtered children as the matching set when filters are active", () => {
-    const visibleTask = makeTask({ id: "visible-task", parentId: "parent", status: "todo" });
-    const hiddenTask = makeTask({ id: "hidden-task", parentId: "parent", status: "todo" });
+    const visibleTask = makeTask({ id: "visible-task", parentId: "parent", status: "open" });
+    const hiddenTask = makeTask({ id: "hidden-task", parentId: "parent", status: "open" });
     const visibleComment = makeTask({ id: "visible-comment", parentId: "parent", taskType: "comment" });
 
     const summary = deriveTreeTaskItemChildren({
@@ -61,7 +61,7 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("falls back to open children for matching-only when tree matching filters are inactive", () => {
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "todo" });
+    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "open" });
     const doneChild = makeTask({ id: "done-child", parentId: "parent", status: "done" });
 
     const summary = deriveTreeTaskItemChildren({
@@ -76,7 +76,7 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("keeps matching descendant branches visible when the current task directly matches the filter", () => {
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "todo" });
+    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "open" });
     const doneChild = makeTask({ id: "done-child", parentId: "parent", status: "done" });
     const matchingDoneChild = makeTask({ id: "matching-done-child", parentId: "parent", status: "done" });
 

@@ -45,11 +45,11 @@ describe("mergeTasks", () => {
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:01:00.000Z"),
       relays: ["relay-a"],
-      status: "todo",
+      status: "open",
       stateUpdates: [
         {
           id: "local-state-1",
-          status: "in-progress",
+          status: "active",
           timestamp: new Date("2026-02-17T10:01:00.000Z"),
           authorPubkey: "local-author",
         },

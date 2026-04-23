@@ -8,8 +8,8 @@ import {
 } from "./task-state-events";
 
 describe("task-state-events", () => {
-  it("maps in-progress to Open kind with description", () => {
-    const mapped = mapTaskStatusToStateEvent("in-progress");
+  it("maps active to Open kind with description", () => {
+    const mapped = mapTaskStatusToStateEvent("active");
     expect(mapped.kind).toBe(NostrEventKind.GitStatusOpen);
     expect(mapped.content).toBe("In Progress");
   });
@@ -34,12 +34,21 @@ describe("task-state-events", () => {
     expect(target).toBe("task-prop");
   });
 
-  it("maps Open with description to in-progress", () => {
+  it("maps Open without description to open", () => {
+    const mapped = mapTaskStateEventToTaskStatus(
+      NostrEventKind.GitStatusOpen,
+      ""
+    );
+    expect(mapped.status).toBe("open");
+    expect(mapped.statusDescription).toBeUndefined();
+  });
+
+  it("maps Open with description to active", () => {
     const mapped = mapTaskStateEventToTaskStatus(
       NostrEventKind.GitStatusOpen,
       "Working on this now"
     );
-    expect(mapped.status).toBe("in-progress");
+    expect(mapped.status).toBe("active");
     expect(mapped.statusDescription).toBe("Working on this now");
   });
 

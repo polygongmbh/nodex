@@ -1,19 +1,24 @@
 import { Task, TaskStatus } from "@/types";
+import {
+  isTaskCompletedState,
+  isTaskTerminalState as registryIsTerminal,
+  getQuickToggleNextState,
+  getTaskStateRegistry,
+} from "@/domain/task-states/task-state-config";
 
-export function isTaskCompletedStatus(status: TaskStatus | undefined): status is "done" {
-  return status === "done";
+export function isTaskCompletedStatus(status: TaskStatus | undefined): boolean {
+  return isTaskCompletedState(status);
 }
 
-export function isTaskTerminalStatus(
-  status: TaskStatus | undefined
-): status is "done" | "closed" {
-  return status === "done" || status === "closed";
+export function isTaskTerminalStatus(status: TaskStatus | undefined): boolean {
+  return registryIsTerminal(status);
 }
 
 export function cycleTaskStatus(current: TaskStatus | undefined): TaskStatus {
-  if (current === "todo" || !current) return "in-progress";
-  if (current === "in-progress") return "done";
-  return "todo";
+  const next = getQuickToggleNextState(current);
+  if (next !== null) return next as TaskStatus;
+  // Terminal states cycle back to first state
+  return (getTaskStateRegistry()[0]?.id ?? "open") as TaskStatus;
 }
 
 export function applyTaskStatusUpdate(

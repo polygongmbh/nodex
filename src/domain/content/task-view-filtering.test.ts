@@ -197,7 +197,7 @@ describe("task view filtering", () => {
         id: "todo-task",
         content: "Todo task #alpha",
         tags: ["alpha"],
-        status: "todo",
+        status: "open",
       }),
       makeTask({
         id: "done-task",
@@ -251,7 +251,7 @@ describe("task view filtering", () => {
         parentId: "closed-root",
         content: "Open child #alpha",
         tags: ["alpha"],
-        status: "todo",
+        status: "open",
       }),
       makeTask({
         id: "closed-descendant",

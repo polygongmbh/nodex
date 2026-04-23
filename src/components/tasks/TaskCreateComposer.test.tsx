@@ -124,7 +124,7 @@ describe("TaskCreateComposer", () => {
     renderCreateComposer({
       onCancel,
       focusedTaskId: "parent-task",
-      initialStatus: "in-progress",
+      initialStatus: "active",
       closeOnSuccess: true,
       allowComment: false,
     });
@@ -140,7 +140,7 @@ describe("TaskCreateComposer", () => {
           type: "task.create",
           content: "Ship #backend",
           focusedTaskId: "parent-task",
-          initialStatus: "in-progress",
+          initialStatus: "active",
         })
       );
     });

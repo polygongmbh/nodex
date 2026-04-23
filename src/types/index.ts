@@ -53,7 +53,7 @@ export type TaskCreateFailureReason =
 export type TaskCreateResult =
   | { ok: true; mode: "published" | "local" | "queued" }
   | { ok: false; reason: TaskCreateFailureReason };
-export type TaskStatus = "todo" | "in-progress" | "done" | "closed";
+export type TaskStatus = "open" | "active" | "done" | "closed";
 export type TaskInitialStatus = Exclude<TaskStatus, "closed">;
 export type OnNewTask = (
   content: string,

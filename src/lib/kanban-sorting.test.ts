@@ -21,7 +21,7 @@ const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
   likes: 0,
   replies: 0,
   reposts: 0,
-  status: "todo",
+  status: "open",
 });
 
 describe("sortByLatestModified", () => {

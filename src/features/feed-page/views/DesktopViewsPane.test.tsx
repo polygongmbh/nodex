@@ -102,7 +102,7 @@ describe("DesktopViewsPane overlay", () => {
       id: "pane-task",
       author,
       content: "Pane task #general",
-      status: "todo",
+      status: "open",
     });
 
     const { container } = renderPane("list", {
@@ -121,7 +121,7 @@ describe("DesktopViewsPane overlay", () => {
       id: "focused-leaf",
       author,
       content: "Focused leaf #general",
-      status: "todo",
+      status: "open",
     });
 
     renderPane("list", {
@@ -140,7 +140,7 @@ describe("DesktopViewsPane overlay", () => {
       id: "focused-feed-leaf",
       author,
       content: "Focused feed leaf #general",
-      status: "todo",
+      status: "open",
     });
 
     const { container } = renderPane("feed", {

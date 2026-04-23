@@ -123,6 +123,8 @@
       "reset": "Reset to default sorting"
     },
     "status": {
+      "open": "Open",
+      "active": "In Progress",
       "todo": "To Do",
       "inProgress": "In Progress",
       "done": "Done",
@@ -166,6 +168,8 @@
   },
   "hints": {
     "statusToggle": {
+      "open": "Mark task in progress. Hold {{alternateKey}} while clicking to select status.",
+      "active": "Mark task done. Hold {{alternateKey}} while clicking to select status.",
       "todo": "Mark task in progress. Hold {{alternateKey}} while clicking to select status.",
       "inProgress": "Mark task done. Hold {{alternateKey}} while clicking to select status.",
       "done": "Task is done. Click to select status.",

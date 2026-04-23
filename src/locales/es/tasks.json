@@ -123,6 +123,8 @@
       "reset": "Restablecer orden por defecto"
     },
     "status": {
+      "open": "Por hacer",
+      "active": "En progreso",
       "todo": "Por hacer",
       "inProgress": "En progreso",
       "done": "Hecho",
@@ -166,6 +168,8 @@
   },
   "hints": {
     "statusToggle": {
+      "open": "Marcar tarea en progreso. Mantén {{alternateKey}} al hacer clic para elegir el estado.",
+      "active": "Marcar tarea como hecha. Mantén {{alternateKey}} al hacer clic para elegir el estado.",
       "todo": "Marcar tarea en progreso. Mantén {{alternateKey}} al hacer clic para elegir el estado.",
       "inProgress": "Marcar tarea como hecha. Mantén {{alternateKey}} al hacer clic para elegir el estado.",
       "done": "La tarea está hecha. Haz clic para elegir el estado.",

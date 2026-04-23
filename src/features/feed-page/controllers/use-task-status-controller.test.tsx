@@ -8,11 +8,11 @@ const author = makePerson({ id: "author-pubkey", name: "author", displayName: "A
 const initialTask = makeTask({
   id: "task-1",
   author,
-  status: "todo",
+  status: "open",
   stateUpdates: [
     {
       id: "relay-state-1",
-      status: "todo",
+      status: "open",
       timestamp: new Date("2026-01-01T00:00:00.000Z"),
       authorPubkey: author.id,
     },
@@ -35,7 +35,7 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
       <button type="button" onClick={() => controller.handleStatusChange("task-1", "done")}>
         SetDone
       </button>
-      <button type="button" onClick={() => controller.handleStatusChange("task-1", "in-progress")}>
+      <button type="button" onClick={() => controller.handleStatusChange("task-1", "active")}>
         SetInProgress
       </button>
       <output data-testid="status">{allTasks[0]?.status || ""}</output>
@@ -63,14 +63,14 @@ describe("useTaskStatusController", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
     render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
 
-    expect(screen.getByTestId("status")).toHaveTextContent("todo");
+    expect(screen.getByTestId("status")).toHaveTextContent("open");
     expect(screen.getByTestId("state-update-count")).toHaveTextContent("1");
 
     fireEvent.click(screen.getByRole("button", { name: "SetDone" }));
 
     expect(screen.getByTestId("status")).toHaveTextContent("done");
     expect(screen.getByTestId("state-update-count")).toHaveTextContent("1");
-    expect(screen.getByTestId("sort-hold")).toHaveTextContent("todo");
+    expect(screen.getByTestId("sort-hold")).toHaveTextContent("open");
     expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", "done");
 
     act(() => {
@@ -89,16 +89,16 @@ describe("useTaskStatusController", () => {
     fireEvent.click(screen.getByRole("button", { name: "SetDone" }));
     fireEvent.click(screen.getByRole("button", { name: "SetInProgress" }));
 
-    expect(screen.getByTestId("status")).toHaveTextContent("in-progress");
+    expect(screen.getByTestId("status")).toHaveTextContent("active");
     expect(screen.getByTestId("sort-hold")).toHaveTextContent("done");
     expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(1, "task-1", "done");
-    expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(2, "task-1", "in-progress");
+    expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(2, "task-1", "active");
 
     act(() => {
       vi.advanceTimersByTime(300);
     });
 
-    expect(screen.getByTestId("status")).toHaveTextContent("in-progress");
+    expect(screen.getByTestId("status")).toHaveTextContent("active");
     expect(screen.getByTestId("sort-hold")).toBeEmptyDOMElement();
   });
 });

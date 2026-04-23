@@ -46,7 +46,7 @@ function Harness({
           controls.publishTaskCreateFollowUps({
             publishedEventId: "a".repeat(64),
             taskType: "task",
-            initialStatus: "todo",
+            initialStatus: "open",
             content: "Task content",
             fallbackRelayUrls: ["wss://relay.one"],
           })

@@ -105,14 +105,14 @@ describe("ScopeFooterHint", () => {
   });
 
   it("appends parent context to the footer scope sentence", () => {
-    const parentTask = makeTask({ id: "parent", author, content: "Parent Task\nSecond line should not be shown", status: "todo" });
+    const parentTask = makeTask({ id: "parent", author, content: "Parent Task\nSecond line should not be shown", status: "open" });
     renderHint({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText(`${FOOTER_SCOPE_TEXT}${PARENT_SCOPE_SUFFIX}`)).toBeInTheDocument();
   });
 
   it("truncates long parent context in the footer scope sentence", () => {
-    const parentTask = makeTask({ id: "parent", author, content: "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA", status: "todo" });
+    const parentTask = makeTask({ id: "parent", author, content: "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA", status: "open" });
     renderHint({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>

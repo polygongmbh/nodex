@@ -83,10 +83,10 @@ export function FeedTaskCard({
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
+    if (status === "active") return t("hints.statusToggle.active", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
     if (status === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.todo", { alternateKey });
+    return t("hints.statusToggle.open", { alternateKey });
   };
   const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
   const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
@@ -224,7 +224,7 @@ export function FeedTaskCard({
                     <CheckCircle2 className={cn("text-primary", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                   ) : task.status === "closed" ? (
                     <X className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  ) : task.status === "in-progress" ? (
+                  ) : task.status === "active" ? (
                     <CircleDot className={cn("text-warning", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                   ) : (
                     <Circle className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
@@ -233,13 +233,13 @@ export function FeedTaskCard({
               </DropdownMenuTrigger>
               {canCompleteTask ? (
                 <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("todo"); }}>
+                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("open"); }}>
                     <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                    {t("listView.status.todo")}
+                    {t("listView.status.open")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("in-progress"); }}>
+                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("active"); }}>
                     <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                    {t("listView.status.inProgress")}
+                    {t("listView.status.active")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("done"); }}>
                     <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />

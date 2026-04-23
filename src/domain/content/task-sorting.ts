@@ -1,5 +1,6 @@
 import { Task, TaskStatus, getLastEditedAt } from "@/types";
 import { isTaskTerminalStatus } from "./task-status";
+import { getTaskStateUiType } from "@/domain/task-states/task-state-config";
 import { isToday, isTomorrow, isPast, startOfDay, differenceInDays } from "date-fns";
 
 /**
@@ -35,12 +36,12 @@ function getTaskById(taskId: string, context: SortContext): Task | undefined {
 }
 
 // Check if a task or any of its descendants is in-progress
-export function hasInProgressInTree(taskId: string, context: SortContext): boolean {
+export function hasActiveInTree(taskId: string, context: SortContext): boolean {
   const task = getTaskById(taskId, context);
-  if (getStatusForSort(task) === "in-progress") return true;
+  if (getTaskStateUiType(getStatusForSort(task)) === "active") return true;
   
   const children = context.childrenMap.get(taskId) || [];
-  return children.some(child => hasInProgressInTree(child.id, context));
+  return children.some(child => hasActiveInTree(child.id, context));
 }
 
 // Get the earliest deadline in a task tree (task + descendants)
@@ -96,7 +97,7 @@ export function sortTasks(tasks: Task[], context: SortContext): Task[] {
   const latestModifiedInTreeCache = new Map<string, number>();
   const highestPriorityInTreeCache = new Map<string, number | undefined>();
   const dueTodayOrPastCache = new Map<string, boolean>();
-  const inProgressInTreeCache = new Map<string, boolean>();
+  const activeInTreeCache = new Map<string, boolean>();
   const earliestDeadlineInTreeCache = new Map<string, Date | null>();
 
   const latestModifiedInTree = (taskId: string): number => {
@@ -141,11 +142,11 @@ export function sortTasks(tasks: Task[], context: SortContext): Task[] {
     return value;
   };
 
-  const inProgressTree = (taskId: string): boolean => {
-    const cached = inProgressInTreeCache.get(taskId);
+  const activeInTree = (taskId: string): boolean => {
+    const cached = activeInTreeCache.get(taskId);
     if (cached !== undefined) return cached;
-    const value = hasInProgressInTree(taskId, context);
-    inProgressInTreeCache.set(taskId, value);
+    const value = hasActiveInTree(taskId, context);
+    activeInTreeCache.set(taskId, value);
     return value;
   };
 
@@ -159,13 +160,13 @@ export function sortTasks(tasks: Task[], context: SortContext): Task[] {
   };
 
   const getSortTier = (task: Task): number => {
-    const status = getStatusForSort(task) || "todo";
+    const status = getStatusForSort(task) || "open";
     if (isTaskTerminalStatus(status)) return 7;
 
     if (dueTodayOrPastInTree(task.id)) return 0;
 
-    const hasInProgress = status === "in-progress" || inProgressTree(task.id);
-    if (hasInProgress) return 1;
+    const hasActive = getTaskStateUiType(status) === "active" || activeInTree(task.id);
+    if (hasActive) return 1;
 
     const highestPriority = highestPriorityInTree(task.id);
     if (typeof highestPriority === "number" && highestPriority >= 50) return 2;

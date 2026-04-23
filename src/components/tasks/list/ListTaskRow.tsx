@@ -102,7 +102,7 @@ export function ListTaskRow({
                 <CheckCircle2 className="w-5 h-5 text-primary" />
               ) : task.status === "closed" ? (
                 <X className="w-5 h-5 text-muted-foreground" />
-              ) : task.status === "in-progress" ? (
+              ) : task.status === "active" ? (
                 <CircleDot className="w-5 h-5 text-warning" />
               ) : (
                 <Circle className="w-5 h-5 text-muted-foreground" />
@@ -114,22 +114,22 @@ export function ListTaskRow({
               <DropdownMenuItem
                 onClick={(event) => {
                   event.stopPropagation();
-                  dispatchStatusChange("todo");
+                  dispatchStatusChange("open");
                 }}
-                className={cn((task.status || "todo") === "todo" && "bg-muted")}
+                className={cn((task.status || "open") === "open" && "bg-muted")}
               >
                 <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                {t("listView.status.todo")}
+                {t("listView.status.open")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(event) => {
                   event.stopPropagation();
-                  dispatchStatusChange("in-progress");
+                  dispatchStatusChange("active");
                 }}
-                className={cn(task.status === "in-progress" && "bg-muted")}
+                className={cn(task.status === "active" && "bg-muted")}
               >
                 <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                {t("listView.status.inProgress")}
+                {t("listView.status.active")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(event) => {

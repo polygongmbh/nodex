@@ -20,15 +20,15 @@ const baseTask: Task = {
   likes: 0,
   replies: 0,
   reposts: 0,
-  status: "todo",
+  status: "open",
 };
 
 describe("applyTaskStatusUpdate", () => {
   it("keeps the click cycle three-state even when closed exists", () => {
-    expect(cycleTaskStatus("todo")).toBe("in-progress");
-    expect(cycleTaskStatus("in-progress")).toBe("done");
-    expect(cycleTaskStatus("done")).toBe("todo");
-    expect(cycleTaskStatus("closed")).toBe("todo");
+    expect(cycleTaskStatus("open")).toBe("active");
+    expect(cycleTaskStatus("active")).toBe("done");
+    expect(cycleTaskStatus("done")).toBe("open");
+    expect(cycleTaskStatus("closed")).toBe("open");
   });
 
   it("creates a local override for non-local tasks so status does not revert", () => {
@@ -47,7 +47,7 @@ describe("applyTaskStatusUpdate", () => {
     const allTasks: Task[] = [baseTask];
 
     const before = Date.now();
-    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "in-progress", "me");
+    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "active", "me");
     const editedAt = updated.find((t) => t.id === "n1")?.lastEditedAt;
 
     expect(editedAt).toBeDefined();
@@ -70,7 +70,7 @@ describe("applyTaskStatusUpdate", () => {
       stateUpdates: [
         {
           id: "relay-state-1",
-          status: "todo",
+          status: "open",
           timestamp: new Date("2026-01-01T00:00:00.000Z"),
           authorPubkey: "relay-author",
         },
@@ -79,7 +79,7 @@ describe("applyTaskStatusUpdate", () => {
     const localTasks: Task[] = [existingLocal];
     const allTasks: Task[] = [existingLocal];
 
-    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "in-progress", "me");
+    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "active", "me");
     const task = updated.find((t) => t.id === "n1");
 
     expect(task?.stateUpdates?.map((update) => update.id)).toEqual(["relay-state-1"]);

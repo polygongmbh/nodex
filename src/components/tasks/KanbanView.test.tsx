@@ -83,7 +83,7 @@ describe("KanbanView", () => {
 
   it("renders a closed column to the right of done", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-    const todoTask = makeTask({ id: "todo-task", author, status: "todo", content: "Todo task #general" });
+    const todoTask = makeTask({ id: "todo-task", author, status: "open", content: "Todo task #general" });
     const doneTask = makeTask({ id: "done-task", author, status: "done", content: "Done task #general" });
     const closedTask = makeTask({ id: "closed-task", author, status: "closed", content: "Closed task #general" });
 
@@ -98,9 +98,9 @@ describe("KanbanView", () => {
     );
 
     const headings = screen
-      .getAllByText(/^(To Do|In Progress|Done|Closed)$/)
+      .getAllByText(/^(Open|In Progress|Done|Closed)$/)
       .map((node) => node.textContent?.trim());
-    expect(headings).toEqual(["To Do", "In Progress", "Done", "Closed"]);
+    expect(headings).toEqual(["Open", "In Progress", "Done", "Closed"]);
     expect(screen.getAllByText((_, node) => node?.textContent === "Closed task #general")[0]).toBeInTheDocument();
   });
 
@@ -117,7 +117,7 @@ describe("KanbanView", () => {
       />
     );
 
-    expect(container.querySelector('[data-droppable-id="todo"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-droppable-id="open"]')).toBeInTheDocument();
   });
 
   // Card content
@@ -127,14 +127,14 @@ describe("KanbanView", () => {
     const prioritizedTask = makeTask({
       id: "priority-task",
       author,
-      status: "todo",
+      status: "open",
       content: "Prioritized task #general",
       priority: 80,
     });
     const nonPrioritizedTask = makeTask({
       id: "no-priority-task",
       author,
-      status: "todo",
+      status: "open",
       content: "No priority task #general",
     });
 
@@ -157,7 +157,7 @@ describe("KanbanView", () => {
     const task = makeTask({
       id: "priority-and-tag-task",
       author,
-      status: "todo",
+      status: "open",
       content: "Task with chips #general",
       tags: ["general"],
       priority: 80,
@@ -185,7 +185,7 @@ describe("KanbanView", () => {
     const task = makeTask({
       id: "due-before-chip-task",
       author,
-      status: "todo",
+      status: "open",
       content: "Task with due date and chips #general",
       tags: ["general"],
       priority: 80,
@@ -213,7 +213,7 @@ describe("KanbanView", () => {
     const task = makeTask({
       id: "attachment-task",
       author,
-      status: "todo",
+      status: "open",
       content: "Task with attachment #general",
       attachments: [
         {
@@ -242,7 +242,7 @@ describe("KanbanView", () => {
     const task = makeTask({
       id: "compact-kanban-task",
       author,
-      status: "todo",
+      status: "open",
       content: "Compact kanban task #general",
       tags: ["general"],
       priority: 80,
@@ -271,11 +271,11 @@ describe("KanbanView", () => {
 
   it("focuses branch tasks on click", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-    const parent = makeTask({ id: "parent-task", author, status: "todo", content: "Parent task #general" });
+    const parent = makeTask({ id: "parent-task", author, status: "open", content: "Parent task #general" });
     const child = makeTask({
       id: "child-task",
       author,
-      status: "todo",
+      status: "open",
       content: "Child task #general",
       parentId: "parent-task",
     });
@@ -296,7 +296,7 @@ describe("KanbanView", () => {
 
   it("does not focus leaf tasks on click", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-    const leaf = makeTask({ id: "leaf-task", author, status: "todo", content: "Leaf task #general" });
+    const leaf = makeTask({ id: "leaf-task", author, status: "open", content: "Leaf task #general" });
 
     render(
       <KanbanView
@@ -314,7 +314,7 @@ describe("KanbanView", () => {
 
   it("optimistically moves card to destination column on drop", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-    const task = makeTask({ id: "drag-task", author, status: "todo", content: "Drag me #general" });
+    const task = makeTask({ id: "drag-task", author, status: "open", content: "Drag me #general" });
     const { container } = render(
       <KanbanView
         focusedTaskId={null}
@@ -325,13 +325,13 @@ describe("KanbanView", () => {
       />
     );
 
-    expect(container.querySelector('[data-droppable-id="todo"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-droppable-id="open"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
     expect(container.querySelector('[data-droppable-id="done"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();
 
     act(() => {
       dndMockState.onDragEnd?.({
         draggableId: "drag-task",
-        source: { droppableId: "todo", index: 0 },
+        source: { droppableId: "open", index: 0 },
         destination: { droppableId: "done", index: 0 },
       });
     });
@@ -342,7 +342,7 @@ describe("KanbanView", () => {
       status: "done",
     });
     expect(container.querySelector('[data-droppable-id="done"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-droppable-id="todo"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-droppable-id="open"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();
   });
 
   it("scrolls the board right when dragging near the right edge", () => {
@@ -355,7 +355,7 @@ describe("KanbanView", () => {
 
     try {
       const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-      const task = makeTask({ id: "edge-scroll-task", author, status: "todo", content: "Task #general" });
+      const task = makeTask({ id: "edge-scroll-task", author, status: "open", content: "Task #general" });
 
       const { container } = render(
         <KanbanView tasks={[task]} allTasks={[task]} currentUser={author} focusedTaskId={null} depthMode="leaves" />

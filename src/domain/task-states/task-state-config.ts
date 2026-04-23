@@ -1,5 +1,7 @@
-/** Semantic type for grouping, sorting, and protocol mapping. */
-export type TaskStateType = "todo" | "active" | "done" | "closed";
+import type { TaskStatus } from "@/types";
+
+/** Semantic type for grouping, sorting, and protocol mapping — identical to TaskStatus. */
+export type TaskStateType = TaskStatus;
 
 export interface TaskStateDefinition {
   id: string;
@@ -11,14 +13,14 @@ export interface TaskStateDefinition {
 }
 
 export const DEFAULT_TASK_STATES: TaskStateDefinition[] = [
-  { id: "todo", type: "todo", label: "To Do", icon: "circle", visibleByDefault: true },
-  { id: "in-progress", type: "active", label: "In Progress", icon: "circle-dot", visibleByDefault: true },
+  { id: "open", type: "open", label: "Open", icon: "circle", visibleByDefault: true },
+  { id: "active", type: "active", label: "In Progress", icon: "circle-dot", visibleByDefault: true },
   { id: "done", type: "done", label: "Done", icon: "check-circle-2", visibleByDefault: true },
   { id: "closed", type: "closed", label: "Closed", icon: "x", visibleByDefault: true },
 ];
 
 function isValidStateType(value: unknown): value is TaskStateType {
-  return value === "todo" || value === "active" || value === "done" || value === "closed";
+  return value === "open" || value === "active" || value === "done" || value === "closed";
 }
 
 function isValidDefinition(entry: unknown): entry is TaskStateDefinition {
@@ -41,7 +43,6 @@ export function parseTaskStateConfig(json: string): TaskStateDefinition[] | null
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
     const validated = parsed.filter(isValidDefinition);
     if (validated.length === 0) return null;
-    // Ensure unique ids
     const seen = new Set<string>();
     const deduped = validated.filter((def) => {
       if (seen.has(def.id)) return false;
@@ -79,11 +80,44 @@ export function resetTaskStateRegistry(): void {
 }
 
 const DEFAULT_TYPE_DEFINITIONS: Record<TaskStateType, Omit<TaskStateDefinition, "id" | "visibleByDefault">> = {
-  todo: { type: "todo", label: "To Do", icon: "circle" },
+  open: { type: "open", label: "Open", icon: "circle" },
   active: { type: "active", label: "Active", icon: "circle-dot" },
   done: { type: "done", label: "Done", icon: "check-circle-2" },
   closed: { type: "closed", label: "Closed", icon: "x" },
 };
+
+/**
+ * Resolve a task's effective state definition from its status and optional label.
+ * Matches configured states by label first, then falls back to the built-in for the status.
+ */
+export function resolveTaskState(
+  status: TaskStatus | undefined,
+  label?: string,
+  registry: TaskStateDefinition[] = getTaskStateRegistry()
+): TaskStateDefinition {
+  const effectiveStatus: TaskStatus = status ?? "open";
+  if (label) {
+    // Match a configured state whose label matches (case-insensitive) and whose type is compatible
+    const byLabel = registry.find(
+      (def) => def.type === effectiveStatus && def.label.toLowerCase() === label.toLowerCase()
+    );
+    if (byLabel) return byLabel;
+    // Also match by id
+    const byId = registry.find(
+      (def) => def.id.toLowerCase() === label.toLowerCase()
+    );
+    if (byId) return byId;
+    // Derive an ad-hoc definition for the unknown label
+    const typeDefaults = DEFAULT_TYPE_DEFINITIONS[effectiveStatus];
+    return { id: `${effectiveStatus}:${label.toLowerCase()}`, ...typeDefaults, label, visibleByDefault: false };
+  }
+  // No label — return the default state for this status type
+  const byType = registry.find((def) => def.type === effectiveStatus && def.id === effectiveStatus);
+  if (byType) return byType;
+  const firstOfType = registry.find((def) => def.type === effectiveStatus);
+  if (firstOfType) return firstOfType;
+  return { id: effectiveStatus, ...DEFAULT_TYPE_DEFINITIONS[effectiveStatus], visibleByDefault: false };
+}
 
 export function resolveTaskStateDefinition(
   stateId: string | undefined,
@@ -92,18 +126,15 @@ export function resolveTaskStateDefinition(
   if (!stateId) return registry[0] ?? DEFAULT_TASK_STATES[0];
   const found = registry.find((def) => def.id === stateId);
   if (found) return found;
-  // Derive a fallback definition from protocol type defaults
   const fallbackType = deriveTypeFromUnknownStateId(stateId);
   const typeDefaults = DEFAULT_TYPE_DEFINITIONS[fallbackType];
   return { id: stateId, ...typeDefaults, label: stateId, visibleByDefault: false };
 }
 
 function deriveTypeFromUnknownStateId(stateId: string): TaskStateType {
-  // Known protocol-level mappings
   if (stateId === "done" || stateId === "completed") return "done";
   if (stateId === "closed") return "closed";
-  if (stateId === "todo" || stateId === "open") return "todo";
-  // Anything else is treated as active (in-progress variant)
+  if (stateId === "open" || stateId === "todo") return "open";
   return "active";
 }
 
@@ -138,8 +169,8 @@ function getDefaultStateForType(
 
 /**
  * Returns the next state for a quick-toggle action, or null if the chooser should open.
- * Desktop: todo -> default active, active -> default done, done/closed -> null (open chooser)
- * Mobile: todo -> default done, active -> default done, done/closed -> null (open chooser)
+ * Desktop: open -> default active, active -> default done, done/closed -> null (open chooser)
+ * Mobile: open -> default done, active -> default done, done/closed -> null (open chooser)
  */
 export function getQuickToggleNextState(
   stateId: string | undefined,
@@ -149,31 +180,25 @@ export function getQuickToggleNextState(
   const currentType = getTaskStateUiType(stateId, registry);
   if (currentType === "done" || currentType === "closed") return null;
 
-  if (currentType === "todo" && !options.mobile) {
+  if (currentType === "open" && !options.mobile) {
     return getDefaultStateForType("active", registry)?.id ?? null;
   }
-  // todo (mobile) or active -> done
   return getDefaultStateForType("done", registry)?.id ?? null;
 }
 
 /**
  * Cycle through all states in registry order, wrapping around.
- * Used for keyboard-driven state stepping.
  */
 export function getNextStateInSequence(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): string {
-  const currentId = stateId ?? registry[0]?.id ?? "todo";
+  const currentId = stateId ?? registry[0]?.id ?? "open";
   const index = registry.findIndex((def) => def.id === currentId);
-  if (index < 0) return registry[0]?.id ?? "todo";
+  if (index < 0) return registry[0]?.id ?? "open";
   return registry[(index + 1) % registry.length].id;
 }
 
-/**
- * Returns the semantic sort type for a state, used to determine sort behavior.
- * Terminal states (done/closed) use latest-modified ordering; others use priority sorting.
- */
 export function getStateSortType(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
@@ -181,14 +206,13 @@ export function getStateSortType(
   return getTaskStateUiType(stateId, registry);
 }
 
-/** All states marked visible by default. */
 export function getVisibleByDefaultStates(
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition[] {
   return registry.filter((def) => def.visibleByDefault);
 }
 
-/** Map a UI state type to the Nostr protocol type for publishing. */
+/** Map a state to Nostr protocol type: active folds into open for publishing. */
 export function getProtocolTypeForState(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()

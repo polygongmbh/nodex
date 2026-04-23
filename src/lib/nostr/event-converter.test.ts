@@ -60,7 +60,7 @@ describe("nostrEventToTask", () => {
     const task = nostrEventToTask(taskEvent);
     
     expect(task.taskType).toBe("task");
-    expect(task.status).toBe("todo");
+    expect(task.status).toBe("open");
   });
 
   it("converts NIP-99 classified listings to feed offer messages by default", () => {
@@ -187,12 +187,12 @@ describe("nostrEventToTask", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,
       kind: NostrEventKind.Task,
-      tags: [["status", "in-progress"]],
+      tags: [["status", "active"]],
     };
     
     const task = nostrEventToTask(event);
     
-    expect(task.status).toBe("in-progress");
+    expect(task.status).toBe("active");
   });
 
   it("does not force a placeholder avatar url", () => {
@@ -458,12 +458,12 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].status).toBe("in-progress");
+    expect(tasks[0].status).toBe("active");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000002 * 1000);
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-new",
-        status: "in-progress",
+        status: "active",
         statusDescription: "In Progress",
       }),
       expect.objectContaining({
@@ -528,7 +528,7 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].status).toBe("todo");
+    expect(tasks[0].status).toBe("open");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000000 * 1000);
     expect(tasks[0].stateUpdates).toBeUndefined();
   });
@@ -698,7 +698,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].id).toBe("task-priority-state");
     expect(tasks[0].priority).toBe(70);
-    expect(tasks[0].status).toBe("in-progress");
+    expect(tasks[0].status).toBe("active");
   });
 
   it("keeps only latest parameterized replaceable listing revision", () => {

@@ -725,19 +725,19 @@ export function useKanbanViewState({
     [depthMode, filteredTaskCandidates, focusedTaskId, getDepth, hasChildren]
   );
   const tasksByStatus = useMemo<Record<TaskStatus, Task[]>>(() => {
-    const grouped: Record<TaskStatus, Task[]> = { todo: [], "in-progress": [], done: [], closed: [] };
+    const grouped: Record<TaskStatus, Task[]> = { open: [], active: [], done: [], closed: [] };
     kanbanTasks.forEach((task) => {
-      grouped[task.status || "todo"].push(task);
+      grouped[task.status || "open"].push(task);
     });
-    grouped.todo = sortKanbanColumnTasks(grouped.todo, "todo", sortContext);
-    grouped["in-progress"] = sortKanbanColumnTasks(grouped["in-progress"], "in-progress", sortContext);
+    grouped.open = sortKanbanColumnTasks(grouped.open, "open", sortContext);
+    grouped.active = sortKanbanColumnTasks(grouped.active, "active", sortContext);
     grouped.done = sortKanbanColumnTasks(grouped.done, "done", sortContext);
     grouped.closed = sortKanbanColumnTasks(grouped.closed, "closed", sortContext);
     return grouped;
   }, [kanbanTasks, sortContext]);
   return {
     kanbanTasks,
-    orderedKanbanTasks: [...tasksByStatus.todo, ...tasksByStatus["in-progress"], ...tasksByStatus.done, ...tasksByStatus.closed],
+    orderedKanbanTasks: [...tasksByStatus.open, ...tasksByStatus.active, ...tasksByStatus.done, ...tasksByStatus.closed],
     tasksByStatus,
     getAncestorChain,
     showContext: depthMode !== "1",

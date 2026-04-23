@@ -19,7 +19,7 @@ function buildTask(id: string, timestampIso: string, overrides: Partial<Task> = 
     relays: ["demo"],
     taskType: "task",
     timestamp: new Date(timestampIso),
-    status: "todo",
+    status: "open",
     ...overrides,
   });
 }
@@ -118,7 +118,7 @@ describe("applyTaskSortOverlays", () => {
 
     const updated = applyTaskSortOverlays(
       [older, newer],
-      { older: "in-progress" },
+      { older: "active" },
       { older: "2026-03-16T13:00:00.000Z" }
     );
 

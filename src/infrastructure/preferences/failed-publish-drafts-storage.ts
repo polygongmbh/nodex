@@ -33,7 +33,7 @@ export interface FailedPublishDraft {
 
 const taskTypeSchema = z.enum(["task", "comment"] as const);
 const taskDateTypeSchema = z.enum(["due", "scheduled", "start", "end", "milestone"] as const);
-const taskInitialStatusSchema = z.enum(["todo", "in-progress", "done"] as const);
+const taskInitialStatusSchema = z.enum(["open", "active", "done"] as const);
 const personSchema = z.object({
   id: z.string(),
   name: z.string(),

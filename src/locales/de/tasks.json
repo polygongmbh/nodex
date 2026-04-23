@@ -123,6 +123,8 @@
       "reset": "Auf Standardsortierung zurücksetzen"
     },
     "status": {
+      "open": "Offen",
+      "active": "In Arbeit",
       "todo": "Offen",
       "inProgress": "In Arbeit",
       "done": "Erledigt",
@@ -166,6 +168,8 @@
   },
   "hints": {
     "statusToggle": {
+      "open": "Aufgabe als in Arbeit markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
+      "active": "Aufgabe als erledigt markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
       "todo": "Aufgabe als in Arbeit markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
       "inProgress": "Aufgabe als erledigt markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
       "done": "Aufgabe ist erledigt. Klicke, um den Status auszuwählen.",

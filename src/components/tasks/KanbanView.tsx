@@ -31,8 +31,8 @@ interface KanbanViewProps {
 }
 
 const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
-  { id: "todo", label: t("listView.status.todo"), icon: <Circle className="w-4 h-4" />, color: "text-muted-foreground" },
-  { id: "in-progress", label: t("listView.status.inProgress"), icon: <CircleDot className="w-4 h-4" />, color: "text-warning" },
+  { id: "open", label: t("listView.status.open"), icon: <Circle className="w-4 h-4" />, color: "text-muted-foreground" },
+  { id: "active", label: t("listView.status.active"), icon: <CircleDot className="w-4 h-4" />, color: "text-warning" },
   { id: "done", label: t("listView.status.done"), icon: <CheckCircle2 className="w-4 h-4" />, color: "text-primary" },
   { id: "closed", label: t("listView.status.closed"), icon: <X className="w-4 h-4" />, color: "text-muted-foreground" },
 ];
@@ -66,27 +66,27 @@ export function KanbanView({
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
-      "todo": [],
-      "in-progress": [],
+      "open": [],
+      "active": [],
       "done": [],
       "closed": [],
     };
     
     kanbanTasks.forEach(task => {
-      const status = optimisticStatusByTaskId[task.id] || task.status || "todo";
+      const status = optimisticStatusByTaskId[task.id] || task.status || "open";
       grouped[status].push(task);
     });
 
     // Active columns retain the filtered order from the shared state hook.
-    grouped["done"] = sortByLatestModified(grouped["done"]);
-    grouped["closed"] = sortByLatestModified(grouped["closed"]);
+    grouped.done = sortByLatestModified(grouped.done);
+    grouped.closed = sortByLatestModified(grouped.closed);
 
     return grouped;
   }, [kanbanTasks, optimisticStatusByTaskId]);
   const canonicalStatusByTaskId = useMemo(() => {
     const map = new Map<string, TaskStatus>();
     for (const task of kanbanTasks) {
-      map.set(task.id, task.status || "todo");
+      map.set(task.id, task.status || "open");
     }
     return map;
   }, [kanbanTasks]);
@@ -111,7 +111,7 @@ export function KanbanView({
     });
   }, [canonicalStatusByTaskId]);
   const getTaskEffectiveStatus = useCallback(
-    (task: Task): TaskStatus => optimisticStatusByTaskId[task.id] || task.status || "todo",
+    (task: Task): TaskStatus => optimisticStatusByTaskId[task.id] || task.status || "open",
     [optimisticStatusByTaskId]
   );
   const hasChildren = useCallback(
@@ -199,19 +199,19 @@ export function KanbanView({
   // Flatten all visible task IDs for keyboard navigation (across all columns)
   const allVisibleTaskIds = useMemo(() => {
     return [
-      ...tasksByStatus["todo"],
-      ...tasksByStatus["in-progress"],
-      ...tasksByStatus["done"],
-      ...tasksByStatus["closed"],
+      ...tasksByStatus.open,
+      ...tasksByStatus.active,
+      ...tasksByStatus.done,
+      ...tasksByStatus.closed,
     ].map((task) => task.id);
   }, [tasksByStatus]);
 
   // Column-aware task IDs for Kanban navigation
   const columnTaskIds = useMemo(() => [
-    tasksByStatus["todo"].map(t => t.id),
-    tasksByStatus["in-progress"].map(t => t.id),
-    tasksByStatus["done"].map(t => t.id),
-    tasksByStatus["closed"].map(t => t.id),
+    tasksByStatus.open.map(t => t.id),
+    tasksByStatus.active.map(t => t.id),
+    tasksByStatus.done.map(t => t.id),
+    tasksByStatus.closed.map(t => t.id),
   ], [tasksByStatus]);
 
   // Track keyboard focus state
@@ -240,8 +240,8 @@ export function KanbanView({
     let newStatus: TaskStatus;
     
     if (currentStatus === "closed") newStatus = "done";
-    else if (currentStatus === "done") newStatus = "in-progress";
-    else if (currentStatus === "in-progress") newStatus = "todo";
+    else if (currentStatus === "done") newStatus = "active";
+    else if (currentStatus === "active") newStatus = "open";
     else return; // Already at leftmost
     
     pendingRefocusRef.current = focusedId;
@@ -263,8 +263,8 @@ export function KanbanView({
     const currentStatus = getTaskEffectiveStatus(task);
     let newStatus: TaskStatus;
     
-    if (currentStatus === "todo") newStatus = "in-progress";
-    else if (currentStatus === "in-progress") newStatus = "done";
+    if (currentStatus === "open") newStatus = "active";
+    else if (currentStatus === "active") newStatus = "done";
     else if (currentStatus === "done") newStatus = "closed";
     else return; // Already at rightmost
     

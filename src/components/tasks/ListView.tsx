@@ -218,13 +218,13 @@ export function ListView({
           break;
         case "status": {
           const statusOrder: Record<TaskStatus, number> = {
-            "in-progress": 0,
-            "todo": 1,
+            "active": 0,
+            "open": 1,
             "done": 2,
             "closed": 3,
           };
           comparison =
-            (statusOrder[a.status || "todo"] ?? 1) - (statusOrder[b.status || "todo"] ?? 1);
+            (statusOrder[a.status || "open"] ?? 1) - (statusOrder[b.status || "open"] ?? 1);
           break;
         }
         case "dueDate":
@@ -326,25 +326,25 @@ export function ListView({
 
   // Editable status cell
   const StatusCell = ({ task }: { task: Task }) => {
-    const status = task.status || "todo";
+    const status = task.status || "open";
     const editable = canCompleteTask(task);
     const statusClassName = cn(
       "text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap",
       status === "done" ? "bg-primary/10 text-primary" :
       status === "closed" ? "bg-muted/80 text-muted-foreground" :
-      status === "in-progress" ? "bg-warning/15 text-warning" :
+      status === "active" ? "bg-warning/15 text-warning" :
       "bg-muted text-muted-foreground"
     );
 
     if (!editable) {
       return (
         <span className={cn(statusClassName, "opacity-60 cursor-not-allowed")}>
-          {status === "in-progress" ? (
+          {status === "active" ? (
             <>
-              <span className="lg:hidden">{t("listView.status.inProgressShort")}</span>
-              <span className="hidden lg:inline">{t("listView.status.inProgress")}</span>
+              <span className="lg:hidden">{t("listView.status.activeShort")}</span>
+              <span className="hidden lg:inline">{t("listView.status.active")}</span>
             </>
-          ) : status === "done" ? t("listView.status.done") : status === "closed" ? t("listView.status.closed") : t("listView.status.todo")}
+          ) : status === "done" ? t("listView.status.done") : status === "closed" ? t("listView.status.closed") : t("listView.status.open")}
         </span>
       );
     }
@@ -353,28 +353,28 @@ export function ListView({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className={cn(statusClassName, "cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all")}>
-            {status === "in-progress" ? (
+            {status === "active" ? (
               <>
-                <span className="lg:hidden">{t("listView.status.inProgressShort")}</span>
-                <span className="hidden lg:inline">{t("listView.status.inProgress")}</span>
+                <span className="lg:hidden">{t("listView.status.activeShort")}</span>
+                <span className="hidden lg:inline">{t("listView.status.active")}</span>
               </>
-            ) : status === "done" ? t("listView.status.done") : status === "closed" ? t("listView.status.closed") : t("listView.status.todo")}
+            ) : status === "done" ? t("listView.status.done") : status === "closed" ? t("listView.status.closed") : t("listView.status.open")}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem
-            onClick={() => dispatchStatusChange(task.id, "todo")}
-            className={cn(status === "todo" && "bg-muted")}
+            onClick={() => dispatchStatusChange(task.id, "open")}
+            className={cn(status === "open" && "bg-muted")}
           >
             <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-            {t("listView.status.todo")}
+            {t("listView.status.open")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => dispatchStatusChange(task.id, "in-progress")}
-            className={cn(status === "in-progress" && "bg-muted")}
+            onClick={() => dispatchStatusChange(task.id, "active")}
+            className={cn(status === "active" && "bg-muted")}
           >
             <CircleDot className="w-4 h-4 mr-2 text-warning" />
-            {t("listView.status.inProgress")}
+            {t("listView.status.active")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => dispatchStatusChange(task.id, "done")}

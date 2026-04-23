@@ -127,14 +127,14 @@ describe("FilteredEmptyState overlay", () => {
   });
 
   it("appends immediate parent context to the scope sentence", () => {
-    const parentTask = makeTask({ id: "parent", author, content: "Parent Task\nSecond line should not be shown", status: "todo" });
+    const parentTask = makeTask({ id: "parent", author, content: "Parent Task\nSecond line should not be shown", status: "open" });
     renderOverlay({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText(`${EMPTY_SCOPE_TEXT}${PARENT_SCOPE_SUFFIX}`)).toBeInTheDocument();
   });
 
   it("truncates long parent context at word boundaries while preserving start and end fragments", () => {
-    const parentTask = makeTask({ id: "parent", author, content: "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA", status: "todo" });
+    const parentTask = makeTask({ id: "parent", author, content: "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA", status: "open" });
     renderOverlay({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>
@@ -145,7 +145,7 @@ describe("FilteredEmptyState overlay", () => {
   });
 
   it("does not treat umlauts as boundaries when preserving the end fragment", () => {
-    const parentTask = makeTask({ id: "parent", author, content: "Context prefix that is definitely long enough to trigger truncation and ends with kontinuierlichÜbermäßigÄußerst", status: "todo" });
+    const parentTask = makeTask({ id: "parent", author, content: "Context prefix that is definitely long enough to trigger truncation and ends with kontinuierlichÜbermäßigÄußerst", status: "open" });
     renderOverlay({ focusedTaskId: "parent", allTasks: [parentTask] });
 
     expect(screen.getByText((content) =>
