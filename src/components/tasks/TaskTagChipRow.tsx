@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { formatPriorityLabel } from "@/domain/content/task-priority";
+import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 
 interface BaseTaskTagChipProps {
   task: Task;
