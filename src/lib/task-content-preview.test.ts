@@ -35,4 +35,28 @@ describe("task-content-preview", () => {
   it("returns the first three lines for collapsed preview", () => {
     expect(getCollapsedTaskContentPreview("1\n2\n3\n4\n5")).toBe("1\n2\n3");
   });
+
+  describe("getTaskTooltipPreview", () => {
+    it("returns short content unchanged", () => {
+      expect(getTaskTooltipPreview("hello world")).toBe("hello world");
+    });
+
+    it("collapses internal whitespace and trims", () => {
+      expect(getTaskTooltipPreview("  alpha\n\nbeta\t\tgamma  ")).toBe("alpha beta gamma");
+    });
+
+    it("truncates long content with an ellipsis", () => {
+      const long = "a".repeat(TASK_TOOLTIP_PREVIEW_MAX + 50);
+      const result = getTaskTooltipPreview(long);
+      expect(result.endsWith("…")).toBe(true);
+      expect(result.length).toBe(TASK_TOOLTIP_PREVIEW_MAX);
+    });
+
+    it("returns empty string for empty or nullish input", () => {
+      expect(getTaskTooltipPreview("")).toBe("");
+      expect(getTaskTooltipPreview("   \n\t  ")).toBe("");
+      expect(getTaskTooltipPreview(null)).toBe("");
+      expect(getTaskTooltipPreview(undefined)).toBe("");
+    });
+  });
 });
