@@ -197,7 +197,7 @@ export function ScrollableTaskTagChipRow({
       data-testid={testId}
     >
       {hasPriority ? (
-        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
+        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium leading-none text-warning">
           {formatPriorityLabel(priority)}
         </span>
       ) : null}
