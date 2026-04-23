@@ -3,8 +3,10 @@ import {
   getCollapsedTaskContentPreview,
   getFirstTaskContentLine,
   getTaskContentLines,
+  getTaskTooltipPreview,
   getTrimmedFirstTaskContentLine,
   shouldCollapseTaskContent,
+  TASK_TOOLTIP_PREVIEW_MAX,
 } from "./task-content-preview";
 
 describe("task-content-preview", () => {
