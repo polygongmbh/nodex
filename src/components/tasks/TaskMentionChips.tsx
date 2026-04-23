@@ -1,6 +1,5 @@
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
-import { AtSign } from "lucide-react";
 import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
@@ -84,8 +83,7 @@ export function TaskMentionChips({
               void dispatchFeedInteraction(toPersonShortcutInteraction(clickablePerson, shortcutIntent));
             }}
           >
-            <AtSign className="h-3 w-3" />
-            {label}
+            @{label}
           </button>
         </PersonHoverCard>
       );
@@ -97,8 +95,7 @@ export function TaskMentionChips({
         className={cn(TASK_CHIP_STYLES.mention, className)}
         title={`@${toUserFacingPubkey(pubkey)}`}
       >
-        <AtSign className="w-3 h-3" />
-        {label}
+        @{label}
       </span>
     );
   });

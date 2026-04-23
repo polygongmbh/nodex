@@ -13,5 +13,5 @@ export const TASK_CHIP_STYLES = {
   base: CHIP_BASE,
   muted: `${CHIP_BASE} bg-muted text-muted-foreground`,
   priority: `${CHIP_BASE} bg-warning/15 text-warning`,
-  mention: `${CHIP_BASE} gap-1 bg-primary/10 text-primary`,
+  mention: `${CHIP_BASE} bg-primary/10 text-primary`,
 } as const;
