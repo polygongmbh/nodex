@@ -335,12 +335,7 @@ export function ListView({
       getTaskStateBadgeClasses(status)
     );
 
-    const statusLabel = status === "active" ? (
-      <>
-        <span className="lg:hidden">{t("listView.status.activeShort")}</span>
-        <span className="hidden lg:inline">{t("listView.status.active")}</span>
-      </>
-    ) : t(`listView.status.${status}`);
+    const statusLabel = t(`status.${status}`);
 
     if (!editable) {
       return (
@@ -365,7 +360,7 @@ export function ListView({
               className={cn(status === state.id && "bg-muted")}
             >
               <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-              {t(`listView.status.${state.id}`)}
+              {t(`status.${state.id}`)}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>

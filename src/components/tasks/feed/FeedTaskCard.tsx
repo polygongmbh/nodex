@@ -230,7 +230,7 @@ export function FeedTaskCard({
                   {getTaskStateRegistry().map((state) => (
                     <DropdownMenuItem key={state.id} onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id as TaskStatus); }}>
                       <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-                      {t(`listView.status.${state.id}`)}
+                      {t(`status.${state.id}`)}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

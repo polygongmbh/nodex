@@ -373,7 +373,7 @@ export function FeedView({
   const canCompleteTask = (task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
-  const getStateLabel = (status: Task["status"]) => t(`listView.status.${status || "open"}`);
+  const getStateLabel = (status: Task["status"]) => t(`status.${status || "open"}`);
   const normalizeLabelText = (value?: string) =>
     (value || "")
       .toLowerCase()

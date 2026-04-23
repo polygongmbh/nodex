@@ -35,7 +35,7 @@ interface KanbanViewProps {
 const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] =>
   getTaskStateRegistry().map((state) => ({
     id: state.type as TaskStatus,
-    label: t(`listView.status.${state.id}`),
+    label: t(`status.${state.id}`),
     icon: <TaskStateIcon status={state.type} size="w-4 h-4" />,
     color: getTaskStateToneClass(state.type),
   }));

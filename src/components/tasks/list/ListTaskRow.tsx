@@ -114,7 +114,7 @@ export function ListTaskRow({
                   className={cn((task.status || "open") === state.id && "bg-muted")}
                 >
                   <TaskStateIcon status={state.type} size="w-4 h-4" className="mr-2" />
-                  {t(`listView.status.${state.id}`)}
+                  {t(`status.${state.id}`)}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>

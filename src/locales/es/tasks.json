@@ -122,19 +122,16 @@
       "priority": "Prioridad",
       "reset": "Restablecer orden por defecto"
     },
-    "status": {
-      "open": "Por hacer",
-      "active": "En progreso",
-      "todo": "Por hacer",
-      "inProgress": "En progreso",
-      "done": "Hecho",
-      "closed": "Cerrado",
-      "activeShort": "Haciendo"
-    },
     "dates": {
       "setDate": "Establecer fecha...",
       "type": "Tipo"
     }
+  },
+  "status": {
+    "open": "Por hacer",
+    "active": "Haciendo",
+    "done": "Hecho",
+    "closed": "Cerrado"
   },
   "feed": {
     "hydrating": "Cargando eventos del relay…",

@@ -122,19 +122,16 @@
       "priority": "Priority",
       "reset": "Reset to default sorting"
     },
-    "status": {
-      "open": "Open",
-      "active": "In Progress",
-      "todo": "To Do",
-      "inProgress": "In Progress",
-      "done": "Done",
-      "closed": "Closed",
-      "activeShort": "Doing"
-    },
     "dates": {
       "setDate": "Set date...",
       "type": "Type"
     }
+  },
+  "status": {
+    "open": "ToDo",
+    "active": "Doing",
+    "done": "Done",
+    "closed": "Closed"
   },
   "feed": {
     "hydrating": "Loading events from relay…",
