@@ -6,9 +6,12 @@ export const TASK_INTERACTION_STYLES = {
   inlineLink: "task-inline-link",
 } as const;
 
+const CHIP_BASE =
+  "inline-flex shrink-0 items-center whitespace-nowrap rounded p-1 text-xs font-medium leading-none";
+
 export const TASK_CHIP_STYLES = {
-  base: "inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded px-2 py-1 text-xs font-medium leading-none",
-  muted: "inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded bg-muted px-2 py-1 text-xs font-medium leading-none text-muted-foreground",
-  priority: "inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded bg-warning/15 px-2 py-1 text-xs font-medium leading-none text-warning",
-  mention: "inline-flex h-7 shrink-0 items-center whitespace-nowrap gap-1 rounded bg-primary/10 px-2 py-1 text-xs font-medium leading-none text-primary",
+  base: CHIP_BASE,
+  muted: `${CHIP_BASE} bg-muted text-muted-foreground`,
+  priority: `${CHIP_BASE} bg-warning/15 text-warning`,
+  mention: `${CHIP_BASE} gap-1 bg-primary/10 text-primary`,
 } as const;
