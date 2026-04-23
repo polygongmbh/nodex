@@ -72,7 +72,14 @@ export function DesktopViewsPane() {
       taskSource.searchQuery,
     ]
   );
-  const shouldShowOverlay = scopedTasks.length === 0;
+  // Only the feed view surfaces non-task items (comments, offers, requests).
+  // Other views render tasks only, so the empty-state overlay should appear
+  // whenever no task-typed items match the current filters even if other
+  // post types do.
+  const shouldShowOverlay =
+    currentView === "feed"
+      ? scopedTasks.length === 0
+      : scopedTasks.every((task) => task.taskType !== "task");
   const viewFallback = <ViewLoadingFallback />;
 
   let viewPane: ReactNode;
