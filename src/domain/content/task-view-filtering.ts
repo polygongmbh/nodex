@@ -5,7 +5,7 @@ import {
   normalizeTaskSearchValue,
   searchableTextMatchesQuery,
 } from "@/domain/content/task-search-document";
-import type { ChannelMatchMode, QuickFilterState, Task } from "@/types";
+import { getTaskStatusType, type ChannelMatchMode, type QuickFilterState, type Task } from "@/types";
 import type { Person } from "@/types/person";
 
 function normalize(value: string): string {
@@ -173,7 +173,7 @@ export function getDirectMatchTaskIdsForView({
 
     if (taskPredicate && !taskPredicate(task)) continue;
     if (!prefilteredTaskIds.has(task.id)) continue;
-    if (hideClosedTasks && task.status === "closed" && !isExplicitlyFocusedTask) continue;
+    if (hideClosedTasks && getTaskStatusType(task.status) === "closed" && !isExplicitlyFocusedTask) continue;
     if (!taskMatchesSelectedPeople(task, selectedPeople)) continue;
     if (!taskMatchesQuickFilters(task, quickFilters)) continue;
 

@@ -1,15 +1,15 @@
-import { Task, TaskStatusType } from "@/types";
+import { Task, TaskStatusLike, TaskStatusType, getTaskStatusType, normalizeTaskStatus } from "@/types";
 import {
   isTaskCompletedState,
   isTaskTerminalState as registryIsTerminal,
 } from "@/domain/task-states/task-state-config";
 
-export function isTaskCompletedStatus(status: TaskStatusType): boolean {
-  return isTaskCompletedState(status);
+export function isTaskCompletedStatus(status: TaskStatusLike): boolean {
+  return isTaskCompletedState(getTaskStatusType(status));
 }
 
-export function isTaskTerminalStatus(status: TaskStatusType): boolean {
-  return registryIsTerminal(status);
+export function isTaskTerminalStatus(status: TaskStatusLike): boolean {
+  return registryIsTerminal(getTaskStatusType(status));
 }
 
 export function applyTaskStatusUpdate(
@@ -22,7 +22,7 @@ export function applyTaskStatusUpdate(
   const toLocalStatusUpdatedTask = (task: Task): Task => {
     return {
       ...task,
-      status: newStatus,
+      status: normalizeTaskStatus(newStatus),
       lastEditedAt: now,
     };
   };

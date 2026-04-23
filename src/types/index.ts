@@ -58,6 +58,7 @@ export interface TaskStatus {
   type: TaskStatusType;
   description?: string;
 }
+export type TaskStatusLike = TaskStatus | TaskStatusType | undefined;
 export type TaskInitialStatus = Exclude<TaskStatusType, "closed">;
 export type OnNewTask = (
   content: string,
@@ -156,8 +157,7 @@ export interface Task {
   locationGeohash?: string;
   timestamp: Date;
   lastEditedAt?: Date;
-  status: TaskStatusType;
-  statusDescription?: string;
+  status: TaskStatus;
   stateUpdates?: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;
@@ -171,11 +171,21 @@ export interface Task {
   rawNostrEvent?: RawNostrEvent;
 }
 
-export function getTaskStatus(task: Pick<Task, "status" | "statusDescription">): TaskStatus {
+export function normalizeTaskStatus(status: TaskStatusLike): TaskStatus {
+  if (!status) return { type: "open" };
+  if (typeof status === "string") return { type: status };
   return {
-    type: task.status,
-    description: task.statusDescription,
+    type: status.type,
+    ...(status.description ? { description: status.description } : {}),
   };
+}
+
+export function getTaskStatusType(status: TaskStatusLike): TaskStatusType {
+  return normalizeTaskStatus(status).type;
+}
+
+export function getTaskStatus(task: Pick<Task, "status">): TaskStatus {
+  return normalizeTaskStatus(task.status);
 }
 
 export function getLastEditedAt(task: Task): Date {

@@ -4,6 +4,7 @@ import type {
   PublishedAttachment,
   Nip99Metadata,
   PostType,
+  TaskStatus,
   TaskInitialStatus,
   TaskDateType,
 } from "@/types";
@@ -79,7 +80,7 @@ export type FeedInteractionIntent =
       locationGeohash?: string;
     }
   | { type: "task.toggleComplete"; taskId: string }
-  | { type: "task.changeStatus"; taskId: string; stateId: string }
+  | { type: "task.changeStatus"; taskId: string; status: TaskStatus }
   | { type: "task.updateDueDate"; taskId: string; dueDate?: Date; dueTime?: string; dateType?: TaskDateType }
   | { type: "task.updatePriority"; taskId: string; priority: number }
   | { type: "task.listingStatus.change"; taskId: string; status: Nip99ListingStatus }

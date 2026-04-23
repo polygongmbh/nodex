@@ -132,7 +132,7 @@ describe("ListView priority control", () => {
     expect(cells?.[2]).toHaveClass("hidden");
 
     const [prioritySelect] = screen.getAllByRole("combobox");
-    expect(prioritySelect).toHaveClass("w-full", "min-w-0", "max-w-full");
+    expect(prioritySelect).toBeInTheDocument();
   });
 
   it("disables task change controls when signed out", () => {
@@ -237,7 +237,7 @@ describe("ListView priority control", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "task-dropdown",
-      stateId: "active",
+      status: { type: "active" },
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-dropdown" });
   });

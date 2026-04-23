@@ -1,9 +1,14 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry, type TaskStateDefinition } from "@/domain/task-states/task-state-config";
+import {
+  getTaskStateRegistry,
+  resolveTaskStateFromStatus,
+  toTaskStatusFromStateDefinition,
+  type TaskStateDefinition,
+} from "@/domain/task-states/task-state-config";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import {   Task, TaskInitialStatus, TaskStatusType, ComposeRestoreRequest } from "@/types";
+import { getTaskStatusType, normalizeTaskStatus, type Task, type TaskInitialStatus, type TaskStatus, type ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
@@ -32,21 +37,40 @@ interface KanbanViewProps {
   isHydrating?: boolean;
 }
 
-/** One column per unique state type, using the canonical state definition for that type. */
-function getColumns(): { id: TaskStatusType; label: string; state: TaskStateDefinition; color: string }[] {
+interface KanbanColumn {
+  id: string;
+  label: string;
+  state: TaskStateDefinition;
+  color: string;
+}
+
+function getColumns(tasks: Task[]): KanbanColumn[] {
   const registry = getTaskStateRegistry();
+  const columns: KanbanColumn[] = [];
   const seen = new Set<string>();
-  const columns: { id: TaskStatusType; label: string; state: TaskStateDefinition; color: string }[] = [];
-  for (const state of registry) {
-    if (seen.has(state.type)) continue;
-    seen.add(state.type);
+
+  for (const state of registry.filter((entry) => entry.visibleByDefault)) {
+    seen.add(state.id);
     columns.push({
-      id: state.type as TaskStatusType,
+      id: state.id,
       label: state.label,
       state,
       color: getTaskStateToneClass(state.type),
     });
   }
+
+  for (const task of tasks) {
+    const resolvedState = resolveTaskStateFromStatus(task.status, registry);
+    if (seen.has(resolvedState.id)) continue;
+    seen.add(resolvedState.id);
+    columns.push({
+      id: resolvedState.id,
+      label: resolvedState.label,
+      state: resolvedState,
+      color: getTaskStateToneClass(resolvedState.type),
+    });
+  }
+
   return columns;
 }
 
@@ -66,9 +90,8 @@ export function KanbanView({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, guardModify, focusSidebar, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();
-  const columns = useMemo(() => getColumns(), []);
+  const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatus>>({});
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
-  const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatusType>>({});
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     tasks,
     allTasks,
@@ -77,44 +100,45 @@ export function KanbanView({
     depthMode,
   });
 
-  const tasksByStatus = useMemo(() => {
-    const grouped: Record<TaskStatusType, Task[]> = {
-      "open": [],
-      "active": [],
-      "done": [],
-      "closed": [],
-    };
-    
-    kanbanTasks.forEach(task => {
-      const status = optimisticStatusByTaskId[task.id] || task.status;
-      grouped[status].push(task);
-    });
+  const columns = useMemo(() => getColumns(kanbanTasks), [kanbanTasks]);
+  const tasksByColumnId = useMemo(() => {
+    const grouped: Record<string, Task[]> = Object.fromEntries(columns.map((column) => [column.id, []]));
 
-    // Active columns retain the filtered order from the shared state hook.
-    grouped.done = sortByLatestModified(grouped.done);
-    grouped.closed = sortByLatestModified(grouped.closed);
+    for (const task of kanbanTasks) {
+      const effectiveStatus = optimisticStatusByTaskId[task.id] || task.status;
+      const columnId = resolveTaskStateFromStatus(effectiveStatus).id;
+      grouped[columnId] ||= [];
+      grouped[columnId].push(task);
+    }
+
+    for (const column of columns) {
+      if (column.state.type === "done" || column.state.type === "closed") {
+        grouped[column.id] = sortByLatestModified(grouped[column.id] || []);
+      }
+    }
 
     return grouped;
-  }, [kanbanTasks, optimisticStatusByTaskId]);
-  const canonicalStatusByTaskId = useMemo(() => {
-    const map = new Map<string, TaskStatusType>();
+  }, [columns, kanbanTasks, optimisticStatusByTaskId]);
+  const canonicalStateIdByTaskId = useMemo(() => {
+    const map = new Map<string, string>();
     for (const task of kanbanTasks) {
-      map.set(task.id, task.status);
+      map.set(task.id, resolveTaskStateFromStatus(task.status).id);
     }
     return map;
   }, [kanbanTasks]);
 
   useEffect(() => {
     setOptimisticStatusByTaskId((previous) => {
-      const next: Record<string, TaskStatusType> = {};
+      const next: Record<string, TaskStatus> = {};
       let changed = false;
       for (const [taskId, status] of Object.entries(previous)) {
-        const canonicalStatus = canonicalStatusByTaskId.get(taskId);
-        if (!canonicalStatus) {
+        const canonicalStateId = canonicalStateIdByTaskId.get(taskId);
+        const optimisticStateId = resolveTaskStateFromStatus(status).id;
+        if (!canonicalStateId) {
           changed = true;
           continue;
         }
-        if (canonicalStatus === status) {
+        if (canonicalStateId === optimisticStateId) {
           changed = true;
           continue;
         }
@@ -122,9 +146,9 @@ export function KanbanView({
       }
       return changed ? next : previous;
     });
-  }, [canonicalStatusByTaskId]);
+  }, [canonicalStateIdByTaskId]);
   const getTaskEffectiveStatus = useCallback(
-    (task: Task): TaskStatusType => optimisticStatusByTaskId[task.id] || task.status,
+    (task: Task): TaskStatus => optimisticStatusByTaskId[task.id] || task.status,
     [optimisticStatusByTaskId]
   );
   const hasChildren = useCallback(
@@ -132,8 +156,8 @@ export function KanbanView({
     [allTasks]
   );
   const dispatchStatusChange = useCallback(
-    (taskId: string, stateId: string) => {
-      void dispatchFeedInteraction({ type: "task.changeStatus", taskId, stateId });
+    (taskId: string, status: TaskStatus) => {
+      void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
     },
     [dispatchFeedInteraction]
   );
@@ -198,34 +222,28 @@ export function KanbanView({
     }
     
     const taskId = result.draggableId;
-    const newStatus = result.destination.droppableId as TaskStatusType;
+    const targetColumn = columns.find((column) => column.id === result.destination?.droppableId);
     const task = kanbanTasks.find((item) => item.id === taskId);
-    if (!task || !canUserChangeTaskStatus(task, currentUser)) return;
-    const currentStatus = getTaskEffectiveStatus(task);
-    if (newStatus === currentStatus) return;
+    if (!task || !targetColumn || !canUserChangeTaskStatus(task, currentUser)) return;
+    const nextStatus = toTaskStatusFromStateDefinition(targetColumn.state);
+    const currentStateId = resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id;
+    if (targetColumn.id === currentStateId) return;
 
-    setOptimisticStatusByTaskId((previous) => ({ ...previous, [taskId]: newStatus }));
-    
-    dispatchStatusChange(taskId, newStatus);
+    setOptimisticStatusByTaskId((previous) => ({ ...previous, [taskId]: nextStatus }));
+
+    dispatchStatusChange(taskId, nextStatus);
   };
 
   // Flatten all visible task IDs for keyboard navigation (across all columns)
   const allVisibleTaskIds = useMemo(() => {
-    return [
-      ...tasksByStatus.open,
-      ...tasksByStatus.active,
-      ...tasksByStatus.done,
-      ...tasksByStatus.closed,
-    ].map((task) => task.id);
-  }, [tasksByStatus]);
+    return columns.flatMap((column) => (tasksByColumnId[column.id] || []).map((task) => task.id));
+  }, [columns, tasksByColumnId]);
 
   // Column-aware task IDs for Kanban navigation
-  const columnTaskIds = useMemo(() => [
-    tasksByStatus.open.map(t => t.id),
-    tasksByStatus.active.map(t => t.id),
-    tasksByStatus.done.map(t => t.id),
-    tasksByStatus.closed.map(t => t.id),
-  ], [tasksByStatus]);
+  const columnTaskIds = useMemo(
+    () => columns.map((column) => (tasksByColumnId[column.id] || []).map((task) => task.id)),
+    [columns, tasksByColumnId]
+  );
 
   // Track keyboard focus state
   const [keyboardFocusedTaskId, setKeyboardFocusedTaskId] = useState<string | null>(null);
@@ -249,14 +267,12 @@ export function KanbanView({
     if (!task) return;
     if (!canUserChangeTaskStatus(task, currentUser)) return;
     
-    const currentStatus = getTaskEffectiveStatus(task);
-    let newStatus: TaskStatusType;
-    
-    if (currentStatus === "closed") newStatus = "done";
-    else if (currentStatus === "done") newStatus = "active";
-    else if (currentStatus === "active") newStatus = "open";
-    else return; // Already at leftmost
-    
+    const currentColumnIndex = columns.findIndex(
+      (column) => column.id === resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id
+    );
+    if (currentColumnIndex <= 0) return;
+    const newStatus = toTaskStatusFromStateDefinition(columns[currentColumnIndex - 1].state);
+
     pendingRefocusRef.current = focusedId;
     dispatchStatusChange(focusedId, newStatus);
   };
@@ -273,14 +289,12 @@ export function KanbanView({
     if (!task) return;
     if (!canUserChangeTaskStatus(task, currentUser)) return;
     
-    const currentStatus = getTaskEffectiveStatus(task);
-    let newStatus: TaskStatusType;
-    
-    if (currentStatus === "open") newStatus = "active";
-    else if (currentStatus === "active") newStatus = "done";
-    else if (currentStatus === "done") newStatus = "closed";
-    else return; // Already at rightmost
-    
+    const currentColumnIndex = columns.findIndex(
+      (column) => column.id === resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id
+    );
+    if (currentColumnIndex < 0 || currentColumnIndex >= columns.length - 1) return;
+    const newStatus = toTaskStatusFromStateDefinition(columns[currentColumnIndex + 1].state);
+
     pendingRefocusRef.current = focusedId;
     dispatchStatusChange(focusedId, newStatus);
   };
@@ -312,7 +326,7 @@ export function KanbanView({
         setFocusByTaskId(taskIdToFocus);
       });
     }
-  }, [tasksByStatus, setFocusByTaskId]);
+  }, [tasksByColumnId, setFocusByTaskId]);
 
   // Scroll focused task into view
   useEffect(() => {
@@ -347,12 +361,12 @@ export function KanbanView({
                     <span className={column.color}><TaskStateDefIcon state={column.state} /></span>
                     <span className="font-medium">{column.label}</span>
                     <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                      {tasksByStatus[column.id].length}
+                      {(tasksByColumnId[column.id] || []).length}
                     </span>
                   </div>
-                  {authPolicy.canOpenCompose && !isInteractionBlocked && column.id !== "closed" && (
+                  {authPolicy.canOpenCompose && !isInteractionBlocked && column.state.type !== "closed" && (
                     <button
-                      onClick={() => setComposingColumn(column.id as TaskInitialStatus)}
+                      onClick={() => setComposingColumn(column.state.type as TaskInitialStatus)}
                       className="p-1 rounded hover:bg-muted transition-colors"
                       data-onboarding="kanban-add-task"
                     >
@@ -362,7 +376,7 @@ export function KanbanView({
                 </div>
 
                 {/* Task Composer */}
-                {composingColumn === column.id && (
+                {composingColumn === column.state.type && (
                   <div className="p-3 border-b border-border bg-card/50 flex-shrink-0">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-muted-foreground">{t("kanban.newTaskIn", { column: column.label })}</span>
@@ -399,7 +413,7 @@ export function KanbanView({
                         {...provided.droppableProps}
                         className="flex h-full min-h-full min-w-0 flex-col gap-2"
                       >
-                        {tasksByStatus[column.id].map((task, index) => {
+                        {(tasksByColumnId[column.id] || []).map((task, index) => {
                           const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
                           return (
                             <Draggable
@@ -433,7 +447,7 @@ export function KanbanView({
                             </Draggable>
                           );
                         })}
-                        {tasksByStatus[column.id].length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
+                        {(tasksByColumnId[column.id] || []).length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
                         {provided.placeholder}
                       </div>
                     </div>

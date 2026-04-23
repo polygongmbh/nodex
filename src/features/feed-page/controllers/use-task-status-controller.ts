@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task, TaskStatus, TaskStatusType } from "@/types";
-import { getLastEditedAt } from "@/types";
+import { getLastEditedAt, getTaskStatusType, normalizeTaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { applyTaskStatusUpdate, isTaskTerminalStatus } from "@/domain/content/task-status";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import { resolveTaskStateDefinition, getQuickToggleNextState, getTaskStateRegistry } from "@/domain/task-states/task-state-config";
+import { getQuickToggleNextState } from "@/domain/task-states/task-state-config";
 import { notifyStatusRestricted } from "@/lib/notifications";
 import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";
 import { playCompletionPopSound } from "@/lib/completion-feedback";
@@ -27,7 +27,7 @@ export interface UseTaskStatusControllerResult {
   completionSoundEnabled: boolean;
   handleToggleCompletionSound: () => void;
   handleToggleComplete: (taskId: string) => void;
-  handleStatusChange: (taskId: string, stateId: string) => void;
+  handleStatusChange: (taskId: string, status: TaskStatus) => void;
   sortStatusHoldByTaskId: Record<string, TaskStatusType>;
   sortModifiedAtHoldByTaskId: Record<string, string>;
 }
@@ -87,7 +87,7 @@ export function useTaskStatusController({
       clearPendingStatusUpdate(taskId);
       const existingTask = allTasks.find((task) => task.id === taskId);
       const currentStatus =
-        pendingTaskStatusesRef.current.get(taskId) ?? existingTask?.status ?? "open";
+        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask?.status) ?? "open";
       pendingTaskStatusesRef.current.set(taskId, status);
       setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
       if (existingTask) {
@@ -144,7 +144,7 @@ export function useTaskStatusController({
         return;
       }
       const currentStatus =
-        pendingTaskStatusesRef.current.get(taskId) ?? existingTask.status ?? "open";
+        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask.status) ?? "open";
       if (isTaskTerminalStatus(currentStatus)) return;
       const nextStatus = getQuickToggleNextState(currentStatus);
       if (nextStatus === null) return;
@@ -163,7 +163,7 @@ export function useTaskStatusController({
   );
 
   const handleStatusChange = useCallback(
-    (taskId: string, stateId: string) => {
+    (taskId: string, status: TaskStatus) => {
       if (guardInteraction("modify")) return;
 
       const existingTask = allTasks.find((task) => task.id === taskId);
@@ -173,18 +173,12 @@ export function useTaskStatusController({
         return;
       }
 
-      const registry = getTaskStateRegistry();
-      const stateDef = resolveTaskStateDefinition(stateId, registry);
-      const resolvedType = stateDef.type as TaskStatusType;
-      // Only pass a description when using a custom sub-state (id differs from its type)
-      const description = stateDef.id !== stateDef.type ? stateDef.label : undefined;
+      const normalizedStatus = normalizeTaskStatus(status);
+      const resolvedType = normalizedStatus.type as TaskStatusType;
 
       scheduleTaskStatusReorderUpdate(taskId, resolvedType);
       triggerCompletionFeedback(taskId, resolvedType);
-      void publishTaskStateUpdate(
-        taskId,
-        description ? { type: resolvedType, description } : { type: resolvedType }
-      );
+      void publishTaskStateUpdate(taskId, normalizedStatus);
     },
     [
       allTasks,

@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, type FocusEvent, type MouseEvent, type P
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
+import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import type { Task } from "@/types";
@@ -48,7 +49,12 @@ export function useTaskStatusMenu({
 
   const dispatchStatusChange = useCallback(
     (stateId: string) => {
-      void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, stateId });
+      const state = resolveTaskStateDefinition(stateId);
+      void dispatchFeedInteraction({
+        type: "task.changeStatus",
+        taskId: task.id,
+        status: state.id === state.type ? { type: state.type } : { type: state.type, description: state.label },
+      });
     },
     [dispatchFeedInteraction, task.id]
   );

@@ -1,4 +1,4 @@
-import type { TaskStatus, TaskStatusType } from "@/types";
+import { getTaskStatusType, normalizeTaskStatus, type TaskStatus, type TaskStatusLike, type TaskStatusType } from "@/types";
 
 /** Semantic type for grouping, sorting, and protocol mapping — identical to TaskStatusType. */
 export type TaskStateType = TaskStatusType;
@@ -15,7 +15,7 @@ export interface TaskStateDefinition {
 export const DEFAULT_TASK_STATES: TaskStateDefinition[] = [
   { id: "open", type: "open", label: "Open", icon: "circle", visibleByDefault: true },
   { id: "active", type: "active", label: "In Progress", icon: "circle-dot", visibleByDefault: true },
-  { id: "done", type: "done", label: "Done", icon: "check-circle-2", visibleByDefault: true },
+  { id: "done", type: "done", label: "Done", icon: "circle-check-big", visibleByDefault: true },
   { id: "closed", type: "closed", label: "Closed", icon: "x", visibleByDefault: true },
 ];
 
@@ -82,7 +82,7 @@ export function resetTaskStateRegistry(): void {
 const DEFAULT_TYPE_DEFINITIONS: Record<TaskStateType, Omit<TaskStateDefinition, "id" | "visibleByDefault">> = {
   open: { type: "open", label: "Open", icon: "circle" },
   active: { type: "active", label: "Active", icon: "circle-dot" },
-  done: { type: "done", label: "Done", icon: "check-circle-2" },
+  done: { type: "done", label: "Done", icon: "circle-check-big" },
   closed: { type: "closed", label: "Closed", icon: "x" },
 };
 
@@ -91,11 +91,11 @@ const DEFAULT_TYPE_DEFINITIONS: Record<TaskStateType, Omit<TaskStateDefinition, 
  * Matches configured states by label first, then falls back to the built-in for the status.
  */
 export function resolveTaskState(
-  status: TaskStatusType | undefined,
+  status: TaskStatusLike,
   label?: string,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
-  const effectiveStatus: TaskStatusType = status ?? "open";
+  const effectiveStatus: TaskStatusType = getTaskStatusType(status);
   if (label) {
     // Match a configured state whose label matches (case-insensitive) and whose type is compatible
     const byLabel = registry.find(
@@ -123,7 +123,19 @@ export function resolveTaskStateFromStatus(
   status: TaskStatus | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
-  return resolveTaskState(status?.type, status?.description, registry);
+  const normalizedStatus = normalizeTaskStatus(status);
+  return resolveTaskState(normalizedStatus.type, normalizedStatus.description, registry);
+}
+
+export function toTaskStatusFromStateDefinition(state: TaskStateDefinition): TaskStatus {
+  return state.id === state.type ? { type: state.type } : { type: state.type, description: state.label };
+}
+
+export function toTaskStatusFromStateId(
+  stateId: string,
+  registry: TaskStateDefinition[] = getTaskStateRegistry()
+): TaskStatus {
+  return toTaskStatusFromStateDefinition(resolveTaskStateDefinition(stateId, registry));
 }
 
 export function resolveTaskStateDefinition(
@@ -180,11 +192,13 @@ function getDefaultStateForType(
  * Mobile: open -> default done, active -> default done, done/closed -> null (open chooser)
  */
 export function getQuickToggleNextState(
-  stateId: string | undefined,
+  stateId: string | TaskStatusLike,
   options: { mobile?: boolean } = {},
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): string | null {
-  const currentType = getTaskStateUiType(stateId, registry);
+  const currentType = typeof stateId === "string"
+    ? getTaskStateUiType(stateId, registry)
+    : getTaskStatusType(stateId);
   if (currentType === "done" || currentType === "closed") return null;
 
   if (currentType === "open" && !options.mobile) {

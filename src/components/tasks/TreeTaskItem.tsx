@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
+import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStatusFromStateDefinition } from "@/domain/task-states/task-state-config";
 import { cn } from "@/lib/utils";
-import { Task, TaskStatusType, Relay, getTaskStatus } from "@/types";
+import { Task, TaskStatusType, Relay, getTaskStatus, getTaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -101,11 +101,12 @@ export function TreeTaskItem({
     event.preventDefault();
     void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
   };
-  const getStatusToggleHint = (status?: TaskStatusType): string => {
+  const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    if (status === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (status === "done") return t("hints.statusToggle.done");
-    if (status === "closed") return t("hints.statusToggle.closed");
+    const statusType = getTaskStatusType(status);
+    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
+    if (statusType === "done") return t("hints.statusToggle.done");
+    if (statusType === "closed") return t("hints.statusToggle.closed");
     return t("hints.statusToggle.open", { alternateKey });
   };
   const hasMatchingChildren = matchingChildren.length > 0;
@@ -160,7 +161,7 @@ export function TreeTaskItem({
     const currentStatus = task.status;
     
     if (prevStatus !== currentStatus) {
-      if (currentStatus === "active") {
+      if (getTaskStatusType(currentStatus) === "active") {
         setLocalFoldState(getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren));
         setHasLocalFoldOverride(false);
       } else if (isTaskTerminalStatus(currentStatus)) {
@@ -427,9 +428,13 @@ export function TreeTaskItem({
                     key={state.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, stateId: state.id });
+                      void dispatchFeedInteraction({
+                        type: "task.changeStatus",
+                        taskId: task.id,
+                        status: toTaskStatusFromStateDefinition(state),
+                      });
                     }}
-                    className={cn(task.status === state.id && "bg-muted")}
+                    className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
                   >
                     <TaskStateDefIcon state={state} className="mr-2" />
                     {state.label}

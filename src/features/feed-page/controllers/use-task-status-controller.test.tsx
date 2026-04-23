@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskStatusController } from "./use-task-status-controller";
 import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import { makePerson, makeTask } from "@/test/fixtures";
+import { getTaskStatusType } from "@/types";
 
 const author = makePerson({ id: "author-pubkey", name: "author", displayName: "Author" });
 const initialTask = makeTask({
@@ -32,16 +33,16 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
 
   return (
     <>
-      <button type="button" onClick={() => controller.handleStatusChange("task-1", "done")}>
+      <button type="button" onClick={() => controller.handleStatusChange("task-1", { type: "done" })}>
         SetDone
       </button>
-      <button type="button" onClick={() => controller.handleStatusChange("task-1", "active")}>
+      <button type="button" onClick={() => controller.handleStatusChange("task-1", { type: "active" })}>
         SetInProgress
       </button>
       <button type="button" onClick={() => controller.handleToggleComplete("task-1")}>
         ToggleComplete
       </button>
-      <output data-testid="status">{allTasks[0]?.status || ""}</output>
+      <output data-testid="status">{getTaskStatusType(allTasks[0]?.status) || ""}</output>
       <output data-testid="state-update-count">{String(allTasks[0]?.stateUpdates?.length ?? 0)}</output>
       <output data-testid="sort-hold">{controller.sortStatusHoldByTaskId["task-1"] || ""}</output>
     </>

@@ -1,10 +1,11 @@
 import type { MouseEvent } from "react";
-import type { TaskStatusType } from "@/types";
+import type { TaskStatusLike } from "@/types";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { getQuickToggleNextState, getTaskStateUiType } from "@/domain/task-states/task-state-config";
+import { getTaskStatusType } from "@/types";
 
 interface HandleTaskStatusToggleClickOptions {
-  status?: TaskStatusType;
+  status?: TaskStatusLike;
   hasStatusChangeHandler: boolean;
   isMenuOpen: boolean;
   openMenu: () => void;
@@ -17,7 +18,7 @@ interface HandleTaskStatusToggleClickOptions {
 }
 
 interface StatusMenuIntentOptions {
-  status?: TaskStatusType;
+  status?: TaskStatusLike;
   altKey: boolean;
   hasStatusChangeHandler: boolean;
 }
@@ -71,7 +72,7 @@ export function handleTaskStatusToggleClick(
   // Focus the task when quick-toggling to an active state
   if (focusOnQuickToggle && !event.altKey) {
     const nextState = getQuickToggleNextState(status);
-    if (nextState !== null && getTaskStateUiType(nextState) === "active") {
+    if (nextState !== null && getTaskStateUiType(getTaskStatusType(nextState)) === "active") {
       focusTask?.();
     }
   }

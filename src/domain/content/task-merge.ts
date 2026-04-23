@@ -44,8 +44,7 @@ export function mergeTasks(existingTasks: Task[], newTasks: Task[]): Task[] {
       ...winner,
       relays: mergedRelays,
       stateUpdates: mergedStateUpdates,
-      status: latestMergedState?.status.type ?? winner.status,
-      statusDescription: latestMergedState?.status.description ?? winner.statusDescription,
+      status: latestMergedState?.status ?? winner.status,
     };
     mergedTask.lastEditedAt = getLatestEditedAt(mergedTask);
     byId.set(incoming.id, mergedTask);

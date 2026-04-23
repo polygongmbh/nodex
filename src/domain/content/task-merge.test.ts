@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Task } from "@/types";
+import { getTaskStatusType, type Task } from "@/types";
 import { mergeTasks } from "./task-merge";
 
 describe("mergeTasks", () => {
@@ -45,7 +45,7 @@ describe("mergeTasks", () => {
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:01:00.000Z"),
       relays: ["relay-a"],
-      status: "open",
+      status: { type: "open" },
       stateUpdates: [
         {
           id: "local-state-1",
@@ -59,7 +59,7 @@ describe("mergeTasks", () => {
       id: "task-1",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-b"],
-      status: "done",
+      status: { type: "done" },
       stateUpdates: [
         {
           id: "relay-state-1",
@@ -74,7 +74,7 @@ describe("mergeTasks", () => {
     const merged = mergeTasks([existing], [incoming]);
 
     expect(merged).toHaveLength(1);
-    expect(merged[0]?.status).toBe("done");
+    expect(getTaskStatusType(merged[0]?.status)).toBe("done");
     expect(merged[0]?.stateUpdates?.map((update) => update.id)).toEqual([
       "relay-state-1",
       "local-state-1",

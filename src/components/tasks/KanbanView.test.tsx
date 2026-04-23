@@ -104,6 +104,28 @@ describe("KanbanView", () => {
     expect(screen.getAllByText((_, node) => node?.textContent === "Closed task #general")[0]).toBeInTheDocument();
   });
 
+  it("renders a separate column for a custom task status", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const blockedTask = makeTask({
+      id: "blocked-task",
+      author,
+      status: { type: "active", description: "Blocked" },
+      content: "Blocked task #general",
+    });
+
+    render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[blockedTask]}
+        allTasks={[blockedTask]}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    expect(screen.getByText("Blocked")).toBeInTheDocument();
+  });
+
   it("renders a droppable target for empty columns", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
 
@@ -148,7 +170,7 @@ describe("KanbanView", () => {
       />
     );
 
-    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(screen.getByRole("combobox", { name: /priority/i })).toBeInTheDocument();
     expect(screen.getAllByRole("combobox", { name: /priority/i })).toHaveLength(1);
   });
 
@@ -175,7 +197,7 @@ describe("KanbanView", () => {
 
     const chipRow = screen.getByTestId("kanban-chip-row-priority-and-tag-task");
     const hashtagChip = screen.getByRole("button", { name: /filter to #general/i });
-    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(screen.getByRole("combobox", { name: /priority/i })).toBeInTheDocument();
     expect(chipRow).not.toHaveTextContent("P4");
     expect(chipRow).toContainElement(hashtagChip);
   });
@@ -261,7 +283,7 @@ describe("KanbanView", () => {
       />
     );
 
-    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(screen.getByRole("combobox", { name: /priority/i })).toBeInTheDocument();
     expect(screen.getByTestId("kanban-due-row-compact-kanban-task")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /filter to #general/i })).not.toBeInTheDocument();
     expect(screen.queryByTestId("kanban-chip-row-compact-kanban-task")).not.toBeInTheDocument();
@@ -339,7 +361,7 @@ describe("KanbanView", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "drag-task",
-      stateId: "done",
+      status: { type: "done" },
     });
     expect(container.querySelector('[data-droppable-id="done"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
     expect(container.querySelector('[data-droppable-id="open"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();

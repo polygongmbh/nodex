@@ -102,7 +102,7 @@ describe("TreeTaskItem status actions", () => {
     fireEvent.click(screen.getByLabelText("Set status"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });
 
   it("does not enter the task when toggling from in progress to done", () => {
@@ -158,7 +158,7 @@ describe("TreeTaskItem status actions", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "t1",
-      stateId: "active",
+      status: { type: "active" },
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });
@@ -171,7 +171,7 @@ describe("TreeTaskItem status actions", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "t1",
-      stateId: "done",
+      status: { type: "done" },
     });
   });
 
@@ -183,7 +183,7 @@ describe("TreeTaskItem status actions", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",
       taskId: "t1",
-      stateId: "closed",
+      status: { type: "closed" },
     });
   });
 

@@ -1,4 +1,4 @@
-import { type FeedMessageType, type TaskStateUpdate, type TaskStatusType, Task, getLastEditedAt } from "@/types";
+import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, type TaskStatusType, Task, getLastEditedAt } from "@/types";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
@@ -167,16 +167,16 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const nip99 = feedMessageType ? parseNip99MetadataFromTags(event.tags) : undefined;
   const locationGeohash = parseFirstGeohashTag(event.tags);
 
-  let status: TaskStatusType = "open";
+  let status: TaskStatus = { type: "open" };
   const statusTag = event.tags.find((tag) => tag[0] === "status");
   if (statusTag) {
     const statusValue = statusTag[1].toLowerCase();
     if (statusValue === "done" || statusValue === "completed") {
-      status = "done";
+      status = { type: "done" };
     } else if (statusValue === "closed") {
-      status = "closed";
+      status = { type: "closed" };
     } else if (statusValue === "in-progress" || statusValue === "active") {
-      status = "active";
+      status = { type: "active" };
     }
   }
 
@@ -360,7 +360,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   const latestStateByTaskId = new Map<
     string,
-    { createdAt: number; status: TaskStatusType; statusDescription?: string }
+    { createdAt: number; status: TaskStatus }
   >();
   const stateUpdatesByTaskId = new Map<string, TaskStateUpdate[]>();
 
@@ -376,8 +376,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     if (!prev || stateEvent.created_at >= prev.createdAt) {
       latestStateByTaskId.set(targetTaskId, {
         createdAt: stateEvent.created_at,
-        status: mapped.type,
-        statusDescription: mapped.description,
+        status: mapped,
       });
     }
 
@@ -400,7 +399,6 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     taskMap.set(taskId, {
       ...task,
       status: state.status,
-      statusDescription: state.statusDescription,
       stateUpdates,
       lastEditedAt: new Date(state.createdAt * 1000),
     });

@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - Task states are now driven by a config registry instead of hard-coded values, enabling custom workflow states via `VITE_TASK_STATE_CONFIG`. The built-in states (Open, In Progress, Done, Closed) remain the default.
 - Mobile quick-toggle now skips the "In Progress" state, going directly from Open to Done.
+- Tasks now carry one canonical status object instead of split status fields, and Kanban renders separate columns for resolved workflow states so custom statuses are preserved across board moves and status updates.
 
 ## [2.13.5] - 2026-04-23
 

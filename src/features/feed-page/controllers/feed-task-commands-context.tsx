@@ -3,6 +3,7 @@ import type {
   PostType,
   TaskDateType,
   TaskInitialStatus,
+  TaskStatus,
   PublishedAttachment,
   Nip99Metadata,
   Nip99ListingStatus,
@@ -29,7 +30,7 @@ export interface FeedTaskCommands {
     locationGeohash?: string
   ): Promise<TaskCreateResult>;
   toggleComplete(taskId: string): void;
-  changeStatus(taskId: string, stateId: string): void;
+  changeStatus(taskId: string, status: TaskStatus): void;
   updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;
   updatePriority(taskId: string, priority: number): void;
   changeListingStatus(taskId: string, status: Nip99ListingStatus): void;

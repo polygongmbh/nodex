@@ -22,7 +22,7 @@ import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import type { EmptyScopeModel } from "@/lib/empty-scope";
-import type { Channel, ChannelMatchMode, Relay, Task, TaskStateUpdate, TaskStatusType } from "@/types";
+import { getTaskStatusType, type Channel, type ChannelMatchMode, type Relay, type Task, type TaskStateUpdate, type TaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 
 interface BaseViewStateInput {
@@ -172,7 +172,7 @@ function clearSelectedPeople(people: Person[]): Person[] {
 function buildFeedEntries(tasks: Task[], focusedTaskId: string | null): FeedEntry[] {
   const entries: FeedEntry[] = [];
   for (const task of [...tasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
-    if (task.status !== "closed" || task.id === focusedTaskId) {
+    if (getTaskStatusType(task.status) !== "closed" || task.id === focusedTaskId) {
       entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
     }
     for (const update of task.stateUpdates || []) {
@@ -727,7 +727,7 @@ export function useKanbanViewState({
   const tasksByStatus = useMemo<Record<TaskStatusType, Task[]>>(() => {
     const grouped: Record<TaskStatusType, Task[]> = { open: [], active: [], done: [], closed: [] };
     kanbanTasks.forEach((task) => {
-      grouped[task.status].push(task);
+      grouped[getTaskStatusType(task.status)].push(task);
     });
     grouped.open = sortKanbanColumnTasks(grouped.open, "open", sortContext);
     grouped.active = sortKanbanColumnTasks(grouped.active, "active", sortContext);

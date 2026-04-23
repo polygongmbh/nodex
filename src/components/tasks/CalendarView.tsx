@@ -2,8 +2,8 @@ import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } fr
 import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
-import {   Task, ComposeRestoreRequest, TaskStatusType, getTaskStatus } from "@/types";
+import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStatusFromStateDefinition } from "@/domain/task-states/task-state-config";
+import { getTaskStatus, getTaskStatusType, type Task, type ComposeRestoreRequest, type TaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 import {
   format,
@@ -333,7 +333,9 @@ export function CalendarView({
     return canUserChangeTaskStatus(task, currentUser);
   };
   const dispatchStatusChange = (taskId: string, stateId: string) => {
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, stateId });
+    const state = getTaskStateRegistry().find((entry) => entry.id === stateId);
+    if (!state) return;
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status: toTaskStatusFromStateDefinition(state) });
   };
   const dispatchToggleComplete = (taskId: string) => {
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
@@ -533,6 +535,7 @@ export function CalendarView({
                                         event.stopPropagation();
                                         dispatchStatusChange(task.id, state.id);
                                       }}
+                                      className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
                                     >
                                       <TaskStateDefIcon state={state} className="mr-2" />
                                       {state.label}
@@ -688,7 +691,7 @@ export function CalendarView({
                                           "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
                                           isTaskTerminalStatus(task.status)
                                             ? "bg-muted text-muted-foreground line-through"
-                                            : task.status === "active"
+                                            : getTaskStatusType(task.status) === "active"
                                               ? "bg-warning/15 text-warning"
                                               : "bg-primary/10"
                                         )}
@@ -957,6 +960,7 @@ export function CalendarView({
                                       event.stopPropagation();
                                       dispatchStatusChange(task.id, state.id);
                                     }}
+                                    className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
                                   >
                                     <TaskStateDefIcon state={state} className="mr-2" />
                                     {state.label}

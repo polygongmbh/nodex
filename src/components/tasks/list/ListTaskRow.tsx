@@ -1,5 +1,5 @@
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
+import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 import type { ReactNode } from "react";
 import {
   DropdownMenu,
@@ -111,7 +111,7 @@ export function ListTaskRow({
                     event.stopPropagation();
                     dispatchStatusChange(state.id);
                   }}
-                  className={cn(task.status === state.id && "bg-muted")}
+                  className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
                 >
                   <TaskStateDefIcon state={state} className="mr-2" />
                   {state.label}
