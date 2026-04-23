@@ -98,7 +98,7 @@ function TaskTagChipContent({
             void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
           }}
           className={cn(
-            "shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-xs font-medium",
+            "inline-flex shrink-0 items-center whitespace-nowrap px-1.5 py-0.5 rounded text-xs font-medium leading-none",
             TASK_INTERACTION_STYLES.hashtagChip,
             tagClassName
           )}
