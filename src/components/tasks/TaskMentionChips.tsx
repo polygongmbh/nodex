@@ -70,7 +70,11 @@ export function TaskMentionChips({
 
     if (clickablePerson) {
       return (
-        <PersonHoverCard key={pubkey} person={clickablePerson}>
+        <PersonHoverCard
+          key={pubkey}
+          person={clickablePerson}
+          triggerClassName="inline-flex shrink-0 leading-none"
+        >
           <button
             type="button"
             className={cn(TASK_CHIP_STYLES.mention, "transition-colors hover:bg-primary/15", className)}
