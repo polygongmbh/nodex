@@ -43,7 +43,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
-import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import {
   createCalendarSelectors,
   useTaskViewSource,
