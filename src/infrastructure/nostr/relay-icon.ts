@@ -1,11 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import { Building2, Cpu, Gamepad2, PlayCircle, Radio, RadioTower, Rss, Users, ListTodo } from "lucide-react";
+import { Building2, Cpu, Gamepad2, Plane, PlayCircle, Radio, RadioTower, Rss, Users, ListTodo } from "lucide-react";
 import { normalizeRelayUrl } from "./relay-url";
 
 const PREFIX_ICON_MAP: Record<string, LucideIcon> = {
   demo: PlayCircle,
   feed: Rss,
   tasks: ListTodo,
+  travel: Plane,
   base: Building2,
   relay: RadioTower,
   nostr: Cpu,
