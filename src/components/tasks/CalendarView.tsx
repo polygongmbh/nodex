@@ -468,9 +468,10 @@ export function CalendarView({
                                       closeMenu: () => closeStatusMenu(task.id),
                                       allowMenuOpen: () => allowStatusMenuOpen(task.id),
                                       clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                                      toggleStatus: () => dispatchToggleComplete(task.id),
-                                      focusTask: () => focusTask(task.id),
-                                    });
+                                       toggleStatus: () => dispatchToggleComplete(task.id),
+                                       focusTask: () => focusTask(task.id),
+                                       focusOnQuickToggle: hasChildren(task.id),
+                                     });
                                   }}
                                   onFocus={(e) => {
                                     if (!canCompleteTask(task)) return;
@@ -916,6 +917,7 @@ export function CalendarView({
                                     clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
                                     toggleStatus: () => dispatchToggleComplete(task.id),
                                     focusTask: () => focusTask(task.id),
+                                    focusOnQuickToggle: hasChildren(task.id),
                                   });
                                 }}
                                 onFocus={(e) => {

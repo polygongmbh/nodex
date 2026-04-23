@@ -364,6 +364,7 @@ export function TreeTaskItem({
                         void dispatchFeedInteraction({ type: "task.toggleComplete", taskId: task.id });
                       },
                       focusTask: () => void dispatchFeedInteraction({ type: "task.focus.change", taskId: task.id }),
+                      focusOnQuickToggle: hasChildren,
                     });
                   }}
                 onFocus={(e) => {
