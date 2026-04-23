@@ -83,8 +83,7 @@ export function TaskMentionChips({
               void dispatchFeedInteraction(toPersonShortcutInteraction(clickablePerson, shortcutIntent));
             }}
           >
-            <AtSign className="h-3 w-3" />
-            {label}
+            @{label}
           </button>
         </PersonHoverCard>
       );
@@ -96,8 +95,7 @@ export function TaskMentionChips({
         className={cn(TASK_CHIP_STYLES.mention, className)}
         title={`@${toUserFacingPubkey(pubkey)}`}
       >
-        <AtSign className="w-3 h-3" />
-        {label}
+        @{label}
       </span>
     );
   });
