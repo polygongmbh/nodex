@@ -142,7 +142,7 @@
       "clearTime": "Quitar hora"
     },
     "dates": {
-      "setOptional": "Establecer fecha de {{dateType}} (opcional)"
+      "setOptional": "Establecer fecha de {{dateType}}"
     }
   },
   "toasts": {

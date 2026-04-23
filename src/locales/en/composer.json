@@ -142,7 +142,7 @@
       "clearTime": "Clear time"
     },
     "dates": {
-      "setOptional": "Set {{dateType}} date (optional)"
+      "setOptional": "Set {{dateType}} date"
     }
   },
   "toasts": {

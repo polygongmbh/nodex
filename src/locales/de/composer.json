@@ -142,7 +142,7 @@
       "clearTime": "Uhrzeit entfernen"
     },
     "dates": {
-      "setOptional": "{{dateType}}-Datum setzen (optional)"
+      "setOptional": "{{dateType}}-Datum setzen"
     }
   },
   "toasts": {
