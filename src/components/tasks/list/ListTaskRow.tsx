@@ -111,7 +111,7 @@ export function ListTaskRow({
                     event.stopPropagation();
                     dispatchStatusChange(state.id);
                   }}
-                  className={cn((task.status || "open") === state.id && "bg-muted")}
+                  className={cn(task.status === state.id && "bg-muted")}
                 >
                   <TaskStateDefIcon state={state} className="mr-2" />
                   {state.label}

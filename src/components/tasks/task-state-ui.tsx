@@ -53,8 +53,8 @@ const TONE_CLASS_BY_TYPE: Record<TaskStateType, string> = {
   closed: "text-muted-foreground",
 };
 
-export function getTaskStateToneClass(status: TaskStatusType | undefined): string {
-  return TONE_CLASS_BY_TYPE[status ?? "open"] ?? "text-muted-foreground";
+export function getTaskStateToneClass(status: TaskStatusType): string {
+  return TONE_CLASS_BY_TYPE[status] ?? "text-muted-foreground";
 }
 
 /** Badge classes (pill styling) for a task state type. */
@@ -65,8 +65,8 @@ const BADGE_CLASS_BY_TYPE: Record<TaskStateType, string> = {
   closed: "bg-muted/80 text-muted-foreground",
 };
 
-export function getTaskStateBadgeClasses(status: TaskStatusType | undefined): string {
-  return BADGE_CLASS_BY_TYPE[status ?? "open"] ?? BADGE_CLASS_BY_TYPE.open;
+export function getTaskStateBadgeClasses(status: TaskStatusType): string {
+  return BADGE_CLASS_BY_TYPE[status] ?? BADGE_CLASS_BY_TYPE.open;
 }
 
 /**

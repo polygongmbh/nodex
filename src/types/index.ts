@@ -161,7 +161,7 @@ export interface Task {
   lastEditedAt?: Date;
   isLiked?: boolean;
   isReposted?: boolean;
-  status?: TaskStatusType;
+  status: TaskStatusType;
   statusDescription?: string;
   stateUpdates?: TaskStateUpdate[];
   completedBy?: string;
@@ -178,8 +178,7 @@ export interface Task {
   rawNostrEvent?: RawNostrEvent;
 }
 
-export function getTaskStatus(task: Pick<Task, "status" | "statusDescription">): TaskStatus | undefined {
-  if (!task.status) return undefined;
+export function getTaskStatus(task: Pick<Task, "status" | "statusDescription">): TaskStatus {
   return {
     type: task.status,
     description: task.statusDescription,

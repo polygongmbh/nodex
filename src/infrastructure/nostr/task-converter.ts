@@ -270,7 +270,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     likes: 0,
     replies: 0,
     reposts: 0,
-    status: isTask ? status : undefined,
+    status,
     parentId,
     dueDate,
     dueTime: dueTimeTag?.[1],
@@ -363,7 +363,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   const latestStateByTaskId = new Map<
     string,
-    { createdAt: number; status: Task["status"]; statusDescription?: string }
+    { createdAt: number; status: TaskStatusType; statusDescription?: string }
   >();
   const stateUpdatesByTaskId = new Map<string, TaskStateUpdate[]>();
 

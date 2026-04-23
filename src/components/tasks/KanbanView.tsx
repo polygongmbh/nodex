@@ -86,7 +86,7 @@ export function KanbanView({
     };
     
     kanbanTasks.forEach(task => {
-      const status = optimisticStatusByTaskId[task.id] || task.status || "open";
+      const status = optimisticStatusByTaskId[task.id] || task.status;
       grouped[status].push(task);
     });
 
@@ -99,7 +99,7 @@ export function KanbanView({
   const canonicalStatusByTaskId = useMemo(() => {
     const map = new Map<string, TaskStatusType>();
     for (const task of kanbanTasks) {
-      map.set(task.id, task.status || "open");
+      map.set(task.id, task.status);
     }
     return map;
   }, [kanbanTasks]);
@@ -124,7 +124,7 @@ export function KanbanView({
     });
   }, [canonicalStatusByTaskId]);
   const getTaskEffectiveStatus = useCallback(
-    (task: Task): TaskStatusType => optimisticStatusByTaskId[task.id] || task.status || "open",
+    (task: Task): TaskStatusType => optimisticStatusByTaskId[task.id] || task.status,
     [optimisticStatusByTaskId]
   );
   const hasChildren = useCallback(

@@ -727,7 +727,7 @@ export function useKanbanViewState({
   const tasksByStatus = useMemo<Record<TaskStatusType, Task[]>>(() => {
     const grouped: Record<TaskStatusType, Task[]> = { open: [], active: [], done: [], closed: [] };
     kanbanTasks.forEach((task) => {
-      grouped[task.status || "open"].push(task);
+      grouped[task.status].push(task);
     });
     grouped.open = sortKanbanColumnTasks(grouped.open, "open", sortContext);
     grouped.active = sortKanbanColumnTasks(grouped.active, "active", sortContext);

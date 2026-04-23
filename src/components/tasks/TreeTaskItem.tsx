@@ -429,7 +429,7 @@ export function TreeTaskItem({
                       e.stopPropagation();
                       void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, stateId: state.id });
                     }}
-                    className={cn((task.status || "open") === state.id && "bg-muted")}
+                    className={cn(task.status === state.id && "bg-muted")}
                   >
                     <TaskStateDefIcon state={state} className="mr-2" />
                     {state.label}

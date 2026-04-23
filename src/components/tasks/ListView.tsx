@@ -328,7 +328,7 @@ export function ListView({
 
   // Editable status cell
   const StatusCell = ({ task }: { task: Task }) => {
-    const status = task.status || "open";
+    const status = task.status;
     const editable = canCompleteTask(task);
     const statusClassName = cn(
       "text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap",

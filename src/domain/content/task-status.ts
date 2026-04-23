@@ -6,15 +6,15 @@ import {
   getTaskStateRegistry,
 } from "@/domain/task-states/task-state-config";
 
-export function isTaskCompletedStatus(status: TaskStatusType | undefined): boolean {
+export function isTaskCompletedStatus(status: TaskStatusType): boolean {
   return isTaskCompletedState(status);
 }
 
-export function isTaskTerminalStatus(status: TaskStatusType | undefined): boolean {
+export function isTaskTerminalStatus(status: TaskStatusType): boolean {
   return registryIsTerminal(status);
 }
 
-export function cycleTaskStatus(current: TaskStatusType | undefined): TaskStatusType {
+export function cycleTaskStatus(current: TaskStatusType): TaskStatusType {
   const next = getQuickToggleNextState(current);
   if (next !== null) return next as TaskStatusType;
   // Terminal states cycle back to first state
