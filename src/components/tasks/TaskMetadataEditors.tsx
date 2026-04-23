@@ -228,7 +228,10 @@ export function TaskPrioritySelect({
           void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: storedPriority });
         }
       }}
-      className={className}
+      className={cn(
+        "h-auto justify-start rounded border-0 bg-warning/15 p-1 font-medium leading-none text-warning ring-offset-0 focus:ring-1 focus:ring-offset-0",
+        className,
+      )}
       disabled={!taskId}
       stopPropagation={stopPropagation}
       aria-label={rest["aria-label"]}
