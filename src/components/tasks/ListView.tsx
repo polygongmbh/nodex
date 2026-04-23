@@ -59,11 +59,11 @@ const LIST_HEADER_CELL_CLASS = `${TABLE_CELL_PADDING_CLASS} min-w-0`;
 const LIST_BODY_CELL_CLASS = `${TABLE_CELL_PADDING_CLASS} min-w-0`;
 // columns: status toggle | task | status | due date | priority | tags
 const LIST_GRID_BASE_CLASS =
-  "grid-cols-[2.5rem_minmax(0,1fr)_fit-content(7.5rem)_7.5rem_minmax(0,1fr)]";
+  "grid-cols-[2.5rem_minmax(0,1fr)_fit-content(7.5rem)_5.5rem_minmax(0,1fr)]";
 const LIST_GRID_LG_CLASS =
-  "lg:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(8.5rem)_8rem_minmax(0,1fr)]";
+  "lg:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(8.5rem)_6rem_minmax(0,1fr)]";
 const LIST_GRID_XL_CLASS =
-  "xl:grid-cols-[2.5rem_minmax(0,3fr)_fit-content(10.75rem)_8rem_minmax(0,2fr)]";
+  "xl:grid-cols-[2.5rem_minmax(0,3fr)_fit-content(10.75rem)_6.5rem_minmax(0,2fr)]";
 const LIST_GRID_2XL_CLASS =
   "2xl:grid-cols-[2.5rem_minmax(0,2fr)_fit-content(8.75rem)_minmax(0,1fr)_8.5rem_minmax(0,1fr)]";
 const LIST_GRID_TEMPLATE_CLASS = `grid ${LIST_GRID_BASE_CLASS} ${LIST_GRID_LG_CLASS} ${LIST_GRID_XL_CLASS} ${LIST_GRID_2XL_CLASS}`;
