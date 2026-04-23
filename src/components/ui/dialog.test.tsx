@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Dialog, DialogContent, DialogDescription, DialogScrollBody, DialogTitle, handleDialogOutsideInteraction } from "./dialog";
@@ -37,19 +37,15 @@ describe("handleDialogOutsideInteraction", () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it("closes when the overlay is clicked and outside dismissal is enabled", () => {
+  it("closes from the shared close button", async () => {
     render(<DialogHarness />);
 
-    const closeOverlay = document.querySelector("[data-state='open'].fixed.inset-0");
-
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    if (!closeOverlay) {
-      throw new Error("Expected clickable dialog overlay");
-    }
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
-    fireEvent.click(closeOverlay);
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
   });
 
   it("stays open when the overlay is clicked and outside dismissal is disabled", () => {

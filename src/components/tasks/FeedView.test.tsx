@@ -74,6 +74,15 @@ function renderFeedView(
 }
 
 describe("FeedView", () => {
+  const chooseComboboxOptionByIndex = (name: string | RegExp, optionIndex: number) => {
+    const trigger = screen.getByRole("combobox", { name });
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+    fireEvent.click(trigger);
+    const option = within(screen.getByRole("listbox")).getAllByRole("option")[optionIndex];
+    fireEvent.pointerUp(option);
+    fireEvent.click(option);
+  };
+
   it("focuses breadcrumb target without bubbling card focus", () => {
     const root = makeTask({ id: "root", content: "Root task #general", author, status: "open" });
     const child = makeTask({
@@ -939,7 +948,7 @@ describe("FeedView", () => {
       searchQueryOverride: "",
     });
 
-    expect(screen.getByText("alice")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Person actions for alice" })).toBeInTheDocument();
   });
 
   it("renders task state updates as standalone compact feed items with task breadcrumb context", () => {
@@ -972,8 +981,13 @@ describe("FeedView", () => {
       />
     );
 
+    const latestStateEntry = screen.getByTestId("feed-state-entry-state-2");
+    const latestStateDescription = latestStateEntry.querySelector(
+      "div.inline-flex.flex-1.items-center.gap-1.overflow-hidden.whitespace-nowrap > span.truncate"
+    );
     expect(screen.getByText(/working on relay reconnect/i)).toBeInTheDocument();
-    expect(screen.getByTestId("feed-state-entry-state-2")).toHaveTextContent(/in progress:\s*working on relay reconnect/i);
+    expect(latestStateDescription).not.toBeNull();
+    expect(latestStateDescription).toHaveTextContent("Working on relay reconnect");
     expect(screen.getByText(/unblocked/i)).toBeInTheDocument();
     expect(screen.getAllByTestId(/feed-state-entry-/)).toHaveLength(2);
     expect(screen.getAllByTitle(/status updated at/i)).toHaveLength(2);
@@ -1046,7 +1060,10 @@ describe("FeedView", () => {
       />
     );
 
-    expect(screen.getAllByText("In Progress")).toHaveLength(1);
+    const dedupedStateDescription = screen
+      .getByTestId("feed-state-entry-state-dedupe")
+      .querySelector("div.inline-flex.flex-1.items-center.gap-1.overflow-hidden.whitespace-nowrap > span.truncate");
+    expect(dedupedStateDescription).toBeNull();
   });
 
   it("hides closed tasks from the feed while keeping done tasks visible", () => {
@@ -1255,11 +1272,7 @@ describe("FeedView", () => {
       />
     );
 
-    expect(screen.getByRole("option", { name: "P4 - Major" })).toBeInTheDocument();
-
-    fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
-      target: { value: "4" },
-    });
+    chooseComboboxOptionByIndex(/priority/i, 4);
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.updatePriority",
@@ -1287,9 +1300,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.change(screen.getByRole("combobox", { name: /type/i }), {
-      target: { value: "scheduled" },
-    });
+    chooseComboboxOptionByIndex(/type/i, 1);
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.updateDueDate",

@@ -219,7 +219,8 @@ describe("TaskComposer", () => {
     expect(beforeButton).toHaveFocus();
   });
 
-  it("restores the full draft payload from the shared draft key", () => {
+  it("restores the full draft payload from the shared draft key", async () => {
+    const onSubmit = vi.fn();
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "",
       messageType: "task",
@@ -235,19 +236,33 @@ describe("TaskComposer", () => {
       locationGeohash: "u33db",
     }));
 
-    renderComposer();
+    renderComposer({ onSubmit });
 
     expect(getComposerInput()).toHaveValue("");
-    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
-    expect(screen.getByRole("option", { name: "P4 - Major" })).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: /date type/i })).toHaveValue("start");
     expect(screen.getByDisplayValue("10:00")).toBeInTheDocument();
     expect(screen.getByLabelText(/geohash/i)).toHaveValue("u33db");
     expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).not.toBeNull();
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();
+
+    fireEvent.change(getComposerInput(), {
+      target: { value: "ship restored task" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+        priority: 80,
+        dateType: "start",
+        dueTime: "10:00",
+        locationGeohash: "u33db",
+        tags: expect.arrayContaining(["backend"]),
+        explicitMentionPubkeys: [alicePubkey],
+      }));
+    });
   });
 
-  it("drops stale restored tags, mentions, date, and location from the shared draft key", () => {
+  it("drops stale restored tags, mentions, date, and location from the shared draft key", async () => {
+    const onSubmit = vi.fn();
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "keep this text",
       messageType: "task",
@@ -263,15 +278,32 @@ describe("TaskComposer", () => {
       priority: 80,
     }));
 
-    renderComposer();
+    renderComposer({ onSubmit });
 
     expect(getComposerInput()).toHaveValue("keep this text");
-    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
-    expect(screen.getByRole("combobox", { name: /date type/i })).toHaveValue("due");
     expect(screen.queryByDisplayValue("10:00")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/geohash/i)).not.toBeInTheDocument();
     expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).toBeNull();
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).toBeNull();
+
+    fireEvent.change(getComposerInput(), {
+      target: { value: "keep this text #design" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+        priority: 80,
+        dateType: "due",
+        tags: ["design"],
+      }));
+      expect(onSubmit).toHaveBeenCalledWith(expect.not.objectContaining({
+        dueTime: "10:00",
+        locationGeohash: "u33db",
+        tags: expect.arrayContaining(["backend"]),
+        explicitMentionPubkeys: [alicePubkey],
+      }));
+    });
   });
 
   it("restores listing metadata and attachments from the shared draft key", () => {

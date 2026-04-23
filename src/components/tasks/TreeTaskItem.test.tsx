@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
@@ -63,6 +63,15 @@ function renderTreeTaskItem(props: Partial<ComponentProps<typeof TreeTaskItem>> 
   };
 
   return render(<TreeTaskItem {...defaultProps} />);
+}
+
+function chooseComboboxOptionByIndex(name: string | RegExp, optionIndex: number) {
+  const trigger = screen.getByRole("combobox", { name });
+  fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+  fireEvent.click(trigger);
+  const option = within(screen.getByRole("listbox")).getAllByRole("option")[optionIndex];
+  fireEvent.pointerUp(option);
+  fireEvent.click(option);
 }
 
 describe("TreeTaskItem status actions", () => {
@@ -379,9 +388,7 @@ describe("TreeTaskItem status actions", () => {
   it("updates task priority from the priority chip", () => {
     renderTreeTaskItem({ task: { ...baseTask, priority: 40 } });
 
-    fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
-      target: { value: "4" },
-    });
+    chooseComboboxOptionByIndex(/priority/i, 4);
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.updatePriority",
@@ -393,9 +400,7 @@ describe("TreeTaskItem status actions", () => {
   it("updates task priority from the compact priority control", () => {
     renderTreeTaskItem({ task: { ...baseTask, priority: 40 }, compactView: true });
 
-    fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
-      target: { value: "4" },
-    });
+    chooseComboboxOptionByIndex(/priority/i, 4);
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.updatePriority",
@@ -408,9 +413,7 @@ describe("TreeTaskItem status actions", () => {
     const dueDate = new Date("2026-05-01T00:00:00.000Z");
     renderTreeTaskItem({ task: { ...baseTask, dueDate, dateType: "due" } });
 
-    fireEvent.change(screen.getByRole("combobox", { name: /type/i }), {
-      target: { value: "scheduled" },
-    });
+    chooseComboboxOptionByIndex(/type/i, 1);
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.updateDueDate",

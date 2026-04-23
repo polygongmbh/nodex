@@ -51,7 +51,7 @@ describe("TaskMentionChips", () => {
       />
     );
 
-    expect(screen.getByText("alice")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Person actions for alice" })).toBeInTheDocument();
   });
 
   it("applies an exclusive person filter on Ctrl/Cmd+click", () => {
