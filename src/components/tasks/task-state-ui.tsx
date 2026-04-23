@@ -1,48 +1,51 @@
-import {
-  Circle, CircleDot, CheckCircle2, X,
-  PauseCircle, AlertCircle, Clock, Loader, Ban, Star,
-  Zap, Archive, Eye, EyeOff, Flag, Minus, Plus, RotateCcw,
-} from "lucide-react";
+import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { Circle, CircleDot, CircleCheckBig, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TaskStatus, TaskStatusType } from "@/types";
 import {
+  getTaskStateRegistry,
   resolveTaskStateFromStatus,
   type TaskStateDefinition,
   type TaskStateType,
 } from "@/domain/task-states/task-state-config";
 
-const ICON_BY_STATUS: Record<string, LucideIcon> = {
-  "circle": Circle,
-  "circle-dot": CircleDot,
-  "check-circle-2": CheckCircle2,
-  "x": X,
-  "pause-circle": PauseCircle,
-  "alert-circle": AlertCircle,
-  "clock": Clock,
-  "loader": Loader,
-  "ban": Ban,
-  "star": Star,
-  "zap": Zap,
-  "archive": Archive,
-  "eye": Eye,
-  "eye-off": EyeOff,
-  "flag": Flag,
-  "minus": Minus,
-  "plus": Plus,
-  "rotate-ccw": RotateCcw,
-};
+// Synchronous cache populated by preloadTaskStateIcons().
+const iconCache = new Map<string, LucideIcon>();
 
-const DEFAULT_ICON_FOR_TYPE: Record<TaskStateType, LucideIcon> = {
+const FALLBACK_ICONS: Record<TaskStateType, LucideIcon> = {
   open: Circle,
   active: CircleDot,
-  done: CheckCircle2,
+  done: CircleCheckBig,
   closed: X,
 };
 
+/**
+ * Eagerly load Lucide icon components for every icon ID in the registry into the
+ * synchronous cache.  Call once at startup; subsequent calls are no-ops for IDs
+ * already cached.
+ */
+export async function preloadTaskStateIcons(
+  registry: TaskStateDefinition[] = getTaskStateRegistry()
+): Promise<void> {
+  const ids = [...new Set(registry.map((s) => s.icon))];
+  await Promise.all(
+    ids.map(async (id) => {
+      if (iconCache.has(id)) return;
+      const loader = dynamicIconImports[id as keyof typeof dynamicIconImports];
+      if (!loader) return;
+      const mod = await loader();
+      iconCache.set(id, mod.default as LucideIcon);
+    })
+  );
+}
+
+// Kick off preloading when this module is first imported.
+preloadTaskStateIcons();
+
 /** Resolve a registry icon string to a Lucide component. */
 export function getTaskStateIconComponent(iconId: string, fallbackType?: TaskStateType): LucideIcon {
-  return ICON_BY_STATUS[iconId] ?? DEFAULT_ICON_FOR_TYPE[fallbackType ?? "open"] ?? Circle;
+  return iconCache.get(iconId) ?? FALLBACK_ICONS[fallbackType ?? "open"] ?? Circle;
 }
 
 /** CSS color class for a task state type. */
