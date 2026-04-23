@@ -13,6 +13,7 @@ import {
   saveCompletionSoundEnabled,
 } from "@/infrastructure/preferences/user-preferences-storage";
 import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 
