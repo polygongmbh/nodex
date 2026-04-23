@@ -1,11 +1,11 @@
 import { useCallback } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import { notifyPublishListingStatusFailed } from "@/lib/notifications";
 import { buildImetaTag } from "@/lib/attachments";
 import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import type { Nip99ListingStatus, Task } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -25,7 +25,6 @@ interface UseListingStatusPublishOptions {
     relayUrls?: string[]
   ) => Promise<PublishResult>;
   resolveTaskOriginRelay: (taskId: string) => { relayUrls: string[] };
-  setLocalTasks: Dispatch<SetStateAction<Task[]>>;
 }
 
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
@@ -36,8 +35,9 @@ export function useListingStatusPublish({
   guardInteraction,
   publishEvent,
   resolveTaskOriginRelay,
-  setLocalTasks,
 }: UseListingStatusPublishOptions) {
+  const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
+
   const handleListingStatusChange = useCallback((taskId: string, status: Nip99ListingStatus) => {
     if (guardInteraction("modify")) return;
 

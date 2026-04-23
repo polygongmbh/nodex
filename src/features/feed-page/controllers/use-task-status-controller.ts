@@ -11,6 +11,7 @@ import {
   loadCompletionSoundEnabled,
   saveCompletionSoundEnabled,
 } from "@/infrastructure/preferences/user-preferences-storage";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 
@@ -19,7 +20,6 @@ export interface UseTaskStatusControllerOptions {
   currentUser: Person | undefined;
   guardInteraction: (mode: "post" | "modify") => boolean;
   publishTaskStateUpdate: (taskId: string, status: TaskStatus) => Promise<unknown>;
-  setLocalTasks: React.Dispatch<React.SetStateAction<Task[]>>;
 }
 
 export interface UseTaskStatusControllerResult {
@@ -36,8 +36,8 @@ export function useTaskStatusController({
   currentUser,
   guardInteraction,
   publishTaskStateUpdate,
-  setLocalTasks,
 }: UseTaskStatusControllerOptions): UseTaskStatusControllerResult {
+  const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
   const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() =>
     loadCompletionSoundEnabled()
   );

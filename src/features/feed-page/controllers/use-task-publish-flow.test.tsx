@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPublishFlow } from "./use-task-publish-flow";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { PostedTag, Relay, Task } from "@/types";
+import type { Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
 
 vi.mock("sonner", () => ({
@@ -54,11 +54,11 @@ function Harness({
   hasDisconnectedSelectedRelays?: boolean;
   queryClient?: QueryClient;
 }) {
-  const [localTasks, setLocalTasks] = useState<Task[]>(initialTasks);
-  const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
-  const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
+  const localTasks = useFeedTaskMutationStore((s) => s.localTasks);
+  const postedTags = useFeedTaskMutationStore((s) => s.postedTags);
+  const suppressedNostrEventIds = useFeedTaskMutationStore((s) => s.suppressedNostrEventIds);
   const availablePeople = people.length > 0 ? people : [currentUser];
-  const allTasks = [...localTasks];
+  const allTasks = localTasks.length > 0 ? localTasks : initialTasks;
   const hook = useTaskPublishFlow({
     allTasks,
     relays,
@@ -70,10 +70,6 @@ function Harness({
     demoFeedActive: forceLocalMode,
     demoRelayId: "demo",
     queryClient,
-    setLocalTasks,
-    setPostedTags,
-    suppressedNostrEventIds,
-    setSuppressedNostrEventIds,
     dispatchFrecencyIntent,
     guardInteraction: vi.fn(() => false),
     hasDisconnectedSelectedRelays,
@@ -212,6 +208,9 @@ declare global {
 }
 
 function renderHarness(props?: Parameters<typeof Harness>[0]) {
+  if (props?.initialTasks?.length) {
+    useFeedTaskMutationStore.setState({ localTasks: props.initialTasks });
+  }
   const queryClient = new QueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
@@ -224,6 +223,11 @@ describe("useTaskPublishFlow", () => {
   beforeEach(() => {
     window.__TEST_RESULT__ = undefined;
     window.localStorage.clear();
+    useFeedTaskMutationStore.setState({
+      localTasks: [],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
   });
 
   it("queues a failed publish draft when submission is rejected", async () => {

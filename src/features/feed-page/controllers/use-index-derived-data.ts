@@ -1,4 +1,5 @@
 import { useMemo, useRef } from "react";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import type { Task, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
@@ -39,9 +40,6 @@ const INITIAL_CHANNEL_SEED_LIMIT = 16;
 export interface UseIndexDerivedDataOptions {
   nostrEvents: CachedNostrEvent[];
   demoTasks: Task[];
-  localTasks: Task[];
-  postedTags: PostedTag[];
-  suppressedNostrEventIds: Set<string>;
   people: Person[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   cachedKind0Events: Kind0LikeEvent[];
@@ -84,9 +82,6 @@ function getPostedTagsForRelayScope(
 export function useIndexDerivedData({
   nostrEvents,
   demoTasks,
-  localTasks,
-  postedTags,
-  suppressedNostrEventIds,
   people,
   latestPresenceByAuthor,
   cachedKind0Events,
@@ -97,6 +92,9 @@ export function useIndexDerivedData({
   personFrecencyState,
   isHydrating = false,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
+  const localTasks = useFeedTaskMutationStore((s) => s.localTasks);
+  const postedTags = useFeedTaskMutationStore((s) => s.postedTags);
+  const suppressedNostrEventIds = useFeedTaskMutationStore((s) => s.suppressedNostrEventIds);
   const filteredNostrEvents = useMemo(() => {
     return nostrEvents.filter((event) => {
       if (suppressedNostrEventIds.has(event.id)) return false;

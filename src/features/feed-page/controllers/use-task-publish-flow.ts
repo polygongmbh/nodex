@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import { toast } from "sonner";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {   removeCachedNostrEventById, type CachedNostrEvent, } from "@/infrastructure/nostr/event-cache";
@@ -86,10 +87,6 @@ interface UseTaskPublishFlowOptions {
   demoFeedActive: boolean;
   demoRelayId: string;
   queryClient: QueryClient;
-  setLocalTasks: Dispatch<SetStateAction<Task[]>>;
-  setPostedTags: Dispatch<SetStateAction<PostedTag[]>>;
-  suppressedNostrEventIds: Set<string>;
-  setSuppressedNostrEventIds: Dispatch<SetStateAction<Set<string>>>;
   dispatchFrecencyIntent: (intent: FeedInteractionFrecencyIntent) => void;
   guardInteraction: (mode: "post" | "modify") => boolean;
   hasDisconnectedSelectedRelays: boolean;
@@ -134,10 +131,6 @@ export function useTaskPublishFlow({
   demoFeedActive,
   demoRelayId,
   queryClient,
-  setLocalTasks,
-  setPostedTags,
-  suppressedNostrEventIds,
-  setSuppressedNostrEventIds,
   dispatchFrecencyIntent,
   guardInteraction,
   hasDisconnectedSelectedRelays,
@@ -147,6 +140,11 @@ export function useTaskPublishFlow({
   publishTaskPriorityUpdate,
   publishTaskCreateFollowUps,
 }: UseTaskPublishFlowOptions) {
+  const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
+  const setPostedTags = useFeedTaskMutationStore((s) => s.setPostedTags);
+  const suppressedNostrEventIds = useFeedTaskMutationStore((s) => s.suppressedNostrEventIds);
+  const setSuppressedNostrEventIds = useFeedTaskMutationStore((s) => s.setSuppressedNostrEventIds);
+
   const [failedPublishDrafts, setFailedPublishDrafts] = useState<FailedPublishDraft[]>(() => loadFailedPublishDrafts());
   const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
   const [composeRestoreRequest, setComposeRestoreRequest] = useState<ComposeRestoreRequest | null>(null);

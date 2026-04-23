@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
@@ -43,7 +43,7 @@ import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/t
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { DEMO_RELAY_ID } from "@/lib/demo-feed-config";
 import { initializeDemoFeedData } from "@/data/demo-feed";
-import { PostedTag, Task } from "@/types";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import {
   DesktopAppShell,
 } from "@/features/feed-page/views/DesktopAppShell";
@@ -98,8 +98,6 @@ function FeedIndexContent() {
     addRelay,
     removeRelay,
   } = useFeedRelayState();
-
-  const [localTasks, setLocalTasks] = useState<Task[]>([]);
 
   const subscribedKinds = useMemo<NostrEventKind[]>(
     () => [
@@ -159,10 +157,8 @@ function FeedIndexContent() {
     removeCachedRelayProfile,
   });
 
-  const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
-  const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
   const {
     channelFrecencyState,
     personFrecencyState,
@@ -181,9 +177,6 @@ function FeedIndexContent() {
   } = useIndexDerivedData({
     nostrEvents,
     demoTasks,
-    localTasks,
-    postedTags,
-    suppressedNostrEventIds,
     people,
     latestPresenceByAuthor,
     cachedKind0Events,
@@ -225,7 +218,6 @@ function FeedIndexContent() {
     setActiveRelayIds,
     channels,
     composeChannels,
-    setPostedTags,
     people,
     setPeople,
     sidebarPeople: sidebarPeopleWithSelected,
@@ -323,7 +315,6 @@ function FeedIndexContent() {
     currentUser,
     guardInteraction,
     publishTaskStateUpdate,
-    setLocalTasks,
   });
 
   const allTasks = useMemo(
@@ -537,7 +528,6 @@ function FeedIndexContent() {
     guardInteraction,
     publishEvent,
     resolveTaskOriginRelay,
-    setLocalTasks,
   });
 
   const {
@@ -565,10 +555,6 @@ function FeedIndexContent() {
     demoFeedActive,
     demoRelayId: DEMO_RELAY_ID,
     queryClient,
-    setLocalTasks,
-    setPostedTags,
-    suppressedNostrEventIds,
-    setSuppressedNostrEventIds,
     dispatchFrecencyIntent,
     guardInteraction,
     hasDisconnectedSelectedRelays,

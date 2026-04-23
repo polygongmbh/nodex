@@ -1,34 +1,33 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskStatusController } from "./use-task-status-controller";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import { makePerson, makeTask } from "@/test/fixtures";
-import type { Task } from "@/types";
+
+const author = makePerson({ id: "author-pubkey", name: "author", displayName: "Author" });
+const initialTask = makeTask({
+  id: "task-1",
+  author,
+  status: "todo",
+  stateUpdates: [
+    {
+      id: "relay-state-1",
+      status: "todo",
+      timestamp: new Date("2026-01-01T00:00:00.000Z"),
+      authorPubkey: author.id,
+    },
+  ],
+});
 
 function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnType<typeof vi.fn> }) {
-  const author = makePerson({ id: "author-pubkey", name: "author", displayName: "Author" });
-  const [localTasks, setLocalTasks] = useState<Task[]>([
-    makeTask({
-      id: "task-1",
-      author,
-      status: "todo",
-      stateUpdates: [
-        {
-          id: "relay-state-1",
-          status: "todo",
-          timestamp: new Date("2026-01-01T00:00:00.000Z"),
-          authorPubkey: author.id,
-        },
-      ],
-    }),
-  ]);
+  const localTasks = useFeedTaskMutationStore((s) => s.localTasks);
+  const allTasks = localTasks.length > 0 ? localTasks : [initialTask];
 
   const controller = useTaskStatusController({
-    allTasks: localTasks,
+    allTasks,
     currentUser: author,
     guardInteraction: () => false,
     publishTaskStateUpdate,
-    setLocalTasks,
   });
 
   return (
@@ -39,8 +38,8 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
       <button type="button" onClick={() => controller.handleStatusChange("task-1", "in-progress")}>
         SetInProgress
       </button>
-      <output data-testid="status">{localTasks[0]?.status || ""}</output>
-      <output data-testid="state-update-count">{String(localTasks[0]?.stateUpdates?.length ?? 0)}</output>
+      <output data-testid="status">{allTasks[0]?.status || ""}</output>
+      <output data-testid="state-update-count">{String(allTasks[0]?.stateUpdates?.length ?? 0)}</output>
       <output data-testid="sort-hold">{controller.sortStatusHoldByTaskId["task-1"] || ""}</output>
     </>
   );
@@ -49,6 +48,11 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
 describe("useTaskStatusController", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    useFeedTaskMutationStore.setState({
+      localTasks: [],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
   });
 
   afterEach(() => {

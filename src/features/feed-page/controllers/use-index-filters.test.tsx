@@ -6,7 +6,8 @@ import { useState } from "react";
 import { useIndexFilters } from "./use-index-filters";
 import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
-import type { Channel, PostedTag, Relay } from "@/types";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
@@ -64,8 +65,8 @@ function Harness({
   const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<Person[]>(
     startWithEmptyScope ? [] : peopleSeed
   );
+  const postedTags = useFeedTaskMutationStore((s) => s.postedTags);
   const [searchQuery, setSearchQuery] = useState("");
-  const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const relayState = useRelayFilterState({
     relays,
   });
@@ -79,7 +80,6 @@ function Harness({
     setActiveRelayIds: relayState.setActiveRelayIds,
     channels: visibleChannels,
     composeChannels: visibleComposeChannels,
-    setPostedTags,
     people,
     setPeople,
     sidebarPeople: visibleSidebarPeople,
@@ -160,6 +160,11 @@ describe("useIndexFilters", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.mocked(toast).mockClear();
+    useFeedTaskMutationStore.setState({
+      localTasks: [],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
   });
 
   it("adds a missing hashtag to postedTags and applies an exclusive channel filter", () => {

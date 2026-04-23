@@ -32,6 +32,7 @@ import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-ur
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, ChannelMatchMode, PostedTag, QuickFilterState, Relay } from "@/types";
 import type { Person } from "@/types/person";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 
 interface UseIndexFiltersOptions {
@@ -40,7 +41,6 @@ interface UseIndexFiltersOptions {
   setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
   channels: Channel[];
   composeChannels: Channel[];
-  setPostedTags: Dispatch<SetStateAction<PostedTag[]>>;
   people: Person[];
   setPeople: Dispatch<SetStateAction<Person[]>>;
   sidebarPeople: Person[];
@@ -54,13 +54,13 @@ export function useIndexFilters({
   setActiveRelayIds,
   channels,
   composeChannels,
-  setPostedTags,
   people,
   setPeople,
   sidebarPeople,
   hasLiveHydratedScope = false,
   isHydrating = false,
 }: UseIndexFiltersOptions) {
+  const setPostedTags = useFeedTaskMutationStore((s) => s.setPostedTags);
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
   const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
     () => loadPersistedChannelFilters()

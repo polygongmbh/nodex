@@ -4,10 +4,11 @@ import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { useIndexDerivedData } from "./use-index-derived-data";
 import { useIndexFilters } from "./use-index-filters";
+import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { PostedTag, Relay } from "@/types";
+import type { Relay } from "@/types";
 import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
@@ -63,7 +64,6 @@ const nostrEvents: CachedNostrEvent[] = [
 function Harness() {
   const [people, setPeople] = useState<Person[]>([]);
   const [searchQuery] = useState("");
-  const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
   const relaysWithActiveState = relays.map((relay) => ({
     ...relay,
@@ -73,9 +73,6 @@ function Harness() {
   const derived = useIndexDerivedData({
     nostrEvents,
     demoTasks: [],
-    localTasks: [],
-    postedTags,
-    suppressedNostrEventIds: new Set(),
     people,
     latestPresenceByAuthor: new Map(),
     cachedKind0Events: [],
@@ -93,7 +90,6 @@ function Harness() {
     setActiveRelayIds,
     channels: derived.channels,
     composeChannels: derived.composeChannels,
-    setPostedTags,
     people,
     setPeople,
     sidebarPeople: [],
@@ -122,6 +118,11 @@ function Harness() {
 describe("useIndexDerivedData compose channels", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    useFeedTaskMutationStore.setState({
+      localTasks: [],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
   });
 
   it("drops relay-scoped compose channels when switching to a relay where they do not exist", () => {
@@ -181,9 +182,6 @@ function SidebarPeopleHarness() {
   const derived = useIndexDerivedData({
     nostrEvents: [],
     demoTasks: [],
-    localTasks: tasks,
-    postedTags: [],
-    suppressedNostrEventIds: new Set(),
     people: [alice, bob],
     latestPresenceByAuthor: new Map(),
     cachedKind0Events: [],
@@ -215,6 +213,24 @@ function SidebarPeopleHarness() {
 }
 
 describe("useIndexDerivedData sidebar people", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice" });
+    const bob = makePerson({ id: "bob", name: "bob", displayName: "Bob" });
+    useFeedTaskMutationStore.setState({
+      localTasks: [
+        makeTask({ id: "a1", author: alice, tags: ["ops"], relays: ["relay-one"] }),
+        makeTask({ id: "a2", author: alice, tags: ["ops"], relays: ["relay-one"] }),
+        makeTask({ id: "a3", author: alice, tags: ["ops"], relays: ["relay-one"] }),
+        makeTask({ id: "b1", author: bob, tags: ["general"], relays: ["relay-two"] }),
+        makeTask({ id: "b2", author: bob, tags: ["general"], relays: ["relay-two"] }),
+        makeTask({ id: "b3", author: bob, tags: ["general"], relays: ["relay-two"] }),
+      ],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
+  });
+
   it("derives frequent people from the active relay scope", () => {
     render(
       <MemoryRouter>
@@ -264,9 +280,6 @@ describe("useIndexDerivedData current user profile metadata", () => {
       useIndexDerivedData({
         nostrEvents: [],
         demoTasks: [],
-        localTasks: [],
-        postedTags: [],
-        suppressedNostrEventIds: new Set(),
         people: [],
         latestPresenceByAuthor: new Map(),
         cachedKind0Events: [],
@@ -295,9 +308,6 @@ describe("useIndexDerivedData current user profile metadata", () => {
       useIndexDerivedData({
         nostrEvents: [],
         demoTasks: [],
-        localTasks: [],
-        postedTags: [],
-        suppressedNostrEventIds: new Set(),
         people: [],
         latestPresenceByAuthor: new Map(),
         cachedKind0Events: [],
@@ -325,9 +335,6 @@ describe("useIndexDerivedData current user profile metadata", () => {
       useIndexDerivedData({
         nostrEvents: [],
         demoTasks: [],
-        localTasks: [],
-        postedTags: [],
-        suppressedNostrEventIds: new Set(),
         people: [],
         latestPresenceByAuthor: new Map(),
         cachedKind0Events: [
@@ -361,9 +368,6 @@ function MentionAutocompleteHarness() {
   const derived = useIndexDerivedData({
     nostrEvents,
     demoTasks: [],
-    localTasks: [],
-    postedTags: [],
-    suppressedNostrEventIds: new Set(),
     people: [alice, carol],
     latestPresenceByAuthor: new Map(),
     cachedKind0Events: [
