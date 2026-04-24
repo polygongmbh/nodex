@@ -2,95 +2,66 @@
 
 ## Goal
 
-Make task card hover tooltips (`title`) more informative across all views by including an extended-but-bounded preview of the task content, instead of the generic "Focus task" / "Focus comment".
+Inline the quick-toggle next-type logic into `use-task-status-controller.ts` (the only consumer that needs it) and simplify `task-status-toggle.ts` to a direct semantic check on the current status. Remove `getQuickToggleNextState` from the registry entirely.
 
-## Current Behavior
+## Why
 
-| View | Hover tooltip today |
-|---|---|
-| Tree (`TreeTaskItem`) | "Focus task" / "Focus comment" — no content |
-| List (`ListTaskRow`) | "Focus task" — no content |
-| Feed (`FeedTaskCard`) | No tooltip on the body at all |
-| Kanban (`KanbanTaskCard`) | No tooltip on the body |
-| Calendar (`CalendarView`) | No tooltip on the task body |
+- `getQuickToggleNextState` has only two callsites and neither needs registry awareness.
+- The toggle helper just wants to know "should this click focus the task?" — that is true when quick-toggling from an open state (since the next type will be `active` on desktop). It can answer that from `status` alone, no lookahead needed.
+- The controller is the only place that actually publishes a next state, so the cycling rules belong there.
 
-Only the Tree aria-label uses `task.content.slice(0, 50)`. Tooltips themselves are content-less.
+## Changes
 
-## Proposed Behavior
+### 1. `src/features/feed-page/controllers/use-task-status-controller.ts`
 
-Hover any task card surface (Tree row, List row, Feed card, Kanban card, Calendar entry) → native browser tooltip shows:
+- Drop the `getQuickToggleNextState` import.
+- Inline next-type computation in `handleToggleComplete`:
+  ```ts
+  const currentType = getTaskStatusType(currentStatus);
+  if (currentType === "done" || currentType === "closed") return;
+  const nextType: TaskStatusType =
+    currentType === "open" && !isMobile ? "active" : "done";
+  ```
+- Resolve `nextType` to a full `TaskStatus` via a registry helper (`getDefaultStateForType` → `toTaskStatusFromStateDefinition`) so custom done states publish as `{ type: "done", description: "Review" }` rather than `{ type: "review" }`.
+- Pass that full `TaskStatus` into `scheduleTaskStatusReorderUpdate` and `publishTaskStateUpdate`.
 
-```
-Focus task: <preview>
-Focus comment: <preview>
-```
+### 2. `src/domain/content/task-status.ts`
 
-Where `<preview>` is:
-- A single-line, whitespace-collapsed version of `task.content`
-- Capped at ~160 characters (extended, not unlimited)
-- Truncated with `…` when longer
-- Falls back to the existing generic label when content is empty (e.g. listings rendered from metadata only)
+- Change `applyTaskStatusUpdate` (and the optimistic `stateUpdates` synthesis added previously) to accept a full `TaskStatusLike` instead of `TaskStatusType`, so descriptions survive the optimistic merge.
 
-## Implementation
+### 3. `src/lib/task-status-toggle.ts`
 
-### 1. New helper: `src/lib/task-content-preview.ts`
+- Replace the `getQuickToggleNextState` + `getTaskStateUiType` chain with a direct check:
+  ```ts
+  if (focusOnQuickToggle && !event.altKey) {
+    const currentType = getTaskStatusType(status);
+    if (currentType === "open") focusTask?.();
+  }
+  ```
+  Rationale: quick-toggle from `open` advances to `active` on desktop (focus-worthy). Mobile already skips focus via existing platform handling, and from `active` the next stop is `done` (not focus-worthy). Terminal states open the chooser instead of toggling.
+- Drop `getTaskStateUiType` and `getQuickToggleNextState` imports.
 
-Add a sibling to the existing `shouldCollapseTaskContent` util:
+### 4. `src/domain/task-states/task-state-config.ts`
 
-```ts
-export const TASK_TOOLTIP_PREVIEW_MAX = 160;
+- Remove `getQuickToggleNextState` entirely (and any now-unused helpers it relied on).
+- Export `getDefaultStateForType` (and a small `toTaskStatusFromStateDefinition` helper if not already public) for the controller to resolve next-type → publishable status.
 
-export function getTaskTooltipPreview(content: string, max = TASK_TOOLTIP_PREVIEW_MAX): string {
-  const collapsed = content.replace(/\s+/g, " ").trim();
-  if (collapsed.length <= max) return collapsed;
-  return `${collapsed.slice(0, max - 1).trimEnd()}…`;
-}
-```
+### 5. Tests
 
-### 2. Locale strings (en, de, es)
-
-Reuse the existing `focusBreadcrumbTitle` pattern (already includes `{{title}}`) by adding a parallel key for comments and switching the empty-content fallback:
-
-```json
-"focusTaskTitle": "Focus {{type}}",
-"focusTaskWithPreview": "Focus {{type}}: {{preview}}"
-```
-
-(Translate "Focus {{type}}: {{preview}}" / "{{type}} fokussieren: {{preview}}" / "Enfocar {{type}}: {{preview}}".)
-
-### 3. Wire previews into each view
-
-Apply the same pattern in five places — compute `preview = getTaskTooltipPreview(task.content)` once, then set `title` to `focusTaskWithPreview` when non-empty, otherwise the existing `focusTaskTitle`.
-
-| File | Change |
-|---|---|
-| `src/components/tasks/TreeTaskItem.tsx` | Replace `title` on the row button (line 303). Also enrich `aria-label` to use the same preview length. |
-| `src/components/tasks/list/ListTaskRow.tsx` | Replace `title` on the content div (line 169). |
-| `src/components/tasks/feed/FeedTaskCard.tsx` | Add `title` to the `TaskSurface` (currently none). |
-| `src/components/tasks/kanban/KanbanTaskCard.tsx` | Add `title` to the `TaskSurface` (currently none). |
-| `src/components/tasks/CalendarView.tsx` | Add `title` to the clickable task row in both the day cell and the "more tasks" popover. |
-
-Tree-specific note: keep using `t("tasks.task")` / `t("tasks.comment")` for the `{{type}}` placeholder so comments still read "Focus comment: …".
-
-### 4. Tests
-
-- Add a small unit test for `getTaskTooltipPreview` covering: short content, long content truncation, multi-line whitespace collapse, empty string.
-- No UI snapshot/copy tests added (per project policy on copy assertions); existing aria-label tests in `FeedView.test.tsx` / `ListView.test.tsx` continue to work because they use regex matching against the title prefix.
+- `src/domain/task-states/task-state-config.test.ts`: drop the `getQuickToggleNextState` test block.
+- `src/features/feed-page/controllers/use-task-status-controller.test.tsx`: add a regression that with a custom registry whose first done-type state is `review`, the controller publishes `{ type: "done", description: "Review" }` (and that desktop cycles open→active→done while mobile cycles non-terminal→done).
+- Optionally tighten `task-status-toggle` tests to assert focus only fires when starting from an open semantic type, regardless of state id.
 
 ## Out of Scope
 
-- Visual hover styling (already handled by `task-card-surface` / `task-hover-text` classes).
-- Any change to the focused/keyboard-ring treatment.
-- Mobile long-press tooltips (browsers don't surface `title` on touch; no change needed).
+- The ~100 pre-existing `TaskStatus` typing errors in `*.test.tsx` and `FeedView.tsx`/`CalendarView.tsx`. These predate this work and remain unaddressed here.
 
 ## Files Touched
 
-- `src/lib/task-content-preview.ts` (add export + test)
-- `src/lib/task-content-preview.test.ts` (new)
-- `src/locales/{en,de,es}/tasks.json`
-- `src/components/tasks/TreeTaskItem.tsx`
-- `src/components/tasks/list/ListTaskRow.tsx`
-- `src/components/tasks/feed/FeedTaskCard.tsx`
-- `src/components/tasks/kanban/KanbanTaskCard.tsx`
-- `src/components/tasks/CalendarView.tsx`
+- `src/features/feed-page/controllers/use-task-status-controller.ts`
+- `src/domain/content/task-status.ts`
+- `src/lib/task-status-toggle.ts`
+- `src/domain/task-states/task-state-config.ts`
+- `src/domain/task-states/task-state-config.test.ts`
+- `src/features/feed-page/controllers/use-task-status-controller.test.tsx`
 
