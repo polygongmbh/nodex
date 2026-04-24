@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -155,8 +155,7 @@ function FeedIndexContent() {
 
   const searchQuery = useFeedPreferencesStore((s) => s.searchQuery);
   const setSearchQuery = useFeedPreferencesStore((s) => s.setSearchQuery);
-  const isSidebarFocused = useFeedPreferencesStore((s) => s.isSidebarFocused);
-  const setIsSidebarFocused = useFeedPreferencesStore((s) => s.setIsSidebarFocused);
+  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const {
     channelFrecencyState,
     personFrecencyState,

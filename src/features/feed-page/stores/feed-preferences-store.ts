@@ -1,46 +1,44 @@
 import { create } from "zustand";
-import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
-import {
-  loadCompactTaskCardsEnabled,
-  saveCompactTaskCardsEnabled,
-  loadCompletionSoundEnabled,
-  saveCompletionSoundEnabled,
-} from "@/infrastructure/preferences/user-preferences-storage";
+import { persist } from "zustand/middleware";
+import type { FeedKanbanDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
+import { FEED_PREFERENCES_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
-interface FeedPreferencesState {
+interface PersistedFeedPreferences {
   compactTaskCardsEnabled: boolean;
   completionSoundEnabled: boolean;
+  kanbanDepthMode: FeedKanbanDepthMode;
+}
+
+interface FeedPreferencesState extends PersistedFeedPreferences {
   searchQuery: string;
-  isSidebarFocused: boolean;
-  kanbanDepthMode: KanbanDepthMode;
 
   setCompactTaskCardsEnabled: (enabled: boolean) => void;
   toggleCompletionSound: () => void;
   setSearchQuery: (query: string) => void;
-  setIsSidebarFocused: (focused: boolean) => void;
-  setKanbanDepthMode: (mode: KanbanDepthMode) => void;
+  setKanbanDepthMode: (mode: FeedKanbanDepthMode) => void;
 }
 
-export const useFeedPreferencesStore = create<FeedPreferencesState>((set) => ({
-  compactTaskCardsEnabled: loadCompactTaskCardsEnabled(),
-  completionSoundEnabled: loadCompletionSoundEnabled(),
-  searchQuery: "",
-  isSidebarFocused: false,
-  kanbanDepthMode: "leaves",
+export const useFeedPreferencesStore = create<FeedPreferencesState>()(
+  persist(
+    (set) => ({
+      compactTaskCardsEnabled: false,
+      completionSoundEnabled: true,
+      searchQuery: "",
+      kanbanDepthMode: "leaves" as FeedKanbanDepthMode,
 
-  setCompactTaskCardsEnabled: (enabled) => {
-    saveCompactTaskCardsEnabled(enabled);
-    set({ compactTaskCardsEnabled: enabled });
-  },
-
-  toggleCompletionSound: () =>
-    set((state) => {
-      const next = !state.completionSoundEnabled;
-      saveCompletionSoundEnabled(next);
-      return { completionSoundEnabled: next };
+      setCompactTaskCardsEnabled: (enabled) => set({ compactTaskCardsEnabled: enabled }),
+      toggleCompletionSound: () =>
+        set((state) => ({ completionSoundEnabled: !state.completionSoundEnabled })),
+      setSearchQuery: (query) => set({ searchQuery: query }),
+      setKanbanDepthMode: (mode) => set({ kanbanDepthMode: mode }),
     }),
-
-  setSearchQuery: (query) => set({ searchQuery: query }),
-  setIsSidebarFocused: (focused) => set({ isSidebarFocused: focused }),
-  setKanbanDepthMode: (mode) => set({ kanbanDepthMode: mode }),
-}));
+    {
+      name: FEED_PREFERENCES_STORAGE_KEY,
+      partialize: (state): PersistedFeedPreferences => ({
+        compactTaskCardsEnabled: state.compactTaskCardsEnabled,
+        completionSoundEnabled: state.completionSoundEnabled,
+        kanbanDepthMode: state.kanbanDepthMode,
+      }),
+    }
+  )
+);

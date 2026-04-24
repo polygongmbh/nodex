@@ -1,7 +1,5 @@
 import {
   AUTO_CAPTION_ENABLED_STORAGE_KEY,
-  COMPACT_TASK_CARDS_ENABLED_STORAGE_KEY,
-  COMPLETION_SOUND_ENABLED_STORAGE_KEY,
   PRESENCE_ENABLED_STORAGE_KEY,
   PUBLISH_DELAY_ENABLED_STORAGE_KEY,
   REDUCED_DATA_MODE_STORAGE_KEY,
@@ -44,20 +42,6 @@ export function loadPublishDelayEnabled(): boolean {
 }
 export function savePublishDelayEnabled(enabled: boolean): void {
   saveBooleanPref(PUBLISH_DELAY_ENABLED_STORAGE_KEY, enabled);
-}
-
-export function loadCompletionSoundEnabled(): boolean {
-  return loadBooleanPref(COMPLETION_SOUND_ENABLED_STORAGE_KEY, true);
-}
-export function saveCompletionSoundEnabled(enabled: boolean): void {
-  saveBooleanPref(COMPLETION_SOUND_ENABLED_STORAGE_KEY, enabled);
-}
-
-export function loadCompactTaskCardsEnabled(): boolean {
-  return loadBooleanPref(COMPACT_TASK_CARDS_ENABLED_STORAGE_KEY, false);
-}
-export function saveCompactTaskCardsEnabled(enabled: boolean): void {
-  saveBooleanPref(COMPACT_TASK_CARDS_ENABLED_STORAGE_KEY, enabled);
 }
 
 export function loadReducedDataMode(): ReducedDataMode {
