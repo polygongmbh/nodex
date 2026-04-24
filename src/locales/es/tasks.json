@@ -199,10 +199,16 @@
       "mention": "Mencionar a {{name}}",
       "filterAndMention": "Filtrar por {{name}} y mencionarlo",
       "copyPubkey": "Copiar clave pública",
+      "copyPubkeyNpub": "npub",
+      "copyPubkeyHex": "hex",
+      "copyPubkeyNpubAria": "Copiar npub",
+      "copyPubkeyHexAria": "Copiar clave hex",
       "privateChat": "Chat privado (próximamente)"
     },
     "toasts": {
       "pubkeyCopied": "Clave pública copiada al portapapeles.",
+      "npubCopied": "npub copiado al portapapeles.",
+      "hexPubkeyCopied": "Clave hex copiada al portapapeles.",
       "pubkeyCopyFailed": "No se pudo copiar la clave pública."
     }
   },
