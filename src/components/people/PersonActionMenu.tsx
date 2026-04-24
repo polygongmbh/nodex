@@ -38,7 +38,6 @@ export function PersonActionMenu({
 }: PersonActionMenuProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const handledPointerShortcutRef = React.useRef(false);
-  const pointerOpenedMenuRef = React.useRef(false);
   const shouldPreventCloseAutoFocusRef = React.useRef(false);
 
   const handleShortcut = (
