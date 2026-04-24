@@ -225,13 +225,13 @@ export function FeedTaskCard({
                   title={statusButtonTitle}
                   className={cn(
                     "flex-shrink-0 mt-0.5 rounded transition-colors",
-                    isMobile ? "p-1.5" : "p-0.5",
+                    isMobile ? "p-1" : "p-0.5",
                     canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                   )}
                 >
                   <TaskStateIcon
                     status={getTaskStatus(task)}
-                    size={isMobile ? "w-4 h-4" : "w-5 h-5"}
+                    size={isMobile ? "w-5 h-5" : "w-5 h-5"}
                   />
                 </button>
               </DropdownMenuTrigger>
@@ -271,18 +271,18 @@ export function FeedTaskCard({
               aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
               className={cn(
                 "flex-shrink-0 mt-0.5 rounded transition-colors",
-                isMobile ? "p-1.5" : "p-0.5",
+                isMobile ? "p-1" : "p-0.5",
                 canUpdateListingStatus ? "hover:bg-muted cursor-pointer" : "cursor-default"
               )}
             >
               {task.feedMessageType === "offer" ? (
-                <Package className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                <Package className={cn("text-muted-foreground", "w-5 h-5")} />
               ) : (
-                <HandHelping className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                <HandHelping className={cn("text-muted-foreground", "w-5 h-5")} />
               )}
             </button>
           ) : (
-            <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4 mx-1.5" : "w-5 h-5")} />
+            <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-5 h-5 mx-1" : "w-5 h-5")} />
           )}
           <PersonHoverCard person={resolvedAuthor}>
             <button
