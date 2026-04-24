@@ -8,6 +8,7 @@ import { TaskDateTypeSelect } from "./TaskDateTypeSelect";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
+  formatPriorityLabel,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
 import {
