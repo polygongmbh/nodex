@@ -188,7 +188,7 @@ export function PrioritySelect({
         title={effectiveTitle}
         hideIndicator
         className={cn(
-          "h-8 w-auto min-w-0 max-w-full justify-start gap-1 overflow-hidden text-xs [&>span]:block [&>span]:min-w-0 [&>span]:max-w-full [&>span]:truncate",
+          "h-8 w-auto min-w-0 max-w-full justify-start gap-1 overflow-hidden text-xs [&>span]:block [&>span]:min-w-0 [&>span]:max-w-full [&>span]:truncate disabled:opacity-100 disabled:cursor-default",
           className
         )}
         {...stopProps}
