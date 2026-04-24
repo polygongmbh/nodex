@@ -70,7 +70,12 @@ export function handleTaskStatusToggleClick(
 
   // Focus the task when quick-toggling from an open state (next stop on desktop is "active").
   // From "active" the next stop is "done" (not focus-worthy); terminal states open the chooser instead.
-  if (focusOnQuickToggle && !event.altKey) {
+  // Disabled on mobile per UX: status changes there should never auto-navigate the user away.
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(max-width: 767px)").matches;
+  if (focusOnQuickToggle && !event.altKey && !isMobileViewport) {
     if (getTaskStatusType(status) === "open") {
       focusTask?.();
     }
