@@ -1049,9 +1049,10 @@ export function CalendarView({
                                 testId={`calendar-chip-row-${task.id}`}
                               />
                             )}
-                            <div className="mt-1.5 flex justify-end">
-                              <TaskAssigneeAvatars task={task} />
-                            </div>
+                          </div>
+                          {/* Assignee avatars - bottom right of card without growing it */}
+                          <div className="flex-shrink-0 self-end">
+                            <TaskAssigneeAvatars task={task} />
                           </div>
                         </div>
                       </div>

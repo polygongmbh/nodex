@@ -120,6 +120,7 @@ export function KanbanTaskCard({
             taskId={canChangeStatus ? task.id : undefined}
             priority={task.priority}
             stopPropagation
+            title={`Priority ${task.priority}`}
             className={cn(
               "ml-auto focus:outline-none",
               TASK_CHIP_STYLES.priority,
@@ -133,6 +134,7 @@ export function KanbanTaskCard({
         <div
           className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}
           data-testid={`kanban-due-row-${task.id}`}
+          title={`${getTaskDateTypeLabel(task.dateType)}: ${format(task.dueDate, "MMM d, yyyy")}${task.dueTime ? ` ${task.dueTime}` : ""}`}
         >
           <Calendar className="w-3 h-3" />
           <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
