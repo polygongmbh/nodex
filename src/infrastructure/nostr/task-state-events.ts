@@ -1,5 +1,9 @@
 import type { TaskStatus } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
+import {
+  getTaskStateRegistry,
+  type TaskStateDefinition,
+} from "@/domain/task-states/task-state-config";
 
 const TASK_STATE_EVENT_KINDS = new Set<number>([
   NostrEventKind.GitStatusOpen,
@@ -41,9 +45,20 @@ export function mapTaskStatusToStateEvent(
   return { kind: NostrEventKind.GitStatusOpen, content: description || "" };
 }
 
+function findStateByLabel(
+  description: string,
+  registry: TaskStateDefinition[]
+): TaskStateDefinition | undefined {
+  const lowered = description.toLowerCase();
+  return registry.find(
+    (def) => def.label.toLowerCase() === lowered || def.id.toLowerCase() === lowered
+  );
+}
+
 export function mapTaskStateEventToTaskStatus(
   kind: number,
-  content: string
+  content: string,
+  registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStatus {
   const description = content.trim() || undefined;
   if (kind === NostrEventKind.GitStatusApplied) {
@@ -54,6 +69,13 @@ export function mapTaskStateEventToTaskStatus(
   }
   if (kind === NostrEventKind.GitStatusOpen || kind === NostrEventKind.GitStatusDraft || kind === NostrEventKind.Procedure) {
     if (!description) return { type: "open" };
+    // If the description matches a configured custom state, preserve its semantic type
+    // (e.g. "Backlog" stays "open", not coerced to "active").
+    const matched = findStateByLabel(description, registry);
+    if (matched && (matched.type === "open" || matched.type === "active")) {
+      return { type: matched.type, description };
+    }
+    // Unknown description on an open-kind event: default to active (legacy behavior).
     return { type: "active", description };
   }
   return { type: "open", description };
