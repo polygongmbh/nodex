@@ -5,6 +5,7 @@ import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } f
 import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -27,6 +28,7 @@ export function useTaskStatusMenu({
 }: UseTaskStatusMenuOptions) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();
+  const isMobile = useIsMobile();
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
@@ -88,7 +90,7 @@ export function useTaskStatusMenu({
         },
         toggleStatus: dispatchToggleComplete,
         focusTask: () => focusTask(task.id),
-        focusOnQuickToggle,
+        focusOnQuickToggle: focusOnQuickToggle && !isMobile,
       });
     },
     onFocus: (event: FocusEvent<HTMLElement>) => {
