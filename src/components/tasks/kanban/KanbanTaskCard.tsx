@@ -100,12 +100,79 @@ export function KanbanTaskCard({
           />
         </div>
       ) : null}
+      {!compactTaskCardsEnabled && showContext ? (
+        <TaskBreadcrumbRow
+          breadcrumbs={ancestorChain}
+          onFocusTask={focusTask}
+          className={cn("mb-2", typeof task.priority === "number" && "pr-12")}
+        />
+      ) : null}
+      <div
+        className={cn(
+          `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
+          // Reserve space for the absolutely-positioned priority chip on the first line(s).
+          typeof task.priority === "number" && "pr-14",
+          isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
+        )}
+      >
+        {linkifyContent(task.content, (tag) => {
+          void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+        }, {
+          plainHashtags: isTaskTerminalStatus(displayStatus),
+          people,
+          disableStandaloneEmbeds: true,
+        })}
+      </div>
+      {task.dueDate ? (
+        <div
+          className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}
+          data-testid={`kanban-due-row-${task.id}`}
+          title={`${getTaskDateTypeLabel(task.dateType)}: ${format(task.dueDate, "MMM d, yyyy")}${task.dueTime ? ` ${task.dueTime}` : ""}`}
+        >
+          <Calendar className="w-3 h-3" />
+          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+          <span>{format(task.dueDate, "MMM d")}</span>
+          {task.dueTime ? (
+            <>
+              <Clock className="w-3 h-3" />
+              <span>{task.dueTime}</span>
+            </>
+          ) : null}
+        </div>
+      ) : null}
       {/*
-       * Bottom-right cluster (lock + assignee avatars) is absolutely pinned to
-       * the bottom-right corner so it tucks into that corner regardless of
-       * content height, without forcing its own row.
+       * Bottom-right cluster (lock + assignee avatars) sits inline at the end
+       * of the content flow, aligned to the right so it tucks into the bottom
+       * corner without forcing its own row.
        */}
-      <div className="absolute right-2 bottom-2 z-10 flex items-center gap-1.5">
+      <div className="mt-2 flex items-center justify-end gap-1.5">
+        {hasMetadataChips ? (
+          <ScrollableTaskTagChipRow
+            task={task}
+            className="mr-auto"
+            showEmptyPlaceholder={false}
+            testId={`kanban-chip-row-${task.id}`}
+          />
+        ) : null}
+        {!compactTaskCardsEnabled && hasChildren(task.id) ? (
+          <span className="mr-auto text-xs text-muted-foreground flex items-center gap-1">
+            <Layers className="w-3 h-3" />
+            <span>{t("kanban.hasSubtasks")}</span>
+          </span>
+        ) : null}
+        {isPendingPublish ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
+            }}
+            className="mr-auto text-xs font-medium text-warning hover:text-warning/80"
+            title={t("composer:toasts.actions.undo")}
+          >
+            {t("composer:toasts.actions.undo")}
+          </button>
+        ) : null}
         {!canChangeStatus ? (
           <div
             className="rounded-full bg-muted/80 p-1 text-muted-foreground"
@@ -116,77 +183,6 @@ export function KanbanTaskCard({
           </div>
         ) : null}
         <TaskAssigneeAvatars task={task} />
-      </div>
-      <div className="min-w-0 pb-6">
-        {!compactTaskCardsEnabled && showContext ? (
-          <TaskBreadcrumbRow
-            breadcrumbs={ancestorChain}
-            onFocusTask={focusTask}
-            className={cn("mb-2", typeof task.priority === "number" && "pr-12")}
-          />
-        ) : null}
-        <div
-          className={cn(
-            `min-w-0 text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
-            // Reserve space for the absolutely-positioned priority chip on the first line(s).
-            typeof task.priority === "number" && "pr-14",
-            isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
-          )}
-        >
-          {linkifyContent(task.content, (tag) => {
-            void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-          }, {
-            plainHashtags: isTaskTerminalStatus(displayStatus),
-            people,
-            disableStandaloneEmbeds: true,
-          })}
-        </div>
-        {task.dueDate ? (
-          <div
-            className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}
-            data-testid={`kanban-due-row-${task.id}`}
-            title={`${getTaskDateTypeLabel(task.dateType)}: ${format(task.dueDate, "MMM d, yyyy")}${task.dueTime ? ` ${task.dueTime}` : ""}`}
-          >
-            <Calendar className="w-3 h-3" />
-            <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-            <span>{format(task.dueDate, "MMM d")}</span>
-            {task.dueTime ? (
-              <>
-                <Clock className="w-3 h-3" />
-                <span>{task.dueTime}</span>
-              </>
-            ) : null}
-          </div>
-        ) : null}
-        {hasMetadataChips ? (
-          <ScrollableTaskTagChipRow
-            task={task}
-            className="mt-2"
-            showEmptyPlaceholder={false}
-            testId={`kanban-chip-row-${task.id}`}
-          />
-        ) : null}
-        {isPendingPublish ? (
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
-              }}
-              className="text-xs font-medium text-warning hover:text-warning/80"
-              title={t("composer:toasts.actions.undo")}
-            >
-              {t("composer:toasts.actions.undo")}
-            </button>
-          </div>
-        ) : null}
-        {!compactTaskCardsEnabled && hasChildren(task.id) ? (
-          <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-            <Layers className="w-3 h-3" />
-            <span>{t("kanban.hasSubtasks")}</span>
-          </div>
-        ) : null}
       </div>
     </TaskSurface>
   );
