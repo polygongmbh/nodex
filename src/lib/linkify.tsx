@@ -25,8 +25,45 @@ const linkify = new LinkifyIt();
 
 const HASH_LINK_PREFIX = "https://nodex.local/hashtag/";
 const MENTION_LINK_PREFIX = "https://nodex.local/mention/";
+const NOSTR_EVENT_LINK_PREFIX = "https://njump.me/";
 const INLINE_TOKEN_CLASS =
   `${TASK_INTERACTION_STYLES.inlineLink} inline whitespace-normal break-all align-baseline p-0 border-0 bg-transparent font-inherit`;
+
+interface DecodedNostrToken {
+  kind: "mention" | "event";
+  /** For mention: hex pubkey. For event: original bech32 token. */
+  value: string;
+  /** Short, user-facing label to display (without leading @ for mentions). */
+  label: string;
+}
+
+function decodeNostrToken(rawToken: string): DecodedNostrToken | null {
+  const token = rawToken.trim().toLowerCase();
+  if (!token) return null;
+  try {
+    const decoded = nip19.decode(token);
+    if (decoded.type === "npub") {
+      const npub = hexPubkeyToNpub(decoded.data) || token;
+      return { kind: "mention", value: decoded.data, label: formatUserFacingPubkey(npub) };
+    }
+    if (decoded.type === "nprofile") {
+      const npub = hexPubkeyToNpub(decoded.data.pubkey) || "";
+      return {
+        kind: "mention",
+        value: decoded.data.pubkey,
+        label: formatUserFacingPubkey(npub || decoded.data.pubkey),
+      };
+    }
+    if (decoded.type === "note" || decoded.type === "nevent" || decoded.type === "naddr") {
+      // Render as external event link via njump.me; show shortened bech32 as label.
+      const shortened = token.length > 16 ? `${token.slice(0, 12)}…${token.slice(-4)}` : token;
+      return { kind: "event", value: token, label: shortened };
+    }
+  } catch {
+    // Invalid token — fall through to null.
+  }
+  return null;
+}
 
 function formatPubkeyMention(pubkey: string): string {
   return formatUserFacingPubkey(pubkey);
