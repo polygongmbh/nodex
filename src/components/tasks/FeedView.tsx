@@ -402,15 +402,15 @@ export function FeedView({
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
-      const stateLabel = getStateLabel(update.status.type);
+      const typeLabel = getStateLabel(update.status.type);
       const statusDescription = update.status.description?.trim();
       const isDefaultInProgressDescription =
         update.status.type === "active" &&
         normalizeLabelText(statusDescription) === normalizeLabelText("In Progress");
-      const showStatusDescription =
-        Boolean(statusDescription) &&
-        !isDefaultInProgressDescription &&
-        normalizeLabelText(statusDescription) !== normalizeLabelText(stateLabel);
+      // Prefer the specific state description (e.g. "Backlog") over the generic type label
+      // ("Open"). Fall back to the type label when there is no meaningful description.
+      const displayLabel =
+        statusDescription && !isDefaultInProgressDescription ? statusDescription : typeLabel;
 
       return (
         <div
@@ -430,10 +430,7 @@ export function FeedView({
               />
               <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-2">
                 <div className="min-w-0 inline-flex flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
-                  <span className="shrink-0">{stateLabel}</span>
-                  {showStatusDescription && (
-                    <span className="truncate">{`: ${statusDescription}`}</span>
-                  )}
+                  <span className="truncate">{displayLabel}</span>
                   <span className="shrink-0">·</span>
                   <PersonHoverCard person={resolvedUpdateAuthor}>
                     <button
