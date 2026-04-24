@@ -4,6 +4,7 @@ import { useTaskStatusController } from "./use-task-status-controller";
 import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import { makePerson, makeTask } from "@/test/fixtures";
 import { getTaskStatusType } from "@/types";
+import * as taskStateConfig from "@/domain/task-states/task-state-config";
 
 const author = makePerson({ id: "author-pubkey", name: "author", displayName: "Author" });
 const initialTask = makeTask({
@@ -121,5 +122,38 @@ describe("useTaskStatusController", () => {
     expect(screen.getByTestId("status")).toHaveTextContent("done");
     expect(publishTaskStateUpdate).not.toHaveBeenCalled();
     expect(screen.getByTestId("sort-hold")).toBeEmptyDOMElement();
+  });
+
+  it("publishes the registry's default done state with description for custom done labels", () => {
+    // Simulate a registry where the first done-type state has id "review" / label "Review"
+    const reviewState = {
+      id: "review",
+      type: "done" as const,
+      label: "Review",
+      icon: "circle-check-big",
+      visibleByDefault: true,
+    };
+    const spy = vi
+      .spyOn(taskStateConfig, "getDefaultStateForType")
+      .mockImplementation((type) => (type === "done" ? reviewState : undefined));
+
+    const publishTaskStateUpdate = vi.fn(async () => undefined);
+    useFeedTaskMutationStore.setState({
+      localTasks: [makeTask({ ...initialTask, status: "active" })],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
+
+    render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "ToggleComplete" }));
+
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", {
+      type: "done",
+      description: "Review",
+    });
+    expect(screen.getByTestId("status")).toHaveTextContent("done");
+
+    spy.mockRestore();
   });
 });

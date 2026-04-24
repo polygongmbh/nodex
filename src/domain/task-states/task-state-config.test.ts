@@ -7,7 +7,6 @@ import {
   getTaskStateUiType,
   isTaskCompletedState,
   isTaskTerminalState,
-  getQuickToggleNextState,
   getNextStateInSequence,
   getStateSortType,
   getVisibleByDefaultStates,
@@ -159,50 +158,6 @@ describe("type helpers", () => {
   });
 });
 
-describe("getQuickToggleNextState", () => {
-  it("desktop: open -> active", () => {
-    expect(getQuickToggleNextState("open", {}, DEFAULT_TASK_STATES)).toBe("active");
-  });
-
-  it("desktop: active -> done", () => {
-    expect(getQuickToggleNextState("active", {}, DEFAULT_TASK_STATES)).toBe("done");
-  });
-
-  it("desktop: done -> null (open chooser)", () => {
-    expect(getQuickToggleNextState("done", {}, DEFAULT_TASK_STATES)).toBeNull();
-  });
-
-  it("desktop: closed -> null (open chooser)", () => {
-    expect(getQuickToggleNextState("closed", {}, DEFAULT_TASK_STATES)).toBeNull();
-  });
-
-  it("mobile: open -> done (skips active)", () => {
-    expect(getQuickToggleNextState("open", { mobile: true }, DEFAULT_TASK_STATES)).toBe("done");
-  });
-
-  it("mobile: active -> done", () => {
-    expect(getQuickToggleNextState("active", { mobile: true }, DEFAULT_TASK_STATES)).toBe("done");
-  });
-
-  it("mobile: done -> null", () => {
-    expect(getQuickToggleNextState("done", { mobile: true }, DEFAULT_TASK_STATES)).toBeNull();
-  });
-
-  it("handles undefined status (defaults to open)", () => {
-    expect(getQuickToggleNextState(undefined, {}, DEFAULT_TASK_STATES)).toBe("active");
-  });
-
-  it("works with custom registry", () => {
-    const custom = [
-      { id: "backlog", type: "open" as const, label: "Backlog", icon: "circle", visibleByDefault: true },
-      { id: "dev", type: "active" as const, label: "Dev", icon: "circle-dot", visibleByDefault: true },
-      { id: "complete", type: "done" as const, label: "Complete", icon: "check", visibleByDefault: true },
-    ];
-    expect(getQuickToggleNextState("backlog", {}, custom)).toBe("dev");
-    expect(getQuickToggleNextState("dev", {}, custom)).toBe("complete");
-    expect(getQuickToggleNextState("backlog", { mobile: true }, custom)).toBe("complete");
-  });
-});
 
 describe("getNextStateInSequence", () => {
   it("cycles through states in order", () => {

@@ -1,8 +1,7 @@
 import type { MouseEvent } from "react";
 import type { TaskStatusLike } from "@/types";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
-import { getQuickToggleNextState, getTaskStateUiType } from "@/domain/task-states/task-state-config";
 import { getTaskStatusType } from "@/types";
+import { isTaskTerminalStatus } from "@/domain/content/task-status";
 
 interface HandleTaskStatusToggleClickOptions {
   status?: TaskStatusLike;
@@ -69,10 +68,10 @@ export function handleTaskStatusToggleClick(
   clearMenuOpenIntent();
   toggleStatus();
 
-  // Focus the task when quick-toggling to an active state
+  // Focus the task when quick-toggling from an open state (next stop on desktop is "active").
+  // From "active" the next stop is "done" (not focus-worthy); terminal states open the chooser instead.
   if (focusOnQuickToggle && !event.altKey) {
-    const nextState = getQuickToggleNextState(status);
-    if (nextState !== null && getTaskStateUiType(getTaskStatusType(nextState)) === "active") {
+    if (getTaskStatusType(status) === "open") {
       focusTask?.();
     }
   }
