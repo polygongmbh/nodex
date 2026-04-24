@@ -199,10 +199,16 @@
       "mention": "{{name}} erwähnen",
       "filterAndMention": "Nach {{name}} filtern und {{name}} erwähnen",
       "copyPubkey": "Öffentlichen Schlüssel kopieren",
+      "copyPubkeyNpub": "npub",
+      "copyPubkeyHex": "hex",
+      "copyPubkeyNpubAria": "npub kopieren",
+      "copyPubkeyHexAria": "Hex-Schlüssel kopieren",
       "privateChat": "Privater Chat (kommt bald)"
     },
     "toasts": {
       "pubkeyCopied": "Öffentlicher Schlüssel in die Zwischenablage kopiert.",
+      "npubCopied": "npub in die Zwischenablage kopiert.",
+      "hexPubkeyCopied": "Hex-Schlüssel in die Zwischenablage kopiert.",
       "pubkeyCopyFailed": "Der öffentliche Schlüssel konnte nicht kopiert werden."
     }
   },
