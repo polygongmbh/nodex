@@ -4,6 +4,7 @@ import { useTaskStatusController } from "./use-task-status-controller";
 import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
 import { makePerson, makeTask } from "@/test/fixtures";
 import { getTaskStatusType } from "@/types";
+import * as taskStateConfig from "@/domain/task-states/task-state-config";
 
 const author = makePerson({ id: "author-pubkey", name: "author", displayName: "Author" });
 const initialTask = makeTask({
