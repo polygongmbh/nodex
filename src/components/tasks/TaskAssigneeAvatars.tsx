@@ -5,12 +5,8 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { cn } from "@/lib/utils";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
-import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
-import {
-  getPersonShortcutIntent,
-  toPersonShortcutInteraction,
-} from "@/components/people/person-shortcuts";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 interface TaskAssigneeAvatarsProps {
@@ -55,7 +51,6 @@ export function TaskAssigneeAvatars({
 
   const { getProfile } = useNostrProfiles(pubkeys);
   const { getPersonById } = useFeedPersonLookup();
-  const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   if (pubkeys.length === 0) return null;
 
@@ -89,31 +84,24 @@ export function TaskAssigneeAvatars({
             person={clickablePerson}
             triggerClassName="inline-flex shrink-0 leading-none rounded-full"
           >
-            <button
-              type="button"
-              aria-label={`Person actions for ${displayName}`}
-              title=""
-              className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
-              onClick={(event) => {
-                event.stopPropagation();
-                const shortcutIntent = getPersonShortcutIntent(event);
-                if (!shortcutIntent) return;
-                event.preventDefault();
-                void dispatchFeedInteraction(
-                  toPersonShortcutInteraction(clickablePerson, shortcutIntent)
-                );
-              }}
-            >
-              <UserAvatar
-                id={pubkey}
-                displayName={displayName}
-                avatarUrl={avatarUrl}
-                className={cn(
-                  avatarSizeClassName,
-                  "ring-1 ring-background flex-shrink-0 transition-transform hover:scale-110"
-                )}
-              />
-            </button>
+            <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
+              <button
+                type="button"
+                aria-label={`Person actions for ${displayName}`}
+                title=""
+                className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              >
+                <UserAvatar
+                  id={pubkey}
+                  displayName={displayName}
+                  avatarUrl={avatarUrl}
+                  className={cn(
+                    avatarSizeClassName,
+                    "ring-1 ring-background flex-shrink-0 transition-transform hover:scale-110"
+                  )}
+                />
+              </button>
+            </PersonActionMenu>
           </PersonHoverCard>
         );
       })}
