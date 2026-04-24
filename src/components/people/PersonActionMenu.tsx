@@ -139,6 +139,13 @@ export function PersonActionMenuContent({
     }
   };
 
+  const closeMenuFromElement = (element: HTMLElement) => {
+    const menu = element.closest('[role="menu"]') as HTMLElement | null;
+    (menu ?? element).dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+    );
+  };
+
   const npubValue = isNpub(person.id) ? person.id.toLowerCase() : hexPubkeyToNpub(person.id);
   const hexValue = isHexPubkey(person.id) ? person.id.toLowerCase() : npubToHexPubkey(person.id);
 
