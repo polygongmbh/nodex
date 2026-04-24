@@ -7,6 +7,7 @@ import { Task, TaskStatusType, Relay, getTaskStatus, getTaskStatusType } from "@
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { TaskAssigneeAvatars } from "./TaskAssigneeAvatars";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
@@ -667,6 +668,10 @@ export function TreeTaskItem({
               </button>
             </div>
           )}
+        </div>
+        {/* Assignee avatars - bottom right of row */}
+        <div className="flex-shrink-0 self-end pb-0.5">
+          <TaskAssigneeAvatars task={task} />
         </div>
       </div>
 
