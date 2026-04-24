@@ -31,10 +31,19 @@ export function useTaskStatusMenu({
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
   const statusMenuOpenedOnPointerDownRef = useRef(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFiredRef = useRef(false);
   const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   const statusButtonTitle = canCompleteTask
     ? getStatusToggleHint(task.status)
     : getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || getStatusToggleHint(task.status);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current !== null) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
 
   const openStatusMenu = useCallback(() => {
     allowStatusMenuOpenRef.current = true;
