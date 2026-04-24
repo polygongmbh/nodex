@@ -404,7 +404,7 @@ export function KanbanView({
                   {(provided, snapshot) => (
                     <div
                       className={cn(
-                        "flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2 pb-8",
+                        "flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2",
                         snapshot.isDraggingOver && "bg-primary/5"
                       )}
                     >
@@ -449,6 +449,8 @@ export function KanbanView({
                         })}
                         {(tasksByColumnId[column.id] || []).length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
                         {provided.placeholder}
+                        {/* Bottom buffer so the last card isn't flush against the scroll edge */}
+                        <div className="h-6 shrink-0" aria-hidden="true" />
                       </div>
                     </div>
                   )}
