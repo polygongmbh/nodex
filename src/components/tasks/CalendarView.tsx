@@ -1026,10 +1026,14 @@ export function CalendarView({
                               onMediaClick={(url) => openTaskMedia(task.id, url)}
                             />
                             {task.dueTime && (
-                              <div className="flex items-center gap-2 text-xs mt-1">
+                              <div
+                                className="flex items-center gap-2 text-xs mt-1"
+                                title={`Due time: ${task.dueTime}`}
+                              >
                                 <span
                                   className="h-1.5 w-1.5 rounded-full"
                                   style={{ backgroundColor: authorColor.accent }}
+                                  title={task.author?.displayName || task.author?.name || "Author"}
                                 />
                                 <Clock className="w-3 h-3" />
                                 <span>{task.dueTime}</span>
