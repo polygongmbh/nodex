@@ -75,6 +75,13 @@ export function useTaskStatusMenu({
   const triggerProps = {
     onClick: (event: MouseEvent<HTMLElement>) => {
       if (!canCompleteTask) return;
+      if (longPressFiredRef.current) {
+        longPressFiredRef.current = false;
+        statusMenuOpenedOnPointerDownRef.current = false;
+        event.stopPropagation();
+        event.preventDefault();
+        return;
+      }
       if (statusMenuOpenedOnPointerDownRef.current) {
         statusMenuOpenedOnPointerDownRef.current = false;
         event.stopPropagation();
@@ -108,10 +115,41 @@ export function useTaskStatusMenu({
       }
       statusTriggerPointerDownRef.current = false;
     },
-    onPointerDown: () => {
+    onPointerDown: (event: PointerEvent<HTMLElement>) => {
       statusTriggerPointerDownRef.current = true;
       allowStatusMenuOpenRef.current = false;
       statusMenuOpenedOnPointerDownRef.current = false;
+      longPressFiredRef.current = false;
+      clearLongPressTimer();
+      if (!canCompleteTask) return;
+      if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+      longPressTimerRef.current = setTimeout(() => {
+        longPressTimerRef.current = null;
+        longPressFiredRef.current = true;
+        statusMenuOpenedOnPointerDownRef.current = true;
+        allowStatusMenuOpenRef.current = true;
+        setStatusMenuOpen(true);
+      }, 450);
+    },
+    onPointerMove: () => {
+      if (longPressTimerRef.current !== null) {
+        clearLongPressTimer();
+      }
+    },
+    onPointerUp: () => {
+      clearLongPressTimer();
+    },
+    onPointerCancel: () => {
+      clearLongPressTimer();
+      longPressFiredRef.current = false;
+    },
+    onPointerLeave: () => {
+      clearLongPressTimer();
+    },
+    onContextMenu: (event: MouseEvent<HTMLElement>) => {
+      if (longPressFiredRef.current) {
+        event.preventDefault();
+      }
     },
     onPointerDownCapture: (event: PointerEvent<HTMLElement>) => {
       if (!canCompleteTask) return;
@@ -132,6 +170,7 @@ export function useTaskStatusMenu({
       statusTriggerPointerDownRef.current = false;
       allowStatusMenuOpenRef.current = false;
       statusMenuOpenedOnPointerDownRef.current = false;
+      clearLongPressTimer();
     },
   };
 
