@@ -119,6 +119,11 @@ interface PrioritySelectProps {
   onOpenChange?: (open: boolean) => void;
   onCloseAutoFocus?: React.ComponentPropsWithoutRef<typeof SelectContent>["onCloseAutoFocus"];
   leadingIcon?: React.ReactNode;
+  /**
+   * When true, the trigger renders the short label (e.g. "P3") and surfaces the
+   * full named priority via the title tooltip. Defaults to false (full named label).
+   */
+  compactLabel?: boolean;
   "aria-label"?: string;
   title?: string;
 }
@@ -133,6 +138,7 @@ export function PrioritySelect({
   onOpenChange,
   onCloseAutoFocus,
   leadingIcon,
+  compactLabel = false,
   title,
   ...rest
 }: PrioritySelectProps) {
@@ -140,6 +146,17 @@ export function PrioritySelect({
   const ariaLabel = rest["aria-label"] ?? t("composer:composer.labels.priority");
   const value = typeof priority === "number" ? String(priority) : PRIORITY_NONE_VALUE;
   const placeholder = t("composer:composer.labels.priority");
+  const namedLabel =
+    typeof priority === "number" ? t(`priorityLevels.${priority}`, { ns: "app" }) : "";
+  const displayLabel = compactLabel
+    ? typeof priority === "number"
+      ? formatPriorityLabel(storedPriorityFromDisplay(priority))
+      : placeholder
+    : typeof priority === "number"
+      ? namedLabel
+      : placeholder;
+  // When compact, surface the full named priority via the tooltip so hover reveals it.
+  const effectiveTitle = title ?? (compactLabel && namedLabel ? namedLabel : undefined);
 
   const stopProps = stopPropagation
     ? {
@@ -168,7 +185,7 @@ export function PrioritySelect({
       <SelectTrigger
         id={id}
         aria-label={ariaLabel}
-        title={title}
+        title={effectiveTitle}
         hideIndicator
         className={cn(
           "h-8 w-auto min-w-0 max-w-full justify-start gap-1 overflow-hidden text-xs [&>span]:block [&>span]:min-w-0 [&>span]:max-w-full [&>span]:truncate",
@@ -178,9 +195,7 @@ export function PrioritySelect({
       >
         {leadingIcon}
         <SelectValue placeholder={placeholder}>
-          {typeof priority === "number"
-            ? t(`priorityLevels.${priority}`, { ns: "app" })
-            : placeholder}
+          {displayLabel}
         </SelectValue>
       </SelectTrigger>
       <SelectContent
