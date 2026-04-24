@@ -91,7 +91,7 @@ export function KanbanView({
   const { authPolicy, guardModify, focusSidebar, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();
   const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatus>>({});
-  const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
+  const [composingColumnId, setComposingColumnId] = useState<string | null>(null);
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     tasks,
     allTasks,
@@ -306,7 +306,7 @@ export function KanbanView({
     onMoveLeft: handleMoveLeft,
     onMoveRight: handleMoveRight,
     onFocusSidebar: focusSidebar,
-    enabled: composingColumn === null,
+    enabled: composingColumnId === null,
     kanbanMode: true,
     columnTaskIds,
   });
@@ -366,7 +366,7 @@ export function KanbanView({
                   </div>
                   {authPolicy.canOpenCompose && !isInteractionBlocked && column.state.type !== "closed" && (
                     <button
-                      onClick={() => setComposingColumn(column.state.type as TaskInitialStatus)}
+                      onClick={() => setComposingColumnId(column.id)}
                       className="p-1 rounded hover:bg-muted transition-colors"
                       data-onboarding="kanban-add-task"
                     >
@@ -376,22 +376,22 @@ export function KanbanView({
                 </div>
 
                 {/* Task Composer */}
-                {composingColumn === column.state.type && (
+                {composingColumnId === column.id && (
                   <div className="p-3 border-b border-border bg-card/50 flex-shrink-0">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-muted-foreground">{t("kanban.newTaskIn", { column: column.label })}</span>
                       <button
-                        onClick={() => setComposingColumn(null)}
+                        onClick={() => setComposingColumnId(null)}
                         className="p-0.5 rounded hover:bg-muted"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </div>
                       <TaskCreateComposer
-                        onCancel={() => setComposingColumn(null)}
+                        onCancel={() => setComposingColumnId(null)}
                         compact
                         focusedTaskId={focusedTaskId}
-                        initialStatus={composingColumn || undefined}
+                        initialStatus={column.state.type as TaskInitialStatus}
                         closeOnSuccess
                         allowComment={false}
                         composeRestoreRequest={composeRestoreRequest}
