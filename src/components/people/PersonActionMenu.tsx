@@ -139,6 +139,13 @@ export function PersonActionMenuContent({
     }
   };
 
+  const closeMenuFromElement = (element: HTMLElement) => {
+    const menu = element.closest('[role="menu"]') as HTMLElement | null;
+    (menu ?? element).dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+    );
+  };
+
   const npubValue = isNpub(person.id) ? person.id.toLowerCase() : hexPubkeyToNpub(person.id);
   const hexValue = isHexPubkey(person.id) ? person.id.toLowerCase() : npubToHexPubkey(person.id);
 
@@ -199,6 +206,7 @@ export function PersonActionMenuContent({
             onActionSelect?.("copy");
             if (!npubValue) return;
             void copyToClipboard(npubValue, "people.toasts.npubCopied");
+            closeMenuFromElement(event.currentTarget);
           }}
           className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -213,6 +221,7 @@ export function PersonActionMenuContent({
             onActionSelect?.("copy");
             if (!hexValue) return;
             void copyToClipboard(hexValue, "people.toasts.hexPubkeyCopied");
+            closeMenuFromElement(event.currentTarget);
           }}
           className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >
