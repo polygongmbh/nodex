@@ -172,20 +172,18 @@ export function KanbanTaskCard({
         ) : null}
       </div>
       {/* Bottom-right cluster: lock indicator + assignee avatars sit on the same row without growing the card. */}
-      {(!canChangeStatus || true) ? (
-        <div className="mt-2 flex items-center justify-end gap-1.5">
-          {!canChangeStatus ? (
-            <div
-              className="rounded-full bg-muted/80 p-1 text-muted-foreground"
-              title={t("tasks.readOnly")}
-              aria-label={t("tasks.readOnly")}
-            >
-              <Lock className="h-3 w-3" />
-            </div>
-          ) : null}
-          <TaskAssigneeAvatars task={task} />
-        </div>
-      ) : null}
+      <div className="mt-2 flex items-center justify-end gap-1.5">
+        {!canChangeStatus ? (
+          <div
+            className="rounded-full bg-muted/80 p-1 text-muted-foreground"
+            title={t("tasks.readOnly")}
+            aria-label={t("tasks.readOnly")}
+          >
+            <Lock className="h-3 w-3" />
+          </div>
+        ) : null}
+        <TaskAssigneeAvatars task={task} />
+      </div>
     </TaskSurface>
   );
 }
