@@ -4,11 +4,11 @@ import { notifyTaskCreationFailed } from "@/lib/notifications";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { TaskComposerFormData } from "./TaskComposer";
-import type { TaskCreateResult, TaskInitialStatus } from "@/types";
+import type { TaskCreateResult, TaskStatus } from "@/types";
 
 interface UseComposerSubmitHandlerOptions {
   focusedTaskId: string | null;
-  initialStatus?: TaskInitialStatus;
+  initialStatus?: TaskStatus;
   activeRelayIds: string[];
   closeOnSuccess?: boolean;
   onCancel: () => void;

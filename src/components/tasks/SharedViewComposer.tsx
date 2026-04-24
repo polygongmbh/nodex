@@ -6,13 +6,13 @@ import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { ComposeRestoreRequest, TaskInitialStatus } from "@/types";
+import type { ComposeRestoreRequest, TaskStatus } from "@/types";
 
 interface SharedViewComposerProps {
   visible: boolean;
   onCancel?: () => void;
   focusedTaskId: string | null;
-  initialStatus?: TaskInitialStatus;
+  initialStatus?: TaskStatus;
   forceExpanded?: boolean;
   forceExpandSignal?: number;
   onExpandedChange?: (expanded: boolean) => void;

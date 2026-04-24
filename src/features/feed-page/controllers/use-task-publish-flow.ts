@@ -51,7 +51,7 @@ import type {
   Task,
   TaskCreateResult,
   TaskDateType,
-  TaskInitialStatus,
+  TaskStatus,
 } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -110,7 +110,7 @@ interface UseTaskPublishFlowOptions {
   publishTaskCreateFollowUps: (params: {
     publishedEventId?: string;
     taskType: Task["taskType"];
-    initialStatus?: TaskInitialStatus;
+    initialStatus?: TaskStatus;
     dueDate?: Date;
     content: string;
     dueTime?: string;
@@ -259,7 +259,7 @@ export function useTaskPublishFlow({
     dueTime?: string,
     dateType: TaskDateType = "due",
     focusedTaskId: string | null = null,
-    initialStatus?: TaskInitialStatus,
+    initialStatus?: TaskStatus,
     explicitMentionPubkeys: string[] = [],
     mentionIdentifiers?: string[],
     priority?: number,
@@ -501,7 +501,7 @@ export function useTaskPublishFlow({
         : (demoFeedActive ? [demoRelayId] : []),
       taskType: normalizedTaskType,
       timestamp: createdAt,
-      status: normalizedTaskType === "task" ? (initialStatus || "open") : undefined,
+      status: (normalizedTaskType === "task" ? (initialStatus ?? { type: "open" }) : undefined) as TaskStatus,
       dueDate: submissionDueDate,
       dueTime: submissionDueTime,
       dateType: submissionDateType,
@@ -757,7 +757,7 @@ export function useTaskPublishFlow({
         : (demoFeedActive ? [demoRelayId] : []),
       taskType: draft.taskType,
       timestamp: parseStoredDate(draft.createdAt) || new Date(),
-      status: draft.taskType === "task" ? (draft.initialStatus || "open") : undefined,
+      status: (draft.taskType === "task" ? (draft.initialStatus ?? { type: "open" }) : undefined) as TaskStatus,
       dueDate,
       dueTime: draft.dueTime,
       dateType: draft.dateType,
