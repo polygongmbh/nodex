@@ -337,8 +337,17 @@ function preprocessMarkdownTokens(value: string): string {
       const mentionIdentifier = normalizeMentionIdentifier(mention);
       nodes.push(`[@${mentionIdentifier}](${MENTION_LINK_PREFIX}${encodeURIComponent(mentionIdentifier)})`);
     } else if (token.toLowerCase().startsWith("nostr:") && nostrNpub) {
-      const mentionIdentifier = normalizeMentionIdentifier(nostrNpub);
-      nodes.push(`[@${mentionIdentifier}](${MENTION_LINK_PREFIX}${encodeURIComponent(mentionIdentifier)})`);
+      const decoded = decodeNostrToken(nostrNpub);
+      if (decoded?.kind === "mention") {
+        const hexPubkey = decoded.value;
+        // Use hex pubkey as identifier — downstream resolver supports hex and npub.
+        nodes.push(`[@${decoded.label}](${MENTION_LINK_PREFIX}${encodeURIComponent(hexPubkey)})`);
+      } else if (decoded?.kind === "event") {
+        nodes.push(`[${decoded.label}](${NOSTR_EVENT_LINK_PREFIX}${encodeURIComponent(decoded.value)})`);
+      } else {
+        // Unknown / undecodable — preserve original text.
+        nodes.push(value.slice(tokenStart, tokenStart + token.length));
+      }
     } else {
       nodes.push(value.slice(tokenStart, tokenStart + token.length));
     }
