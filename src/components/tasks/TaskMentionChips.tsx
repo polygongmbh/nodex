@@ -3,10 +3,9 @@ import type { Person } from "@/types/person";
 import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
-import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedPersonLookup, useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
-import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 
 const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 
