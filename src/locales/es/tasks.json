@@ -9,6 +9,15 @@
     },
     "task": "Tarea",
     "comment": "Comentario",
+    "offer": "Oferta",
+    "request": "Solicitud",
+    "listing": {
+      "commentBy": "Comentario de {{author}}",
+      "clickToClose": "{{type}} — haz clic para cerrar",
+      "clickToReactivate": "{{type}} inactiva — haz clic para reactivar",
+      "fulfilled": "Solicitud cumplida",
+      "sold": "Oferta vendida"
+    },
     "tags": "Etiquetas",
     "less": "menos",
     "readOnly": "Tarea de solo lectura",

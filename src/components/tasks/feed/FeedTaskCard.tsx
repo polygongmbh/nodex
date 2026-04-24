@@ -124,10 +124,14 @@ export function FeedTaskCard({
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const feedMessageLabel =
     task.feedMessageType === "offer"
-      ? "Offer"
+      ? t("tasks.offer")
       : task.feedMessageType === "request"
-        ? "Request"
+        ? t("tasks.request")
         : t("tasks.comment");
+  const listingSoldLabel =
+    task.feedMessageType === "request"
+      ? t("tasks.listing.fulfilled")
+      : t("tasks.listing.sold");
   const authorMeta = formatAuthorMetaParts({
     id: resolvedAuthor.id,
     displayName: resolvedAuthor.displayName,
