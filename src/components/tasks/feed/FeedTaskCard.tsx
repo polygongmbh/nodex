@@ -266,11 +266,13 @@ export function FeedTaskCard({
               title={
                 canUpdateListingStatus
                   ? listingStatus === "sold"
-                    ? `${feedMessageLabel} · Mark active`
-                    : `${feedMessageLabel} · Mark sold`
-                  : `${feedMessageLabel}${listingStatus === "sold" ? " · Sold" : ""}`
+                    ? t("tasks.listing.clickToReactivate", { type: feedMessageLabel })
+                    : t("tasks.listing.clickToClose", { type: feedMessageLabel })
+                  : listingStatus === "sold"
+                    ? listingSoldLabel
+                    : feedMessageLabel
               }
-              aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
+              aria-label={listingStatus === "sold" ? listingSoldLabel : feedMessageLabel}
               className={cn(
                 "flex-shrink-0 mt-0.5 rounded transition-colors",
                 isMobile ? "p-1" : "p-0.5",
@@ -285,7 +287,7 @@ export function FeedTaskCard({
             </button>
           ) : (
             <span
-              title={feedMessageLabel}
+              title={t("tasks.listing.commentBy", { author: authorMeta.primary })}
               className={cn("flex-shrink-0 mt-0.5 inline-flex items-center justify-center", isMobile ? "p-1" : "p-0.5")}
             >
               <MessageSquare className={cn("text-muted-foreground", "w-5 h-5")} />
@@ -344,7 +346,7 @@ export function FeedTaskCard({
                 {isComment && isListing && listingStatus === "sold" && !isMobile ? (
                   <>
                     <span className="text-xs bg-muted text-muted-foreground line-through px-1.5 py-0.5 rounded">
-                      {listingStatus}
+                      {listingSoldLabel}
                     </span>
                     <span className="shrink-0">·</span>
                   </>
