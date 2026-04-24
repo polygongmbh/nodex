@@ -38,7 +38,6 @@ export function PersonActionMenu({
 }: PersonActionMenuProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const handledPointerShortcutRef = React.useRef(false);
-  const pointerOpenedMenuRef = React.useRef(false);
   const shouldPreventCloseAutoFocusRef = React.useRef(false);
 
   const handleShortcut = (
@@ -81,22 +80,14 @@ export function PersonActionMenu({
           }}
           onPointerDown={(event: React.PointerEvent<HTMLElement>) => {
             event.stopPropagation();
-            pointerOpenedMenuRef.current = event.button === 0;
           }}
           onClick={(event: React.MouseEvent<HTMLElement>) => {
             event.stopPropagation();
             if (handledPointerShortcutRef.current) {
               handledPointerShortcutRef.current = false;
-              pointerOpenedMenuRef.current = false;
               return;
             }
             if (handleShortcut(event)) return;
-            if (pointerOpenedMenuRef.current) {
-              pointerOpenedMenuRef.current = false;
-              queueMicrotask(() => {
-                event.currentTarget.blur();
-              });
-            }
           }}
         >
           {children}
