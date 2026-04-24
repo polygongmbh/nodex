@@ -7,7 +7,6 @@ import {
   getTaskStateUiType,
   isTaskCompletedState,
   isTaskTerminalState,
-  getQuickToggleNextState,
   getNextStateInSequence,
   getStateSortType,
   getVisibleByDefaultStates,

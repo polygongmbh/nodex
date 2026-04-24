@@ -179,32 +179,15 @@ export function isTaskTerminalState(
   return type === "done" || type === "closed";
 }
 
-function getDefaultStateForType(
+/**
+ * Find the default (first) state definition of a given semantic type within the registry.
+ * Returns undefined if no state of that type is configured.
+ */
+export function getDefaultStateForType(
   type: TaskStateType,
-  registry: TaskStateDefinition[]
+  registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition | undefined {
   return registry.find((def) => def.type === type);
-}
-
-/**
- * Returns the next state for a quick-toggle action, or null if the chooser should open.
- * Desktop: open -> default active, active -> default done, done/closed -> null (open chooser)
- * Mobile: open -> default done, active -> default done, done/closed -> null (open chooser)
- */
-export function getQuickToggleNextState(
-  stateId: string | TaskStatusLike,
-  options: { mobile?: boolean } = {},
-  registry: TaskStateDefinition[] = getTaskStateRegistry()
-): string | null {
-  const currentType = typeof stateId === "string"
-    ? getTaskStateUiType(stateId, registry)
-    : getTaskStatusType(stateId);
-  if (currentType === "done" || currentType === "closed") return null;
-
-  if (currentType === "open" && !options.mobile) {
-    return getDefaultStateForType("active", registry)?.id ?? null;
-  }
-  return getDefaultStateForType("done", registry)?.id ?? null;
 }
 
 /**

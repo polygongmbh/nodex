@@ -1,4 +1,4 @@
-import { Task, TaskStatusLike, TaskStatusType, getTaskStatusType, normalizeTaskStatus } from "@/types";
+import { Task, TaskStatusLike, getTaskStatusType, normalizeTaskStatus } from "@/types";
 import {
   isTaskCompletedState,
   isTaskTerminalState as registryIsTerminal,
@@ -16,13 +16,14 @@ export function applyTaskStatusUpdate(
   localTasks: Task[],
   allTasks: Task[],
   taskId: string,
-  newStatus: TaskStatusType
+  newStatus: TaskStatusLike
 ): Task[] {
   const now = new Date();
+  const normalizedStatus = normalizeTaskStatus(newStatus);
   const toLocalStatusUpdatedTask = (task: Task): Task => {
     return {
       ...task,
-      status: normalizeTaskStatus(newStatus),
+      status: normalizedStatus,
       lastEditedAt: now,
     };
   };

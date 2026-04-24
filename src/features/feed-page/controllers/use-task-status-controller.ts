@@ -4,7 +4,10 @@ import { getLastEditedAt, getTaskStatusType, normalizeTaskStatus } from "@/types
 import type { Person } from "@/types/person";
 import { applyTaskStatusUpdate, isTaskTerminalStatus } from "@/domain/content/task-status";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import { getQuickToggleNextState } from "@/domain/task-states/task-state-config";
+import {
+  getDefaultStateForType,
+  toTaskStatusFromStateDefinition,
+} from "@/domain/task-states/task-state-config";
 import { notifyStatusRestricted } from "@/lib/notifications";
 import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";
 import { playCompletionPopSound } from "@/lib/completion-feedback";
@@ -85,12 +88,12 @@ export function useTaskStatusController({
   }, []);
 
   const scheduleTaskStatusReorderUpdate = useCallback(
-    (taskId: string, status: TaskStatusType) => {
+    (taskId: string, status: TaskStatus) => {
       clearPendingStatusUpdate(taskId);
       const existingTask = allTasks.find((task) => task.id === taskId);
       const currentStatus =
         pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask?.status) ?? "open";
-      pendingTaskStatusesRef.current.set(taskId, status);
+      pendingTaskStatusesRef.current.set(taskId, status.type);
       setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
       if (existingTask) {
         const currentSortDate = getLastEditedAt(existingTask);
@@ -145,15 +148,20 @@ export function useTaskStatusController({
         notifyStatusRestricted();
         return;
       }
-      const currentStatus =
+      const currentType =
         pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask.status) ?? "open";
-      if (isTaskTerminalStatus(currentStatus)) return;
-      const nextStateId = getQuickToggleNextState(currentStatus, { mobile: isMobile });
-      if (nextStateId === null) return;
-      const nextStatus = nextStateId as TaskStatusType;
+      if (currentType === "done" || currentType === "closed") return;
+      const nextType: TaskStatusType =
+        currentType === "open" && !isMobile ? "active" : "done";
+      // Resolve to a configured state definition so custom done states (e.g. "Review")
+      // publish as { type: "done", description: "Review" } rather than a synthetic id.
+      const nextStateDef = getDefaultStateForType(nextType);
+      const nextStatus: TaskStatus = nextStateDef
+        ? toTaskStatusFromStateDefinition(nextStateDef)
+        : { type: nextType };
       scheduleTaskStatusReorderUpdate(taskId, nextStatus);
-      triggerCompletionFeedback(taskId, nextStatus);
-      void publishTaskStateUpdate(taskId, { type: nextStatus });
+      triggerCompletionFeedback(taskId, nextType);
+      void publishTaskStateUpdate(taskId, nextStatus);
     },
     [
       allTasks,
@@ -180,7 +188,7 @@ export function useTaskStatusController({
       const normalizedStatus = normalizeTaskStatus(status);
       const resolvedType = normalizedStatus.type as TaskStatusType;
 
-      scheduleTaskStatusReorderUpdate(taskId, resolvedType);
+      scheduleTaskStatusReorderUpdate(taskId, normalizedStatus);
       triggerCompletionFeedback(taskId, resolvedType);
       void publishTaskStateUpdate(taskId, normalizedStatus);
     },
