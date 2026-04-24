@@ -95,30 +95,29 @@ export function KanbanTaskCard({
               "px-1.5 py-0.5 text-sm focus:outline-none",
               TASK_CHIP_STYLES.priority,
               "text-sm",
-              canChangeStatus && "cursor-pointer hover:bg-warning/20",
-              !canChangeStatus && "cursor-not-allowed opacity-60"
+              canChangeStatus ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed"
             )}
           />
         </div>
       ) : null}
-      <div className="min-w-0">
-        {/*
-         * Bottom-right cluster (lock + assignee avatars) is floated so it tucks
-         * into the trailing flow of the card instead of forcing a dedicated row.
-         * Keeping it as the first child lets following blocks wrap around it.
-         */}
-        <div className="float-right ml-2 mt-1 flex items-center gap-1.5">
-          {!canChangeStatus ? (
-            <div
-              className="rounded-full bg-muted/80 p-1 text-muted-foreground"
-              title={t("tasks.readOnly")}
-              aria-label={t("tasks.readOnly")}
-            >
-              <Lock className="h-3 w-3" />
-            </div>
-          ) : null}
-          <TaskAssigneeAvatars task={task} />
-        </div>
+      {/*
+       * Bottom-right cluster (lock + assignee avatars) is absolutely pinned to
+       * the bottom-right corner so it tucks into that corner regardless of
+       * content height, without forcing its own row.
+       */}
+      <div className="absolute right-2 bottom-2 z-10 flex items-center gap-1.5">
+        {!canChangeStatus ? (
+          <div
+            className="rounded-full bg-muted/80 p-1 text-muted-foreground"
+            title={t("tasks.readOnly")}
+            aria-label={t("tasks.readOnly")}
+          >
+            <Lock className="h-3 w-3" />
+          </div>
+        ) : null}
+        <TaskAssigneeAvatars task={task} />
+      </div>
+      <div className="min-w-0 pb-6">
         {!compactTaskCardsEnabled && showContext ? (
           <TaskBreadcrumbRow
             breadcrumbs={ancestorChain}
