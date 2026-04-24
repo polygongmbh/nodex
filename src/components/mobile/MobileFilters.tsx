@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Hash, Users, Check, X, Minus, User, LogOut, Sparkles, LogIn, Pencil, Mail, Scale, ShieldCheck, History } from "lucide-react";
 import {
   Dialog,
@@ -140,10 +140,12 @@ export function MobileFilters({
     user,
   ]);
 
+  const lastHandledProfileEditorOpenSignalRef = useRef(0);
   useEffect(() => {
-    if (profileEditorOpenSignal > 0 && user) {
-      setIsProfileEditorOpen(true);
-    }
+    if (profileEditorOpenSignal <= 0 || !user) return;
+    if (profileEditorOpenSignal === lastHandledProfileEditorOpenSignalRef.current) return;
+    lastHandledProfileEditorOpenSignalRef.current = profileEditorOpenSignal;
+    setIsProfileEditorOpen(true);
   }, [profileEditorOpenSignal, user]);
 
   const handleCopyPrivateKey = () => {
