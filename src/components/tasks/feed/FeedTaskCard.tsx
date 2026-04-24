@@ -225,13 +225,13 @@ export function FeedTaskCard({
                   title={statusButtonTitle}
                   className={cn(
                     "flex-shrink-0 mt-0.5 rounded transition-colors",
-                    isMobile ? "p-1.5" : "p-0.5",
+                    isMobile ? "p-1" : "p-0.5",
                     canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                   )}
                 >
                   <TaskStateIcon
                     status={getTaskStatus(task)}
-                    size={isMobile ? "w-4 h-4" : "w-5 h-5"}
+                    size={isMobile ? "w-5 h-5" : "w-5 h-5"}
                   />
                 </button>
               </DropdownMenuTrigger>
