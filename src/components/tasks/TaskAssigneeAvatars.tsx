@@ -92,6 +92,7 @@ export function TaskAssigneeAvatars({
             <button
               type="button"
               aria-label={`Person actions for ${displayName}`}
+              title=""
               className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40"
               onClick={(event) => {
                 event.stopPropagation();
