@@ -54,7 +54,6 @@ export function TaskMentionChips({
 }: TaskMentionChipsProps) {
   const { people: contextPeople } = useFeedSurfaceState();
   const { getPersonById } = useFeedPersonLookup();
-  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const people = peopleProp ?? contextPeople;
   const mentionPubkeys = collectMentionPubkeys(task);
   if (mentionPubkeys.length === 0) return null;
@@ -74,21 +73,16 @@ export function TaskMentionChips({
           person={clickablePerson}
           triggerClassName="inline-flex shrink-0 leading-none"
         >
-          <button
-            type="button"
-            className={cn(TASK_CHIP_STYLES.mention, "transition-colors hover:bg-primary/15", className)}
-            aria-label={`Person actions for ${label}`}
-            title=""
-            onClick={(event) => {
-              event.stopPropagation();
-              const shortcutIntent = getPersonShortcutIntent(event);
-              if (!shortcutIntent) return;
-              event.preventDefault();
-              void dispatchFeedInteraction(toPersonShortcutInteraction(clickablePerson, shortcutIntent));
-            }}
-          >
-            @{label}
-          </button>
+          <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
+            <button
+              type="button"
+              className={cn(TASK_CHIP_STYLES.mention, "transition-colors hover:bg-primary/15", className)}
+              aria-label={`Person actions for ${label}`}
+              title=""
+            >
+              @{label}
+            </button>
+          </PersonActionMenu>
         </PersonHoverCard>
       );
     }
