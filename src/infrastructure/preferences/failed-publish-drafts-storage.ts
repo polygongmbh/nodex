@@ -1,5 +1,5 @@
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { PublishedAttachment, TaskDateType, TaskInitialStatus, TaskType } from "@/types";
+import type { PublishedAttachment, TaskDateType, TaskStatus, TaskType } from "@/types";
 import type { Person } from "@/types/person";
 import { z } from "zod";
 
@@ -20,7 +20,7 @@ export interface FailedPublishDraft {
   dueDate?: string;
   dueTime?: string;
   parentId?: string;
-  initialStatus?: TaskInitialStatus;
+  initialStatus?: TaskStatus;
   mentionPubkeys: string[];
   assigneePubkeys?: string[];
   priority?: number;
@@ -33,7 +33,11 @@ export interface FailedPublishDraft {
 
 const taskTypeSchema = z.enum(["task", "comment"] as const);
 const taskDateTypeSchema = z.enum(["due", "scheduled", "start", "end", "milestone"] as const);
-const taskInitialStatusSchema = z.enum(["open", "active", "done"] as const);
+const taskStatusTypeSchema = z.enum(["open", "active", "done", "closed"] as const);
+const taskStatusSchema = z.object({
+  type: taskStatusTypeSchema,
+  description: z.string().optional(),
+});
 const personSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -56,7 +60,7 @@ const failedPublishDraftSchema = z.object({
   dueDate: z.string().optional(),
   dueTime: z.string().optional(),
   parentId: z.string().optional(),
-  initialStatus: taskInitialStatusSchema.optional(),
+  initialStatus: taskStatusSchema.optional(),
   mentionPubkeys: z.array(z.string()),
   assigneePubkeys: z.array(z.string()).optional(),
   priority: z.number().finite().optional(),
