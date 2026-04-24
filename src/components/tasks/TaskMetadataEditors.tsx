@@ -8,6 +8,7 @@ import { TaskDateTypeSelect } from "./TaskDateTypeSelect";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
+  formatPriorityLabel,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
 import {
@@ -118,6 +119,11 @@ interface PrioritySelectProps {
   onOpenChange?: (open: boolean) => void;
   onCloseAutoFocus?: React.ComponentPropsWithoutRef<typeof SelectContent>["onCloseAutoFocus"];
   leadingIcon?: React.ReactNode;
+  /**
+   * When true, the trigger renders the short label (e.g. "P3") and surfaces the
+   * full named priority via the title tooltip. Defaults to false (full named label).
+   */
+  compactLabel?: boolean;
   "aria-label"?: string;
   title?: string;
 }
@@ -132,6 +138,7 @@ export function PrioritySelect({
   onOpenChange,
   onCloseAutoFocus,
   leadingIcon,
+  compactLabel = false,
   title,
   ...rest
 }: PrioritySelectProps) {
@@ -139,6 +146,17 @@ export function PrioritySelect({
   const ariaLabel = rest["aria-label"] ?? t("composer:composer.labels.priority");
   const value = typeof priority === "number" ? String(priority) : PRIORITY_NONE_VALUE;
   const placeholder = t("composer:composer.labels.priority");
+  const namedLabel =
+    typeof priority === "number" ? t(`priorityLevels.${priority}`, { ns: "app" }) : "";
+  const displayLabel = compactLabel
+    ? typeof priority === "number"
+      ? formatPriorityLabel(storedPriorityFromDisplay(priority))
+      : placeholder
+    : typeof priority === "number"
+      ? namedLabel
+      : placeholder;
+  // When compact, surface the full named priority via the tooltip so hover reveals it.
+  const effectiveTitle = title ?? (compactLabel && namedLabel ? namedLabel : undefined);
 
   const stopProps = stopPropagation
     ? {
@@ -167,7 +185,7 @@ export function PrioritySelect({
       <SelectTrigger
         id={id}
         aria-label={ariaLabel}
-        title={title}
+        title={effectiveTitle}
         hideIndicator
         className={cn(
           "h-8 w-auto min-w-0 max-w-full justify-start gap-1 overflow-hidden text-xs [&>span]:block [&>span]:min-w-0 [&>span]:max-w-full [&>span]:truncate",
@@ -177,9 +195,7 @@ export function PrioritySelect({
       >
         {leadingIcon}
         <SelectValue placeholder={placeholder}>
-          {typeof priority === "number"
-            ? t(`priorityLevels.${priority}`, { ns: "app" })
-            : placeholder}
+          {displayLabel}
         </SelectValue>
       </SelectTrigger>
       <SelectContent
@@ -206,6 +222,12 @@ interface TaskPrioritySelectProps {
   priority?: number;
   className?: string;
   stopPropagation?: boolean;
+  /**
+   * Defaults to true: card/chip surfaces show the short "PX" label and reveal
+   * the named priority via the title tooltip. Set to false in dense editors
+   * (e.g. table rows, composers) where the named label should remain visible.
+   */
+  compactLabel?: boolean;
   "aria-label"?: string;
   title?: string;
 }
@@ -216,6 +238,7 @@ export function TaskPrioritySelect({
   priority,
   className,
   stopPropagation = false,
+  compactLabel = true,
   ...rest
 }: TaskPrioritySelectProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -237,6 +260,7 @@ export function TaskPrioritySelect({
       )}
       disabled={!taskId}
       stopPropagation={stopPropagation}
+      compactLabel={compactLabel}
       aria-label={rest["aria-label"]}
       title={rest.title}
     />

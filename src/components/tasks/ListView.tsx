@@ -93,6 +93,7 @@ const PriorityCell = memo(function PriorityCell({
     <TaskPrioritySelect
       taskId={editable ? taskId : undefined}
       priority={priority}
+      compactLabel={false}
       className={cn(
         "h-7 rounded-md border-none bg-transparent px-2 text-xs shadow-none transition-colors hover:bg-muted/60 focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent",
         hasPriority ? "text-foreground" : "text-muted-foreground"
