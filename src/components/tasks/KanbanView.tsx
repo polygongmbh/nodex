@@ -404,7 +404,7 @@ export function KanbanView({
                   {(provided, snapshot) => (
                     <div
                       className={cn(
-                        "flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2",
+                        "flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2 pb-8",
                         snapshot.isDraggingOver && "bg-primary/5"
                       )}
                     >
