@@ -1,8 +1,17 @@
 import { useMemo } from "react";
 import type { Task } from "@/types";
+import type { Person } from "@/types/person";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { cn } from "@/lib/utils";
+import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
+import {
+  getPersonShortcutIntent,
+  toPersonShortcutInteraction,
+} from "@/components/people/person-shortcuts";
+import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 interface TaskAssigneeAvatarsProps {
   task: Task;
@@ -15,9 +24,21 @@ interface TaskAssigneeAvatarsProps {
 
 const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 
+function buildFallbackPersonFromPubkey(pubkey: string): Person {
+  const label = formatUserFacingPubkey(pubkey);
+  return {
+    id: pubkey,
+    name: label,
+    displayName: label,
+    isOnline: false,
+    isSelected: false,
+  };
+}
+
 /**
  * Renders a small overlapping stack of profile pictures for a task's assignees.
- * Falls back to the task's author when there are no assignees.
+ * Falls back to the task's author when there are no assignees. Each avatar is
+ * clickable and shows a hover card, mirroring the mention-chip behavior.
  */
 export function TaskAssigneeAvatars({
   task,
@@ -33,6 +54,8 @@ export function TaskAssigneeAvatars({
   }, [task.assigneePubkeys, task.author?.id]);
 
   const { getProfile } = useNostrProfiles(pubkeys);
+  const { getPersonById } = useFeedPersonLookup();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   if (pubkeys.length === 0) return null;
 
@@ -46,21 +69,51 @@ export function TaskAssigneeAvatars({
     >
       {visible.map((pubkey) => {
         const profile = getProfile(pubkey);
+        const matchedPerson = getPersonById(pubkey);
+        const fallbackPerson = buildFallbackPersonFromPubkey(pubkey);
+        const clickablePerson = matchedPerson || fallbackPerson;
         const displayName =
           profile?.displayName ||
           profile?.name ||
-          (pubkey === task.author?.id ? task.author.displayName || task.author.name : undefined);
+          matchedPerson?.displayName ||
+          matchedPerson?.name ||
+          (pubkey === task.author?.id ? task.author.displayName || task.author.name : undefined) ||
+          fallbackPerson.displayName;
+        const avatarUrl =
+          profile?.picture ||
+          (pubkey === task.author?.id ? task.author.avatar : undefined);
+
         return (
-          <UserAvatar
+          <PersonHoverCard
             key={pubkey}
-            id={pubkey}
-            displayName={displayName}
-            avatarUrl={profile?.picture || (pubkey === task.author?.id ? task.author.avatar : undefined)}
-            className={cn(
-              avatarSizeClassName,
-              "ring-1 ring-background flex-shrink-0"
-            )}
-          />
+            person={clickablePerson}
+            triggerClassName="inline-flex shrink-0 leading-none rounded-full"
+          >
+            <button
+              type="button"
+              aria-label={`Person actions for ${displayName}`}
+              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40"
+              onClick={(event) => {
+                event.stopPropagation();
+                const shortcutIntent = getPersonShortcutIntent(event);
+                if (!shortcutIntent) return;
+                event.preventDefault();
+                void dispatchFeedInteraction(
+                  toPersonShortcutInteraction(clickablePerson, shortcutIntent)
+                );
+              }}
+            >
+              <UserAvatar
+                id={pubkey}
+                displayName={displayName}
+                avatarUrl={avatarUrl}
+                className={cn(
+                  avatarSizeClassName,
+                  "ring-1 ring-background flex-shrink-0 transition-transform hover:scale-110"
+                )}
+              />
+            </button>
+          </PersonHoverCard>
         );
       })}
       {overflow > 0 ? (

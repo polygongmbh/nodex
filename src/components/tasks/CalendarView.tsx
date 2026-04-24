@@ -34,6 +34,7 @@ import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { TaskAttachmentList } from "./TaskAttachmentList";
+import { TaskAssigneeAvatars } from "./TaskAssigneeAvatars";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1044,6 +1045,9 @@ export function CalendarView({
                                 testId={`calendar-chip-row-${task.id}`}
                               />
                             )}
+                            <div className="mt-1.5 flex justify-end">
+                              <TaskAssigneeAvatars task={task} />
+                            </div>
                           </div>
                         </div>
                       </div>
