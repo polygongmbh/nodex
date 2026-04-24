@@ -222,6 +222,12 @@ interface TaskPrioritySelectProps {
   priority?: number;
   className?: string;
   stopPropagation?: boolean;
+  /**
+   * Defaults to true: card/chip surfaces show the short "PX" label and reveal
+   * the named priority via the title tooltip. Set to false in dense editors
+   * (e.g. table rows, composers) where the named label should remain visible.
+   */
+  compactLabel?: boolean;
   "aria-label"?: string;
   title?: string;
 }
@@ -232,6 +238,7 @@ export function TaskPrioritySelect({
   priority,
   className,
   stopPropagation = false,
+  compactLabel = true,
   ...rest
 }: TaskPrioritySelectProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -253,6 +260,7 @@ export function TaskPrioritySelect({
       )}
       disabled={!taskId}
       stopPropagation={stopPropagation}
+      compactLabel={compactLabel}
       aria-label={rest["aria-label"]}
       title={rest.title}
     />
