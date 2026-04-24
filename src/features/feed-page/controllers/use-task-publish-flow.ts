@@ -51,7 +51,7 @@ import type {
   Task,
   TaskCreateResult,
   TaskDateType,
-  TaskInitialStatus,
+  TaskStatus,
 } from "@/types";
 import type { Person } from "@/types/person";
 
