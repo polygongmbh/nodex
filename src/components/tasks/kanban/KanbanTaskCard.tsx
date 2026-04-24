@@ -187,8 +187,6 @@ export function KanbanTaskCard({
             <span>{t("kanban.hasSubtasks")}</span>
           </div>
         ) : null}
-        {/* Clear the float so the card height tracks the taller of content/cluster. */}
-        <div className="clear-both" />
       </div>
     </TaskSurface>
   );
