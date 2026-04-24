@@ -1,67 +1,58 @@
+## Plan: Descriptive Tooltips and Listing Labels in Feed Cards
 
+### Overview
 
-## Goal
+Update the feed task card icons and chips to show more specific, actionable titles instead of generic labels. Localize all new strings across English, German, and Spanish.
 
-Inline the quick-toggle next-type logic into `use-task-status-controller.ts` (the only consumer that needs it) and simplify `task-status-toggle.ts` to a direct semantic check on the current status. Remove `getQuickToggleNextState` from the registry entirely.
+### Changes
 
-## Why
+#### 1. Add new i18n keys (all three locales)
 
-- `getQuickToggleNextState` has only two callsites and neither needs registry awareness.
-- The toggle helper just wants to know "should this click focus the task?" — that is true when quick-toggling from an open state (since the next type will be `active` on desktop). It can answer that from `status` alone, no lookahead needed.
-- The controller is the only place that actually publishes a next state, so the cycling rules belong there.
+In each `src/locales/{en,de,es}/tasks.json`, add inside the `"tasks"` object:
 
-## Changes
+```json
+"offer": "Offer",
+"request": "Request",
+"listing": {
+  "commentBy": "Comment by {{author}}",
+  "clickToClose": "{{type}} — click to close",
+  "clickToReactivate": "Inactive {{type}} — click to reactivate",
+  "fulfilled": "Request fulfilled",
+  "sold": "Offer unavailable"
+}
+```
 
-### 1. `src/features/feed-page/controllers/use-task-status-controller.ts`
+- **German translations**: `Angebot`, `Gesuch`, `Kommentar von {{author}}`, `{{type}} — zum Schließen klicken`, `Erfülltes {{type}} — zum Reaktivieren klicken`, `Anfrage erfüllt`, `Angebot vergeben`
+- **Spanish translations**: `Oferta`, `Solicitud`, `Comentario de {{author}}`, `{{type}} — haz clic para cerrar`, `{{type}} cumplida — haz clic para reactivar`, `Solicitud Cumplida`, `Oferta Vendida`
 
-- Drop the `getQuickToggleNextState` import.
-- Inline next-type computation in `handleToggleComplete`:
-  ```ts
-  const currentType = getTaskStatusType(currentStatus);
-  if (currentType === "done" || currentType === "closed") return;
-  const nextType: TaskStatusType =
-    currentType === "open" && !isMobile ? "active" : "done";
-  ```
-- Resolve `nextType` to a full `TaskStatus` via a registry helper (`getDefaultStateForType` → `toTaskStatusFromStateDefinition`) so custom done states publish as `{ type: "done", description: "Review" }` rather than `{ type: "review" }`.
-- Pass that full `TaskStatus` into `scheduleTaskStatusReorderUpdate` and `publishTaskStateUpdate`.
+#### 2. Update `src/components/tasks/feed/FeedTaskCard.tsx`
 
-### 2. `src/domain/content/task-status.ts`
+**a) Translate `feedMessageLabel**`
+Replace the hardcoded `"Offer"` and `"Request"` with `t("tasks.offer")` and `t("tasks.request")`.
 
-- Change `applyTaskStatusUpdate` (and the optimistic `stateUpdates` synthesis added previously) to accept a full `TaskStatusLike` instead of `TaskStatusType`, so descriptions survive the optimistic merge.
+**b) Comment icon tooltip**
+Change the `MessageSquare` icon wrapper `title` from `feedMessageLabel` (plain "Comment") to `t("tasks.listing.commentBy", { author: authorMeta.primary })`.
 
-### 3. `src/lib/task-status-toggle.ts`
+**c) Listing icon tooltips**
+Replace the current inline title strings for the `Package`/`HandHelping` button with the new i18n keys:
 
-- Replace the `getQuickToggleNextState` + `getTaskStateUiType` chain with a direct check:
-  ```ts
-  if (focusOnQuickToggle && !event.altKey) {
-    const currentType = getTaskStatusType(status);
-    if (currentType === "open") focusTask?.();
-  }
-  ```
-  Rationale: quick-toggle from `open` advances to `active` on desktop (focus-worthy). Mobile already skips focus via existing platform handling, and from `active` the next stop is `done` (not focus-worthy). Terminal states open the chooser instead of toggling.
-- Drop `getTaskStateUiType` and `getQuickToggleNextState` imports.
+- Active + interactive: `t("tasks.listing.clickToClose", { type: feedMessageLabel })`
+- Sold + interactive: `t("tasks.listing.clickToReactivate", { type: feedMessageLabel })`
+- Non-interactive sold: replace with `t("tasks.listing.fulfilled")` or `t("tasks.listing.sold")` based on type
 
-### 4. `src/domain/task-states/task-state-config.ts`
+**d) "Sold" chip text**
+Replace the literal `{listingStatus}` chip text (`"sold"`) with a type-aware label:
 
-- Remove `getQuickToggleNextState` entirely (and any now-unused helpers it relied on).
-- Export `getDefaultStateForType` (and a small `toTaskStatusFromStateDefinition` helper if not already public) for the controller to resolve next-type → publishable status.
+- Offers: `t("tasks.listing.sold")`
+- Requests: `t("tasks.listing.fulfilled")`
 
-### 5. Tests
+#### 3. Verification
 
-- `src/domain/task-states/task-state-config.test.ts`: drop the `getQuickToggleNextState` test block.
-- `src/features/feed-page/controllers/use-task-status-controller.test.tsx`: add a regression that with a custom registry whose first done-type state is `review`, the controller publishes `{ type: "done", description: "Review" }` (and that desktop cycles open→active→done while mobile cycles non-terminal→done).
-- Optionally tighten `task-status-toggle` tests to assert focus only fires when starting from an open semantic type, regardless of state id.
+Run a focused build check (`npm run build`) to confirm no TypeScript or i18n interpolation errors were introduced.
 
-## Out of Scope
+### Affected Files
 
-- The ~100 pre-existing `TaskStatus` typing errors in `*.test.tsx` and `FeedView.tsx`/`CalendarView.tsx`. These predate this work and remain unaddressed here.
-
-## Files Touched
-
-- `src/features/feed-page/controllers/use-task-status-controller.ts`
-- `src/domain/content/task-status.ts`
-- `src/lib/task-status-toggle.ts`
-- `src/domain/task-states/task-state-config.ts`
-- `src/domain/task-states/task-state-config.test.ts`
-- `src/features/feed-page/controllers/use-task-status-controller.test.tsx`
-
+- `src/locales/en/tasks.json`
+- `src/locales/de/tasks.json`
+- `src/locales/es/tasks.json`
+- `src/components/tasks/feed/FeedTaskCard.tsx`
