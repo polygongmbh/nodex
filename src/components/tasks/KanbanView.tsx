@@ -388,10 +388,13 @@ export function KanbanView({
                       </button>
                     </div>
                       <TaskCreateComposer
+                        key={column.id}
                         onCancel={() => setComposingColumnId(null)}
                         compact
                         focusedTaskId={focusedTaskId}
-                        initialStatus={column.state.type as TaskInitialStatus}
+                        initialStatus={
+                          (column.state.type === "closed" ? "open" : column.state.type) as TaskInitialStatus
+                        }
                         closeOnSuccess
                         allowComment={false}
                         composeRestoreRequest={composeRestoreRequest}
