@@ -3,6 +3,7 @@ import LinkifyIt from "linkify-it";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+import { nip19 } from "nostr-tools";
 import { LINKIFY_CONTENT_TOKEN_REGEX } from "@/lib/content-tokens";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Person } from "@/types/person";
@@ -11,12 +12,14 @@ import { guessMimeTypeFromUrl, isSafeHttpUrl } from "@/lib/attachments";
 import i18n from "@/lib/i18n/config";
 import {
   formatUserFacingPubkey,
+  hexPubkeyToNpub,
   isHexPubkey,
   npubToHexPubkey,
   toUserFacingPubkey,
 } from "@/lib/nostr/user-facing-pubkey";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+
 
 const linkify = new LinkifyIt();
 
