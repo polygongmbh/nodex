@@ -84,31 +84,24 @@ export function TaskAssigneeAvatars({
             person={clickablePerson}
             triggerClassName="inline-flex shrink-0 leading-none rounded-full"
           >
-            <button
-              type="button"
-              aria-label={`Person actions for ${displayName}`}
-              title=""
-              className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
-              onClick={(event) => {
-                event.stopPropagation();
-                const shortcutIntent = getPersonShortcutIntent(event);
-                if (!shortcutIntent) return;
-                event.preventDefault();
-                void dispatchFeedInteraction(
-                  toPersonShortcutInteraction(clickablePerson, shortcutIntent)
-                );
-              }}
-            >
-              <UserAvatar
-                id={pubkey}
-                displayName={displayName}
-                avatarUrl={avatarUrl}
-                className={cn(
-                  avatarSizeClassName,
-                  "ring-1 ring-background flex-shrink-0 transition-transform hover:scale-110"
-                )}
-              />
-            </button>
+            <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
+              <button
+                type="button"
+                aria-label={`Person actions for ${displayName}`}
+                title=""
+                className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              >
+                <UserAvatar
+                  id={pubkey}
+                  displayName={displayName}
+                  avatarUrl={avatarUrl}
+                  className={cn(
+                    avatarSizeClassName,
+                    "ring-1 ring-background flex-shrink-0 transition-transform hover:scale-110"
+                  )}
+                />
+              </button>
+            </PersonActionMenu>
           </PersonHoverCard>
         );
       })}
