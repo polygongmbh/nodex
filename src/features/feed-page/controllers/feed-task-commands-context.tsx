@@ -2,7 +2,6 @@ import { createContext, useContext, type PropsWithChildren } from "react";
 import type {
   PostType,
   TaskDateType,
-  TaskInitialStatus,
   TaskStatus,
   PublishedAttachment,
   Nip99Metadata,
@@ -21,7 +20,7 @@ export interface FeedTaskCommands {
     dueTime?: string,
     dateType?: TaskDateType,
     focusedTaskId?: string | null,
-    initialStatus?: TaskInitialStatus,
+    initialStatus?: TaskStatus,
     explicitMentionPubkeys?: string[],
     mentionIdentifiers?: string[],
     priority?: number,

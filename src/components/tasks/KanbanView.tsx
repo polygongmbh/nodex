@@ -8,7 +8,7 @@ import {
   type TaskStateDefinition,
 } from "@/domain/task-states/task-state-config";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { getTaskStatusType, normalizeTaskStatus, type Task, type TaskInitialStatus, type TaskStatus, type ComposeRestoreRequest } from "@/types";
+import { getTaskStatusType, normalizeTaskStatus, type Task, type TaskStatus, type ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
@@ -392,9 +392,11 @@ export function KanbanView({
                         onCancel={() => setComposingColumnId(null)}
                         compact
                         focusedTaskId={focusedTaskId}
-                        initialStatus={
-                          (column.state.type === "closed" ? "open" : column.state.type) as TaskInitialStatus
-                        }
+                        initialStatus={toTaskStatusFromStateDefinition(
+                          column.state.type === "closed"
+                            ? { ...column.state, id: "open", type: "open", label: "Open" }
+                            : column.state
+                        )}
                         closeOnSuccess
                         allowComment={false}
                         composeRestoreRequest={composeRestoreRequest}

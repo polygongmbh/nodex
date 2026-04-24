@@ -6,7 +6,7 @@ import { useComposerFilterSync } from "./use-composer-filter-sync";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
-import type { ComposeRestoreRequest, TaskInitialStatus } from "@/types";
+import type { ComposeRestoreRequest, TaskStatus } from "@/types";
 
 interface TaskCreateComposerProps {
   onCancel: () => void;
@@ -14,7 +14,7 @@ interface TaskCreateComposerProps {
   defaultDueDate?: Date;
   defaultContent?: string;
   focusedTaskId: string | null;
-  initialStatus?: TaskInitialStatus;
+  initialStatus?: TaskStatus;
   adaptiveSize?: boolean;
   focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
