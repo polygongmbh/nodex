@@ -51,7 +51,6 @@ export function TaskAssigneeAvatars({
 
   const { getProfile } = useNostrProfiles(pubkeys);
   const { getPersonById } = useFeedPersonLookup();
-  const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   if (pubkeys.length === 0) return null;
 
