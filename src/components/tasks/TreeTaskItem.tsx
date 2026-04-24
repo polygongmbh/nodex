@@ -576,6 +576,7 @@ export function TreeTaskItem({
                   type="button"
                   disabled={!editableMetadata}
                   onClick={(event) => event.stopPropagation()}
+                  title={`${getTaskDateTypeLabel(task.dateType)}: ${format(task.dueDate, "MMM d, yyyy")}${task.dueTime ? ` ${task.dueTime}` : ""}`}
                   className={cn(
                     "mt-1 flex items-center gap-2 rounded px-1 py-0.5 text-xs transition-colors",
                     dueDateColor,
@@ -618,6 +619,7 @@ export function TreeTaskItem({
                 taskId={editableMetadata ? task.id : undefined}
                 priority={task.priority}
                 stopPropagation
+                title={`Priority ${task.priority}`}
                 className={cn(
                   TASK_CHIP_STYLES.priority,
                   "focus:outline-none",
@@ -636,6 +638,7 @@ export function TreeTaskItem({
                   taskId={editableMetadata ? task.id : undefined}
                   priority={task.priority}
                   stopPropagation
+                  title={`Priority ${task.priority}`}
                   className={cn(
                     TASK_CHIP_STYLES.priority,
                     "focus:outline-none",
