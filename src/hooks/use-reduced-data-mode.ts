@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type ReducedDataMode, loadReducedDataMode } from "@/infrastructure/preferences/user-preferences-storage";
+import { type ReducedDataMode, useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
 import { featureDebugLog } from "@/lib/feature-debug";
 
 interface NetworkInformationLike extends EventTarget {
@@ -35,12 +35,8 @@ export function resolveReducedDataEnabled(mode: ReducedDataMode, browserSignal =
 }
 
 export function useReducedDataMode(): boolean {
-  const [mode, setMode] = useState<ReducedDataMode>(() => loadReducedDataMode());
+  const mode = useFeedPreferencesStore(s => s.reducedDataMode);
   const [browserSignal, setBrowserSignal] = useState(() => getBrowserReducedDataSignal());
-
-  useEffect(() => {
-    setMode(loadReducedDataMode());
-  }, []);
 
   useEffect(() => {
     const networkInformation = getNetworkInformation();

@@ -23,7 +23,7 @@ import {   buildImetaTag, extractEmbeddableAttachmentsFromContent, normalizePubl
 import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { loadPublishDelayEnabled } from "@/infrastructure/preferences/user-preferences-storage";
+import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
 import { canUserUpdateTask } from "@/domain/content/task-permissions";
 import {
   notifyLocalSaved,
@@ -575,7 +575,7 @@ export function useTaskPublishFlow({
       }
     };
 
-    if (loadPublishDelayEnabled()) {
+    if (useFeedPreferencesStore.getState().publishDelayEnabled) {
       const pendingTaskId = `pending-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
       setLocalTasks((prev) => [
         {

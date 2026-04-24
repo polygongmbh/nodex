@@ -7,18 +7,7 @@ import {
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
-import {
-  loadPresencePublishingEnabled,
-  savePresencePublishingEnabled,
-} from "@/infrastructure/preferences/user-preferences-storage";
-import {
-  loadPublishDelayEnabled,
-  savePublishDelayEnabled,
-} from "@/infrastructure/preferences/user-preferences-storage";
-import {
-  loadAutoCaptionEnabled,
-  saveAutoCaptionEnabled,
-} from "@/infrastructure/preferences/user-preferences-storage";
+import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
 import { preloadLocalImageCaptionModel } from "@/lib/local-image-caption";
 import { EditableNostrProfile, isNip05CompatibleName } from "@/infrastructure/nostr/profile-metadata";
 import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
@@ -82,15 +71,12 @@ export function useProfileEditor({
     nip05: "",
     about: "",
   });
-  const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
-    loadPresencePublishingEnabled()
-  );
-  const [publishDelayEnabled, setPublishDelayEnabled] = useState(() =>
-    loadPublishDelayEnabled()
-  );
-  const [autoCaptionEnabled, setAutoCaptionEnabled] = useState(() =>
-    loadAutoCaptionEnabled()
-  );
+  const presencePublishingEnabled = useFeedPreferencesStore(s => s.presencePublishingEnabled);
+  const publishDelayEnabled = useFeedPreferencesStore(s => s.publishDelayEnabled);
+  const autoCaptionEnabled = useFeedPreferencesStore(s => s.autoCaptionEnabled);
+  const setPresencePublishingEnabled = useFeedPreferencesStore(s => s.setPresencePublishingEnabled);
+  const setPublishDelayEnabled = useFeedPreferencesStore(s => s.setPublishDelayEnabled);
+  const setAutoCaptionEnabled = useFeedPreferencesStore(s => s.setAutoCaptionEnabled);
 
   const trimmedUsername = username.trim();
   const hasTypedUsername = username.length > 0;
@@ -129,9 +115,6 @@ export function useProfileEditor({
     setNip05(nextSnapshot.nip05);
     setAbout(nextSnapshot.about);
     setIsUsernameAutoFilled(false);
-    setPresencePublishingEnabled(loadPresencePublishingEnabled());
-    setPublishDelayEnabled(loadPublishDelayEnabled());
-    setAutoCaptionEnabled(loadAutoCaptionEnabled());
   }, []);
 
   const handleUsernameChange = useCallback((value: string) => {
@@ -161,7 +144,6 @@ export function useProfileEditor({
 
   const handlePresencePublishingChange = (enabled: boolean) => {
     setPresencePublishingEnabled(enabled);
-    savePresencePublishingEnabled(enabled);
     if (!enabled && userPubkey) {
       const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS;
       void publishEvent(
@@ -174,12 +156,10 @@ export function useProfileEditor({
 
   const handlePublishDelayChange = (enabled: boolean) => {
     setPublishDelayEnabled(enabled);
-    savePublishDelayEnabled(enabled);
   };
 
   const handleAutoCaptionChange = (enabled: boolean) => {
     setAutoCaptionEnabled(enabled);
-    saveAutoCaptionEnabled(enabled);
     featureDebugLog("auto-caption", "Profile auto-caption preference changed", {
       enabled,
       userPubkey: userPubkey || null,

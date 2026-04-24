@@ -13,7 +13,7 @@ import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroP
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
-import { loadPresencePublishingEnabled } from "@/infrastructure/preferences/user-preferences-storage";
+import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
@@ -557,9 +557,10 @@ function FeedIndexContent() {
     publishTaskCreateFollowUps,
   });
 
+  const presencePublishingEnabled = useFeedPreferencesStore(s => s.presencePublishingEnabled);
   const { publishOfflinePresenceNow } = useRelayScopedPresence({
     userPubkey: user?.pubkey,
-    presenceEnabled: loadPresencePublishingEnabled(),
+    presenceEnabled: presencePublishingEnabled,
     currentView,
     focusedTask,
     relayScopeIds: resolveChannelRelayScopeIds(
