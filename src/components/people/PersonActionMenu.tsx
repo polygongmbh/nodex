@@ -199,6 +199,7 @@ export function PersonActionMenuContent({
             onActionSelect?.("copy");
             if (!npubValue) return;
             void copyToClipboard(npubValue, "people.toasts.npubCopied");
+            closeMenuFromElement(event.currentTarget);
           }}
           className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -213,6 +214,7 @@ export function PersonActionMenuContent({
             onActionSelect?.("copy");
             if (!hexValue) return;
             void copyToClipboard(hexValue, "people.toasts.hexPubkeyCopied");
+            closeMenuFromElement(event.currentTarget);
           }}
           className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
         >
