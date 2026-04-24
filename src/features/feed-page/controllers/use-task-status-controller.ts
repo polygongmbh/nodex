@@ -11,11 +11,8 @@ import {
 import { notifyStatusRestricted } from "@/lib/notifications";
 import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";
 import { playCompletionPopSound } from "@/lib/completion-feedback";
-import {
-  loadCompletionSoundEnabled,
-  saveCompletionSoundEnabled,
-} from "@/infrastructure/preferences/user-preferences-storage";
 import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const TASK_STATUS_REORDER_DELAY_MS = 260;
@@ -28,8 +25,6 @@ export interface UseTaskStatusControllerOptions {
 }
 
 export interface UseTaskStatusControllerResult {
-  completionSoundEnabled: boolean;
-  handleToggleCompletionSound: () => void;
   handleToggleComplete: (taskId: string) => void;
   handleStatusChange: (taskId: string, status: TaskStatus) => void;
   sortStatusHoldByTaskId: Record<string, TaskStatusType>;
@@ -43,10 +38,8 @@ export function useTaskStatusController({
   publishTaskStateUpdate,
 }: UseTaskStatusControllerOptions): UseTaskStatusControllerResult {
   const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
+  const completionSoundEnabled = useFeedPreferencesStore((s) => s.completionSoundEnabled);
   const isMobile = useIsMobile();
-  const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() =>
-    loadCompletionSoundEnabled()
-  );
   const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<
     Record<string, TaskStatusType>
   >({});
@@ -70,14 +63,6 @@ export function useTaskStatusController({
       setSortStatusHoldByTaskId({});
       setSortModifiedAtHoldByTaskId({});
     };
-  }, []);
-
-  const handleToggleCompletionSound = useCallback(() => {
-    setCompletionSoundEnabled((previous) => {
-      const next = !previous;
-      saveCompletionSoundEnabled(next);
-      return next;
-    });
   }, []);
 
   const clearPendingStatusUpdate = useCallback((taskId: string) => {
@@ -203,8 +188,6 @@ export function useTaskStatusController({
   );
 
   return {
-    completionSoundEnabled,
-    handleToggleCompletionSound,
     handleToggleComplete,
     handleStatusChange,
     sortStatusHoldByTaskId,

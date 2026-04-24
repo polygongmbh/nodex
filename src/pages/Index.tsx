@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
 import { useFocusedTaskCollapsedSidebarPreview } from "@/features/feed-page/controllers/use-focused-task-collapsed-sidebar-preview";
@@ -15,10 +14,6 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { loadPresencePublishingEnabled } from "@/infrastructure/preferences/user-preferences-storage";
-import {
-  loadCompactTaskCardsEnabled,
-  saveCompactTaskCardsEnabled,
-} from "@/infrastructure/preferences/user-preferences-storage";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
@@ -44,6 +39,7 @@ import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { DEMO_RELAY_ID } from "@/lib/demo-feed-config";
 import { initializeDemoFeedData } from "@/data/demo-feed";
 import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
 import {
   DesktopAppShell,
 } from "@/features/feed-page/views/DesktopAppShell";
@@ -157,8 +153,10 @@ function FeedIndexContent() {
     removeCachedRelayProfile,
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+  const searchQuery = useFeedPreferencesStore((s) => s.searchQuery);
+  const setSearchQuery = useFeedPreferencesStore((s) => s.setSearchQuery);
+  const isSidebarFocused = useFeedPreferencesStore((s) => s.isSidebarFocused);
+  const setIsSidebarFocused = useFeedPreferencesStore((s) => s.setIsSidebarFocused);
   const {
     channelFrecencyState,
     personFrecencyState,
@@ -233,14 +231,10 @@ function FeedIndexContent() {
   });
 
   const shortcutsHelp = useKeyboardShortcutsHelp();
-  const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
-  const [compactTaskCardsEnabled, setCompactTaskCardsEnabled] = useState<boolean>(() =>
-    loadCompactTaskCardsEnabled()
-  );
-
-  useEffect(() => {
-    saveCompactTaskCardsEnabled(compactTaskCardsEnabled);
-  }, [compactTaskCardsEnabled]);
+  const kanbanDepthMode = useFeedPreferencesStore((s) => s.kanbanDepthMode);
+  const setKanbanDepthMode = useFeedPreferencesStore((s) => s.setKanbanDepthMode);
+  const compactTaskCardsEnabled = useFeedPreferencesStore((s) => s.compactTaskCardsEnabled);
+  const setCompactTaskCardsEnabled = useFeedPreferencesStore((s) => s.setCompactTaskCardsEnabled);
 
   const handleToggleChannelMatchModeShortcut = useCallback(() => {
     setChannelMatchMode((previous) => {
@@ -276,12 +270,10 @@ function FeedIndexContent() {
   }, [setQuickFilters]);
 
   const handleToggleCompactTaskCards = useCallback(() => {
-    setCompactTaskCardsEnabled((previous) => {
-      const next = !previous;
-      featureDebugLog("compact-cards", "Toggled compact task cards", { enabled: next });
-      return next;
-    });
-  }, []);
+    const next = !compactTaskCardsEnabled;
+    featureDebugLog("compact-cards", "Toggled compact task cards", { enabled: next });
+    setCompactTaskCardsEnabled(next);
+  }, [compactTaskCardsEnabled, setCompactTaskCardsEnabled]);
 
   const {
     hasDisconnectedSelectedRelays,
@@ -303,9 +295,9 @@ function FeedIndexContent() {
     publishEvent,
   });
 
+  const completionSoundEnabled = useFeedPreferencesStore((s) => s.completionSoundEnabled);
+  const handleToggleCompletionSound = useFeedPreferencesStore((s) => s.toggleCompletionSound);
   const {
-    completionSoundEnabled,
-    handleToggleCompletionSound,
     handleToggleComplete,
     handleStatusChange,
     sortStatusHoldByTaskId,
@@ -647,7 +639,7 @@ function FeedIndexContent() {
       setKanbanDepthMode,
       setManageRouteActive,
     }),
-    [setCurrentView, setSearchQuery, setKanbanDepthMode, setManageRouteActive]
+    [setCurrentView, setSearchQuery, setKanbanDepthMode, setManageRouteActive, setIsSidebarFocused]
   );
 
   const taskCommands = useMemo<FeedTaskCommands>(
