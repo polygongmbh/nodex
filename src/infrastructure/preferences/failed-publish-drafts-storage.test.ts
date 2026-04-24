@@ -25,7 +25,7 @@ const sampleDraft: FailedPublishDraft = {
   dateType: "due",
   dueDate: "2026-02-20T00:00:00.000Z",
   dueTime: "10:30",
-  initialStatus: "open",
+  initialStatus: { type: "open" },
   mentionPubkeys: ["f".repeat(64)],
   assigneePubkeys: ["f".repeat(64)],
   priority: 2,

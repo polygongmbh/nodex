@@ -9,6 +9,9 @@ const dispatchFeedInteraction = vi.fn();
 
 vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
   useNostrProfile: (): { profile: null } => ({ profile: null }),
+  useNostrProfiles: (): { getProfile: () => null } => ({
+    getProfile: () => null,
+  }),
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({

@@ -344,6 +344,14 @@ function preprocessMarkdownTokens(value: string): string {
         nodes.push(`[@${decoded.label}](${MENTION_LINK_PREFIX}${encodeURIComponent(hexPubkey)})`);
       } else if (decoded?.kind === "event") {
         nodes.push(`[${decoded.label}](${NOSTR_EVENT_LINK_PREFIX}${encodeURIComponent(decoded.value)})`);
+      } else if (/^(npub|nprofile)1/i.test(nostrNpub)) {
+        const mentionIdentifier = normalizeMentionIdentifier(nostrNpub);
+        nodes.push(`[@${formatUserFacingPubkey(mentionIdentifier)}](${MENTION_LINK_PREFIX}${encodeURIComponent(mentionIdentifier)})`);
+      } else if (/^(note|nevent|naddr)1/i.test(nostrNpub)) {
+        const shortened = nostrNpub.length > 16
+          ? `${nostrNpub.slice(0, 12)}…${nostrNpub.slice(-4)}`
+          : nostrNpub;
+        nodes.push(`[${shortened}](${NOSTR_EVENT_LINK_PREFIX}${encodeURIComponent(nostrNpub)})`);
       } else {
         // Unknown / undecodable — preserve original text.
         nodes.push(value.slice(tokenStart, tokenStart + token.length));
