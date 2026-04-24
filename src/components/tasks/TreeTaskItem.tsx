@@ -43,6 +43,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 import {
   deriveTreeTaskItemChildren,
@@ -463,20 +464,22 @@ export function TreeTaskItem({
         {/* Avatar - only show for comments */}
         {isComment && !compactView && (
           <PersonHoverCard person={authorPerson}>
-            <button
-              type="button"
-              className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              aria-label={t("people.actions.openMenu", { name: authorName })}
-              onClick={(event) => handleAuthorShortcut(event, authorPerson)}
-            >
-              <UserAvatar
-                id={task.author.id}
-                displayName={authorName}
-                avatarUrl={authorAvatar}
-                className="w-6 h-6 flex-shrink-0"
-                beamTestId={`task-item-beam-${task.id}`}
-              />
-            </button>
+            <PersonActionMenu person={authorPerson} enableModifierShortcuts>
+              <button
+                type="button"
+                className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                aria-label={t("people.actions.openMenu", { name: authorName })}
+                onClick={(event) => handleAuthorShortcut(event, authorPerson)}
+              >
+                <UserAvatar
+                  id={task.author.id}
+                  displayName={authorName}
+                  avatarUrl={authorAvatar}
+                  className="w-6 h-6 flex-shrink-0"
+                  beamTestId={`task-item-beam-${task.id}`}
+                />
+              </button>
+            </PersonActionMenu>
           </PersonHoverCard>
         )}
 

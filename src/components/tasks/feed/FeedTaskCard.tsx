@@ -33,6 +33,7 @@ import { useTranslation } from "react-i18next";
 import { getTaskStatus, type Nip99ListingStatus, type RawNostrEvent, type Task } from "@/types";
 import type { Person } from "@/types/person";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 
 interface FeedTaskCardProps {
@@ -294,20 +295,22 @@ export function FeedTaskCard({
             </span>
           )}
           <PersonHoverCard person={resolvedAuthor}>
-            <button
-              type="button"
-              className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
-              onClick={(event) => handleAuthorShortcut(event, resolvedAuthor)}
-            >
-              <UserAvatar
-                id={resolvedAuthor.id}
-                displayName={resolvedAuthor.displayName}
-                avatarUrl={resolvedAuthor.avatar}
-                className={cn("flex-shrink-0", isMobile ? "w-7 h-7" : "w-8 h-8")}
-                beamTestId={`feed-beam-${task.id}`}
-              />
-            </button>
+            <PersonActionMenu person={resolvedAuthor} enableModifierShortcuts>
+              <button
+                type="button"
+                className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
+                onClick={(event) => handleAuthorShortcut(event, resolvedAuthor)}
+              >
+                <UserAvatar
+                  id={resolvedAuthor.id}
+                  displayName={resolvedAuthor.displayName}
+                  avatarUrl={resolvedAuthor.avatar}
+                  className={cn("flex-shrink-0", isMobile ? "w-7 h-7" : "w-8 h-8")}
+                  beamTestId={`feed-beam-${task.id}`}
+                />
+              </button>
+            </PersonActionMenu>
           </PersonHoverCard>
           <div className="flex-1 min-w-0">
             <div className={cn("mb-1 flex min-w-0 items-start text-muted-foreground", isMobile ? "gap-1 text-xs" : "gap-2 text-sm")}>
