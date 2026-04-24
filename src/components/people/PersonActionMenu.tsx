@@ -12,7 +12,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { hexPubkeyToNpub, isHexPubkey, isNpub, npubToHexPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import {
   getPersonShortcutIntent,
   getPlatformAlternateShortcutLabel,
@@ -130,14 +130,17 @@ export function PersonActionMenuContent({
   const primaryShortcutLabel = getPlatformPrimaryShortcutLabel();
   const alternateShortcutLabel = getPlatformAlternateShortcutLabel();
 
-  const copyPublicKey = async () => {
+  const copyToClipboard = async (value: string, successMessageKey: string) => {
     try {
-      await navigator.clipboard.writeText(person.id);
-      toast.success(t("people.toasts.pubkeyCopied"));
+      await navigator.clipboard.writeText(value);
+      toast.success(t(successMessageKey));
     } catch {
       toast.error(t("people.toasts.pubkeyCopyFailed"));
     }
   };
+
+  const npubValue = isNpub(person.id) ? person.id.toLowerCase() : hexPubkeyToNpub(person.id);
+  const hexValue = isHexPubkey(person.id) ? person.id.toLowerCase() : npubToHexPubkey(person.id);
 
   return (
     <DropdownMenuContent
@@ -181,13 +184,41 @@ export function PersonActionMenuContent({
         <DropdownMenuShortcut>{`${primaryShortcutLabel}+${alternateShortcutLabel}`}</DropdownMenuShortcut>
       </DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={() => {
-        onActionSelect?.("copy");
-        void copyPublicKey();
-      }}>
-        <Copy className="mr-2 h-4 w-4" />
-        {t("people.actions.copyPubkey")}
-      </DropdownMenuItem>
+      <div
+        className="flex items-center gap-2 px-2 py-1.5 text-sm"
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        <Copy className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="flex-1 truncate text-foreground">{t("people.actions.copyPubkey")}</span>
+        <button
+          type="button"
+          aria-label={t("people.actions.copyPubkeyNpubAria")}
+          disabled={!npubValue}
+          onClick={(event) => {
+            event.stopPropagation();
+            onActionSelect?.("copy");
+            if (!npubValue) return;
+            void copyToClipboard(npubValue, "people.toasts.npubCopied");
+          }}
+          className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {t("people.actions.copyPubkeyNpub")}
+        </button>
+        <button
+          type="button"
+          aria-label={t("people.actions.copyPubkeyHexAria")}
+          disabled={!hexValue}
+          onClick={(event) => {
+            event.stopPropagation();
+            onActionSelect?.("copy");
+            if (!hexValue) return;
+            void copyToClipboard(hexValue, "people.toasts.hexPubkeyCopied");
+          }}
+          className="rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {t("people.actions.copyPubkeyHex")}
+        </button>
+      </div>
       <DropdownMenuItem disabled>
         <MessageSquareMore className="mr-2 h-4 w-4" />
         {t("people.actions.privateChat")}
