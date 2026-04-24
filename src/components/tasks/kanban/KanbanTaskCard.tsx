@@ -2,6 +2,7 @@ import { Calendar, Clock, Layers, Lock } from "lucide-react";
 import { ScrollableTaskTagChipRow, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskPrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
+import { TaskAssigneeAvatars } from "@/components/tasks/TaskAssigneeAvatars";
 import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
@@ -173,6 +174,9 @@ export function KanbanTaskCard({
           <span>{t("kanban.hasSubtasks")}</span>
         </div>
       ) : null}
+      <div className="mt-2 flex justify-end">
+        <TaskAssigneeAvatars task={task} />
+      </div>
     </TaskSurface>
   );
 }
