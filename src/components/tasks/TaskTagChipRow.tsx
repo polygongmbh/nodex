@@ -170,7 +170,7 @@ function TaskChipRow({
   return (
     <div className={cn("flex flex-wrap gap-1", className)} data-testid={testId}>
       {hasPriority ? (
-        <span className={TASK_CHIP_STYLES.priority}>
+        <span className={TASK_CHIP_STYLES.priority} title={`Priority ${formatPriorityLabel(priority)}`}>
           {formatPriorityLabel(priority)}
         </span>
       ) : null}
@@ -211,7 +211,7 @@ export function ScrollableTaskTagChipRow({
       data-testid={testId}
     >
       {hasPriority ? (
-        <span className={TASK_CHIP_STYLES.priority}>
+        <span className={TASK_CHIP_STYLES.priority} title={`Priority ${formatPriorityLabel(priority)}`}>
           {formatPriorityLabel(priority)}
         </span>
       ) : null}

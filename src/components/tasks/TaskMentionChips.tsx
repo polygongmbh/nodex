@@ -79,6 +79,7 @@ export function TaskMentionChips({
             type="button"
             className={cn(TASK_CHIP_STYLES.mention, "transition-colors hover:bg-primary/15", className)}
             aria-label={`Person actions for ${label}`}
+            title=""
             onClick={(event) => {
               event.stopPropagation();
               const shortcutIntent = getPersonShortcutIntent(event);
