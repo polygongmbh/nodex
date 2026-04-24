@@ -92,8 +92,9 @@ export function KanbanTaskCard({
             priority={task.priority}
             stopPropagation
             className={cn(
-              "focus:outline-none",
+              "px-1.5 py-0.5 text-sm focus:outline-none",
               TASK_CHIP_STYLES.priority,
+              "text-sm",
               canChangeStatus && "cursor-pointer hover:bg-warning/20",
               !canChangeStatus && "cursor-not-allowed opacity-60"
             )}
@@ -101,6 +102,23 @@ export function KanbanTaskCard({
         </div>
       ) : null}
       <div className="min-w-0">
+        {/*
+         * Bottom-right cluster (lock + assignee avatars) is floated so it tucks
+         * into the trailing flow of the card instead of forcing a dedicated row.
+         * Keeping it as the first child lets following blocks wrap around it.
+         */}
+        <div className="float-right ml-2 mt-1 flex items-center gap-1.5">
+          {!canChangeStatus ? (
+            <div
+              className="rounded-full bg-muted/80 p-1 text-muted-foreground"
+              title={t("tasks.readOnly")}
+              aria-label={t("tasks.readOnly")}
+            >
+              <Lock className="h-3 w-3" />
+            </div>
+          ) : null}
+          <TaskAssigneeAvatars task={task} />
+        </div>
         {!compactTaskCardsEnabled && showContext ? (
           <TaskBreadcrumbRow
             breadcrumbs={ancestorChain}
@@ -112,7 +130,7 @@ export function KanbanTaskCard({
           className={cn(
             `min-w-0 text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
             // Reserve space for the absolutely-positioned priority chip on the first line(s).
-            typeof task.priority === "number" && "pr-12",
+            typeof task.priority === "number" && "pr-14",
             isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
           )}
         >
@@ -170,19 +188,8 @@ export function KanbanTaskCard({
             <span>{t("kanban.hasSubtasks")}</span>
           </div>
         ) : null}
-      </div>
-      {/* Bottom-right cluster: lock indicator + assignee avatars sit on the same row without growing the card. */}
-      <div className="mt-2 flex items-center justify-end gap-1.5">
-        {!canChangeStatus ? (
-          <div
-            className="rounded-full bg-muted/80 p-1 text-muted-foreground"
-            title={t("tasks.readOnly")}
-            aria-label={t("tasks.readOnly")}
-          >
-            <Lock className="h-3 w-3" />
-          </div>
-        ) : null}
-        <TaskAssigneeAvatars task={task} />
+        {/* Clear the float so the card height tracks the taller of content/cluster. */}
+        <div className="clear-both" />
       </div>
     </TaskSurface>
   );
