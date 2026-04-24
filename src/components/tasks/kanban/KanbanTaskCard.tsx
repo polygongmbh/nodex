@@ -176,7 +176,8 @@ export function KanbanTaskCard({
           <span>{t("kanban.hasSubtasks")}</span>
         </div>
       ) : null}
-      <div className="mt-2 flex justify-end">
+      {/* Assignee avatars - absolutely positioned bottom-right so they don't grow the card */}
+      <div className="absolute bottom-2 right-2 pointer-events-auto">
         <TaskAssigneeAvatars task={task} />
       </div>
     </TaskSurface>
