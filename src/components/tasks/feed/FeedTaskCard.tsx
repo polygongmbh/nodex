@@ -337,21 +337,11 @@ export function FeedTaskCard({
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}
-                {isComment && !isMobile ? (
+                {isComment && isListing && listingStatus === "sold" && !isMobile ? (
                   <>
-                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{feedMessageLabel}</span>
-                    {isListing ? (
-                      <span
-                        className={cn(
-                          "text-xs px-1.5 py-0.5 rounded",
-                          listingStatus === "sold"
-                            ? "bg-muted text-muted-foreground line-through"
-                            : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {listingStatus}
-                      </span>
-                    ) : null}
+                    <span className="text-xs bg-muted text-muted-foreground line-through px-1.5 py-0.5 rounded">
+                      {listingStatus}
+                    </span>
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}
