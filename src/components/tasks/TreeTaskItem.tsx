@@ -465,7 +465,7 @@ export function TreeTaskItem({
           <PersonHoverCard person={authorPerson}>
             <button
               type="button"
-              className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
               aria-label={t("people.actions.openMenu", { name: authorName })}
               onClick={(event) => handleAuthorShortcut(event, authorPerson)}
             >
