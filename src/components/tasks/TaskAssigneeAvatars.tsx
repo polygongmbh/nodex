@@ -5,12 +5,8 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { cn } from "@/lib/utils";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
-import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
-import {
-  getPersonShortcutIntent,
-  toPersonShortcutInteraction,
-} from "@/components/people/person-shortcuts";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 interface TaskAssigneeAvatarsProps {
