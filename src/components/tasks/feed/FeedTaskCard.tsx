@@ -262,11 +262,9 @@ export function FeedTaskCard({
               title={
                 canUpdateListingStatus
                   ? listingStatus === "sold"
-                    ? "Mark listing active"
-                    : "Mark listing sold"
-                  : listingStatus === "sold"
-                    ? "Listing sold"
-                    : "Listing active"
+                    ? `${feedMessageLabel} · Mark active`
+                    : `${feedMessageLabel} · Mark sold`
+                  : `${feedMessageLabel}${listingStatus === "sold" ? " · Sold" : ""}`
               }
               aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
               className={cn(
@@ -282,7 +280,12 @@ export function FeedTaskCard({
               )}
             </button>
           ) : (
-            <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-5 h-5 mx-1" : "w-5 h-5")} />
+            <span
+              title={feedMessageLabel}
+              className={cn("flex-shrink-0 mt-0.5 inline-flex items-center justify-center", isMobile ? "p-1" : "p-0.5")}
+            >
+              <MessageSquare className={cn("text-muted-foreground", "w-5 h-5")} />
+            </span>
           )}
           <PersonHoverCard person={resolvedAuthor}>
             <button
@@ -334,21 +337,11 @@ export function FeedTaskCard({
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}
-                {isComment && !isMobile ? (
+                {isComment && isListing && listingStatus === "sold" && !isMobile ? (
                   <>
-                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{feedMessageLabel}</span>
-                    {isListing ? (
-                      <span
-                        className={cn(
-                          "text-xs px-1.5 py-0.5 rounded",
-                          listingStatus === "sold"
-                            ? "bg-muted text-muted-foreground line-through"
-                            : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {listingStatus}
-                      </span>
-                    ) : null}
+                    <span className="text-xs bg-muted text-muted-foreground line-through px-1.5 py-0.5 rounded">
+                      {listingStatus}
+                    </span>
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}
