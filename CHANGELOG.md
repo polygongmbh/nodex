@@ -6,6 +6,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.14.1] - 2026-04-24
+
+- Feed and Kanban task cards now use richer task affordances, including assignee avatar stacks, improved priority/status chip handling, and clearer localized listing/comment labels across English, German, and Spanish.
+- Person menus and rendered content now handle NIP-19 identifiers more cleanly: profile menus can copy either `npub` or hex keys, and `nostr:` mentions and event references link correctly in task content.
+- Custom task-state events now preserve configured open/active semantics more reliably when parsing and publishing status updates, fixing mismatches between Kanban columns, quick status controls, and Nostr-backed state descriptions.
+
 ## [2.14.0] - 2026-04-24
 Introducing Configurable Task States with custom Kanban columns!
 
