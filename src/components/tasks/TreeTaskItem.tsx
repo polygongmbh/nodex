@@ -423,12 +423,13 @@ export function TreeTaskItem({
                 aria-label={t("tasks.actions.setStatus")}
                 title={canCompleteTask() ? getStatusToggleHint(task.status) : (statusBlockedReason || getStatusToggleHint(task.status))}
                 className={cn(
-                  "flex-shrink-0 mt-0 p-2 -m-1 rounded transition-colors touch-manipulation",
+                  "flex-shrink-0 p-1.5 md:p-0.5 rounded transition-colors touch-manipulation",
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                 )}
               >
                 <TaskStateIcon
                   status={getTaskStatus(task)}
+                  size="w-5 h-5"
                 />
               </button>
             </DropdownMenuTrigger>
