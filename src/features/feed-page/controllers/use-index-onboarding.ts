@@ -30,7 +30,7 @@ interface UseIndexOnboardingOptions {
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
-  setSearchQuery: Dispatch<SetStateAction<string>>;
+  setSearchQuery: (query: string) => void;
   setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setPeople: Dispatch<SetStateAction<Person[]>>;
