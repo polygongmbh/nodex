@@ -745,7 +745,8 @@ export function CalendarView({
                         );
                       })}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             ))}
