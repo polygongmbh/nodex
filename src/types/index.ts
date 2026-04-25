@@ -161,7 +161,7 @@ export interface Task {
   locationGeohash?: string;
   timestamp: Date;
   lastEditedAt?: Date;
-  status: TaskStatusValue;
+  status?: TaskStatusValue;
   stateUpdates?: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;
