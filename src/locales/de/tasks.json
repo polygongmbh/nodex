@@ -198,6 +198,7 @@
       "showOnly": "Nur Inhalte mit Beteiligung von {{name}} anzeigen",
       "mention": "{{name}} erwähnen",
       "filterAndMention": "Nach {{name}} filtern und {{name}} erwähnen",
+      "highlight": "Hervorheben",
       "copyPubkey": "Öffentlichen Schlüssel kopieren",
       "copyPubkeyNpub": "npub",
       "copyPubkeyHex": "hex",
