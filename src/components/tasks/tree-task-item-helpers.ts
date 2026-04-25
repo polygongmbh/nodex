@@ -68,9 +68,9 @@ export function deriveTreeTaskItemChildren({
   // they only reveal under a done branch or via "show all". Mirror that filter here so
   // `allVisibleDiffersFromMatching` correctly enables the third fold state when hidden
   // done children exist.
-  const effectiveMatchingTaskChildren = rawEffectiveMatchingTaskChildren.filter(
-    (child) => !isTaskTerminalStatus(child.status)
-  );
+  const effectiveMatchingTaskChildren = parentIsTerminal
+    ? rawEffectiveMatchingTaskChildren
+    : rawEffectiveMatchingTaskChildren.filter((child) => !isTaskTerminalStatus(child.status));
 
   return {
     allChildren,
