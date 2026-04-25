@@ -145,8 +145,20 @@ export function MobileFilters({
     if (profileEditorOpenSignal <= 0 || !user) return;
     if (profileEditorOpenSignal === lastHandledProfileEditorOpenSignalRef.current) return;
     lastHandledProfileEditorOpenSignalRef.current = profileEditorOpenSignal;
+    if (!hasWritableRelayConnection) {
+      toast.error(t("auth:auth.profile.noRelayConnected"));
+      return;
+    }
     setIsProfileEditorOpen(true);
-  }, [profileEditorOpenSignal, user]);
+  }, [hasWritableRelayConnection, profileEditorOpenSignal, t, user]);
+
+  const handleOpenProfileEditor = () => {
+    if (!hasWritableRelayConnection) {
+      toast.error(t("auth:auth.profile.noRelayConnected"));
+      return;
+    }
+    setIsProfileEditorOpen(true);
+  };
 
   const handleCopyPrivateKey = () => {
     if (!guestPrivateKey) return;
