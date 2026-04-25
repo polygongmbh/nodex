@@ -58,6 +58,7 @@ export interface TaskStatus {
   type: TaskStatusType;
   description?: string;
 }
+export type TaskStatusValue = TaskStatus | TaskStatusType;
 export type TaskStatusLike = TaskStatus | TaskStatusType | undefined;
 export type TaskInitialStatus = Exclude<TaskStatusType, "closed">;
 export type OnNewTask = (
@@ -80,7 +81,7 @@ export type OnNewTask = (
 
 export interface TaskStateUpdate {
   id: string;
-  status: TaskStatus;
+  status: TaskStatusValue;
   timestamp: Date;
   authorPubkey: string;
 }
