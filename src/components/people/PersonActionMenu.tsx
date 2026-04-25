@@ -20,6 +20,9 @@ import {
   toPersonShortcutInteraction,
 } from "./person-shortcuts";
 import { resumePersonHoverCards, suspendPersonHoverCards } from "./PersonHoverCard";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { getCompactPersonLabel } from "@/types/person";
 
 interface PersonActionMenuProps {
   person: Person;
