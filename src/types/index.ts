@@ -58,6 +58,7 @@ export interface TaskStatus {
   type: TaskStatusType;
   description?: string;
 }
+export type TaskStatusValue = TaskStatus | TaskStatusType;
 export type TaskStatusLike = TaskStatus | TaskStatusType | undefined;
 export type TaskInitialStatus = Exclude<TaskStatusType, "closed">;
 export type OnNewTask = (
@@ -152,12 +153,15 @@ export interface Task {
   tags: string[];
   relays: string[];
   taskType: TaskEntryType;
+  likes?: number;
+  replies?: number;
+  reposts?: number;
   feedMessageType?: FeedMessageType;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   timestamp: Date;
   lastEditedAt?: Date;
-  status: TaskStatus;
+  status?: TaskStatusValue;
   stateUpdates?: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;

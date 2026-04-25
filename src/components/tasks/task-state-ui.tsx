@@ -2,7 +2,7 @@ import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { Circle, CircleDot, CircleCheckBig, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { TaskStatus, TaskStatusType } from "@/types";
+import type { TaskStatusLike, TaskStatusType } from "@/types";
 import {
   getTaskStateRegistry,
   resolveTaskStateFromStatus,
@@ -80,7 +80,7 @@ export function TaskStateIcon({
   className,
   size = "w-6 h-6 md:w-5 md:h-5",
 }: {
-  status?: TaskStatus;
+  status?: TaskStatusLike;
   className?: string;
   size?: string;
 }) {

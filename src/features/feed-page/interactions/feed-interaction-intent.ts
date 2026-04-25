@@ -5,6 +5,7 @@ import type {
   Nip99Metadata,
   PostType,
   TaskStatus,
+  TaskStatusLike,
   TaskDateType,
 } from "@/types";
 import type { Person } from "@/types/person";
@@ -70,7 +71,7 @@ export type FeedInteractionIntent =
       dueTime?: string;
       dateType?: TaskDateType;
       focusedTaskId: string | null;
-      initialStatus?: TaskStatus;
+      initialStatus?: TaskStatusLike;
       explicitMentionPubkeys?: string[];
       mentionIdentifiers?: string[];
       priority?: number;

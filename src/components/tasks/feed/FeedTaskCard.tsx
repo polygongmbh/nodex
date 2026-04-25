@@ -12,6 +12,7 @@ import {
 import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
 import { TaskTagChipInline, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
+import { getTaskStatusType } from "@/types";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
@@ -86,9 +87,10 @@ export function FeedTaskCard({
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    if (status === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (status === "done") return t("hints.statusToggle.done");
-    if (status === "closed") return t("hints.statusToggle.closed");
+    const statusType = getTaskStatusType(status);
+    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
+    if (statusType === "done") return t("hints.statusToggle.done");
+    if (statusType === "closed") return t("hints.statusToggle.closed");
     return t("hints.statusToggle.open", { alternateKey });
   };
   const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
