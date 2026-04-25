@@ -100,7 +100,7 @@ export function ListTaskRow({
                 canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
               )}
             >
-              <TaskStateIcon status={getTaskStatus(task)} size="w-6 h-6 md:w-5 md:h-5" />
+              <TaskStateIcon status={getTaskStatus(task)} />
             </button>
           </DropdownMenuTrigger>
           {canCompleteTask ? (
