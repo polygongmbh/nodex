@@ -323,20 +323,20 @@ export function TreeTaskItem({
             onClick={handleToggleExpand}
             data-testid={`tree-fold-toggle-${task.id}`}
             data-fold-state={foldState}
-            className="flex-shrink-0 p-1.5 md:p-0.5 rounded hover:bg-muted touch-manipulation"
+            className="flex-shrink-0 p-0.5 rounded hover:bg-muted touch-manipulation"
             title={foldToggleLabel}
             aria-label={foldToggleLabel}
           >
             {foldState === "matchingOnly" ? (
-              <ChevronDown className="w-5 h-5 md:w-4 md:h-4 text-muted-foreground" />
+              <ChevronDown className="w-6 h-6 md:w-4 md:h-4 text-muted-foreground" />
             ) : foldState === "collapsed" ? (
-              <ChevronRight className="w-5 h-5 md:w-4 md:h-4 text-muted-foreground" />
+              <ChevronRight className="w-6 h-6 md:w-4 md:h-4 text-muted-foreground" />
             ) : (
-              <ChevronsDown className="w-5 h-5 md:w-4 md:h-4 text-primary" />
+              <ChevronsDown className="w-6 h-6 md:w-4 md:h-4 text-primary" />
             )}
           </button>
         ) : (
-          <div className="w-5 flex-shrink-0" />
+          <div className="w-6 md:w-5 flex-shrink-0" />
         )}
 
         {/* Status toggle for tasks - quick cycle stays todo -> in-progress -> done */}
@@ -423,13 +423,13 @@ export function TreeTaskItem({
                 aria-label={t("tasks.actions.setStatus")}
                 title={canCompleteTask() ? getStatusToggleHint(task.status) : (statusBlockedReason || getStatusToggleHint(task.status))}
                 className={cn(
-                  "flex-shrink-0 p-1.5 md:p-0.5 rounded transition-colors touch-manipulation",
+                  "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                 )}
               >
                 <TaskStateIcon
                   status={getTaskStatus(task)}
-                  size="w-5 h-5"
+                  size="w-6 h-6 md:w-5 md:h-5"
                 />
               </button>
             </DropdownMenuTrigger>
