@@ -336,7 +336,7 @@ export function TreeTaskItem({
             )}
           </button>
         ) : (
-          <div className="w-5 flex-shrink-0" />
+          <div className="w-6 md:w-5 flex-shrink-0" />
         )}
 
         {/* Status toggle for tasks - quick cycle stays todo -> in-progress -> done */}
