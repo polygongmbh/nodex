@@ -82,6 +82,7 @@ export function PersonHoverCard({
 }: PersonHoverCardProps) {
   const { t, i18n } = useTranslation("tasks");
   const { allTasks } = useFeedTaskViewModel();
+  const isMobile = useIsMobile();
   const hoverCardId = useId();
   const openSourceRef = useRef<HoverCardOpenSource>("focus");
   const activeId = useSyncExternalStore(
