@@ -712,13 +712,13 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const { isUsernameValid } = validation;
 
   const openProfileEditor = useCallback(() => {
-    if (!isConnected) {
+    if (!hasWritableRelayConnection) {
       toast.error(t("auth.profile.noRelayConnected"));
       return;
     }
     resetFromProfile(effectiveProfile);
     setIsProfileEditorOpen(true);
-  }, [effectiveProfile, isConnected, resetFromProfile, t]);
+  }, [effectiveProfile, hasWritableRelayConnection, resetFromProfile, t]);
 
   const handleCopyKey = () => {
     const hexKey = getGuestPrivateKey();
@@ -873,9 +873,15 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   <TooltipTrigger asChild>
                     <DropdownMenuItem
                       aria-label={t("auth.menu.editProfile")}
-                      className="h-8 w-8 shrink-0 justify-center rounded-md border border-border/70 p-0 text-muted-foreground"
+                      aria-disabled={!hasWritableRelayConnection}
+                      data-disabled={!hasWritableRelayConnection ? "" : undefined}
+                      className={cn(
+                        "h-8 w-8 shrink-0 justify-center rounded-md border border-border/70 p-0 text-muted-foreground",
+                        !hasWritableRelayConnection && "pointer-events-none opacity-50"
+                      )}
                       onSelect={(event) => {
                         event.preventDefault();
+                        if (!hasWritableRelayConnection) return;
                         openProfileEditor();
                       }}
                     >
@@ -884,7 +890,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                     </DropdownMenuItem>
                   </TooltipTrigger>
                   <TooltipContent side="left" align="center" className="text-xs">
-                    {t("auth.menu.editProfile")}
+                    {hasWritableRelayConnection
+                      ? t("auth.menu.editProfile")
+                      : t("auth.profile.noRelayConnected")}
                   </TooltipContent>
                 </Tooltip>
               </div>

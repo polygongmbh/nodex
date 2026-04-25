@@ -62,7 +62,7 @@ export function MobileFilters({
   const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
 
-  const { user, authMethod, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
+  const { user, authMethod, hasWritableRelayConnection, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
@@ -145,8 +145,20 @@ export function MobileFilters({
     if (profileEditorOpenSignal <= 0 || !user) return;
     if (profileEditorOpenSignal === lastHandledProfileEditorOpenSignalRef.current) return;
     lastHandledProfileEditorOpenSignalRef.current = profileEditorOpenSignal;
+    if (!hasWritableRelayConnection) {
+      toast.error(t("auth:auth.profile.noRelayConnected"));
+      return;
+    }
     setIsProfileEditorOpen(true);
-  }, [profileEditorOpenSignal, user]);
+  }, [hasWritableRelayConnection, profileEditorOpenSignal, t, user]);
+
+  const handleOpenProfileEditor = () => {
+    if (!hasWritableRelayConnection) {
+      toast.error(t("auth:auth.profile.noRelayConnected"));
+      return;
+    }
+    setIsProfileEditorOpen(true);
+  };
 
   const handleCopyPrivateKey = () => {
     if (!guestPrivateKey) return;
@@ -236,8 +248,11 @@ export function MobileFilters({
               ) : (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsProfileEditorOpen(true)}
-                    className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
+                    onClick={handleOpenProfileEditor}
+                    disabled={!hasWritableRelayConnection}
+                    title={!hasWritableRelayConnection ? t("auth:auth.profile.noRelayConnected") : undefined}
+                    aria-label={!hasWritableRelayConnection ? t("auth:auth.profile.noRelayConnected") : t("auth:auth.profile.edit")}
+                    className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors disabled:opacity-50 disabled:active:bg-transparent disabled:cursor-not-allowed"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     {t("auth:auth.profile.edit")}
