@@ -60,7 +60,7 @@ let cachedRegistry: TaskStateDefinition[] | undefined;
 export function getTaskStateRegistry(): TaskStateDefinition[] {
   if (cachedRegistry) return cachedRegistry;
   const envValue = typeof import.meta !== "undefined"
-    ? (import.meta as Record<string, Record<string, string>>).env?.VITE_TASK_STATE_CONFIG
+    ? (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_TASK_STATE_CONFIG
     : undefined;
   if (envValue) {
     const parsed = parseTaskStateConfig(envValue);
@@ -120,7 +120,7 @@ export function resolveTaskState(
 }
 
 export function resolveTaskStateFromStatus(
-  status: TaskStatus | undefined,
+  status: TaskStatusLike,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
   const normalizedStatus = normalizeTaskStatus(status);
