@@ -198,6 +198,7 @@
       "showOnly": "Show only content involving {{name}}",
       "mention": "Mention {{name}}",
       "filterAndMention": "Filter for and mention {{name}}",
+      "highlight": "Highlight",
       "copyPubkey": "Copy public key",
       "copyPubkeyNpub": "npub",
       "copyPubkeyHex": "hex",

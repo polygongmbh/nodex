@@ -20,6 +20,9 @@ import {
   toPersonShortcutInteraction,
 } from "./person-shortcuts";
 import { resumePersonHoverCards, suspendPersonHoverCards } from "./PersonHoverCard";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { getCompactPersonLabel } from "@/types/person";
 
 interface PersonActionMenuProps {
   person: Person;
@@ -167,6 +170,11 @@ export function PersonActionMenuContent({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const primaryShortcutLabel = getPlatformPrimaryShortcutLabel();
   const alternateShortcutLabel = getPlatformAlternateShortcutLabel();
+  const isMobile = useIsMobile();
+  const compactLabel = getCompactPersonLabel(person);
+  const pubkeyLabel = toUserFacingPubkey(person.id);
+  const statusKey: "online" | "recent" | "offline" = person.onlineStatus
+    ?? (person.isOnline ? "online" : "offline");
 
   const copyToClipboard = async (value: string, successMessageKey: string) => {
     try {
@@ -186,6 +194,99 @@ export function PersonActionMenuContent({
 
   const npubValue = isNpub(person.id) ? person.id.toLowerCase() : hexPubkeyToNpub(person.id);
   const hexValue = isHexPubkey(person.id) ? person.id.toLowerCase() : npubToHexPubkey(person.id);
+
+  // Mobile: profile preview card (replaces hover card) + two actions only
+  if (isMobile) {
+    return (
+      <DropdownMenuContent
+        align={align}
+        side={side}
+        sideOffset={8}
+        className="z-[160] w-72"
+        onClick={(event) => event.stopPropagation()}
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
+        <div className="px-2 py-2">
+          <div className="flex items-start gap-3">
+            <UserAvatar
+              id={person.id}
+              displayName={person.displayName}
+              avatarUrl={person.avatar}
+              className="h-10 w-10 shrink-0"
+            />
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-semibold text-foreground">{compactLabel}</p>
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {t(`people.status.${statusKey}`)}
+                </span>
+              </div>
+              {person.name && person.name !== compactLabel ? (
+                <p className="truncate text-xs text-muted-foreground">@{person.name}</p>
+              ) : null}
+              {person.nip05 ? (
+                <p className="truncate text-xs text-muted-foreground">{person.nip05}</p>
+              ) : null}
+              <p className="break-all font-mono text-[10px] leading-snug text-muted-foreground">
+                {pubkeyLabel}
+              </p>
+            </div>
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="touch-target-sm"
+          onClick={() => {
+            onActionSelect?.("filterAndMention");
+            void dispatchFeedInteraction({ type: "person.filterAndMention", person });
+          }}
+        >
+          <span className="mr-2 inline-flex items-center">
+            <Filter className="h-4 w-4" />
+            <AtSign className="-ml-1 h-3.5 w-3.5" />
+          </span>
+          {t("people.actions.highlight")}
+        </DropdownMenuItem>
+        <div
+          className="flex items-center gap-2 px-2 py-2 text-sm"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <Copy className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="flex-1 truncate text-foreground">{t("people.actions.copyPubkey")}</span>
+          <button
+            type="button"
+            aria-label={t("people.actions.copyPubkeyNpubAria")}
+            disabled={!npubValue}
+            onClick={(event) => {
+              event.stopPropagation();
+              onActionSelect?.("copy");
+              if (!npubValue) return;
+              void copyToClipboard(npubValue, "people.toasts.npubCopied");
+              closeMenuFromElement(event.currentTarget);
+            }}
+            className="touch-target-sm rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("people.actions.copyPubkeyNpub")}
+          </button>
+          <button
+            type="button"
+            aria-label={t("people.actions.copyPubkeyHexAria")}
+            disabled={!hexValue}
+            onClick={(event) => {
+              event.stopPropagation();
+              onActionSelect?.("copy");
+              if (!hexValue) return;
+              void copyToClipboard(hexValue, "people.toasts.hexPubkeyCopied");
+              closeMenuFromElement(event.currentTarget);
+            }}
+            className="touch-target-sm rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("people.actions.copyPubkeyHex")}
+          </button>
+        </div>
+      </DropdownMenuContent>
+    );
+  }
 
   return (
     <DropdownMenuContent
