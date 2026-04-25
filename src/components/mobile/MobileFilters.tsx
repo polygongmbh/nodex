@@ -248,8 +248,11 @@ export function MobileFilters({
               ) : (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsProfileEditorOpen(true)}
-                    className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
+                    onClick={handleOpenProfileEditor}
+                    disabled={!hasWritableRelayConnection}
+                    title={!hasWritableRelayConnection ? t("auth:auth.profile.noRelayConnected") : undefined}
+                    aria-label={!hasWritableRelayConnection ? t("auth:auth.profile.noRelayConnected") : t("auth:auth.profile.edit")}
+                    className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors disabled:opacity-50 disabled:active:bg-transparent disabled:cursor-not-allowed"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     {t("auth:auth.profile.edit")}
