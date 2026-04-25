@@ -39,6 +39,11 @@ export function PersonActionMenu({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const handledPointerShortcutRef = React.useRef(false);
   const shouldPreventCloseAutoFocusRef = React.useRef(false);
+  const [open, setOpen] = React.useState(false);
+  const touchStartRef = React.useRef<{ x: number; y: number; time: number } | null>(null);
+  const touchScrolledRef = React.useRef(false);
+  // Pixels of finger movement after touchstart that should be treated as a scroll, not a tap.
+  const TOUCH_SCROLL_THRESHOLD_PX = 8;
 
   const handleShortcut = (
     event: Pick<React.MouseEvent<HTMLElement>, "metaKey" | "ctrlKey" | "altKey" | "shiftKey" | "preventDefault" | "stopPropagation">,
@@ -55,7 +60,9 @@ export function PersonActionMenu({
 
   return (
     <DropdownMenu
+      open={open}
       onOpenChange={(open) => {
+        setOpen(open);
         if (open) {
           suspendPersonHoverCards();
           return;
@@ -66,7 +73,32 @@ export function PersonActionMenu({
       <DropdownMenuTrigger asChild>
         <span
           className="inline-flex"
+          onTouchStart={(event: React.TouchEvent<HTMLElement>) => {
+            const touch = event.touches[0];
+            if (!touch) return;
+            touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+            touchScrolledRef.current = false;
+          }}
+          onTouchMove={(event: React.TouchEvent<HTMLElement>) => {
+            const start = touchStartRef.current;
+            const touch = event.touches[0];
+            if (!start || !touch) return;
+            const dx = touch.clientX - start.x;
+            const dy = touch.clientY - start.y;
+            if (Math.hypot(dx, dy) > TOUCH_SCROLL_THRESHOLD_PX) {
+              touchScrolledRef.current = true;
+            }
+          }}
+          onTouchEnd={() => {
+            touchStartRef.current = null;
+          }}
           onPointerDownCapture={(event: React.PointerEvent<HTMLElement>) => {
+            // Suppress touch-driven open until we know it's a tap, not a scroll.
+            if (event.pointerType === "touch") {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
             if (event.button !== 0) return;
             if (handleShortcut(event)) {
               handledPointerShortcutRef.current = true;
@@ -79,15 +111,21 @@ export function PersonActionMenu({
             }
           }}
           onPointerDown={(event: React.PointerEvent<HTMLElement>) => {
+            if (event.pointerType === "touch") return;
             event.stopPropagation();
           }}
           onClick={(event: React.MouseEvent<HTMLElement>) => {
             event.stopPropagation();
+            if (touchScrolledRef.current) {
+              touchScrolledRef.current = false;
+              return;
+            }
             if (handledPointerShortcutRef.current) {
               handledPointerShortcutRef.current = false;
               return;
             }
             if (handleShortcut(event)) return;
+            setOpen((prev) => !prev);
           }}
         >
           {children}
