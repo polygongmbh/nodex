@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo, useState, type UIEvent } from "react";
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
-import {   Task, ComposeRestoreRequest, RawNostrEvent } from "@/types";
+import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatusType, normalizeTaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FeedTaskCard } from "./feed/FeedTaskCard";
@@ -184,9 +184,10 @@ export function FeedView({
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    if (status === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (status === "done") return t("hints.statusToggle.done");
-    if (status === "closed") return t("hints.statusToggle.closed");
+    const statusType = getTaskStatusType(status);
+    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
+    if (statusType === "done") return t("hints.statusToggle.done");
+    if (statusType === "closed") return t("hints.statusToggle.closed");
     return t("hints.statusToggle.open", { alternateKey });
   };
 
@@ -402,10 +403,11 @@ export function FeedView({
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
-      const typeLabel = getStateLabel(update.status.type);
-      const statusDescription = update.status.description?.trim();
+      const normalizedUpdateStatus = normalizeTaskStatus(update.status);
+      const typeLabel = getStateLabel(normalizedUpdateStatus.type);
+      const statusDescription = normalizedUpdateStatus.description?.trim();
       const isDefaultInProgressDescription =
-        update.status.type === "active" &&
+        normalizedUpdateStatus.type === "active" &&
         normalizeLabelText(statusDescription) === normalizeLabelText("In Progress");
       // Prefer the specific state description (e.g. "Backlog") over the generic type label
       // ("Open"). Fall back to the type label when there is no meaningful description.
