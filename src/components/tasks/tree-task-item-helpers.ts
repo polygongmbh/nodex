@@ -54,20 +54,23 @@ export function deriveTreeTaskItemChildren({
   const commentChildCount = allCommentChildren.length;
   const completedTaskChildCount = allTaskChildren.filter((child) => isTaskCompletedStatus(child.status)).length;
   const shouldUseFilteredMatchingChildren = hasMatchingFilters && !currentTaskIsDirectMatch;
+  const noFilterTaskBaseline = parentIsTerminal ? allTaskChildren : defaultMatchingTaskChildren;
+  const noFilterCommentBaseline = defaultMatchingCommentChildren;
   const rawEffectiveMatchingTaskChildren = shouldUseFilteredMatchingChildren
     ? matchingTaskChildren
     : hasMatchingFilters
-      ? mergeChildrenPreservingOrder(allTaskChildren, defaultMatchingTaskChildren, matchingTaskChildren)
-      : defaultMatchingTaskChildren;
+      ? mergeChildrenPreservingOrder(allTaskChildren, noFilterTaskBaseline, matchingTaskChildren)
+      : noFilterTaskBaseline;
   const effectiveMatchingCommentChildren = shouldUseFilteredMatchingChildren
     ? matchingCommentChildren
     : hasMatchingFilters
-      ? mergeChildrenPreservingOrder(allCommentChildren, defaultMatchingCommentChildren, matchingCommentChildren)
-      : defaultMatchingCommentChildren;
+      ? mergeChildrenPreservingOrder(allCommentChildren, noFilterCommentBaseline, matchingCommentChildren)
+      : noFilterCommentBaseline;
   // Done/terminal child tasks should never appear in the normal "matchingOnly" view —
   // they only reveal under a done branch or via "show all". Mirror that filter here so
   // `allVisibleDiffersFromMatching` correctly enables the third fold state when hidden
-  // done children exist.
+  // done children exist. When the parent is itself terminal, done children stay visible
+  // because the user has explicitly navigated into a done branch.
   const effectiveMatchingTaskChildren = parentIsTerminal
     ? rawEffectiveMatchingTaskChildren
     : rawEffectiveMatchingTaskChildren.filter((child) => !isTaskTerminalStatus(child.status));
