@@ -8,6 +8,7 @@ import { getCompactPersonLabel } from "@/types/person";
 import { cn } from "@/lib/utils";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PersonHoverCardProps {
   person: Person;
