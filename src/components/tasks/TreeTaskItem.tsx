@@ -688,7 +688,7 @@ export function TreeTaskItem({
             // Determine which children to show based on fold state
             let commentsToShow: Task[];
             let tasksToShow: Task[];
-            
+
             if (foldState === "allVisible") {
               // Show ALL children
               commentsToShow = allCommentChildren;
@@ -696,13 +696,19 @@ export function TreeTaskItem({
             } else {
               commentsToShow = matchingCommentChildren;
               tasksToShow = matchingTaskChildren;
+              // Done/terminal subtasks are only revealed under a done branch or via the "show all" fold state.
+              // In normal expanded (matchingOnly) state, hide them even if they directly match the active filters.
+              const parentIsTerminal = isTaskTerminalStatus(task.status);
+              if (!parentIsTerminal) {
+                tasksToShow = tasksToShow.filter((child) => !isTaskTerminalStatus(child.status));
+              }
             }
-            
+
             const sortedTasksToShow =
               foldState === "allVisible" && sortContext
                 ? sortTasks(tasksToShow, sortContext)
                 : tasksToShow;
-            
+
             return (
               <>
                 {/* Comments first (maintain original order) */}
