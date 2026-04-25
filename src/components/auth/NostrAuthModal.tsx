@@ -712,13 +712,13 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const { isUsernameValid } = validation;
 
   const openProfileEditor = useCallback(() => {
-    if (!isConnected) {
+    if (!hasWritableRelayConnection) {
       toast.error(t("auth.profile.noRelayConnected"));
       return;
     }
     resetFromProfile(effectiveProfile);
     setIsProfileEditorOpen(true);
-  }, [effectiveProfile, isConnected, resetFromProfile, t]);
+  }, [effectiveProfile, hasWritableRelayConnection, resetFromProfile, t]);
 
   const handleCopyKey = () => {
     const hexKey = getGuestPrivateKey();
