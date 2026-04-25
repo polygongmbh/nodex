@@ -686,23 +686,18 @@ export function TreeTaskItem({
       {hasChildren && foldState !== "collapsed" && (
         <div className="space-y-1">
           {(() => {
-            // Determine which children to show based on fold state
+            // Determine which children to show based on fold state.
+            // Note: in the matchingOnly view, done child tasks are already excluded by
+            // deriveTreeTaskItemChildren unless this parent is itself terminal.
             let commentsToShow: Task[];
             let tasksToShow: Task[];
 
             if (foldState === "allVisible") {
-              // Show ALL children
               commentsToShow = allCommentChildren;
               tasksToShow = allTaskChildren;
             } else {
               commentsToShow = matchingCommentChildren;
               tasksToShow = matchingTaskChildren;
-              // Done/terminal subtasks are only revealed under a done branch or via the "show all" fold state.
-              // In normal expanded (matchingOnly) state, hide them even if they directly match the active filters.
-              const parentIsTerminal = isTaskTerminalStatus(task.status);
-              if (!parentIsTerminal) {
-                tasksToShow = tasksToShow.filter((child) => !isTaskTerminalStatus(child.status));
-              }
             }
 
             const sortedTasksToShow =
