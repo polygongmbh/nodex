@@ -632,7 +632,9 @@ export function CalendarView({
                 </div>
 
                 <div className="space-y-px bg-border/35">
-                  {section.weeks.map((week) => (
+                  {section.weeks.map((week) => {
+                    const weekContainsToday = week.some((day) => isToday(day));
+                    return (
                     <div
                       key={week[0]?.toISOString() ?? section.key}
                       className={cn(
@@ -640,13 +642,21 @@ export function CalendarView({
                         isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
                       )}
                     >
-                      <div className="bg-muted/55 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                      <div
+                        className={cn(
+                          "flex items-center justify-center text-xs font-medium",
+                          weekContainsToday
+                            ? "bg-primary/15 text-primary font-semibold"
+                            : "bg-muted/55 text-muted-foreground"
+                        )}
+                      >
                         {getISOWeek(week[3] ?? week[0])}
                       </div>
                       {week.map((day) => {
                         const dayTasks = getTasksForDay(day);
                         const isSelected = selectedDate && isSameDay(day, selectedDate);
                         const isInDisplayedMonth = isSameMonth(day, section.month);
+                        const dayIsToday = isToday(day);
 
                         return (
                           <button
@@ -661,15 +671,25 @@ export function CalendarView({
                                 ensureDesktopMonthRendered(day);
                               }
                             }}
+                            aria-current={dayIsToday ? "date" : undefined}
                             className={cn(
-                              "bg-background transition-colors duration-150 text-left flex flex-col relative border border-transparent",
+                              "transition-colors duration-150 text-left flex flex-col relative border border-transparent",
                               isMobile ? "min-h-[4.4rem] p-1" : "min-h-[6.2rem] p-1",
-                              isToday(day) && "border-primary/60",
-                              isSelected ? "bg-primary/20 border-primary/70" : "hover:bg-muted/40",
+                              // Subtle row tint when this week contains today, distinct from selected day
+                              weekContainsToday ? "bg-primary/5" : "bg-background",
+                              dayIsToday && "border-primary bg-primary/15 ring-1 ring-primary/40",
+                              isSelected ? "bg-primary/25 border-primary" : !dayIsToday && "hover:bg-muted/40",
                               !isInDisplayedMonth && "opacity-60"
                             )}
                           >
-                            <span className={cn(isMobile ? "text-xs" : "text-sm", "font-medium", isToday(day) && "text-primary")}>
+                            <span
+                              className={cn(
+                                isMobile ? "text-xs" : "text-sm",
+                                "font-medium",
+                                dayIsToday &&
+                                  "inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground"
+                              )}
+                            >
                               {format(day, "d")}
                             </span>
                             {dayTasks.length > 0 && (
@@ -725,7 +745,8 @@ export function CalendarView({
                         );
                       })}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             ))}
