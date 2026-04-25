@@ -8,6 +8,7 @@ interface DeriveTreeTaskItemChildrenParams {
   matchingChildren: Task[];
   hasMatchingFilters: boolean;
   currentTaskIsDirectMatch: boolean;
+  parentIsTerminal?: boolean;
 }
 
 export interface TreeTaskItemChildrenState {
