@@ -52,7 +52,7 @@ export function deriveTreeTaskItemChildren({
   const commentChildCount = allCommentChildren.length;
   const completedTaskChildCount = allTaskChildren.filter((child) => isTaskCompletedStatus(child.status)).length;
   const shouldUseFilteredMatchingChildren = hasMatchingFilters && !currentTaskIsDirectMatch;
-  const effectiveMatchingTaskChildren = shouldUseFilteredMatchingChildren
+  const rawEffectiveMatchingTaskChildren = shouldUseFilteredMatchingChildren
     ? matchingTaskChildren
     : hasMatchingFilters
       ? mergeChildrenPreservingOrder(allTaskChildren, defaultMatchingTaskChildren, matchingTaskChildren)
@@ -62,6 +62,13 @@ export function deriveTreeTaskItemChildren({
     : hasMatchingFilters
       ? mergeChildrenPreservingOrder(allCommentChildren, defaultMatchingCommentChildren, matchingCommentChildren)
       : defaultMatchingCommentChildren;
+  // Done/terminal child tasks should never appear in the normal "matchingOnly" view —
+  // they only reveal under a done branch or via "show all". Mirror that filter here so
+  // `allVisibleDiffersFromMatching` correctly enables the third fold state when hidden
+  // done children exist.
+  const effectiveMatchingTaskChildren = rawEffectiveMatchingTaskChildren.filter(
+    (child) => !isTaskTerminalStatus(child.status)
+  );
 
   return {
     allChildren,
