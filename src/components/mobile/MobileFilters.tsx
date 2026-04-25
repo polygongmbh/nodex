@@ -62,7 +62,7 @@ export function MobileFilters({
   const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
 
-  const { user, authMethod, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
+  const { user, authMethod, hasWritableRelayConnection, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
