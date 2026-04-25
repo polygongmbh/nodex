@@ -213,8 +213,9 @@ export function TreeTaskItem({
         matchingChildren,
         hasMatchingFilters,
         currentTaskIsDirectMatch,
+        parentIsTerminal: isTaskTerminalStatus(task.status),
       }),
-    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren]
+    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, task.status]
   );
   const isComment = task.taskType === "comment";
   const isLockedUntilStart = isTaskLockedUntilStart(task);
@@ -685,24 +686,25 @@ export function TreeTaskItem({
       {hasChildren && foldState !== "collapsed" && (
         <div className="space-y-1">
           {(() => {
-            // Determine which children to show based on fold state
+            // Determine which children to show based on fold state.
+            // Note: in the matchingOnly view, done child tasks are already excluded by
+            // deriveTreeTaskItemChildren unless this parent is itself terminal.
             let commentsToShow: Task[];
             let tasksToShow: Task[];
-            
+
             if (foldState === "allVisible") {
-              // Show ALL children
               commentsToShow = allCommentChildren;
               tasksToShow = allTaskChildren;
             } else {
               commentsToShow = matchingCommentChildren;
               tasksToShow = matchingTaskChildren;
             }
-            
+
             const sortedTasksToShow =
               foldState === "allVisible" && sortContext
                 ? sortTasks(tasksToShow, sortContext)
                 : tasksToShow;
-            
+
             return (
               <>
                 {/* Comments first (maintain original order) */}
