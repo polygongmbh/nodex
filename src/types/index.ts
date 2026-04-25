@@ -81,7 +81,7 @@ export type OnNewTask = (
 
 export interface TaskStateUpdate {
   id: string;
-  status: TaskStatusValue;
+  status: TaskStatus;
   timestamp: Date;
   authorPubkey: string;
 }
@@ -158,7 +158,7 @@ export interface Task {
   locationGeohash?: string;
   timestamp: Date;
   lastEditedAt?: Date;
-  status: TaskStatus;
+  status: TaskStatusValue;
   stateUpdates?: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;
