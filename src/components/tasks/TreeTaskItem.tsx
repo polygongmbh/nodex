@@ -429,7 +429,6 @@ export function TreeTaskItem({
               >
                 <TaskStateIcon
                   status={getTaskStatus(task)}
-                  size="w-6 h-6 md:w-5 md:h-5"
                 />
               </button>
             </DropdownMenuTrigger>
