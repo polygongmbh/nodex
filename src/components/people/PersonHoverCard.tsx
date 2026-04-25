@@ -8,6 +8,7 @@ import { getCompactPersonLabel } from "@/types/person";
 import { cn } from "@/lib/utils";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PersonHoverCardProps {
   person: Person;
@@ -81,6 +82,7 @@ export function PersonHoverCard({
 }: PersonHoverCardProps) {
   const { t, i18n } = useTranslation("tasks");
   const { allTasks } = useFeedTaskViewModel();
+  const isMobile = useIsMobile();
   const hoverCardId = useId();
   const openSourceRef = useRef<HoverCardOpenSource>("focus");
   const activeId = useSyncExternalStore(
@@ -144,6 +146,16 @@ export function PersonHoverCard({
       setActiveHoverCard(hoverCardId, "hover");
     }
   };
+
+  // On mobile/touch devices we never show the hover card (no hover affordance).
+  // The PersonActionMenu provides the equivalent profile preview on tap.
+  if (isMobile) {
+    return (
+      <span className={cn("inline align-baseline", triggerClassName)}>
+        {children}
+      </span>
+    );
+  }
 
   return (
     <HoverCard
