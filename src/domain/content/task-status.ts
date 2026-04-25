@@ -16,7 +16,8 @@ export function applyTaskStatusUpdate(
   localTasks: Task[],
   allTasks: Task[],
   taskId: string,
-  newStatus: TaskStatusLike
+  newStatus: TaskStatusLike,
+  _authorPubkey?: string
 ): Task[] {
   const now = new Date();
   const normalizedStatus = normalizeTaskStatus(newStatus);
