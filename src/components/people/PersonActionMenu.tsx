@@ -96,9 +96,9 @@ export function PersonActionMenu({
             touchStartRef.current = null;
           }}
           onPointerDownCapture={(event: React.PointerEvent<HTMLElement>) => {
-            // Suppress touch-driven open until we know it's a tap, not a scroll.
+            // For touch we let the click handler decide based on touchScrolledRef,
+            // so we don't preventDefault here (which would also cancel the click).
             if (event.pointerType === "touch") {
-              event.preventDefault();
               event.stopPropagation();
               return;
             }
