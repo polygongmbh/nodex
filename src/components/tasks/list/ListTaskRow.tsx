@@ -96,7 +96,7 @@ export function ListTaskRow({
               aria-label={t("tasks.actions.setStatus")}
               title={statusButtonTitle}
               className={cn(
-                "p-2 -m-1 rounded transition-colors touch-manipulation",
+                "p-1.5 md:p-0.5 rounded transition-colors touch-manipulation",
                 canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
               )}
             >
