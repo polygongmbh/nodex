@@ -75,7 +75,7 @@ describe("deriveTreeTaskItemChildren", () => {
     expect(summary.allVisibleDiffersFromMatching).toBe(true);
   });
 
-  it("keeps matching descendant branches visible when the current task directly matches the filter", () => {
+  it("hides directly-matching done child tasks under a non-terminal parent (revealed only via 'show all')", () => {
     const openChild = makeTask({ id: "open-child", parentId: "parent", status: "open" });
     const doneChild = makeTask({ id: "done-child", parentId: "parent", status: "done" });
     const matchingDoneChild = makeTask({ id: "matching-done-child", parentId: "parent", status: "done" });
@@ -87,11 +87,28 @@ describe("deriveTreeTaskItemChildren", () => {
       currentTaskIsDirectMatch: true,
     });
 
+    // Done children are hidden in matchingOnly even when they directly match,
+    // so the toggle still surfaces an "allVisible" state to reveal them.
+    expect(summary.matchingTaskChildren.map((child) => child.id)).toEqual(["open-child"]);
+    expect(summary.allVisibleDiffersFromMatching).toBe(true);
+  });
+
+  it("keeps done child tasks visible when the parent itself is terminal", () => {
+    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "open" });
+    const doneChild = makeTask({ id: "done-child", parentId: "parent", status: "done" });
+
+    const summary = deriveTreeTaskItemChildren({
+      allChildren: [openChild, doneChild],
+      matchingChildren: [],
+      hasMatchingFilters: false,
+      currentTaskIsDirectMatch: true,
+      parentIsTerminal: true,
+    });
+
     expect(summary.matchingTaskChildren.map((child) => child.id)).toEqual([
       "open-child",
-      "matching-done-child",
+      "done-child",
     ]);
-    expect(summary.allVisibleDiffersFromMatching).toBe(true);
   });
 });
 
