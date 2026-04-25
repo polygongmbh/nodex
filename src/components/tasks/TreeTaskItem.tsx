@@ -323,7 +323,7 @@ export function TreeTaskItem({
             onClick={handleToggleExpand}
             data-testid={`tree-fold-toggle-${task.id}`}
             data-fold-state={foldState}
-            className="flex-shrink-0 p-0.5 rounded hover:bg-muted mt-1"
+            className="flex-shrink-0 p-2 -m-1 rounded hover:bg-muted mt-0.5 touch-manipulation"
             title={foldToggleLabel}
             aria-label={foldToggleLabel}
           >
