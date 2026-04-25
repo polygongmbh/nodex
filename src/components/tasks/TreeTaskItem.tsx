@@ -213,8 +213,9 @@ export function TreeTaskItem({
         matchingChildren,
         hasMatchingFilters,
         currentTaskIsDirectMatch,
+        parentIsTerminal: isTaskTerminalStatus(task.status),
       }),
-    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren]
+    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, task.status]
   );
   const isComment = task.taskType === "comment";
   const isLockedUntilStart = isTaskLockedUntilStart(task);
