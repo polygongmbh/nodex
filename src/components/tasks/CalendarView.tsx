@@ -93,9 +93,10 @@ export function CalendarView({
   const activeRelays = relays.filter((relay) => relay.isActive);
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    if (status === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (status === "done") return t("hints.statusToggle.done");
-    if (status === "closed") return t("hints.statusToggle.closed");
+    const statusType = getTaskStatusType(status);
+    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
+    if (statusType === "done") return t("hints.statusToggle.done");
+    if (statusType === "closed") return t("hints.statusToggle.closed");
     return t("hints.statusToggle.open", { alternateKey });
   };
 
@@ -520,11 +521,11 @@ export function CalendarView({
                                   aria-label={t("tasks.actions.setStatus")}
                                   title={getStatusButtonTitle(task)}
                                   className={cn(
-                                    "flex-shrink-0 mt-0.5",
+                                    "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
                                     canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
                                   )}
                                 >
-                                  <TaskStateIcon status={getTaskStatus(task)} size="w-4 h-4" />
+                                  <TaskStateIcon status={getTaskStatus(task)} />
                                 </button>
                               </DropdownMenuTrigger>
                               {canCompleteTask(task) && (
@@ -959,11 +960,11 @@ export function CalendarView({
                                 aria-label={t("tasks.actions.setStatus")}
                                 title={getStatusButtonTitle(task)}
                                 className={cn(
-                                  "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                                  "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
                                   canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                                 )}
                               >
-                                <TaskStateIcon status={getTaskStatus(task)} size="w-4 h-4" />
+                                <TaskStateIcon status={getTaskStatus(task)} />
                               </button>
                             </DropdownMenuTrigger>
                             {canCompleteTask(task) && (
