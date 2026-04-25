@@ -323,7 +323,7 @@ export function TreeTaskItem({
             onClick={handleToggleExpand}
             data-testid={`tree-fold-toggle-${task.id}`}
             data-fold-state={foldState}
-            className="flex-shrink-0 p-0.5 rounded hover:bg-muted mt-1"
+            className="flex-shrink-0 p-2 -m-1 rounded hover:bg-muted mt-0.5 touch-manipulation"
             title={foldToggleLabel}
             aria-label={foldToggleLabel}
           >
@@ -423,7 +423,7 @@ export function TreeTaskItem({
                 aria-label={t("tasks.actions.setStatus")}
                 title={canCompleteTask() ? getStatusToggleHint(task.status) : (statusBlockedReason || getStatusToggleHint(task.status))}
                 className={cn(
-                  "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                  "flex-shrink-0 mt-0 p-2 -m-1 rounded transition-colors touch-manipulation",
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                 )}
               >
