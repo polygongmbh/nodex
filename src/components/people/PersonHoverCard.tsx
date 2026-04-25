@@ -147,6 +147,16 @@ export function PersonHoverCard({
     }
   };
 
+  // On mobile/touch devices we never show the hover card (no hover affordance).
+  // The PersonActionMenu provides the equivalent profile preview on tap.
+  if (isMobile) {
+    return (
+      <span className={cn("inline align-baseline", triggerClassName)}>
+        {children}
+      </span>
+    );
+  }
+
   return (
     <HoverCard
       open={open}
