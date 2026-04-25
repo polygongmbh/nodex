@@ -40,6 +40,7 @@ export function deriveTreeTaskItemChildren({
   matchingChildren,
   hasMatchingFilters,
   currentTaskIsDirectMatch,
+  parentIsTerminal = false,
 }: DeriveTreeTaskItemChildrenParams): TreeTaskItemChildrenState {
   const allTaskChildren = allChildren.filter((child) => child.taskType === "task");
   const allCommentChildren = allChildren.filter((child) => child.taskType === "comment");
