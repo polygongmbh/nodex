@@ -14,6 +14,12 @@ export interface FeedTaskViewModel extends SharedTaskViewContext {
     id: number;
   } | null;
   isInteractionBlocked?: boolean;
+  /**
+   * Surfaces a toast (and may open the auth modal) when a soft-disabled
+   * control is tapped while the user can't perform the action. Typically
+   * provided by `useTaskPublishControls`.
+   */
+  onBlockedInteractionAttempt?: () => void;
   isHydrating?: boolean;
 }
 
