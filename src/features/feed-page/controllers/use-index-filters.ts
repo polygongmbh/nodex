@@ -400,6 +400,7 @@ export function useIndexFilters({
       resetFiltersToDefault();
     },
   }), [
+    captureFilterSnapshot,
     channels,
     relays,
     setPostedTags,
