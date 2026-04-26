@@ -33,9 +33,8 @@ import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-time
 import { useTranslation } from "react-i18next";
 import { getTaskStatus, type Nip99ListingStatus, type RawNostrEvent, type Task } from "@/types";
 import type { Person } from "@/types/person";
-import { PersonHoverCard } from "@/components/people/PersonHoverCard";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
-import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
+import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
+import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 
 interface FeedTaskCardProps {
   task: Task;
