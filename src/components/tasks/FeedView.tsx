@@ -426,18 +426,13 @@ export function FeedView({
                 <div className="min-w-0 inline-flex flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
                   <span className="truncate">{displayLabel}</span>
                   <span className="shrink-0">·</span>
-                  <PersonHoverCard person={resolvedUpdateAuthor}>
-                    <PersonActionMenu person={resolvedUpdateAuthor} enableModifierShortcuts>
-                      <button
-                        type="button"
-                        className="hover:text-foreground shrink-0"
-                        aria-label={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
-                        onClick={(event) => handleAuthorShortcut(event, resolvedUpdateAuthor)}
-                      >
-                        {updateAuthorMeta.primary}
-                      </button>
-                    </PersonActionMenu>
-                  </PersonHoverCard>
+                  <InteractivePersonName
+                    person={resolvedUpdateAuthor}
+                    className="hover:text-foreground shrink-0"
+                    ariaLabel={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
+                  >
+                    {updateAuthorMeta.primary}
+                  </InteractivePersonName>
                   <span className="shrink-0">·</span>
                   <button
                     type="button"
