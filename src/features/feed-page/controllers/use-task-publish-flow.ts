@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
+import type { SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { toast } from "sonner";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {   removeCachedNostrEventById, type CachedNostrEvent, } from "@/infrastructure/nostr/event-cache";
-import {   loadFailedPublishDrafts, saveFailedPublishDrafts, type FailedPublishDraft, } from "@/infrastructure/preferences/failed-publish-drafts-storage";
+import { type FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import {
   extractMentionIdentifiersFromContent,
   normalizeMentionIdentifiers,
@@ -23,7 +23,7 @@ import {   buildImetaTag, extractEmbeddableAttachmentsFromContent, normalizePubl
 import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { canUserUpdateTask } from "@/domain/content/task-permissions";
 import {
   notifyLocalSaved,
@@ -140,21 +140,18 @@ export function useTaskPublishFlow({
   publishTaskPriorityUpdate,
   publishTaskCreateFollowUps,
 }: UseTaskPublishFlowOptions) {
-  const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
-  const setPostedTags = useFeedTaskMutationStore((s) => s.setPostedTags);
-  const suppressedNostrEventIds = useFeedTaskMutationStore((s) => s.suppressedNostrEventIds);
-  const setSuppressedNostrEventIds = useFeedTaskMutationStore((s) => s.setSuppressedNostrEventIds);
+  const setLocalTasks = useTaskMutationStore((s) => s.setLocalTasks);
+  const setPostedTags = useTaskMutationStore((s) => s.setPostedTags);
+  const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
+  const setSuppressedNostrEventIds = useTaskMutationStore((s) => s.setSuppressedNostrEventIds);
+  const failedPublishDrafts = useTaskMutationStore((s) => s.failedPublishDrafts);
+  const setFailedPublishDrafts = useTaskMutationStore((s) => s.setFailedPublishDrafts);
 
-  const [failedPublishDrafts, setFailedPublishDrafts] = useState<FailedPublishDraft[]>(() => loadFailedPublishDrafts());
   const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
   const [composeRestoreRequest, setComposeRestoreRequest] = useState<ComposeRestoreRequest | null>(null);
   const pendingPublishStateRef = useRef<
     Map<string, { timeoutId: number; toastId: string | number; composeState: ComposeRestoreState }>
   >(new Map());
-
-  useEffect(() => {
-    saveFailedPublishDrafts(failedPublishDrafts);
-  }, [failedPublishDrafts]);
 
   useEffect(() => {
     const pendingPublishState = pendingPublishStateRef.current;
@@ -575,7 +572,7 @@ export function useTaskPublishFlow({
       }
     };
 
-    if (useFeedPreferencesStore.getState().publishDelayEnabled) {
+    if (usePreferencesStore.getState().publishDelayEnabled) {
       const pendingTaskId = `pending-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
       setLocalTasks((prev) => [
         {

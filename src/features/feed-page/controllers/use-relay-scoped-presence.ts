@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { dedupeNormalizedRelayUrls, normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
@@ -43,7 +44,6 @@ interface BuildRelayScopedPresenceTargetsOptions {
 
 interface UseRelayScopedPresenceOptions extends BuildRelayScopedPresenceTargetsOptions {
   userPubkey: string | null | undefined;
-  presenceEnabled: boolean;
   publishEvent: (
     kind: NostrEventKind,
     content: string,
@@ -204,7 +204,6 @@ async function publishPresenceTargets(
 
 export function useRelayScopedPresence({
   userPubkey,
-  presenceEnabled,
   currentView,
   focusedTask,
   relayScopeIds,
@@ -212,6 +211,7 @@ export function useRelayScopedPresence({
   publishEvent,
   setPresenceRelayUrls,
 }: UseRelayScopedPresenceOptions) {
+  const presenceEnabled = usePreferencesStore(s => s.presencePublishingEnabled);
   const activeTargets = useMemo(
     () => buildRelayScopedPresenceTargets({ currentView, focusedTask, relayScopeIds, relays }),
     [currentView, focusedTask, relayScopeIds, relays]

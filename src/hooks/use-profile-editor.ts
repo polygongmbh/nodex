@@ -7,7 +7,7 @@ import {
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
-import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { preloadLocalImageCaptionModel } from "@/lib/local-image-caption";
 import { EditableNostrProfile, isNip05CompatibleName } from "@/infrastructure/nostr/profile-metadata";
 import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
@@ -71,12 +71,12 @@ export function useProfileEditor({
     nip05: "",
     about: "",
   });
-  const presencePublishingEnabled = useFeedPreferencesStore(s => s.presencePublishingEnabled);
-  const publishDelayEnabled = useFeedPreferencesStore(s => s.publishDelayEnabled);
-  const autoCaptionEnabled = useFeedPreferencesStore(s => s.autoCaptionEnabled);
-  const setPresencePublishingEnabled = useFeedPreferencesStore(s => s.setPresencePublishingEnabled);
-  const setPublishDelayEnabled = useFeedPreferencesStore(s => s.setPublishDelayEnabled);
-  const setAutoCaptionEnabled = useFeedPreferencesStore(s => s.setAutoCaptionEnabled);
+  const presencePublishingEnabled = usePreferencesStore(s => s.presencePublishingEnabled);
+  const publishDelayEnabled = usePreferencesStore(s => s.publishDelayEnabled);
+  const autoCaptionEnabled = usePreferencesStore(s => s.autoCaptionEnabled);
+  const setPresencePublishingEnabled = usePreferencesStore(s => s.setPresencePublishingEnabled);
+  const setPublishDelayEnabled = usePreferencesStore(s => s.setPublishDelayEnabled);
+  const setAutoCaptionEnabled = usePreferencesStore(s => s.setAutoCaptionEnabled);
 
   const trimmedUsername = username.trim();
   const hasTypedUsername = username.length > 0;

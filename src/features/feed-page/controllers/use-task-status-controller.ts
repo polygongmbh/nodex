@@ -11,8 +11,8 @@ import {
 import { notifyStatusRestricted } from "@/lib/notifications";
 import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";
 import { playCompletionPopSound } from "@/lib/completion-feedback";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
-import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const TASK_STATUS_REORDER_DELAY_MS = 260;
@@ -37,8 +37,8 @@ export function useTaskStatusController({
   guardInteraction,
   publishTaskStateUpdate,
 }: UseTaskStatusControllerOptions): UseTaskStatusControllerResult {
-  const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
-  const completionSoundEnabled = useFeedPreferencesStore((s) => s.completionSoundEnabled);
+  const setLocalTasks = useTaskMutationStore((s) => s.setLocalTasks);
+  const completionSoundEnabled = usePreferencesStore((s) => s.completionSoundEnabled);
   const isMobile = useIsMobile();
   const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<
     Record<string, TaskStatusType>

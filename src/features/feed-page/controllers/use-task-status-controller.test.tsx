@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskStatusController } from "./use-task-status-controller";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { makePerson, makeTask } from "@/test/fixtures";
 import { getTaskStatusType } from "@/types";
 import * as taskStateConfig from "@/domain/task-states/task-state-config";
@@ -22,7 +22,7 @@ const initialTask = makeTask({
 });
 
 function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnType<typeof vi.fn> }) {
-  const localTasks = useFeedTaskMutationStore((s) => s.localTasks);
+  const localTasks = useTaskMutationStore((s) => s.localTasks);
   const allTasks = localTasks.length > 0 ? localTasks : [initialTask];
 
   const controller = useTaskStatusController({
@@ -53,7 +53,7 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
 describe("useTaskStatusController", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    useFeedTaskMutationStore.setState({
+    useTaskMutationStore.setState({
       localTasks: [],
       postedTags: [],
       suppressedNostrEventIds: new Set(),
@@ -109,7 +109,7 @@ describe("useTaskStatusController", () => {
 
   it("does not cycle terminal tasks through quick toggle", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
-    useFeedTaskMutationStore.setState({
+    useTaskMutationStore.setState({
       localTasks: [makeTask({ ...initialTask, status: "done" })],
       postedTags: [],
       suppressedNostrEventIds: new Set(),
@@ -138,7 +138,7 @@ describe("useTaskStatusController", () => {
       .mockImplementation((type) => (type === "done" ? reviewState : undefined));
 
     const publishTaskStateUpdate = vi.fn(async () => undefined);
-    useFeedTaskMutationStore.setState({
+    useTaskMutationStore.setState({
       localTasks: [makeTask({ ...initialTask, status: "active" })],
       postedTags: [],
       suppressedNostrEventIds: new Set(),

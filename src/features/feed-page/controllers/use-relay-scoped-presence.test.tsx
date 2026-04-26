@@ -1,10 +1,11 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Relay, Task } from "@/types";
 import {
   buildRelayScopedPresenceTargets,
   useRelayScopedPresence,
 } from "./use-relay-scoped-presence";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 
 function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id" | "url">): Relay {
   return {
@@ -66,6 +67,10 @@ describe("buildRelayScopedPresenceTargets", () => {
 });
 
 describe("useRelayScopedPresence", () => {
+  beforeEach(() => {
+    usePreferencesStore.setState({ presencePublishingEnabled: true });
+  });
+
   it("publishes relay-specific presence payloads and skips unchanged fingerprints", async () => {
     const publishEvent = vi.fn(async (_kind, _content, _tags, _parentId, relayUrls) => ({
       success: true,
@@ -76,7 +81,6 @@ describe("useRelayScopedPresence", () => {
       ({ currentView }) =>
         useRelayScopedPresence({
           userPubkey: "pub",
-          presenceEnabled: true,
           currentView,
           focusedTask: buildTask({ id: "a".repeat(64), relays: ["relay-a"] }),
           relayScopeIds: new Set(["relay-a", "relay-b"]),
@@ -132,7 +136,6 @@ describe("useRelayScopedPresence", () => {
       ({ relayScopeIds }) =>
         useRelayScopedPresence({
           userPubkey: "pub",
-          presenceEnabled: true,
           currentView: "feed",
           focusedTask: buildTask({ id: "a".repeat(64), relays: ["relay-a", "relay-b"] }),
           relayScopeIds,

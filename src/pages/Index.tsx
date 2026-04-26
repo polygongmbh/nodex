@@ -13,7 +13,6 @@ import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroP
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
-import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
@@ -38,17 +37,13 @@ import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/t
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { DEMO_RELAY_ID } from "@/lib/demo-feed-config";
 import { initializeDemoFeedData } from "@/data/demo-feed";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
-import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import {
   DesktopAppShell,
 } from "@/features/feed-page/views/DesktopAppShell";
 import {
   FeedPageMobileShell,
 } from "@/features/feed-page/views/FeedPageMobileShell";
-import {
-  type FeedPageUiConfig,
-} from "@/features/feed-page/views/feed-page-ui-config";
 import {
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
@@ -153,8 +148,8 @@ function FeedIndexContent() {
     removeCachedRelayProfile,
   });
 
-  const searchQuery = useFeedPreferencesStore((s) => s.searchQuery);
-  const setSearchQuery = useFeedPreferencesStore((s) => s.setSearchQuery);
+  const searchQuery = usePreferencesStore((s) => s.searchQuery);
+  const setSearchQuery = usePreferencesStore((s) => s.setSearchQuery);
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const {
     channelFrecencyState,
@@ -230,10 +225,10 @@ function FeedIndexContent() {
   });
 
   const shortcutsHelp = useKeyboardShortcutsHelp();
-  const kanbanDepthMode = useFeedPreferencesStore((s) => s.kanbanDepthMode);
-  const setKanbanDepthMode = useFeedPreferencesStore((s) => s.setKanbanDepthMode);
-  const compactTaskCardsEnabled = useFeedPreferencesStore((s) => s.compactTaskCardsEnabled);
-  const setCompactTaskCardsEnabled = useFeedPreferencesStore((s) => s.setCompactTaskCardsEnabled);
+  const kanbanDepthMode = usePreferencesStore((s) => s.kanbanDepthMode);
+  const setKanbanDepthMode = usePreferencesStore((s) => s.setKanbanDepthMode);
+  const compactTaskCardsEnabled = usePreferencesStore((s) => s.compactTaskCardsEnabled);
+  const setCompactTaskCardsEnabled = usePreferencesStore((s) => s.setCompactTaskCardsEnabled);
 
   const handleToggleChannelMatchModeShortcut = useCallback(() => {
     setChannelMatchMode((previous) => {
@@ -295,8 +290,6 @@ function FeedIndexContent() {
     publishEvent,
   });
 
-  const completionSoundEnabled = useFeedPreferencesStore((s) => s.completionSoundEnabled);
-  const handleToggleCompletionSound = useFeedPreferencesStore((s) => s.toggleCompletionSound);
   const {
     handleToggleComplete,
     handleStatusChange,
@@ -557,10 +550,8 @@ function FeedIndexContent() {
     publishTaskCreateFollowUps,
   });
 
-  const presencePublishingEnabled = useFeedPreferencesStore(s => s.presencePublishingEnabled);
   const { publishOfflinePresenceNow } = useRelayScopedPresence({
     userPubkey: user?.pubkey,
-    presenceEnabled: presencePublishingEnabled,
     currentView,
     focusedTask,
     relayScopeIds: resolveChannelRelayScopeIds(
@@ -624,13 +615,6 @@ function FeedIndexContent() {
     </>
   );
 
-  const uiConfig: FeedPageUiConfig = useMemo(
-    () => ({
-      completionSoundEnabled,
-      onToggleCompletionSound: handleToggleCompletionSound,
-    }),
-    [completionSoundEnabled, handleToggleCompletionSound]
-  );
   const viewCommands = useMemo<FeedViewCommands>(
     () => ({
       focusSidebar: () => setIsSidebarFocused(true),
@@ -691,7 +675,6 @@ function FeedIndexContent() {
       },
       forceShowComposer: forceShowComposeForGuide,
       composeGuideActivationSignal,
-      compactTaskCardsEnabled,
       isInteractionBlocked,
       onBlockedInteractionAttempt: handleBlockedInteractionAttempt,
       isHydrating,
@@ -707,7 +690,6 @@ function FeedIndexContent() {
       setMentionRequest,
       forceShowComposeForGuide,
       composeGuideActivationSignal,
-      compactTaskCardsEnabled,
       isInteractionBlocked,
       handleBlockedInteractionAttempt,
       isHydrating,
@@ -836,7 +818,6 @@ function FeedIndexContent() {
   return (
     <FeedPageProviders
       coreHandlers={coreHandlers}
-      uiConfig={uiConfig}
       surfaceState={feedSurfaceState}
       taskViewModel={feedTaskViewModel}
       viewState={feedViewState}

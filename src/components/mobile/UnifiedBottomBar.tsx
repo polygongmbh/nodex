@@ -25,7 +25,7 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/nip96-attachment-upload";
-import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
@@ -577,7 +577,7 @@ export function UnifiedBottomBar({
             : attachment
         )
       );
-      if (file.type.startsWith("image/") && useFeedPreferencesStore.getState().autoCaptionEnabled) {
+      if (file.type.startsWith("image/") && usePreferencesStore.getState().autoCaptionEnabled) {
         featureDebugLog("auto-caption", "Starting mobile post-upload caption generation for image attachment", {
           attachmentId: id,
           fileName: file.name,
@@ -636,7 +636,7 @@ export function UnifiedBottomBar({
     if (!files || files.length === 0) return;
     const selectedFiles = Array.from(files);
     const imageFiles = selectedFiles.filter((file) => file.type.startsWith("image/"));
-    if (imageFiles.length > 0 && useFeedPreferencesStore.getState().autoCaptionEnabled) {
+    if (imageFiles.length > 0 && usePreferencesStore.getState().autoCaptionEnabled) {
       featureDebugLog("auto-caption", "Mobile image attachments queued for local caption inference", {
         imageCount: imageFiles.length,
       });

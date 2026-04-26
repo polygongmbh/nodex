@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { useIndexDerivedData } from "./use-index-derived-data";
 import { useIndexFilters } from "./use-index-filters";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -118,7 +118,7 @@ function Harness() {
 describe("useIndexDerivedData compose channels", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    useFeedTaskMutationStore.setState({
+    useTaskMutationStore.setState({
       localTasks: [],
       postedTags: [],
       suppressedNostrEventIds: new Set(),
@@ -217,7 +217,7 @@ describe("useIndexDerivedData sidebar people", () => {
     window.localStorage.clear();
     const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice" });
     const bob = makePerson({ id: "bob", name: "bob", displayName: "Bob" });
-    useFeedTaskMutationStore.setState({
+    useTaskMutationStore.setState({
       localTasks: [
         makeTask({ id: "a1", author: alice, tags: ["ops"], relays: ["relay-one"] }),
         makeTask({ id: "a2", author: alice, tags: ["ops"], relays: ["relay-one"] }),

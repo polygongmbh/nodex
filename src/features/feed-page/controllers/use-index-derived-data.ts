@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Task, Channel, Relay, TaskStatusType, PostedTag } from "@/types";
 import type { Person } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
@@ -92,9 +92,9 @@ export function useIndexDerivedData({
   personFrecencyState,
   isHydrating = false,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
-  const localTasks = useFeedTaskMutationStore((s) => s.localTasks);
-  const postedTags = useFeedTaskMutationStore((s) => s.postedTags);
-  const suppressedNostrEventIds = useFeedTaskMutationStore((s) => s.suppressedNostrEventIds);
+  const localTasks = useTaskMutationStore((s) => s.localTasks);
+  const postedTags = useTaskMutationStore((s) => s.postedTags);
+  const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
   const filteredNostrEvents = useMemo(() => {
     return nostrEvents.filter((event) => {
       if (suppressedNostrEventIds.has(event.id)) return false;

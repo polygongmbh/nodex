@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useListingStatusPublish } from "./use-listing-status-publish";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { makePerson, makeTask } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
@@ -31,7 +31,7 @@ function Harness({
 }: {
   publishEvent?: ReturnType<typeof vi.fn>;
 }) {
-  const localTasks = useFeedTaskMutationStore((s) => s.localTasks);
+  const localTasks = useTaskMutationStore((s) => s.localTasks);
   const allTasks = localTasks.length > 0 ? localTasks : [listingTask];
 
   const { handleListingStatusChange } = useListingStatusPublish({
@@ -53,7 +53,7 @@ function Harness({
 
 describe("useListingStatusPublish", () => {
   beforeEach(() => {
-    useFeedTaskMutationStore.setState({
+    useTaskMutationStore.setState({
       localTasks: [],
       postedTags: [],
       suppressedNostrEventIds: new Set(),

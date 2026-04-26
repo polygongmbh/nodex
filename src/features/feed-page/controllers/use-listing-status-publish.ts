@@ -5,7 +5,7 @@ import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Nip99ListingStatus, Task } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -36,7 +36,7 @@ export function useListingStatusPublish({
   publishEvent,
   resolveTaskOriginRelay,
 }: UseListingStatusPublishOptions) {
-  const setLocalTasks = useFeedTaskMutationStore((s) => s.setLocalTasks);
+  const setLocalTasks = useTaskMutationStore((s) => s.setLocalTasks);
 
   const handleListingStatusChange = useCallback((taskId: string, status: Nip99ListingStatus) => {
     if (guardInteraction("modify")) return;

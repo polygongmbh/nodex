@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useIndexFilters } from "./use-index-filters";
 import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
@@ -65,7 +65,7 @@ function Harness({
   const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<Person[]>(
     startWithEmptyScope ? [] : peopleSeed
   );
-  const postedTags = useFeedTaskMutationStore((s) => s.postedTags);
+  const postedTags = useTaskMutationStore((s) => s.postedTags);
   const [searchQuery, setSearchQuery] = useState("");
   const relayState = useRelayFilterState({
     relays,
@@ -160,7 +160,7 @@ describe("useIndexFilters", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.mocked(toast).mockClear();
-    useFeedTaskMutationStore.setState({
+    useTaskMutationStore.setState({
       localTasks: [],
       postedTags: [],
       suppressedNostrEventIds: new Set(),

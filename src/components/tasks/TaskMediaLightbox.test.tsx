@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { TaskMediaLightbox } from "./TaskMediaLightbox";
 import type { TaskMediaItem } from "@/lib/task-media";
-import { useFeedPreferencesStore } from "@/features/feed-page/stores/feed-preferences-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 
 class ResizeObserverMock {
   observe() {}
@@ -22,7 +22,7 @@ describe("TaskMediaLightbox keyboard navigation", () => {
 
   beforeEach(() => {
     window.localStorage.clear();
-    useFeedPreferencesStore.setState({ reducedDataMode: "auto" });
+    usePreferencesStore.setState({ reducedDataMode: "auto" });
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
   });
 
@@ -122,7 +122,7 @@ describe("TaskMediaLightbox keyboard navigation", () => {
   });
 
   it("shows a load-full-image action in reduced-data mode when preview metadata exists", () => {
-    useFeedPreferencesStore.setState({ reducedDataMode: "on" });
+    usePreferencesStore.setState({ reducedDataMode: "on" });
 
     render(
       <TaskMediaLightbox

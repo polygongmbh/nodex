@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { Task, ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
@@ -23,7 +24,6 @@ interface TaskTreeProps {
   isMobile?: boolean;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
-  compactTaskCardsEnabled?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
   onMentionRequestConsumed?: (requestId: number) => void;
   mentionRequest?: {
@@ -43,7 +43,6 @@ export function TaskTree({
   isMobile = false,
   forceShowComposer,
   composeGuideActivationSignal,
-  compactTaskCardsEnabled = false,
   isPendingPublishTask,
   onMentionRequestConsumed,
   composeRestoreRequest = null,
@@ -51,6 +50,7 @@ export function TaskTree({
   isInteractionBlocked = false,
   isHydrating = false,
 }: TaskTreeProps) {
+  const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
   const interactionModel = useFeedViewInteractionModel();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;

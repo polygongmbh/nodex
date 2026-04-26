@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanView } from "./KanbanView";
 import { makePerson, makeTask } from "@/test/fixtures";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 
 const dndMockState: {
   onDragEnd: ((result: {
@@ -76,6 +77,7 @@ vi.mock("@hello-pangea/dnd", () => ({
 
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
+  usePreferencesStore.setState({ compactTaskCardsEnabled: false });
 });
 
 describe("KanbanView", () => {
@@ -272,6 +274,7 @@ describe("KanbanView", () => {
       dueTime: "10:00",
     });
 
+    usePreferencesStore.setState({ compactTaskCardsEnabled: true });
     render(
       <KanbanView
         focusedTaskId={null}
@@ -279,7 +282,6 @@ describe("KanbanView", () => {
         allTasks={[task]}
         currentUser={author}
         depthMode="leaves"
-        compactTaskCardsEnabled
       />
     );
 

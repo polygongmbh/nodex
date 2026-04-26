@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPublishFlow } from "./use-task-publish-flow";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
@@ -54,9 +54,9 @@ function Harness({
   hasDisconnectedSelectedRelays?: boolean;
   queryClient?: QueryClient;
 }) {
-  const localTasks = useFeedTaskMutationStore((s) => s.localTasks);
-  const postedTags = useFeedTaskMutationStore((s) => s.postedTags);
-  const suppressedNostrEventIds = useFeedTaskMutationStore((s) => s.suppressedNostrEventIds);
+  const localTasks = useTaskMutationStore((s) => s.localTasks);
+  const postedTags = useTaskMutationStore((s) => s.postedTags);
+  const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
   const availablePeople = people.length > 0 ? people : [currentUser];
   const allTasks = localTasks.length > 0 ? localTasks : initialTasks;
   const hook = useTaskPublishFlow({
@@ -209,7 +209,7 @@ declare global {
 
 function renderHarness(props?: Parameters<typeof Harness>[0]) {
   if (props?.initialTasks?.length) {
-    useFeedTaskMutationStore.setState({ localTasks: props.initialTasks });
+    useTaskMutationStore.setState({ localTasks: props.initialTasks });
   }
   const queryClient = new QueryClient();
   return render(
@@ -223,10 +223,11 @@ describe("useTaskPublishFlow", () => {
   beforeEach(() => {
     window.__TEST_RESULT__ = undefined;
     window.localStorage.clear();
-    useFeedTaskMutationStore.setState({
+    useTaskMutationStore.setState({
       localTasks: [],
       postedTags: [],
       suppressedNostrEventIds: new Set(),
+      failedPublishDrafts: [],
     });
   });
 

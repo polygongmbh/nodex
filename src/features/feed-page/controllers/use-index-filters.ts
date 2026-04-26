@@ -32,7 +32,7 @@ import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-ur
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, ChannelMatchMode, PostedTag, QuickFilterState, Relay } from "@/types";
 import type { Person } from "@/types/person";
-import { useFeedTaskMutationStore } from "@/features/feed-page/stores/feed-task-mutation-store";
+import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 
 interface UseIndexFiltersOptions {
@@ -60,7 +60,7 @@ export function useIndexFilters({
   hasLiveHydratedScope = false,
   isHydrating = false,
 }: UseIndexFiltersOptions) {
-  const setPostedTags = useFeedTaskMutationStore((s) => s.setPostedTags);
+  const setPostedTags = useTaskMutationStore((s) => s.setPostedTags);
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
   const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
     () => loadPersistedChannelFilters()
@@ -80,7 +80,7 @@ export function useIndexFilters({
     const channelFilterStatesSnapshot = new Map(channelFilterStates);
     const peopleSnapshot = people.map((person) => ({ ...person }));
     const activeRelayIdsSnapshot = new Set(activeRelayIds);
-    const postedTagsSnapshot = useFeedTaskMutationStore.getState().postedTags.map((entry) => ({
+    const postedTagsSnapshot = useTaskMutationStore.getState().postedTags.map((entry) => ({
       ...entry,
       relayIds: [...entry.relayIds],
     }));

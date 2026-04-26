@@ -15,7 +15,7 @@ interface PersistedFeedPreferences {
   reducedDataMode: ReducedDataMode;
 }
 
-interface FeedPreferencesState extends PersistedFeedPreferences {
+interface PreferencesState extends PersistedFeedPreferences {
   searchQuery: string;
 
   setCompactTaskCardsEnabled: (enabled: boolean) => void;
@@ -28,7 +28,7 @@ interface FeedPreferencesState extends PersistedFeedPreferences {
   setReducedDataMode: (mode: ReducedDataMode) => void;
 }
 
-export const useFeedPreferencesStore = create<FeedPreferencesState>()(
+export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
       compactTaskCardsEnabled: false,

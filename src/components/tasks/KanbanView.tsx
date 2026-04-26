@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { Plus, X } from "lucide-react";
 import { TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import {
@@ -31,7 +32,6 @@ interface KanbanViewProps {
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode: KanbanDepthMode;
-  compactTaskCardsEnabled?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   isHydrating?: boolean;
@@ -81,13 +81,13 @@ export function KanbanView({
   searchQueryOverride,
   depthMode,
   focusedTaskId,
-  compactTaskCardsEnabled = false,
   isPendingPublishTask,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
 }: KanbanViewProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
   const { authPolicy, guardModify, focusSidebar, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();
   const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatus>>({});
