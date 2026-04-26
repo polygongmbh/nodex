@@ -212,6 +212,7 @@
     "warnings": {
       "parentLocalOnly": "Parent reference is local-only; publishing task without parent link",
       "disconnectedSelectedFeeds": "Reconnect selected spaces before modifying or posting",
+      "noWritableRelay": "Connect to at least one space before continuing",
       "partialPublish": "Published to {{publishedCount}} of {{targetCount}} selected spaces",
       "readOnlyParentReplyHidden": "This thread is on a read-only space, so replies are disabled here."
     }
