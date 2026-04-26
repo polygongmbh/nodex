@@ -2,7 +2,7 @@ import { HandHelping, MessageSquare, Package } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import type { ReactNode } from "react";
-import { UserAvatar } from "@/components/ui/user-avatar";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,9 +33,8 @@ import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-time
 import { useTranslation } from "react-i18next";
 import { getTaskStatus, type Nip99ListingStatus, type RawNostrEvent, type Task } from "@/types";
 import type { Person } from "@/types/person";
-import { PersonHoverCard } from "@/components/people/PersonHoverCard";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
-import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
+import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
+import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 
 interface FeedTaskCardProps {
   task: Task;
@@ -94,13 +93,6 @@ export function FeedTaskCard({
     return t("hints.statusToggle.open", { alternateKey });
   };
   const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
-  const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
-    event.stopPropagation();
-    const shortcutIntent = getPersonShortcutIntent(event);
-    if (!shortcutIntent) return;
-    event.preventDefault();
-    void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
-  };
   const formatFeedNpubLabel = (value: string, showFull: boolean): string => {
     if (showFull || value.length <= 11) return value;
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
@@ -296,51 +288,34 @@ export function FeedTaskCard({
               <MessageSquare className={cn("text-muted-foreground", "w-5 h-5")} />
             </span>
           )}
-          <PersonHoverCard person={resolvedAuthor}>
-            <PersonActionMenu person={resolvedAuthor} enableModifierShortcuts>
-              <button
-                type="button"
-                className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
-                onClick={(event) => handleAuthorShortcut(event, resolvedAuthor)}
-              >
-                <UserAvatar
-                  id={resolvedAuthor.id}
-                  displayName={resolvedAuthor.displayName}
-                  avatarUrl={resolvedAuthor.avatar}
-                  className={cn("flex-shrink-0", isMobile ? "w-7 h-7" : "w-8 h-8")}
-                  beamTestId={`feed-beam-${task.id}`}
-                />
-              </button>
-            </PersonActionMenu>
-          </PersonHoverCard>
+          <InteractivePersonAvatar
+            person={resolvedAuthor}
+            sizeClassName={isMobile ? "w-7 h-7" : "w-8 h-8"}
+            beamTestId={`feed-beam-${task.id}`}
+            ariaLabel={t("people.actions.openMenu", { name: authorMeta.primary })}
+          />
           <div className="flex-1 min-w-0">
             <div className={cn("mb-1 flex min-w-0 items-start text-muted-foreground", isMobile ? "gap-1 text-xs" : "gap-2 text-sm")}>
               <div className={cn("min-w-0 flex-1 flex-wrap items-center", isMobile ? "gap-1" : "gap-2", "inline-flex")}>
                 {hasPrimaryAuthorLabel ? (
                   <>
-                    <PersonHoverCard person={resolvedAuthor}>
-                      <PersonActionMenu person={resolvedAuthor} enableModifierShortcuts>
-                        <button
-                          type="button"
-                          className={cn(
-                            "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
-                            isMobile && "max-w-full"
-                          )}
-                          aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
-                          onClick={(event) => handleAuthorShortcut(event, resolvedAuthor)}
-                        >
-                          <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
-                            {primaryAuthorLabel}
-                          </span>
-                          {secondaryAuthorLabel && !isMobile ? (
-                            <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
-                              {` (${secondaryAuthorLabel})`}
-                            </span>
-                          ) : null}
-                        </button>
-                      </PersonActionMenu>
-                    </PersonHoverCard>
+                    <InteractivePersonName
+                      person={resolvedAuthor}
+                      ariaLabel={t("people.actions.openMenu", { name: authorMeta.primary })}
+                      className={cn(
+                        "font-medium text-foreground hover:text-primary",
+                        isMobile && "max-w-full"
+                      )}
+                    >
+                      <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
+                        {primaryAuthorLabel}
+                      </span>
+                      {secondaryAuthorLabel && !isMobile ? (
+                        <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
+                          {` (${secondaryAuthorLabel})`}
+                        </span>
+                      ) : null}
+                    </InteractivePersonName>
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}

@@ -44,9 +44,7 @@ import {
 } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
-import { PersonHoverCard } from "@/components/people/PersonHoverCard";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
-import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
+import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
 import { buildFeedDisclosureResetKey } from "./feed-disclosure-reset";
 
@@ -171,13 +169,6 @@ export function FeedView({
 }: FeedViewProps) {
   const { t, i18n } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
-    event.stopPropagation();
-    const shortcutIntent = getPersonShortcutIntent(event);
-    if (!shortcutIntent) return;
-    event.preventDefault();
-    void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
-  };
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { relays, channels, people, quickFilters, channelMatchMode = "and" } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
@@ -435,18 +426,13 @@ export function FeedView({
                 <div className="min-w-0 inline-flex flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
                   <span className="truncate">{displayLabel}</span>
                   <span className="shrink-0">·</span>
-                  <PersonHoverCard person={resolvedUpdateAuthor}>
-                    <PersonActionMenu person={resolvedUpdateAuthor} enableModifierShortcuts>
-                      <button
-                        type="button"
-                        className="hover:text-foreground shrink-0"
-                        aria-label={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
-                        onClick={(event) => handleAuthorShortcut(event, resolvedUpdateAuthor)}
-                      >
-                        {updateAuthorMeta.primary}
-                      </button>
-                    </PersonActionMenu>
-                  </PersonHoverCard>
+                  <InteractivePersonName
+                    person={resolvedUpdateAuthor}
+                    className="hover:text-foreground shrink-0"
+                    ariaLabel={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
+                  >
+                    {updateAuthorMeta.primary}
+                  </InteractivePersonName>
                   <span className="shrink-0">·</span>
                   <button
                     type="button"
