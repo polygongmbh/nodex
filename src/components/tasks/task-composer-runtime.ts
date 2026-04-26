@@ -1,5 +1,6 @@
 import { createContext, createElement, useContext, useMemo, type PropsWithChildren } from "react";
 import { useFeedComposerOptions } from "@/features/feed-page/views/feed-surface-context";
+import { hasComposerSubstance } from "@/lib/composer-content";
 import {
   formatMentionIdentifierForDisplay,
   getMentionAliases,
@@ -261,7 +262,20 @@ export function resolveTaskComposerInitialState({
   defaultDueDate?: Date;
   allowFeedMessageTypes: boolean;
 }): TaskComposerInitialState {
-  const draftState = draftStorageKey ? readTaskComposerDraft(draftStorageKey) : null;
+  const storedDraft = draftStorageKey ? readTaskComposerDraft(draftStorageKey) : null;
+  // Only restore drafts with real user-entered substance (text, attachments,
+  // or NIP-99 metadata). Auxiliary state alone — e.g. a seeded due date,
+  // priority, channels, or location — must not leak from a previous context
+  // (like the calendar view) into a fresh composer elsewhere.
+  const draftState =
+    storedDraft &&
+    hasComposerSubstance({
+      content: storedDraft.content,
+      attachments: storedDraft.attachments,
+      nip99: storedDraft.nip99,
+    })
+      ? storedDraft
+      : null;
   const isStaleDraft = isTaskComposerDraftStale(draftState);
 
   return {

@@ -6,20 +6,17 @@
       "add": "Hinzufügen",
       "addAria": "Space hinzufügen",
       "remove": "Entfernen",
-      "removeAria": "Space {{name}} entfernen",
-      "longPressToReset": "Halten, um Spaces-Auswahl zurückzusetzen"
+      "removeAria": "Space {{name}} entfernen"
     },
     "channels": {
       "title": "Kanäle",
       "cycleHint": "Tippen zum Wechseln: neutral -> einschließen -> ausschließen",
       "matchMode": "Beiträge anzeigen, die allen ausgewählten Kanälen (UND) oder einem beliebigen ausgewählten Kanal (ODER) entsprechen",
       "modeAnd": "UND",
-      "modeOr": "ODER",
-      "longPressToReset": "Halten, um Kanal-Filter zurückzusetzen"
+      "modeOr": "ODER"
     },
     "people": {
-      "title": "Personen",
-      "longPressToReset": "Halten, um Personenauswahl zurückzusetzen"
+      "title": "Personen"
     },
     "savedFilters": {
       "actions": {

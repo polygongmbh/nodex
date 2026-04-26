@@ -56,7 +56,6 @@ import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 import { isWritableRelay } from "@/components/tasks/task-composer-runtime";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
-import { useLongPress } from "@/lib/use-long-press";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
@@ -712,31 +711,6 @@ export function UnifiedBottomBar({
   const toggleSelector = (type: SelectorType) => {
     setActiveSelector(activeSelector === type ? null : type);
   };
-
-  // Long-press on a filter button clears that section's selection (with undo
-  // toast). The reusable hook also suppresses the synthetic click so we don't
-  // also open the selector after the reset fires.
-  const relayLongPressHandlers = useLongPress({
-    onClick: () => toggleSelector("relay"),
-    onLongPress: () => {
-      void dispatchFeedInteraction({ type: "sidebar.relay.toggleAll" });
-      setActiveSelector(null);
-    },
-  });
-  const channelLongPressHandlers = useLongPress({
-    onClick: () => toggleSelector("channel"),
-    onLongPress: () => {
-      void dispatchFeedInteraction({ type: "sidebar.channel.toggleAll" });
-      setActiveSelector(null);
-    },
-  });
-  const personLongPressHandlers = useLongPress({
-    onClick: () => toggleSelector("person"),
-    onLongPress: () => {
-      void dispatchFeedInteraction({ type: "sidebar.person.toggleAll" });
-      setActiveSelector(null);
-    },
-  });
 
   // Count active filters
   const activeRelaysCount = relays.filter(r => r.isActive).length;
@@ -1420,11 +1394,9 @@ export function UnifiedBottomBar({
           {/* Filter/Selector Buttons */}
           <div className="flex items-center gap-0.5 ml-auto shrink-0">
             <button
-              {...relayLongPressHandlers}
-              aria-label={t("filters:filters.feeds.title")}
-              title={t("filters:filters.feeds.longPressToReset")}
+              onClick={() => toggleSelector("relay")}
               className={cn(
-                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "relay" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -1436,11 +1408,9 @@ export function UnifiedBottomBar({
               )}
             </button>
             <button
-              {...channelLongPressHandlers}
-              aria-label={t("filters:filters.channels.title")}
-              title={t("filters:filters.channels.longPressToReset")}
+              onClick={() => toggleSelector("channel")}
               className={cn(
-                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -1452,11 +1422,10 @@ export function UnifiedBottomBar({
               )}
             </button>
             <button
-              {...personLongPressHandlers}
+              onClick={() => toggleSelector("person")}
               aria-label={t("filters:filters.people.title")}
-              title={t("filters:filters.people.longPressToReset")}
               className={cn(
-                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >

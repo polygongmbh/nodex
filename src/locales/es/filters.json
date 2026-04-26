@@ -6,20 +6,17 @@
       "add": "Añadir",
       "addAria": "Añadir space",
       "remove": "Eliminar",
-      "removeAria": "Eliminar space {{name}}",
-      "longPressToReset": "Mantén pulsado para vaciar la selección de spaces"
+      "removeAria": "Eliminar space {{name}}"
     },
     "channels": {
       "title": "Canales",
       "cycleHint": "Toca para cambiar: neutral → incluir → excluir",
       "matchMode": "Mostrar publicaciones que coincidan con todos los canales seleccionados (Y) o con cualquiera de los canales seleccionados (O)",
       "modeAnd": "Y",
-      "modeOr": "O",
-      "longPressToReset": "Mantén pulsado para vaciar los filtros de canales"
+      "modeOr": "O"
     },
     "people": {
-      "title": "Personas",
-      "longPressToReset": "Mantén pulsado para vaciar la selección de personas"
+      "title": "Personas"
     },
     "savedFilters": {
       "actions": {
