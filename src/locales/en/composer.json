@@ -38,7 +38,6 @@
       "tag": "Add or select at least one #channel",
       "commentRelay": "Select at least one green space to post a comment",
       "relay": "Select a single space or a parent task to create a new task",
-      "selectTask": "Select a task to reply to",
       "publishing": "Publishing..."
     },
     "blockedDetail": {
@@ -49,7 +48,6 @@
         "tag": "Add at least one channel tag like #design, or use an included channel filter.",
         "commentRelay": "Comments can be posted to any green space.",
         "relay": "Choose exactly one green space for a new task, or post from inside an existing task.",
-        "selectTask": "Open a task first if you want to post a comment.",
         "uploading": "Your attachments are still uploading. Posting will unlock automatically when they finish.",
         "uploadFailed": "Retry or remove failed attachments before posting.",
         "publishing": "This post is already on the way."
@@ -59,7 +57,6 @@
         "tag": "Add #channel",
         "commentRelay": "Select space",
         "relay": "Select space",
-        "selectTask": "Select task",
         "uploading": "Wait for uploads",
         "uploadFailed": "Fix attachments",
         "publishing": "Publishing..."

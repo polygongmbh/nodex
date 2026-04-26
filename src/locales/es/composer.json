@@ -38,7 +38,6 @@
       "tag": "Añade o selecciona al menos un #canal",
       "commentRelay": "Selecciona al menos un space verde para publicar un comentario",
       "relay": "Selecciona un único space o una tarea padre para crear una nueva tarea",
-      "selectTask": "Selecciona una tarea para responder",
       "publishing": "Publicando..."
     },
     "blockedDetail": {
@@ -49,7 +48,6 @@
         "tag": "Añade al menos una etiqueta de canal como #design o usa un filtro de canal incluido.",
         "commentRelay": "Los comentarios pueden publicarse en cualquier space verde.",
         "relay": "Elige exactamente un space verde para una tarea nueva o publica desde una tarea existente.",
-        "selectTask": "Abre primero una tarea si quieres publicar un comentario.",
         "uploading": "Tus archivos todavía se están subiendo. La publicación se habilitará automáticamente cuando terminen.",
         "uploadFailed": "Reintenta o elimina los archivos fallidos antes de publicar.",
         "publishing": "Esta entrada ya se está publicando."
@@ -59,7 +57,6 @@
         "tag": "Añadir #canal",
         "commentRelay": "Seleccionar space",
         "relay": "Seleccionar space",
-        "selectTask": "Seleccionar tarea",
         "uploading": "Esperar subidas",
         "uploadFailed": "Corregir archivos",
         "publishing": "Publicando..."

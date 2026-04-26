@@ -747,7 +747,6 @@ export function UnifiedBottomBar({
   const showTaskSubmitBlockBanner =
     taskSubmitBlock?.code !== "write" && taskSubmitBlock?.code !== "signin";
   const showTaskSubmitBlockDetail = taskSubmitBlock?.code === "relay"
-    || taskSubmitBlock?.code === "selectTask"
     || taskSubmitBlock?.code === "uploading"
     || taskSubmitBlock?.code === "uploadFailed";
   const isPrimarySendEmptyDisabled = canCreateContent && sharedText.trim().length === 0;

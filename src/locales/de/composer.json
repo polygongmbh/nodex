@@ -38,7 +38,6 @@
       "tag": "Mindestens einen #channel hinzufügen oder auswählen",
       "commentRelay": "Wähle mindestens einen grünen Space, um einen Kommentar zu posten",
       "relay": "Wähle einen einzelnen Space oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
-      "selectTask": "Wähle eine Aufgabe zum Antworten",
       "publishing": "Wird veröffentlicht..."
     },
     "blockedDetail": {
@@ -49,7 +48,6 @@
         "tag": "Füge mindestens ein Channel-Tag wie #design hinzu oder nutze einen eingeschlossenen Channel-Filter.",
         "commentRelay": "Kommentare können auf jedem grünen Space veröffentlicht werden.",
         "relay": "Wähle für eine neue Aufgabe genau einen grünen Space oder poste aus einer bestehenden Aufgabe heraus.",
-        "selectTask": "Öffne zuerst eine Aufgabe, wenn du einen Kommentar posten willst.",
         "uploading": "Deine Anhänge werden noch hochgeladen. Das Posten wird automatisch freigeschaltet, sobald sie fertig sind.",
         "uploadFailed": "Versuche fehlgeschlagene Anhänge erneut oder entferne sie, bevor du postest.",
         "publishing": "Dieser Beitrag wird bereits veröffentlicht."
@@ -59,7 +57,6 @@
         "tag": "#channel hinzufügen",
         "commentRelay": "Space wählen",
         "relay": "Space auswählen",
-        "selectTask": "Aufgabe wählen",
         "uploading": "Auf Uploads warten",
         "uploadFailed": "Anhänge korrigieren",
         "publishing": "Wird veröffentlicht..."

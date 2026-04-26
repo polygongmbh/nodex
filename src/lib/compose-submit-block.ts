@@ -4,7 +4,6 @@ export type ComposeSubmitBlockCode =
   | "signin"
   | "write"
   | "tag"
-  | "selectTask"
   | "commentRelay"
   | "relay"
   | "uploading"
@@ -15,7 +14,6 @@ export type ComposeSubmitBlockAction =
   | "open-channel-selector"
   | "open-relay-selector"
   | "focus-attachments"
-  | "focus-task-context"
   | "review-blocker";
 
 export interface ComposeSubmitBlockState {
@@ -38,7 +36,6 @@ interface ResolveComposeSubmitBlockOptions {
   hasMeaningfulContent: boolean;
   hasAtLeastOneTag: boolean;
   canInheritParentTags: boolean;
-  hasCommentWithoutParent?: boolean;
   hasInvalidRootCommentRelaySelection?: boolean;
   hasInvalidRootTaskRelaySelection?: boolean;
   hasPendingAttachmentUploads: boolean;
@@ -51,7 +48,6 @@ export function resolveComposeSubmitBlock({
   hasMeaningfulContent,
   hasAtLeastOneTag,
   canInheritParentTags,
-  hasCommentWithoutParent = false,
   hasInvalidRootCommentRelaySelection = false,
   hasInvalidRootTaskRelaySelection = false,
   hasPendingAttachmentUploads,
@@ -113,17 +109,6 @@ export function resolveComposeSubmitBlock({
     };
   }
 
-  if (hasCommentWithoutParent) {
-    return {
-      code: "selectTask",
-      reason: t("composer.blocked.selectTask"),
-      detail: t("composer.blockedDetail.detail.selectTask"),
-      ctaLabel: t("composer.blockedDetail.cta.selectTask"),
-      action: "focus-task-context",
-      isHardDisabled: false,
-    };
-  }
-
   if (hasInvalidRootCommentRelaySelection) {
     return {
       code: "commentRelay",
@@ -151,7 +136,6 @@ export function resolveComposeSubmitBlock({
 
 export function shouldShowComposeSubmitBlockDetail(block: ComposeSubmitBlockState | null): boolean {
   return block?.code === "relay"
-    || block?.code === "selectTask"
     || block?.code === "uploading"
     || block?.code === "uploadFailed"
     || block?.code === "commentRelay";
@@ -167,7 +151,6 @@ export function getComposeSubmitBlockFocusTarget(
     case "focus-attachments":
       return "attachments";
     case "open-relay-selector":
-    case "focus-task-context":
     case "review-blocker":
       return "blocker";
     case null:
