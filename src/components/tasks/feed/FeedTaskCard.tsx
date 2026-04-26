@@ -2,7 +2,7 @@ import { HandHelping, MessageSquare, Package } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
 import type { ReactNode } from "react";
-import { UserAvatar } from "@/components/ui/user-avatar";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
