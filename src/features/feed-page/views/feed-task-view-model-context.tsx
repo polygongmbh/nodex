@@ -6,7 +6,6 @@ import type {
 export interface FeedTaskViewModel extends SharedTaskViewContext {
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
-  compactTaskCardsEnabled?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
   onMentionRequestConsumed?: (requestId: number) => void;
   mentionRequest?: {

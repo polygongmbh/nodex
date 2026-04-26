@@ -11,7 +11,6 @@ import {
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-context";
 import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
-import { FeedPageUiConfigProvider, type FeedPageUiConfig } from "./feed-page-ui-config";
 import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-context";
 
 export interface FeedPageCoreHandlers {
@@ -25,7 +24,6 @@ export interface FeedPageCoreHandlers {
 
 interface FeedPageProvidersProps extends PropsWithChildren {
   coreHandlers: FeedPageCoreHandlers;
-  uiConfig: FeedPageUiConfig;
   surfaceState: FeedSurfaceState;
   taskViewModel: FeedTaskViewModel;
   viewState: FeedViewState;
@@ -224,7 +222,6 @@ function FeedInteractionBusFromContexts({
 
 export function FeedPageProviders({
   coreHandlers,
-  uiConfig,
   surfaceState,
   taskViewModel,
   viewState,
@@ -243,13 +240,11 @@ export function FeedPageProviders({
       <FeedViewCommandsProvider value={viewCommands}>
         <FeedTaskCommandsProvider value={taskCommands}>
           <FeedInteractionBusFromContexts coreHandlers={coreHandlers}>
-            <FeedPageUiConfigProvider value={uiConfig}>
-              <FeedSurfaceProvider value={surfaceState}>
-                <FeedViewStateProvider value={viewState}>
-                  <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
-                </FeedViewStateProvider>
-              </FeedSurfaceProvider>
-            </FeedPageUiConfigProvider>
+            <FeedSurfaceProvider value={surfaceState}>
+              <FeedViewStateProvider value={viewState}>
+                <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
+              </FeedViewStateProvider>
+            </FeedSurfaceProvider>
           </FeedInteractionBusFromContexts>
         </FeedTaskCommandsProvider>
       </FeedViewCommandsProvider>
