@@ -360,7 +360,12 @@ export function TreeTaskItem({
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => {
-                  if (!canCompleteTask()) return;
+                  if (!canCompleteTask()) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    surfaceStatusBlockedFeedback();
+                    return;
+                  }
                   if (statusMenuOpenedOnPointerDownRef.current) {
                     statusMenuOpenedOnPointerDownRef.current = false;
                     e.stopPropagation();
@@ -423,13 +428,14 @@ export function TreeTaskItem({
                   allowStatusMenuOpenRef.current = false;
                   statusMenuOpenedOnPointerDownRef.current = false;
                 }}
-                disabled={!canCompleteTask()}
+                aria-disabled={!canCompleteTask() || undefined}
                 aria-label={t("tasks.actions.setStatus")}
                 title={canCompleteTask() ? getStatusToggleHint(task.status) : (statusBlockedReason || getStatusToggleHint(task.status))}
                 className={cn(
                   "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
-                  canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                  canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-60"
                 )}
+              >
               >
                 <TaskStateIcon
                   status={getTaskStatus(task)}
