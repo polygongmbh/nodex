@@ -493,6 +493,25 @@ export function TaskComposer({
 
   useEffect(() => {
     if (!draftStorageKey) return;
+    // A composer that's only carrying a `defaultDueDate` (e.g. the
+    // calendar's inline event composer seeded with the selected day) should
+    // not pollute the shared draft storage. Otherwise, opening the composer
+    // elsewhere later would inherit that date out of context. We persist
+    // only when the user has actually entered something meaningful.
+    const nip99HasContent = nip99 ? Object.values(nip99).some((value) => value !== undefined && value !== null && value !== "") : false;
+    const hasMeaningfulContent =
+      content.trim().length > 0
+      || explicitTagNames.length > 0
+      || explicitMentionPubkeys.length > 0
+      || priority !== undefined
+      || locationGeohash !== undefined
+      || attachments.length > 0
+      || nip99HasContent;
+    if (!hasMeaningfulContent) {
+      // Clear any stale draft so we don't keep replaying old state.
+      clearTaskComposerDraft(draftStorageKey);
+      return;
+    }
     writeTaskComposerDraft(draftStorageKey, {
       content,
       taskType,
