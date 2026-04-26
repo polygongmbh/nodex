@@ -1454,7 +1454,7 @@ export function UnifiedBottomBar({
             <button
               {...personLongPressHandlers}
               aria-label={t("filters:filters.people.title")}
-              title={t("filters:filters.people.longPressToReset", "Hold to reset")}
+              title={t("filters:filters.people.longPressToReset")}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
                 activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
