@@ -96,8 +96,16 @@ export function TreeTaskItem({
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
+  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const people = peopleProp ?? contextPeople;
   const authorProfiles = useTaskAuthorProfiles();
+  const surfaceStatusBlockedFeedback = () => {
+    if (isInteractionBlocked && onBlockedInteractionAttempt) {
+      onBlockedInteractionAttempt();
+      return;
+    }
+    notifyTaskActionBlocked(getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people));
+  };
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     const statusType = getTaskStatusType(status);
