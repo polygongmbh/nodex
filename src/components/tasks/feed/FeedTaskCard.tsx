@@ -98,6 +98,7 @@ export function FeedTaskCard({
     if (showFull || value.length <= 11) return value;
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
   };
+  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const {
     canCompleteTask,
     statusMenuOpen,
@@ -110,7 +111,7 @@ export function FeedTaskCard({
     currentUser,
     people,
     isInteractionBlocked,
-    onBlockedInteractionAttempt: useFeedTaskViewModel().onBlockedInteractionAttempt,
+    onBlockedInteractionAttempt,
     getStatusToggleHint,
   });
   const isComment = task.taskType === "comment";
