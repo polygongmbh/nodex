@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useMemo, useState } from "react";
 import { useSavedFilterConfigs } from "./use-saved-filter-configs";
+import { useSavedFilterStore } from "@/features/feed-page/stores/saved-filter-store";
 import { makePerson, makeRelay } from "@/test/fixtures";
 import { makeFilterSnapshot, makeQuickFilters, selectPeople } from "@/test/filter-state";
 import type { Channel, ChannelMatchMode, Relay } from "@/types";
@@ -113,6 +114,10 @@ function Harness() {
 describe("useSavedFilterConfigs", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    useSavedFilterStore.setState({
+      activeConfigurationId: null,
+      configurations: [],
+    });
   });
 
   it("saves the current snapshot and reapplies it later", () => {
@@ -161,7 +166,7 @@ describe("useSavedFilterConfigs", () => {
   });
 
   it("keeps all relays deactivated when applying a configuration with stale relay ids", () => {
-    window.localStorage.setItem("nodex.saved-filter-configurations.v1", JSON.stringify({
+    useSavedFilterStore.setState({
       activeConfigurationId: null,
       configurations: [
         {
@@ -181,7 +186,7 @@ describe("useSavedFilterConfigs", () => {
           updatedAt: "2026-03-18T00:00:00.000Z",
         },
       ],
-    }));
+    });
 
     render(<Harness />);
 

@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import {   findSavedFilterConfiguration, } from "@/domain/preferences/saved-filter-state";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
-import {   loadSavedFilterState, saveSavedFilterState, } from "@/infrastructure/preferences/saved-filter-configurations-storage";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { areFilterSnapshotsEqual, type FilterSnapshot } from "@/domain/content/filter-snapshot";
-import type {   Channel, ChannelMatchMode, QuickFilterState, Relay, SavedFilterConfiguration, SavedFilterController, SavedFilterState } from "@/types";
+import { useSavedFilterStore } from "@/features/feed-page/stores/saved-filter-store";
+import type {   Channel, ChannelMatchMode, QuickFilterState, Relay, SavedFilterConfiguration, SavedFilterController } from "@/types";
 import type { Person } from "@/types/person";
 
 interface UseSavedFilterConfigsOptions {
@@ -29,18 +28,16 @@ export function useSavedFilterConfigs({
   setQuickFilters,
   resetFiltersToDefault,
 }: UseSavedFilterConfigsOptions) {
-  const [savedFilterState, setSavedFilterState] = useState<SavedFilterState>(() => loadSavedFilterState());
-
-  useEffect(() => {
-    saveSavedFilterState(savedFilterState);
-  }, [savedFilterState]);
+  const configurations = useSavedFilterStore((s) => s.configurations);
+  const activeConfigurationId = useSavedFilterStore((s) => s.activeConfigurationId);
+  const addConfiguration = useSavedFilterStore((s) => s.addConfiguration);
+  const setActiveConfigurationId = useSavedFilterStore((s) => s.setActiveConfigurationId);
+  const renameConfiguration = useSavedFilterStore((s) => s.renameConfiguration);
+  const deleteConfiguration = useSavedFilterStore((s) => s.deleteConfiguration);
 
   const activeSavedConfiguration = useMemo(
-    () =>
-      savedFilterState.configurations.find(
-        (configuration) => configuration.id === savedFilterState.activeConfigurationId
-      ) || null,
-    [savedFilterState.activeConfigurationId, savedFilterState.configurations]
+    () => configurations.find((c) => c.id === activeConfigurationId) || null,
+    [activeConfigurationId, configurations]
   );
 
   const createSnapshotFromConfiguration = useCallback(
@@ -58,14 +55,10 @@ export function useSavedFilterConfigs({
     if (!activeSavedConfiguration) return;
     const activeSnapshot = createSnapshotFromConfiguration(activeSavedConfiguration);
     if (areFilterSnapshotsEqual(activeSnapshot, currentFilterSnapshot)) return;
-    setSavedFilterState((previous) => {
-      if (!previous.activeConfigurationId) return previous;
-      return {
-        ...previous,
-        activeConfigurationId: null,
-      };
-    });
-  }, [activeSavedConfiguration, createSnapshotFromConfiguration, currentFilterSnapshot]);
+    if (activeConfigurationId) {
+      setActiveConfigurationId(null);
+    }
+  }, [activeSavedConfiguration, createSnapshotFromConfiguration, currentFilterSnapshot, activeConfigurationId, setActiveConfigurationId]);
 
   const handleSaveCurrentFilterConfiguration = useCallback((name: string) => {
     const normalizedName = name.trim();
@@ -87,22 +80,16 @@ export function useSavedFilterConfigs({
       updatedAt: nowIso,
     };
 
-    setSavedFilterState((previous) => ({
-      activeConfigurationId: configurationId,
-      configurations: [...previous.configurations, configuration],
-    }));
-  }, [currentFilterSnapshot]);
+    addConfiguration(configuration);
+  }, [currentFilterSnapshot, addConfiguration]);
 
   const handleApplySavedFilterConfiguration = useCallback((configurationId: string) => {
-    const configuration = findSavedFilterConfiguration(savedFilterState, configurationId);
+    const configuration = configurations.find((c) => c.id === configurationId) || null;
     if (!configuration) return;
 
-    if (savedFilterState.activeConfigurationId === configurationId) {
+    if (activeConfigurationId === configurationId) {
       resetFiltersToDefault();
-      setSavedFilterState((previous) => ({
-        ...previous,
-        activeConfigurationId: null,
-      }));
+      setActiveConfigurationId(null);
       return;
     }
 
@@ -125,14 +112,13 @@ export function useSavedFilterConfigs({
     setPeople((previous) => mapPeopleSelection(previous, (person) => selectedPeopleIdSet.has(person.id)));
     setQuickFilters(normalizeQuickFilterState(configuration.quickFilters));
 
-    setSavedFilterState((previous) => ({
-      ...previous,
-      activeConfigurationId: configurationId,
-    }));
+    setActiveConfigurationId(configurationId);
   }, [
     relays,
     resetFiltersToDefault,
-    savedFilterState,
+    configurations,
+    activeConfigurationId,
+    setActiveConfigurationId,
     setActiveRelayIds,
     setChannelFilterStates,
     setChannelMatchMode,
@@ -143,32 +129,17 @@ export function useSavedFilterConfigs({
   const handleRenameSavedFilterConfiguration = useCallback((configurationId: string, nextName: string) => {
     const normalizedName = nextName.trim();
     if (!normalizedName) return;
-    setSavedFilterState((previous) => ({
-      ...previous,
-      configurations: previous.configurations.map((configuration) =>
-        configuration.id === configurationId
-          ? {
-              ...configuration,
-              name: normalizedName,
-              updatedAt: new Date().toISOString(),
-            }
-          : configuration
-      ),
-    }));
-  }, []);
+    renameConfiguration(configurationId, normalizedName);
+  }, [renameConfiguration]);
 
   const handleDeleteSavedFilterConfiguration = useCallback((configurationId: string) => {
-    setSavedFilterState((previous) => ({
-      activeConfigurationId:
-        previous.activeConfigurationId === configurationId ? null : previous.activeConfigurationId,
-      configurations: previous.configurations.filter((configuration) => configuration.id !== configurationId),
-    }));
-  }, []);
+    deleteConfiguration(configurationId);
+  }, [deleteConfiguration]);
 
   const savedFilterController = useMemo<SavedFilterController>(
     () => ({
-      configurations: savedFilterState.configurations,
-      activeConfigurationId: savedFilterState.activeConfigurationId,
+      configurations,
+      activeConfigurationId,
       onApplyConfiguration: handleApplySavedFilterConfiguration,
       onSaveCurrentConfiguration: handleSaveCurrentFilterConfiguration,
       onRenameConfiguration: handleRenameSavedFilterConfiguration,
@@ -179,13 +150,12 @@ export function useSavedFilterConfigs({
       handleDeleteSavedFilterConfiguration,
       handleRenameSavedFilterConfiguration,
       handleSaveCurrentFilterConfiguration,
-      savedFilterState.activeConfigurationId,
-      savedFilterState.configurations,
+      activeConfigurationId,
+      configurations,
     ]
   );
 
   return {
-    savedFilterState,
     savedFilterController,
   };
 }
