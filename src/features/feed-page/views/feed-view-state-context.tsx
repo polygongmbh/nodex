@@ -13,7 +13,6 @@ export interface FeedViewState {
   isManageRouteActive: boolean;
   canCreateContent: boolean;
   profileCompletionPromptSignal: number;
-  failedPublishDrafts: FailedPublishDraft[];
   visibleFailedPublishDrafts: FailedPublishDraft[];
   selectedPublishableRelayIds: string[];
   desktopSwipeHandlers: HTMLAttributes<HTMLDivElement>;
@@ -28,7 +27,6 @@ const defaultState: FeedViewState = {
   isManageRouteActive: false,
   canCreateContent: false,
   profileCompletionPromptSignal: 0,
-  failedPublishDrafts: [],
   visibleFailedPublishDrafts: [],
   selectedPublishableRelayIds: [],
   desktopSwipeHandlers: {},

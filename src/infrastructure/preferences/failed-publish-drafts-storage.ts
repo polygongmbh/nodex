@@ -5,7 +5,6 @@ import { z } from "zod";
 
 import { FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 export { FAILED_PUBLISH_DRAFTS_STORAGE_KEY };
-const MAX_FAILED_PUBLISH_DRAFTS = 50;
 
 export interface FailedPublishDraft {
   id: string;
@@ -81,33 +80,4 @@ const failedPublishDraftSchema = z.object({
   publishTags: z.array(z.array(z.string())),
   publishParentId: z.string().optional(),
 });
-const failedPublishDraftsSchema = z.array(failedPublishDraftSchema);
-
-function hasLocalStorage(): boolean {
-  return typeof window !== "undefined" && Boolean(window.localStorage);
-}
-
-export function loadFailedPublishDrafts(): FailedPublishDraft[] {
-  if (!hasLocalStorage()) return [];
-  try {
-    const raw = window.localStorage.getItem(FAILED_PUBLISH_DRAFTS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = failedPublishDraftsSchema.safeParse(JSON.parse(raw));
-    if (!parsed.success) return [];
-    return (parsed.data as FailedPublishDraft[]).slice(0, MAX_FAILED_PUBLISH_DRAFTS);
-  } catch {
-    return [];
-  }
-}
-
-export function saveFailedPublishDrafts(drafts: FailedPublishDraft[]): void {
-  if (!hasLocalStorage()) return;
-  try {
-    window.localStorage.setItem(
-      FAILED_PUBLISH_DRAFTS_STORAGE_KEY,
-      JSON.stringify(drafts.slice(0, MAX_FAILED_PUBLISH_DRAFTS))
-    );
-  } catch {
-    // Ignore persistence errors and continue.
-  }
-}
+export const failedPublishDraftsSchema = z.array(failedPublishDraftSchema);

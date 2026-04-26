@@ -9,6 +9,7 @@ import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedViewState } from "./feed-view-state-context";
+import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { FeedPageSidebar } from "./FeedPageSidebar";
 import { DesktopViewsPane } from "./DesktopViewsPane";
 
@@ -26,11 +27,11 @@ export function DesktopAppShell({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const {
     currentView,
-    failedPublishDrafts,
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds,
     desktopSwipeHandlers,
   } = useFeedViewState();
+  const failedPublishDrafts = useFailedPublishDraftsStore((s) => s.failedPublishDrafts);
 
   return (
     <div className="grid app-shell-height overflow-hidden bg-background grid-cols-[auto,1fr] grid-rows-[var(--topbar-height),1fr] [--topbar-height:3.5rem] xl:[--topbar-height:4rem]">

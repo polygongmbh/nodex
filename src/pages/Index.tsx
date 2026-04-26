@@ -517,7 +517,6 @@ function FeedIndexContent() {
 
   const {
     composeRestoreRequest,
-    failedPublishDrafts,
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds,
     isPendingPublishTask,
@@ -766,7 +765,6 @@ function FeedIndexContent() {
       isManageRouteActive,
       canCreateContent: authPolicy.canCreateContent,
       profileCompletionPromptSignal,
-      failedPublishDrafts,
       visibleFailedPublishDrafts,
       selectedPublishableRelayIds,
       desktopSwipeHandlers,
@@ -776,7 +774,6 @@ function FeedIndexContent() {
       authPolicy.canCreateContent,
       currentView,
       desktopSwipeHandlers,
-      failedPublishDrafts,
       isAuthModalOpen,
       isManageRouteActive,
       isOnboardingOpen,

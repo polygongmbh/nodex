@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
+import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { toast } from "sonner";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {   removeCachedNostrEventById, type CachedNostrEvent, } from "@/infrastructure/nostr/event-cache";
@@ -56,7 +57,6 @@ import type {
 import type { Person } from "@/types/person";
 
 const PUBLISH_UNDO_DELAY_MS = 5000;
-const MAX_FAILED_PUBLISH_DRAFTS = 50;
 
 interface PublishResult {
   success: boolean;
@@ -144,8 +144,8 @@ export function useTaskPublishFlow({
   const setPostedTags = useTaskMutationStore((s) => s.setPostedTags);
   const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
   const setSuppressedNostrEventIds = useTaskMutationStore((s) => s.setSuppressedNostrEventIds);
-  const failedPublishDrafts = useTaskMutationStore((s) => s.failedPublishDrafts);
-  const setFailedPublishDrafts = useTaskMutationStore((s) => s.setFailedPublishDrafts);
+  const failedPublishDrafts = useFailedPublishDraftsStore((s) => s.failedPublishDrafts);
+  const setFailedPublishDrafts = useFailedPublishDraftsStore((s) => s.setFailedPublishDrafts);
 
   const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
   const [composeRestoreRequest, setComposeRestoreRequest] = useState<ComposeRestoreRequest | null>(null);
@@ -594,7 +594,7 @@ export function useTaskPublishFlow({
         if (!publishResult.success) {
           suppressFailedPublishEvent(publishResult.eventId);
           const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
-          setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, MAX_FAILED_PUBLISH_DRAFTS));
+          setFailedPublishDrafts((prev) => [failedDraft, ...prev]);
           setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
           notifyPublishSavedForRetry({
             relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
@@ -648,7 +648,7 @@ export function useTaskPublishFlow({
     if (!publishResult.success) {
       suppressFailedPublishEvent(publishResult.eventId);
       const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
-      setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, MAX_FAILED_PUBLISH_DRAFTS));
+      setFailedPublishDrafts((prev) => [failedDraft, ...prev]);
       notifyPublishSavedForRetry({
         relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
         reason: publishResult.rejectionReason,
@@ -877,7 +877,6 @@ export function useTaskPublishFlow({
 
   return {
     composeRestoreRequest,
-    failedPublishDrafts,
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds,
     isPendingPublishTask,

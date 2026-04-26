@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPublishFlow } from "./use-task-publish-flow";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
+import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
@@ -57,6 +58,7 @@ function Harness({
   const localTasks = useTaskMutationStore((s) => s.localTasks);
   const postedTags = useTaskMutationStore((s) => s.postedTags);
   const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
+  const failedPublishDrafts = useFailedPublishDraftsStore((s) => s.failedPublishDrafts);
   const availablePeople = people.length > 0 ? people : [currentUser];
   const allTasks = localTasks.length > 0 ? localTasks : initialTasks;
   const hook = useTaskPublishFlow({
@@ -183,12 +185,12 @@ function Harness({
       >
         SubmitWhitespaceDelimitedTokens
       </button>
-      <button onClick={() => hook.handleRetryFailedPublish(hook.failedPublishDrafts[0]?.id || "")}>Retry</button>
+      <button onClick={() => hook.handleRetryFailedPublish(failedPublishDrafts[0]?.id || "")}>Retry</button>
       <button onClick={() => hook.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due")}>
         Due
       </button>
       <button onClick={() => hook.handlePriorityChange("task-1", 60)}>Priority</button>
-      <output data-testid="draft-count">{String(hook.failedPublishDrafts.length)}</output>
+      <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
       <output data-testid="visible-draft-count">{String(hook.visibleFailedPublishDrafts.length)}</output>
       <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
       <output data-testid="local-count">{String(localTasks.length)}</output>
@@ -227,8 +229,8 @@ describe("useTaskPublishFlow", () => {
       localTasks: [],
       postedTags: [],
       suppressedNostrEventIds: new Set(),
-      failedPublishDrafts: [],
     });
+    useFailedPublishDraftsStore.setState({ failedPublishDrafts: [] });
   });
 
   it("queues a failed publish draft when submission is rejected", async () => {

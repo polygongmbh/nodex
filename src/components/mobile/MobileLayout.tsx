@@ -14,6 +14,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useMobileToastOffset } from "./use-mobile-toast-offset";
 
@@ -42,10 +43,10 @@ export function MobileLayout() {
     isOnboardingOpen,
     activeOnboardingStepId,
     isManageRouteActive,
-    failedPublishDrafts,
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds,
   } = useFeedViewState();
+  const failedPublishDrafts = useFailedPublishDraftsStore((s) => s.failedPublishDrafts);
 
   const dispatchManageRouteChange = useCallback((isActive: boolean) => {
     void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
