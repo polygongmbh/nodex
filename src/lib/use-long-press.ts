@@ -95,7 +95,6 @@ export function useLongPress({
     onPointerUp: cancel,
     onPointerLeave: cancel,
     onPointerCancel: cancel,
-    onPointerMove: cancel,
     onClick: handleClick,
     onContextMenu: handleContextMenu,
   };
