@@ -228,19 +228,21 @@ export function useIndexFilters({
       });
       return;
     }
+    const restoreSnapshot = captureFilterSnapshot();
     setChannelFilterStates(() => setExclusiveChannelFilter(channels, channelId));
     const channel = channelsWithState.find((entry) => entry.id === channelId);
-    notifyShowingOnlyChannel(channel?.name || channelId);
-  }, [channels, channelFilterStates, channelsWithState, setChannelFilterStates]);
+    notifyShowingOnlyChannel(channel?.name || channelId, { onUndo: restoreSnapshot });
+  }, [captureFilterSnapshot, channels, channelFilterStates, channelsWithState, setChannelFilterStates]);
 
   const toggleAllChannels = useCallback(() => {
     const hasActiveFilters =
       channelFilterStates.size > 0 &&
       Array.from(channelFilterStates.values()).some((state) => state !== "neutral");
     if (!hasActiveFilters) return;
+    const restoreSnapshot = captureFilterSnapshot();
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-    notifyAllChannelsReset();
-  }, [channels, channelFilterStates, setChannelFilterStates]);
+    notifyAllChannelsReset({ onUndo: restoreSnapshot });
+  }, [captureFilterSnapshot, channels, channelFilterStates, setChannelFilterStates]);
 
   const togglePerson = useCallback((personId: string) => {
     setPeople((prev) =>
@@ -255,10 +257,11 @@ export function useIndexFilters({
       setPeople((prev) => mapPeopleSelection(prev, () => false));
       return;
     }
+    const restoreSnapshot = captureFilterSnapshot();
     setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === personId));
     const person = people.find((entry) => entry.id === personId);
-    notifyShowingOnlyPersonExclusive(person);
-  }, [people, setPeople]);
+    notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
+  }, [captureFilterSnapshot, people, setPeople]);
 
   const toggleAllPeople = useCallback(() => {
     if (sidebarPeople.length === 0) {
@@ -268,6 +271,7 @@ export function useIndexFilters({
     const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
     const hasSelectedPeople = people.some((person) => sidebarIds.has(person.id) && person.isSelected);
     if (!hasSelectedPeople) return;
+    const restoreSnapshot = captureFilterSnapshot();
     setPeople((prev) =>
       prev.map((person) =>
         sidebarIds.has(person.id)
@@ -275,8 +279,8 @@ export function useIndexFilters({
           : person
       )
     );
-    notifyFrequentPeopleDeselected();
-  }, [people, setPeople, sidebarPeople]);
+    notifyFrequentPeopleDeselected({ onUndo: restoreSnapshot });
+  }, [captureFilterSnapshot, people, setPeople, sidebarPeople]);
 
   const resetFiltersToDefault = useCallback(() => {
     setActiveRelayIds(new Set());
