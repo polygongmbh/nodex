@@ -6,6 +6,14 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.0] - 2026-04-26
+Minor release for mobile interaction polish, composer resilience, and feed preference persistence.
+
+- Mobile task and profile interactions now use larger touch targets, consistent profile menus and avatars, long-press reset affordances, and clearer undo handling for filter toasts across feed surfaces.
+- Composer flows now gate save and restore more carefully, remove stale `selectTask` submission blocking, simplify blocked-action guidance, and keep soft-disabled controls able to explain why an action is unavailable.
+- Calendar, feed, tree, and task-card surfaces received interaction polish including today and current-week emphasis, upcoming-card alignment cleanup, and done-task filtering in the tree view.
+- Saved filters, user preferences, and failed publish drafts now persist through dedicated Zustand-backed stores, reducing stale local state carryover and making failed publish recovery more reliable.
+
 ## [2.14.1] - 2026-04-24
 
 - Feed and Kanban task cards now use richer task affordances, including assignee avatar stacks, improved priority/status chip handling, and clearer localized listing/comment labels across English, German, and Spanish.
