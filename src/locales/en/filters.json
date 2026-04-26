@@ -6,17 +6,20 @@
       "add": "Add",
       "addAria": "Add space",
       "remove": "Remove",
-      "removeAria": "Remove space {{name}}"
+      "removeAria": "Remove space {{name}}",
+      "longPressToReset": "Hold to clear selected spaces"
     },
     "channels": {
       "title": "Channels",
       "cycleHint": "Tap to cycle: neutral -> include -> exclude",
       "matchMode": "Show posts that match all selected channels (AND) or any selected channel (OR)",
       "modeAnd": "AND",
-      "modeOr": "OR"
+      "modeOr": "OR",
+      "longPressToReset": "Hold to clear channel filters"
     },
     "people": {
-      "title": "People"
+      "title": "People",
+      "longPressToReset": "Hold to clear selected people"
     },
     "savedFilters": {
       "actions": {
