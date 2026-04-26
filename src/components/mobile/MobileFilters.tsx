@@ -149,9 +149,10 @@ export function MobileFilters({
     setIsProfileEditorOpen(true);
   }, [hasWritableRelayConnection, profileEditorOpenSignal, user]);
 
+  const profileEditBlocked = !hasWritableRelayConnection;
   const handleOpenProfileEditor = () => {
-    if (!hasWritableRelayConnection) {
-      toast.error(t("auth:auth.profile.noRelayConnected"));
+    if (profileEditBlocked) {
+      toast.warning(t("auth:auth.profile.noRelayConnected"), { id: "need-writable-relay" });
       return;
     }
     setIsProfileEditorOpen(true);
@@ -247,7 +248,12 @@ export function MobileFilters({
                   <button
                     onClick={handleOpenProfileEditor}
                     aria-label={t("auth:auth.profile.edit")}
-                    className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
+                    aria-disabled={profileEditBlocked || undefined}
+                    title={profileEditBlocked ? t("auth:auth.profile.noRelayConnected") : undefined}
+                    className={cn(
+                      "px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors",
+                      profileEditBlocked && "opacity-60 cursor-not-allowed"
+                    )}
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     {t("auth:auth.profile.edit")}

@@ -41,6 +41,8 @@ import {
 import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { notifyTaskActionBlocked } from "@/lib/notifications";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
 
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
@@ -94,8 +96,16 @@ export function TreeTaskItem({
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
+  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const people = peopleProp ?? contextPeople;
   const authorProfiles = useTaskAuthorProfiles();
+  const surfaceStatusBlockedFeedback = () => {
+    if (isInteractionBlocked && onBlockedInteractionAttempt) {
+      onBlockedInteractionAttempt();
+      return;
+    }
+    notifyTaskActionBlocked(getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people));
+  };
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     const statusType = getTaskStatusType(status);
@@ -350,7 +360,12 @@ export function TreeTaskItem({
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => {
-                  if (!canCompleteTask()) return;
+                  if (!canCompleteTask()) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    surfaceStatusBlockedFeedback();
+                    return;
+                  }
                   if (statusMenuOpenedOnPointerDownRef.current) {
                     statusMenuOpenedOnPointerDownRef.current = false;
                     e.stopPropagation();
@@ -413,12 +428,12 @@ export function TreeTaskItem({
                   allowStatusMenuOpenRef.current = false;
                   statusMenuOpenedOnPointerDownRef.current = false;
                 }}
-                disabled={!canCompleteTask()}
+                aria-disabled={!canCompleteTask() || undefined}
                 aria-label={t("tasks.actions.setStatus")}
                 title={canCompleteTask() ? getStatusToggleHint(task.status) : (statusBlockedReason || getStatusToggleHint(task.status))}
                 className={cn(
                   "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
-                  canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                  canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-60"
                 )}
               >
                 <TaskStateIcon

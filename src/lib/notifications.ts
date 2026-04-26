@@ -27,6 +27,14 @@ export function notifyDisconnectedSelectedFeeds(): void {
   toast.warning(i18n.t("composer:toasts.warnings.disconnectedSelectedFeeds"), { id: "disconnected-selected-feeds" });
 }
 
+export function notifyNeedWritableRelay(): void {
+  toast.warning(i18n.t("composer:toasts.warnings.noWritableRelay"), { id: "need-writable-relay" });
+}
+
+export function notifyTaskActionBlocked(reason?: string): void {
+  toast.warning(reason || i18n.t("tasks:tasks.toasts.actionBlocked"), { id: "task-action-blocked" });
+}
+
 // Relay filter
 
 export function notifyRelayFilterDisabled(relayDomain: string, options: { onUndo?: () => void } = {}): void {

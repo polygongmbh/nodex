@@ -10,6 +10,7 @@ import {
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { hasTextSelection } from "@/lib/click-intent";
@@ -55,6 +56,7 @@ export function ListTaskRow({
 }: ListTaskRowProps) {
   const { t } = useTranslation("tasks");
   const isLockedUntilStart = isTaskLockedUntilStart(task);
+  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const {
     canCompleteTask,
     statusMenuOpen,
@@ -68,6 +70,7 @@ export function ListTaskRow({
     currentUser,
     people,
     isInteractionBlocked,
+    onBlockedInteractionAttempt,
     getStatusToggleHint,
     focusOnQuickToggle: false,
   });

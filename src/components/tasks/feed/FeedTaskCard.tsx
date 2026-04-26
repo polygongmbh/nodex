@@ -15,6 +15,7 @@ import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRo
 import { getTaskStatusType } from "@/types";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
@@ -97,6 +98,7 @@ export function FeedTaskCard({
     if (showFull || value.length <= 11) return value;
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
   };
+  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const {
     canCompleteTask,
     statusMenuOpen,
@@ -109,6 +111,7 @@ export function FeedTaskCard({
     currentUser,
     people,
     isInteractionBlocked,
+    onBlockedInteractionAttempt,
     getStatusToggleHint,
   });
   const isComment = task.taskType === "comment";

@@ -212,6 +212,7 @@
     "warnings": {
       "parentLocalOnly": "La referencia al padre es solo local; se publicará la tarea sin enlace al padre",
       "disconnectedSelectedFeeds": "Vuelve a conectar los spaces seleccionados antes de modificar o publicar",
+      "noWritableRelay": "Conéctate al menos a un space para continuar",
       "partialPublish": "Publicado en {{publishedCount}} de {{targetCount}} spaces seleccionados",
       "readOnlyParentReplyHidden": "Este hilo está en un space de solo lectura, así que las respuestas están deshabilitadas aquí."
     }

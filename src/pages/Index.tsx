@@ -278,6 +278,7 @@ function FeedIndexContent() {
     hasDisconnectedSelectedRelays,
     isInteractionBlocked,
     guardInteraction,
+    handleBlockedInteractionAttempt,
     resolveRelayUrlsFromIds,
     resolveTaskOriginRelay,
     publishTaskStateUpdate,
@@ -691,6 +692,7 @@ function FeedIndexContent() {
       composeGuideActivationSignal,
       compactTaskCardsEnabled,
       isInteractionBlocked,
+      onBlockedInteractionAttempt: handleBlockedInteractionAttempt,
       isHydrating,
     }),
     [
@@ -706,6 +708,7 @@ function FeedIndexContent() {
       composeGuideActivationSignal,
       compactTaskCardsEnabled,
       isInteractionBlocked,
+      handleBlockedInteractionAttempt,
       isHydrating,
     ]
   );

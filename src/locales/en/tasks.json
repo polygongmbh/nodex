@@ -42,6 +42,9 @@
       "showMore": "Show more",
       "showLess": "Show less"
     },
+    "toasts": {
+      "actionBlocked": "This action isn't available right now"
+    },
     "rawEvent": {
       "title": "Raw Nostr Event",
       "description": "Inspect the full event payload from the relay cache.",
