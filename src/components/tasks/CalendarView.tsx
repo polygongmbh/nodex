@@ -393,6 +393,9 @@ export function CalendarView({
       direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1);
     setCurrentMonth(targetMonth);
     ensureDesktopMonthRendered(targetMonth);
+    // Suppress scroll-driven month sync for the duration of the smooth scroll so the
+    // header doesn't briefly flash the previous month while the animation passes through it.
+    programmaticScrollUntilRef.current = performance.now() + 700;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => alignDesktopScrollToMonth(targetMonth, "smooth"));
     });
