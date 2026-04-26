@@ -42,6 +42,9 @@
       "showMore": "Mostrar más",
       "showLess": "Mostrar menos"
     },
+    "toasts": {
+      "actionBlocked": "Esta acción no está disponible ahora"
+    },
     "rawEvent": {
       "title": "Evento Nostr bruto",
       "description": "Inspecciona la carga completa del evento desde la caché del relay.",

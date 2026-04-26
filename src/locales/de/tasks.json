@@ -42,6 +42,9 @@
       "showMore": "Mehr anzeigen",
       "showLess": "Weniger anzeigen"
     },
+    "toasts": {
+      "actionBlocked": "Diese Aktion ist gerade nicht verfügbar"
+    },
     "rawEvent": {
       "title": "Rohes Nostr-Event",
       "description": "Prüfe die vollständige Event-Nutzlast aus dem Relay-Cache.",
