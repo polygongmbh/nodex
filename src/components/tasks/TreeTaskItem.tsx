@@ -41,6 +41,8 @@ import {
 import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { notifyTaskActionBlocked } from "@/lib/notifications";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
 
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
