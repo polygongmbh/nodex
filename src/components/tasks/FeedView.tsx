@@ -45,6 +45,7 @@ import {
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
 import { buildFeedDisclosureResetKey } from "./feed-disclosure-reset";
