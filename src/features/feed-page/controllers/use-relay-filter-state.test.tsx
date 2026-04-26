@@ -196,6 +196,14 @@ describe("useRelayFilterState", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Exclusive" }));
 
-    expect(toast).toHaveBeenCalledWith(expect.stringContaining("relay.one"));
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("relay.one"),
+      expect.objectContaining({
+        action: expect.objectContaining({
+          label: expect.any(String),
+          onClick: expect.any(Function),
+        }),
+      })
+    );
   });
 });

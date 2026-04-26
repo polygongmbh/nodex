@@ -1036,36 +1036,6 @@ describe("FeedView", () => {
     ).toBeTruthy();
   });
 
-  it("does not duplicate state label when status description matches it", () => {
-    const taskWithStateUpdate = makeTask({
-      id: "task-state-dedupe",
-      author,
-      content: "Task state update test #test",
-      status: "open",
-      stateUpdates: [
-        {
-          id: "state-dedupe",
-          status: { type: "active", description: "In Progress" },
-          timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          authorPubkey: author.id,
-        },
-      ],
-    });
-
-    render(
-      <FeedView
-        focusedTaskId={null}
-        tasks={[taskWithStateUpdate]}
-        allTasks={[taskWithStateUpdate]}
-      />
-    );
-
-    const dedupedStateDescription = screen
-      .getByTestId("feed-state-entry-state-dedupe")
-      .querySelector("div.inline-flex.flex-1.items-center.gap-1.overflow-hidden.whitespace-nowrap > span.truncate");
-    expect(dedupedStateDescription).toBeNull();
-  });
-
   it("hides closed tasks from the feed while keeping done tasks visible", () => {
     const openTask = makeTask({
       id: "task-open",

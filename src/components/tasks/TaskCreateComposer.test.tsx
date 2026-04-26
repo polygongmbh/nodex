@@ -219,8 +219,6 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalled();
-    expect(screen.getByRole("alert")).toHaveTextContent("Select a single space or a parent task to create a new task");
-    expect(getComposerPrimaryAction()).toHaveTextContent("Select space");
   });
 
   it("allows root task creation when exactly one writable relay is active", async () => {

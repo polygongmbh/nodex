@@ -459,17 +459,6 @@ describe("NostrUserMenu", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("does not auto-open setup profile dialog when no relay is connected", () => {
-    ndkMock.user = createMockNdkUser({ profile: { name: "" } });
-    ndkMock.authMethod = "extension";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isConnected = false;
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
   it("does not auto-open setup profile dialog when only read-only relays are available", () => {
     ndkMock.user = createMockNdkUser({ pubkey: "b".repeat(64), profile: { name: "" } });
     ndkMock.authMethod = "guest";

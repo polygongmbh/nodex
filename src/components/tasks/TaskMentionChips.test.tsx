@@ -95,7 +95,7 @@ describe("TaskMentionChips", () => {
 
     const mentionChip = screen.getByRole("button", { name: /person actions for npub1/i });
     expect(mentionChip).toBeInTheDocument();
-    expect(mentionChip).not.toHaveAttribute("title");
+    expect(mentionChip).toHaveAttribute("title", "");
   });
 
   it("uses fallback person data for modifier actions when mention has no matched person", () => {

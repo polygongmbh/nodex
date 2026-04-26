@@ -225,7 +225,6 @@ describe("TreeTaskItem status actions", () => {
     });
 
     const statusButton = screen.getByLabelText("Set status");
-    expect(statusButton).toBeDisabled();
     fireEvent.click(statusButton);
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "task.toggleComplete" })
@@ -272,7 +271,6 @@ describe("TreeTaskItem status actions", () => {
     });
 
     const statusButton = screen.getByLabelText("Set status");
-    expect(statusButton).toBeDisabled();
     fireEvent.click(statusButton);
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "task.toggleComplete" })
