@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Task, TaskStatusType, Relay, getTaskStatus, getTaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
-import { UserAvatar } from "@/components/ui/user-avatar";
+
 import { TaskAssigneeAvatars } from "./TaskAssigneeAvatars";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
@@ -42,7 +42,7 @@ import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-con
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
-import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import {
