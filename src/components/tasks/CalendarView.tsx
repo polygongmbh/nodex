@@ -683,6 +683,12 @@ export function CalendarView({
                     return (
                     <div
                       key={week[0]?.toISOString() ?? section.key}
+                      ref={(node: HTMLDivElement | null) => {
+                        if (weekContainsToday) {
+                          desktopCurrentWeekRef.current = node;
+                        }
+                      }}
+                      data-current-week={weekContainsToday ? "true" : undefined}
                       className={cn(
                         "grid gap-px bg-border/35",
                         isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
