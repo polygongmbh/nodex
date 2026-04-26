@@ -106,6 +106,42 @@ describe("KanbanView", () => {
     expect(screen.getAllByText((_, node) => node?.textContent === "Closed task #general")[0]).toBeInTheDocument();
   });
 
+  it("uses shared priority-first ordering for active kanban columns", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const olderHighPriority = makeTask({
+      id: "older-high-priority",
+      author,
+      status: "open",
+      content: "Older high priority task #general",
+      priority: 80,
+      timestamp: new Date("2026-02-17T08:00:00.000Z"),
+      lastEditedAt: new Date("2026-02-17T08:00:00.000Z"),
+    });
+    const newerNoPriority = makeTask({
+      id: "newer-no-priority",
+      author,
+      status: "open",
+      content: "Newer no priority task #general",
+      timestamp: new Date("2026-02-17T10:00:00.000Z"),
+      lastEditedAt: new Date("2026-02-17T10:00:00.000Z"),
+    });
+
+    const { container } = render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[newerNoPriority, olderHighPriority]}
+        allTasks={[newerNoPriority, olderHighPriority]}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    const openCards = Array.from(
+      container.querySelectorAll('[data-droppable-id="open"] [data-draggable-id]')
+    ).map((node) => node.getAttribute("data-draggable-id"));
+    expect(openCards).toEqual(["older-high-priority", "newer-no-priority"]);
+  });
+
   it("renders a separate column for a custom task status", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const blockedTask = makeTask({

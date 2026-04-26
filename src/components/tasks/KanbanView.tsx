@@ -16,13 +16,13 @@ import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import { sortByLatestModified } from "@/lib/kanban-sorting";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useKanbanViewState } from "@/features/feed-page/controllers/use-task-view-states";
+import { sortKanbanColumnTasks, useKanbanViewState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskViewServices } from "./use-task-view-services";
+import { buildChildrenMap, type SortContext } from "@/domain/content/task-sorting";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -99,6 +99,14 @@ export function KanbanView({
     searchQueryOverride,
     depthMode,
   });
+  const sortContext = useMemo<SortContext>(() => {
+    const childrenMap = buildChildrenMap(allTasks);
+    return {
+      childrenMap,
+      allTasks,
+      taskById: new Map(allTasks.map((task) => [task.id, task] as const)),
+    };
+  }, [allTasks]);
 
   const columns = useMemo(() => getColumns(kanbanTasks), [kanbanTasks]);
   const tasksByColumnId = useMemo(() => {
@@ -112,13 +120,11 @@ export function KanbanView({
     }
 
     for (const column of columns) {
-      if (column.state.type === "done" || column.state.type === "closed") {
-        grouped[column.id] = sortByLatestModified(grouped[column.id] || []);
-      }
+      grouped[column.id] = sortKanbanColumnTasks(grouped[column.id] || [], column.state.type, sortContext);
     }
 
     return grouped;
-  }, [columns, kanbanTasks, optimisticStatusByTaskId]);
+  }, [columns, kanbanTasks, optimisticStatusByTaskId, sortContext]);
   const canonicalStateIdByTaskId = useMemo(() => {
     const map = new Map<string, string>();
     for (const task of kanbanTasks) {
