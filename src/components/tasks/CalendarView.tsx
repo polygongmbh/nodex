@@ -118,11 +118,15 @@ export function CalendarView({
   const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
   const desktopScrollerRef = useRef<HTMLDivElement | null>(null);
   const desktopMonthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const desktopCurrentWeekRef = useRef<HTMLDivElement | null>(null);
   const desktopInitialAlignDoneRef = useRef(false);
   const desktopLoadingRef = useRef(false);
   const prependCompensationRef = useRef<{ previousHeight: number } | null>(null);
   const loadingCooldownUntilRef = useRef(0);
   const syncMonthRafIdRef = useRef<number | null>(null);
+  // Suppress scroll-driven currentMonth updates while a programmatic scroll is animating,
+  // so the header doesn't briefly flash the previous month during smooth scrolls.
+  const programmaticScrollUntilRef = useRef(0);
   const taskSource = useTaskViewSource({
     tasks,
     allTasks,
@@ -241,11 +245,36 @@ export function CalendarView({
   useEffect(() => {
     if (desktopInitialAlignDoneRef.current) return;
     const rafId = requestAnimationFrame(() => {
-      alignDesktopScrollToMonth(currentMonth, "auto");
+      // Prefer scrolling so the current week is visible (with a small top offset)
+      // rather than the start of the month, which on shorter viewports can hide today.
+      const scroller = desktopScrollerRef.current;
+      const weekNode = desktopCurrentWeekRef.current;
+      if (scroller && weekNode) {
+        const offset = isMobile ? 8 : 12;
+        const top = weekNode.offsetTop - offset;
+        // Use 'auto' on initial mount so it doesn't animate from 0.
+        programmaticScrollUntilRef.current = performance.now() + 50;
+        scroller.scrollTo({ top: Math.max(0, top), behavior: "auto" });
+      } else {
+        alignDesktopScrollToMonth(currentMonth, "auto");
+      }
       desktopInitialAlignDoneRef.current = true;
     });
     return () => cancelAnimationFrame(rafId);
-  }, [alignDesktopScrollToMonth, currentMonth]);
+  }, [alignDesktopScrollToMonth, currentMonth, isMobile]);
+
+  // Close the new-event composer whenever the selected day changes, so the
+  // composer doesn't carry over (with its seeded due date) into another day.
+  const previousSelectedDayKeyRef = useRef<string | null>(
+    selectedDate ? format(startOfDay(selectedDate), "yyyy-MM-dd") : null
+  );
+  useEffect(() => {
+    const nextKey = selectedDate ? format(startOfDay(selectedDate), "yyyy-MM-dd") : null;
+    if (previousSelectedDayKeyRef.current !== nextKey) {
+      previousSelectedDayKeyRef.current = nextKey;
+      setIsComposingEvent(false);
+    }
+  }, [selectedDate]);
 
   useLayoutEffect(() => {
     const scroller = desktopScrollerRef.current;
@@ -265,6 +294,9 @@ export function CalendarView({
 
     const syncCurrentMonthFromScroll = () => {
       syncMonthRafIdRef.current = null;
+      // While a programmatic scroll is animating, don't update the header — otherwise
+      // the smooth-scroll mid-frames briefly land on the previous section, causing a flash.
+      if (performance.now() < programmaticScrollUntilRef.current) return;
       const marker = scroller.scrollTop + 96;
       let activeMonth: Date | null = null;
 
@@ -374,6 +406,9 @@ export function CalendarView({
       direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1);
     setCurrentMonth(targetMonth);
     ensureDesktopMonthRendered(targetMonth);
+    // Suppress scroll-driven month sync for the duration of the smooth scroll so the
+    // header doesn't briefly flash the previous month while the animation passes through it.
+    programmaticScrollUntilRef.current = performance.now() + 700;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => alignDesktopScrollToMonth(targetMonth, "smooth"));
     });
@@ -661,6 +696,12 @@ export function CalendarView({
                     return (
                     <div
                       key={week[0]?.toISOString() ?? section.key}
+                      ref={(node: HTMLDivElement | null) => {
+                        if (weekContainsToday) {
+                          desktopCurrentWeekRef.current = node;
+                        }
+                      }}
+                      data-current-week={weekContainsToday ? "true" : undefined}
                       className={cn(
                         "grid gap-px bg-border/35",
                         isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
