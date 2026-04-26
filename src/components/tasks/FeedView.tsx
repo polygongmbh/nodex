@@ -169,13 +169,6 @@ export function FeedView({
 }: FeedViewProps) {
   const { t, i18n } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const handleAuthorShortcut = (event: React.MouseEvent<HTMLElement>, person: Person) => {
-    event.stopPropagation();
-    const shortcutIntent = getPersonShortcutIntent(event);
-    if (!shortcutIntent) return;
-    event.preventDefault();
-    void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
-  };
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { relays, channels, people, quickFilters, channelMatchMode = "and" } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
