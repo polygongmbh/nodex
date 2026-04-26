@@ -5,6 +5,7 @@ import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } f
 import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
+import { notifyTaskActionBlocked } from "@/lib/notifications";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -13,6 +14,13 @@ interface UseTaskStatusMenuOptions {
   currentUser?: Person;
   people: Person[];
   isInteractionBlocked?: boolean;
+  /**
+   * Called when a tap on the (soft-disabled) status control should surface
+   * feedback because a global gate (sign-in, writable relay, disconnected
+   * selected feeds) is active. When omitted, falls back to the per-task
+   * permission reason via a toast.
+   */
+  onBlockedInteractionAttempt?: () => void;
   getStatusToggleHint: (status?: Task["status"]) => string;
   focusOnQuickToggle?: boolean;
 }
@@ -22,6 +30,7 @@ export function useTaskStatusMenu({
   currentUser,
   people,
   isInteractionBlocked = false,
+  onBlockedInteractionAttempt,
   getStatusToggleHint,
   focusOnQuickToggle = true,
 }: UseTaskStatusMenuOptions) {
@@ -34,9 +43,19 @@ export function useTaskStatusMenu({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
   const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+  const blockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
   const statusButtonTitle = canCompleteTask
     ? getStatusToggleHint(task.status)
-    : getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || getStatusToggleHint(task.status);
+    : blockedReason || getStatusToggleHint(task.status);
+
+  const surfaceBlockedFeedback = useCallback(() => {
+    if (isInteractionBlocked && onBlockedInteractionAttempt) {
+      onBlockedInteractionAttempt();
+      return;
+    }
+    notifyTaskActionBlocked(blockedReason);
+  }, [blockedReason, isInteractionBlocked, onBlockedInteractionAttempt]);
+
 
   const clearLongPressTimer = useCallback(() => {
     if (longPressTimerRef.current !== null) {
