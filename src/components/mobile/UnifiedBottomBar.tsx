@@ -713,6 +713,31 @@ export function UnifiedBottomBar({
     setActiveSelector(activeSelector === type ? null : type);
   };
 
+  // Long-press on a filter button clears that section's selection (with undo
+  // toast). The reusable hook also suppresses the synthetic click so we don't
+  // also open the selector after the reset fires.
+  const relayLongPressHandlers = useLongPress({
+    onClick: () => toggleSelector("relay"),
+    onLongPress: () => {
+      void dispatchFeedInteraction({ type: "sidebar.relay.toggleAll" });
+      setActiveSelector(null);
+    },
+  });
+  const channelLongPressHandlers = useLongPress({
+    onClick: () => toggleSelector("channel"),
+    onLongPress: () => {
+      void dispatchFeedInteraction({ type: "sidebar.channel.toggleAll" });
+      setActiveSelector(null);
+    },
+  });
+  const personLongPressHandlers = useLongPress({
+    onClick: () => toggleSelector("person"),
+    onLongPress: () => {
+      void dispatchFeedInteraction({ type: "sidebar.person.toggleAll" });
+      setActiveSelector(null);
+    },
+  });
+
   // Count active filters
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
