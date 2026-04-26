@@ -241,7 +241,17 @@ export function CalendarView({
   useEffect(() => {
     if (desktopInitialAlignDoneRef.current) return;
     const rafId = requestAnimationFrame(() => {
-      alignDesktopScrollToMonth(currentMonth, "auto");
+      const scroller = desktopScrollerRef.current;
+      // Prefer scrolling the row containing today into view so the user
+      // immediately sees the current week, especially on mobile where the
+      // viewport is short and the month header alone wastes vertical space.
+      const todayCell = scroller?.querySelector<HTMLElement>('[data-current-week="true"]');
+      if (scroller && todayCell) {
+        const offset = todayCell.offsetTop - scroller.offsetTop - 8;
+        scroller.scrollTo({ top: Math.max(0, offset), behavior: "auto" });
+      } else {
+        alignDesktopScrollToMonth(currentMonth, "auto");
+      }
       desktopInitialAlignDoneRef.current = true;
     });
     return () => cancelAnimationFrame(rafId);
