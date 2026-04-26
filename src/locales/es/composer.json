@@ -36,30 +36,20 @@
       "signin": "Se requiere iniciar sesión",
       "write": "Escribe primero un mensaje",
       "tag": "Añade o selecciona al menos un #canal",
-      "commentRelay": "Selecciona al menos un space verde para publicar un comentario",
-      "relay": "Selecciona un único space o una tarea padre para crear una nueva tarea",
+      "commentRelay": "Selecciona una tarea padre o un space escribible (punto verde) para publicar.",
+      "relay": "Selecciona un space escribible (punto verde) o una tarea padre para publicar.",
+      "uploading": "Espera a que se suban los archivos.",
       "publishing": "Publicando..."
     },
     "blockedDetail": {
       "title": "Aún no se puede publicar",
-      "detail": {
-        "signin": "Inicia sesión para publicar esta entrada.",
-        "write": "Añade primero algo de texto y vuelve a intentarlo.",
-        "tag": "Añade al menos una etiqueta de canal como #design o usa un filtro de canal incluido.",
-        "commentRelay": "Los comentarios pueden publicarse en cualquier space verde.",
-        "relay": "Elige exactamente un space verde para una tarea nueva o publica desde una tarea existente.",
-        "uploading": "Tus archivos todavía se están subiendo. La publicación se habilitará automáticamente cuando terminen.",
-        "uploadFailed": "Reintenta o elimina los archivos fallidos antes de publicar.",
-        "publishing": "Esta entrada ya se está publicando."
-      },
       "cta": {
         "write": "Escribir mensaje",
         "tag": "Añadir #canal",
         "commentRelay": "Seleccionar space",
         "relay": "Seleccionar space",
         "uploading": "Esperar subidas",
-        "uploadFailed": "Corregir archivos",
-        "publishing": "Publicando..."
+        "uploadFailed": "Corregir archivos"
       }
     },
     "actions": {

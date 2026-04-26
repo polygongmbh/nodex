@@ -414,6 +414,46 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(getTaskCreateCalls()).toHaveLength(0);
   });
 
+  it("uses toast feedback instead of an inline alert while attachments are uploading", () => {
+    const toastInfoSpy = vi.spyOn(toast, "info").mockImplementation(() => "");
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        canCreateContent
+        composeRestoreRequest={{
+          id: 3,
+          state: {
+            content: "Ship #general",
+            taskType: "task",
+            explicitTagNames: [],
+            explicitMentionPubkeys: [],
+            attachments: [
+              {
+                id: "upload-1",
+                fileName: "diagram.png",
+                url: "https://example.test/diagram.png",
+                status: "uploading",
+                source: "upload",
+              },
+            ],
+          },
+        }}
+      />
+    );
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    fireEvent.click(getMobilePrimaryAction());
+
+    expect(toastInfoSpy).toHaveBeenCalledWith(expect.any(String), { id: "task-composer-uploading-blocked" });
+    expect(getTaskCreateCalls()).toHaveLength(0);
+  });
+
   it("submits a root task when exactly one active relay is writable", async () => {
     render(
       <UnifiedBottomBar

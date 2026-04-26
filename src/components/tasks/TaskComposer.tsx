@@ -37,7 +37,6 @@ import { filterChannelsForAutocomplete, getComposerAutocompleteMatch, hasMention
 import {
   getComposeSubmitBlockFocusTarget,
   resolveComposeSubmitBlock,
-  shouldShowComposeSubmitBlockDetail,
   type ComposeSubmitBlockState,
 } from "@/lib/compose-submit-block";
 import {
@@ -1050,8 +1049,7 @@ export function TaskComposer({
   });
   const submitBlock = localSubmitBlock ?? externalSubmitBlockByType?.[taskType] ?? null;
   const submitBlockedReason = submitBlock?.reason ?? null;
-  const showSubmitBlockBanner = submitBlock?.code !== "write";
-  const showSubmitBlockDetail = shouldShowComposeSubmitBlockDetail(submitBlock);
+  const showSubmitBlockBanner = submitBlock?.code !== "write" && submitBlock?.code !== "uploading";
   const isSubmitButtonEmptyDisabled = canCreateContent && content.trim().length === 0;
   const submitButtonLabel = isSubmitButtonEmptyDisabled ? null : submitBlock?.ctaLabel;
 
@@ -1787,9 +1785,6 @@ export function TaskComposer({
               {t("composer.blockedDetail.title")}
             </div>
             <div className="font-medium text-foreground">{submitBlock.reason}</div>
-            {showSubmitBlockDetail && (
-              <div className="text-xs text-muted-foreground">{submitBlock.detail}</div>
-            )}
           </div>
         </div>
       )}

@@ -19,7 +19,6 @@ export type ComposeSubmitBlockAction =
 export interface ComposeSubmitBlockState {
   code: ComposeSubmitBlockCode;
   reason: string;
-  detail: string;
   ctaLabel: string;
   action: ComposeSubmitBlockAction | null;
   isHardDisabled: boolean;
@@ -58,20 +57,8 @@ export function resolveComposeSubmitBlock({
     return {
       code: "signin",
       reason: t("composer.blocked.signin"),
-      detail: t("composer.blockedDetail.detail.signin"),
       ctaLabel: t("composer.actions.signin"),
       action: null,
-      isHardDisabled: false,
-    };
-  }
-
-  if (hasPendingAttachmentUploads) {
-    return {
-      code: "uploading",
-      reason: t("composer.attachments.waitForUploads"),
-      detail: t("composer.blockedDetail.detail.uploading"),
-      ctaLabel: t("composer.blockedDetail.cta.uploading"),
-      action: "focus-attachments",
       isHardDisabled: false,
     };
   }
@@ -80,7 +67,6 @@ export function resolveComposeSubmitBlock({
     return {
       code: "uploadFailed",
       reason: t("composer.attachments.retryFailed"),
-      detail: t("composer.blockedDetail.detail.uploadFailed"),
       ctaLabel: t("composer.blockedDetail.cta.uploadFailed"),
       action: "focus-attachments",
       isHardDisabled: false,
@@ -91,7 +77,6 @@ export function resolveComposeSubmitBlock({
     return {
       code: "write",
       reason: t("composer.blocked.write"),
-      detail: t("composer.blockedDetail.detail.write"),
       ctaLabel: t("composer.blockedDetail.cta.write"),
       action: "focus-input",
       isHardDisabled: false,
@@ -102,7 +87,6 @@ export function resolveComposeSubmitBlock({
     return {
       code: "tag",
       reason: t("composer.blocked.tag"),
-      detail: t("composer.blockedDetail.detail.tag"),
       ctaLabel: t("composer.blockedDetail.cta.tag"),
       action: "open-channel-selector",
       isHardDisabled: false,
@@ -113,7 +97,6 @@ export function resolveComposeSubmitBlock({
     return {
       code: "commentRelay",
       reason: t("composer.blocked.commentRelay"),
-      detail: t("composer.blockedDetail.detail.commentRelay"),
       ctaLabel: t("composer.blockedDetail.cta.commentRelay"),
       action: "open-relay-selector",
       isHardDisabled: false,
@@ -124,21 +107,23 @@ export function resolveComposeSubmitBlock({
     return {
       code: "relay",
       reason: t("composer.blocked.relay"),
-      detail: t("composer.blockedDetail.detail.relay"),
       ctaLabel: t("composer.blockedDetail.cta.relay"),
       action: "open-relay-selector",
       isHardDisabled: false,
     };
   }
 
-  return null;
-}
+  if (hasPendingAttachmentUploads) {
+    return {
+      code: "uploading",
+      reason: t("composer.blocked.uploading"),
+      ctaLabel: t("composer.blockedDetail.cta.uploading"),
+      action: "focus-attachments",
+      isHardDisabled: false,
+    };
+  }
 
-export function shouldShowComposeSubmitBlockDetail(block: ComposeSubmitBlockState | null): boolean {
-  return block?.code === "relay"
-    || block?.code === "uploading"
-    || block?.code === "uploadFailed"
-    || block?.code === "commentRelay";
+  return null;
 }
 
 export function getComposeSubmitBlockFocusTarget(

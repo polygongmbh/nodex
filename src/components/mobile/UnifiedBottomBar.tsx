@@ -745,10 +745,7 @@ export function UnifiedBottomBar({
   // signed-out state, so the extra "Can't post yet / Sign in required" panel
   // is redundant and visually heavy on mobile.
   const showTaskSubmitBlockBanner =
-    taskSubmitBlock?.code !== "write" && taskSubmitBlock?.code !== "signin";
-  const showTaskSubmitBlockDetail = taskSubmitBlock?.code === "relay"
-    || taskSubmitBlock?.code === "uploading"
-    || taskSubmitBlock?.code === "uploadFailed";
+    taskSubmitBlock?.code !== "write" && taskSubmitBlock?.code !== "signin" && taskSubmitBlock?.code !== "uploading";
   const isPrimarySendEmptyDisabled = canCreateContent && sharedText.trim().length === 0;
   const primarySendTitle = isPrimarySendEmptyDisabled
     ? (taskSubmitBlock?.reason
@@ -834,6 +831,9 @@ export function UnifiedBottomBar({
 
   const handleBlockedTaskAttempt = () => {
     if (!taskSubmitBlock) return;
+    if (taskSubmitBlock.code === "uploading") {
+      toast.info(taskSubmitBlock.reason, { id: "task-composer-uploading-blocked" });
+    }
     switch (taskSubmitBlock.action) {
       case "focus-input":
         focusComposeInput();
@@ -1296,11 +1296,6 @@ export function UnifiedBottomBar({
                 <div className="text-xs font-medium leading-tight text-foreground">
                   {taskSubmitBlockedReason}
                 </div>
-                {showTaskSubmitBlockDetail && (
-                  <div className="text-[11px] leading-tight text-muted-foreground">
-                    {taskSubmitBlock?.detail}
-                  </div>
-                )}
               </div>
             </div>
           ) : canCreateContent ? (
