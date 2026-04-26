@@ -1,13 +1,11 @@
 import { useMemo } from "react";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
-import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { cn } from "@/lib/utils";
-import { PersonHoverCard } from "@/components/people/PersonHoverCard";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 
 interface TaskAssigneeAvatarsProps {
   task: Task;
@@ -34,7 +32,8 @@ function buildFallbackPersonFromPubkey(pubkey: string): Person {
 /**
  * Renders a small overlapping stack of profile pictures for a task's assignees.
  * Falls back to the task's author when there are no assignees. Each avatar is
- * clickable and shows a hover card, mirroring the mention-chip behavior.
+ * clickable and shows a hover card / action menu, mirroring the mention-chip
+ * behavior via the shared InteractivePersonAvatar.
  */
 export function TaskAssigneeAvatars({
   task,
@@ -79,30 +78,14 @@ export function TaskAssigneeAvatars({
           (pubkey === task.author?.id ? task.author.avatar : undefined);
 
         return (
-          <PersonHoverCard
+          <InteractivePersonAvatar
             key={pubkey}
             person={clickablePerson}
-            triggerClassName="inline-flex shrink-0 leading-none rounded-full"
-          >
-            <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
-              <button
-                type="button"
-                aria-label={`Person actions for ${displayName}`}
-                title=""
-                className="rounded-full transition-shadow hover:ring-2 hover:ring-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
-              >
-                <UserAvatar
-                  id={pubkey}
-                  displayName={displayName}
-                  avatarUrl={avatarUrl}
-                  className={cn(
-                    avatarSizeClassName,
-                    "ring-1 ring-background flex-shrink-0 transition-transform hover:scale-110"
-                  )}
-                />
-              </button>
-            </PersonActionMenu>
-          </PersonHoverCard>
+            sizeClassName={avatarSizeClassName}
+            avatarClassName="ring-1 ring-background hover:scale-110 transition-transform"
+            displayName={displayName}
+            avatarUrl={avatarUrl}
+          />
         );
       })}
       {overflow > 0 ? (
