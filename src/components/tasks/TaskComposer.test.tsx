@@ -192,13 +192,13 @@ describe("TaskComposer", () => {
 
   it("restores draft content and kind from the shared draft key", () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
-      content: "#persisted hello",
+      content: "persisted hello #note",
       messageType: "comment",
     }));
 
     renderComposer();
 
-    expect(getComposerInput("comment")).toHaveValue("#persisted hello");
+    expect(getComposerInput("comment")).toHaveValue("persisted hello #note");
     expect(screen.getByRole("button", { name: /add comment/i })).toBeInTheDocument();
   });
 
