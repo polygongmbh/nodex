@@ -1438,7 +1438,7 @@ export function UnifiedBottomBar({
             <button
               {...channelLongPressHandlers}
               aria-label={t("filters:filters.channels.title")}
-              title={t("filters:filters.channels.longPressToReset", "Hold to reset")}
+              title={t("filters:filters.channels.longPressToReset")}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
                 activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
