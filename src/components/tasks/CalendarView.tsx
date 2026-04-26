@@ -118,11 +118,15 @@ export function CalendarView({
   const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
   const desktopScrollerRef = useRef<HTMLDivElement | null>(null);
   const desktopMonthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const desktopCurrentWeekRef = useRef<HTMLDivElement | null>(null);
   const desktopInitialAlignDoneRef = useRef(false);
   const desktopLoadingRef = useRef(false);
   const prependCompensationRef = useRef<{ previousHeight: number } | null>(null);
   const loadingCooldownUntilRef = useRef(0);
   const syncMonthRafIdRef = useRef<number | null>(null);
+  // Suppress scroll-driven currentMonth updates while a programmatic scroll is animating,
+  // so the header doesn't briefly flash the previous month during smooth scrolls.
+  const programmaticScrollUntilRef = useRef(0);
   const taskSource = useTaskViewSource({
     tasks,
     allTasks,
