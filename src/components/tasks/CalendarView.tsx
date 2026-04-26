@@ -263,6 +263,19 @@ export function CalendarView({
     return () => cancelAnimationFrame(rafId);
   }, [alignDesktopScrollToMonth, currentMonth, isMobile]);
 
+  // Close the new-event composer whenever the selected day changes, so the
+  // composer doesn't carry over (with its seeded due date) into another day.
+  const previousSelectedDayKeyRef = useRef<string | null>(
+    selectedDate ? format(startOfDay(selectedDate), "yyyy-MM-dd") : null
+  );
+  useEffect(() => {
+    const nextKey = selectedDate ? format(startOfDay(selectedDate), "yyyy-MM-dd") : null;
+    if (previousSelectedDayKeyRef.current !== nextKey) {
+      previousSelectedDayKeyRef.current = nextKey;
+      setIsComposingEvent(false);
+    }
+  }, [selectedDate]);
+
   useLayoutEffect(() => {
     const scroller = desktopScrollerRef.current;
     const pending = prependCompensationRef.current;
