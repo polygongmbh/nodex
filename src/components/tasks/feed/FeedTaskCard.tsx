@@ -320,24 +320,26 @@ export function FeedTaskCard({
                 {hasPrimaryAuthorLabel ? (
                   <>
                     <PersonHoverCard person={resolvedAuthor}>
-                      <button
-                        type="button"
-                        className={cn(
-                          "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
-                          isMobile && "max-w-full"
-                        )}
-                        aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
-                        onClick={(event) => handleAuthorShortcut(event, resolvedAuthor)}
-                      >
-                        <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
-                          {primaryAuthorLabel}
-                        </span>
-                        {secondaryAuthorLabel && !isMobile ? (
-                          <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
-                            {` (${secondaryAuthorLabel})`}
+                      <PersonActionMenu person={resolvedAuthor} enableModifierShortcuts>
+                        <button
+                          type="button"
+                          className={cn(
+                            "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
+                            isMobile && "max-w-full"
+                          )}
+                          aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
+                          onClick={(event) => handleAuthorShortcut(event, resolvedAuthor)}
+                        >
+                          <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
+                            {primaryAuthorLabel}
                           </span>
-                        ) : null}
-                      </button>
+                          {secondaryAuthorLabel && !isMobile ? (
+                            <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
+                              {` (${secondaryAuthorLabel})`}
+                            </span>
+                          ) : null}
+                        </button>
+                      </PersonActionMenu>
                     </PersonHoverCard>
                     <span className="shrink-0">·</span>
                   </>

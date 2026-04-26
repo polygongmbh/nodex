@@ -45,6 +45,7 @@ import {
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
 import { buildFeedDisclosureResetKey } from "./feed-disclosure-reset";
@@ -435,14 +436,16 @@ export function FeedView({
                   <span className="truncate">{displayLabel}</span>
                   <span className="shrink-0">·</span>
                   <PersonHoverCard person={resolvedUpdateAuthor}>
-                    <button
-                      type="button"
-                      className="hover:text-foreground shrink-0"
-                      aria-label={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
-                      onClick={(event) => handleAuthorShortcut(event, resolvedUpdateAuthor)}
-                    >
-                      {updateAuthorMeta.primary}
-                    </button>
+                    <PersonActionMenu person={resolvedUpdateAuthor} enableModifierShortcuts>
+                      <button
+                        type="button"
+                        className="hover:text-foreground shrink-0"
+                        aria-label={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
+                        onClick={(event) => handleAuthorShortcut(event, resolvedUpdateAuthor)}
+                      >
+                        {updateAuthorMeta.primary}
+                      </button>
+                    </PersonActionMenu>
                   </PersonHoverCard>
                   <span className="shrink-0">·</span>
                   <button
