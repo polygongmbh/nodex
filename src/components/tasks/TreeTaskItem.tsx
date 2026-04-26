@@ -43,8 +43,8 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
-import { PersonActionMenu } from "@/components/people/PersonActionMenu";
-import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
+import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
+import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import {
   deriveTreeTaskItemChildren,
   getDefaultTreeTaskFoldState,
