@@ -433,160 +433,183 @@ export function CalendarView({
                       {group.label} ({group.tasks.length})
                     </h3>
                     <div className="space-y-1.5">
-                      {group.tasks.map((task) => {
-                        const authorColor = getAuthorColor(task.author);
-                        return (
-                          <div
-                            key={task.id}
-                            data-task-id={task.id}
-                            className="flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
-                          >
-                            <DropdownMenu
-                              open={Boolean(statusMenuOpenByTaskId[task.id])}
-                              onOpenChange={(open) => {
-                                if (!open) {
-                                  closeStatusMenu(task.id);
-                                  clearStatusMenuOpenIntent(task.id);
-                                  statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                  return;
-                                }
-                                if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
-                                  openStatusMenu(task.id);
-                                } else {
-                                  closeStatusMenu(task.id);
-                                }
-                                clearStatusMenuOpenIntent(task.id);
-                                statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                              }}
-                            >
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    if (!canCompleteTask(task)) return;
-                                    if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
-                                      e.stopPropagation();
-                                      return;
-                                    }
-                                    handleTaskStatusToggleClick(e, {
-                                      status: task.status,
-                                      hasStatusChangeHandler: canCompleteTask(task),
-                                      isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
-                                      openMenu: () => openStatusMenu(task.id),
-                                      closeMenu: () => closeStatusMenu(task.id),
-                                      allowMenuOpen: () => allowStatusMenuOpen(task.id),
-                                      clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                                       toggleStatus: () => dispatchToggleComplete(task.id),
-                                       focusTask: () => focusTask(task.id),
-                                       focusOnQuickToggle: hasChildren(task.id),
-                                     });
-                                  }}
-                                  onFocus={(e) => {
-                                    if (!canCompleteTask(task)) return;
-                                    if (
-                                      shouldAutoOpenStatusMenuOnFocus(
-                                        e.currentTarget,
-                                        statusTriggerPointerDownTaskIdsRef.current.has(task.id)
-                                      )
-                                    ) {
-                                      allowStatusMenuOpen(task.id);
-                                      openStatusMenu(task.id);
-                                    }
-                                    statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                                  }}
-                                  onPointerDown={() => {
-                                    statusTriggerPointerDownTaskIdsRef.current.add(task.id);
-                                    clearStatusMenuOpenIntent(task.id);
-                                    statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                  }}
-                                  onPointerDownCapture={(e) => {
-                                    if (!canCompleteTask(task)) return;
-                                    if (
-                                      shouldOpenStatusMenuForDirectSelection({
-                                        status: task.status,
-                                        altKey: e.altKey,
-                                        hasStatusChangeHandler: canCompleteTask(task),
-                                      })
-                                    ) {
-                                      e.preventDefault();
-                                      allowStatusMenuOpen(task.id);
-                                      statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
-                                      openStatusMenu(task.id);
-                                    }
-                                  }}
-                                  onBlur={() => {
-                                    statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                                    clearStatusMenuOpenIntent(task.id);
-                                    statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                  }}
-                                  disabled={!canCompleteTask(task)}
-                                  aria-label={t("tasks.actions.setStatus")}
-                                  title={getStatusButtonTitle(task)}
-                                  className={cn(
-                                    "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
-                                    canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
-                                  )}
-                                >
-                                  <TaskStateIcon status={getTaskStatus(task)} />
-                                </button>
-                              </DropdownMenuTrigger>
-                              {canCompleteTask(task) && (
-                                <DropdownMenuContent align="start">
-                                  {getTaskStateRegistry().map((state) => (
-                                    <DropdownMenuItem
-                                      key={state.id}
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        dispatchStatusChange(task.id, state.id);
-                                      }}
-                                      className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
-                                    >
-                                      <TaskStateDefIcon state={state} className="mr-2" />
-                                      {state.label}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuContent>
-                              )}
-                            </DropdownMenu>
-                            <div className="flex-1 min-w-0">
-                              <p
-                                onClick={() => {
-                                  if (!hasTextSelection() && hasChildren(task.id)) {
-                                    focusTask(task.id);
-                                  }
-                                }}
-                                className={`text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`}
-                                title={(() => {
-                                  const typeLabel = t("tasks.task").toLowerCase();
-                                  const preview = getTaskTooltipPreview(task.content);
-                                  return preview
-                                    ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-                                    : t("tasks.focusTaskTitle", { type: typeLabel });
-                                })()}
-                              >
-                                {linkifyContent(task.content, (tag) => {
-                                  void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-                                }, {
-                                  plainHashtags: isTaskTerminalStatus(task.status),
-                                  people,
-                                  disableStandaloneEmbeds: true,
-                                })}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs flex items-center gap-2">
-                                  <span
-                                    className="h-1.5 w-1.5 rounded-full"
-                                    style={{ backgroundColor: authorColor.accent }}
-                                  />
-                                  <Clock className="w-3 h-3" />
-                                  <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-                                  {format(task.dueDate!, "MMM d")}
-                                  {task.dueTime && ` ${task.dueTime}`}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                       {group.tasks.map((task) => {
+                         const authorColor = getAuthorColor(task.author);
+                         const canChangeStatus = canCompleteTask(task);
+                         return (
+                           <div
+                             key={task.id}
+                             data-task-id={task.id}
+                             className="relative flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
+                           >
+                             {typeof task.priority === "number" ? (
+                               <div className="absolute right-2 top-2 z-10">
+                                 <TaskPrioritySelect
+                                   id={`upcoming-priority-${task.id}`}
+                                   taskId={canChangeStatus ? task.id : undefined}
+                                   priority={task.priority}
+                                   stopPropagation
+                                   className={cn(
+                                     "px-1.5 py-0.5 text-sm focus:outline-none",
+                                     TASK_CHIP_STYLES.priority,
+                                     "text-sm",
+                                     canChangeStatus ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed"
+                                   )}
+                                 />
+                               </div>
+                             ) : null}
+                             <DropdownMenu
+                               open={Boolean(statusMenuOpenByTaskId[task.id])}
+                               onOpenChange={(open) => {
+                                 if (!open) {
+                                   closeStatusMenu(task.id);
+                                   clearStatusMenuOpenIntent(task.id);
+                                   statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
+                                   return;
+                                 }
+                                 if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
+                                   openStatusMenu(task.id);
+                                 } else {
+                                   closeStatusMenu(task.id);
+                                 }
+                                 clearStatusMenuOpenIntent(task.id);
+                                 statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
+                               }}
+                             >
+                               <DropdownMenuTrigger asChild>
+                                 <button
+                                   onClick={(e) => {
+                                     if (!canCompleteTask(task)) return;
+                                     if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
+                                       e.stopPropagation();
+                                       return;
+                                     }
+                                     handleTaskStatusToggleClick(e, {
+                                       status: task.status,
+                                       hasStatusChangeHandler: canCompleteTask(task),
+                                       isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
+                                       openMenu: () => openStatusMenu(task.id),
+                                       closeMenu: () => closeStatusMenu(task.id),
+                                       allowMenuOpen: () => allowStatusMenuOpen(task.id),
+                                       clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
+                                        toggleStatus: () => dispatchToggleComplete(task.id),
+                                        focusTask: () => focusTask(task.id),
+                                        focusOnQuickToggle: hasChildren(task.id),
+                                      });
+                                   }}
+                                   onFocus={(e) => {
+                                     if (!canCompleteTask(task)) return;
+                                     if (
+                                       shouldAutoOpenStatusMenuOnFocus(
+                                         e.currentTarget,
+                                         statusTriggerPointerDownTaskIdsRef.current.has(task.id)
+                                       )
+                                     ) {
+                                       allowStatusMenuOpen(task.id);
+                                       openStatusMenu(task.id);
+                                     }
+                                     statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                                   }}
+                                   onPointerDown={() => {
+                                     statusTriggerPointerDownTaskIdsRef.current.add(task.id);
+                                     clearStatusMenuOpenIntent(task.id);
+                                     statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
+                                   }}
+                                   onPointerDownCapture={(e) => {
+                                     if (!canCompleteTask(task)) return;
+                                     if (
+                                       shouldOpenStatusMenuForDirectSelection({
+                                         status: task.status,
+                                         altKey: e.altKey,
+                                         hasStatusChangeHandler: canCompleteTask(task),
+                                       })
+                                     ) {
+                                       e.preventDefault();
+                                       allowStatusMenuOpen(task.id);
+                                       statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
+                                       openStatusMenu(task.id);
+                                     }
+                                   }}
+                                   onBlur={() => {
+                                     statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                                     clearStatusMenuOpenIntent(task.id);
+                                     statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
+                                   }}
+                                   disabled={!canCompleteTask(task)}
+                                   aria-label={t("tasks.actions.setStatus")}
+                                   title={getStatusButtonTitle(task)}
+                                   className={cn(
+                                     "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
+                                     canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                                   )}
+                                 >
+                                   <TaskStateIcon status={getTaskStatus(task)} />
+                                 </button>
+                               </DropdownMenuTrigger>
+                               {canCompleteTask(task) && (
+                                 <DropdownMenuContent align="start">
+                                   {getTaskStateRegistry().map((state) => (
+                                     <DropdownMenuItem
+                                       key={state.id}
+                                       onClick={(event) => {
+                                         event.stopPropagation();
+                                         dispatchStatusChange(task.id, state.id);
+                                       }}
+                                       className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
+                                     >
+                                       <TaskStateDefIcon state={state} className="mr-2" />
+                                       {state.label}
+                                     </DropdownMenuItem>
+                                   ))}
+                                 </DropdownMenuContent>
+                               )}
+                             </DropdownMenu>
+                             <div className="flex-1 min-w-0">
+                               <p
+                                 onClick={() => {
+                                   if (!hasTextSelection() && hasChildren(task.id)) {
+                                     focusTask(task.id);
+                                   }
+                                 }}
+                                 className={cn(
+                                   `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`,
+                                   typeof task.priority === "number" && "pr-14"
+                                 )}
+                                 title={(() => {
+                                   const typeLabel = t("tasks.task").toLowerCase();
+                                   const preview = getTaskTooltipPreview(task.content);
+                                   return preview
+                                     ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
+                                     : t("tasks.focusTaskTitle", { type: typeLabel });
+                                 })()}
+                               >
+                                 {linkifyContent(task.content, (tag) => {
+                                   void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+                                 }, {
+                                   plainHashtags: isTaskTerminalStatus(task.status),
+                                   people,
+                                   disableStandaloneEmbeds: true,
+                                 })}
+                               </p>
+                               <div className="mt-1 flex items-end justify-between gap-2">
+                                 <span className="text-xs flex items-center gap-2 min-w-0">
+                                   <span
+                                     className="h-1.5 w-1.5 rounded-full flex-shrink-0"
+                                     style={{ backgroundColor: authorColor.accent }}
+                                   />
+                                   <Clock className="w-3 h-3 flex-shrink-0" />
+                                   <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+                                   <span className="truncate">
+                                     {format(task.dueDate!, "MMM d")}
+                                     {task.dueTime && ` ${task.dueTime}`}
+                                   </span>
+                                 </span>
+                                 <TaskAssigneeAvatars task={task} />
+                               </div>
+                             </div>
+                           </div>
+                         );
+                       })}
                     </div>
                   </div>
                 ))}
