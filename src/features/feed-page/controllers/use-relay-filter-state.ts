@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n/config";
 import { Relay } from "@/types";
 import { getEffectiveActiveRelayIds } from "@/domain/preferences/filter-state";
 import {
