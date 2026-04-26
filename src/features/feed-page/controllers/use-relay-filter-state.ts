@@ -56,6 +56,8 @@ export function useRelayFilterState({
     const relay = relays.find((r) => r.id === id);
     const relayDomain = getRelayDomain(relay, id);
     setActiveRelayIds((prev) => {
+      const previousSnapshot = new Set(prev);
+      const restoreSnapshot = () => setActiveRelayIds(new Set(previousSnapshot));
       const next = new Set(prev);
       const isEnabled = next.has(id);
       if (isEnabled) {
@@ -67,16 +69,18 @@ export function useRelayFilterState({
         }
       }
       if (isEnabled) {
-        notifyRelayFilterDisabled(relayDomain);
+        notifyRelayFilterDisabled(relayDomain, { onUndo: restoreSnapshot });
       } else {
         const enabledToastMessage = relay
           ? getEnableToastMessage?.(relay, { mode: "toggle" })
           : undefined;
         if (enabledToastMessage !== null) {
           if (typeof enabledToastMessage === "string") {
-            toast(enabledToastMessage);
+            toast(enabledToastMessage, {
+              action: { label: "Undo", onClick: restoreSnapshot },
+            });
           } else {
-            notifyRelayFilterEnabled(relayDomain);
+            notifyRelayFilterEnabled(relayDomain, { onUndo: restoreSnapshot });
           }
         }
       }
@@ -88,8 +92,10 @@ export function useRelayFilterState({
     const relay = relays.find((r) => r.id === id);
     const relayDomain = getRelayDomain(relay, id);
     setActiveRelayIds((prev) => {
+      const previousSnapshot = new Set(prev);
+      const restoreSnapshot = () => setActiveRelayIds(new Set(previousSnapshot));
       if (prev.size === 1 && prev.has(id)) {
-        notifyRelayFilterDisabled(relayDomain);
+        notifyRelayFilterDisabled(relayDomain, { onUndo: restoreSnapshot });
         return new Set();
       }
 
@@ -101,9 +107,11 @@ export function useRelayFilterState({
         : undefined;
       if (enabledToastMessage !== null) {
         if (typeof enabledToastMessage === "string") {
-          toast(enabledToastMessage);
+          toast(enabledToastMessage, {
+            action: { label: "Undo", onClick: restoreSnapshot },
+          });
         } else {
-          notifyShowingOnlyRelay(relayDomain);
+          notifyShowingOnlyRelay(relayDomain, { onUndo: restoreSnapshot });
         }
       }
       return new Set([id]);
@@ -112,6 +120,8 @@ export function useRelayFilterState({
 
   const handleToggleAllRelays = () => {
     setActiveRelayIds((prev) => {
+      const previousSnapshot = new Set(prev);
+      const restoreSnapshot = () => setActiveRelayIds(new Set(previousSnapshot));
       const connectedRelays = relays.filter(
         (r) => r.connectionStatus === "connected" || r.connectionStatus === "read-only"
       );
@@ -124,7 +134,7 @@ export function useRelayFilterState({
         connectedRelays.length > 0 && connectedRelays.every((r) => prev.has(r.id));
 
       if (allConnectedActive) {
-        notifyRelayFiltersCleared();
+        notifyRelayFiltersCleared({ onUndo: restoreSnapshot });
         return new Set();
       }
 
@@ -133,7 +143,7 @@ export function useRelayFilterState({
           onRelayEnabled?.(relay);
         }
       });
-      notifyAllRelaysSelected();
+      notifyAllRelaysSelected({ onUndo: restoreSnapshot });
       return new Set(connectedRelays.map((r) => r.id));
     });
   };
