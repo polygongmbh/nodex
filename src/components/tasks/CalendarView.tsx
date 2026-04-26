@@ -245,11 +245,23 @@ export function CalendarView({
   useEffect(() => {
     if (desktopInitialAlignDoneRef.current) return;
     const rafId = requestAnimationFrame(() => {
-      alignDesktopScrollToMonth(currentMonth, "auto");
+      // Prefer scrolling so the current week is visible (with a small top offset)
+      // rather than the start of the month, which on shorter viewports can hide today.
+      const scroller = desktopScrollerRef.current;
+      const weekNode = desktopCurrentWeekRef.current;
+      if (scroller && weekNode) {
+        const offset = isMobile ? 8 : 12;
+        const top = weekNode.offsetTop - offset;
+        // Use 'auto' on initial mount so it doesn't animate from 0.
+        programmaticScrollUntilRef.current = performance.now() + 50;
+        scroller.scrollTo({ top: Math.max(0, top), behavior: "auto" });
+      } else {
+        alignDesktopScrollToMonth(currentMonth, "auto");
+      }
       desktopInitialAlignDoneRef.current = true;
     });
     return () => cancelAnimationFrame(rafId);
-  }, [alignDesktopScrollToMonth, currentMonth]);
+  }, [alignDesktopScrollToMonth, currentMonth, isMobile]);
 
   useLayoutEffect(() => {
     const scroller = desktopScrollerRef.current;
