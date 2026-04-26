@@ -265,7 +265,10 @@ export function KanbanView({
     if (!focusedId) return;
     const task = kanbanTasks.find(t => t.id === focusedId);
     if (!task) return;
-    if (!canUserChangeTaskStatus(task, currentUser)) return;
+    if (!canUserChangeTaskStatus(task, currentUser)) {
+      guardModify();
+      return;
+    }
     
     const currentColumnIndex = columns.findIndex(
       (column) => column.id === resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id
@@ -287,7 +290,10 @@ export function KanbanView({
     if (!focusedId) return;
     const task = kanbanTasks.find(t => t.id === focusedId);
     if (!task) return;
-    if (!canUserChangeTaskStatus(task, currentUser)) return;
+    if (!canUserChangeTaskStatus(task, currentUser)) {
+      guardModify();
+      return;
+    }
     
     const currentColumnIndex = columns.findIndex(
       (column) => column.id === resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id
