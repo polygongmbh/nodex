@@ -145,12 +145,9 @@ export function MobileFilters({
     if (profileEditorOpenSignal <= 0 || !user) return;
     if (profileEditorOpenSignal === lastHandledProfileEditorOpenSignalRef.current) return;
     lastHandledProfileEditorOpenSignalRef.current = profileEditorOpenSignal;
-    if (!hasWritableRelayConnection) {
-      toast.error(t("auth:auth.profile.noRelayConnected"));
-      return;
-    }
+    if (!hasWritableRelayConnection) return;
     setIsProfileEditorOpen(true);
-  }, [hasWritableRelayConnection, profileEditorOpenSignal, t, user]);
+  }, [hasWritableRelayConnection, profileEditorOpenSignal, user]);
 
   const handleOpenProfileEditor = () => {
     if (!hasWritableRelayConnection) {
