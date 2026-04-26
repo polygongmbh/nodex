@@ -17,7 +17,7 @@ import {
   formatMentionIdentifierForDisplay,
   normalizeMentionIdentifier,
 } from "@/lib/mentions";
-import { hasMeaningfulComposerText } from "@/lib/composer-content";
+import { hasComposerSubstance, hasMeaningfulComposerText } from "@/lib/composer-content";
 import { notifyNeedTag } from "@/lib/notifications";
 import {
   isAlternateSubmitKey,
@@ -493,6 +493,26 @@ export function TaskComposer({
 
   useEffect(() => {
     if (!draftStorageKey) return;
+    const persistableAttachments = attachments
+      .filter((attachment) => attachment.status === "uploaded" && attachment.url)
+      .map((attachment) => ({
+        url: attachment.url,
+        mimeType: attachment.mimeType,
+        sha256: attachment.sha256,
+        size: attachment.size,
+        dimensions: attachment.dimensions,
+        blurhash: attachment.blurhash,
+        alt: attachment.alt,
+        name: attachment.name || attachment.fileName,
+      }));
+    // Only persist drafts that contain user-entered substance: text,
+    // uploaded attachments, or NIP-99 listing metadata. This prevents
+    // ambient state (seeded due date from calendar, priority, channels,
+    // location) from leaking into a fresh composer in another view.
+    if (!hasComposerSubstance({ content, attachments: persistableAttachments, nip99 })) {
+      clearTaskComposerDraft(draftStorageKey);
+      return;
+    }
     writeTaskComposerDraft(draftStorageKey, {
       content,
       taskType,
@@ -508,18 +528,7 @@ export function TaskComposer({
       priority: storedPriorityFromDisplay(priority),
       nip99,
       locationGeohash,
-      attachments: attachments
-        .filter((attachment) => attachment.status === "uploaded" && attachment.url)
-        .map((attachment) => ({
-          url: attachment.url,
-          mimeType: attachment.mimeType,
-          sha256: attachment.sha256,
-          size: attachment.size,
-          dimensions: attachment.dimensions,
-            blurhash: attachment.blurhash,
-            alt: attachment.alt,
-            name: attachment.name || attachment.fileName,
-        })),
+      attachments: persistableAttachments,
     } satisfies TaskComposerDraftState);
   }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, draftStorageKey]);
 
