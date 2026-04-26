@@ -93,7 +93,12 @@ export function useTaskStatusMenu({
 
   const triggerProps = {
     onClick: (event: MouseEvent<HTMLElement>) => {
-      if (!canCompleteTask) return;
+      if (!canCompleteTask) {
+        event.stopPropagation();
+        event.preventDefault();
+        surfaceBlockedFeedback();
+        return;
+      }
       if (longPressFiredRef.current) {
         longPressFiredRef.current = false;
         statusMenuOpenedOnPointerDownRef.current = false;
