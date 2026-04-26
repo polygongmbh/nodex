@@ -222,7 +222,7 @@ describe("TaskComposer", () => {
   it("restores the full draft payload from the shared draft key", async () => {
     const onSubmit = vi.fn();
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
-      content: "",
+      content: "ship restored task",
       messageType: "task",
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
@@ -238,15 +238,12 @@ describe("TaskComposer", () => {
 
     renderComposer({ onSubmit });
 
-    expect(getComposerInput()).toHaveValue("");
+    expect(getComposerInput()).toHaveValue("ship restored task");
     expect(screen.getByDisplayValue("10:00")).toBeInTheDocument();
     expect(screen.getByLabelText(/geohash/i)).toHaveValue("u33db");
     expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).not.toBeNull();
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();
 
-    fireEvent.change(getComposerInput(), {
-      target: { value: "ship restored task" },
-    });
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
     await waitFor(() => {
@@ -258,6 +255,53 @@ describe("TaskComposer", () => {
         tags: expect.arrayContaining(["backend"]),
         explicitMentionPubkeys: [alicePubkey],
       }));
+    });
+  });
+
+  it("does not restore drafts without text, attachments, or NIP-99 content", () => {
+    // Auxiliary state alone (date/priority/tags/mentions/location) must not
+    // leak from a previous composer context (e.g. the calendar view) into a
+    // fresh composer elsewhere.
+    localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
+      content: "",
+      messageType: "task",
+      savedAt: new Date().toISOString(),
+      explicitTagNames: ["backend"],
+      explicitMentionPubkeys: [alicePubkey],
+      taskDate: {
+        dueDate: "2026-04-01T10:00:00.000Z",
+        dueTime: "10:00",
+        dateType: "start",
+      },
+      priority: 80,
+      locationGeohash: "u33db",
+    }));
+
+    renderComposer();
+
+    expect(getComposerInput()).toHaveValue("");
+    expect(screen.queryByDisplayValue("10:00")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/geohash/i)).not.toBeInTheDocument();
+    expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).toBeNull();
+    expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).toBeNull();
+  });
+
+  it("clears the persisted draft when the composer is emptied", async () => {
+    localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
+      content: "draft text",
+      messageType: "task",
+      savedAt: new Date().toISOString(),
+    }));
+
+    renderComposer();
+
+    const textarea = getComposerInput();
+    expect(textarea).toHaveValue("draft text");
+
+    fireEvent.change(textarea, { target: { value: "" } });
+
+    await waitFor(() => {
+      expect(localStorage.getItem(COMPOSE_DRAFT_STORAGE_KEY)).toBeNull();
     });
   });
 
