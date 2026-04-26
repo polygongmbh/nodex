@@ -29,24 +29,34 @@ export function notifyDisconnectedSelectedFeeds(): void {
 
 // Relay filter
 
-export function notifyRelayFilterDisabled(relayDomain: string): void {
-  toast(i18n.t("composer:toasts.success.relayFilterDisabled", { relayDomain }));
+export function notifyRelayFilterDisabled(relayDomain: string, options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.relayFilterDisabled", { relayDomain }), buildUndoOption(options.onUndo));
 }
 
-export function notifyRelayFilterEnabled(relayDomain: string): void {
-  toast(i18n.t("composer:toasts.success.relayFilterEnabled", { relayDomain }));
+export function notifyRelayFilterEnabled(relayDomain: string, options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.relayFilterEnabled", { relayDomain }), buildUndoOption(options.onUndo));
 }
 
-export function notifyShowingOnlyRelay(relayDomain: string): void {
-  toast(i18n.t("composer:toasts.success.showingOnlyRelay", { relayDomain }));
+export function notifyShowingOnlyRelay(relayDomain: string, options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.showingOnlyRelay", { relayDomain }), buildUndoOption(options.onUndo));
 }
 
-export function notifyRelayFiltersCleared(): void {
-  toast(i18n.t("composer:toasts.success.relayFiltersCleared"));
+export function notifyRelayFiltersCleared(options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.relayFiltersCleared"), buildUndoOption(options.onUndo));
 }
 
-export function notifyAllRelaysSelected(): void {
-  toast(i18n.t("composer:toasts.success.allRelaysSelected"));
+export function notifyAllRelaysSelected(options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.allRelaysSelected"), buildUndoOption(options.onUndo));
+}
+
+function buildUndoOption(onUndo?: () => void) {
+  if (!onUndo) return undefined;
+  return {
+    action: {
+      label: i18n.t("composer:toasts.actions.undo"),
+      onClick: onUndo,
+    },
+  };
 }
 
 // Relay reconnect
