@@ -78,7 +78,7 @@ export function useRelayFilterState({
         if (enabledToastMessage !== null) {
           if (typeof enabledToastMessage === "string") {
             toast(enabledToastMessage, {
-              action: { label: "Undo", onClick: restoreSnapshot },
+              action: { label: i18n.t("composer:toasts.actions.undo"), onClick: restoreSnapshot },
             });
           } else {
             notifyRelayFilterEnabled(relayDomain, { onUndo: restoreSnapshot });
@@ -109,7 +109,7 @@ export function useRelayFilterState({
       if (enabledToastMessage !== null) {
         if (typeof enabledToastMessage === "string") {
           toast(enabledToastMessage, {
-            action: { label: "Undo", onClick: restoreSnapshot },
+            action: { label: i18n.t("composer:toasts.actions.undo"), onClick: restoreSnapshot },
           });
         } else {
           notifyShowingOnlyRelay(relayDomain, { onUndo: restoreSnapshot });
