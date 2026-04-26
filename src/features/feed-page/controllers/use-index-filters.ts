@@ -70,6 +70,29 @@ export function useIndexFilters({
   );
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>(() => normalizeQuickFilterState());
 
+  /**
+   * Capture the current filter slice so undo actions on toast notifications can
+   * restore it verbatim. We snapshot every piece of state our filter handlers
+   * touch (channels, people, posted tags, active relay ids) so any combination
+   * of mutations can be rolled back as a unit.
+   */
+  const captureFilterSnapshot = useCallback(() => {
+    const channelFilterStatesSnapshot = new Map(channelFilterStates);
+    const peopleSnapshot = people.map((person) => ({ ...person }));
+    const activeRelayIdsSnapshot = new Set(activeRelayIds);
+    const postedTagsSnapshot = useFeedTaskMutationStore.getState().postedTags.map((entry) => ({
+      ...entry,
+      relayIds: [...entry.relayIds],
+    }));
+    return () => {
+      setChannelFilterStates(() => new Map(channelFilterStatesSnapshot));
+      setPeople(() => peopleSnapshot.map((person) => ({ ...person })));
+      setActiveRelayIds(() => new Set(activeRelayIdsSnapshot));
+      setPostedTags(() => postedTagsSnapshot.map((entry) => ({ ...entry, relayIds: [...entry.relayIds] })));
+    };
+  }, [activeRelayIds, channelFilterStates, people, setActiveRelayIds, setPeople, setPostedTags]);
+
+
   const channelsWithState = useMemo(
     () =>
       channels.map((channel) => ({
