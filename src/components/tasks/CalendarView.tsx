@@ -26,6 +26,8 @@ import {
 import { cn } from "@/lib/utils";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow, hasTaskMetadataChips } from "./TaskTagChipRow";
+import { TaskPrioritySelect } from "./TaskMetadataEditors";
+import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { getAuthorColor } from "@/lib/author-color";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
