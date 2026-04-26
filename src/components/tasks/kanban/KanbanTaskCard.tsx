@@ -95,7 +95,15 @@ export function KanbanTaskCard({
     >
       {/* Priority chip pinned to the top-right corner so the content column never has to share width with it. */}
       {typeof task.priority === "number" ? (
-        <div className="absolute right-2 top-2 z-10">
+        <div
+          className="absolute right-2 top-2 z-10"
+          onClickCapture={canChangeStatus ? undefined : (e) => {
+            // Soft-disabled: still surface feedback when tapped on touch devices.
+            e.preventDefault();
+            e.stopPropagation();
+            surfaceBlockedFeedback();
+          }}
+        >
           <TaskPrioritySelect
             id={`kanban-priority-${task.id}`}
             taskId={canChangeStatus ? task.id : undefined}
@@ -105,7 +113,7 @@ export function KanbanTaskCard({
               "px-1.5 py-0.5 text-sm focus:outline-none",
               TASK_CHIP_STYLES.priority,
               "text-sm",
-              canChangeStatus ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed"
+              canChangeStatus ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed opacity-60"
             )}
           />
         </div>
