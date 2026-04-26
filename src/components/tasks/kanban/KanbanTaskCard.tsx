@@ -7,8 +7,9 @@ import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
-import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
@@ -19,6 +20,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useTranslation } from "react-i18next";
 import { getTaskTooltipPreview } from "@/lib/task-content-preview";
 import { format } from "date-fns";
+import { notifyTaskActionBlocked } from "@/lib/notifications";
 import type { Task, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -52,11 +54,19 @@ export function KanbanTaskCard({
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();
+  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
   const dueDateColor = getDueDateColorClass(task.dueDate, displayStatus);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+  const surfaceBlockedFeedback = () => {
+    if (isInteractionBlocked && onBlockedInteractionAttempt) {
+      onBlockedInteractionAttempt();
+      return;
+    }
+    notifyTaskActionBlocked(getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people));
+  };
   const hasMetadataChips =
     !compactTaskCardsEnabled && hasTaskMetadataChips(task, activeRelayCount);
 
