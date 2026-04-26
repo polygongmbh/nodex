@@ -436,7 +436,6 @@ export function TreeTaskItem({
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-60"
                 )}
               >
-              >
                 <TaskStateIcon
                   status={getTaskStatus(task)}
                 />
