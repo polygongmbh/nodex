@@ -308,6 +308,8 @@ export function useIndexFilters({
       const existsInSidebar = channels.some((channel) => channel.name.toLowerCase() === normalizedTag);
       const scopedRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
 
+      const restoreSnapshot = captureFilterSnapshot();
+
       if (!existsInSidebar) {
         setPostedTags((prev) => {
           const next = prev.filter((entry) => entry.name !== normalizedTag);
@@ -323,7 +325,7 @@ export function useIndexFilters({
         return setExclusiveChannelFilter(allChannels, channelId);
       });
 
-      notifyShowingOnlyTag(normalizedTag);
+      notifyShowingOnlyTag(normalizedTag, { onUndo: restoreSnapshot });
     },
     "filter.clearPerson": (intent) => {
       setPeople((prev) =>
@@ -333,24 +335,30 @@ export function useIndexFilters({
       );
     },
     "person.filter.exclusive": (intent) => {
+      const restoreSnapshot = captureFilterSnapshot();
       applyExclusivePersonFilter(intent.person);
-      notifyShowingOnlyPersonExclusive(intent.person);
+      notifyShowingOnlyPersonExclusive(intent.person, { onUndo: restoreSnapshot });
     },
     "person.filter.toggle": (intent) => {
       const wasSelected = people.find((person) => person.id === intent.person.id)?.isSelected ?? intent.person.isSelected;
+      const restoreSnapshot = captureFilterSnapshot();
       toggleInteractivePerson(intent.person);
-      notifyPersonFilterToggled(intent.person, wasSelected);
+      notifyPersonFilterToggled(intent.person, wasSelected, { onUndo: restoreSnapshot });
     },
     "person.compose.mention": (intent) => {
       queueMentionForPerson(intent.person);
     },
     "person.filterAndMention": (intent) => {
+      const restoreSnapshot = captureFilterSnapshot();
       applyExclusivePersonFilter(intent.person);
       queueMentionForPerson(intent.person);
+      notifyShowingOnlyPersonExclusive(intent.person, { onUndo: restoreSnapshot });
     },
     "filter.applyAuthorExclusive": (intent) => {
+      const restoreSnapshot = captureFilterSnapshot();
       applyExclusivePersonFilter(intent.author);
       queueMentionForPerson(intent.author);
+      notifyShowingOnlyPersonExclusive(intent.author, { onUndo: restoreSnapshot });
     },
     "sidebar.quickFilter.recentDays.change": (intent) => {
       const nextDays = clampRecentDays(intent.days);
