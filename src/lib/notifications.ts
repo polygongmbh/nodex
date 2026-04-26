@@ -29,24 +29,34 @@ export function notifyDisconnectedSelectedFeeds(): void {
 
 // Relay filter
 
-export function notifyRelayFilterDisabled(relayDomain: string): void {
-  toast(i18n.t("composer:toasts.success.relayFilterDisabled", { relayDomain }));
+export function notifyRelayFilterDisabled(relayDomain: string, options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.relayFilterDisabled", { relayDomain }), buildUndoOption(options.onUndo));
 }
 
-export function notifyRelayFilterEnabled(relayDomain: string): void {
-  toast(i18n.t("composer:toasts.success.relayFilterEnabled", { relayDomain }));
+export function notifyRelayFilterEnabled(relayDomain: string, options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.relayFilterEnabled", { relayDomain }), buildUndoOption(options.onUndo));
 }
 
-export function notifyShowingOnlyRelay(relayDomain: string): void {
-  toast(i18n.t("composer:toasts.success.showingOnlyRelay", { relayDomain }));
+export function notifyShowingOnlyRelay(relayDomain: string, options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.showingOnlyRelay", { relayDomain }), buildUndoOption(options.onUndo));
 }
 
-export function notifyRelayFiltersCleared(): void {
-  toast(i18n.t("composer:toasts.success.relayFiltersCleared"));
+export function notifyRelayFiltersCleared(options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.relayFiltersCleared"), buildUndoOption(options.onUndo));
 }
 
-export function notifyAllRelaysSelected(): void {
-  toast(i18n.t("composer:toasts.success.allRelaysSelected"));
+export function notifyAllRelaysSelected(options: { onUndo?: () => void } = {}): void {
+  toast(i18n.t("composer:toasts.success.allRelaysSelected"), buildUndoOption(options.onUndo));
+}
+
+function buildUndoOption(onUndo?: () => void) {
+  if (!onUndo) return undefined;
+  return {
+    action: {
+      label: i18n.t("composer:toasts.actions.undo"),
+      onClick: onUndo,
+    },
+  };
 }
 
 // Relay reconnect
@@ -61,24 +71,38 @@ export function notifyRelayReconnectAttempt(relayDomain: string): void {
 
 // Channel / person filter
 
-export function notifyShowingOnlyChannel(channelName: string): void {
-  toast(i18n.t("composer:toasts.success.showingOnlyChannel", { channelName }));
+interface FilterToastOptions {
+  onUndo?: () => void;
 }
 
-export function notifyAllChannelsReset(): void {
-  toast(i18n.t("composer:toasts.success.allChannelsReset"));
+function withUndoAction(options: FilterToastOptions): { action?: { label: string; onClick: () => void } } {
+  if (!options.onUndo) return {};
+  return {
+    action: {
+      label: i18n.t("composer:toasts.actions.undo"),
+      onClick: options.onUndo,
+    },
+  };
 }
 
-export function notifyShowingOnlyTag(tag: string): void {
-  toast(i18n.t("composer:toasts.success.showingOnlyTag", { tag }));
+export function notifyShowingOnlyChannel(channelName: string, options: FilterToastOptions = {}): void {
+  toast(i18n.t("composer:toasts.success.showingOnlyChannel", { channelName }), withUndoAction(options));
+}
+
+export function notifyAllChannelsReset(options: FilterToastOptions = {}): void {
+  toast(i18n.t("composer:toasts.success.allChannelsReset"), withUndoAction(options));
+}
+
+export function notifyShowingOnlyTag(tag: string, options: FilterToastOptions = {}): void {
+  toast(i18n.t("composer:toasts.success.showingOnlyTag", { tag }), withUndoAction(options));
 }
 
 export function notifyNoFrequentPeople(): void {
   toast(i18n.t("composer:toasts.success.noFrequentPeople"));
 }
 
-export function notifyFrequentPeopleDeselected(): void {
-  toast(i18n.t("composer:toasts.success.frequentPeopleDeselected"));
+export function notifyFrequentPeopleDeselected(options: FilterToastOptions = {}): void {
+  toast(i18n.t("composer:toasts.success.frequentPeopleDeselected"), withUndoAction(options));
 }
 
 function resolvePersonToastName(person?: Person | null): string {
@@ -90,15 +114,25 @@ function resolvePersonToastName(person?: Person | null): string {
   return i18n.t("composer:toasts.success.selectedUserFallback");
 }
 
-export function notifyShowingOnlyPersonExclusive(person?: Person | null): void {
-  toast(i18n.t("composer:toasts.success.showingOnlyPersonExclusive", { personName: resolvePersonToastName(person) }));
+export function notifyShowingOnlyPersonExclusive(person?: Person | null, options: FilterToastOptions = {}): void {
+  toast(
+    i18n.t("composer:toasts.success.showingOnlyPersonExclusive", { personName: resolvePersonToastName(person) }),
+    withUndoAction(options),
+  );
 }
 
-export function notifyPersonFilterToggled(person: Person | null | undefined, wasSelected: boolean): void {
-  toast(i18n.t(
-    wasSelected ? "toasts.success.removedPersonFilter" : "toasts.success.showingOnlyPerson",
-    { personName: resolvePersonToastName(person) }
-  ));
+export function notifyPersonFilterToggled(
+  person: Person | null | undefined,
+  wasSelected: boolean,
+  options: FilterToastOptions = {},
+): void {
+  toast(
+    i18n.t(
+      wasSelected ? "toasts.success.removedPersonFilter" : "toasts.success.showingOnlyPerson",
+      { personName: resolvePersonToastName(person) },
+    ),
+    withUndoAction(options),
+  );
 }
 
 // Publish: task status / dates / priority
