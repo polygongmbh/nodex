@@ -56,6 +56,7 @@ import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 import { isWritableRelay } from "@/components/tasks/task-composer-runtime";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
+import { useLongPress } from "@/lib/use-long-press";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
