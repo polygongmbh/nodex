@@ -1420,9 +1420,11 @@ export function UnifiedBottomBar({
           {/* Filter/Selector Buttons */}
           <div className="flex items-center gap-0.5 ml-auto shrink-0">
             <button
-              onClick={() => toggleSelector("relay")}
+              {...relayLongPressHandlers}
+              aria-label={t("filters:filters.relays.title")}
+              title={t("filters:filters.relays.longPressToReset", "Hold to reset")}
               className={cn(
-                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
                 activeSelector === "relay" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -1434,9 +1436,11 @@ export function UnifiedBottomBar({
               )}
             </button>
             <button
-              onClick={() => toggleSelector("channel")}
+              {...channelLongPressHandlers}
+              aria-label={t("filters:filters.channels.title")}
+              title={t("filters:filters.channels.longPressToReset", "Hold to reset")}
               className={cn(
-                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
                 activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -1448,10 +1452,11 @@ export function UnifiedBottomBar({
               )}
             </button>
             <button
-              onClick={() => toggleSelector("person")}
+              {...personLongPressHandlers}
               aria-label={t("filters:filters.people.title")}
+              title={t("filters:filters.people.longPressToReset", "Hold to reset")}
               className={cn(
-                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
                 activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
