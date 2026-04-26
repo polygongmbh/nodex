@@ -1421,8 +1421,8 @@ export function UnifiedBottomBar({
           <div className="flex items-center gap-0.5 ml-auto shrink-0">
             <button
               {...relayLongPressHandlers}
-              aria-label={t("filters:filters.relays.title")}
-              title={t("filters:filters.relays.longPressToReset", "Hold to reset")}
+              aria-label={t("filters:filters.feeds.title")}
+              title={t("filters:filters.feeds.longPressToReset")}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95 select-none",
                 activeSelector === "relay" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
