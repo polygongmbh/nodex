@@ -281,6 +281,9 @@ export function CalendarView({
 
     const syncCurrentMonthFromScroll = () => {
       syncMonthRafIdRef.current = null;
+      // While a programmatic scroll is animating, don't update the header — otherwise
+      // the smooth-scroll mid-frames briefly land on the previous section, causing a flash.
+      if (performance.now() < programmaticScrollUntilRef.current) return;
       const marker = scroller.scrollTop + 96;
       let activeMonth: Date | null = null;
 
