@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
@@ -118,8 +118,13 @@ export function useOnboarding({
     setActiveOnboardingSection(null);
   }, [user]);
 
+  const lastHandledStepIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!isOnboardingOpen) setActiveOnboardingStepId(null);
+    if (!isOnboardingOpen) {
+      setActiveOnboardingStepId(null);
+      lastHandledStepIdRef.current = null;
+    }
   }, [isOnboardingOpen]);
 
   const handleOnboardingStepChange = useCallback((payload: {
@@ -127,6 +132,13 @@ export function useOnboarding({
     stepNumber: number;
   }) => {
     setActiveOnboardingStepId(payload.id);
+
+    // Side effects (view switch, filter reset) should only fire when the step
+    // actually changes — not on every callback re-creation triggered by parent
+    // state updates. Otherwise selections made during the step are perpetually
+    // undone in a loop.
+    if (lastHandledStepIdRef.current === payload.id) return;
+    lastHandledStepIdRef.current = payload.id;
 
     const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
     if (isComposeGuideStep(payload.id) && !isDedicatedViewGuide) {
