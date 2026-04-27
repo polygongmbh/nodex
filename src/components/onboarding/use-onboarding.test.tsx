@@ -3,13 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRef, useState } from "react";
 import { act } from "react";
 import { useOnboarding } from "./use-onboarding";
-import { makeChannel, makePerson } from "@/test/fixtures";
-import type { Channel } from "@/types";
+import { makePerson } from "@/test/fixtures";
 import type { Person } from "@/types/person";
-
-const channels: Channel[] = [
-  makeChannel({ id: "general", name: "general" }),
-];
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
+import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 
 const peopleSeed: Person[] = [
   makePerson({ id: "alice", name: "alice", displayName: "Alice", isSelected: true }),
@@ -27,27 +25,21 @@ function Harness({
   const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
   const [currentView, setCurrentView] = useState<"feed" | "tree" | "kanban" | "calendar" | "list">("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
-  const [searchQuery, setSearchQuery] = useState("draft");
-  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
-  const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
-    new Map([["general", "included"]])
-  );
   const [people, setPeople] = useState<Person[]>(peopleSeed);
-  const [authOpen, setAuthOpen] = useState(false);
+
+  const storeRelayIds = useFilterStore((s) => s.activeRelayIds);
+  const storeChannelStates = useFilterStore((s) => s.channelFilterStates);
+  const storeSearchQuery = usePreferencesStore((s) => s.searchQuery);
+  const authOpen = useAuthModalStore((s) => s.isOpen);
 
   const onboarding = useOnboarding({
     user,
     isMobile,
     currentView,
-    channels,
     openedWithFocusedTaskRef,
     setCurrentView,
     setFocusedTaskId,
-    setSearchQuery,
-    setActiveRelayIds,
-    setChannelFilterStates,
     setPeople,
-    setIsAuthModalOpen: setAuthOpen,
   });
 
   return (
@@ -61,9 +53,9 @@ function Harness({
       <button onClick={() => setUser(null)}>SignOut</button>
       <output data-testid="current-view">{currentView}</output>
       <output data-testid="focused-task">{focusedTaskId ?? ""}</output>
-      <output data-testid="search-query">{searchQuery}</output>
-      <output data-testid="relay-ids">{Array.from(activeRelayIds).sort().join(",")}</output>
-      <output data-testid="channel-state">{channelFilterStates.get("general") || "neutral"}</output>
+      <output data-testid="search-query">{storeSearchQuery}</output>
+      <output data-testid="relay-ids">{Array.from(storeRelayIds).sort().join(",")}</output>
+      <output data-testid="channel-state">{storeChannelStates.get("general") || "neutral"}</output>
       <output data-testid="selected-people">
         {people.filter((person) => person.isSelected).map((person) => person.id).join(",")}
       </output>
@@ -78,6 +70,12 @@ describe("useOnboarding", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.useRealTimers();
+    useFilterStore.setState({
+      activeRelayIds: new Set(["relay-one"]),
+      channelFilterStates: new Map([["general", "included"]]),
+    });
+    usePreferencesStore.setState({ searchQuery: "draft" });
+    useAuthModalStore.setState({ isOpen: false });
   });
 
   it("resets view and filters on the mobile navigation-focus step", () => {

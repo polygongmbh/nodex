@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { buildAuthRoute, resolveAuthRouteStep } from "@/lib/auth-routes";
+import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 
 export type AuthModalEntryStep = "choose" | "noas" | "noasSignUp";
 
 export function useAuthModalRoute() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const isAuthModalOpen = useAuthModalStore((s) => s.isOpen);
+  const setIsAuthModalOpen = useAuthModalStore((s) => s.setIsOpen);
   const [authModalInitialStep, setAuthModalInitialStep] = useState<AuthModalEntryStep | undefined>(undefined);
 
   const handleOpenAuthModal = useCallback((initialStep?: AuthModalEntryStep) => {
@@ -37,7 +39,6 @@ export function useAuthModalRoute() {
   return {
     isAuthModalOpen,
     authModalInitialStep,
-    setIsAuthModalOpen,
     handleOpenAuthModal,
     handleCloseAuthModal,
   };

@@ -11,10 +11,12 @@ import {
   isNavigationFocusStep,
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
-import { mapPeopleSelection, setAllChannelFilters } from "@/domain/content/filter-state-utils";
-import type { Channel } from "@/types";
+import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import type { Person } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
+import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 
 const STARTUP_ONBOARDING_INTRO_DELAY_MS = 300;
 
@@ -22,34 +24,28 @@ interface UseOnboardingOptions {
   user: { pubkey?: string } | null | undefined;
   isMobile: boolean;
   currentView: ViewType;
-  channels: Channel[];
   openedWithFocusedTaskRef: MutableRefObject<boolean>;
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
-  setSearchQuery: (query: string) => void;
-  setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
-  setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setPeople: Dispatch<SetStateAction<Person[]>>;
-  setIsAuthModalOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export function useOnboarding({
   user,
   isMobile,
   currentView,
-  channels,
   openedWithFocusedTaskRef,
   onBeforeResetFocusedTaskScope,
   setCurrentView,
   setFocusedTaskId,
-  setSearchQuery,
-  setActiveRelayIds,
-  setChannelFilterStates,
   setPeople,
-  setIsAuthModalOpen,
 }: UseOnboardingOptions) {
   const { t } = useTranslation("onboarding");
+  const { setActiveRelayIds, setChannelFilterStates } = useFilterStore();
+  const setSearchQuery = usePreferencesStore((s) => s.setSearchQuery);
+  const setIsAuthModalOpen = useAuthModalStore((s) => s.setIsOpen);
+
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
@@ -154,7 +150,7 @@ export function useOnboarding({
       setFocusedTaskId(null);
       setSearchQuery("");
       setActiveRelayIds(new Set());
-      setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
+      setChannelFilterStates(new Map());
       setPeople((prev) => mapPeopleSelection(prev, () => false));
       return;
     }
@@ -169,10 +165,9 @@ export function useOnboarding({
     setFocusedTaskId(null);
     setSearchQuery("");
     setActiveRelayIds(new Set());
-    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
+    setChannelFilterStates(new Map());
     setPeople((prev) => mapPeopleSelection(prev, () => false));
   }, [
-    channels,
     currentView,
     isMobile,
     onBeforeResetFocusedTaskScope,
