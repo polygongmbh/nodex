@@ -131,6 +131,9 @@ export function useOnboarding({
     const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
     if (isComposeGuideStep(payload.id) && !isDedicatedViewGuide) {
       setComposeGuideActivationSignal((previous) => previous + 1);
+      if (!isMobile && currentView !== "feed") {
+        setCurrentView("feed");
+      }
     }
 
     if (shouldForceFeedAndResetFiltersOnStep(payload.id, isMobile)) {
