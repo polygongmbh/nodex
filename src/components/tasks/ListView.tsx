@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
+import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
@@ -167,6 +168,7 @@ export function ListView({
   // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
   const sortContextRef = useRef<SortContext | null>(null);
   const taskLookup = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
   
   const sortContext: SortContext = useMemo(() => {
     const childrenMap = buildChildrenMap(allTasks);
@@ -174,10 +176,11 @@ export function ListView({
       childrenMap,
       allTasks,
       taskById: taskLookup,
+      priorityScores,
     };
     return sortContextRef.current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortVersion, taskLookup]);
+  }, [sortVersion, priorityScores, taskLookup]);
 
   const hasChildren = useCallback((taskId: string): boolean => {
     return allTasks.some((task) => task.taskType === "task" && task.parentId === taskId);

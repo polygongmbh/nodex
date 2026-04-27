@@ -11,6 +11,7 @@ import {
   type TaskViewFilterRequest,
 } from "@/domain/content/task-view-filtering";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
+import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
@@ -200,11 +201,12 @@ export function useTaskViewSource({
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+  const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
   const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
   const filterIndex = useMemo(() => buildTaskViewFilterIndex(allTasks, people), [allTasks, people]);
   const sortContext = useMemo<SortContext>(
-    () => ({ childrenMap, allTasks, taskById }),
-    [allTasks, childrenMap, taskById]
+    () => ({ childrenMap, allTasks, taskById, priorityScores }),
+    [allTasks, childrenMap, priorityScores, taskById]
   );
   const neutralChannels = useMemo(
     () => channels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
@@ -690,7 +692,11 @@ export function useKanbanViewState({
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-  const sortContext = useMemo<SortContext>(() => ({ childrenMap, allTasks, taskById }), [allTasks, childrenMap, taskById]);
+  const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
+  const sortContext = useMemo<SortContext>(
+    () => ({ childrenMap, allTasks, taskById, priorityScores }),
+    [allTasks, childrenMap, priorityScores, taskById]
+  );
   const hasChildren = useCallback(
     (taskId: string): boolean => (childrenMap.get(taskId) || []).some((candidate) => candidate.taskType === "task"),
     [childrenMap]

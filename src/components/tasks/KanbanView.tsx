@@ -23,6 +23,7 @@ import { sortKanbanColumnTasks, useKanbanViewState } from "@/features/feed-page/
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskViewServices } from "./use-task-view-services";
 import { buildChildrenMap, type SortContext } from "@/domain/content/task-sorting";
+import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -101,10 +102,12 @@ export function KanbanView({
   });
   const sortContext = useMemo<SortContext>(() => {
     const childrenMap = buildChildrenMap(allTasks);
+    const priorityScores = evaluateTaskPriorities(allTasks);
     return {
       childrenMap,
       allTasks,
       taskById: new Map(allTasks.map((task) => [task.id, task] as const)),
+      priorityScores,
     };
   }, [allTasks]);
 

@@ -26,8 +26,9 @@ describe("getDueDateColorClass", () => {
 
 describe("sortTasks", () => {
   const today = startOfDay(new Date());
+  const now = today.getTime();
 
-  it("orders tasks by due-now, progress, priority bands, and priority absence", () => {
+  it("orders tasks by evaluated priority, progress, and latest modification", () => {
     const tasks = [
       makeTask({
         id: "medium-priority",
@@ -75,18 +76,46 @@ describe("sortTasks", () => {
     const sorted = sortTasks(tasks, {
       allTasks: tasks,
       childrenMap: buildChildrenMap(tasks),
+      now,
     });
 
     expect(sorted.map((task) => task.id)).toEqual([
       "due-now",
-      "active",
-      "high-priority",
       "upcoming-due",
-      "medium-priority",
+      "high-priority",
       "no-priority",
+      "active",
+      "medium-priority",
       "low-priority",
       "done-task",
     ]);
+  });
+
+  it("raises a parent when its child has urgent evaluated priority", () => {
+    const parent = makeTask({
+      id: "parent",
+      lastEditedAt: new Date("2026-02-18T09:00:00.000Z"),
+    });
+    const urgentChild = makeTask({
+      id: "urgent-child",
+      parentId: "parent",
+      dueDate: subDays(today, 1),
+      lastEditedAt: new Date("2026-02-18T08:00:00.000Z"),
+    });
+    const highManualPriority = makeTask({
+      id: "high-manual-priority",
+      priority: 80,
+      lastEditedAt: new Date("2026-02-18T12:00:00.000Z"),
+    });
+    const allTasks = [parent, urgentChild, highManualPriority];
+
+    const sorted = sortTasks([highManualPriority, parent], {
+      allTasks,
+      childrenMap: buildChildrenMap(allTasks),
+      now,
+    });
+
+    expect(sorted.map((task) => task.id)).toEqual(["parent", "high-manual-priority"]);
   });
 
   it("uses latest modification time as tie-breaker within same tier", () => {

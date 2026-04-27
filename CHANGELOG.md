@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Default task ordering now uses the shared priority evaluator across tree, list, kanban, and calendar surfaces.
 - Read-only relay selection now uses the normal selected-space toast and active sidebar styling instead of reconnect-warning feedback.
 - Relay connections now recover from offline startup attempts that stay stuck in connecting, keep retrying with increasing backoff, and no longer rebuild every relay socket when a relay is added, removed, or reordered.
 
