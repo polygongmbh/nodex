@@ -777,7 +777,6 @@ function FeedIndexContent() {
     return (
       <FeedPageProviders
         coreHandlers={coreHandlers}
-        uiConfig={uiConfig}
         surfaceState={feedSurfaceState}
         taskViewModel={feedTaskViewModel}
         viewState={feedViewState}
