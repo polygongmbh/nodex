@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Commands
 
 ```sh
@@ -41,17 +39,6 @@ The `useNDK()` hook exposes the entire app state: authenticated user, relay list
 - `Channel` — hashtag-based filter with `included | excluded | neutral` state
 - `Relay` — relay connection with status
 
-### Nostr Event Kinds Used
-Conform to Nostr protocol standards at https://github.com/nostr-protocol/nips/. 
-Reference relevant NIPs in commit messages and release/review notes when protocol behavior is affected.
-- **1621** — Task (NIP-??), treated as the primary task event
-- **1630–1633** — Git-style open/applied/closed/draft status events
-- **1639** — Procedure
-- **30402/30403** — NIP-99 classified listings (offers/requests in feed)
-- **31922/31923** — NIP-52 calendar date/time events (due dates)
-- **30315** — NIP-38 user status (presence)
-- **0** — Kind 0 metadata (profiles)
-
 ### Views & Routing
 Routes are `/:view` and `/:view/:taskId`. Views: `feed`, `tree`, `list`, `kanban`, `calendar`, `table`. `Index.tsx` renders the appropriate view component via `ViewSwitcher`.
 
@@ -77,18 +64,14 @@ High-impact areas that require test coverage:
 - Nostr event conversion, mapping, and publishing tags
 - Permission and status transition rules
 
-### Environment Variables (`.env`)
-All `VITE_*` vars are injected at build time via `vite.config.ts`:
-- `VITE_DEFAULT_RELAYS` — comma-separated relay WebSocket URLs
-- `VITE_NIP96_UPLOAD_URL` — attachment upload endpoint (hides upload UI if unset)
-- `VITE_ENABLE_DEMO_FEED` — `true` to show local demo feed relay
-
 ## Workflow
 
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash` and warn if there are multiple unrelated changed files.
 - Use Conventional Commits: `feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`
 - Amend the immediately previous local commit when the change is a direct fixup of it; use a new commit otherwise.
-- In post-implementation summaries, concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
+- In post-implementation summaries, after committing your changes, concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
+
+When the user says `squash`, inspect recent unpushed commits and suggest sensible squashes for fixups or tightly related follow-ups; list candidates with original and target messages before executing anything.
 
 ### Changelog
 - Keep `CHANGELOG.md` updated; add user-visible changes to `## [Unreleased]` as you go
@@ -104,8 +87,3 @@ All `VITE_*` vars are injected at build time via `vite.config.ts`:
 - Use `console.warn`/`console.error` for actionable issues; avoid noisy debug logs in normal production flows
 - New user-facing features must include debug logs enabled by default in dev builds without manual toggling
 - Use toasts for significant user-facing outcomes; avoid duplicate/spammy toasts for the same event
-
-### push / squash Commands
-When the user says `push` (or starts a message with it), run the full release workflow: check unpushed commits, update version in `package.json` semantically, update changelog, run the verification matrix for release prep, create an annotated tag, then ask for confirmation before pushing.
-
-When the user says `squash`, inspect recent unpushed commits and suggest sensible squashes for fixups or tightly related follow-ups; list candidates with original and target messages before executing anything.

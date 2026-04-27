@@ -11,7 +11,6 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
@@ -492,10 +491,6 @@ function FeedIndexContent() {
     currentView,
     channels,
     openedWithFocusedTaskRef,
-    shouldForceAuthAfterOnboarding: shouldPromptSignInAfterOnboarding({
-      isSignedIn: Boolean(user),
-      relays: ndkRelays,
-    }),
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,

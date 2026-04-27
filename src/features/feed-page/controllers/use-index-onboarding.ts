@@ -24,7 +24,6 @@ interface UseIndexOnboardingOptions {
   currentView: ViewType;
   channels: Channel[];
   openedWithFocusedTaskRef: MutableRefObject<boolean>;
-  shouldForceAuthAfterOnboarding: boolean;
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
@@ -41,7 +40,6 @@ export function useIndexOnboarding({
   currentView,
   channels,
   openedWithFocusedTaskRef,
-  shouldForceAuthAfterOnboarding,
   onBeforeResetFocusedTaskScope,
   setCurrentView,
   setFocusedTaskId,
@@ -60,7 +58,6 @@ export function useIndexOnboarding({
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const lastHandledOnboardingStepRef = useRef<string | null>(null);
-  const startedSignedOutRef = useRef(!user);
   const handledStartupIntroRef = useRef(false);
 
   const onboardingSections = useMemo(
@@ -102,15 +99,14 @@ export function useIndexOnboarding({
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(false);
     setActiveOnboardingSection(null);
-    if (shouldForceAuthAfterOnboarding) {
+    if (!user) {
       setIsAuthModalOpen(true);
     }
-  }, [setIsAuthModalOpen, shouldForceAuthAfterOnboarding]);
+  }, [setIsAuthModalOpen, user]);
 
   useEffect(() => {
     if (handledStartupIntroRef.current) return;
     handledStartupIntroRef.current = true;
-    if (!startedSignedOutRef.current) return;
 
     if (!openedWithFocusedTaskRef.current && !user) {
       const introTimeout = window.setTimeout(() => {

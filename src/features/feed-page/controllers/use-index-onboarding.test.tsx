@@ -18,11 +18,9 @@ const peopleSeed: Person[] = [
 
 function Harness({
   isMobile = true,
-  shouldForceAuthAfterOnboarding = false,
   initialUser = null,
 }: {
   isMobile?: boolean;
-  shouldForceAuthAfterOnboarding?: boolean;
   initialUser?: { pubkey?: string } | null;
 }) {
   const openedWithFocusedTaskRef = useRef(false);
@@ -43,7 +41,6 @@ function Harness({
     currentView,
     channels,
     openedWithFocusedTaskRef,
-    shouldForceAuthAfterOnboarding,
     setCurrentView,
     setFocusedTaskId,
     setSearchQuery,
@@ -96,8 +93,8 @@ describe("useIndexOnboarding", () => {
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
   });
 
-  it("opens auth after guide close when sign-in should be forced", () => {
-    render(<Harness shouldForceAuthAfterOnboarding />);
+  it("opens auth after guide close when user is signed out", () => {
+    render(<Harness />);
 
     fireEvent.click(screen.getByRole("button", { name: "CloseGuide" }));
 
