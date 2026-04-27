@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { MobileFilters } from "./MobileFilters";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import type { Channel, Relay } from "@/types";
@@ -63,6 +64,13 @@ const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => (
 
 vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    warning: vi.fn(),
+  },
 }));
 
 // --- shared fixtures --------------------------------------------------------
@@ -146,5 +154,19 @@ describe("MobileFilters management view", () => {
     // MobileFilters is responsible for conditionally mounting GuestPrivateKeyRow;
     // the row's own interactions are tested in GuestPrivateKeyRow.test.tsx.
     expect(screen.getByText(/backup private key/i)).toBeInTheDocument();
+  });
+
+  it("uses a single generic success toast when copying a guest private key", () => {
+    const writeText = vi.fn();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    renderMobileFilters();
+    fireEvent.click(screen.getByRole("button", { name: /copy private key/i }));
+
+    expect(writeText).toHaveBeenCalledWith("f".repeat(64));
+    expect(toast.success).toHaveBeenCalledWith("Private key copied to clipboard");
   });
 });

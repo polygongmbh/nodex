@@ -5,7 +5,7 @@ import { Label } from "../ui/label";
 import { Loader2, UserPlus, Copy, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { getPublicKey } from "nostr-tools";
+import { getPublicKey, nip19 } from "nostr-tools";
 import { NoasSharedFields } from "./NoasSharedFields";
 import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
 import { resolveNoasCredentialsForSubmit } from "./noas-form-helpers";
@@ -62,16 +62,39 @@ export function NoasSignUpForm({
     onUsernameChange(fullHandle);
   };
 
-  const derivePublicKeyFromHex = (hexPrivateKey: string): string | null => {
-    const normalizedPrivateKey = hexPrivateKey.trim().toLowerCase();
-    if (!/^[a-f0-9]{64}$/.test(normalizedPrivateKey)) {
+  const decodePrivateKeyToBytes = (privateKeyValue: string): Uint8Array | null => {
+    const normalizedPrivateKey = privateKeyValue.trim();
+    if (!normalizedPrivateKey) {
       return null;
     }
-    try {
+
+    if (/^[a-f0-9]{64}$/i.test(normalizedPrivateKey)) {
       const privateKeyBytes = new Uint8Array(32);
       for (let i = 0; i < 32; i++) {
-        privateKeyBytes[i] = parseInt(normalizedPrivateKey.substr(i * 2, 2), 16);
+        privateKeyBytes[i] = parseInt(normalizedPrivateKey.slice(i * 2, i * 2 + 2), 16);
       }
+      return privateKeyBytes;
+    }
+
+    try {
+      const decoded = nip19.decode(normalizedPrivateKey);
+      if (decoded.type === "nsec" && decoded.data instanceof Uint8Array) {
+        return decoded.data;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  };
+
+  const derivePublicKey = (privateKeyValue: string): string | null => {
+    const privateKeyBytes = decodePrivateKeyToBytes(privateKeyValue);
+    if (!privateKeyBytes) {
+      return null;
+    }
+
+    try {
       return getPublicKey(privateKeyBytes);
     } catch (deriveError) {
       console.error("Failed to derive public key:", deriveError);
@@ -81,7 +104,7 @@ export function NoasSignUpForm({
 
   const handlePrivateKeyChange = (value: string) => {
     setPrivateKey(value);
-    const derivedPubkey = derivePublicKeyFromHex(value);
+    const derivedPubkey = derivePublicKey(value);
     setPubkey(derivedPubkey || "");
   };
 
@@ -93,7 +116,7 @@ export function NoasSignUpForm({
       .join("");
     setPrivateKey(hexKey);
 
-    const derivedPubkey = derivePublicKeyFromHex(hexKey);
+    const derivedPubkey = derivePublicKey(hexKey);
     setPubkey(derivedPubkey || "");
     setShowPrivateKey(true);
   };
@@ -136,9 +159,9 @@ export function NoasSignUpForm({
 
     let finalPubkey = pubkey.trim();
     if (!finalPubkey) {
-      finalPubkey = derivePublicKeyFromHex(privateKey.trim()) || "";
+      finalPubkey = derivePublicKey(privateKey.trim()) || "";
       if (!finalPubkey) {
-        setLocalError(t("auth.errors.pubkeyRequired"));
+        setLocalError(t("auth.modal.errors.privateKeyInvalid"));
         return;
       }
     }
@@ -185,7 +208,7 @@ export function NoasSignUpForm({
 
         <div className="space-y-2 rounded-lg bg-muted/50 p-3">
           <div className="flex items-center justify-between">
-            <Label htmlFor="noas-private-key">{t("auth.noas.privateKey")}</Label>
+            <Label htmlFor="noas-private-key">{t("auth.privateKey")}</Label>
             <Button
               type="button"
               variant="ghost"

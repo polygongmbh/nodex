@@ -489,7 +489,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                       <Key className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium">{t("auth.modal.privateKey")}</div>
+                      <div className="font-medium">{t("auth.privateKey")}</div>
                       <div className="text-xs text-muted-foreground sm:text-sm">
                         {t("auth.modal.privateKeyHint")}
                       </div>
@@ -525,7 +525,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             ) : step === "privateKey" ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="privateKey">{t("auth.modal.privateKey")}</Label>
+                  <Label htmlFor="privateKey">{t("auth.privateKey")}</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="privateKey"
@@ -726,12 +726,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       try {
         const nsec = nip19.nsecEncode(hexKey as unknown as Uint8Array);
         navigator.clipboard.writeText(nsec);
-        toast.success(t("auth.menu.copySuccessNsec"));
       } catch {
-        // If nsec encoding fails, copy hex
         navigator.clipboard.writeText(hexKey);
-        toast.success(t("auth.menu.copySuccessHex"));
       }
+      toast.success(t("auth.profile.copiedPrivateKey"));
     }
   };
 
@@ -803,7 +801,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         ? t("auth.authMethod.signer")
         : authMethod === "noas"
           ? t("auth.authMethod.noas")
-          : t("auth.authMethod.privateKey");
+          : t("auth.privateKey");
   const preferenceState = {
     presence: {
       checked: presencePublishingEnabled,

@@ -367,6 +367,24 @@ describe("NostrAuthModal", () => {
     expect(screen.getAllByRole("button", { name: /^sign in$/i })).toHaveLength(2);
   });
 
+  it("shows a private-key validation error during noas signup when the key cannot be derived", () => {
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+
+    renderModal({ isOpen: true, onClose: vi.fn() });
+
+    openNoasEntryIfNeeded();
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
+      target: { value: "not-a-valid-private-key" },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+
+    expect(ndkMock.signupWithNoas).not.toHaveBeenCalled();
+    expect(screen.getByText(/invalid private key\. please check and try again\./i)).toBeInTheDocument();
+  });
+
   it("suppresses the generic signup toast when the Noas server returns an active signup message", async () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.signupWithNoas = vi.fn(async () => ({

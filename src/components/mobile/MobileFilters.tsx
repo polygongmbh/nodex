@@ -105,7 +105,7 @@ export function MobileFilters({
         : authMethod === "noas"
           ? t("auth:auth.authMethod.noas")
         : authMethod === "privateKey"
-          ? t("auth:auth.authMethod.privateKey")
+          ? t("auth:auth.privateKey")
           : t("auth:auth.authMethod.unknown");
 
   const guestPrivateKey = getGuestPrivateKey();
