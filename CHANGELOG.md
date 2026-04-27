@@ -6,8 +6,11 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.2] - 2026-04-27
+
 - Mobile feed rendering no longer crashes on startup from a stale `uiConfig` provider prop reference.
 - Kanban now defaults its levels setting to top-level only for new sessions until you choose a different depth.
+- Noas auth now uses one shared private-key localization set across the sign-in and sign-up flows, keeping those labels consistent across English, German, and Spanish.
 
 ## [2.15.1] - 2026-04-27
 
