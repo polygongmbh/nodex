@@ -197,7 +197,8 @@ export function useKind0People(
 
   useEffect(() => {
     if (!profileCachePayload) return;
-    rememberCachedKind0Profile(
+    const previous = loadCachedKind0Events();
+    const next = rememberCachedKind0Profile(
       profileCachePayload.pubkey,
       {
         name: profileCachePayload.profile.name,
@@ -207,7 +208,9 @@ export function useKind0People(
         nip05: profileCachePayload.profile.nip05,
       }
     );
-    setCacheRevision((previous) => previous + 1);
+    if (next.length !== previous.length || next.some((event, index) => event.content !== previous[index]?.content || event.pubkey !== previous[index]?.pubkey)) {
+      setCacheRevision((revision) => revision + 1);
+    }
   }, [profileCachePayload]);
 
   const visiblePubkeys = useMemo(
