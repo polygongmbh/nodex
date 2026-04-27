@@ -302,6 +302,7 @@ export function NoasSignUpForm({
 
         <Button
           type="submit"
+          data-testid="noas-sign-up-submit"
           disabled={isLoading}
           className="w-full gap-2"
           onPointerDownCapture={normalizeUsernameFieldForSubmit}
@@ -314,7 +315,7 @@ export function NoasSignUpForm({
           ) : (
             <>
               <UserPlus className="h-4 w-4" />
-              <span>{t("auth.signUp")}</span>
+              <span>{t("auth.createAccount")}</span>
             </>
           )}
         </Button>

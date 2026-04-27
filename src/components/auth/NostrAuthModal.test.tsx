@@ -177,11 +177,11 @@ describe("NostrAuthModal", () => {
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice_name" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice_name");
     expect(screen.getByLabelText(/^password$/i)).toHaveValue("password123");
 
-    fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+    fireEvent.click(screen.getByTestId("noas-auth-tab-sign-in"));
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice_name");
     expect(screen.getByLabelText(/^password$/i)).toHaveValue("password123");
   });
@@ -194,7 +194,7 @@ describe("NostrAuthModal", () => {
     openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     expect(screen.getByText(/enter your full nip-05 handle/i)).toBeInTheDocument();
   });
@@ -234,7 +234,7 @@ describe("NostrAuthModal", () => {
     const { rerender } = renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
     expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
 
     ndkMock.defaultNoasHostUrl = "https://example.com";
@@ -255,7 +255,7 @@ describe("NostrAuthModal", () => {
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
     expect(ndkMock.loginWithNoas).toHaveBeenCalledWith("alice", "password123", {
@@ -272,7 +272,7 @@ describe("NostrAuthModal", () => {
     openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
     expect(screen.getAllByText(/connection to the noas host failed/i)).toHaveLength(1);
@@ -288,7 +288,7 @@ describe("NostrAuthModal", () => {
     openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
     expect(screen.getAllByText(/returned key does not match your account/i)).toHaveLength(1);
@@ -309,7 +309,7 @@ describe("NostrAuthModal", () => {
     openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
     expect(screen.getAllByText("409 Conflict: Username already active. Sign in.")).toHaveLength(1);
@@ -327,13 +327,13 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     await waitFor(() => expect(ndkMock.signupWithNoas).toHaveBeenCalled());
     expect(screen.getAllByText("409 Conflict: Username already active. Sign in.")).toHaveLength(1);
@@ -352,19 +352,19 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     await waitFor(() => expect(ndkMock.signupWithNoas).toHaveBeenCalled());
     expect(toast.success).toHaveBeenCalledWith("Check your inbox to activate your account.");
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getAllByText("Check your inbox to activate your account.").length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("button", { name: /^sign in$/i })).toHaveLength(2);
+    expect(screen.getByTestId("noas-auth-tab-sign-in")).toHaveAttribute("aria-selected", "true");
   });
 
   it("shows a private-key validation error during noas signup when the key cannot be derived", () => {
@@ -373,13 +373,13 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "not-a-valid-private-key" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     expect(ndkMock.signupWithNoas).not.toHaveBeenCalled();
     expect(screen.getByText(/invalid private key\. please check and try again\./i)).toBeInTheDocument();
@@ -398,13 +398,13 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(toast.success).toHaveBeenCalledWith("Account activated.");
@@ -420,7 +420,7 @@ describe("NostrAuthModal", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getAllByRole("button", { name: /^sign up$/i })).toHaveLength(2);
+    expect(screen.getByTestId("noas-auth-tab-create-account")).toHaveAttribute("aria-selected", "true");
     expect(screen.getByLabelText(/^username$/i)).toBeInTheDocument();
   });
 });

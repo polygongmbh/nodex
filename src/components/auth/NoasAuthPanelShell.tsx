@@ -31,11 +31,14 @@ export function NoasAuthPanelShell({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-4 border-b pb-2 pr-10">
+      <div className="flex items-center gap-4 border-b pb-2 pr-10" role="tablist">
         <button
           type="button"
           onClick={isSignIn ? undefined : onSignIn}
           disabled={isLoading || isSignIn}
+          role="tab"
+          aria-selected={isSignIn}
+          data-testid="noas-auth-tab-sign-in"
           className={
             isSignIn
               ? "text-sm font-medium text-primary border-b-2 border-primary pb-2 -mb-[9px]"
@@ -48,13 +51,16 @@ export function NoasAuthPanelShell({
           type="button"
           onClick={isSignIn ? onSignUp : undefined}
           disabled={isLoading || !isSignIn}
+          role="tab"
+          aria-selected={!isSignIn}
+          data-testid="noas-auth-tab-create-account"
           className={
             isSignIn
               ? "text-sm font-medium text-muted-foreground hover:text-foreground pb-2 -mb-[9px]"
               : "text-sm font-medium text-primary border-b-2 border-primary pb-2 -mb-[9px]"
           }
         >
-          {t("auth.signUp")}
+          {t("auth.createAccount")}
         </button>
       </div>
 

@@ -124,7 +124,7 @@ describe("Noas auth forms", () => {
     render(<ControlledNoasAuthForm initialNoasHostUrl="https://custom.noas.example" />);
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.pointerDown(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.pointerDown(screen.getByTestId("noas-auth-submit"));
 
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@custom.noas.example");
   });
@@ -151,7 +151,7 @@ describe("Noas auth forms", () => {
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example:7443" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
       baseUrl: "https://custom.noas.example:7443",
@@ -171,7 +171,7 @@ describe("Noas auth forms", () => {
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@bad host" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     expect(onLogin).not.toHaveBeenCalled();
     expect(screen.getByText(/enter a valid full handle/i)).toBeInTheDocument();
@@ -184,7 +184,7 @@ describe("Noas auth forms", () => {
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "ab" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     expect(onLogin).not.toHaveBeenCalled();
     expect(screen.getByText(/username must be 3-32 characters/i)).toBeInTheDocument();
@@ -197,7 +197,7 @@ describe("Noas auth forms", () => {
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice-test" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     expect(onLogin).toHaveBeenCalledWith("alice-test", "password123", {
       baseUrl: "https://noas.example.com",
@@ -211,7 +211,7 @@ describe("Noas auth forms", () => {
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@other.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
       baseUrl: "https://other.example",
@@ -232,7 +232,7 @@ describe("Noas auth forms", () => {
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     expect(onLogin).not.toHaveBeenCalled();
     expect(screen.getByText(/enter your full nip-05 handle/i)).toBeInTheDocument();
@@ -251,7 +251,7 @@ describe("Noas auth forms", () => {
       />
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(onLogin).toHaveBeenCalled());
     expect(screen.getAllByText(parentError)).toHaveLength(1);
@@ -316,8 +316,8 @@ describe("Noas auth forms", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /^sign up$/i }).length).toBeGreaterThan(0);
+    expect(screen.getByTestId("noas-auth-tab-sign-in")).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByTestId("noas-auth-tab-create-account")).toHaveAttribute("aria-selected", "true");
   });
 
   it("updates public key preview when private key input changes", async () => {
@@ -357,7 +357,7 @@ describe("Noas auth forms", () => {
     fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
     });
-    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+    fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     expect(onSignUp).toHaveBeenCalledWith(
       "alice",
@@ -373,7 +373,7 @@ describe("Noas auth forms", () => {
     render(<ControlledNoasSignUpForm initialNoasHostUrl="https://noas.example.com" />);
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.pointerDown(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+    fireEvent.pointerDown(screen.getByTestId("noas-sign-up-submit"));
 
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@noas.example.com");
   });

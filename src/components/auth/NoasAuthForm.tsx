@@ -110,6 +110,7 @@ export function NoasAuthForm({
 
         <Button
           type="submit"
+          data-testid="noas-auth-submit"
           disabled={isLoading}
           className="w-full gap-2"
           onPointerDownCapture={normalizeUsernameFieldForSubmit}
