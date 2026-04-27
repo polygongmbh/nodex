@@ -42,6 +42,19 @@ interface UseKind0PeopleResult {
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
+function areKind0EventListsEqual(previous: Kind0LikeEvent[], next: Kind0LikeEvent[]): boolean {
+  if (previous === next) return true;
+  if (previous.length !== next.length) return false;
+  for (let index = 0; index < previous.length; index += 1) {
+    const a = previous[index];
+    const b = next[index];
+    if (a.pubkey !== b.pubkey || a.created_at !== b.created_at || a.content !== b.content || a.kind !== b.kind) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function arePeopleListsEqual(previous: Person[], next: Person[]): boolean {
   if (previous.length !== next.length) return false;
   return previous.every((person, index) => {
@@ -98,8 +111,10 @@ export function useKind0People(
   );
 
   useEffect(() => {
-    setCachedKind0Events(loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls));
-    setFallbackKind0Events(loadCachedKind0Events());
+    const nextScoped = loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls);
+    setCachedKind0Events((previous) => (areKind0EventListsEqual(previous, nextScoped) ? previous : nextScoped));
+    const nextFallback = loadCachedKind0Events();
+    setFallbackKind0Events((previous) => (areKind0EventListsEqual(previous, nextFallback) ? previous : nextFallback));
     // Equivalent normalized relay scopes should not trigger another cache refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheRevision, selectedRelayScopeKey]);
@@ -145,6 +160,7 @@ export function useKind0People(
   }, [latestPresenceByAuthor, nostrEvents]);
 
   useEffect(() => {
+    if (liveKind0Events.length === 0) return;
     const eventsByRelayUrl = new Map<string, Kind0LikeEvent[]>();
     liveKind0Events.forEach((event) => {
       event.relayUrls.forEach((relayUrl) => {
@@ -163,11 +179,16 @@ export function useKind0People(
 
     if (eventsByRelayUrl.size === 0) return;
 
+    let storageChanged = false;
     eventsByRelayUrl.forEach((events, relayUrl) => {
       const existing = loadCachedKind0Events(relayUrl);
-      saveCachedKind0Events([...existing, ...events], relayUrl);
+      if (saveCachedKind0Events([...existing, ...events], relayUrl)) {
+        storageChanged = true;
+      }
     });
-    setCacheRevision((previous) => previous + 1);
+    if (storageChanged) {
+      setCacheRevision((previous) => previous + 1);
+    }
   }, [liveKind0Events]);
 
   useEffect(() => {
@@ -191,7 +212,8 @@ export function useKind0People(
 
   useEffect(() => {
     if (!profileCachePayload) return;
-    rememberCachedKind0Profile(
+    const previous = loadCachedKind0Events();
+    const next = rememberCachedKind0Profile(
       profileCachePayload.pubkey,
       {
         name: profileCachePayload.profile.name,
@@ -201,7 +223,9 @@ export function useKind0People(
         nip05: profileCachePayload.profile.nip05,
       }
     );
-    setCacheRevision((previous) => previous + 1);
+    if (next.length !== previous.length || next.some((event, index) => event.content !== previous[index]?.content || event.pubkey !== previous[index]?.pubkey)) {
+      setCacheRevision((revision) => revision + 1);
+    }
   }, [profileCachePayload]);
 
   const visiblePubkeys = useMemo(
