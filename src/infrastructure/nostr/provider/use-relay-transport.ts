@@ -64,6 +64,8 @@ export function useRelayTransport(
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     relayAuthRetryHistoryRef.current.delete(normalizedRelayUrl);
     relayAttemptStartedAtRef.current.set(normalizedRelayUrl, Date.now());
+    relayReadRejectedRef.current.delete(normalizedRelayUrl);
+    relayWriteRejectedRef.current.delete(normalizedRelayUrl);
   }, [
     removedRelaysRef,
     relayInitialFailureCountsRef,
@@ -72,6 +74,8 @@ export function useRelayTransport(
     pendingRelayVerificationRef,
     relayAuthRetryHistoryRef,
     relayAttemptStartedAtRef,
+    relayReadRejectedRef,
+    relayWriteRejectedRef,
   ]);
 
   const clearRelayCapabilityTracking = useCallback((normalizedRelayUrl: string) => {
