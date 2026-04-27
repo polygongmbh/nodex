@@ -23,9 +23,7 @@ const FILTER_RESET_STEP_IDS = new Set([
   "filters-hashtag-content",
 ]);
 
-const DESKTOP_PREOPEN_COMPOSE_STEP_IDS = new Set([
-  "filters-hashtag-content",
-]);
+const DESKTOP_PREOPEN_COMPOSE_STEP_IDS = new Set<string>([]);
 
 export function isComposeGuideStep(stepId: string | null | undefined): boolean {
   return Boolean(stepId && COMPOSE_GUIDE_STEP_IDS.has(stepId));
