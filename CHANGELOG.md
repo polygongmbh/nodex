@@ -6,27 +6,33 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-- Default task ordering now uses the shared priority evaluator across tree, list, kanban, and calendar surfaces.
-- Read-only relay selection now uses the normal selected-space toast and active sidebar styling instead of reconnect-warning feedback.
-- Relay connections now recover from offline startup attempts that stay stuck in connecting, keep retrying with increasing backoff, and no longer rebuild every relay socket when a relay is added, removed, or reordered.
+## [2.15.3] - 2026-04-27
+Patch release for relay-filter persistence, relay recovery, and new task sorting.
+
+- Relay and channel filter state now persists through a dedicated filter store, keeping selected relay scopes and channel filters stable across reloads.
+- Relay recovery now clears stale read/write rejection states on reconnect, keeps reconnect attempts attached to the live relay session, and avoids tearing down every socket when relay selection changes.
+- Task ordering now relies on a new priority evaluator across tree, list, kanban, and calendar views.
 
 ## [2.15.2] - 2026-04-27
+Patch release for dialog motion polish, Noas auth copy consistency, and a mobile startup fix.
 
+- Desktop dialogs and related overlays now share unified modal animations, with the desktop surface anchored from the top-right origin for more consistent motion.
 - Mobile feed rendering no longer crashes on startup from a stale `uiConfig` provider prop reference.
 - Kanban now defaults its levels setting to top-level only for new sessions until you choose a different depth.
-- Noas auth now uses one shared private-key localization set across the sign-in and sign-up flows, keeping those labels consistent across English, German, and Spanish.
 
 ## [2.15.1] - 2026-04-27
+Patch release for the Kanban sorting regression fix and onboarding flow cleanup.
 
 - Kanban active columns now use the shared task-priority ordering again, while done and closed columns keep newest-edited-first ordering.
+- Onboarding and auth autostart behavior was simplified by removing redundant step-tracking and persistence layers, reducing startup churn after the `2.15.0` onboarding changes.
 
 ## [2.15.0] - 2026-04-26
-Minor release for mobile interaction polish, composer resilience, and feed preference persistence.
+Minor release for mobile interaction polish, composer resilience, and persisted feed state.
 
-- Mobile task and profile interactions now use larger touch targets, consistent profile menus and avatars, long-press reset affordances, and clearer undo handling for filter toasts across feed surfaces.
-- Composer flows now gate save and restore more carefully, remove stale `selectTask` submission blocking, simplify blocked-action guidance, and keep soft-disabled controls able to explain why an action is unavailable.
-- Calendar, feed, tree, and task-card surfaces received interaction polish including today and current-week emphasis, upcoming-card alignment cleanup, and done-task filtering in the tree view.
-- Saved filters, user preferences, and failed publish drafts now persist through dedicated Zustand-backed stores, reducing stale local state carryover and making failed publish recovery more reliable.
+- Mobile task and profile surfaces now use larger hit targets, shared avatar and profile-menu behavior, improved icon sizing, and long-press reset affordances across feed views.
+- Feed interactions now use undoable filter toasts more consistently, avoid noisy menu-triggered toast behavior, and behave more reliably during touch scrolling and relay-gated profile editing.
+- Composer flows now gate draft save and restore more carefully, fix calendar composer and initial week-scroll issues, remove the stale `selectTask` submission blocker, and keep soft-disabled actions able to explain why they are unavailable.
+- Saved filters, user preferences, and failed publish drafts now persist through dedicated Zustand-backed stores, while tree and calendar surfaces pick up done-task filtering plus today/current-week and upcoming-card polish.
 
 ## [2.14.1] - 2026-04-24
 
