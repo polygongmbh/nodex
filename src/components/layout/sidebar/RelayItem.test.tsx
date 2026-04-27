@@ -101,9 +101,12 @@ describe("RelayItem", () => {
     const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
     const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
     const readOnlyTrigger = screen.getByLabelText("Read Only");
+    const sidebarRow = exclusiveButton.closest("[data-sidebar-item]") as HTMLElement;
 
     expect(exclusiveButton).toHaveAttribute("title");
     expect(toggleButton).toHaveAttribute("title");
+    expect(sidebarRow.className).toContain("bg-sidebar-accent");
+    expect(sidebarRow.className).not.toContain("bg-warning/10");
 
     fireEvent.mouseEnter(readOnlyTrigger);
     fireEvent.pointerMove(readOnlyTrigger);

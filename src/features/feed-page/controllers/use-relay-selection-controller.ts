@@ -41,6 +41,10 @@ function isFailedRelaySelectionTarget(relay: Relay): boolean {
   return shouldReconnectRelayOnSelection(relay.connectionStatus);
 }
 
+function shouldShowReconnectAttemptOnSelection(relay: Relay): boolean {
+  return isFailedRelaySelectionTarget(relay) && relay.connectionStatus !== "read-only";
+}
+
 export function useRelaySelectionController({
   relays,
   reconnectFailureGraceMs = DEFAULT_RECONNECT_FAILURE_GRACE_MS,
@@ -58,13 +62,12 @@ export function useRelaySelectionController({
   } = useRelayFilterState({
     relays,
     getEnableToastMessage: (relay) => {
-      if (!isFailedRelaySelectionTarget(relay)) return undefined;
+      if (!shouldShowReconnectAttemptOnSelection(relay)) return undefined;
       return null;
     },
     onRelayEnabled: (relay) => {
-      if (!isFailedRelaySelectionTarget(relay)) return;
+      if (!shouldShowReconnectAttemptOnSelection(relay)) return;
 
-      const relayUrl = normalizeRelayUrl(relay.url);
       const relayDomain = getRelayDomain(relay, relay.id);
       const existing = pendingReconnectSelectionsRef.current.get(relay.id);
       if (existing) {

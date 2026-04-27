@@ -40,7 +40,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
   const relayDisplayName = relayUrlToName(relay.url);
   const relayTooltipName = stripRelayProtocol(relay.url);
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
-  const isConnectionActive = resolvedConnectionStatus === "connected";
+  const isConnectionUsable = resolvedConnectionStatus === "connected" || resolvedConnectionStatus === "read-only";
   const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
   const connectionSurfaceClass = getRelayStatusSurfaceClass(resolvedConnectionStatus);
   const relayIssueTooltip = resolveRelayIssueTooltip(t, resolvedConnectionStatus);
@@ -53,7 +53,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
       className={cn(
         "gap-3 py-1.5",
         relay.isActive && "bg-sidebar-accent",
-        relay.isActive && !isConnectionActive && "bg-warning/10"
+        relay.isActive && !isConnectionUsable && "bg-warning/10"
       )}
     >
       {/* Icon - click for toggle */}

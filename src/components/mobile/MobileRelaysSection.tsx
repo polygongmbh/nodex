@@ -60,7 +60,7 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
             relay.id === "demo" || !relay.connectionStatus
               ? "connected"
               : relay.connectionStatus;
-          const isConnectionActive = resolvedConnectionStatus === "connected";
+          const isConnectionUsable = resolvedConnectionStatus === "connected" || resolvedConnectionStatus === "read-only";
           const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
           return (
             <div
@@ -71,7 +71,7 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
                   ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                   : "border-border hover:bg-muted",
                 relay.isActive &&
-                  !isConnectionActive &&
+                  !isConnectionUsable &&
                   "bg-warning/10 border-warning/40 text-foreground"
               )}
             >

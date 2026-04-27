@@ -4,6 +4,7 @@ import type { Relay } from "@/types";
 import { useRelaySelectionController } from "./use-relay-selection-controller";
 import { toast } from "sonner";
 import type { RenderHookResult } from "@testing-library/react";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
 const { mockedToast } = vi.hoisted(() => ({
   mockedToast: Object.assign(vi.fn(), {
@@ -66,6 +67,7 @@ function expectActiveRelayIds(
 describe("useRelaySelectionController", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    useFilterStore.setState({ activeRelayIds: new Set(), channelFilterStates: new Map(), channelMatchMode: "and" });
     vi.clearAllMocks();
     vi.useRealTimers();
   });
@@ -133,12 +135,13 @@ describe("useRelaySelectionController", () => {
     expect(toast.error).toHaveBeenCalled();
   });
 
-  it("triggers manual reconnect when a read-only relay is activated while keeping it selected", () => {
+  it("uses the normal selection toast when a read-only relay is activated", () => {
     const { result } = renderSelectionController([buildRelay({ connectionStatus: "read-only" })]);
 
     expectExclusiveSelectReconnect(result);
 
-    expect(toast.info).toHaveBeenCalled();
+    expect(toast).toHaveBeenCalled();
+    expect(toast.info).not.toHaveBeenCalled();
     expectActiveRelayIds(result, ["relay-one"]);
   });
 });
