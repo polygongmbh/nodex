@@ -271,8 +271,11 @@ export function derivePeopleFromKind0Events(
     new Set(visiblePubkeys.map((pubkey) => normalizePubkey(pubkey)).filter(Boolean))
   );
 
+  const selectedLatestByPubkey = getLatestKind0ByPubkey(selectedEvents);
+  const fallbackLatestByPubkey = getLatestKind0ByPubkey(fallbackEvents);
+
   const people = normalizedVisiblePubkeys.map((pubkey) => {
-    const event = resolveKind0EventForPubkey(pubkey, selectedEvents, fallbackEvents);
+    const event = resolveKind0EventForPubkey(pubkey, selectedLatestByPubkey, fallbackLatestByPubkey);
     const parsed = event ? parseKind0Content(event.content) : {};
     const fallbackPubkeyLabel = formatUserFacingPubkey(pubkey);
     const name = (parsed.name || parsed.displayName || fallbackPubkeyLabel).trim();
