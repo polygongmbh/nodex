@@ -33,8 +33,8 @@ describe("onboarding step rules", () => {
     expect(isFilterResetStep("mobile-navigation-focus")).toBe(false);
   });
 
-  it("keeps desktop compose pre-open mapping", () => {
-    expect(shouldPreopenComposeOnDesktop("filters-hashtag-content")).toBe(true);
+  it("does not pre-open compose on desktop for the hashtag content step", () => {
+    expect(shouldPreopenComposeOnDesktop("filters-hashtag-content")).toBe(false);
     expect(shouldPreopenComposeOnDesktop("compose-kind")).toBe(false);
   });
 
