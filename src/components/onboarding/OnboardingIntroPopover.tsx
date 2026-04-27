@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LogIn, Sparkles, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { OverlayScrim, OVERLAY_SCRIM_FADE_MS } from "@/components/ui/overlay-scrim";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const INTRO_FADE_DURATION_MS = OVERLAY_SCRIM_FADE_MS;
 
