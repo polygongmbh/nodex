@@ -22,6 +22,3 @@ export function shouldForceComposeForGuide({
   return false;
 }
 
-export function getOnboardingBehaviorGateId(stepId: string): string {
-  return stepId;
-}

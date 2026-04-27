@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
 import type { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
-import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
+import { shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import {
   isComposeGuideStep,
   isFilterResetStep,
@@ -139,9 +139,8 @@ export function useIndexOnboarding({
   }) => {
     setActiveOnboardingStepId(payload.id);
 
-    const stepKey = getOnboardingBehaviorGateId(payload.id);
-    if (lastHandledOnboardingStepRef.current === stepKey) return;
-    lastHandledOnboardingStepRef.current = stepKey;
+    if (lastHandledOnboardingStepRef.current === payload.id) return;
+    lastHandledOnboardingStepRef.current = payload.id;
 
     // Re-pulse the compose activation signal whenever a compose-guide step is
     // (re-)entered, so the composer re-expands even if the previous step had

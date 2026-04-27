@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  getOnboardingBehaviorGateId,
-  shouldForceComposeForGuide,
-} from "./onboarding-guide";
+import { shouldForceComposeForGuide } from "./onboarding-guide";
 
 describe("shouldForceComposeForGuide", () => {
   it("pre-opens compose on desktop during filters-hashtag-content", () => {
@@ -56,8 +53,3 @@ describe("shouldForceComposeForGuide", () => {
   });
 });
 
-describe("getOnboardingBehaviorGateId", () => {
-  it("uses step id as the stable behavior gate key", () => {
-    expect(getOnboardingBehaviorGateId("compose-input")).toBe("compose-input");
-  });
-});
