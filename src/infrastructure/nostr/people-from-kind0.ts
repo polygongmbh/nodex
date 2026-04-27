@@ -176,16 +176,17 @@ export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
 
 function resolveKind0EventForPubkey(
   pubkey: string,
-  selectedEvents: Kind0LikeEvent[],
-  fallbackEvents: Kind0LikeEvent[]
+  selectedLatestByPubkey: Map<string, Kind0LikeEvent>,
+  fallbackLatestByPubkey: Map<string, Kind0LikeEvent>
 ): Kind0LikeEvent | null {
   const normalizedPubkey = normalizePubkey(pubkey);
   if (!normalizedPubkey) return null;
 
-  const selected = getLatestKind0ByPubkey(selectedEvents).get(normalizedPubkey);
-  if (selected) return selected;
-
-  return getLatestKind0ByPubkey(fallbackEvents).get(normalizedPubkey) || null;
+  return (
+    selectedLatestByPubkey.get(normalizedPubkey) ||
+    fallbackLatestByPubkey.get(normalizedPubkey) ||
+    null
+  );
 }
 
 export function rememberCachedKind0Profile(
