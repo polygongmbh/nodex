@@ -118,14 +118,14 @@ export function useOnboarding({
     setActiveOnboardingSection(null);
   }, [user]);
 
+  const lastHandledStepIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!isOnboardingOpen) {
       setActiveOnboardingStepId(null);
       lastHandledStepIdRef.current = null;
     }
   }, [isOnboardingOpen]);
-
-  const lastHandledStepIdRef = useRef<string | null>(null);
 
   const handleOnboardingStepChange = useCallback((payload: {
     id: string;
