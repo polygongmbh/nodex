@@ -57,7 +57,6 @@ export function useIndexOnboarding({
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
-  const lastHandledOnboardingStepRef = useRef<string | null>(null);
   const handledStartupIntroRef = useRef(false);
 
   const onboardingSections = useMemo(
@@ -136,12 +135,6 @@ export function useIndexOnboarding({
   }) => {
     setActiveOnboardingStepId(payload.id);
 
-    if (lastHandledOnboardingStepRef.current === payload.id) return;
-    lastHandledOnboardingStepRef.current = payload.id;
-
-    // Re-pulse the compose activation signal whenever a compose-guide step is
-    // (re-)entered, so the composer re-expands even if the previous step had
-    // already pre-opened it (e.g. user clicked outside, collapsing it).
     const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
     if (isComposeGuideStep(payload.id) && !isDedicatedViewGuide) {
       setComposeGuideActivationSignal((previous) => previous + 1);
