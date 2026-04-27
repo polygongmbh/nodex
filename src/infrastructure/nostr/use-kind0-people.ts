@@ -145,6 +145,7 @@ export function useKind0People(
   }, [latestPresenceByAuthor, nostrEvents]);
 
   useEffect(() => {
+    if (liveKind0Events.length === 0) return;
     const eventsByRelayUrl = new Map<string, Kind0LikeEvent[]>();
     liveKind0Events.forEach((event) => {
       event.relayUrls.forEach((relayUrl) => {
@@ -163,11 +164,16 @@ export function useKind0People(
 
     if (eventsByRelayUrl.size === 0) return;
 
+    let storageChanged = false;
     eventsByRelayUrl.forEach((events, relayUrl) => {
       const existing = loadCachedKind0Events(relayUrl);
-      saveCachedKind0Events([...existing, ...events], relayUrl);
+      if (saveCachedKind0Events([...existing, ...events], relayUrl)) {
+        storageChanged = true;
+      }
     });
-    setCacheRevision((previous) => previous + 1);
+    if (storageChanged) {
+      setCacheRevision((previous) => previous + 1);
+    }
   }, [liveKind0Events]);
 
   useEffect(() => {
