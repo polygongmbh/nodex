@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { shouldForceComposeForGuide } from "./onboarding-guide";
 
 describe("shouldForceComposeForGuide", () => {
-  it("pre-opens compose on desktop during filters-hashtag-content", () => {
+  it("does not pre-open compose on desktop during filters-hashtag-content", () => {
     expect(
       shouldForceComposeForGuide({
         isOnboardingOpen: true,
         activeOnboardingStepId: "filters-hashtag-content",
         isMobile: false,
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("forces compose at compose-kind", () => {
