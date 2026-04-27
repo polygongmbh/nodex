@@ -2,9 +2,9 @@
   "onboarding": {
     "intro": {
       "ariaLabel": "Willkommen bei Nodex",
-      "title": "Willkommen bei Nodex",
-      "description": "Nodex macht Nostr zu einem geteilten Workspace — Aufgaben, Kommentare und verschachtelte Diskussionen, die über Relays statt auf einem einzelnen Server leben.",
-      "features": "Organisiere mit Kanälen, Spaces und Personenfiltern; halte Ideen als Aufgaben oder Kommentare mit #tags und @mentions fest; und wechsle zwischen Timeline, Hierarchisch, Kanban, Tabelle und Kalender, um dieselben Inhalte aus jedem Blickwinkel zu sehen.",
+      "title": "Ein Ort für alles, was entsteht.",
+      "description": "Nodex verbindet Ideen, Pläne, Austausch und Inhalte in einer flexiblen Umgebung. Alles beginnt mit dem, was du festhalten möchtest.",
+      "features": "Aus Aufgaben werden Projekte, Notizen ergänzen Details, Kommentare bringen Gedanken und Entscheidungen zusammen. Nodex kann Aufgabenmanager, Ideensammlung, Teamchat, Journal, Social Feed oder genau die Mischung sein, die zu dir passt.",
       "startTour": "Tour starten",
       "createAccount": "Konto erstellen",
       "signIn": "Anmelden"
