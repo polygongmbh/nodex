@@ -152,16 +152,15 @@ export function loadCachedKind0EventsForRelayUrls(relayUrls: string[]): Kind0Lik
   );
 }
 
-export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: string): void {
-  if (!canUseStorage()) return;
+export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: string): boolean {
+  if (!canUseStorage()) return false;
   if (!relayUrl) {
-    writeStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY, events);
-    return;
+    return writeStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY, events);
   }
 
   const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
-  if (!normalizedRelayUrl) return;
-  writeStoredKind0Events(getRelayStorageKey(normalizedRelayUrl), events);
+  if (!normalizedRelayUrl) return false;
+  return writeStoredKind0Events(getRelayStorageKey(normalizedRelayUrl), events);
 }
 
 export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
