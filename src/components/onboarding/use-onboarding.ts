@@ -119,7 +119,10 @@ export function useOnboarding({
   }, [user]);
 
   useEffect(() => {
-    if (!isOnboardingOpen) setActiveOnboardingStepId(null);
+    if (!isOnboardingOpen) {
+      setActiveOnboardingStepId(null);
+      lastHandledStepIdRef.current = null;
+    }
   }, [isOnboardingOpen]);
 
   const lastHandledStepIdRef = useRef<string | null>(null);
