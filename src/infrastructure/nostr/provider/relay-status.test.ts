@@ -30,7 +30,6 @@ describe("resolveRelayLifecycleStatus", () => {
       mappedStatus: "disconnected",
       previousStatus: "connecting",
       hasConnectedOnce: false,
-      isAutoPaused: false,
       attemptStartedAt: 1000,
       now: 1000 + RELAY_CONNECTING_GRACE_MS - 1,
     })).toBe("connecting");
@@ -41,20 +40,8 @@ describe("resolveRelayLifecycleStatus", () => {
       mappedStatus: "disconnected",
       previousStatus: "connected",
       hasConnectedOnce: true,
-      isAutoPaused: false,
       now: 1000,
     })).toBe("disconnected");
-  });
-
-  it("prioritizes auto-paused failures over transient connecting state", () => {
-    expect(resolveRelayLifecycleStatus({
-      mappedStatus: "disconnected",
-      previousStatus: "connecting",
-      hasConnectedOnce: false,
-      isAutoPaused: true,
-      attemptStartedAt: 1000,
-      now: 1000,
-    })).toBe("connection-error");
   });
 
   it("falls back to disconnected once the initial attempt grace window expires", () => {
@@ -62,7 +49,6 @@ describe("resolveRelayLifecycleStatus", () => {
       mappedStatus: "disconnected",
       previousStatus: "connecting",
       hasConnectedOnce: false,
-      isAutoPaused: false,
       attemptStartedAt: 1000,
       now: 1000 + RELAY_CONNECTING_GRACE_MS,
     })).toBe("disconnected");
@@ -75,7 +61,6 @@ describe("resolveRelayStatus", () => {
       mappedStatus: "connected",
       previousStatus: "connected",
       hasConnectedOnce: true,
-      isAutoPaused: false,
       now: 1000,
       readRejected: false,
       writeRejected: true,
@@ -87,7 +72,6 @@ describe("resolveRelayStatus", () => {
       mappedStatus: "connected",
       previousStatus: "read-only",
       hasConnectedOnce: true,
-      isAutoPaused: false,
       now: 1000,
       readRejected: true,
       writeRejected: true,
@@ -99,7 +83,6 @@ describe("resolveRelayStatus", () => {
       mappedStatus: "disconnected",
       previousStatus: "read-only",
       hasConnectedOnce: true,
-      isAutoPaused: false,
       now: 1000,
       readRejected: false,
       writeRejected: true,

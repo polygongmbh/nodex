@@ -9,7 +9,6 @@ function buildRefs(): RelayTransportRefs {
     removedRelaysRef: { current: new Set() },
     relayInitialFailureCountsRef: { current: new Map() },
     relayConnectedOnceRef: { current: new Set() },
-    relayAutoPausedRef: { current: new Set() },
     relayVerificationReadOpsRef: { current: 0 },
     relayVerificationWriteOpsRef: { current: 0 },
     relayAttemptStartedAtRef: { current: new Map() },

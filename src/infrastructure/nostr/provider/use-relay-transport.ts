@@ -14,7 +14,6 @@ export interface RelayTransportRefs {
   removedRelaysRef: MutableRefObject<Set<string>>;
   relayInitialFailureCountsRef: MutableRefObject<Map<string, number>>;
   relayConnectedOnceRef: MutableRefObject<Set<string>>;
-  relayAutoPausedRef: MutableRefObject<Set<string>>;
   relayVerificationReadOpsRef: MutableRefObject<number>;
   relayVerificationWriteOpsRef: MutableRefObject<number>;
   relayAttemptStartedAtRef: MutableRefObject<Map<string, number>>;
@@ -47,7 +46,6 @@ export function useRelayTransport(
     removedRelaysRef,
     relayInitialFailureCountsRef,
     relayConnectedOnceRef,
-    relayAutoPausedRef,
     relayAttemptStartedAtRef,
     relayCurrentInstanceRef,
     relayReadRejectedRef,
@@ -60,7 +58,6 @@ export function useRelayTransport(
     removedRelaysRef.current.delete(normalizedRelayUrl);
     relayInitialFailureCountsRef.current.delete(normalizedRelayUrl);
     relayConnectedOnceRef.current.delete(normalizedRelayUrl);
-    relayAutoPausedRef.current.delete(normalizedRelayUrl);
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     relayAuthRetryHistoryRef.current.delete(normalizedRelayUrl);
     relayAttemptStartedAtRef.current.set(normalizedRelayUrl, Date.now());
@@ -70,7 +67,6 @@ export function useRelayTransport(
     removedRelaysRef,
     relayInitialFailureCountsRef,
     relayConnectedOnceRef,
-    relayAutoPausedRef,
     pendingRelayVerificationRef,
     relayAuthRetryHistoryRef,
     relayAttemptStartedAtRef,
@@ -106,7 +102,6 @@ export function useRelayTransport(
       mappedStatus: options?.mappedStatus ?? getRelayTransportStatus(normalizedRelayUrl, options?.previousStatus),
       previousStatus: options?.previousStatus,
       hasConnectedOnce: relayConnectedOnceRef.current.has(normalizedRelayUrl),
-      isAutoPaused: relayAutoPausedRef.current.has(normalizedRelayUrl),
       attemptStartedAt: relayAttemptStartedAtRef.current.get(normalizedRelayUrl),
       now: options?.now ?? Date.now(),
       readRejected: relayReadRejectedRef.current.get(normalizedRelayUrl) === true,
@@ -115,7 +110,6 @@ export function useRelayTransport(
   }, [
     getRelayTransportStatus,
     relayConnectedOnceRef,
-    relayAutoPausedRef,
     relayAttemptStartedAtRef,
     relayReadRejectedRef,
     relayWriteRejectedRef,

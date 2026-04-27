@@ -20,6 +20,7 @@ const mockedNdk = vi.hoisted(() => {
 
   const ndkInstances: NdkLike[] = [];
   const publishedEvents: Array<{ kind?: number; content?: string; tags?: string[][]; relayUrls: string[] }> = [];
+  const relayConnectModes = new Map<string, "success" | "hang">();
 
   enum MockNDKRelayStatus {
     DISCONNECTING = 0,
@@ -82,6 +83,9 @@ const mockedNdk = vi.hoisted(() => {
       this.connectivity.ws.readyState = 0;
       this.status = MockNDKRelayStatus.CONNECTING;
       this.pool.emit("relay:connecting", this);
+      if (relayConnectModes.get(this.url) === "hang") {
+        return;
+      }
       this.connectivity.ws.readyState = 1;
       this.status = MockNDKRelayStatus.CONNECTED;
       this.pool.emit("relay:connect", this);
@@ -222,6 +226,7 @@ const mockedNdk = vi.hoisted(() => {
     MockNDKRelayStatus,
     ndkInstances,
     publishedEvents,
+    relayConnectModes,
   };
 });
 
@@ -488,8 +493,10 @@ function AuthSessionHarness() {
 
 describe("NDKProvider relay lifecycle", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     mockedNdk.ndkInstances.length = 0;
     mockedNdk.publishedEvents.length = 0;
+    mockedNdk.relayConnectModes.clear();
     noasClientModule.instances.length = 0;
     noasClientModule.nextSignInResponse = {
       success: true,
@@ -871,6 +878,45 @@ describe("NDKProvider relay lifecycle", () => {
     expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
     expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
     expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
+  });
+
+  it("retries a startup connection that stays stuck connecting without moving to connection-error", async () => {
+    vi.useFakeTimers();
+    mockedNdk.relayConnectModes.set("wss://relay.one", "hang");
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connecting");
+    const ndk = mockedNdk.ndkInstances[0];
+    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+
+    mockedNdk.relayConnectModes.set("wss://relay.one", "success");
+
+    await act(async () => {
+      vi.advanceTimersByTime(15000);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:disconnected");
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    expect(screen.getByTestId("relay-state").textContent).not.toContain("connection-error");
+    expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
+    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
+    vi.useRealTimers();
   });
 
   it("marks relay read-only when websocket returns OK false with auth-required reason", async () => {

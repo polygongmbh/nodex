@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Relay connections now recover from offline startup attempts that stay stuck in connecting, keep retrying with increasing backoff, and no longer rebuild every relay socket when a relay is added, removed, or reordered.
+
 ## [2.15.2] - 2026-04-27
 
 - Mobile feed rendering no longer crashes on startup from a stale `uiConfig` provider prop reference.

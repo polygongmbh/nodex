@@ -352,7 +352,6 @@ export function RelayManagement({
                         }}
                         aria-label={t("relay.reconnect")}
                         title={t("relay.reconnect")}
-                        disabled={relay.status === "connecting"}
                       >
                         <RotateCcw className="w-4 h-4" />
                       </Button>

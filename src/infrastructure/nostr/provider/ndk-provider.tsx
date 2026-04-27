@@ -54,7 +54,6 @@ import {
   mapNativeRelayStatus,
   mapRelayStatuses,
   mergeRelayStatusUpdates,
-  MAX_INITIAL_CONNECT_FAILURES,
 } from "./relay-status";
 import { reorderResolvedRelayStatuses } from "./relay-list";
 import { waitForNostrExtensionAvailability } from "./session-restore";
@@ -100,6 +99,8 @@ const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
 const RELAY_PUBLISH_TIMEOUT_MS = 3000;
 const RELAY_AUTH_PREFLIGHT_TIMEOUT_MS = 4000;
+const RELAY_CONNECTING_WATCHDOG_MS = 15000;
+const RELAY_CONNECT_RETRY_BASE_MS = 1000;
 const KIND0_PROFILE_CACHE_TTL_MS = 120000;
 const KIND0_PROFILE_FAILURE_COOLDOWN_MS = 15000;
 type RelayOperation = "read" | "write" | "unknown";
@@ -137,6 +138,20 @@ function mapRelayTransportStatus(relay: NDKRelay): NDKRelayStatus["status"] {
   }
 
   return mappedStatus;
+}
+
+function updateExplicitRelayUrlsInPlace(ndkInstance: NDK, relayUrls: string[]): void {
+  const nextRelayUrls = dedupeNormalizedRelayUrls(relayUrls);
+  const explicitRelayUrls = ndkInstance.explicitRelayUrls;
+  if (Array.isArray(explicitRelayUrls)) {
+    explicitRelayUrls.splice(0, explicitRelayUrls.length, ...nextRelayUrls);
+    return;
+  }
+  (ndkInstance as unknown as { explicitRelayUrls: string[] }).explicitRelayUrls = nextRelayUrls;
+}
+
+function resolveRelayConnectRetryDelay(failureCount: number): number {
+  return RELAY_CONNECT_RETRY_BASE_MS * 2 ** Math.max(failureCount - 1, 0);
 }
 
 function profileFromCachedKind0(pubkey: string): NDKUserProfile | undefined {
@@ -180,7 +195,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const profileSyncRunRef = useRef(0);
   const relayInitialFailureCountsRef = useRef<Map<string, number>>(new Map());
   const relayConnectedOnceRef = useRef<Set<string>>(new Set());
-  const relayAutoPausedRef = useRef<Set<string>>(new Set());
   const relayVerificationReadOpsRef = useRef(0);
   const relayVerificationWriteOpsRef = useRef(0);
   const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
@@ -194,6 +208,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
+  const relayConnectWatchdogIdsRef = useRef<Map<string, number>>(new Map());
   const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
   const kind0ProfileCacheRef = useRef<Map<string, { profile: NDKUserProfile | null; fetchedAt: number }>>(new Map());
   const kind0ProfileInFlightRef = useRef<Map<string, Promise<NDKUserProfile | null>>>(new Map());
@@ -225,7 +240,15 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       window.clearTimeout(timeoutId);
     });
     relayTimeoutIdsRef.current.clear();
+    relayConnectWatchdogIdsRef.current.clear();
   }, []);
+
+  const clearRelayConnectWatchdog = useCallback((normalizedRelayUrl: string) => {
+    const timeoutId = relayConnectWatchdogIdsRef.current.get(normalizedRelayUrl);
+    if (typeof timeoutId !== "number") return;
+    clearTrackedRelayTimeout(timeoutId);
+    relayConnectWatchdogIdsRef.current.delete(normalizedRelayUrl);
+  }, [clearTrackedRelayTimeout]);
 
   const detachRelayOkRejectObserver = useCallback((relayUrl: string) => {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
@@ -595,6 +618,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const trackedRelay = relayCurrentInstanceRef.current.get(normalizedRelayUrl);
     const pooledRelay = ndkInstance.pool.relays.get(normalizedRelayUrl);
 
+    clearRelayConnectWatchdog(normalizedRelayUrl);
     detachRelayOkRejectObserver(normalizedRelayUrl);
     relayCurrentInstanceRef.current.delete(normalizedRelayUrl);
 
@@ -606,7 +630,75 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     }
 
     ndkInstance.pool.removeRelay(normalizedRelayUrl);
-  }, [detachRelayOkRejectObserver]);
+  }, [clearRelayConnectWatchdog, detachRelayOkRejectObserver]);
+
+  const scheduleRelayConnectWatchdogRef = useRef<(ndkInstance: NDK, relay: NDKRelay) => void>(() => undefined);
+
+  const scheduleRelayConnectWatchdog = useCallback((ndkInstance: NDK, relay: NDKRelay) => {
+    const normalizedRelayUrl = normalizeRelayUrl(relay.url);
+    clearRelayConnectWatchdog(normalizedRelayUrl);
+
+    const timeoutId = scheduleRelayTimeout(() => {
+      relayConnectWatchdogIdsRef.current.delete(normalizedRelayUrl);
+      if (
+        relayCurrentInstanceRef.current.get(normalizedRelayUrl) !== relay ||
+        removedRelaysRef.current.has(normalizedRelayUrl)
+      ) {
+        return;
+      }
+
+      const mappedStatus = mapRelayTransportStatus(relay);
+      if (mappedStatus !== "connecting") return;
+
+      const nextFailureCount = (relayInitialFailureCountsRef.current.get(normalizedRelayUrl) ?? 0) + 1;
+      relayInitialFailureCountsRef.current.set(normalizedRelayUrl, nextFailureCount);
+      const retryDelay = resolveRelayConnectRetryDelay(nextFailureCount);
+
+      setRelays((prev) =>
+        prev.map((entry) =>
+          normalizeRelayUrl(entry.url) === normalizedRelayUrl
+            ? { ...entry, status: "disconnected" }
+            : entry
+        )
+      );
+      nostrDevLog("relay", "Relay connection attempt timed out before opening; retrying", {
+        relayUrl: normalizedRelayUrl,
+        failures: nextFailureCount,
+        retryDelay,
+      });
+
+      disconnectTrackedRelayInstance(ndkInstance, normalizedRelayUrl);
+      if (removedRelaysRef.current.has(normalizedRelayUrl)) {
+        return;
+      }
+      scheduleRelayTimeout(() => {
+        if (removedRelaysRef.current.has(normalizedRelayUrl)) {
+          return;
+        }
+        const freshRelay = ndkInstance.pool.getRelay(normalizedRelayUrl, false);
+        relayCurrentInstanceRef.current.set(normalizedRelayUrl, freshRelay);
+        setRelays((prev) =>
+          prev.map((entry) =>
+            normalizeRelayUrl(entry.url) === normalizedRelayUrl
+              ? { ...entry, status: "connecting" }
+              : entry
+          )
+        );
+        scheduleRelayConnectWatchdogRef.current(ndkInstance, freshRelay);
+        freshRelay.connect();
+      }, retryDelay);
+    }, RELAY_CONNECTING_WATCHDOG_MS);
+
+    relayConnectWatchdogIdsRef.current.set(normalizedRelayUrl, timeoutId);
+  }, [
+    clearRelayConnectWatchdog,
+    disconnectTrackedRelayInstance,
+    removedRelaysRef,
+    relayCurrentInstanceRef,
+    relayInitialFailureCountsRef,
+    scheduleRelayTimeout,
+  ]);
+  scheduleRelayConnectWatchdogRef.current = scheduleRelayConnectWatchdog;
 
   const connectManagedRelay = useCallback((
     ndkInstance: NDK,
@@ -623,6 +715,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       relayCurrentInstanceRef.current.set(normalizedRelayUrl, trackedRelay);
       const mappedStatus = mapRelayTransportStatus(trackedRelay);
       if (mappedStatus === "connected" || mappedStatus === "connecting") {
+        if (mappedStatus === "connected") {
+          clearRelayConnectWatchdog(normalizedRelayUrl);
+        } else {
+          scheduleRelayConnectWatchdog(ndkInstance, trackedRelay);
+        }
         return trackedRelay;
       }
 
@@ -631,10 +728,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         disconnectTrackedRelayInstance(ndkInstance, normalizedRelayUrl);
         const freshRelay = ndkInstance.pool.getRelay(normalizedRelayUrl, false);
         relayCurrentInstanceRef.current.set(normalizedRelayUrl, freshRelay);
+        scheduleRelayConnectWatchdog(ndkInstance, freshRelay);
         freshRelay.connect();
         return freshRelay;
       }
 
+      scheduleRelayConnectWatchdog(ndkInstance, trackedRelay);
       trackedRelay.connect();
       return trackedRelay;
     }
@@ -645,9 +744,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     const relay = ndkInstance.pool.getRelay(normalizedRelayUrl, false);
     relayCurrentInstanceRef.current.set(normalizedRelayUrl, relay);
+    scheduleRelayConnectWatchdog(ndkInstance, relay);
     relay.connect();
     return relay;
-  }, [disconnectTrackedRelayInstance]);
+  }, [clearRelayConnectWatchdog, disconnectTrackedRelayInstance, scheduleRelayConnectWatchdog]);
 
   const replayActiveSubscriptionsForRelay = useCallback((ndkInstance: NDK, relayUrl: string) => {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
@@ -712,7 +812,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       const isAuthCapable = authCapableSet.has(relayUrl);
       relaysPendingAuthSubscriptionReplayRef.current.add(relayUrl);
       if (retrySet.has(relayUrl)) {
-        relayAutoPausedRef.current.delete(relayUrl);
         relayInitialFailureCountsRef.current.delete(relayUrl);
         relayAuthRetryHistoryRef.current.delete(relayUrl);
         pendingRelayVerificationRef.current.delete(relayUrl);
@@ -872,14 +971,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           relayCurrentInstanceRef.current.set(normalized, relay);
           if (removedRelaysRef.current.has(normalized)) return;
           const previousEntry = previousEntryByUrl.get(normalized);
-          if (relayAutoPausedRef.current.has(normalized)) {
-            updates.push({
-              ...previousEntry,
-              url: normalized,
-              status: "connection-error",
-            });
-            return;
-          }
           const mappedStatus = mapRelayTransportStatus(relay);
           updates.push({
             ...previousEntry,
@@ -893,7 +984,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       });
     };
 
-    ndkInstance.pool.on("relay:connecting", () => {
+    ndkInstance.pool.on("relay:connecting", (relay: NDKRelay) => {
+      const normalized = normalizeRelayUrl(relay.url);
+      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
+      if (!currentRelay || currentRelay === relay) {
+        relayCurrentInstanceRef.current.set(normalized, relay);
+        scheduleRelayConnectWatchdog(ndkInstance, relay);
+      }
       syncRelayStatusesFromPool();
     });
 
@@ -904,11 +1001,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         return;
       }
       relayCurrentInstanceRef.current.set(normalized, relay);
+      clearRelayConnectWatchdog(normalized);
       attachRelayOkRejectObserver(relay);
       nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
-      relayAutoPausedRef.current.delete(normalized);
       const relayInfo = relayInfoRef.current.get(normalized);
       if (relayInfo?.authRequired) {
         primeRelayAuthChallenge(ndkInstance, normalized);
@@ -966,12 +1063,16 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
       const normalized = normalizeRelayUrl(relay.url);
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
+      clearRelayConnectWatchdog(normalized);
       detachRelayOkRejectObserver(normalized);
       const currentRelay = relayCurrentInstanceRef.current.get(normalized);
       if (currentRelay && currentRelay !== relay) {
         return;
       }
       const activeRelay = ndkInstance.pool.relays.get(normalized);
+      if (!currentRelay && !activeRelay) {
+        return;
+      }
 
       // Ignore late disconnects from a removed relay instance after the same normalized URL
       // has already been re-added to the pool.
@@ -979,9 +1080,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         return;
       }
 
-      // Do not overwrite "connection-error" with "disconnected": pool.removeRelay() fires a
-      // second relay:disconnect after auto-pause, which would clobber the error status.
-      if (!removedRelaysRef.current.has(normalized) && !relayAutoPausedRef.current.has(normalized)) {
+      if (!removedRelaysRef.current.has(normalized)) {
         setRelays((prev) => {
           const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);
           if (!existing || existing.status === "disconnected") return prev;
@@ -990,8 +1089,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           );
         });
       }
-
-      if (relayAutoPausedRef.current.has(normalized)) return;
 
       if (relayConnectedOnceRef.current.has(normalized)) {
         // Relay had connected before. NDK normally handles reconnection via handleReconnection(),
@@ -1003,8 +1100,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           scheduleRelayTimeout(() => {
             if (
               relayCurrentInstanceRef.current.get(normalized) === relay &&
-              !removedRelaysRef.current.has(normalized) &&
-              !relayAutoPausedRef.current.has(normalized)
+              !removedRelaysRef.current.has(normalized)
             ) {
               relay.connect();
             }
@@ -1019,35 +1115,17 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       const nextFailureCount = (relayInitialFailureCountsRef.current.get(normalized) ?? 0) + 1;
       relayInitialFailureCountsRef.current.set(normalized, nextFailureCount);
 
-      if (nextFailureCount < MAX_INITIAL_CONNECT_FAILURES) {
-        if (!removedRelaysRef.current.has(normalized)) {
-          const delay = Math.min(1000 * 2 ** (nextFailureCount - 1), 30000);
-          scheduleRelayTimeout(() => {
-            if (
-              relayCurrentInstanceRef.current.get(normalized) === relay &&
-              !removedRelaysRef.current.has(normalized) &&
-              !relayAutoPausedRef.current.has(normalized)
-            ) {
-              relay.connect();
-            }
-          }, delay);
-        }
-        return;
+      if (!removedRelaysRef.current.has(normalized)) {
+        const delay = resolveRelayConnectRetryDelay(nextFailureCount);
+        scheduleRelayTimeout(() => {
+          if (
+            relayCurrentInstanceRef.current.get(normalized) === relay &&
+            !removedRelaysRef.current.has(normalized)
+          ) {
+            relay.connect();
+          }
+        }, delay);
       }
-
-      relayAutoPausedRef.current.add(normalized);
-      setRelays((prev) =>
-        prev.map((entry) =>
-          normalizeRelayUrl(entry.url) === normalized ? { ...entry, status: "connection-error" } : entry
-        )
-      );
-      console.warn("Relay auto-paused after repeated failed connection attempts", {
-        relayUrl: normalized,
-        failures: nextFailureCount,
-      });
-
-      relay.disconnect();
-      ndkInstance.pool.removeRelay(relay.url);
     });
 
     // Initialize relay states
@@ -1234,7 +1312,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       inFlightKind0ProfileRequests.clear();
       relayCurrentInstance.clear();
     };
-  }, [applyAuthenticatedState, attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
+  }, [applyAuthenticatedState, attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, clearRelayConnectWatchdog, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayConnectWatchdog, scheduleRelayTimeout]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -1364,7 +1442,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     removedRelaysRef.current.delete(normalized);
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
-    relayAutoPausedRef.current.delete(normalized);
     nostrDevLog("relay", "Adding relay and initiating connection", { relayUrl: normalized });
     void probeRelayInfo(normalized);
 
@@ -1372,7 +1449,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // NDK's pool monitor uses explicitRelayUrls to decide whether to send REQ to newly
     // connected relays for existing subscriptions.
     if (!ndk.explicitRelayUrls?.some((entry) => normalizeRelayUrl(entry) === normalized)) {
-      ndk.explicitRelayUrls = [...(ndk.explicitRelayUrls || []), normalized];
+      updateExplicitRelayUrlsInPlace(ndk, [...(ndk.explicitRelayUrls || []), normalized]);
     }
 
     // Add to relays state
@@ -1431,7 +1508,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
 
       const nextRelayUrls = next.map((relay) => relay.url);
-      ndk.explicitRelayUrls = nextRelayUrls;
+      updateExplicitRelayUrlsInPlace(ndk, nextRelayUrls);
       savePersistedRelayUrls(nextRelayUrls);
       nostrDevLog("relay", "Relay order updated", { relayUrls: nextRelayUrls });
       return next;
@@ -1758,7 +1835,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
-    relayAutoPausedRef.current.delete(normalized);
     relayAuthPreflightHistoryRef.current.delete(normalized);
     relayReadRejectedRef.current.delete(normalized);
     relayWriteRejectedRef.current.delete(normalized);
@@ -1768,7 +1844,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
 
     // Remove from NDK's explicit relay list so subscriptions stop routing to it.
-    ndk.explicitRelayUrls = ndk.explicitRelayUrls?.filter((u) => normalizeRelayUrl(u) !== normalized);
+    updateExplicitRelayUrlsInPlace(
+      ndk,
+      (ndk.explicitRelayUrls || []).filter((u) => normalizeRelayUrl(u) !== normalized)
+    );
 
     disconnectTrackedRelayInstance(ndk, normalized);
   }, [disconnectTrackedRelayInstance, ndk, relayStatusCacheAdapter]);
@@ -1778,11 +1857,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const normalized = normalizeRelayUrl(url);
     const relayStatus = relaysRef.current.find((entry) => normalizeRelayUrl(entry.url) === normalized)?.status;
     const reconnectAction = resolveManualRelayReconnectAction(relayStatus);
-    const forceNewSocket = options?.forceNewSocket ?? false;
+    const forceNewSocket = (options?.forceNewSocket ?? false) || relayStatus === "connecting";
     removedRelaysRef.current.delete(normalized);
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
-    relayAutoPausedRef.current.delete(normalized);
     pendingRelayVerificationRef.current.delete(normalized);
     relayAuthRetryHistoryRef.current.delete(normalized);
     if (reconnectAction.retryAuth && ndk.signer) {

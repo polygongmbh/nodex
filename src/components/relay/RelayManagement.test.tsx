@@ -67,6 +67,24 @@ describe("RelayManagement", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
   });
 
+  it("keeps the reconnect button enabled while a relay is connecting", () => {
+    const dispatch = renderWithBus(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "connecting" },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    const reconnectButton = screen.getByRole("button", { name: /reconnect relay/i });
+
+    expect(reconnectButton).toBeEnabled();
+    fireEvent.click(reconnectButton);
+
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
+  });
+
   it("hides the reconnect button for connected relays", () => {
     renderWithBus(
       <RelayManagement
