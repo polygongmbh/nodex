@@ -73,24 +73,24 @@
       },
       "filtersRelays": {
         "title": "Spaces Auswählen",
-        "description": "Nutze den Bereich *Spaces*, um sichtbare Spaces auszuwählen. Klicke auf das Icon eines Space, um die Sichtbarkeit seiner Beiträge umzuschalten, oder auf den Namen, um nur dessen Beiträge anzuzeigen. Farbige Punkte zeigen den Verbindungsstatus, und der +-Button öffnet die Relay-Verwaltung.",
+        "description": "Klicke auf das Icon eines Space, um die Sichtbarkeit seiner Beiträge umzuschalten, oder auf den Namen, um nur dessen Beiträge anzuzeigen. Farbige Punkte zeigen den Verbindungsstatus, und der +-Button öffnet die Relay-Verwaltung.",
         "action": "Schalte einen Space um, um fortzufahren."
       },
       "filtersChannels": {
         "title": "Nach Kanal Filtern",
-        "description": "Nutze den Bereich *Kanäle*, um Beiträge nach Thema einzugrenzen. Klicke auf einen Kanalnamen, um darauf zu fokussieren, oder auf das #-Icon, um zwischen neutral -> einschließen -> ausschließen zu wechseln. Das Hashtag-Icon links von *Kanäle* setzt alle Kanalfilter zurück."
+        "description": "*Kanäle* grenzen sichtbare Beiträge nach Thema ein. Klicke auf einen Kanalnamen, um diesen Kanal auszuwählen. Mit den #-Icon wechselts du zwischen neutral -> einschließen -> ausschließen und kannst so die Ergebnisse eingrenzen oder erweitern, je nachdem ob UND oder ODER ausgewählt ist. Das Hashtag-Icon links von *Kanäle* setzt alle Kanalfilter zurück."
       },
       "filtersPeople": {
         "title": "Nach Person Filtern",
-        "description": "Nutze den Bereich *Personen*, um auf Beteiligte zu fokussieren. Klicke auf einen Namen, um nur Inhalte mit Beteiligung dieser Person zu zeigen, oder auf den Avatar, um Inhalte mit dieser Person ein- oder auszublenden. Das Icon links von *Personen* setzt alle Personenfilter zurück."
+        "description": "Klicke auf einen Namen, um nur Inhalte mit Beteiligung dieser Person zu zeigen, oder auf den Avatar, um Inhalte mit dieser Person ein- und auszublenden. Das Icon links von *Personen* setzt alle Personenfilter zurück."
       },
       "filtersSearch": {
-        "title": "Suche Über Alle Ansichten",
-        "description": "Die untere Leiste grenzt sichtbare Aufgaben in jeder Ansicht per Text ein."
+        "title": "Suche",
+        "description": "Mit dem Suchfeld grenzt du die sichtbare Aufgaben nach Inhalt ein."
       },
       "filtersHashtagContent": {
         "title": "Hashtags in Beiträgen",
-        "description": "Klicke in einem Beitrag auf einen Hashtag-Chip, um auf dieses Tag zu fokussieren. Entferne den Tag-Filter, um zur vollen Liste zurückzukehren.",
+        "description": "Klicke in einem Beitrag auf einen Hashtag-Chip, um auf diesen Kanal zu filtern. Entferne den Tag-Filter, um zur vollen Liste zurückzukehren.",
         "action": "Klicke auf ein Hashtag-Chip in einem Beitrag."
       },
       "composeKind": {
