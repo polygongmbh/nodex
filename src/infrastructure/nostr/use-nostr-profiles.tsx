@@ -205,7 +205,36 @@ export function useCachedNostrProfile(pubkey: string | null): NostrProfile | nul
 }
 
 
-export function getDefaultAvatarUrl(pubkey: string): string {
+function profileEquals(a: NostrProfile | undefined, b: NostrProfile): boolean {
+  if (!a) return false;
+  return (
+    a.pubkey === b.pubkey &&
+    a.name === b.name &&
+    a.displayName === b.displayName &&
+    a.picture === b.picture &&
+    a.about === b.about &&
+    a.nip05 === b.nip05 &&
+    a.nip05Verified === b.nip05Verified &&
+    a.banner === b.banner &&
+    a.website === b.website &&
+    a.lud16 === b.lud16
+  );
+}
+
+/**
+ * Seed/refresh an entry in the shared profile cache from any source (e.g. the
+ * authenticated user's own NDK profile). Lets every UserAvatar across the app
+ * resolve to the same picture and fall back uniformly without prop drilling.
+ */
+export function seedNostrProfile(profile: NostrProfile): void {
+  if (!profile.pubkey) return;
+  if (profileEquals(profileCache[profile.pubkey], profile)) return;
+  profileCache[profile.pubkey] = profile;
+  pendingRequests.delete(profile.pubkey);
+  notifySubscribers();
+}
+
+
   void pubkey;
   return "";
 }
