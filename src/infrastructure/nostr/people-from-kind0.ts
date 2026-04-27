@@ -110,12 +110,17 @@ function readStoredKind0Events(storageKey: string): Kind0LikeEvent[] {
   }
 }
 
-function writeStoredKind0Events(storageKey: string, events: Kind0LikeEvent[]): void {
-  if (!canUseStorage()) return;
+function writeStoredKind0Events(storageKey: string, events: Kind0LikeEvent[]): boolean {
+  if (!canUseStorage()) return false;
   try {
-    window.localStorage.setItem(storageKey, JSON.stringify(mergeKind0EventLists(events)));
+    const serialized = JSON.stringify(mergeKind0EventLists(events));
+    const previous = window.localStorage.getItem(storageKey);
+    if (previous === serialized) return false;
+    window.localStorage.setItem(storageKey, serialized);
+    return true;
   } catch {
     // Ignore local storage write failures.
+    return false;
   }
 }
 
