@@ -94,12 +94,12 @@ export function WelcomeModal({
             {showCreateAccount ? (
               <Button variant="outline" onClick={onCreateAccount}>
                 <UserPlus className="h-4 w-4" />
-                {t("auth:createAccount")}
+                {t("auth:auth.createAccount")}
               </Button>
             ) : null}
             <Button variant="outline" onClick={onSignIn}>
               <LogIn className="h-4 w-4" />
-              {t("auth:signIn")}
+              {t("auth:auth.signIn")}
             </Button>
             <Button onClick={onStartTour}>
               <Sparkles className="h-4 w-4" />

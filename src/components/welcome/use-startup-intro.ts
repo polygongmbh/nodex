@@ -12,12 +12,19 @@ interface UseStartupIntroOptions {
 export function useStartupIntro({ user, openedWithFocusedTaskRef, onStartTour }: UseStartupIntroOptions) {
   const [isOpen, setIsOpen] = useState(false);
   const [showOnStartup] = useState(() => !openedWithFocusedTaskRef.current && !user);
+  const userRef = useRef(user);
+
+  userRef.current = user;
 
   useEffect(() => {
-    if (!showOnStartup || user) return;
-    const id = window.setTimeout(() => setIsOpen(true), STARTUP_INTRO_DELAY_MS);
+    if (!showOnStartup) return;
+    const id = window.setTimeout(() => {
+      if (!userRef.current) {
+        setIsOpen(true);
+      }
+    }, STARTUP_INTRO_DELAY_MS);
     return () => window.clearTimeout(id);
-  }, [showOnStartup, user]);
+  }, [showOnStartup]);
 
   useEffect(() => {
     if (!user) return;

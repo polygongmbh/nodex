@@ -22,6 +22,7 @@ function Harness({
   return (
     <>
       <button onClick={() => setUser({ pubkey: "signed-in" })}>SignIn</button>
+      <button onClick={() => setUser(null)}>SignOut</button>
       <button onClick={handleStartTour}>StartTour</button>
       <output data-testid="intro-open">{String(isOpen)}</output>
     </>
@@ -56,6 +57,14 @@ describe("useStartupIntro", () => {
     expect(screen.getByTestId("intro-open")).toHaveTextContent("true");
 
     fireEvent.click(screen.getByRole("button", { name: "SignIn" }));
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
+
+    fireEvent.click(screen.getByRole("button", { name: "SignOut" }));
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
   });
 
