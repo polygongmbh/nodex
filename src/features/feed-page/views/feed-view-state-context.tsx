@@ -1,8 +1,6 @@
 import { createContext, useContext, type HTMLAttributes, type PropsWithChildren } from "react";
 import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
-import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
-
 export interface FeedViewState {
   currentView: ViewType;
   kanbanDepthMode: KanbanDepthMode;
@@ -13,8 +11,6 @@ export interface FeedViewState {
   isManageRouteActive: boolean;
   canCreateContent: boolean;
   profileCompletionPromptSignal: number;
-  visibleFailedPublishDrafts: FailedPublishDraft[];
-  selectedPublishableRelayIds: string[];
   desktopSwipeHandlers: HTMLAttributes<HTMLDivElement>;
 }
 
@@ -27,8 +23,6 @@ const defaultState: FeedViewState = {
   isManageRouteActive: false,
   canCreateContent: false,
   profileCompletionPromptSignal: 0,
-  visibleFailedPublishDrafts: [],
-  selectedPublishableRelayIds: [],
   desktopSwipeHandlers: {},
 };
 

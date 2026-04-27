@@ -5,7 +5,7 @@ import { UnifiedBottomBar } from "./UnifiedBottomBar";
 
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
-import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
+import { FailedPublishQueueBannerContainer } from "@/features/feed-page/views/FailedPublishQueueBannerContainer";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,6 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
-import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useMobileToastOffset } from "./use-mobile-toast-offset";
 
@@ -43,10 +42,7 @@ export function MobileLayout() {
     isOnboardingOpen,
     activeOnboardingStepId,
     isManageRouteActive,
-    visibleFailedPublishDrafts,
-    selectedPublishableRelayIds,
   } = useFeedViewState();
-  const failedPublishDrafts = useFailedPublishDraftsStore((s) => s.failedPublishDrafts);
 
   const dispatchManageRouteChange = useCallback((isActive: boolean) => {
     void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
@@ -248,12 +244,7 @@ export function MobileLayout() {
       <div>
         <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} onManageOpen={openManageView} isManageActive={showFilters} />
       </div>
-      <FailedPublishQueueBanner
-        drafts={failedPublishDrafts}
-        selectedFeedDrafts={visibleFailedPublishDrafts}
-        selectedRelayIds={selectedPublishableRelayIds}
-        isMobile
-      />
+      <FailedPublishQueueBannerContainer isMobile />
 
       <main
         className="flex-1 overflow-hidden relative"

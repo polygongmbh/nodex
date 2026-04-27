@@ -857,28 +857,8 @@ export function useTaskPublishFlow({
     void publishTaskPriorityUpdate(taskId, priority);
   }, [allTasks, currentUser, guardInteraction, publishTaskPriorityUpdate, setLocalTasks]);
 
-  const visibleFailedPublishDrafts = useMemo(() => {
-    return failedPublishDrafts.filter((draft) => {
-      const targetRelayIds = draft.relayIds.length > 0
-        ? draft.relayIds
-        : draft.relayUrls.map((url) => getRelayIdFromUrl(url));
-      if (targetRelayIds.length === 0) return true;
-      return targetRelayIds.some((relayId) => effectiveActiveRelayIds.has(relayId));
-    });
-  }, [effectiveActiveRelayIds, failedPublishDrafts]);
-
-  const selectedPublishableRelayIds = useMemo(
-    () =>
-      relays
-        .filter((relay) => effectiveActiveRelayIds.has(relay.id))
-        .map((relay) => relay.id),
-    [effectiveActiveRelayIds, relays]
-  );
-
   return {
     composeRestoreRequest,
-    visibleFailedPublishDrafts,
-    selectedPublishableRelayIds,
     isPendingPublishTask,
     handleUndoPendingPublish,
     handleNewTask,

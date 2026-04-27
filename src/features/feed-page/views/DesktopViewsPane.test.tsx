@@ -59,8 +59,6 @@ function renderPane(currentView: "feed" | "tree" | "kanban" | "calendar" | "list
           isManageRouteActive: false,
           canCreateContent: true,
           profileCompletionPromptSignal: 0,
-          visibleFailedPublishDrafts: [],
-          selectedPublishableRelayIds: [],
           desktopSwipeHandlers: {},
         }}
       >

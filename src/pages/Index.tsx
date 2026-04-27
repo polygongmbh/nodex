@@ -517,8 +517,6 @@ function FeedIndexContent() {
 
   const {
     composeRestoreRequest,
-    visibleFailedPublishDrafts,
-    selectedPublishableRelayIds,
     isPendingPublishTask,
     handleUndoPendingPublish,
     handleNewTask,
@@ -765,8 +763,6 @@ function FeedIndexContent() {
       isManageRouteActive,
       canCreateContent: authPolicy.canCreateContent,
       profileCompletionPromptSignal,
-      visibleFailedPublishDrafts,
-      selectedPublishableRelayIds,
       desktopSwipeHandlers,
     }),
     [
@@ -780,8 +776,6 @@ function FeedIndexContent() {
       isSidebarFocused,
       kanbanDepthMode,
       profileCompletionPromptSignal,
-      selectedPublishableRelayIds,
-      visibleFailedPublishDrafts,
     ]
   );
 

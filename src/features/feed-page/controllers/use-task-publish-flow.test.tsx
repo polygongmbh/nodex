@@ -191,7 +191,6 @@ function Harness({
       </button>
       <button onClick={() => hook.handlePriorityChange("task-1", 60)}>Priority</button>
       <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
-      <output data-testid="visible-draft-count">{String(hook.visibleFailedPublishDrafts.length)}</output>
       <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
       <output data-testid="local-count">{String(localTasks.length)}</output>
       <output data-testid="first-priority">{String(localTasks[0]?.priority ?? "")}</output>
@@ -247,7 +246,7 @@ describe("useTaskPublishFlow", () => {
     await waitFor(() => {
       expect(screen.getByTestId("draft-count")).toHaveTextContent("1");
     });
-    expect(screen.getByTestId("visible-draft-count")).toHaveTextContent("1");
+
     expect(screen.getByTestId("suppressed-count")).toHaveTextContent("1");
     expect(screen.getByTestId("posted-tags")).toHaveTextContent("general:relay-one");
     expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "queued" });

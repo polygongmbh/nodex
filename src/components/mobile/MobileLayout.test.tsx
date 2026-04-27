@@ -59,6 +59,10 @@ vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
   useFeedSurfaceState: () => mockSurfaceState(),
 }));
 
+vi.mock("@/features/feed-page/views/FailedPublishQueueBannerContainer", () => ({
+  FailedPublishQueueBannerContainer: () => null,
+}));
+
 vi.mock("./MobileNav", () => ({
   MobileNav: ({
     onViewChange,
@@ -164,8 +168,6 @@ const baseFeedViewState: FeedViewState = {
   isManageRouteActive: false,
   canCreateContent: true,
   profileCompletionPromptSignal: 0,
-  visibleFailedPublishDrafts: [],
-  selectedPublishableRelayIds: [],
   desktopSwipeHandlers: {},
 };
 
