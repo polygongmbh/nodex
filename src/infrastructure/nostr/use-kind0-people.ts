@@ -42,6 +42,19 @@ interface UseKind0PeopleResult {
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
+function areKind0EventListsEqual(previous: Kind0LikeEvent[], next: Kind0LikeEvent[]): boolean {
+  if (previous === next) return true;
+  if (previous.length !== next.length) return false;
+  for (let index = 0; index < previous.length; index += 1) {
+    const a = previous[index];
+    const b = next[index];
+    if (a.pubkey !== b.pubkey || a.created_at !== b.created_at || a.content !== b.content || a.kind !== b.kind) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function arePeopleListsEqual(previous: Person[], next: Person[]): boolean {
   if (previous.length !== next.length) return false;
   return previous.every((person, index) => {
