@@ -17,9 +17,9 @@ export function UserAvatar({ id, displayName, avatarUrl, className, beamTestId }
   // every surface (sidebar, hover card, kanban card, etc.) resolves the same
   // avatar from the same source — and falls back to the beam in lockstep.
   const isPubkey = typeof id === "string" && PUBKEY_PATTERN.test(id);
-  const { profile } = useNostrProfile(isPubkey ? id : null);
-  const resolvedAvatarUrl = avatarUrl || profile?.picture || undefined;
-  const resolvedDisplayName = displayName || profile?.displayName || profile?.name;
+  const cachedProfile = useCachedNostrProfile(isPubkey ? id : null);
+  const resolvedAvatarUrl = avatarUrl || cachedProfile?.picture || undefined;
+  const resolvedDisplayName = displayName || cachedProfile?.displayName || cachedProfile?.name;
   const initial = (resolvedDisplayName || id || "?").charAt(0).toUpperCase();
 
   return (
