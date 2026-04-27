@@ -9,6 +9,22 @@ export function isWritableAppRelay(relay: Relay): boolean {
     && (relay.connectionStatus === undefined || relay.connectionStatus === "connected");
 }
 
+export function isReachableAppRelay(relay: Relay): boolean {
+  return relay.id !== DEMO_RELAY_ID
+    && (relay.connectionStatus === undefined
+      || relay.connectionStatus === "connected"
+      || relay.connectionStatus === "read-only"
+      || relay.connectionStatus === "verification-failed");
+}
+
+export function resolveReachableAppRelayUrls(relays: Relay[], relayScopeIds?: Set<string>): string[] {
+  return dedupeNormalizedRelayUrls(
+    relays
+      .filter((relay) => isReachableAppRelay(relay) && (!relayScopeIds || relayScopeIds.has(relay.id)))
+      .map((relay) => relay.url)
+  );
+}
+
 export function isWritableNdkRelay(relay: NDKRelayStatus): boolean {
   return relay.status === "connected";
 }

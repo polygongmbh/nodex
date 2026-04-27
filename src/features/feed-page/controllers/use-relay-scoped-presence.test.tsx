@@ -39,7 +39,7 @@ function buildTask(overrides: Partial<Task> & Pick<Task, "id" | "relays">): Task
 }
 
 describe("buildRelayScopedPresenceTargets", () => {
-  it("splits scoped writable relays by whether they carry the focused task", () => {
+  it("splits scoped reachable relays by whether they carry the focused task", () => {
     const targets = buildRelayScopedPresenceTargets({
       currentView: "feed",
       focusedTask: buildTask({ id: "a".repeat(64), relays: ["relay-a", "relay-c"] }),
@@ -54,7 +54,7 @@ describe("buildRelayScopedPresenceTargets", () => {
     expect(targets).toHaveLength(2);
     expect(targets).toEqual([
       expect.objectContaining({
-        relayUrls: ["wss://relay.a"],
+        relayUrls: ["wss://relay.a", "wss://relay.c"],
         taskId: "a".repeat(64),
       }),
       expect.objectContaining({
@@ -62,6 +62,23 @@ describe("buildRelayScopedPresenceTargets", () => {
         taskId: null,
       }),
     ]);
+  });
+
+  it("includes read-only relays but excludes disconnected and errored ones", () => {
+    const targets = buildRelayScopedPresenceTargets({
+      currentView: "feed",
+      focusedTask: null,
+      relayScopeIds: new Set(["relay-a", "relay-b", "relay-c", "relay-d"]),
+      relays: [
+        buildRelay({ id: "relay-a", url: "wss://relay.a", connectionStatus: "connected" }),
+        buildRelay({ id: "relay-b", url: "wss://relay.b", connectionStatus: "read-only" }),
+        buildRelay({ id: "relay-c", url: "wss://relay.c", connectionStatus: "disconnected" }),
+        buildRelay({ id: "relay-d", url: "wss://relay.d", connectionStatus: "connection-error" }),
+      ],
+    });
+
+    expect(targets).toHaveLength(1);
+    expect(targets[0].relayUrls).toEqual(["wss://relay.a", "wss://relay.b"]);
   });
 
 });
