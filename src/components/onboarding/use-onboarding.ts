@@ -122,11 +122,20 @@ export function useOnboarding({
     if (!isOnboardingOpen) setActiveOnboardingStepId(null);
   }, [isOnboardingOpen]);
 
+  const lastHandledStepIdRef = useRef<string | null>(null);
+
   const handleOnboardingStepChange = useCallback((payload: {
     id: string;
     stepNumber: number;
   }) => {
     setActiveOnboardingStepId(payload.id);
+
+    // Side effects (view switch, filter reset) should only fire when the step
+    // actually changes — not on every callback re-creation triggered by parent
+    // state updates. Otherwise selections made during the step are perpetually
+    // undone in a loop.
+    if (lastHandledStepIdRef.current === payload.id) return;
+    lastHandledStepIdRef.current = payload.id;
 
     const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
     if (isComposeGuideStep(payload.id) && !isDedicatedViewGuide) {
