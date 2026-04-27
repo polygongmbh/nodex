@@ -61,6 +61,26 @@ function renderModal(props: ComponentProps<typeof NostrAuthModal>, initialPath =
   );
 }
 
+function fillNoasCredentials(username: string, password: string) {
+  fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: username } });
+  fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: password } });
+}
+
+function fillNoasSignUpFields(
+  username = "alice@custom.noas.example",
+  password = "password123",
+  privateKey = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+) {
+  fillNoasCredentials(username, password);
+  fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
+    target: { value: privateKey },
+  });
+}
+
+function switchToCreateAccount() {
+  fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
+}
+
 describe("NostrAuthModal", () => {
   const openNoasEntryIfNeeded = () => {
     const noasEntryButton = screen.queryByRole("button", { name: /noas authentication/i });
@@ -174,10 +194,9 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice_name" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fillNoasCredentials("alice_name", "password123");
 
-    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
+    switchToCreateAccount();
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice_name");
     expect(screen.getByLabelText(/^password$/i)).toHaveValue("password123");
 
@@ -192,8 +211,7 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fillNoasCredentials("alice", "password123");
     fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     expect(screen.getByText(/enter your full nip-05 handle/i)).toBeInTheDocument();
@@ -234,7 +252,8 @@ describe("NostrAuthModal", () => {
     const { rerender } = renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
+    switchToCreateAccount();
+    expect(screen.getByTestId("noas-auth-tab-create-account")).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
 
     ndkMock.defaultNoasHostUrl = "https://example.com";
@@ -253,8 +272,7 @@ describe("NostrAuthModal", () => {
 
     renderModal({ isOpen: true, onClose: vi.fn() });
 
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fillNoasCredentials("alice", "password123");
     fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
@@ -270,8 +288,7 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fillNoasCredentials("alice@custom.noas.example", "password123");
     fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
@@ -286,8 +303,7 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fillNoasCredentials("alice@custom.noas.example", "password123");
     fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
@@ -295,7 +311,7 @@ describe("NostrAuthModal", () => {
     expect(screen.queryByText(/server or key error/i)).not.toBeInTheDocument();
   });
 
-  it("shows the raw Noas sign-in error payload with HTTP status when provided", async () => {
+  it("shows the raw Noas error payload with HTTP status for both sign-in and create-account flows", async () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.loginWithNoas = vi.fn(async () => ({
       success: false,
@@ -303,20 +319,6 @@ describe("NostrAuthModal", () => {
       errorMessage: "Username already active. Sign in.",
       httpStatus: 409,
     }));
-
-    renderModal({ isOpen: true, onClose: vi.fn() });
-
-    openNoasEntryIfNeeded();
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.click(screen.getByTestId("noas-auth-submit"));
-
-    await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
-    expect(screen.getAllByText("409 Conflict: Username already active. Sign in.")).toHaveLength(1);
-  });
-
-  it("shows the raw Noas sign-up error payload with HTTP status when provided", async () => {
-    vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.signupWithNoas = vi.fn(async () => ({
       success: false,
       errorCode: "server_error",
@@ -327,12 +329,14 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
-      target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
-    });
+    fillNoasCredentials("alice@custom.noas.example", "password123");
+    fireEvent.click(screen.getByTestId("noas-auth-submit"));
+
+    await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
+    expect(screen.getAllByText("409 Conflict: Username already active. Sign in.")).toHaveLength(1);
+
+    switchToCreateAccount();
+    fillNoasSignUpFields();
     fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     await waitFor(() => expect(ndkMock.signupWithNoas).toHaveBeenCalled());
@@ -352,12 +356,8 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
-      target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
-    });
+    switchToCreateAccount();
+    fillNoasSignUpFields();
     fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     await waitFor(() => expect(ndkMock.signupWithNoas).toHaveBeenCalled());
@@ -373,12 +373,8 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose: vi.fn() });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
-      target: { value: "not-a-valid-private-key" },
-    });
+    switchToCreateAccount();
+    fillNoasSignUpFields("alice@custom.noas.example", "password123", "not-a-valid-private-key");
     fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     expect(ndkMock.signupWithNoas).not.toHaveBeenCalled();
@@ -398,12 +394,8 @@ describe("NostrAuthModal", () => {
     renderModal({ isOpen: true, onClose });
 
     openNoasEntryIfNeeded();
-    fireEvent.click(screen.getByTestId("noas-auth-tab-create-account"));
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
-    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
-      target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
-    });
+    switchToCreateAccount();
+    fillNoasSignUpFields();
     fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());

@@ -79,6 +79,10 @@ function ControlledNoasSignUpForm({
   );
 }
 
+function renderControlledSignUpForm(props: Parameters<typeof ControlledNoasSignUpForm>[0] = {}) {
+  render(<ControlledNoasSignUpForm {...props} />);
+}
+
 describe("Noas auth forms", () => {
   it("shows a more options button on the sign-in form", () => {
     render(
@@ -258,7 +262,7 @@ describe("Noas auth forms", () => {
     expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 
-  it("keeps sign-up compact without a more options button", () => {
+  it("renders the sign-up shell with the expected tab state and credential semantics", () => {
     render(
       <NoasSignUpForm
         onSignUp={vi.fn(async () => true)}
@@ -275,23 +279,8 @@ describe("Noas auth forms", () => {
     );
 
     expect(screen.queryByRole("button", { name: /more options/i })).not.toBeInTheDocument();
-  });
-
-  it("marks the private-key field as non-credential autofill content", () => {
-    render(
-      <NoasSignUpForm
-        onSignUp={vi.fn(async () => true)}
-        onSignIn={vi.fn()}
-        username=""
-        password=""
-        isEditingHostUrl={false}
-        isLoading={false}
-        noasHostUrl="https://noas.example.com"
-        onUsernameChange={vi.fn()}
-        onPasswordChange={vi.fn()}
-        onToggleHostEdit={vi.fn()}
-      />
-    );
+    expect(screen.getByTestId("noas-auth-tab-sign-in")).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByTestId("noas-auth-tab-create-account")).toHaveAttribute("aria-selected", "true");
 
     const privateKeyInput = screen.getByRole("textbox", { name: /^private key$/i });
     expect(privateKeyInput).toHaveAttribute("name", "nostrPrivateKey");
@@ -300,41 +289,8 @@ describe("Noas auth forms", () => {
     expect(screen.getByLabelText(/^password$/i)).toHaveAttribute("autocomplete", "new-password");
   });
 
-  it("shows shared tabs on the sign-up form and lets users switch back to sign-in", () => {
-    render(
-      <NoasSignUpForm
-        onSignUp={vi.fn(async () => true)}
-        onSignIn={vi.fn()}
-        username=""
-        password=""
-        isEditingHostUrl={false}
-        isLoading={false}
-        noasHostUrl="https://noas.example.com"
-        onUsernameChange={vi.fn()}
-        onPasswordChange={vi.fn()}
-        onToggleHostEdit={vi.fn()}
-      />
-    );
-
-    expect(screen.getByTestId("noas-auth-tab-sign-in")).toHaveAttribute("aria-selected", "false");
-    expect(screen.getByTestId("noas-auth-tab-create-account")).toHaveAttribute("aria-selected", "true");
-  });
-
   it("updates public key preview when private key input changes", async () => {
-    render(
-      <NoasSignUpForm
-        onSignUp={vi.fn(async () => true)}
-        onSignIn={vi.fn()}
-        username=""
-        password=""
-        isEditingHostUrl={false}
-        isLoading={false}
-        noasHostUrl="https://noas.example.com"
-        onUsernameChange={vi.fn()}
-        onPasswordChange={vi.fn()}
-        onToggleHostEdit={vi.fn()}
-      />
-    );
+    renderControlledSignUpForm();
 
     const privateKey = "1".repeat(64);
     const privateKeyInput = screen.getByRole("textbox", { name: /^private key$/i });
@@ -350,7 +306,7 @@ describe("Noas auth forms", () => {
   it("fills in the default host in the field before sign-up submit", () => {
     const onSignUp = vi.fn(async () => true);
 
-    render(<ControlledNoasSignUpForm onSignUp={onSignUp} />);
+    renderControlledSignUpForm({ onSignUp });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -369,8 +325,8 @@ describe("Noas auth forms", () => {
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@noas.example.com");
   });
 
-  it("fills in the default host on submit-button press before sign-up submit", () => {
-    render(<ControlledNoasSignUpForm initialNoasHostUrl="https://noas.example.com" />);
+  it("fills in the default host before sign-up submit interactions", () => {
+    renderControlledSignUpForm({ initialNoasHostUrl: "https://noas.example.com" });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.pointerDown(screen.getByTestId("noas-sign-up-submit"));
