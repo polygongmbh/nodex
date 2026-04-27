@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps } from "react";
 import { SidebarHeader } from "@/components/layout/Sidebar";
 import { FailedPublishQueueBannerContainer } from "./FailedPublishQueueBannerContainer";
 import { DesktopSearchDock } from "@/components/tasks/DesktopSearchDock";
@@ -15,13 +15,11 @@ import { DesktopViewsPane } from "./DesktopViewsPane";
 interface DesktopAppShellProps {
   shortcutsHelpProps: ComponentProps<typeof KeyboardShortcutsHelp>;
   authModalProps: ComponentProps<typeof NostrAuthModal>;
-  onboardingOverlays: ReactNode;
 }
 
 export function DesktopAppShell({
   shortcutsHelpProps,
   authModalProps,
-  onboardingOverlays,
 }: DesktopAppShellProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const {
@@ -57,7 +55,6 @@ export function DesktopAppShell({
 
       <KeyboardShortcutsHelp {...shortcutsHelpProps} />
       <NostrAuthModal {...authModalProps} />
-      {onboardingOverlays}
     </div>
   );
 }

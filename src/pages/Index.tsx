@@ -8,8 +8,7 @@ import { useTaskScopeSpecificFilters } from "@/features/feed-page/controllers/us
 import { useNostrEventCache } from "@/infrastructure/nostr/use-nostr-event-cache";
 import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
-import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
-import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
+import { OnboardingController } from "@/components/onboarding/OnboardingController";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
@@ -60,7 +59,6 @@ function FeedIndexContent() {
   const {
     isAuthModalOpen,
     authModalInitialStep,
-    setIsAuthModalOpen,
     handleOpenAuthModal,
     handleCloseAuthModal,
   } = useAuthModalRoute();
@@ -489,16 +487,11 @@ function FeedIndexContent() {
     user,
     isMobile,
     currentView,
-    channels,
     openedWithFocusedTaskRef,
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,
-    setSearchQuery,
-    setActiveRelayIds,
-    setChannelFilterStates,
     setPeople,
-    setIsAuthModalOpen,
   });
 
   const { handleListingStatusChange } = useListingStatusPublish({
@@ -569,41 +562,17 @@ function FeedIndexContent() {
     };
   }, [publishOfflinePresenceNow, user?.pubkey]);
 
-  const onboardingOverlays = (
-    <>
-      <OnboardingIntroPopover
-        isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
-        showCreateAccount={Boolean(import.meta.env.VITE_NOAS_HOST_URL || defaultNoasHostUrl)}
-        onStartTour={() => {
-          if (!demoFeedActive && allTasks.length === 0) {
-            setDemoTasks(initializeDemoFeedData());
-            setActiveRelayIds((previous) => {
-              const next = new Set(previous);
-              next.add(DEMO_RELAY_ID);
-              return next;
-            });
-            navigate("/feed");
-          }
-          handleStartOnboardingTour();
-        }}
-        onCreateAccount={() => handleOpenAuthModal("noasSignUp")}
-        onSignIn={() => handleOpenAuthModal("noas")}
-      />
-      <OnboardingGuide
-        isOpen={isOnboardingOpen && !isAuthModalOpen}
-        isMobile={isMobile}
-        manualStart={onboardingManualStart}
-        currentView={currentView}
-        uiContextKey={`${currentView}:${focusedTaskId || ""}`}
-        initialSection={onboardingInitialSection}
-        sections={onboardingSections}
-        stepsBySection={onboardingStepsBySection}
-        onClose={handleCloseGuide}
-        onActiveSectionChange={handleOnboardingActiveSectionChange}
-        onStepChange={handleOnboardingStepChange}
-      />
-    </>
-  );
+  const handleBeforeOnboardingTour = useCallback(() => {
+    if (!demoFeedActive && allTasks.length === 0) {
+      setDemoTasks(initializeDemoFeedData());
+      setActiveRelayIds((previous) => {
+        const next = new Set(previous);
+        next.add(DEMO_RELAY_ID);
+        return next;
+      });
+      navigate("/feed");
+    }
+  }, [demoFeedActive, allTasks.length, setDemoTasks, setActiveRelayIds, navigate]);
 
   const viewCommands = useMemo<FeedViewCommands>(
     () => ({
@@ -772,32 +741,25 @@ function FeedIndexContent() {
     ]
   );
 
-  // Mobile layout
-  if (isMobile) {
-    return (
-      <FeedPageProviders
-        coreHandlers={coreHandlers}
-        surfaceState={feedSurfaceState}
-        taskViewModel={feedTaskViewModel}
-        viewState={feedViewState}
-        sidebarCommands={sidebarCommands}
-        viewCommands={viewCommands}
-        taskCommands={taskCommands}
-      >
-        <MotdBanner />
-        <FeedPageMobileShell
-          authModalProps={{
-            isOpen: isAuthModalOpen,
-            onClose: handleCloseAuthModal,
-            initialStep: authModalInitialStep,
-          }}
-          onboardingOverlays={onboardingOverlays}
-        />
-      </FeedPageProviders>
-    );
-  }
+  const onboardingController = (
+    <OnboardingController
+      isOnboardingOpen={isOnboardingOpen}
+      isOnboardingIntroOpen={isOnboardingIntroOpen}
+      onboardingManualStart={onboardingManualStart}
+      onboardingInitialSection={onboardingInitialSection}
+      onboardingSections={onboardingSections}
+      onboardingStepsBySection={onboardingStepsBySection}
+      currentView={currentView}
+      focusedTaskId={focusedTaskId}
+      handleStartOnboardingTour={handleStartOnboardingTour}
+      handleCloseGuide={handleCloseGuide}
+      handleOnboardingStepChange={handleOnboardingStepChange}
+      handleOnboardingActiveSectionChange={handleOnboardingActiveSectionChange}
+      onBeforeStartTour={handleBeforeOnboardingTour}
+      onOpenAuthModal={handleOpenAuthModal}
+    />
+  );
 
-  // Desktop layout
   return (
     <FeedPageProviders
       coreHandlers={coreHandlers}
@@ -807,18 +769,28 @@ function FeedIndexContent() {
       sidebarCommands={sidebarCommands}
       viewCommands={viewCommands}
       taskCommands={taskCommands}
-      sidebarController={desktopSidebarController}
+      sidebarController={isMobile ? undefined : desktopSidebarController}
     >
       <MotdBanner />
-      <DesktopAppShell
-        shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-        authModalProps={{
-          isOpen: isAuthModalOpen,
-          onClose: handleCloseAuthModal,
-          initialStep: authModalInitialStep,
-        }}
-        onboardingOverlays={onboardingOverlays}
-      />
+      {isMobile ? (
+        <FeedPageMobileShell
+          authModalProps={{
+            isOpen: isAuthModalOpen,
+            onClose: handleCloseAuthModal,
+            initialStep: authModalInitialStep,
+          }}
+        />
+      ) : (
+        <DesktopAppShell
+          shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+          authModalProps={{
+            isOpen: isAuthModalOpen,
+            onClose: handleCloseAuthModal,
+            initialStep: authModalInitialStep,
+          }}
+        />
+      )}
+      {onboardingController}
     </FeedPageProviders>
   );
 }
