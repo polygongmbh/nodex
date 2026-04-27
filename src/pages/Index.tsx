@@ -484,7 +484,6 @@ function FeedIndexContent() {
     handleStartOnboardingTour,
     handleOpenGuide,
     handleCloseGuide,
-    handleCompleteGuide,
     handleOnboardingStepChange,
     handleOnboardingActiveSectionChange,
   } = useIndexOnboarding({
@@ -605,7 +604,6 @@ function FeedIndexContent() {
         sections={onboardingSections}
         stepsBySection={onboardingStepsBySection}
         onClose={handleCloseGuide}
-        onComplete={handleCompleteGuide}
         onActiveSectionChange={handleOnboardingActiveSectionChange}
         onStepChange={handleOnboardingStepChange}
       />

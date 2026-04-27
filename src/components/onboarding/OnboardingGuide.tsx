@@ -26,7 +26,6 @@ interface OnboardingGuideProps {
   sections: OnboardingSection[];
   stepsBySection: Record<OnboardingSectionId, OnboardingStep[]>;
   onClose: () => void;
-  onComplete: (lastStep: number) => void;
   onActiveSectionChange?: (section: OnboardingSectionId | null) => void;
   onStepChange?: (step: {
     id: string;
@@ -82,7 +81,6 @@ export function OnboardingGuide({
   sections,
   stepsBySection,
   onClose,
-  onComplete,
   onActiveSectionChange,
   onStepChange,
 }: OnboardingGuideProps) {
@@ -239,7 +237,6 @@ export function OnboardingGuide({
       autoAdvancedStepEntryKeysRef.current.add(entryKey);
       const lastStep = stepIndex >= activeSteps.length - 1;
       if (lastStep) {
-        onComplete(stepIndex);
         onClose();
         return;
       }
@@ -249,7 +246,7 @@ export function OnboardingGuide({
       window.clearTimeout(timeout);
       pendingAutoAdvanceStepEntryKeysRef.current.delete(entryKey);
     };
-  }, [activeSteps.length, isManualSession, onClose, onComplete, stepIndex]);
+  }, [activeSteps.length, isManualSession, onClose, stepIndex]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -880,7 +877,6 @@ export function OnboardingGuide({
   const handleNext = () => {
     if (nextDisabled) return;
     if (isLastStep) {
-      onComplete(stepIndex);
       onClose();
       return;
     }

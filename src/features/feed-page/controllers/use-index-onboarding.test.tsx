@@ -58,7 +58,6 @@ function Harness({
       <button onClick={() => onboarding.handleOnboardingStepChange({ id: "mobile-navigation-focus", stepNumber: 1 })}>
         ResetStep
       </button>
-      <button onClick={() => onboarding.handleCompleteGuide(3)}>CompleteGuide</button>
       <button onClick={onboarding.handleCloseGuide}>CloseGuide</button>
       <button onClick={onboarding.handleOpenGuide}>OpenGuide</button>
       <button onClick={() => setUser({ pubkey: "signed-in" })}>SignIn</button>
@@ -100,7 +99,6 @@ describe("useIndexOnboarding", () => {
   it("opens auth after guide close when sign-in should be forced", () => {
     render(<Harness shouldForceAuthAfterOnboarding />);
 
-    fireEvent.click(screen.getByRole("button", { name: "CompleteGuide" }));
     fireEvent.click(screen.getByRole("button", { name: "CloseGuide" }));
 
     expect(screen.getByTestId("auth-open")).toHaveTextContent("true");

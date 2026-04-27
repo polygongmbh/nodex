@@ -52,7 +52,6 @@ function renderGuide({
     sections: OnboardingSection[];
     stepsBySection: Record<OnboardingSectionId, OnboardingStep[]>;
     onClose: () => void;
-    onComplete: (lastStep: number) => void;
     onActiveSectionChange: (section: OnboardingSectionId | null) => void;
     onStepChange: (step: {
       id: string;
@@ -74,7 +73,6 @@ function renderGuide({
         sections={sections}
         stepsBySection={baseStepsBySection}
         onClose={vi.fn()}
-        onComplete={vi.fn()}
         {...guideProps}
       />
     </div>
@@ -140,7 +138,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={baseStepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -164,7 +161,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={baseStepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -188,7 +184,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={baseStepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -215,7 +210,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={baseStepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -242,7 +236,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={baseStepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -276,7 +269,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={baseStepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -386,7 +378,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={stepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -438,7 +429,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={stepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -472,7 +462,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={baseStepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -503,7 +492,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         sections={sections}
         stepsBySection={stepsBySection}
         onClose={vi.fn()}
-        onComplete={vi.fn()}
         onStepChange={onStepChange}
       />
     );
@@ -540,7 +528,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={baseStepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -558,7 +545,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={baseStepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -600,7 +586,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={stepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -617,7 +602,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={stepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -663,7 +647,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={stepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -680,7 +663,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={stepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -726,7 +708,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={stepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -741,7 +722,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={stepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -798,7 +778,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={stepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -830,7 +809,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={stepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -899,7 +877,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={stepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -977,7 +954,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
             sections={sections}
             stepsBySection={stepsBySection}
             onClose={vi.fn()}
-            onComplete={vi.fn()}
           />
         </div>
       );
@@ -1026,7 +1002,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         sections={sections}
         stepsBySection={stepsBySection}
         onClose={vi.fn()}
-        onComplete={vi.fn()}
       />
     );
 
@@ -1064,7 +1039,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={stepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -1101,7 +1075,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={stepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -1121,7 +1094,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           sections={sections}
           stepsBySection={baseStepsBySection}
           onClose={vi.fn()}
-          onComplete={vi.fn()}
         />
       </div>
     );
@@ -1158,7 +1130,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         sections={sections}
         stepsBySection={stepsBySection}
         onClose={vi.fn()}
-        onComplete={vi.fn()}
         onActiveSectionChange={onActiveSectionChange}
       />
     );
@@ -1183,7 +1154,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         sections={sections}
         stepsBySection={stepsBySection}
         onClose={vi.fn()}
-        onComplete={vi.fn()}
         onActiveSectionChange={onActiveSectionChange}
       />
     );
@@ -1204,7 +1174,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         sections={sections}
         stepsBySection={baseStepsBySection}
         onClose={onClose}
-        onComplete={vi.fn()}
       />
     );
 

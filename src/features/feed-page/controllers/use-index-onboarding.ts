@@ -4,8 +4,6 @@ import { useTranslation } from "react-i18next";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
 import type { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
-import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
-import { shouldAutoStartOnboarding } from "@/lib/onboarding-autostart";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import {
   isComposeGuideStep,
@@ -62,7 +60,6 @@ export function useIndexOnboarding({
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const lastHandledOnboardingStepRef = useRef<string | null>(null);
-  const shouldOpenAuthAfterGuideExitRef = useRef(false);
   const startedSignedOutRef = useRef(!user);
   const handledStartupIntroRef = useRef(false);
 
@@ -105,30 +102,17 @@ export function useIndexOnboarding({
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(false);
     setActiveOnboardingSection(null);
-    const shouldOpenAuth = shouldOpenAuthAfterGuideExitRef.current || shouldForceAuthAfterOnboarding;
-    shouldOpenAuthAfterGuideExitRef.current = false;
-    if (shouldOpenAuth) {
+    if (shouldForceAuthAfterOnboarding) {
       setIsAuthModalOpen(true);
     }
   }, [setIsAuthModalOpen, shouldForceAuthAfterOnboarding]);
-
-  const handleCompleteGuide = useCallback((lastStep: number) => {
-    markOnboardingCompleted(lastStep);
-    if (shouldForceAuthAfterOnboarding) {
-      shouldOpenAuthAfterGuideExitRef.current = true;
-    }
-  }, [shouldForceAuthAfterOnboarding]);
 
   useEffect(() => {
     if (handledStartupIntroRef.current) return;
     handledStartupIntroRef.current = true;
     if (!startedSignedOutRef.current) return;
 
-    const onboardingState = loadOnboardingState();
-    if (shouldAutoStartOnboarding({
-      onboardingCompleted: onboardingState.completed,
-      openedWithFocusedTask: openedWithFocusedTaskRef.current,
-    }) && !user) {
+    if (!openedWithFocusedTaskRef.current && !user) {
       const introTimeout = window.setTimeout(() => {
         queueOnboardingIntro(false, "all", !user);
       }, STARTUP_ONBOARDING_INTRO_DELAY_MS);
@@ -239,7 +223,6 @@ export function useIndexOnboarding({
     handleStartOnboardingTour,
     handleOpenGuide,
     handleCloseGuide,
-    handleCompleteGuide,
     handleOnboardingStepChange,
     handleOnboardingActiveSectionChange,
   };
