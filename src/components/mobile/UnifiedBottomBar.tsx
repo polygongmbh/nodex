@@ -1220,7 +1220,6 @@ export function UnifiedBottomBar({
                     <UserAvatar
                       id={person.id}
                       displayName={personDisplayName}
-                      avatarUrl={person.avatar}
                       className="w-6 h-6"
                     />
                     <span className="truncate max-w-[8rem]" title={personDisplayName}>
@@ -1709,7 +1708,6 @@ export function UnifiedBottomBar({
                         <UserAvatar
                           id={person.id}
                           displayName={person.displayName || person.name}
-                          avatarUrl={person.avatar}
                           className="w-4 h-4"
                         />
                         <span className="text-sm min-w-0 flex-1 truncate">@{person.name || person.displayName}</span>

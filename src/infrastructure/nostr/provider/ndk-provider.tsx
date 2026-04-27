@@ -31,6 +31,7 @@ import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus } from "./contracts";
+import { seedNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
 import {
   clearSessionNoasState,
   clearSessionPrivateKey,
@@ -2064,6 +2065,26 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     setNeedsProfileSetup,
     setIsProfileSyncing,
   );
+
+  // Mirror the authenticated user's own profile into the shared Kind 0 cache so
+  // every UserAvatar (sidebar, hover card, kanban card, user menu, …) resolves
+  // to the same picture/displayName from a single source of truth.
+  useEffect(() => {
+    if (!user?.pubkey) return;
+    const profile = user.profile ?? {};
+    seedNostrProfile({
+      pubkey: user.pubkey,
+      name: profile.name,
+      displayName: profile.displayName,
+      picture: profile.picture,
+      about: profile.about,
+      nip05: profile.nip05,
+      banner: profile.banner,
+      website: profile.website,
+      lud16: profile.lud16,
+    });
+  }, [user?.pubkey, user?.profile]);
+
 
   const subscribe = useCallback((
     filters: NDKFilter[],

@@ -199,7 +199,6 @@ export function PersonHoverCard({
           <UserAvatar
             id={person.id}
             displayName={person.displayName}
-            avatarUrl={person.avatar}
             className="h-11 w-11 shrink-0"
           />
           <div className="min-w-0 flex-1 space-y-1">

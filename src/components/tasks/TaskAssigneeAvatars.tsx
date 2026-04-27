@@ -73,9 +73,6 @@ export function TaskAssigneeAvatars({
           matchedPerson?.name ||
           (pubkey === task.author?.id ? task.author.displayName || task.author.name : undefined) ||
           fallbackPerson.displayName;
-        const avatarUrl =
-          profile?.picture ||
-          (pubkey === task.author?.id ? task.author.avatar : undefined);
 
         return (
           <InteractivePersonAvatar
@@ -84,7 +81,6 @@ export function TaskAssigneeAvatars({
             sizeClassName={avatarSizeClassName}
             avatarClassName="ring-1 ring-background hover:scale-110 transition-transform"
             displayName={displayName}
-            avatarUrl={avatarUrl}
           />
         );
       })}

@@ -20,8 +20,6 @@ interface InteractivePersonAvatarProps {
   enableModifierShortcuts?: boolean;
   /** Optional displayName override (e.g. when a richer profile is available). */
   displayName?: string;
-  /** Optional avatar URL override (e.g. fetched profile picture). */
-  avatarUrl?: string;
 }
 
 /**
@@ -29,7 +27,8 @@ interface InteractivePersonAvatarProps {
  *
  * Owns hover card + action menu + click target as a single button so behavior
  * is identical across feed, tree, kanban, calendar, etc. Size is controlled
- * via `sizeClassName` so each surface can tune its visual scale.
+ * via `sizeClassName` so each surface can tune its visual scale. The avatar
+ * picture itself is resolved by `UserAvatar` from the shared profile cache.
  */
 export function InteractivePersonAvatar({
   person,
@@ -40,11 +39,9 @@ export function InteractivePersonAvatar({
   ariaLabel,
   enableModifierShortcuts = true,
   displayName,
-  avatarUrl,
 }: InteractivePersonAvatarProps) {
   const { t } = useTranslation("tasks");
   const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.id;
-  const resolvedAvatarUrl = avatarUrl ?? person.avatar;
   const label = ariaLabel ?? t("people.actions.openMenu", { name: resolvedDisplayName });
 
   return (
@@ -61,7 +58,6 @@ export function InteractivePersonAvatar({
           <UserAvatar
             id={person.id}
             displayName={resolvedDisplayName}
-            avatarUrl={resolvedAvatarUrl}
             className={cn(sizeClassName, "flex-shrink-0", avatarClassName)}
             beamTestId={beamTestId}
           />
