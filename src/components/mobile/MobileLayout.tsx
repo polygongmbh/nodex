@@ -198,12 +198,6 @@ export function MobileLayout() {
     }
     lastHandledGuideStepIdRef.current = activeOnboardingStepId;
 
-    if (activeOnboardingStepId === "mobile-filters-properties") {
-      openManageView();
-      setProfileEditorOpenSignal((previous) => previous + 1);
-      return;
-    }
-
     if (activeOnboardingStepId === "mobile-compose-combobox") {
       closeManageView("feed");
     }

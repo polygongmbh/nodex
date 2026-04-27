@@ -95,7 +95,7 @@
       },
       "composeKind": {
         "title": "Tarea o Comentario",
-        "description": "El selector de tipo decide si tu publicación es una tarea independiente o un comentario al elemento padre.",
+        "description": "El selector de tipo decide el tipo de publicación, mostrando opcionalmente propiedades específicas del tipo.",
         "action": "Abre el selector de tipo para continuar."
       },
       "composeInput": {

@@ -95,7 +95,7 @@
       },
       "composeKind": {
         "title": "Aufgabe oder Kommentar",
-        "description": "Mit der Typ-Auswahl legst du fest, ob dein Beitrag eine eigenständige Aufgabe oder ein Kommentar zum übergeordneten Element ist.",
+        "description": "Die Typ-Auswahl legt den Beitragstyp fest und zeigt ggf. typspezifische Felder an.",
         "action": "Öffne die Typ-Auswahl, um fortzufahren."
       },
       "composeInput": {

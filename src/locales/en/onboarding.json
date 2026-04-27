@@ -95,7 +95,7 @@
       },
       "composeKind": {
         "title": "Task or Comment",
-        "description": "The kind selector decides whether what you post is a standalone task or a comment on the parent.",
+        "description": "The kind selector decides the post type, optionally revealing type-specific properties to set.",
         "action": "Open the kind selector to continue."
       },
       "composeInput": {

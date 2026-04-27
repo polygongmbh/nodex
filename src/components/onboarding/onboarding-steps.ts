@@ -131,12 +131,6 @@ export function getOnboardingStepsBySection(
         actionPrompt: t("onboarding.steps.mobile.filtersOpen.action"),
       },
       {
-        id: "mobile-filters-properties",
-        title: t("onboarding.steps.mobile.filtersProperties.title"),
-        description: t("onboarding.steps.mobile.filtersProperties.description"),
-        target: '[data-onboarding="mobile-filters-profile"]',
-      },
-      {
         id: "mobile-filters-use",
         title: t("onboarding.steps.mobile.filtersUse.title"),
         description: t("onboarding.steps.mobile.filtersUse.description"),

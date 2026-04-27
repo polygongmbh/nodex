@@ -570,31 +570,13 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getAllByText("Loading events from relay…")).toHaveLength(1);
   });
 
-  it("opens Manage and unfolds profile editor on mobile onboarding step 5", async () => {
-    setSignedInUser();
-    ndkMock.needsProfileSetup = false;
-
-    renderMobileLayout({
-      viewState: { isOnboardingOpen: true, activeOnboardingStepId: "mobile-filters-properties" },
-    });
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
-      expect(document.querySelector("#manage-profile-name")).toBeInTheDocument();
-    });
-  });
-
-  it("switches to feed on mobile onboarding step 7", async () => {
+  it("switches to feed on mobile compose combobox onboarding step", async () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
 
     const { rerender } = renderMobileLayout({
-      viewState: { isOnboardingOpen: true, activeOnboardingStepId: "mobile-filters-properties" },
-    });
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
+      viewState: { isOnboardingOpen: true, activeOnboardingStepId: "mobile-filters-use" },
     });
 
     setMocks({ viewState: { currentView: "tree", isOnboardingOpen: true, activeOnboardingStepId: "mobile-compose-combobox" } });
