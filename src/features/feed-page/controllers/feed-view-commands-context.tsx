@@ -1,12 +1,12 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
-import type { FeedViewType, FeedKanbanDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
+import type { FeedViewType, DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 
 export interface FeedViewCommands {
   focusSidebar(): void;
   focusTasks(): void;
   setCurrentView(view: FeedViewType): void;
   setSearchQuery(query: string): void;
-  setKanbanDepthMode(mode: FeedKanbanDepthMode): void;
+  setDisplayDepthMode(mode: DisplayDepthMode): void;
   setManageRouteActive(isActive: boolean): void;
 }
 
@@ -15,7 +15,7 @@ const defaultCommands: FeedViewCommands = {
   focusTasks: () => {},
   setCurrentView: () => {},
   setSearchQuery: () => {},
-  setKanbanDepthMode: () => {},
+  setDisplayDepthMode: () => {},
   setManageRouteActive: () => {},
 };
 

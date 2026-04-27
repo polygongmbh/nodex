@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Mobile feed rendering no longer crashes on startup from a stale `uiConfig` provider prop reference.
+- Kanban now defaults its levels setting to top-level only for new sessions until you choose a different depth.
 
 ## [2.15.1] - 2026-04-27
 

@@ -12,20 +12,19 @@ import { LegalDialog } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
 import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { getCompactPersonLabel } from "@/types/person";
-
-export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
 export function DesktopSearchDock() {
   const { t, i18n } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { searchQuery, channels = [], people = [] } = useFeedSurfaceState();
   const { allTasks, focusedTaskId } = useFeedTaskViewModel();
-  const { currentView, kanbanDepthMode } = useFeedViewState();
-  const showKanbanLevels = currentView === "kanban" || currentView === "list";
+  const { currentView, displayDepthMode } = useFeedViewState();
+  const showDisplayDepthSelector = currentView === "kanban" || currentView === "list";
   const contextTaskTitle = focusedTaskId
     ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
     : "";
@@ -81,13 +80,13 @@ export function DesktopSearchDock() {
             </button>
           )}
         </div>
-        {showKanbanLevels && (
+        {showDisplayDepthSelector && (
           <div className="flex items-center gap-1.5 flex-shrink-0" data-onboarding="kanban-levels">
             <Layers className="w-4 h-4 text-muted-foreground" />
             <Select
-              value={kanbanDepthMode}
+              value={displayDepthMode}
               onValueChange={(v) => {
-                void dispatchFeedInteraction({ type: "ui.kanbanDepth.change", mode: v as KanbanDepthMode });
+                void dispatchFeedInteraction({ type: "ui.displayDepth.change", mode: v as DisplayDepthMode });
               }}
             >
               <SelectTrigger

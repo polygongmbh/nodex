@@ -11,7 +11,7 @@ import type {
 import type { Person } from "@/types/person";
 
 export type FeedViewType = "tree" | "feed" | "kanban" | "calendar" | "list";
-export type FeedKanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
+export type DisplayDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
 export type FeedInteractionIntent =
   | { type: "ui.openAuthModal"; initialStep?: string }
@@ -22,7 +22,7 @@ export type FeedInteractionIntent =
   | { type: "ui.interaction.guardModify" }
   | { type: "ui.view.change"; view: FeedViewType }
   | { type: "ui.search.change"; query: string }
-  | { type: "ui.kanbanDepth.change"; mode: FeedKanbanDepthMode }
+  | { type: "ui.displayDepth.change"; mode: DisplayDepthMode }
   | { type: "ui.manageRoute.change"; isActive: boolean }
   | { type: "filter.applyHashtagExclusive"; tag: string }
   | { type: "filter.applyAuthorExclusive"; author: Person }

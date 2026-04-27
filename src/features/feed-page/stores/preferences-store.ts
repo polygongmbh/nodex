@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { FeedKanbanDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
+import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { FEED_PREFERENCES_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 export type ReducedDataMode = "auto" | "on" | "off";
@@ -8,7 +8,7 @@ export type ReducedDataMode = "auto" | "on" | "off";
 interface PersistedFeedPreferences {
   compactTaskCardsEnabled: boolean;
   completionSoundEnabled: boolean;
-  kanbanDepthMode: FeedKanbanDepthMode;
+  displayDepthMode: DisplayDepthMode;
   presencePublishingEnabled: boolean;
   autoCaptionEnabled: boolean;
   publishDelayEnabled: boolean;
@@ -21,7 +21,7 @@ interface PreferencesState extends PersistedFeedPreferences {
   setCompactTaskCardsEnabled: (enabled: boolean) => void;
   toggleCompletionSound: () => void;
   setSearchQuery: (query: string) => void;
-  setKanbanDepthMode: (mode: FeedKanbanDepthMode) => void;
+  setDisplayDepthMode: (mode: DisplayDepthMode) => void;
   setPresencePublishingEnabled: (enabled: boolean) => void;
   setAutoCaptionEnabled: (enabled: boolean) => void;
   setPublishDelayEnabled: (enabled: boolean) => void;
@@ -34,7 +34,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       compactTaskCardsEnabled: false,
       completionSoundEnabled: true,
       searchQuery: "",
-      kanbanDepthMode: "leaves" as FeedKanbanDepthMode,
+      displayDepthMode: "1" as DisplayDepthMode,
       presencePublishingEnabled: true,
       autoCaptionEnabled: false,
       publishDelayEnabled: false,
@@ -44,7 +44,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       toggleCompletionSound: () =>
         set((state) => ({ completionSoundEnabled: !state.completionSoundEnabled })),
       setSearchQuery: (query) => set({ searchQuery: query }),
-      setKanbanDepthMode: (mode) => set({ kanbanDepthMode: mode }),
+      setDisplayDepthMode: (mode) => set({ displayDepthMode: mode }),
       setPresencePublishingEnabled: (enabled) => set({ presencePublishingEnabled: enabled }),
       setAutoCaptionEnabled: (enabled) => set({ autoCaptionEnabled: enabled }),
       setPublishDelayEnabled: (enabled) => set({ publishDelayEnabled: enabled }),
@@ -55,7 +55,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       partialize: (state): PersistedFeedPreferences => ({
         compactTaskCardsEnabled: state.compactTaskCardsEnabled,
         completionSoundEnabled: state.completionSoundEnabled,
-        kanbanDepthMode: state.kanbanDepthMode,
+        displayDepthMode: state.displayDepthMode,
         presencePublishingEnabled: state.presencePublishingEnabled,
         autoCaptionEnabled: state.autoCaptionEnabled,
         publishDelayEnabled: state.publishDelayEnabled,

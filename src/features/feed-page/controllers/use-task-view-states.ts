@@ -20,7 +20,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useEmptyScopeModel } from "./use-empty-scope-model";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
-import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
+import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import type { EmptyScopeModel } from "@/lib/empty-scope";
 import { getTaskStatusType, type Channel, type ChannelMatchMode, type Relay, type Task, type TaskStateUpdate, type TaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
@@ -630,7 +630,7 @@ export function useListViewState({
   focusedTaskId,
   searchQueryOverride,
   depthMode = "leaves",
-}: BaseViewStateInput & { depthMode?: KanbanDepthMode }): ListViewState {
+}: BaseViewStateInput & { depthMode?: DisplayDepthMode }): ListViewState {
   const { relays, channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
     useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
@@ -685,7 +685,7 @@ export function useKanbanViewState({
   focusedTaskId,
   searchQueryOverride,
   depthMode,
-}: BaseViewStateInput & { depthMode: KanbanDepthMode }): KanbanViewState {
+}: BaseViewStateInput & { depthMode: DisplayDepthMode }): KanbanViewState {
   const { channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);

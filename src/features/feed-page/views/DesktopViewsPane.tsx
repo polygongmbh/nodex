@@ -23,7 +23,7 @@ const ListView = lazy(() =>
 );
 
 export function DesktopViewsPane() {
-  const { currentView, kanbanDepthMode } = useFeedViewState();
+  const { currentView, displayDepthMode } = useFeedViewState();
   const viewModel = useFeedTaskViewModel();
   const taskSource = useTaskViewSource({
     tasks: viewModel.tasks,
@@ -97,7 +97,7 @@ export function DesktopViewsPane() {
     case "kanban":
       viewPane = (
         <Suspense fallback={viewFallback}>
-          <KanbanView {...viewModel} depthMode={kanbanDepthMode} />
+          <KanbanView {...viewModel} depthMode={displayDepthMode} />
         </Suspense>
       );
       break;
@@ -111,7 +111,7 @@ export function DesktopViewsPane() {
     case "list":
       viewPane = (
         <Suspense fallback={viewFallback}>
-          <ListView {...viewModel} depthMode={kanbanDepthMode} />
+          <ListView {...viewModel} depthMode={displayDepthMode} />
         </Suspense>
       );
       break;

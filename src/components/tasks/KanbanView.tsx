@@ -16,7 +16,7 @@ import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import type { KanbanDepthMode } from "./DesktopSearchDock";
+import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { sortKanbanColumnTasks, useKanbanViewState } from "@/features/feed-page/controllers/use-task-view-states";
@@ -31,7 +31,7 @@ interface KanbanViewProps {
   focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
-  depthMode: KanbanDepthMode;
+  depthMode: DisplayDepthMode;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   isHydrating?: boolean;

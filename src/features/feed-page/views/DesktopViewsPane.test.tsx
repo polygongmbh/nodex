@@ -52,7 +52,7 @@ function renderPane(currentView: "feed" | "tree" | "kanban" | "calendar" | "list
       <FeedViewStateProvider
         value={{
           currentView,
-          kanbanDepthMode: "leaves",
+          displayDepthMode: "leaves",
           isSidebarFocused: false,
           isOnboardingOpen: false,
           activeOnboardingStepId: null,

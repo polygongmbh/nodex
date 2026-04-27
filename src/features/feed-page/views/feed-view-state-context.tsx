@@ -1,9 +1,9 @@
 import { createContext, useContext, type HTMLAttributes, type PropsWithChildren } from "react";
-import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
+import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 export interface FeedViewState {
   currentView: ViewType;
-  kanbanDepthMode: KanbanDepthMode;
+  displayDepthMode: DisplayDepthMode;
   isSidebarFocused: boolean;
   /** Pre-gated: rawIsOnboardingOpen && !isAuthModalOpen */
   isOnboardingOpen: boolean;
@@ -16,7 +16,7 @@ export interface FeedViewState {
 
 const defaultState: FeedViewState = {
   currentView: "feed",
-  kanbanDepthMode: "leaves",
+  displayDepthMode: "1",
   isSidebarFocused: false,
   isOnboardingOpen: false,
   activeOnboardingStepId: null,

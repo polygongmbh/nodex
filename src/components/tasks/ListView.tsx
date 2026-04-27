@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import type { KanbanDepthMode } from "./DesktopSearchDock";
+import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import {
   DropdownMenu,
@@ -47,7 +47,7 @@ interface ListViewProps {
   focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
-  depthMode?: KanbanDepthMode;
+  depthMode?: DisplayDepthMode;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   isInteractionBlocked?: boolean;

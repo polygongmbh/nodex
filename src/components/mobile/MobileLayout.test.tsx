@@ -161,7 +161,7 @@ const tasks: Task[] = [];
 
 const baseFeedViewState: FeedViewState = {
   currentView: "tree",
-  kanbanDepthMode: "leaves",
+  displayDepthMode: "leaves",
   isSidebarFocused: false,
   isOnboardingOpen: false,
   activeOnboardingStepId: null,

@@ -15,7 +15,7 @@ describe("preferencesStore", () => {
       compactTaskCardsEnabled: false,
       completionSoundEnabled: true,
       searchQuery: "",
-      kanbanDepthMode: "leaves",
+      displayDepthMode: "1",
     });
   });
 
@@ -24,7 +24,7 @@ describe("preferencesStore", () => {
     expect(state.compactTaskCardsEnabled).toBe(false);
     expect(state.completionSoundEnabled).toBe(true);
     expect(state.searchQuery).toBe("");
-    expect(state.kanbanDepthMode).toBe("leaves");
+    expect(state.displayDepthMode).toBe("1");
   });
 
   it("setCompactTaskCardsEnabled updates state and persists to localStorage", () => {
@@ -49,9 +49,9 @@ describe("preferencesStore", () => {
     expect(getPersistedState().searchQuery).toBeUndefined();
   });
 
-  it("setKanbanDepthMode updates state and persists to localStorage", () => {
-    usePreferencesStore.getState().setKanbanDepthMode("all");
-    expect(usePreferencesStore.getState().kanbanDepthMode).toBe("all");
-    expect(getPersistedState().kanbanDepthMode).toBe("all");
+  it("setDisplayDepthMode updates state and persists to localStorage", () => {
+    usePreferencesStore.getState().setDisplayDepthMode("all");
+    expect(usePreferencesStore.getState().displayDepthMode).toBe("all");
+    expect(getPersistedState().displayDepthMode).toBe("all");
   });
 });

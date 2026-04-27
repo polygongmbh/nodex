@@ -80,8 +80,8 @@ function FeedInteractionBusFromContexts({
       "ui.search.change": (intent) => {
         viewCommands.setSearchQuery(intent.query);
       },
-      "ui.kanbanDepth.change": (intent) => {
-        viewCommands.setKanbanDepthMode(intent.mode);
+      "ui.displayDepth.change": (intent) => {
+        viewCommands.setDisplayDepthMode(intent.mode);
       },
       "ui.manageRoute.change": (intent) => {
         viewCommands.setManageRouteActive(intent.isActive);

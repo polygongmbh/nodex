@@ -224,8 +224,8 @@ function FeedIndexContent() {
   });
 
   const shortcutsHelp = useKeyboardShortcutsHelp();
-  const kanbanDepthMode = usePreferencesStore((s) => s.kanbanDepthMode);
-  const setKanbanDepthMode = usePreferencesStore((s) => s.setKanbanDepthMode);
+  const displayDepthMode = usePreferencesStore((s) => s.displayDepthMode);
+  const setDisplayDepthMode = usePreferencesStore((s) => s.setDisplayDepthMode);
   const compactTaskCardsEnabled = usePreferencesStore((s) => s.compactTaskCardsEnabled);
   const setCompactTaskCardsEnabled = usePreferencesStore((s) => s.setCompactTaskCardsEnabled);
 
@@ -611,10 +611,10 @@ function FeedIndexContent() {
       focusTasks: () => setIsSidebarFocused(false),
       setCurrentView,
       setSearchQuery,
-      setKanbanDepthMode,
+      setDisplayDepthMode,
       setManageRouteActive,
     }),
-    [setCurrentView, setSearchQuery, setKanbanDepthMode, setManageRouteActive, setIsSidebarFocused]
+    [setCurrentView, setSearchQuery, setDisplayDepthMode, setManageRouteActive, setIsSidebarFocused]
   );
 
   const taskCommands = useMemo<FeedTaskCommands>(
@@ -749,7 +749,7 @@ function FeedIndexContent() {
   const feedViewState = useMemo(
     () => ({
       currentView,
-      kanbanDepthMode,
+      displayDepthMode,
       isSidebarFocused,
       isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
       activeOnboardingStepId,
@@ -767,7 +767,7 @@ function FeedIndexContent() {
       isManageRouteActive,
       isOnboardingOpen,
       isSidebarFocused,
-      kanbanDepthMode,
+      displayDepthMode,
       profileCompletionPromptSignal,
     ]
   );
