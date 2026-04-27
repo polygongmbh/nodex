@@ -211,7 +211,6 @@ export function PersonActionMenuContent({
             <UserAvatar
               id={person.id}
               displayName={person.displayName}
-              avatarUrl={person.avatar}
               className="h-10 w-10 shrink-0"
             />
             <div className="min-w-0 flex-1 space-y-0.5">

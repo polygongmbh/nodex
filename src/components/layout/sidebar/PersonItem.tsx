@@ -91,7 +91,6 @@ export function PersonItem({
             <UserAvatar
               id={person.id}
               displayName={person.displayName}
-              avatarUrl={person.avatar}
               className={cn(
                 "w-7 h-7 transition-colors",
                 person.isSelected

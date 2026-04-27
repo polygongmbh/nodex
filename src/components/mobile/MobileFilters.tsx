@@ -376,7 +376,6 @@ export function MobileFilters({
                   <UserAvatar
                     id={person.id}
                     displayName={personDisplayName}
-                    avatarUrl={person.avatar}
                     className="w-6 h-6"
                   />
                   <span className="truncate max-w-[9rem]" title={personDisplayName}>

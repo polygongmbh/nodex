@@ -1602,7 +1602,6 @@ export function TaskComposer({
                   <UserAvatar
                     id={person.pubkey}
                     displayName={person.primaryLabel}
-                    avatarUrl={person.avatar}
                     className="w-4 h-4"
                   />
                   <span className="text-sm min-w-0 flex-1 truncate">@{person.primaryLabel}</span>
