@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useRef, useState } from "react";
-import { act } from "react";
+import { beforeEach, describe, expect, it } from "vitest";
+import { useState } from "react";
 import { useOnboarding } from "./use-onboarding";
 import { makePerson } from "@/test/fixtures";
 import type { Person } from "@/types/person";
@@ -21,7 +20,6 @@ function Harness({
   isMobile?: boolean;
   initialUser?: { pubkey?: string } | null;
 }) {
-  const openedWithFocusedTaskRef = useRef(false);
   const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
   const [currentView, setCurrentView] = useState<"feed" | "tree" | "kanban" | "calendar" | "list">("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
@@ -36,7 +34,6 @@ function Harness({
     user,
     isMobile,
     currentView,
-    openedWithFocusedTaskRef,
     setCurrentView,
     setFocusedTaskId,
     setPeople,
@@ -61,7 +58,6 @@ function Harness({
       </output>
       <output data-testid="auth-open">{String(authOpen)}</output>
       <output data-testid="guide-open">{String(onboarding.isOnboardingOpen)}</output>
-      <output data-testid="intro-open">{String(onboarding.isOnboardingIntroOpen)}</output>
     </>
   );
 }
@@ -69,7 +65,6 @@ function Harness({
 describe("useOnboarding", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    vi.useRealTimers();
     useFilterStore.setState({
       activeRelayIds: new Set(["relay-one"]),
       channelFilterStates: new Map([["general", "included"]]),
@@ -107,42 +102,4 @@ describe("useOnboarding", () => {
     expect(screen.getByTestId("guide-open")).toHaveTextContent("true");
   });
 
-  it("does not reopen the welcome dialog after signing out later in the session", () => {
-    vi.useFakeTimers();
-    render(<Harness />);
-
-    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
-
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
-    expect(screen.getByTestId("intro-open")).toHaveTextContent("true");
-
-    fireEvent.click(screen.getByRole("button", { name: "SignIn" }));
-    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
-
-    fireEvent.click(screen.getByRole("button", { name: "SignOut" }));
-    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
-  });
-
-  it("does not auto-open the welcome dialog when the app starts signed in", () => {
-    render(<Harness initialUser={{ pubkey: "signed-in" }} />);
-
-    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
-  });
-
-  it("keeps the welcome dialog closed if sign-in finishes before the startup delay", () => {
-    vi.useFakeTimers();
-    render(<Harness />);
-
-    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
-
-    fireEvent.click(screen.getByRole("button", { name: "SignIn" }));
-
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
-
-    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
-  });
 });

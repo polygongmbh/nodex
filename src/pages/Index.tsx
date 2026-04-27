@@ -470,7 +470,6 @@ function FeedIndexContent() {
 
   const {
     isOnboardingOpen,
-    isOnboardingIntroOpen,
     onboardingInitialSection,
     onboardingManualStart,
     activeOnboardingStepId,
@@ -478,7 +477,7 @@ function FeedIndexContent() {
     onboardingStepsBySection,
     forceShowComposeForGuide,
     composeGuideActivationSignal,
-    handleStartOnboardingTour,
+    openGuideAsStartup,
     handleOpenGuide,
     handleCloseGuide,
     handleOnboardingStepChange,
@@ -487,7 +486,6 @@ function FeedIndexContent() {
     user,
     isMobile,
     currentView,
-    openedWithFocusedTaskRef,
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,
@@ -744,14 +742,14 @@ function FeedIndexContent() {
   const onboardingController = (
     <OnboardingController
       isOnboardingOpen={isOnboardingOpen}
-      isOnboardingIntroOpen={isOnboardingIntroOpen}
       onboardingManualStart={onboardingManualStart}
       onboardingInitialSection={onboardingInitialSection}
       onboardingSections={onboardingSections}
       onboardingStepsBySection={onboardingStepsBySection}
       currentView={currentView}
       focusedTaskId={focusedTaskId}
-      handleStartOnboardingTour={handleStartOnboardingTour}
+      openedWithFocusedTaskRef={openedWithFocusedTaskRef}
+      openGuideAsStartup={openGuideAsStartup}
       handleCloseGuide={handleCloseGuide}
       handleOnboardingStepChange={handleOnboardingStepChange}
       handleOnboardingActiveSectionChange={handleOnboardingActiveSectionChange}
