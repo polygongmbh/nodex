@@ -1,5 +1,5 @@
 import { useRef, useMemo, useCallback, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -32,6 +32,7 @@ export function useFeedNavigation({
 }: UseFeedNavigationOptions) {
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const lastContentViewRef = useRef<ViewType>("feed");
 
   const isManageRouteActive = urlView === MOBILE_MANAGE_ROUTE;
@@ -55,41 +56,42 @@ export function useFeedNavigation({
   // Captures the initial URL state for onboarding autostart suppression.
   const openedWithFocusedTaskRef = useRef(Boolean(urlTaskId));
 
+  // Always preserve the current search/hash when navigating to keep filter URL state intact
+  // and avoid bouncing between the path-only URL and the synced filter params.
+  const navigateToPath = useCallback(
+    (pathname: string) => {
+      if (pathname === location.pathname) return;
+      navigate({ pathname, search: location.search, hash: location.hash });
+    },
+    [navigate, location.pathname, location.search, location.hash]
+  );
+
   const setCurrentView = useCallback(
     (newView: ViewType) => {
-      if (focusedTaskId) {
-        navigate(`/${newView}/${focusedTaskId}`);
-      } else {
-        navigate(`/${newView}`);
-      }
+      const pathname = focusedTaskId ? `/${newView}/${focusedTaskId}` : `/${newView}`;
+      navigateToPath(pathname);
     },
-    [navigate, focusedTaskId]
+    [navigateToPath, focusedTaskId]
   );
 
   const setFocusedTaskId = useCallback(
     (taskId: string | null) => {
-      if (taskId) {
-        navigate(`/${currentView}/${taskId}`);
-      } else {
-        navigate(`/${currentView}`);
-      }
+      const pathname = taskId ? `/${currentView}/${taskId}` : `/${currentView}`;
+      navigateToPath(pathname);
     },
-    [navigate, currentView]
+    [navigateToPath, currentView]
   );
 
   const setManageRouteActive = useCallback(
     (isActive: boolean) => {
       if (isActive) {
-        navigate(`/${MOBILE_MANAGE_ROUTE}`);
+        navigateToPath(`/${MOBILE_MANAGE_ROUTE}`);
         return;
       }
-      if (focusedTaskId) {
-        navigate(`/${currentView}/${focusedTaskId}`);
-        return;
-      }
-      navigate(`/${currentView}`);
+      const pathname = focusedTaskId ? `/${currentView}/${focusedTaskId}` : `/${currentView}`;
+      navigateToPath(pathname);
     },
-    [currentView, focusedTaskId, navigate]
+    [currentView, focusedTaskId, navigateToPath]
   );
 
   const handleDesktopSwipeLeft = useCallback(() => {

@@ -23,9 +23,9 @@ export function useAuthModalRoute() {
     setAuthModalInitialStep(undefined);
     setIsAuthModalOpen(false);
     if (resolveAuthRouteStep(location.pathname)) {
-      navigate("/feed", { replace: true });
+      navigate({ pathname: "/feed", search: location.search, hash: location.hash }, { replace: true });
     }
-  }, [location.pathname, navigate]);
+  }, [location.pathname, location.search, location.hash, navigate]);
 
   useEffect(() => {
     const authRouteStep = resolveAuthRouteStep(location.pathname);
