@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LogIn, Sparkles, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { OverlayScrim, OVERLAY_SCRIM_FADE_MS } from "@/components/ui/overlay-scrim";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const INTRO_FADE_DURATION_MS = OVERLAY_SCRIM_FADE_MS;
 
@@ -22,6 +23,7 @@ export function OnboardingIntroPopover({
   onSignIn,
 }: OnboardingIntroPopoverProps) {
   const { t } = useTranslation("onboarding");
+  const isMobile = useIsMobile();
   const [isRendered, setIsRendered] = useState(isOpen);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -58,12 +60,13 @@ export function OnboardingIntroPopover({
   if (!isRendered) return null;
 
   const state = isVisible ? "open" : "closed";
-  // Match the unified overlay motion used by Dialog/AlertDialog (fade + subtle zoom)
-  // so transitioning from this intro into the auth modal feels continuous instead of
-  // changing motion vocabulary mid-flow.
+  // Match the unified overlay motion used by Dialog/AlertDialog: fade + (desktop only)
+  // a subtle zoom emanating from the top-right corner where the login/profile entry points
+  // live. On mobile we drop the zoom entirely for a lighter fade-only entrance.
   const dialogStyle = {
     opacity: isVisible ? 1 : 0,
-    transform: isVisible ? "scale(1)" : "scale(0.95)",
+    transform: isMobile ? "none" : isVisible ? "scale(1)" : "scale(0.95)",
+    transformOrigin: "100% 0%",
     transitionProperty: "opacity, transform",
     transitionDuration: `${INTRO_FADE_DURATION_MS}ms`,
     transitionTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
