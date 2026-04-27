@@ -1,9 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { OnboardingIntroPopover } from "./OnboardingIntroPopover";
+import { WelcomeModal } from "./WelcomeModal";
 
-describe("OnboardingIntroPopover", () => {
+describe("WelcomeModal", () => {
   const advanceOpenAnimation = () => {
     act(() => {
       vi.advanceTimersByTime(32);
@@ -13,7 +13,7 @@ describe("OnboardingIntroPopover", () => {
   it("renders the extra action when create account is available", () => {
     vi.useFakeTimers();
     render(
-      <OnboardingIntroPopover
+      <WelcomeModal
         isOpen
         showCreateAccount
         onStartTour={vi.fn()}
@@ -32,7 +32,7 @@ describe("OnboardingIntroPopover", () => {
   it("omits the extra action when create account is unavailable", () => {
     vi.useFakeTimers();
     render(
-      <OnboardingIntroPopover
+      <WelcomeModal
         isOpen
         showCreateAccount={false}
         onStartTour={vi.fn()}
@@ -50,7 +50,7 @@ describe("OnboardingIntroPopover", () => {
 
   it("does not render when closed", () => {
     render(
-      <OnboardingIntroPopover
+      <WelcomeModal
         isOpen={false}
         showCreateAccount
         onStartTour={vi.fn()}
@@ -65,7 +65,7 @@ describe("OnboardingIntroPopover", () => {
   it("keeps the dialog mounted briefly while fading out", () => {
     vi.useFakeTimers();
     const { rerender } = render(
-      <OnboardingIntroPopover
+      <WelcomeModal
         isOpen
         showCreateAccount
         onStartTour={vi.fn()}
@@ -75,7 +75,7 @@ describe("OnboardingIntroPopover", () => {
     );
 
     rerender(
-      <OnboardingIntroPopover
+      <WelcomeModal
         isOpen={false}
         showCreateAccount
         onStartTour={vi.fn()}

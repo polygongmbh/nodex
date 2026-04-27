@@ -1,0 +1,9 @@
+{
+  "welcome": {
+    "ariaLabel": "Willkommen bei Nodex",
+    "title": "Ein Ort für alles, was entsteht.",
+    "description": "Nodex verbindet Ideen, Pläne, Austausch und Inhalte in einer flexiblen Umgebung. Alles beginnt mit dem, was du festhalten möchtest.",
+    "features": "Aus Aufgaben werden Projekte, Notizen ergänzen Details, Kommentare bringen Gedanken und Entscheidungen zusammen. Nodex kann Aufgabenmanager, Ideensammlung, Teamchat, Journal, Social Feed oder genau die Mischung sein, die zu dir passt.",
+    "startTour": "Tour starten"
+  }
+}

@@ -1,14 +1,5 @@
 {
   "onboarding": {
-    "intro": {
-      "ariaLabel": "Bienvenido a Nodex",
-      "title": "Todo empieza con algo que guardar.",
-      "description": "Nodex reúne lo que piensas, planeas, conversas y compartes en un entorno que se adapta a ti. Guarda una idea, una tarea o un apunte, y deja que encuentre su lugar a medida que crece.",
-      "features": "Puedes convertir una tarea en proyecto, añadir notas cuando falten detalles y seguir la conversación desde el punto exacto donde surge. Úsalo como organizador, cuaderno de ideas, chat de equipo, diario o feed social, según lo que necesites en cada momento.",
-      "startTour": "Iniciar tour",
-      "createAccount": "Crear cuenta",
-      "signIn": "Iniciar sesión"
-    },
     "picker": {
       "helper": "Elige un área resaltada para comenzar su guía.",
       "close": "Cerrar",

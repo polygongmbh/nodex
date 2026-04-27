@@ -9,6 +9,7 @@ import { useNostrEventCache } from "@/infrastructure/nostr/use-nostr-event-cache
 import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { OnboardingController } from "@/components/onboarding/OnboardingController";
+import { WelcomeController } from "@/components/welcome/WelcomeController";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
@@ -739,6 +740,18 @@ function FeedIndexContent() {
     ]
   );
 
+  const welcomeController = (
+    <WelcomeController
+      openedWithFocusedTaskRef={openedWithFocusedTaskRef}
+      showCreateAccount={Boolean(import.meta.env.VITE_NOAS_HOST_URL || defaultNoasHostUrl)}
+      onStartTour={() => {
+        handleBeforeOnboardingTour();
+        openGuideAsStartup();
+      }}
+      onOpenAuthModal={handleOpenAuthModal}
+    />
+  );
+
   const onboardingController = (
     <OnboardingController
       isOnboardingOpen={isOnboardingOpen}
@@ -748,13 +761,9 @@ function FeedIndexContent() {
       onboardingStepsBySection={onboardingStepsBySection}
       currentView={currentView}
       focusedTaskId={focusedTaskId}
-      openedWithFocusedTaskRef={openedWithFocusedTaskRef}
-      openGuideAsStartup={openGuideAsStartup}
       handleCloseGuide={handleCloseGuide}
       handleOnboardingStepChange={handleOnboardingStepChange}
       handleOnboardingActiveSectionChange={handleOnboardingActiveSectionChange}
-      onBeforeStartTour={handleBeforeOnboardingTour}
-      onOpenAuthModal={handleOpenAuthModal}
     />
   );
 
@@ -788,6 +797,7 @@ function FeedIndexContent() {
           }}
         />
       )}
+      {welcomeController}
       {onboardingController}
     </FeedPageProviders>
   );

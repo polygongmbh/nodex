@@ -7,6 +7,7 @@ import enOnboarding from "@/locales/en/onboarding.json";
 import enRelay from "@/locales/en/relay.json";
 import enShell from "@/locales/en/shell.json";
 import enTasks from "@/locales/en/tasks.json";
+import enWelcome from "@/locales/en/welcome.json";
 import deApp from "@/locales/de/app.json";
 import deAuth from "@/locales/de/auth.json";
 import deComposer from "@/locales/de/composer.json";
@@ -15,6 +16,7 @@ import deOnboarding from "@/locales/de/onboarding.json";
 import deRelay from "@/locales/de/relay.json";
 import deShell from "@/locales/de/shell.json";
 import deTasks from "@/locales/de/tasks.json";
+import deWelcome from "@/locales/de/welcome.json";
 import esApp from "@/locales/es/app.json";
 import esAuth from "@/locales/es/auth.json";
 import esComposer from "@/locales/es/composer.json";
@@ -23,6 +25,7 @@ import esOnboarding from "@/locales/es/onboarding.json";
 import esRelay from "@/locales/es/relay.json";
 import esShell from "@/locales/es/shell.json";
 import esTasks from "@/locales/es/tasks.json";
+import esWelcome from "@/locales/es/welcome.json";
 
 function flattenTranslations(value: unknown, prefix: string = ""): string[] {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -45,6 +48,7 @@ describe("locale parity", () => {
     relay: { en: enRelay, de: deRelay, es: esRelay },
     shell: { en: enShell, de: deShell, es: esShell },
     tasks: { en: enTasks, de: deTasks, es: esTasks },
+    welcome: { en: enWelcome, de: deWelcome, es: esWelcome },
   } as const;
 
   for (const [namespace, localeSet] of Object.entries(namespaces)) {

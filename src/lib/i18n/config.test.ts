@@ -31,6 +31,7 @@ describe("i18n config", () => {
       "relay",
       "shell",
       "tasks",
+      "welcome",
     ]);
   });
 });

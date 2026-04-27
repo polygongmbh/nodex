@@ -1,14 +1,5 @@
 {
   "onboarding": {
-    "intro": {
-      "ariaLabel": "Welcome to Nodex",
-      "title": "Your Space. Your Ideas. Your Way.",
-      "description": "Nodex gives you an environment where ideas, plans, conversation, and sharing grow from the same flow of information. Capture anything, then keep it connected as it develops.",
-      "features": "Turn tasks into projects, add notes for details, discuss tasks and ideas. Nodex can be your task manager, idea hub, collaboration space, journal, social feed, or any blend that fits you.",
-      "startTour": "Start the Tour",
-      "createAccount": "Create account",
-      "signIn": "Sign in"
-    },
     "picker": {
       "helper": "Pick one highlighted area to begin its guide.",
       "close": "Close",

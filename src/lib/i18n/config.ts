@@ -10,6 +10,7 @@ import enOnboarding from "@/locales/en/onboarding.json";
 import enRelay from "@/locales/en/relay.json";
 import enShell from "@/locales/en/shell.json";
 import enTasks from "@/locales/en/tasks.json";
+import enWelcome from "@/locales/en/welcome.json";
 import deApp from "@/locales/de/app.json";
 import deAuth from "@/locales/de/auth.json";
 import deComposer from "@/locales/de/composer.json";
@@ -18,6 +19,7 @@ import deOnboarding from "@/locales/de/onboarding.json";
 import deRelay from "@/locales/de/relay.json";
 import deShell from "@/locales/de/shell.json";
 import deTasks from "@/locales/de/tasks.json";
+import deWelcome from "@/locales/de/welcome.json";
 import esApp from "@/locales/es/app.json";
 import esAuth from "@/locales/es/auth.json";
 import esComposer from "@/locales/es/composer.json";
@@ -26,6 +28,7 @@ import esOnboarding from "@/locales/es/onboarding.json";
 import esRelay from "@/locales/es/relay.json";
 import esShell from "@/locales/es/shell.json";
 import esTasks from "@/locales/es/tasks.json";
+import esWelcome from "@/locales/es/welcome.json";
 
 export const SUPPORTED_LANGUAGES = ["en", "de", "es"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -39,6 +42,7 @@ export const I18N_NAMESPACES = [
   "relay",
   "shell",
   "tasks",
+  "welcome",
 ] as const;
 export type I18nNamespace = (typeof I18N_NAMESPACES)[number];
 
@@ -80,6 +84,7 @@ if (!i18n.isInitialized) {
           relay: enRelay,
           shell: enShell,
           tasks: enTasks,
+          welcome: enWelcome,
         },
         de: {
           app: deApp,
@@ -90,6 +95,7 @@ if (!i18n.isInitialized) {
           relay: deRelay,
           shell: deShell,
           tasks: deTasks,
+          welcome: deWelcome,
         },
         es: {
           app: esApp,
@@ -100,6 +106,7 @@ if (!i18n.isInitialized) {
           relay: esRelay,
           shell: esShell,
           tasks: esTasks,
+          welcome: esWelcome,
         },
       },
       ns: [...I18N_NAMESPACES],
