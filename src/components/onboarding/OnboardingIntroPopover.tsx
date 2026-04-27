@@ -23,6 +23,7 @@ export function OnboardingIntroPopover({
   onSignIn,
 }: OnboardingIntroPopoverProps) {
   const { t } = useTranslation("onboarding");
+  const isMobile = useIsMobile();
   const [isRendered, setIsRendered] = useState(isOpen);
   const [isVisible, setIsVisible] = useState(false);
 
