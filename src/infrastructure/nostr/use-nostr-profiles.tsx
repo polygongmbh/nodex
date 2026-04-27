@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { NDKEvent, NDKFilter, NDKKind } from "@nostr-dev-kit/ndk";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
@@ -182,7 +182,29 @@ export function useNostrProfile(pubkey: string | null) {
   };
 }
 
-// No remote avatar URL fallback; local generator is used in UI components.
+function subscribeToProfileCache(callback: () => void) {
+  subscribers.add(callback);
+  return () => {
+    subscribers.delete(callback);
+  };
+}
+
+/**
+ * Cache-only profile lookup. Does NOT trigger any subscription/fetch — it just
+ * reads whatever the shared profile cache already knows. Safe to use in
+ * components rendered outside of `NDKProvider` (e.g. unit tests, isolated UI),
+ * and ideal for low-level primitives like `UserAvatar` that simply want to
+ * upgrade to the live picture when one is already known.
+ */
+export function useCachedNostrProfile(pubkey: string | null): NostrProfile | null {
+  const getSnapshot = useCallback(
+    () => (pubkey ? profileCache[pubkey] ?? null : null),
+    [pubkey],
+  );
+  return useSyncExternalStore(subscribeToProfileCache, getSnapshot, getSnapshot);
+}
+
+
 export function getDefaultAvatarUrl(pubkey: string): string {
   void pubkey;
   return "";
