@@ -234,7 +234,7 @@ export function seedNostrProfile(profile: NostrProfile): void {
   notifySubscribers();
 }
 
-
+export function getDefaultAvatarUrl(pubkey: string): string {
   void pubkey;
   return "";
 }
