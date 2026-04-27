@@ -223,73 +223,58 @@ policies:
 ## General Workflow Policies
 
 ### General Agent Policies
-- Follow commit/changelog/test/lint/refactor/process rules in this file for all AI-assisted changes.
 - Keep edits focused, reviewable, and behavior-safe unless intentional behavioral changes are requested.
-- Prefer explicit, parseable rules for automation; keep prose for rationale and edge cases.
-- When a policy already exists in a machine-readable block or matrix, update that source first and keep prose sections non-duplicative.
-- Avoid introducing new cross-component callback props with bare `(string) => void` signatures for interaction flows; prefer dispatching typed interaction intents at the event site or using a typed command API when a return value is required.
-- Always strive to reduce [Index.tsx](/Users/tj/IT/nostr/nodex/src/pages/Index.tsx); prefer moving new logic into focused controllers, view components, or domain/helpers instead of expanding the page file.
-- Close any background terminal sessions started for the task once they are no longer needed, and always clean them up after each commit before handoff or further workflow steps.
-- When changing shared user-facing copy in locale files, propagate equivalent updates across all supported languages in `src/locales/` in the same change unless an omission is explicitly documented.
-- When adding, removing, renaming, or changing the semantics/defaults of supported environment variables, update `.env.example` in the same change.
-- Use semantic linebreaks in prose-heavy docs/config comments such as `AGENTS.md`, `README.md`, and `.env.example`.
-- Do not leave hardcoded user-facing strings in production code; route them through i18n and keep `en`, `de`, and `es` in sync unless a documented compliance/jurisdiction exception applies.
-- If unrelated files change while working, ignore incidental changes unless they directly conflict with target files.
-- Include blockers/uncertainty with `⚠️` and revised estimates.
+- Treat the machine-readable blocks and verification matrix as canonical; update them first and keep prose additive.
+- Avoid introducing new cross-component callback props with bare `(string) => void` signatures for interaction flows; prefer typed interaction intents or a typed command API.
+- Prefer reducing `src/pages/Index.tsx` by moving logic into focused controllers, views, or helpers.
+- Close background terminal sessions once they are no longer needed, and always clean them up after each commit before handoff.
+- Propagate shared locale copy updates across `src/locales/` in the same change unless the omission is explicitly documented.
+- Update `.env.example` when supported environment variables are added, removed, renamed, or materially changed.
+- Use semantic linebreaks in prose-heavy docs and config comments such as `AGENTS.md`, `README.md`, and `.env.example`.
+- Route production user-facing strings through i18n and keep `en`, `de`, and `es` aligned unless a documented compliance or jurisdiction exception applies.
+- Ignore unrelated incidental file changes unless they directly conflict with the target work.
+- Surface blockers or uncertainty with `⚠️` and revised estimates.
 
 ### Test and Verification
-- Follow the verification matrix above for required commands.
-- Write tests before each change except minor visual/cosmetic changes, then verify the changed behavior after implementation.
-- Before adjusting existing tests, first determine whether failures indicate regressions or deliberate behavior changes.
-- Prefer behavior/outcome tests over implementation-detail tests.
+- Follow the verification matrix for required commands.
+- Write tests before changes by default, except for minor visual or cosmetic changes.
+- If an existing test fails, determine whether it reflects a regression or an intentional behavior change before editing it.
+- Prefer behavior and outcome coverage over implementation-detail coverage.
 - Keep UI tests focused on key flows and accessibility contracts.
-- Do not add cosmetic-only assertions unless explicitly required; any class/style assertion must include a short comment explaining the protected product contract.
-- Prefer semantics-based queries (`getByRole` with accessible names or stable `data-testid`) instead of literal text searches and keep copy-specific assertions inside dedicated i18n/messaging suites. Avoid adding new `data-testid` selectors when stable semantic queries (`getByRole`, labels, landmarks, accessible names) are available. Use `data-testid` only when semantics are genuinely unstable or absent, and keep those usages narrowly scoped and documented in the related test or review notes.
-- Do not add copy-specific assertions for labels, placeholders, helper text, or other user-facing strings in feature tests by default. Cover those only in dedicated i18n/messaging suites or when the exact text is itself the product contract under test.
-- Avoid test assertions that depend on importing or mutating the shared i18n runtime just to obtain translated copy. Prefer semantics-based assertions, stable `data-testid` hooks, or narrow translation mocks. Keep direct i18n-import assertions only for dedicated i18n/config coverage or when the translation behavior itself is the product contract under test.
-- Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
-- Treat lint warnings as actionable backlog; do not introduce new warnings. If a lint rule is intentionally relaxed or disabled, document scope and rationale in the same commit.
+- Use semantic queries first. Use `data-testid` only when semantics are unstable or absent, and document why when you do.
+- Keep copy-specific assertions in dedicated i18n or messaging coverage unless the exact text is the product contract.
+- Avoid importing or mutating shared i18n runtime in feature tests just to get translated copy.
+- Snapshot tests for complex UI are disallowed unless narrowly scoped and justified inline.
+- Treat lint warnings as backlog; do not introduce new ones, and document any intentional rule relaxation in the same commit.
 
 ### Commit Discipline
-- Always commit every completed change.
-- Always commit before handoff/final response unless the user explicitly says not to commit.
-- Make atomic commits that build individually and stay coherent.
-- You may amend commits with corrections if they are not yet pushed.
-- Before amending, inspect the current tip commit (`git log --oneline -1` or equivalent) and confirm it is the relevant local commit for the change.
-- Amend true follow-up fixes into the immediately relevant local commit when they are part of the same change.
-- Keep unrelated changes in separate commits even if they are discovered while working on an unpushed local commit.
-- If a commit only fixes the immediately previous local commit, squash it before handoff.
-- Use Conventional Commits (`feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`).
-- Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) changed, ignore changes in `.env`, and ignore incidental changes under `plans/` unless the current task explicitly requires committing them.
+- Commit every completed change before handoff unless the user explicitly says not to.
+- Keep commits atomic, coherent, and individually buildable.
+- Amend or squash local follow-up fixes into the immediately relevant unpushed commit after confirming the tip with `git log --oneline -1`.
+- Keep unrelated work in separate commits.
+- Use Conventional Commits: `feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`.
+- Ignore `package-lock.json` unless dependencies or dependency-affecting scripts changed, ignore `.env`, and ignore incidental `plans/` changes unless the task explicitly requires them.
 
 ### Changelog Discipline
-- Keep `CHANGELOG.md` continuously updated.
-- Keep `## [Unreleased]` at the top and add notable user-visible changes there until release.
-- For notable user-visible behavior changes, add/update a changelog entry in the same change set.
-- Do not add changelog entries for minor/internal-only changes unless explicitly requested.
-- Keep entries concrete; one entry may summarize closely related commits.
-- In version sections, classify genuinely new end-user capabilities under `### Added` and reserve `### Fixed` for regressions in previously existing behavior.
-- If a version section has fewer than 4 total change bullets, omit `### Added`/`### Changed`/`### Fixed` subheadings and list bullets directly under the version heading.
-- When a feature is first introduced in the same release, do not add separate changelog bullets for implementation/fix-up iterations that occurred while building it; summarize only the final user-visible outcome.
-- Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
-- For major/minor releases (for example `2.0.0`, `1.7.0`), include a concise update summary line directly under the version heading before any bullet lists/subsections.
-- On release, move grouped entries from `Unreleased` into the new versioned section.
-- Determine release scope by reconciling `CHANGELOG.md` `Unreleased` with `git log --first-parent <latest-tag>..HEAD` and `git diff --stat <latest-tag>..HEAD`; already-pushed changes that remain unreleased still belong to the pending version unless explicitly deferred.
-- Before every push, prune redundant or iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` while keeping refinements and regressions under `### Changed` or `### Fixed`.
+- Keep `CHANGELOG.md` current, with `## [Unreleased]` at the top until release.
+- Update the changelog in the same change set for notable user-visible behavior changes.
+- Skip changelog entries for minor or internal-only changes unless explicitly requested.
+- Keep entries concrete and user-facing; summarize related work once instead of logging iteration details.
+- Use semantic versions, ISO dates, and the existing `Added`/`Changed`/`Fixed` classification rules.
+- On release or push prep, reconcile `Unreleased` against `git log --first-parent <latest-tag>..HEAD` and `git diff --stat <latest-tag>..HEAD`.
 
 ### Release Scope
-- When choosing between patch and minor for an unpushed release, treat minor as opt-in and require at least one of: two or more `feat:` commits, or production-code churn reaching the configured minor threshold.
-- For churn-based minor decisions, measure only production-code insertions plus deletions since the previous release or currently pushed version (exclude tests/docs/process-only files).
+- Treat minor releases as opt-in. Default to patch unless the configured `feat:` count or production-code churn threshold is met.
+- For churn-based minor decisions, count only production-code insertions plus deletions since the previous release or pushed version.
 
 ### Refactoring Cadence
-- After each major milestone, run a cleanup pass for duplication, consistency, complex components, and discovered debt.
-- Do cleanup in a separate follow-up `refactor:` commit after the functional milestone commit.
-- Do not mix milestone feature/fix and refactor changes in one commit unless required for functionality.
-- Prefer small, reviewable refactors that preserve behavior.
-- For each major milestone, include a short checklist in handoff or review notes:
+- After each major milestone, run a cleanup pass for duplication, consistency, large components, and discovered debt.
+- Put cleanup in a separate follow-up `refactor:` commit unless functionality requires it to stay together.
+- Prefer small, reviewable, behavior-preserving refactors.
+- For each major milestone, include this checklist in handoff or review notes:
   - duplication reviewed
   - consistency issues reviewed
-  - large/complex components reviewed
+  - large or complex components reviewed
   - deferrals with rationale
 
 ## Agent Operating Instructions
@@ -324,13 +309,11 @@ When asked to create a plan to fix or implement something:
 - After squashing, diff current commit to the previous head - there should be no difference, if there is, stop and ask how to proceed.
 
 #### push
-- `push` (or starts with `push`) is a special command and MUST run this full release workflow; do not shortcut directly to `git push` unless the user explicitly asks to bypass the routine.
-- if no release or push prep changes are needed, still run the checklist, report results, and ask for explicit confirmation before any network push.
-- update user-facing guides before release or push when behavior changed
-- list unpushed commits: `git log origin/<branch>..HEAD --oneline`
-- provide one high-level summary across all unpushed commits
+- `push` (or starts with `push`) is a special command and MUST run this full release workflow; do not shortcut directly to `git push` unless the user explicitly asks to bypass the routine
+- update user-facing guides before release or push
+- list commits since last version and provide high-level summary
 - reconcile the pending release against `CHANGELOG.md` `Unreleased`, `git log --first-parent <latest-tag>..HEAD`, and `git diff --stat <latest-tag>..HEAD` so already-pushed-but-unreleased entries are included in the version scope unless explicitly deferred
-- omit cosmetic-only low-level details unless asked
+- omit cosmetic-only and internal details from the changelog
 - update `package.json` version semantically based on the release policy above
 - when bumping a patch/minor version, include a short explicit rationale in release/push notes (for example: "patch for fixes only" or "minor for broader user-facing feature scope")
 - create annotated tag matching version (for example `v1.1.0`)
@@ -342,8 +325,7 @@ When asked to create a plan to fix or implement something:
 - Prefer single-line status items when content fits.
 - Avoid repetitive progress boilerplate.
 - In post-implementation summaries, concisely report added/removed line counts split into production code, test code, and other changes (for example documentation or process files).
-- Commit reporting format:
-  - `✅ <hash> <type>: <message> (+<added> ~<changed> -<removed>)`
+- Commit reporting format: `✅ <hash> <type>: <message> (+<added> ~<changed> -<removed>)`
 - Status indicators:
   - `✅` success/completed
   - `⚠️` warning/risk/blocker
