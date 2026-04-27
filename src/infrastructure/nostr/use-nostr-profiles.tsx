@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { NDKEvent, NDKFilter, NDKKind } from "@nostr-dev-kit/ndk";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
