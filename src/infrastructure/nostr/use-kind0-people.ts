@@ -98,8 +98,10 @@ export function useKind0People(
   );
 
   useEffect(() => {
-    setCachedKind0Events(loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls));
-    setFallbackKind0Events(loadCachedKind0Events());
+    const nextScoped = loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls);
+    setCachedKind0Events((previous) => (areKind0EventListsEqual(previous, nextScoped) ? previous : nextScoped));
+    const nextFallback = loadCachedKind0Events();
+    setFallbackKind0Events((previous) => (areKind0EventListsEqual(previous, nextFallback) ? previous : nextFallback));
     // Equivalent normalized relay scopes should not trigger another cache refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheRevision, selectedRelayScopeKey]);
