@@ -127,10 +127,7 @@ export function useIndexOnboarding({
   }, [user]);
 
   useEffect(() => {
-    if (!isOnboardingOpen) {
-      lastHandledOnboardingStepRef.current = null;
-      setActiveOnboardingStepId(null);
-    }
+    if (!isOnboardingOpen) setActiveOnboardingStepId(null);
   }, [isOnboardingOpen]);
 
   const handleOnboardingStepChange = useCallback((payload: {
