@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BeamAvatar } from "@/components/ui/beam-avatar";
-import { useNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
+import { useCachedNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
 
 interface UserAvatarProps {
   id: string;
