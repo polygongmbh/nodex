@@ -31,6 +31,7 @@ import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus } from "./contracts";
+import { seedNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
 import {
   clearSessionNoasState,
   clearSessionPrivateKey,
