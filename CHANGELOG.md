@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.1] - 2026-04-27
+
 - Kanban active columns now use the shared task-priority ordering again, while done and closed columns keep newest-edited-first ordering.
 
 ## [2.15.0] - 2026-04-26
