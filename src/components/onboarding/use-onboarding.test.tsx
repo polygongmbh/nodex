@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRef, useState } from "react";
 import { act } from "react";
-import { useIndexOnboarding } from "./use-index-onboarding";
+import { useOnboarding } from "./use-onboarding";
 import { makeChannel, makePerson } from "@/test/fixtures";
 import type { Channel } from "@/types";
 import type { Person } from "@/types/person";
@@ -35,7 +35,7 @@ function Harness({
   const [people, setPeople] = useState<Person[]>(peopleSeed);
   const [authOpen, setAuthOpen] = useState(false);
 
-  const onboarding = useIndexOnboarding({
+  const onboarding = useOnboarding({
     user,
     isMobile,
     currentView,
@@ -74,7 +74,7 @@ function Harness({
   );
 }
 
-describe("useIndexOnboarding", () => {
+describe("useOnboarding", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.useRealTimers();

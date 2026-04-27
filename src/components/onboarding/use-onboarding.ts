@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
@@ -18,7 +18,7 @@ import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 const STARTUP_ONBOARDING_INTRO_DELAY_MS = 300;
 
-interface UseIndexOnboardingOptions {
+interface UseOnboardingOptions {
   user: { pubkey?: string } | null | undefined;
   isMobile: boolean;
   currentView: ViewType;
@@ -34,7 +34,7 @@ interface UseIndexOnboardingOptions {
   setIsAuthModalOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-export function useIndexOnboarding({
+export function useOnboarding({
   user,
   isMobile,
   currentView,
@@ -48,7 +48,7 @@ export function useIndexOnboarding({
   setChannelFilterStates,
   setPeople,
   setIsAuthModalOpen,
-}: UseIndexOnboardingOptions) {
+}: UseOnboardingOptions) {
   const { t } = useTranslation("onboarding");
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
@@ -57,7 +57,9 @@ export function useIndexOnboarding({
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
-  const handledStartupIntroRef = useRef(false);
+  const [showStartupIntro] = useState(
+    () => !openedWithFocusedTaskRef.current && !user
+  );
 
   const onboardingSections = useMemo(
     () => getOnboardingSections(isMobile, currentView, t),
@@ -104,19 +106,10 @@ export function useIndexOnboarding({
   }, [setIsAuthModalOpen, user]);
 
   useEffect(() => {
-    if (handledStartupIntroRef.current) return;
-    handledStartupIntroRef.current = true;
-
-    if (!openedWithFocusedTaskRef.current && !user) {
-      const introTimeout = window.setTimeout(() => {
-        queueOnboardingIntro(false, "all", !user);
-      }, STARTUP_ONBOARDING_INTRO_DELAY_MS);
-
-      return () => {
-        window.clearTimeout(introTimeout);
-      };
-    }
-  }, [openedWithFocusedTaskRef, queueOnboardingIntro, user]);
+    if (!showStartupIntro || user) return;
+    const id = window.setTimeout(() => queueOnboardingIntro(false, "all"), STARTUP_ONBOARDING_INTRO_DELAY_MS);
+    return () => window.clearTimeout(id);
+  }, [showStartupIntro, queueOnboardingIntro, user]);
 
   useEffect(() => {
     if (!user) return;
