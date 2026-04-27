@@ -3,23 +3,25 @@ import { BeamAvatar } from "@/components/ui/beam-avatar";
 import { useCachedNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
 
 interface UserAvatarProps {
+  /** A 64-char hex Nostr pubkey. Other ids are not supported. */
   id: string;
+  /** Optional display-name override. Falls back to the cached profile name, then the pubkey. */
   displayName?: string;
-  avatarUrl?: string;
   className?: string;
   beamTestId?: string;
 }
 
-const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
-
-export function UserAvatar({ id, displayName, avatarUrl, className, beamTestId }: UserAvatarProps) {
-  // When the id looks like a Nostr pubkey, consult the shared profile cache so
-  // every surface (sidebar, hover card, kanban card, etc.) resolves the same
-  // avatar from the same source — and falls back to the beam in lockstep.
-  const isPubkey = typeof id === "string" && PUBKEY_PATTERN.test(id);
-  const cachedProfile = useCachedNostrProfile(isPubkey ? id : null);
-  const resolvedAvatarUrl = avatarUrl || cachedProfile?.picture || undefined;
+/**
+ * Single source of truth for rendering a Nostr user's avatar. Resolves the
+ * picture and display name from the shared Kind 0 profile cache, and falls
+ * back to a deterministic beam identicon. Every surface (sidebar, hover card,
+ * kanban card, user menu, mentions, …) uses this primitive directly so they
+ * all show the same picture and fall back uniformly.
+ */
+export function UserAvatar({ id, displayName, className, beamTestId }: UserAvatarProps) {
+  const cachedProfile = useCachedNostrProfile(id);
   const resolvedDisplayName = displayName || cachedProfile?.displayName || cachedProfile?.name;
+  const resolvedAvatarUrl = cachedProfile?.picture || undefined;
   const initial = (resolvedDisplayName || id || "?").charAt(0).toUpperCase();
 
   return (
