@@ -4,7 +4,8 @@ import { MemoryRouter } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useIndexFilters } from "./use-index-filters";
-import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
+import { useRelayFilterController } from "@/features/feed-page/controllers/use-relay-filter-controller";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Channel, Relay } from "@/types";
@@ -67,7 +68,7 @@ function Harness({
   );
   const postedTags = useTaskMutationStore((s) => s.postedTags);
   const [searchQuery, setSearchQuery] = useState("");
-  const relayState = useRelayFilterState({
+  const relayState = useRelayFilterController({
     relays,
   });
   const relaysWithActiveState = relays.map((relay) => ({
@@ -159,6 +160,7 @@ function renderHarness(options?: {
 describe("useIndexFilters", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    useFilterStore.setState({ activeRelayIds: new Set(), channelFilterStates: new Map(), channelMatchMode: "and" });
     vi.mocked(toast).mockClear();
     useTaskMutationStore.setState({
       localTasks: [],

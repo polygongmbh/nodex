@@ -1,12 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import i18n from "@/lib/i18n/config";
 import { Relay } from "@/types";
 import { getEffectiveActiveRelayIds } from "@/domain/preferences/filter-state";
-import {
-  loadPersistedRelayIds,
-  savePersistedRelayIds,
-} from "@/infrastructure/preferences/filter-preferences-storage";
 import {
   notifyRelayFilterDisabled,
   notifyRelayFilterEnabled,
@@ -14,8 +10,9 @@ import {
   notifyRelayFiltersCleared,
   notifyAllRelaysSelected,
 } from "@/lib/notifications";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
-interface UseRelayFilterStateOptions {
+interface UseRelayFilterControllerOptions {
   relays: Relay[];
   onRelayEnabled?: (relay: Relay) => void;
   getEnableToastMessage?: (
@@ -40,18 +37,13 @@ export function getRelayDomain(relay: Relay | undefined, fallbackId: string): st
   return fallbackId;
 }
 
-export function useRelayFilterState({
+export function useRelayFilterController({
   relays,
   onRelayEnabled,
   getEnableToastMessage,
-}: UseRelayFilterStateOptions) {
-  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
-    loadPersistedRelayIds()
-  );
-
-  useEffect(() => {
-    savePersistedRelayIds(activeRelayIds);
-  }, [activeRelayIds]);
+}: UseRelayFilterControllerOptions) {
+  const activeRelayIds = useFilterStore((s) => s.activeRelayIds);
+  const setActiveRelayIds = useFilterStore((s) => s.setActiveRelayIds);
 
   const handleRelayToggle = (id: string) => {
     const relay = relays.find((r) => r.id === id);

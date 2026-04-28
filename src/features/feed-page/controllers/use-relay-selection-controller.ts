@@ -3,7 +3,7 @@ import type { Relay } from "@/types";
 import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { notifyRelayReconnectFailed, notifyRelayReconnectAttempt } from "@/lib/notifications";
-import { getRelayDomain, useRelayFilterState } from "./use-relay-filter-state";
+import { getRelayDomain, useRelayFilterController } from "./use-relay-filter-controller";
 
 type RelaySelectionMode = "toggle" | "exclusive";
 
@@ -59,7 +59,7 @@ export function useRelaySelectionController({
     handleRelayToggle,
     handleRelayExclusive,
     handleToggleAllRelays,
-  } = useRelayFilterState({
+  } = useRelayFilterController({
     relays,
     getEnableToastMessage: (relay) => {
       if (!shouldShowReconnectAttemptOnSelection(relay)) return undefined;
