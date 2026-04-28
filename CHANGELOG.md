@@ -6,6 +6,13 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.4] - 2026-04-28
+Patch release for onboarding flow stabilization, welcome cleanup, and profile cache consistency.
+
+- Onboarding and welcome flows now run through dedicated controllers and startup-only intro handling, reducing reset loops, removing the mobile edit-profile step, and keeping first-run guidance scoped to app launch.
+- Noas auth copy now aligns more closely with the create-account path across the refreshed welcome and auth surfaces in English, German, and Spanish.
+- Shared user avatars now upgrade more reliably from cached Kind 0 profile data, improving picture and display-name consistency across task, people, and auth surfaces.
+
 ## [2.15.3] - 2026-04-27
 Patch release for relay-filter persistence, relay recovery, and new task sorting.
 

@@ -12,6 +12,7 @@ vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
   useNostrProfiles: (): { getProfile: () => null } => ({
     getProfile: () => null,
   }),
+  useCachedNostrProfile: () => null,
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
