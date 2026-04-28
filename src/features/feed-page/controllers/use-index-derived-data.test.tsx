@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { useIndexDerivedData } from "./use-index-derived-data";
-import { useIndexFilters } from "./use-index-filters";
+import { useChannelFilterController } from "./use-channel-filter-controller";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -63,8 +64,8 @@ const nostrEvents: CachedNostrEvent[] = [
 
 function Harness() {
   const [people, setPeople] = useState<Person[]>([]);
-  const [searchQuery] = useState("");
-  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
+  const activeRelayIds = useFilterStore((s) => s.activeRelayIds);
+  const setActiveRelayIds = useFilterStore((s) => s.setActiveRelayIds);
   const relaysWithActiveState = relays.map((relay) => ({
     ...relay,
     isActive: activeRelayIds.has(relay.id),
@@ -84,10 +85,8 @@ function Harness() {
     isHydrating: false,
   });
 
-  const filters = useIndexFilters({
+  const filters = useChannelFilterController({
     relays: relaysWithActiveState,
-    activeRelayIds,
-    setActiveRelayIds,
     channels: derived.channels,
     composeChannels: derived.composeChannels,
     people,
@@ -106,7 +105,6 @@ function Harness() {
       <button onClick={() => setActiveRelayIds(new Set(["relay-one"]))}>RelayOne</button>
       <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagExclusive", tag: "urgent" })}>HashtagExclusive</button>
-      <output data-testid="search-query">{searchQuery}</output>
       <output data-testid="compose-channel-names">
         {filters.composeChannelsWithState.map((channel) => channel.name).join(",")}
       </output>
@@ -118,6 +116,7 @@ function Harness() {
 describe("useIndexDerivedData compose channels", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    useFilterStore.setState({ activeRelayIds: new Set(["relay-one"]), channelFilterStates: new Map(), channelMatchMode: "and" });
     useTaskMutationStore.setState({
       localTasks: [],
       postedTags: [],

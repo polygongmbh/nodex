@@ -13,7 +13,7 @@ import { WelcomeController } from "@/components/welcome/WelcomeController";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
-import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
+import { useChannelFilterController } from "@/features/feed-page/controllers/use-channel-filter-controller";
 import { useOnboarding } from "@/components/onboarding/use-onboarding";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
@@ -202,10 +202,8 @@ function FeedIndexContent() {
     togglePerson,
     showOnlyPerson,
     toggleAllPeople,
-  } = useIndexFilters({
+  } = useChannelFilterController({
     relays,
-    activeRelayIds,
-    setActiveRelayIds,
     channels,
     composeChannels,
     people,

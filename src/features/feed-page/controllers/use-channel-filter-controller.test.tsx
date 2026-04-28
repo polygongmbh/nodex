@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
-import { useIndexFilters } from "./use-index-filters";
+import { useChannelFilterController } from "./use-channel-filter-controller";
 import { useRelayFilterController } from "@/features/feed-page/controllers/use-relay-filter-controller";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
@@ -75,10 +75,8 @@ function Harness({
     ...relay,
     isActive: relayState.effectiveActiveRelayIds.has(relay.id),
   }));
-  const filters = useIndexFilters({
+  const filters = useChannelFilterController({
     relays: relaysWithActiveState,
-    activeRelayIds: relayState.activeRelayIds,
-    setActiveRelayIds: relayState.setActiveRelayIds,
     channels: visibleChannels,
     composeChannels: visibleComposeChannels,
     people,
@@ -157,7 +155,7 @@ function renderHarness(options?: {
   );
 }
 
-describe("useIndexFilters", () => {
+describe("useChannelFilterController", () => {
   beforeEach(() => {
     window.localStorage.clear();
     useFilterStore.setState({ activeRelayIds: new Set(), channelFilterStates: new Map(), channelMatchMode: "and" });

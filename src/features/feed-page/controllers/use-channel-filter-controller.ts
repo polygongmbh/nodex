@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import { getPreferredMentionIdentifier } from "@/lib/mentions";
 import {
   notifyShowingOnlyChannel,
@@ -10,12 +9,6 @@ import {
   notifyShowingOnlyPersonExclusive,
   notifyPersonFilterToggled,
 } from "@/lib/notifications";
-import {
-  loadPersistedChannelFilters,
-  loadPersistedChannelMatchMode,
-  savePersistedChannelFilters,
-  savePersistedChannelMatchMode,
-} from "@/infrastructure/preferences/filter-preferences-storage";
 import {
   mapPeopleSelection,
   setAllChannelFilters,
@@ -30,15 +23,15 @@ import {
 } from "@/domain/content/quick-filter-constraints";
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
-import type { Channel, ChannelMatchMode, PostedTag, QuickFilterState, Relay } from "@/types";
+import type { Channel, QuickFilterState, Relay } from "@/types";
 import type { Person } from "@/types/person";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
+import type { Dispatch, SetStateAction } from "react";
 
-interface UseIndexFiltersOptions {
+interface UseChannelFilterControllerOptions {
   relays: Relay[];
-  activeRelayIds: Set<string>;
-  setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
   channels: Channel[];
   composeChannels: Channel[];
   people: Person[];
@@ -48,10 +41,8 @@ interface UseIndexFiltersOptions {
   isHydrating?: boolean;
 }
 
-export function useIndexFilters({
+export function useChannelFilterController({
   relays,
-  activeRelayIds,
-  setActiveRelayIds,
   channels,
   composeChannels,
   people,
@@ -59,23 +50,18 @@ export function useIndexFilters({
   sidebarPeople,
   hasLiveHydratedScope = false,
   isHydrating = false,
-}: UseIndexFiltersOptions) {
+}: UseChannelFilterControllerOptions) {
   const setPostedTags = useTaskMutationStore((s) => s.setPostedTags);
+  const activeRelayIds = useFilterStore((s) => s.activeRelayIds);
+  const setActiveRelayIds = useFilterStore((s) => s.setActiveRelayIds);
+  const channelFilterStates = useFilterStore((s) => s.channelFilterStates);
+  const setChannelFilterStates = useFilterStore((s) => s.setChannelFilterStates);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const setChannelMatchMode = useFilterStore((s) => s.setChannelMatchMode);
+
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
-  const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
-    () => loadPersistedChannelFilters()
-  );
-  const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>(
-    () => loadPersistedChannelMatchMode()
-  );
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>(() => normalizeQuickFilterState());
 
-  /**
-   * Capture the current filter slice so undo actions on toast notifications can
-   * restore it verbatim. We snapshot every piece of state our filter handlers
-   * touch (channels, people, posted tags, active relay ids) so any combination
-   * of mutations can be rolled back as a unit.
-   */
   const captureFilterSnapshot = useCallback(() => {
     const channelFilterStatesSnapshot = new Map(channelFilterStates);
     const peopleSnapshot = people.map((person) => ({ ...person }));
@@ -90,8 +76,7 @@ export function useIndexFilters({
       setActiveRelayIds(() => new Set(activeRelayIdsSnapshot));
       setPostedTags(() => postedTagsSnapshot.map((entry) => ({ ...entry, relayIds: [...entry.relayIds] })));
     };
-  }, [activeRelayIds, channelFilterStates, people, setActiveRelayIds, setPeople, setPostedTags]);
-
+  }, [activeRelayIds, channelFilterStates, people, setActiveRelayIds, setChannelFilterStates, setPeople, setPostedTags]);
 
   const channelsWithState = useMemo(
     () =>
@@ -134,7 +119,7 @@ export function useIndexFilters({
 
       return changed ? next : prev;
     });
-  }, [channels, composeChannels, isFilterPruneReady]);
+  }, [channels, composeChannels, isFilterPruneReady, setChannelFilterStates]);
 
   useEffect(() => {
     if (!isFilterPruneReady) return;
@@ -159,14 +144,6 @@ export function useIndexFilters({
     setChannelFilterStates,
     setPeople,
   });
-
-  useEffect(() => {
-    savePersistedChannelFilters(channelFilterStates);
-  }, [channelFilterStates]);
-
-  useEffect(() => {
-    savePersistedChannelMatchMode(channelMatchMode);
-  }, [channelMatchMode]);
 
   const normalizeInteractivePerson = useCallback((person: Person): Person => ({
     ...person,
@@ -291,7 +268,7 @@ export function useIndexFilters({
     featureDebugLog("quick-filters", "Reset filters to defaults with all feeds deactivated", {
       availableRelayCount: relays.length,
     });
-  }, [channels, relays, setActiveRelayIds, setChannelFilterStates, setChannelMatchMode, setPeople, setQuickFilters]);
+  }, [channels, relays, setActiveRelayIds, setChannelFilterStates, setChannelMatchMode, setPeople]);
 
   const filterHandlers: FeedInteractionHandlerMap = useMemo(() => ({
     "filter.clearChannel": (intent) => {
