@@ -254,7 +254,7 @@ describe("MobileLayout auth wiring", () => {
     });
   });
 
-  it("redirects to manage view and opens profile editor when profile completion prompt signal increments", async () => {
+  it("does not redirect to manage view when profile completion prompt signal increments (handled globally)", async () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
 
@@ -271,11 +271,11 @@ describe("MobileLayout auth wiring", () => {
     setMocks({ viewState: { canCreateContent: true, profileCompletionPromptSignal: 1 } });
     rerender(<MobileLayout />);
 
-    await waitFor(() => {
-      expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
-      expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
-      expect(document.querySelector("#manage-profile-name")).toBeInTheDocument();
-    });
+    // Prompt no longer hijacks the route; the global ProfileCompletionDialog
+    // (mounted in FeedPageProviders) handles displaying the editor instead.
+    expect(screen.getByTestId("task-tree")).toBeInTheDocument();
+    expect(document.querySelector('[data-onboarding="mobile-filters"]')).not.toBeInTheDocument();
+    expect(document.querySelector("#manage-profile-name")).not.toBeInTheDocument();
   });
 
   it("stays on the feed surface when a signed-in guest already has local profile fields and no prompt signal", () => {
