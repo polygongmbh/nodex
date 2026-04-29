@@ -244,6 +244,7 @@ export function FeedPageProviders({
             <FeedSurfaceProvider value={surfaceState}>
               <FeedViewStateProvider value={viewState}>
                 <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
+                <ProfileCompletionDialog />
               </FeedViewStateProvider>
             </FeedSurfaceProvider>
           </FeedInteractionBusFromContexts>
