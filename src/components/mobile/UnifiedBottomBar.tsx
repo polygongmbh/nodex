@@ -53,9 +53,17 @@ import {
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
-import { isWritableRelay } from "@/components/tasks/task-composer-runtime";
+import {
+  isWritableRelay,
+  readTaskComposerDraft,
+  writeTaskComposerDraft,
+  clearTaskComposerDraft,
+  type TaskComposerDraftState,
+} from "@/components/tasks/task-composer-runtime";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
+import { COMPOSE_DRAFT_MOBILE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
+import { hasComposerSubstance } from "@/lib/composer-content";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
@@ -139,7 +147,28 @@ export function UnifiedBottomBar({
       t,
     });
   }, [contextTaskTitle, i18n.language, i18n.resolvedLanguage, includedChannels, people, t]);
-  const [sharedText, setSharedText] = useState(() => searchQuery || defaultContent);
+  const initialDraftRef = useRef<TaskComposerDraftState | null>(null);
+  if (initialDraftRef.current === null) {
+    const stored = readTaskComposerDraft(COMPOSE_DRAFT_MOBILE_STORAGE_KEY);
+    if (
+      stored
+      && hasComposerSubstance({
+        content: stored.content,
+        attachments: stored.attachments,
+        nip99: stored.nip99,
+      })
+    ) {
+      initialDraftRef.current = stored;
+    }
+  }
+  const initialDraft = initialDraftRef.current;
+  const initialDraftDueDate = (() => {
+    const raw = initialDraft?.taskDate?.dueDate;
+    if (!raw) return undefined;
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  })();
+  const [sharedText, setSharedText] = useState(() => initialDraft?.content ?? (searchQuery || defaultContent));
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
   const [isBottomBarFocused, setIsBottomBarFocused] = useState(false);
   const [isBottomBarInteracting, setIsBottomBarInteracting] = useState(false);
@@ -150,14 +179,34 @@ export function UnifiedBottomBar({
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
-  const [dueDate, setDueDate] = useState<Date | undefined>();
-  const [dueTime, setDueTime] = useState("");
-  const [dateType, setDateType] = useState<TaskDateType>("due");
-  const [priority, setPriority] = useState<number | undefined>(undefined);
-  const [explicitTagNames, setExplicitTagNames] = useState<string[]>([]);
-  const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
-  const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
-  const [locationGeohash, setLocationGeohash] = useState<string | undefined>();
+  const [dueDate, setDueDate] = useState<Date | undefined>(initialDraftDueDate);
+  const [dueTime, setDueTime] = useState(initialDraft?.taskDate?.dueTime ?? "");
+  const [dateType, setDateType] = useState<TaskDateType>(initialDraft?.taskDate?.dateType ?? "due");
+  const [priority, setPriority] = useState<number | undefined>(displayPriorityFromStored(initialDraft?.priority));
+  const [explicitTagNames, setExplicitTagNames] = useState<string[]>(
+    (initialDraft?.explicitTagNames ?? [])
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(
+    (initialDraft?.explicitMentionPubkeys ?? [])
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim().toLowerCase())
+      .filter((value) => /^[a-f0-9]{64}$/i.test(value))
+  );
+  const [attachments, setAttachments] = useState<ComposeAttachment[]>(() =>
+    (initialDraft?.attachments ?? []).map((attachment, index) => ({
+      id: `restored-draft-${index}`,
+      fileName: attachment.name || attachment.url,
+      status: "uploaded" as const,
+      source: "url" as const,
+      ...attachment,
+    }))
+  );
+  const [locationGeohash, setLocationGeohash] = useState<string | undefined>(
+    normalizeGeohash(initialDraft?.locationGeohash)
+  );
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -320,6 +369,52 @@ export function UnifiedBottomBar({
       cursorPositionRef.current = end;
     });
   }, [composeRestoreRequest, dispatchSearchChange]);
+
+  // Persist composer draft to localStorage so reloads do not discard in-progress
+  // text/attachments/metadata. Mirrors desktop TaskComposer persistence.
+  useEffect(() => {
+    const persistableAttachments = attachments
+      .filter((attachment) => attachment.status === "uploaded" && attachment.url)
+      .map((attachment) => ({
+        url: attachment.url,
+        mimeType: attachment.mimeType,
+        sha256: attachment.sha256,
+        size: attachment.size,
+        dimensions: attachment.dimensions,
+        blurhash: attachment.blurhash,
+        alt: attachment.alt,
+        name: attachment.name || attachment.fileName,
+      })) as PublishedAttachment[];
+    if (!hasComposerSubstance({ content: sharedText, attachments: persistableAttachments })) {
+      clearTaskComposerDraft(COMPOSE_DRAFT_MOBILE_STORAGE_KEY);
+      return;
+    }
+    writeTaskComposerDraft(COMPOSE_DRAFT_MOBILE_STORAGE_KEY, {
+      content: sharedText,
+      savedAt: new Date().toISOString(),
+      taskDate: {
+        dueDate: dueDate ? dueDate.toISOString() : undefined,
+        dueTime,
+        dateType,
+      },
+      explicitTagNames,
+      explicitMentionPubkeys,
+      priority: storedPriorityFromDisplay(priority),
+      locationGeohash,
+      attachments: persistableAttachments,
+    });
+  }, [
+    sharedText,
+    dueDate,
+    dueTime,
+    dateType,
+    explicitTagNames,
+    explicitMentionPubkeys,
+    priority,
+    locationGeohash,
+    attachments,
+  ]);
+
 
   useEffect(() => {
     if (currentView === "calendar") {

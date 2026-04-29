@@ -39,5 +39,6 @@ export const RELAY_STATUS_CACHE_STORAGE_KEY = "nodex.relay-status-cache.v1";
 export const CHANNEL_FRECENCY_STORAGE_KEY = "nodex.channel-frecency.v1";
 export const PERSON_FRECENCY_STORAGE_KEY = "nodex.person-frecency.v1";
 export const COMPOSE_DRAFT_STORAGE_KEY = "nodex.compose-draft.feed-tree";
+export const COMPOSE_DRAFT_MOBILE_STORAGE_KEY = "nodex.compose-draft.mobile";
 /** Prefix for per-relay host fallback cache: append `.${hostname}` */
 export const DEFAULT_RELAY_FALLBACK_STORAGE_KEY_PREFIX = "nodex.default-relay-fallback.v1";
