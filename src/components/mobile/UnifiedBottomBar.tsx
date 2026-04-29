@@ -395,11 +395,16 @@ export function UnifiedBottomBar({
   ]);
 
 
+  // Seed the calendar's selected date as the composer due date only while
+  // the user is actively composing in the calendar view. Without this guard,
+  // simply navigating to the calendar would mutate (and persist) compose
+  // state even when the composer is closed, leaking the date into other
+  // views and across reloads.
   useEffect(() => {
-    if (currentView === "calendar") {
-      setDueDate(selectedCalendarDate || new Date());
-    }
-  }, [currentView, selectedCalendarDate]);
+    if (currentView !== "calendar") return;
+    if (!isComposeFocused) return;
+    setDueDate(selectedCalendarDate || new Date());
+  }, [currentView, selectedCalendarDate, isComposeFocused]);
 
   useEffect(() => {
     const scroller = dateScrollerRef.current;
