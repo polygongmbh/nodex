@@ -370,6 +370,52 @@ export function UnifiedBottomBar({
     });
   }, [composeRestoreRequest, dispatchSearchChange]);
 
+  // Persist composer draft to localStorage so reloads do not discard in-progress
+  // text/attachments/metadata. Mirrors desktop TaskComposer persistence.
+  useEffect(() => {
+    const persistableAttachments = attachments
+      .filter((attachment) => attachment.status === "uploaded" && attachment.url)
+      .map((attachment) => ({
+        url: attachment.url,
+        mimeType: attachment.mimeType,
+        sha256: attachment.sha256,
+        size: attachment.size,
+        dimensions: attachment.dimensions,
+        blurhash: attachment.blurhash,
+        alt: attachment.alt,
+        name: attachment.name || attachment.fileName,
+      })) as PublishedAttachment[];
+    if (!hasComposerSubstance({ content: sharedText, attachments: persistableAttachments })) {
+      clearTaskComposerDraft(COMPOSE_DRAFT_MOBILE_STORAGE_KEY);
+      return;
+    }
+    writeTaskComposerDraft(COMPOSE_DRAFT_MOBILE_STORAGE_KEY, {
+      content: sharedText,
+      savedAt: new Date().toISOString(),
+      taskDate: {
+        dueDate: dueDate ? dueDate.toISOString() : undefined,
+        dueTime,
+        dateType,
+      },
+      explicitTagNames,
+      explicitMentionPubkeys,
+      priority: storedPriorityFromDisplay(priority),
+      locationGeohash,
+      attachments: persistableAttachments,
+    });
+  }, [
+    sharedText,
+    dueDate,
+    dueTime,
+    dateType,
+    explicitTagNames,
+    explicitMentionPubkeys,
+    priority,
+    locationGeohash,
+    attachments,
+  ]);
+
+
   useEffect(() => {
     if (currentView === "calendar") {
       setDueDate(selectedCalendarDate || new Date());
