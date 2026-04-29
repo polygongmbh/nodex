@@ -352,7 +352,8 @@ export function UnifiedBottomBar({
   }, [composeRestoreRequest, dispatchSearchChange]);
 
   // Persist composer draft to localStorage so reloads do not discard in-progress
-  // text/attachments/metadata. Mirrors desktop TaskComposer persistence.
+  // text/attachments/metadata. Shares the storage key and write/clear semantics
+  // with the desktop TaskComposer via persistTaskComposerDraft.
   useEffect(() => {
     const persistableAttachments = attachments
       .filter((attachment) => attachment.status === "uploaded" && attachment.url)
@@ -366,24 +367,21 @@ export function UnifiedBottomBar({
         alt: attachment.alt,
         name: attachment.name || attachment.fileName,
       })) as PublishedAttachment[];
-    if (!hasComposerSubstance({ content: sharedText, attachments: persistableAttachments })) {
-      clearTaskComposerDraft(COMPOSE_DRAFT_MOBILE_STORAGE_KEY);
-      return;
-    }
-    writeTaskComposerDraft(COMPOSE_DRAFT_MOBILE_STORAGE_KEY, {
-      content: sharedText,
-      savedAt: new Date().toISOString(),
-      taskDate: {
-        dueDate: dueDate ? dueDate.toISOString() : undefined,
+    persistTaskComposerDraft(
+      COMPOSE_DRAFT_STORAGE_KEY,
+      {
+        content: sharedText,
+        dueDate,
         dueTime,
         dateType,
+        explicitTagNames,
+        explicitMentionPubkeys,
+        priority,
+        locationGeohash,
+        attachments: persistableAttachments,
       },
-      explicitTagNames,
-      explicitMentionPubkeys,
-      priority: storedPriorityFromDisplay(priority),
-      locationGeohash,
-      attachments: persistableAttachments,
-    });
+      storedPriorityFromDisplay
+    );
   }, [
     sharedText,
     dueDate,
