@@ -12,6 +12,7 @@ import {
 import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-context";
 import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
 import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-context";
+import { ProfileCompletionDialog } from "@/components/auth/ProfileCompletionDialog";
 
 export interface FeedPageCoreHandlers {
   onOpenAuthModal: (initialStep?: "choose" | "noas" | "noasSignUp") => void;
@@ -243,6 +244,7 @@ export function FeedPageProviders({
             <FeedSurfaceProvider value={surfaceState}>
               <FeedViewStateProvider value={viewState}>
                 <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
+                <ProfileCompletionDialog />
               </FeedViewStateProvider>
             </FeedSurfaceProvider>
           </FeedInteractionBusFromContexts>

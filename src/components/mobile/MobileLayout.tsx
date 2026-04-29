@@ -203,13 +203,13 @@ export function MobileLayout() {
     }
   }, [activeOnboardingStepId, isOnboardingOpen, closeManageView, openManageView]);
 
+  // Profile completion prompt is now handled globally by ProfileCompletionDialog,
+  // which pops a profile editor dialog on mobile and desktop without changing route.
   useEffect(() => {
     if (profileCompletionPromptSignal <= 0) return;
     if (profileCompletionPromptSignal === lastHandledProfilePromptSignalRef.current) return;
     lastHandledProfilePromptSignalRef.current = profileCompletionPromptSignal;
-    openManageView();
-    setProfileEditorOpenSignal((previous) => previous + 1);
-  }, [openManageView, profileCompletionPromptSignal]);
+  }, [profileCompletionPromptSignal]);
 
   useMobileToastOffset({ hasBreadcrumbOffset: hasMobileBreadcrumbOffset });
 
