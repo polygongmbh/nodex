@@ -53,9 +53,17 @@ import {
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
-import { isWritableRelay } from "@/components/tasks/task-composer-runtime";
+import {
+  isWritableRelay,
+  readTaskComposerDraft,
+  writeTaskComposerDraft,
+  clearTaskComposerDraft,
+  type TaskComposerDraftState,
+} from "@/components/tasks/task-composer-runtime";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
+import { COMPOSE_DRAFT_MOBILE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
+import { hasComposerSubstance } from "@/lib/composer-content";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
