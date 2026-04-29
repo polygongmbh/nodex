@@ -47,6 +47,7 @@ import {
 import {
   clearTaskComposerDraft,
   getTaskComposerRestoreMessageType,
+  persistTaskComposerDraft,
   resolveTaskComposerInitialState,
   resolveTaskComposerMention,
   useTaskComposerDraftStorageKey,
