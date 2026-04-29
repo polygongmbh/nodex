@@ -55,15 +55,12 @@ import {
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 import {
   isWritableRelay,
-  readTaskComposerDraft,
-  writeTaskComposerDraft,
-  clearTaskComposerDraft,
-  type TaskComposerDraftState,
+  resolveTaskComposerInitialState,
+  persistTaskComposerDraft,
 } from "@/components/tasks/task-composer-runtime";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
-import { COMPOSE_DRAFT_MOBILE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
-import { hasComposerSubstance } from "@/lib/composer-content";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
