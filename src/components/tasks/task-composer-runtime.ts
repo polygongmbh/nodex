@@ -319,6 +319,62 @@ export function clearTaskComposerDraft(key: string) {
   }
 }
 
+export interface PersistableComposerSnapshot {
+  content: string;
+  taskType?: PostType;
+  dueDate?: Date;
+  dueTime: string;
+  dateType: TaskDateType;
+  explicitTagNames: string[];
+  explicitMentionPubkeys: string[];
+  /** Display-tier priority (1-5); will be converted to stored 0-100 scale. */
+  priority?: number;
+  locationGeohash?: string;
+  nip99?: Nip99Metadata;
+  /** Already-persistable attachments (uploaded with url). */
+  attachments: PublishedAttachment[];
+}
+
+/**
+ * Single shared persistence entry point used by both desktop and mobile composers.
+ * Writes a substantive draft, or clears storage when the snapshot has no
+ * user-entered substance (text/attachments/nip99).
+ */
+export function persistTaskComposerDraft(
+  key: string,
+  snapshot: PersistableComposerSnapshot,
+  storedPriorityFromDisplay: (priority?: number) => number | undefined
+) {
+  if (
+    !hasComposerSubstance({
+      content: snapshot.content,
+      attachments: snapshot.attachments,
+      nip99: snapshot.nip99,
+    })
+  ) {
+    clearTaskComposerDraft(key);
+    return;
+  }
+  writeTaskComposerDraft(key, {
+    content: snapshot.content,
+    taskType: snapshot.taskType,
+    messageType: snapshot.taskType,
+    savedAt: new Date().toISOString(),
+    taskDate: {
+      dueDate: snapshot.dueDate ? snapshot.dueDate.toISOString() : undefined,
+      dueTime: snapshot.dueTime,
+      dateType: snapshot.dateType,
+    },
+    explicitTagNames: snapshot.explicitTagNames,
+    explicitMentionPubkeys: snapshot.explicitMentionPubkeys,
+    priority: storedPriorityFromDisplay(snapshot.priority),
+    nip99: snapshot.nip99,
+    locationGeohash: snapshot.locationGeohash,
+    attachments: snapshot.attachments,
+  });
+}
+
+
 export function resolveTaskComposerMention(mentionRequest: { mention: string; id: number } | null) {
   if (!mentionRequest?.mention) return null;
   return {
