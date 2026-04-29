@@ -503,32 +503,24 @@ export function TaskComposer({
         blurhash: attachment.blurhash,
         alt: attachment.alt,
         name: attachment.name || attachment.fileName,
-      }));
-    // Only persist drafts that contain user-entered substance: text,
-    // uploaded attachments, or NIP-99 listing metadata. This prevents
-    // ambient state (seeded due date from calendar, priority, channels,
-    // location) from leaking into a fresh composer in another view.
-    if (!hasComposerSubstance({ content, attachments: persistableAttachments, nip99 })) {
-      clearTaskComposerDraft(draftStorageKey);
-      return;
-    }
-    writeTaskComposerDraft(draftStorageKey, {
-      content,
-      taskType,
-      messageType: taskType,
-      savedAt: new Date().toISOString(),
-      taskDate: {
-        dueDate: dueDate ? dueDate.toISOString() : undefined,
+      })) as PublishedAttachment[];
+    persistTaskComposerDraft(
+      draftStorageKey,
+      {
+        content,
+        taskType,
+        dueDate,
         dueTime,
         dateType,
+        explicitTagNames,
+        explicitMentionPubkeys,
+        priority,
+        nip99,
+        locationGeohash,
+        attachments: persistableAttachments,
       },
-      explicitTagNames,
-      explicitMentionPubkeys,
-      priority: storedPriorityFromDisplay(priority),
-      nip99,
-      locationGeohash,
-      attachments: persistableAttachments,
-    } satisfies TaskComposerDraftState);
+      storedPriorityFromDisplay
+    );
   }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, draftStorageKey]);
 
   useEffect(() => {
