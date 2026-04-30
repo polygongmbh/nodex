@@ -1,8 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import { RelayItem } from "./RelayItem";
 import type { Relay } from "@/types";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
+
+vi.mock("@/components/ui/tooltip", () => ({
+  TooltipProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <div data-side="right">{children}</div>,
+}));
 
 const baseRelay: Relay = {
   id: "relay-1",

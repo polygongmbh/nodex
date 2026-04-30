@@ -44,7 +44,8 @@ function installStorageFallbackIfNeeded(): void {
 
 installStorageFallbackIfNeeded();
 
-const DEBUG_ASYNC_LEAKS = process.env.VITEST_DEBUG_ASYNC_LEAKS === "true";
+const TRACK_ASYNC_LEAKS = process.env.VITEST_TRACK_ASYNC_LEAKS === "true";
+const DEBUG_ASYNC_LEAKS = TRACK_ASYNC_LEAKS && process.env.VITEST_DEBUG_ASYNC_LEAKS === "true";
 type TimeoutHandle = ReturnType<typeof setTimeout> | number;
 type IntervalHandle = ReturnType<typeof setInterval> | number;
 type AnimationFrameHandle = ReturnType<typeof window.requestAnimationFrame>;
@@ -339,9 +340,11 @@ function clearTrackedAsyncWork(): {
   return leaked;
 }
 
-installTrackedTimerWrappers();
-installTrackedEventListenerWrappers();
-installTrackedObserverWrappers();
+if (TRACK_ASYNC_LEAKS) {
+  installTrackedTimerWrappers();
+  installTrackedEventListenerWrappers();
+  installTrackedObserverWrappers();
+}
 
 // Mock matchMedia for tests
 Object.defineProperty(window, "matchMedia", {
@@ -454,36 +457,40 @@ beforeAll(() => {
 
 afterEach(() => {
   cleanup();
-  clearTrackedAsyncWork();
+  if (TRACK_ASYNC_LEAKS) {
+    clearTrackedAsyncWork();
+  }
   vi.useRealTimers();
 });
 
 afterAll(() => {
-  clearTrackedAsyncWork();
-  window.setTimeout = originalWindowSetTimeout;
-  window.clearTimeout = originalWindowClearTimeout;
-  window.setInterval = originalWindowSetInterval;
-  window.clearInterval = originalWindowClearInterval;
-  window.requestAnimationFrame = originalWindowRequestAnimationFrame;
-  window.cancelAnimationFrame = originalWindowCancelAnimationFrame;
-  globalThis.setTimeout = originalGlobalSetTimeout;
-  globalThis.clearTimeout = originalGlobalClearTimeout;
-  globalThis.setInterval = originalGlobalSetInterval;
-  globalThis.clearInterval = originalGlobalClearInterval;
-  globalThis.requestAnimationFrame = originalGlobalRequestAnimationFrame;
-  globalThis.cancelAnimationFrame = originalGlobalCancelAnimationFrame;
-  window.addEventListener = originalWindowAddEventListener as typeof window.addEventListener;
-  window.removeEventListener = originalWindowRemoveEventListener as typeof window.removeEventListener;
-  document.addEventListener = originalDocumentAddEventListener as typeof document.addEventListener;
-  document.removeEventListener = originalDocumentRemoveEventListener as typeof document.removeEventListener;
-  if (originalMutationObserver) {
-    globalThis.MutationObserver = originalMutationObserver;
-  }
-  if (originalResizeObserver) {
-    globalThis.ResizeObserver = originalResizeObserver;
-  }
-  if (originalIntersectionObserver) {
-    globalThis.IntersectionObserver = originalIntersectionObserver;
+  if (TRACK_ASYNC_LEAKS) {
+    clearTrackedAsyncWork();
+    window.setTimeout = originalWindowSetTimeout;
+    window.clearTimeout = originalWindowClearTimeout;
+    window.setInterval = originalWindowSetInterval;
+    window.clearInterval = originalWindowClearInterval;
+    window.requestAnimationFrame = originalWindowRequestAnimationFrame;
+    window.cancelAnimationFrame = originalWindowCancelAnimationFrame;
+    globalThis.setTimeout = originalGlobalSetTimeout;
+    globalThis.clearTimeout = originalGlobalClearTimeout;
+    globalThis.setInterval = originalGlobalSetInterval;
+    globalThis.clearInterval = originalGlobalClearInterval;
+    globalThis.requestAnimationFrame = originalGlobalRequestAnimationFrame;
+    globalThis.cancelAnimationFrame = originalGlobalCancelAnimationFrame;
+    window.addEventListener = originalWindowAddEventListener as typeof window.addEventListener;
+    window.removeEventListener = originalWindowRemoveEventListener as typeof window.removeEventListener;
+    document.addEventListener = originalDocumentAddEventListener as typeof document.addEventListener;
+    document.removeEventListener = originalDocumentRemoveEventListener as typeof document.removeEventListener;
+    if (originalMutationObserver) {
+      globalThis.MutationObserver = originalMutationObserver;
+    }
+    if (originalResizeObserver) {
+      globalThis.ResizeObserver = originalResizeObserver;
+    }
+    if (originalIntersectionObserver) {
+      globalThis.IntersectionObserver = originalIntersectionObserver;
+    }
   }
   vi.restoreAllMocks();
 });

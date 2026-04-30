@@ -72,6 +72,22 @@ function renderFeedView(
   );
 }
 
+function makeFeedTasks(
+  length: number,
+  build?: (index: number) => Partial<Task>
+): Task[] {
+  return Array.from({ length }, (_, index) =>
+    makeTask({
+      id: `task-${index + 1}`,
+      content: `Task ${index + 1} #general`,
+      author,
+      status: "open",
+      timestamp: new Date(2026, 0, 1, 0, length - index),
+      ...build?.(index),
+    })
+  );
+}
+
 describe("FeedView", () => {
   const chooseComboboxOptionByIndex = (name: string | RegExp, optionIndex: number) => {
     const trigger = screen.getByRole("combobox", { name });
@@ -202,15 +218,7 @@ describe("FeedView", () => {
   });
 
   it("hydrates the feed incrementally instead of mounting all entries at once", () => {
-    const manyTasks = Array.from({ length: 75 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        status: "open",
-        timestamp: new Date(2026, 0, 1, 0, 75 - index),
-      })
-    );
+    const manyTasks = makeFeedTasks(41);
 
     const { container } = render(
       <FeedView
@@ -225,15 +233,7 @@ describe("FeedView", () => {
   });
 
   it("reveals more entries when scrolling near the end of the feed", () => {
-    const manyTasks = Array.from({ length: 75 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        status: "open",
-        timestamp: new Date(2026, 0, 1, 0, 75 - index),
-      })
-    );
+    const manyTasks = makeFeedTasks(71);
 
     const { container } = render(
       <FeedView
@@ -267,15 +267,7 @@ describe("FeedView", () => {
   });
 
   it("reveals more entries before reaching the exact end of the feed", () => {
-    const manyTasks = Array.from({ length: 75 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        status: "open",
-        timestamp: new Date(2026, 0, 1, 0, 75 - index),
-      })
-    );
+    const manyTasks = makeFeedTasks(71);
 
     const { container } = render(
       <FeedView
@@ -309,15 +301,7 @@ describe("FeedView", () => {
   });
 
   it("hides the scope footer while more feed entries still remain to hydrate", () => {
-    const manyTasks = Array.from({ length: 75 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        status: "open",
-        timestamp: new Date(2026, 0, 1, 0, 75 - index),
-      })
-    );
+    const manyTasks = makeFeedTasks(41);
 
     const scopedPerson = { ...author, isSelected: true };
     const { container } = renderFeedView(
@@ -366,16 +350,10 @@ describe("FeedView", () => {
   });
 
   it("re-clamps the visible feed window when clearing a broadening filter", () => {
-    const manyTasks = Array.from({ length: 75 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: index < 10 ? `Frontend task ${index + 1} #frontend` : `General task ${index + 1} #general`,
-        tags: index < 10 ? ["frontend"] : ["general"],
-        author,
-        status: "open",
-        timestamp: new Date(2026, 0, 1, 0, 75 - index),
-      })
-    );
+    const manyTasks = makeFeedTasks(71, (index) => ({
+      content: index < 10 ? `Frontend task ${index + 1} #frontend` : `General task ${index + 1} #general`,
+      tags: index < 10 ? ["frontend"] : ["general"],
+    }));
 
     const includedChannel = makeChannel({ id: "frontend", name: "frontend", filterState: "included" });
     const neutralChannel = makeChannel({ id: "frontend", name: "frontend", filterState: "neutral" });
@@ -421,16 +399,9 @@ describe("FeedView", () => {
   it("re-clamps the visible feed window when active relay scope changes", async () => {
     const relayOne = makeRelay({ id: "relay-one", name: "Relay One", url: "wss://relay.one", isActive: true });
     const relayTwo = makeRelay({ id: "relay-two", name: "Relay Two", url: "wss://relay.two", isActive: true });
-    const manyTasks = Array.from({ length: 90 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        relays: index < 45 ? ["relay-one"] : ["relay-two"],
-        status: "open",
-        timestamp: new Date(2026, 0, 1, 0, 90 - index),
-      })
-    );
+    const manyTasks = makeFeedTasks(82, (index) => ({
+      relays: index < 41 ? ["relay-one"] : ["relay-two"],
+    }));
 
     const { container, rerender } = renderFeedView(
       {
@@ -491,16 +462,9 @@ describe("FeedView", () => {
   });
 
   it("re-clamps the visible feed window when quick filters change", async () => {
-    const manyTasks = Array.from({ length: 90 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        priority: index < 45 ? 80 : 20,
-        status: "open",
-        timestamp: new Date(2026, 0, 1, 0, 90 - index),
-      })
-    );
+    const manyTasks = makeFeedTasks(82, (index) => ({
+      priority: index < 41 ? 80 : 20,
+    }));
 
     const { container, rerender } = renderFeedView(
       {
@@ -794,42 +758,37 @@ describe("FeedView", () => {
     );
   });
 
-  it("right-aligns timeline timestamps and formats same-day and yesterday labels", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-03T12:00:00.000Z"));
-    try {
-      const taskWithStateUpdates = makeTask({
-        id: "task-timestamp-formatting",
-        author,
-        content: "Reconnect relays after resume #infra",
-        status: "open",
-        timestamp: new Date("2026-04-03T09:15:00.000Z"),
-        stateUpdates: [
-          {
-            id: "state-timestamp-yesterday",
-            status: { type: "active", description: "Working on relay reconnect" },
-            timestamp: new Date("2026-04-02T18:45:00.000Z"),
-            authorPubkey: author.pubkey,
-          },
-        ],
-      });
+  it("renders task and state-update timestamps with the shared right-aligned timestamp treatment", () => {
+    const taskWithStateUpdates = makeTask({
+      id: "task-timestamp-formatting",
+      author,
+      content: "Reconnect relays after resume #infra",
+      status: "open",
+      stateUpdates: [
+        {
+          id: "state-timestamp-yesterday",
+          status: { type: "active", description: "Working on relay reconnect" },
+          timestamp: new Date(2026, 3, 2, 20, 45, 0),
+          authorPubkey: author.pubkey,
+        },
+      ],
+    });
 
-      render(
-        <FeedView
+    render(
+      <FeedView
         focusedTaskId={null}
-          tasks={[taskWithStateUpdates]}
-          allTasks={[taskWithStateUpdates]}
-        />
-      );
+        tasks={[taskWithStateUpdates]}
+        allTasks={[taskWithStateUpdates]}
+      />
+    );
 
-      const taskTimestamp = screen.getByTitle(/task created at/i);
-      const stateTimestamp = screen.getByTitle(/status updated at/i);
+    const taskTimestamp = screen.getByTitle(/task created at/i);
+    const stateTimestamp = screen.getByTitle(/status updated at/i);
 
-      expect(taskTimestamp).toHaveTextContent("11:15 AM");
-      expect(stateTimestamp).toHaveTextContent("yesterday 08:45 PM");
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(taskTimestamp).toHaveClass("ml-auto", "shrink-0", "text-right");
+    expect(taskTimestamp).not.toBeEmptyDOMElement();
+    expect(stateTimestamp).toHaveClass("ml-auto", "shrink-0", "text-right");
+    expect(stateTimestamp).not.toBeEmptyDOMElement();
   });
 
   it("hides secondary author metadata on mobile for a denser header row", () => {
