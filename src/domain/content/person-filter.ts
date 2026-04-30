@@ -25,6 +25,10 @@ export function taskMatchesSelectedPeople(task: Task, selectedPeople: Person[]):
     return true;
   }
 
+  for (const update of task.stateUpdates || []) {
+    if (selectedPersonIds.has(normalize(update.authorPubkey))) return true;
+  }
+
   const selectedIdentifiers = buildSelectedPersonIdentifierSet(selectedPeople);
   const taskMentions = new Set<string>();
 

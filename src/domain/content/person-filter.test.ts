@@ -72,6 +72,36 @@ describe("taskMatchesSelectedPeople", () => {
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
   });
 
+  it("passes when selected person authored a state update on the task", () => {
+    const task: Task = {
+      ...baseTask,
+      stateUpdates: [
+        {
+          id: "update-1",
+          status: { type: "active" },
+          timestamp: new Date(),
+          authorPubkey: "alice-pubkey",
+        },
+      ],
+    };
+    expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
+  });
+
+  it("fails when state update author does not match selected person", () => {
+    const task: Task = {
+      ...baseTask,
+      stateUpdates: [
+        {
+          id: "update-1",
+          status: { type: "active" },
+          timestamp: new Date(),
+          authorPubkey: "charlie-pubkey",
+        },
+      ],
+    };
+    expect(taskMatchesSelectedPeople(task, [alice])).toBe(false);
+  });
+
   it("fails when neither author nor mentions match selected person", () => {
     const task: Task = { ...baseTask, content: "no mention for selected person" };
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(false);
