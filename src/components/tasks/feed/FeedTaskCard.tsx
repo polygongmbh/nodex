@@ -304,13 +304,8 @@ export function FeedTaskCard({
                   <>
                     <InteractivePersonName
                       person={resolvedAuthor}
-                      ariaLabel={t("people.actions.openMenu", { name: authorMeta.primary })}
-                      className={cn(
-                        "font-medium text-foreground hover:text-primary",
-                        isMobile && "max-w-full"
-                      )}
                     >
-                      <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
+                      <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate font-medium text-foreground">
                         {primaryAuthorLabel}
                       </span>
                       {secondaryAuthorLabel && !isMobile ? (

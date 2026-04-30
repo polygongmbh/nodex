@@ -490,15 +490,15 @@ export function TreeTaskItem({
                 <>
                   <InteractivePersonName
                     person={authorPerson}
-                    className="font-medium text-foreground/80 flex items-center gap-1 hover:text-primary"
-                    ariaLabel={t("people.actions.openMenu", { name: authorName })}
                   >
-                    {authorName}
-                    {authorNip05 && (
-                      <span title={authorNip05}>
-                        <BadgeCheck className="w-3 h-3 text-success" />
-                      </span>
-                    )}
+                    <span className="inline-flex items-center gap-1 font-medium text-foreground/80">
+                      {authorName}
+                      {authorNip05 && (
+                        <span title={authorNip05}>
+                          <BadgeCheck className="w-3 h-3 text-success" />
+                        </span>
+                      )}
+                    </span>
                   </InteractivePersonName>
                   <span>·</span>
                   <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>

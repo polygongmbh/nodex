@@ -426,13 +426,11 @@ export function FeedView({
                 <div className="min-w-0 inline-flex flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
                   <span className="truncate">{displayLabel}</span>
                   <span className="shrink-0">·</span>
-                  <InteractivePersonName
-                    person={resolvedUpdateAuthor}
-                    className="hover:text-foreground shrink-0"
-                    ariaLabel={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
-                  >
-                    {updateAuthorMeta.primary}
-                  </InteractivePersonName>
+                  <span className="shrink-0 text-foreground">
+                    <InteractivePersonName person={resolvedUpdateAuthor}>
+                      {updateAuthorMeta.primary}
+                    </InteractivePersonName>
+                  </span>
                   <span className="shrink-0">·</span>
                   <button
                     type="button"

@@ -1,18 +1,12 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import type { Person } from "@/types/person";
+import { getCompactPersonLabel, type Person } from "@/types/person";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
-import { cn } from "@/lib/utils";
 
 interface InteractivePersonNameProps {
   person: Person;
   children: ReactNode;
-  className?: string;
-  ariaLabel?: string;
-  enableModifierShortcuts?: boolean;
-  displayName?: string;
-  testId?: string;
 }
 
 /**
@@ -23,27 +17,17 @@ interface InteractivePersonNameProps {
 export function InteractivePersonName({
   person,
   children,
-  className,
-  ariaLabel,
-  enableModifierShortcuts = true,
-  displayName,
-  testId,
 }: InteractivePersonNameProps) {
   const { t } = useTranslation("tasks");
-  const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.pubkey;
-  const label = ariaLabel ?? t("people.actions.openMenu", { name: resolvedDisplayName });
+  const label = t("people.actions.openMenu", { name: getCompactPersonLabel(person) });
 
   return (
     <PersonHoverCard person={person}>
-      <PersonActionMenu person={person} enableModifierShortcuts={enableModifierShortcuts}>
+      <PersonActionMenu person={person} enableModifierShortcuts>
         <button
           type="button"
-          className={cn(
-            "rounded focus:outline-none focus:ring-2 focus:ring-primary/50 min-w-0",
-            className,
-          )}
+          className="min-w-0 max-w-full rounded text-left transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           aria-label={label}
-          data-testid={testId}
         >
           {children}
         </button>
