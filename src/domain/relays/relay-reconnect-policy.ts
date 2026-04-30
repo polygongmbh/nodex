@@ -16,7 +16,7 @@ const DEFAULT_MANUAL_RECONNECT_ACTION: ManualRelayReconnectAction = {
 
 export function shouldReconnectRelayOnSelection(status: Relay["connectionStatus"]): boolean {
   const reconnectAction = resolveManualRelayReconnectAction(status);
-  return reconnectAction.reconnectTransport || reconnectAction.retryAuth;
+  return reconnectAction.retryAuth;
 }
 
 export function resolveManualRelayReconnectAction(

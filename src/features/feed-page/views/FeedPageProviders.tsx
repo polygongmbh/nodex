@@ -143,7 +143,7 @@ function FeedInteractionBusFromContexts({
         sidebarCommands.removeRelay(intent.url);
       },
       "sidebar.relay.reconnect": (intent) => {
-        sidebarCommands.reconnectRelay(intent.url);
+        sidebarCommands.reconnectRelay(intent.url, { forceNewSocket: intent.forceNewSocket });
       },
       "sidebar.savedFilter.apply": (intent) => {
         sidebarCommands.applySavedFilter(intent.configurationId);

@@ -64,7 +64,11 @@ describe("RelayManagement", () => {
     fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
     fireEvent.click(screen.getByRole("button", { name: /reconnect relay/i }));
 
-    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sidebar.relay.reconnect",
+      url: "wss://relay.one",
+      forceNewSocket: true,
+    });
   });
 
   it("keeps the reconnect button enabled while a relay is connecting", () => {
@@ -82,7 +86,11 @@ describe("RelayManagement", () => {
     expect(reconnectButton).toBeEnabled();
     fireEvent.click(reconnectButton);
 
-    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sidebar.relay.reconnect",
+      url: "wss://relay.one",
+      forceNewSocket: true,
+    });
   });
 
   it("hides the reconnect button for connected relays", () => {
@@ -112,7 +120,11 @@ describe("RelayManagement", () => {
     fireEvent.click(screen.getByRole("button", { name: /remove relay/i }));
 
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.remove", url: "wss://relay.one" });
-    expect(dispatch).not.toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
+    expect(dispatch).not.toHaveBeenCalledWith({
+      type: "sidebar.relay.reconnect",
+      url: "wss://relay.one",
+      forceNewSocket: true,
+    });
   });
 
   it("dispatches relay reorder intent with the next ordered relay urls", () => {

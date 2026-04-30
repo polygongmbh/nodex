@@ -40,7 +40,7 @@ export type FeedInteractionIntent =
   | { type: "sidebar.relay.add"; url: string }
   | { type: "sidebar.relay.reorder"; orderedUrls: string[] }
   | { type: "sidebar.relay.remove"; url: string }
-  | { type: "sidebar.relay.reconnect"; url: string }
+  | { type: "sidebar.relay.reconnect"; url: string; forceNewSocket?: boolean }
   | { type: "sidebar.channel.toggle"; channelId: string }
   | { type: "sidebar.channel.exclusive"; channelId: string }
   | { type: "sidebar.channel.toggleAll" }

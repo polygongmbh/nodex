@@ -3,8 +3,8 @@ import { resolveManualRelayReconnectAction, shouldReconnectRelayOnSelection } fr
 
 describe("shouldReconnectRelayOnSelection", () => {
   it("reconnects for any selection state that maps to a manual reconnect action", () => {
-    expect(shouldReconnectRelayOnSelection("disconnected")).toBe(true);
-    expect(shouldReconnectRelayOnSelection("connection-error")).toBe(true);
+    expect(shouldReconnectRelayOnSelection("disconnected")).toBe(false);
+    expect(shouldReconnectRelayOnSelection("connection-error")).toBe(false);
     expect(shouldReconnectRelayOnSelection("verification-failed")).toBe(true);
     expect(shouldReconnectRelayOnSelection("read-only")).toBe(true);
 

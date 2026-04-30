@@ -28,6 +28,14 @@ function buildRelay(overrides: Partial<Relay> = {}): Relay {
   };
 }
 
+function buildReadOnlyRelay(overrides: Partial<Relay> = {}): Relay {
+  return buildRelay({ connectionStatus: "read-only", ...overrides });
+}
+
+function buildVerificationFailedRelay(overrides: Partial<Relay> = {}): Relay {
+  return buildRelay({ connectionStatus: "verification-failed", ...overrides });
+}
+
 function renderSelectionController(relays: Relay[], reconnectFailureGraceMs = 50) {
   return renderHook(
     ({ currentRelays }) => useRelaySelectionController({
@@ -73,7 +81,7 @@ describe("useRelaySelectionController", () => {
   });
 
   it("keeps a relay selected after reconnect recovers", () => {
-    const { result, rerender } = renderSelectionController([buildRelay()]);
+    const { result, rerender } = renderSelectionController([buildVerificationFailedRelay()]);
 
     expectExclusiveSelectReconnect(result);
 
@@ -97,7 +105,7 @@ describe("useRelaySelectionController", () => {
 
   it("deselects a failed relay again when reconnect never recovers", () => {
     vi.useFakeTimers();
-    const { result } = renderSelectionController([buildRelay()]);
+    const { result } = renderSelectionController([buildVerificationFailedRelay()]);
 
     expectExclusiveSelectReconnect(result);
 
@@ -113,7 +121,7 @@ describe("useRelaySelectionController", () => {
   });
 
   it("deselects a relay when it returns to a failed state after connecting", () => {
-    const { result, rerender } = renderSelectionController([buildRelay()], 500);
+    const { result, rerender } = renderSelectionController([buildVerificationFailedRelay()], 500);
 
     expectExclusiveSelectReconnect(result);
 
@@ -136,11 +144,33 @@ describe("useRelaySelectionController", () => {
   });
 
   it("uses the normal selection toast when a read-only relay is activated", () => {
-    const { result } = renderSelectionController([buildRelay({ connectionStatus: "read-only" })]);
+    const { result } = renderSelectionController([buildReadOnlyRelay()]);
 
     expectExclusiveSelectReconnect(result);
 
     expect(toast).toHaveBeenCalled();
+    expect(toast.info).not.toHaveBeenCalled();
+    expectActiveRelayIds(result, ["relay-one"]);
+  });
+
+  it("does not trigger reconnect handling for disconnected relays on selection", () => {
+    const { result } = renderSelectionController([buildRelay({ connectionStatus: "disconnected" })]);
+
+    act(() => {
+      expect(result.current.handleRelaySelectIntent("relay-one", "exclusive")).toBeNull();
+    });
+
+    expect(toast.info).not.toHaveBeenCalled();
+    expectActiveRelayIds(result, ["relay-one"]);
+  });
+
+  it("does not trigger reconnect handling for connection-error relays on selection", () => {
+    const { result } = renderSelectionController([buildRelay({ connectionStatus: "connection-error" })]);
+
+    act(() => {
+      expect(result.current.handleRelaySelectIntent("relay-one", "exclusive")).toBeNull();
+    });
+
     expect(toast.info).not.toHaveBeenCalled();
     expectActiveRelayIds(result, ["relay-one"]);
   });

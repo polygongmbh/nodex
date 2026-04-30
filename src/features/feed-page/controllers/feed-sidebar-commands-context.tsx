@@ -25,7 +25,7 @@ export interface FeedSidebarCommands {
   addRelay(url: string): void;
   reorderRelays(orderedUrls: string[]): void;
   removeRelay(url: string): void;
-  reconnectRelay(url: string): void;
+  reconnectRelay(url: string, options?: { forceNewSocket?: boolean }): void;
   // Saved filters
   applySavedFilter(configurationId: string): void;
   saveCurrentFilter(name: string): void;

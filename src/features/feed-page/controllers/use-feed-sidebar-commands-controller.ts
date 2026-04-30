@@ -31,7 +31,7 @@ export interface UseFeedSidebarCommandsControllerOptions {
   onAddRelay: (url: string) => void;
   onReorderRelays: (orderedUrls: string[]) => void;
   onRemoveRelay: (url: string) => void;
-  onReconnectRelay: (url: string) => void;
+  onReconnectRelay: (url: string, options?: { forceNewSocket?: boolean }) => void;
   // Saved filter commands
   onApplySavedFilter: (configurationId: string) => void;
   onSaveCurrentFilter: (name: string) => void;

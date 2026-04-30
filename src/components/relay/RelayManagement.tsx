@@ -348,7 +348,11 @@ export function RelayManagement({
                         className="h-8 w-8 text-muted-foreground hover:text-foreground"
                         onClick={(event) => {
                           stopRelayCardToggle(event);
-                          void dispatchFeedInteraction({ type: "sidebar.relay.reconnect", url: relay.url });
+                          void dispatchFeedInteraction({
+                            type: "sidebar.relay.reconnect",
+                            url: relay.url,
+                            forceNewSocket: true,
+                          });
                         }}
                         aria-label={t("relay.reconnect")}
                         title={t("relay.reconnect")}
