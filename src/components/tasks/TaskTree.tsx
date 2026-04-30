@@ -206,21 +206,22 @@ export function TaskTree({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      <SharedViewComposer
-        visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
-        onCancel={() => setIsComposerExpanded(false)}
-        focusedTaskId={normalizedFocusedTaskId}
-        forceExpanded={effectiveForceShowComposer}
-        forceExpandSignal={composeGuideActivationSignal}
-        onExpandedChange={setIsComposerExpanded}
-        mentionRequest={mentionRequest}
-        onMentionRequestConsumed={onMentionRequestConsumed}
-        composeRestoreRequest={composeRestoreRequest}
-        className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
-        defaultContent={composerDefaultContent}
-        collapseOnSuccess
-        allowComment={Boolean(normalizedFocusedTaskId)}
-      />
+      {!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer) && (
+        <SharedViewComposer
+          onCancel={() => setIsComposerExpanded(false)}
+          focusedTaskId={normalizedFocusedTaskId}
+          forceExpanded={effectiveForceShowComposer}
+          forceExpandSignal={composeGuideActivationSignal}
+          onExpandedChange={setIsComposerExpanded}
+          mentionRequest={mentionRequest}
+          onMentionRequestConsumed={onMentionRequestConsumed}
+          composeRestoreRequest={composeRestoreRequest}
+          className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+          defaultContent={composerDefaultContent}
+          collapseOnSuccess
+          allowComment={Boolean(normalizedFocusedTaskId)}
+        />
+      )}
 
       {/* Task List */}
       <TaskAuthorProfilesProvider tasks={allTasks}>

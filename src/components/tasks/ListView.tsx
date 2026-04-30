@@ -440,17 +440,18 @@ export function ListView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      <SharedViewComposer
-        visible={authPolicy.canOpenCompose || effectiveForceShowComposer}
-        onCancel={() => {}}
-        focusedTaskId={focusedTaskId}
-        forceExpanded={effectiveForceShowComposer}
-        forceExpandSignal={composeGuideActivationSignal}
-        composeRestoreRequest={composeRestoreRequest}
-        className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
-        defaultContent={composerDefaultContent}
-        allowComment={false}
-      />
+      {(authPolicy.canOpenCompose || effectiveForceShowComposer) && (
+        <SharedViewComposer
+          onCancel={() => {}}
+          focusedTaskId={focusedTaskId}
+          forceExpanded={effectiveForceShowComposer}
+          forceExpandSignal={composeGuideActivationSignal}
+          composeRestoreRequest={composeRestoreRequest}
+          className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+          defaultContent={composerDefaultContent}
+          allowComment={false}
+        />
+      )}
 
       {/* Table */}
       <div ref={tableContainerRef} className="scrollbar-main-view flex-1 overflow-x-auto">

@@ -1155,7 +1155,9 @@ export function CalendarView({
         )}
       </div>
 
-      <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
+      {mediaController.activeMediaIndex !== null && (
+        <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
+      )}
 
     </main>
   );

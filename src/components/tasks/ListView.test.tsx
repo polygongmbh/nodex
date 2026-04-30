@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ListView } from "./ListView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -146,7 +146,7 @@ describe("ListView priority control", () => {
     const relays = [makeRelay()];
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
-    render(
+    const { container } = render(
       <ListView
         focusedTaskId={null}
         tasks={tasks}
@@ -154,8 +154,8 @@ describe("ListView priority control", () => {
       />
     );
 
-    const [prioritySelect] = screen.getAllByRole("combobox");
-    expect(prioritySelect).toBeDisabled();
+    const taskRow = container.querySelector('[data-task-id="task-locked"]') as HTMLElement;
+    expect(within(taskRow).getByRole("button", { name: /priority/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /set date/i })).toBeDisabled();
   });
 

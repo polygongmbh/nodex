@@ -522,19 +522,20 @@ export function FeedView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      <SharedViewComposer
-        visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
-        onCancel={() => {}}
-        focusedTaskId={focusedTaskId}
-        forceExpanded={effectiveForceShowComposer}
-        forceExpandSignal={composeGuideActivationSignal}
-        mentionRequest={mentionRequest}
-        onMentionRequestConsumed={onMentionRequestConsumed}
-        composeRestoreRequest={composeRestoreRequest}
-        className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
-        defaultContent={composerDefaultContent}
-        allowFeedMessageTypes
-      />
+      {!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer) && (
+        <SharedViewComposer
+          onCancel={() => {}}
+          focusedTaskId={focusedTaskId}
+          forceExpanded={effectiveForceShowComposer}
+          forceExpandSignal={composeGuideActivationSignal}
+          mentionRequest={mentionRequest}
+          onMentionRequestConsumed={onMentionRequestConsumed}
+          composeRestoreRequest={composeRestoreRequest}
+          className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
+          defaultContent={composerDefaultContent}
+          allowFeedMessageTypes
+        />
+      )}
 
       {/* Feed List */}
       <div
@@ -556,7 +557,9 @@ export function FeedView({
           <ScopeFooterHint />
         ) : null}
       </div>
-      <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
+      {mediaController.activeMediaIndex !== null && (
+        <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
+      )}
       <RawNostrEventDialog
         open={rawEventDialogOpen}
         onOpenChange={setRawEventDialogOpen}

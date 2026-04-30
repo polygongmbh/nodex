@@ -168,10 +168,29 @@ export function PrioritySelect({
       }
     : {};
 
+  if (disabled) {
+    return (
+      <button
+        id={id}
+        type="button"
+        disabled
+        aria-label={ariaLabel}
+        title={effectiveTitle}
+        className={cn(
+          "h-8 w-auto min-w-0 max-w-full flex items-center justify-start gap-1 overflow-hidden text-xs cursor-default",
+          className
+        )}
+        {...stopProps}
+      >
+        {leadingIcon}
+        <span className="block min-w-0 max-w-full truncate">{displayLabel}</span>
+      </button>
+    );
+  }
+
   return (
     <Select
       value={value}
-      disabled={disabled}
       onOpenChange={onOpenChange}
       onValueChange={(next) => {
         if (next === PRIORITY_NONE_VALUE) {
@@ -188,7 +207,7 @@ export function PrioritySelect({
         title={effectiveTitle}
         hideIndicator
         className={cn(
-          "h-8 w-auto min-w-0 max-w-full justify-start gap-1 overflow-hidden text-xs [&>span]:block [&>span]:min-w-0 [&>span]:max-w-full [&>span]:truncate disabled:opacity-100 disabled:cursor-default",
+          "h-8 w-auto min-w-0 max-w-full justify-start gap-1 overflow-hidden text-xs [&>span]:block [&>span]:min-w-0 [&>span]:max-w-full [&>span]:truncate",
           className
         )}
         {...stopProps}

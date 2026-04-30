@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import type { ComposeRestoreRequest, TaskStatus } from "@/types";
 
 interface SharedViewComposerProps {
-  visible: boolean;
   onCancel?: () => void;
   focusedTaskId: string | null;
   initialStatus?: TaskStatus;
@@ -30,7 +29,6 @@ interface SharedViewComposerProps {
 }
 
 export function SharedViewComposer({
-  visible,
   onCancel,
   focusedTaskId,
   initialStatus,
@@ -58,16 +56,15 @@ export function SharedViewComposer({
     && parentTask.relays.every((relayId) => !isWritableRelay(relays.find((relay) => relay.id === relayId)));
 
   useEffect(() => {
-    if (!visible || !shouldHideComposer || !authPolicy.canCreateContent) {
+    if (!shouldHideComposer || !authPolicy.canCreateContent) {
       hasWarnedHiddenComposerRef.current = false;
       return;
     }
     if (hasWarnedHiddenComposerRef.current) return;
     hasWarnedHiddenComposerRef.current = true;
     toast.warning(t("toasts.warnings.readOnlyParentReplyHidden"));
-  }, [authPolicy.canCreateContent, shouldHideComposer, t, visible]);
+  }, [authPolicy.canCreateContent, shouldHideComposer, t]);
 
-  if (!visible) return null;
   if (shouldHideComposer) return null;
 
   return (
