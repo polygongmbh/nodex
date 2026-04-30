@@ -17,7 +17,7 @@ function getAuthorSeed(author: Person): string {
     author.nip05 ||
     author.displayName ||
     author.name ||
-    author.id ||
+    author.pubkey ||
     "anon";
   return candidate.trim().toLowerCase();
 }

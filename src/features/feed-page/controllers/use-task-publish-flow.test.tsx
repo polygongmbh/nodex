@@ -33,7 +33,7 @@ vi.mock("@/lib/user-preferences", () => ({
 function Harness({
   publishEvent = vi.fn(async () => ({ success: true, eventId: "b".repeat(64), publishedRelayUrls: ["wss://relay.one"] })),
   initialTasks = [] as Task[],
-  currentUser = makePerson({ id: "a".repeat(64), name: "Alice", displayName: "Alice" }),
+  currentUser = makePerson({ pubkey: "a".repeat(64), name: "Alice", displayName: "Alice" }),
   people = [] as Person[],
   dispatchFrecencyIntent = vi.fn(),
   publishTaskDueUpdate = vi.fn(async () => true),
@@ -313,11 +313,11 @@ describe("useTaskPublishFlow", () => {
   it("blocks due date and priority changes for unrelated users on assigned tasks", async () => {
     const publishTaskDueUpdate = vi.fn(async () => true);
     const publishTaskPriorityUpdate = vi.fn(async () => true);
-    const currentUser = makePerson({ id: "viewer-pubkey", name: "viewer", displayName: "Viewer" });
+    const currentUser = makePerson({ pubkey: "viewer-pubkey", name: "viewer", displayName: "Viewer" });
     const initialTask = makeTask({
       id: "task-1",
       relays: ["relay-one"],
-      author: makePerson({ id: "creator-pubkey", name: "creator", displayName: "Creator" }),
+      author: makePerson({ pubkey: "creator-pubkey", name: "creator", displayName: "Creator" }),
       assigneePubkeys: ["assignee-pubkey"],
     });
 
@@ -356,7 +356,7 @@ describe("useTaskPublishFlow", () => {
 
     renderHarness({
       publishEvent,
-      people: [makePerson({ id: "a".repeat(64), name: "alice", displayName: "Alice" })],
+      people: [makePerson({ pubkey: "a".repeat(64), name: "alice", displayName: "Alice" })],
     });
     fireEvent.click(screen.getByRole("button", { name: "SubmitAuthoritativeMentions" }));
 
@@ -384,7 +384,7 @@ describe("useTaskPublishFlow", () => {
 
     renderHarness({
       publishEvent,
-      people: [makePerson({ id: "a".repeat(64), name: "alice", displayName: "Alice" })],
+      people: [makePerson({ pubkey: "a".repeat(64), name: "alice", displayName: "Alice" })],
     });
     fireEvent.click(screen.getByRole("button", { name: "SubmitWhitespaceDelimitedTokens" }));
 

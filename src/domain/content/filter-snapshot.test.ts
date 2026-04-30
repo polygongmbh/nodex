@@ -2,11 +2,10 @@ import { describe, expect, it } from "vitest";
 import type { Person } from "@/types/person";
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "./filter-snapshot";
 
-const createPerson = (id: string, isSelected: boolean): Person => ({
-  id,
-  name: id,
-  displayName: id,
-  isOnline: false,
+const createPerson = (pubkey: string, isSelected: boolean): Person => ({
+  pubkey,
+  name: pubkey,
+  displayName: pubkey,
   isSelected,
 });
 

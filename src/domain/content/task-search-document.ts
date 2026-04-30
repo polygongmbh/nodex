@@ -12,7 +12,7 @@ function resolvePeopleLookup(people: Person[] | Map<string, Person>): Map<string
   }
 
   return new Map(
-    people.map((person) => [normalizeTaskSearchValue(person.id), person] as const)
+    people.map((person) => [normalizeTaskSearchValue(person.pubkey), person] as const)
   );
 }
 
@@ -31,13 +31,13 @@ function collectResolvedMentionPeople(
 
     const directMatch = peopleById.get(normalizedIdentifier);
     if (directMatch) {
-      resolved.set(directMatch.id, directMatch);
+      resolved.set(directMatch.pubkey, directMatch);
       continue;
     }
 
     for (const person of people) {
       if (getMentionAliases(person).includes(normalizedIdentifier)) {
-        resolved.set(person.id, person);
+        resolved.set(person.pubkey, person);
         break;
       }
     }
@@ -56,7 +56,7 @@ export function buildTaskSearchableText(
   const assignees = task.assigneePubkeys ?? [];
   const resolvedMentionPeople = collectResolvedMentionPeople(mentions, peopleById);
   const resolvedAssigneePeople = collectResolvedMentionPeople(assignees, peopleById);
-  const authorId = task.author?.id ? normalizeTaskSearchValue(task.author.id) : "";
+  const authorId = task.author?.pubkey ? normalizeTaskSearchValue(task.author.pubkey) : "";
   const resolvedAuthor =
     (authorId ? peopleById.get(authorId) : undefined) ?? task.author;
 
@@ -72,18 +72,18 @@ export function buildTaskSearchableText(
       person.name ?? "",
       person.displayName ?? "",
       person.nip05 ?? "",
-      person.id ?? "",
+      person.pubkey ?? "",
     ]),
     ...resolvedAssigneePeople.flatMap((person) => [
       person.name ?? "",
       person.displayName ?? "",
       person.nip05 ?? "",
-      person.id ?? "",
+      person.pubkey ?? "",
     ]),
     resolvedAuthor?.name ?? "",
     resolvedAuthor?.displayName ?? "",
     resolvedAuthor?.nip05 ?? "",
-    resolvedAuthor?.id ?? "",
+    resolvedAuthor?.pubkey ?? "",
   ]
     .filter(Boolean)
     .map(normalizeTaskSearchValue)

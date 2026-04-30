@@ -1,19 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PersonItem } from "./PersonItem";
-import type { Person } from "@/types/person";
+import type { SidebarPerson } from "@/types/person";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 
-const basePerson: Person = {
-  id: "npub123",
+const basePerson: SidebarPerson = {
+  pubkey: "npub123",
   name: "alice",
   displayName: "Alice",
-  isOnline: true,
+
   isSelected: false,
 };
 
 describe("PersonItem", () => {
-  const renderPersonItem = (person: Person) => {
+  const renderPersonItem = (person: SidebarPerson) => {
     const dispatch = vi.fn().mockResolvedValue({
       envelope: { id: 1, dispatchedAtMs: Date.now(), intent: { type: "ui.focusTasks" } },
       outcome: { status: "handled" },

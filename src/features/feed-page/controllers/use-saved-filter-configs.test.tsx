@@ -14,8 +14,8 @@ const relays: Relay[] = [
 ];
 
 const peopleSeed: Person[] = [
-  makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
-  makePerson({ id: "bob", name: "bob", displayName: "Bob" }),
+  makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
+  makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
 ];
 
 function Harness() {
@@ -39,7 +39,7 @@ function Harness() {
         channelStates: Object.fromEntries(
           Array.from(channelFilterStates.entries()).filter(([, state]) => state === "included" || state === "excluded")
         ) as Record<string, "included" | "excluded">,
-        selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.id).sort(),
+        selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.pubkey).sort(),
         channelMatchMode,
         quickFilters,
       }),
@@ -99,7 +99,7 @@ function Harness() {
       <output data-testid="channel-state">{channelFilterStates.get("general") || "neutral"}</output>
       <output data-testid="match-mode">{channelMatchMode}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.id).join(",")}
+        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
       </output>
       <output data-testid="quick-filters">
         {[

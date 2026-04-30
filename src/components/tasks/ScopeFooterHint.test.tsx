@@ -33,16 +33,15 @@ const channels: Channel[] = [
 
 const people: Person[] = [
   {
-    id: "alice",
+    pubkey: "alice",
     name: "alice",
     displayName: "Alice",
     avatar: "",
-    isOnline: true,
     isSelected: true,
   },
 ];
 
-const author = makePerson({ id: "author", name: "author", displayName: "Author", isOnline: false });
+const author = makePerson({ pubkey: "author", name: "author", displayName: "Author" });
 
 const FILTER_SCOPE = "with Alice, in #ops, excluding #frontend, on relay.one";
 const FOOTER_SCOPE_TEXT = `This is all ${FILTER_SCOPE}`;

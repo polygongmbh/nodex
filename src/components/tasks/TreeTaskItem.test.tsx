@@ -46,7 +46,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 
 const baseTask: Task = makeTask({
   id: "t1",
-  author: makePerson({ id: "me", name: "me", displayName: "Me" }),
+  author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
   content: "Ship feature #frontend",
   tags: ["frontend"],
   status: "open",
@@ -220,7 +220,7 @@ describe("TreeTaskItem status actions", () => {
     renderTreeTaskItem({
       task: {
         ...baseTask,
-        author: makePerson({ id: "other-pubkey", name: "bob" }),
+        author: makePerson({ pubkey: "other-pubkey", name: "bob" }),
         content: "Follow up with @alice",
       },
     });
@@ -239,7 +239,7 @@ describe("TreeTaskItem status actions", () => {
     renderTreeTaskItem({
       task: {
         ...baseTask,
-        author: makePerson({ id: "other-pubkey", name: "alice" }),
+        author: makePerson({ pubkey: "other-pubkey", name: "alice" }),
       },
     });
 
@@ -251,12 +251,12 @@ describe("TreeTaskItem status actions", () => {
 
   it("blocks status changes when another user's task matches a known person", () => {
     const sparseAuthor = makePerson({
-      id: "ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318",
+      pubkey: "ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318",
       name: "ad9cb1b0",
       displayName: "ad9cb1b0...1318",
     });
     const knownPerson = makePerson({
-      id: sparseAuthor.id,
+      pubkey: sparseAuthor.pubkey,
       name: "ryan",
       displayName: "Ryan",
       nip05: "ryan@example.com",
@@ -266,7 +266,7 @@ describe("TreeTaskItem status actions", () => {
       task: {
         ...baseTask,
         author: sparseAuthor,
-        mentions: [sparseAuthor.id],
+        mentions: [sparseAuthor.pubkey],
       },
       people: [knownPerson],
     });

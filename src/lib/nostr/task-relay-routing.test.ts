@@ -21,7 +21,6 @@ const makeTask = (overrides: Partial<Task> = {}): Task => ({
     id: "b".repeat(64),
     name: "alice",
     displayName: "Alice",
-    isOnline: true,
     isSelected: false,
   },
   content: "Task",

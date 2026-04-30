@@ -9,7 +9,7 @@ function normalize(value?: unknown): string {
 function buildSelectedPersonIdentifierSet(selectedPeople: Person[]): Set<string> {
   const identifiers = new Set<string>();
   for (const person of selectedPeople) {
-    [person.id, person.name, person.displayName]
+    [person.pubkey, person.name, person.displayName]
       .filter(Boolean)
       .map(normalize)
       .forEach((identifier) => identifiers.add(identifier));
@@ -20,8 +20,8 @@ function buildSelectedPersonIdentifierSet(selectedPeople: Person[]): Set<string>
 export function taskMatchesSelectedPeople(task: Task, selectedPeople: Person[]): boolean {
   if (selectedPeople.length === 0) return true;
 
-  const selectedPersonIds = new Set(selectedPeople.map((person) => normalize(person.id)).filter(Boolean));
-  if (selectedPersonIds.has(normalize(task.author?.id))) {
+  const selectedPersonIds = new Set(selectedPeople.map((person) => normalize(person.pubkey)).filter(Boolean));
+  if (selectedPersonIds.has(normalize(task.author?.pubkey))) {
     return true;
   }
 

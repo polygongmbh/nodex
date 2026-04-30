@@ -41,8 +41,8 @@ const channels: Channel[] = [
 ];
 
 const peopleSeed: Person[] = [
-  makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
-  makePerson({ id: "bob", name: "bob", displayName: "Bob" }),
+  makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
+  makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
 ];
 
 function Harness({
@@ -116,7 +116,7 @@ function Harness({
         ]);
       }}>KeepGeneralComposeForcedOnly</button>
       <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAliceSidebarPerson</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", author: makePerson({ id: "alice", name: "alice", displayName: "Alice" }) })}>
+      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", author: makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }) })}>
         AuthorClick
       </button>
       <button onClick={() => setPeople(peopleSeed)}>LoadPeople</button>
@@ -130,7 +130,7 @@ function Harness({
       </output>
       <output data-testid="channel-match-mode">{filters.channelMatchMode}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.id).join(",")}
+        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
       </output>
       <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
       <output data-testid="mention-request">{filters.mentionRequest?.mention ?? ""}</output>

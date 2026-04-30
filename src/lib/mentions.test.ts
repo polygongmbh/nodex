@@ -11,20 +11,16 @@ import {
 } from "./mentions";
 
 const alice: Person = {
-  id: "a".repeat(64),
+  pubkey: "a".repeat(64),
   name: "alice",
   displayName: "Alice",
   nip05: "alice@example.com",
-  isOnline: true,
-  isSelected: false,
 };
 
 const bob: Person = {
-  id: "b".repeat(64),
+  pubkey: "b".repeat(64),
   name: "bob",
   displayName: "Bob",
-  isOnline: true,
-  isSelected: false,
 };
 
 describe("mentions", () => {

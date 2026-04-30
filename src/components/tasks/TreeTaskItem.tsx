@@ -134,8 +134,8 @@ export function TreeTaskItem({
   const statusMenuOpenedOnPointerDownRef = useRef(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
-  const isPubkey = task.author.id.length === 64 && /^[a-f0-9]+$/.test(task.author.id);
-  const nostrProfile = isPubkey ? authorProfiles?.[task.author.id] : undefined;
+  const isPubkey = task.author.pubkey.length === 64 && /^[a-f0-9]+$/.test(task.author.pubkey);
+  const nostrProfile = isPubkey ? authorProfiles?.[task.author.pubkey] : undefined;
   
   // Use Nostr profile if available, fallback to task author
   const authorName = nostrProfile?.displayName || nostrProfile?.name || task.author.displayName;

@@ -179,9 +179,9 @@ function FeedIndexContent() {
   });
 
   const sidebarPeopleWithSelected = useMemo(() => {
-    const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
-    const selectedMissing = people.filter((person) => person.isSelected && !sidebarIds.has(person.id));
-    return [...selectedMissing, ...sidebarPeople];
+    const sidebarIds = new Set(sidebarPeople.map((person) => person.pubkey));
+    const selectedMissing = people.filter((person) => person.isSelected && !sidebarIds.has(person.pubkey));
+    return [...(selectedMissing as typeof sidebarPeople), ...sidebarPeople];
   }, [people, sidebarPeople]);
 
   const {
@@ -426,7 +426,7 @@ function FeedIndexContent() {
     const selectedPeopleIds = new Set(snapshot.selectedPeopleIds);
     const snapshotPeople = people.map((person) => ({
       ...person,
-      isSelected: selectedPeopleIds.has(person.id),
+      isSelected: selectedPeopleIds.has(person.pubkey),
     }));
     const snapshotFilterIndex = buildTaskViewFilterIndex(allTasks, snapshotPeople);
     const prefilteredTaskIds = new Set(relayScopedTasks.map((task) => task.id));
@@ -691,7 +691,7 @@ function FeedIndexContent() {
       collapsedPreviewChannels: focusedTaskCollapsedSidebarPreview.channels,
       channelMatchMode,
       people: peopleWithState,
-      collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people,
+      collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people as typeof peopleWithState,
       nostrRelays,
       isFocused: isSidebarFocused,
       quickFilters,

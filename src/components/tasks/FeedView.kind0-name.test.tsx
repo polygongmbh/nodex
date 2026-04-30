@@ -15,19 +15,15 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
 const authorId = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 const taskAuthor: Person = {
-  id: authorId,
+  pubkey: authorId,
   name: "me",
   displayName: "You",
-  isOnline: true,
-  isSelected: false,
 };
 
 const peopleAuthor: Person = {
-  id: authorId,
+  pubkey: authorId,
   name: "janek",
   displayName: "Janek",
-  isOnline: true,
-  isSelected: false,
 };
 
 const tasks: Task[] = [makeTask({ id: "task-1", author: taskAuthor, status: "open" })];

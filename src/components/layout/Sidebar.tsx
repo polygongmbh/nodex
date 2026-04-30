@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
 import {   Relay, Channel, ChannelMatchMode, QuickFilterState, SavedFilterConfiguration } from "@/types";
-import type { Person } from "@/types/person";
+import type { SidebarPerson } from "@/types/person";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
@@ -69,8 +69,8 @@ export interface SidebarProps {
   collapsedPreviewChannels?: Channel[];
   pinnedChannelIds?: string[];
   channelMatchMode?: ChannelMatchMode;
-  people: Person[];
-  collapsedPreviewPeople?: Person[];
+  people: SidebarPerson[];
+  collapsedPreviewPeople?: SidebarPerson[];
   nostrRelays: NDKRelayStatus[];
   isFocused?: boolean;
   quickFilters?: QuickFilterState;
@@ -164,7 +164,7 @@ export function Sidebar({
           isPinned: (person) => person.pinIndex !== undefined,
           maxItems: collapsedPreviewLimit,
           alwaysIncludePinned: true,
-        }).map((person) => person.id)
+        }).map((person) => person.pubkey)
       ),
     [collapsedPreviewLimit, collapsedPreviewPeople, people]
   );
@@ -183,11 +183,11 @@ export function Sidebar({
         .forEach((channel) => items.push({ type: "channel", id: channel.id }));
     }
     if (expandedSections.people) {
-      people.forEach(p => items.push({ type: 'person', id: p.id }));
+      people.forEach(p => items.push({ type: 'person', id: p.pubkey }));
     } else {
       people
-        .filter((person) => collapsedPreviewPersonIds.has(person.id))
-        .forEach((person) => items.push({ type: "person", id: person.id }));
+        .filter((person) => collapsedPreviewPersonIds.has(person.pubkey))
+        .forEach((person) => items.push({ type: "person", id: person.pubkey }));
     }
     return items;
   }, [relays, channels, people, expandedSections, collapsedPreviewChannelIds, collapsedPreviewPersonIds]);
@@ -444,11 +444,11 @@ export function Sidebar({
         >
           {people.map((person) => (
             <PersonItem
-              key={person.id}
+              key={person.pubkey}
               person={person}
               isPinned={person.pinIndex !== undefined}
-              isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.id}
-              className={!expandedSections.people && !collapsedPreviewPersonIds.has(person.id) ? "hidden" : undefined}
+              isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.pubkey}
+              className={!expandedSections.people && !collapsedPreviewPersonIds.has(person.pubkey) ? "hidden" : undefined}
             />
           ))}
         </SidebarSection>

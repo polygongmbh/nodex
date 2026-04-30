@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Person } from "@/types/person";
+import type { SidebarPerson } from "@/types/person";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { SidebarFilterRow } from "./SidebarFilterRow";
 import { SidebarPinButton } from "./SidebarPinButton";
@@ -12,7 +12,7 @@ import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 
 interface PersonItemProps {
-  person: Person;
+  person: SidebarPerson;
   isPinned?: boolean;
   isKeyboardFocused?: boolean;
   className?: string;
@@ -26,8 +26,8 @@ export function PersonItem({
 }: PersonItemProps) {
   const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const personName = person.id === "me" ? t("sidebar.filters.me") : person.displayName;
-  const onlineStatus = person.onlineStatus ?? (person.isOnline ? "online" : "offline");
+  const personName = person.pubkey === "me" ? t("sidebar.filters.me") : person.displayName;
+  const onlineStatus = person.presence?.state ?? "offline";
   const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-warning" : null;
   const handlePersonShortcut = (event: MouseEvent, fallback: "toggle" | "exclusive") => {
     const shortcutIntent = getPersonShortcutIntent(event);
@@ -37,16 +37,16 @@ export function PersonItem({
       return true;
     }
     if (fallback === "toggle") {
-      void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
+      void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.pubkey });
     } else {
-      void dispatchFeedInteraction({ type: "sidebar.person.exclusive", personId: person.id });
+      void dispatchFeedInteraction({ type: "sidebar.person.exclusive", personId: person.pubkey });
     }
     return false;
   };
 
   return (
     <SidebarFilterRow
-      itemId={`person-${person.id}`}
+      itemId={`person-${person.pubkey}`}
       isKeyboardFocused={isKeyboardFocused}
       className={cn(
         "relative gap-3 py-1.5",
@@ -55,14 +55,14 @@ export function PersonItem({
       )}
     >
       <SidebarPinButton
-        dataTestId={`person-item-pin-${person.id}`}
+        dataTestId={`person-item-pin-${person.pubkey}`}
         isPinned={isPinned}
         onClick={(e) => {
           e.stopPropagation();
           void dispatchFeedInteraction(
             isPinned
-              ? { type: "sidebar.person.unpin", personId: person.id }
-              : { type: "sidebar.person.pin", personId: person.id }
+              ? { type: "sidebar.person.unpin", personId: person.pubkey }
+              : { type: "sidebar.person.pin", personId: person.pubkey }
           );
         }}
         title={isPinned
@@ -80,7 +80,7 @@ export function PersonItem({
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <button
-            data-testid={`person-item-toggle-${person.id}`}
+            data-testid={`person-item-toggle-${person.pubkey}`}
             onClick={(event) => {
               event.stopPropagation();
               handlePersonShortcut(event, "toggle");
@@ -89,7 +89,7 @@ export function PersonItem({
             className="relative rounded-full hover:ring-2 hover:ring-primary/50"
           >
             <UserAvatar
-              id={person.id}
+              id={person.pubkey}
               displayName={person.displayName}
               className={cn(
                 "w-7 h-7 transition-colors",
@@ -97,14 +97,14 @@ export function PersonItem({
                   ? "ring-2 ring-primary/50 motion-filter-pop"
                   : "group-hover:opacity-90"
               )}
-              beamTestId={`sidebar-person-beam-${person.id}`}
+              beamTestId={`sidebar-person-beam-${person.pubkey}`}
             />
             {statusDotClassName && (
               <div className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar", statusDotClassName)} />
             )}
           </button>
           <button
-            data-testid={`person-item-exclusive-${person.id}`}
+            data-testid={`person-item-exclusive-${person.pubkey}`}
             onClick={(event) => {
               event.stopPropagation();
               handlePersonShortcut(event, "exclusive");
@@ -129,7 +129,7 @@ export function PersonItem({
       <PersonActionMenu person={person} align="end">
         <button
           type="button"
-          data-testid={`person-item-actions-${person.id}`}
+          data-testid={`person-item-actions-${person.pubkey}`}
           className="rounded p-1 text-sidebar-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-accent/70 hover:text-foreground"
           aria-label={t("tasks:people.actions.openMenu", { name: personName })}
           title={t("tasks:people.actions.openMenu", { name: personName })}

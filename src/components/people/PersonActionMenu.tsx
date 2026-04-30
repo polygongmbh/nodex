@@ -2,7 +2,7 @@ import React from "react";
 import { AtSign, Copy, Filter, MessageSquareMore } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import type { Person } from "@/types/person";
+import type { Person, PersonPresenceSnapshot } from "@/types/person";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
   DropdownMenu,
@@ -172,9 +172,9 @@ export function PersonActionMenuContent({
   const alternateShortcutLabel = getPlatformAlternateShortcutLabel();
   const isMobile = useIsMobile();
   const compactLabel = getCompactPersonLabel(person);
-  const pubkeyLabel = toUserFacingPubkey(person.id);
-  const statusKey: "online" | "recent" | "offline" = person.onlineStatus
-    ?? (person.isOnline ? "online" : "offline");
+  const pubkeyLabel = toUserFacingPubkey(person.pubkey);
+  const presence = (person as Person & { presence?: PersonPresenceSnapshot }).presence;
+  const statusKey: "online" | "recent" | "offline" = presence?.state ?? "offline";
 
   const copyToClipboard = async (value: string, successMessageKey: string) => {
     try {
@@ -192,8 +192,8 @@ export function PersonActionMenuContent({
     );
   };
 
-  const npubValue = isNpub(person.id) ? person.id.toLowerCase() : hexPubkeyToNpub(person.id);
-  const hexValue = isHexPubkey(person.id) ? person.id.toLowerCase() : npubToHexPubkey(person.id);
+  const npubValue = isNpub(person.pubkey) ? person.pubkey.toLowerCase() : hexPubkeyToNpub(person.pubkey);
+  const hexValue = isHexPubkey(person.pubkey) ? person.pubkey.toLowerCase() : npubToHexPubkey(person.pubkey);
 
   // Mobile: profile preview card (replaces hover card) + two actions only
   if (isMobile) {
@@ -209,7 +209,7 @@ export function PersonActionMenuContent({
         <div className="px-2 py-2">
           <div className="flex items-start gap-3">
             <UserAvatar
-              id={person.id}
+              id={person.pubkey}
               displayName={person.displayName}
               className="h-10 w-10 shrink-0"
             />
@@ -297,8 +297,8 @@ export function PersonActionMenuContent({
       onCloseAutoFocus={onCloseAutoFocus}
     >
       <div className="px-2 py-1.5">
-        <p className="truncate text-sm font-medium text-foreground">{person.displayName || person.name || toUserFacingPubkey(person.id)}</p>
-        <p className="truncate text-xs text-muted-foreground">{person.nip05 || `@${person.name || toUserFacingPubkey(person.id)}`}</p>
+        <p className="truncate text-sm font-medium text-foreground">{person.displayName || person.name || toUserFacingPubkey(person.pubkey)}</p>
+        <p className="truncate text-xs text-muted-foreground">{person.nip05 || `@${person.name || toUserFacingPubkey(person.pubkey)}`}</p>
       </div>
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={() => {

@@ -57,7 +57,7 @@ describe("DesktopSearchDock", () => {
     mockUseFeedSurfaceState.mockReturnValue({
       searchQuery: "",
       channels: [{ id: "general", name: "general", filterState: "included" }],
-      people: [{ id: "p1", name: "alice", displayName: "Alice", avatar: "", isOnline: true, isSelected: true }],
+      people: [{ pubkey: "p1", name: "alice", displayName: "Alice", avatar: "", isSelected: true }],
     });
 
     render(

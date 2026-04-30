@@ -1,38 +1,43 @@
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 export interface Person {
-  id: string;
+  pubkey: string; // normalized lowercase 64-char hex
   name: string;
   displayName: string;
   nip05?: string;
   about?: string;
   avatar?: string;
-  isOnline: boolean;
-  onlineStatus?: "online" | "recent" | "offline";
-  lastPresenceAtMs?: number;
-  presenceView?: string;
-  presenceTaskId?: string | null;
-  isSelected: boolean;
-  /** Present when pinned; value is the display order (0 = first). */
-  pinIndex?: number;
 }
 
-type AuthorMetaLabelInput = Pick<Person, "id" | "displayName" | "name" | "nip05">;
+export type SelectablePerson = Person & { isSelected: boolean };
+
+export interface PersonPresenceSnapshot {
+  state: "online" | "recent" | "offline";
+  reportedAtMs?: number;
+  context?: { view?: string; taskId?: string | null };
+}
+
+export interface SidebarPerson extends SelectablePerson {
+  pinIndex?: number;
+  presence?: PersonPresenceSnapshot;
+}
+
+type AuthorMetaLabelInput = Pick<Person, "pubkey" | "displayName" | "name" | "nip05">;
 
 interface AuthorMetaLabelParts {
   primary: string;
   secondary?: string;
 }
 
-type PersonLabelSource = Pick<Person, "id" | "displayName" | "name">;
+type PersonLabelSource = Pick<Person, "pubkey" | "displayName" | "name">;
 
 function abbreviatePubkey(pubkey: string): string {
   return formatUserFacingPubkey(pubkey, { prefix: 6, suffix: 4, ellipsis: "…" });
 }
 
-export function isPubkeyDerivedPlaceholder(value: string, personId: string): boolean {
+export function isPubkeyDerivedPlaceholder(value: string, personPubkey: string): boolean {
   const normalizedValue = value.trim().toLowerCase();
-  const normalizedPubkey = personId.trim().toLowerCase();
+  const normalizedPubkey = personPubkey.trim().toLowerCase();
   const normalizedUserFacingPubkey = toUserFacingPubkey(normalizedPubkey).toLowerCase();
   const placeholders = new Set<string>();
 
@@ -66,32 +71,32 @@ export function isPubkeyDerivedPlaceholder(value: string, personId: string): boo
 }
 
 export function getPersonDisplayName(person: PersonLabelSource): string {
-  return person.displayName.trim() || person.name.trim() || person.id.trim();
+  return person.displayName.trim() || person.name.trim() || person.pubkey.trim();
 }
 
 export function getCompactPersonLabel(person: PersonLabelSource): string {
   const displayName = getPersonDisplayName(person);
 
-  if (isPubkeyDerivedPlaceholder(displayName, person.id)) {
-    return formatUserFacingPubkey(person.id, { prefix: 10, suffix: 6, ellipsis: "…" });
+  if (isPubkeyDerivedPlaceholder(displayName, person.pubkey)) {
+    return formatUserFacingPubkey(person.pubkey, { prefix: 10, suffix: 6, ellipsis: "…" });
   }
 
   return displayName;
 }
 
 export function formatAuthorMetaLabel({
-  id,
+  pubkey,
   displayName,
   name,
   nip05,
 }: AuthorMetaLabelInput): string {
-  const parts = formatAuthorMetaParts({ id, displayName, name, nip05 });
+  const parts = formatAuthorMetaParts({ pubkey, displayName, name, nip05 });
   if (!parts.secondary) return parts.primary;
   return `${parts.primary} (${parts.secondary})`;
 }
 
 export function formatAuthorMetaParts({
-  id,
+  pubkey,
   displayName,
   name,
   nip05,
@@ -103,9 +108,9 @@ export function formatAuthorMetaParts({
   const hasUsername = normalizedUsername.length > 0;
   const hasNip05 = normalizedNip05.length > 0;
   const hasHumanDisplayName =
-    hasDisplayName && !isPubkeyDerivedPlaceholder(normalizedName, id);
+    hasDisplayName && !isPubkeyDerivedPlaceholder(normalizedName, pubkey);
   const hasHumanUsername =
-    hasUsername && !isPubkeyDerivedPlaceholder(normalizedUsername, id);
+    hasUsername && !isPubkeyDerivedPlaceholder(normalizedUsername, pubkey);
   const hasDistinctUsername =
     hasHumanUsername &&
     (!hasHumanDisplayName || normalizedUsername.toLowerCase() !== normalizedName.toLowerCase());
@@ -115,10 +120,10 @@ export function formatAuthorMetaParts({
     (!hasHumanUsername || normalizedNip05.toLowerCase() !== normalizedUsername.toLowerCase());
 
   if (!hasHumanDisplayName && !hasHumanUsername && !hasDistinctNip05) {
-    return { primary: toUserFacingPubkey(id) };
+    return { primary: toUserFacingPubkey(pubkey) };
   }
 
-  const abbreviatedPubkey = abbreviatePubkey(id);
+  const abbreviatedPubkey = abbreviatePubkey(pubkey);
   const secondaryParts: string[] = [];
 
   if (hasDistinctUsername) {

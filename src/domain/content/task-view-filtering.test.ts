@@ -22,7 +22,7 @@ describe("task view filtering", () => {
   });
 
   it("builds reusable search and descendant indexes", () => {
-    const alice = makePerson({ id: "p1", displayName: "Alice Example", name: "alice" });
+    const alice = makePerson({ pubkey: "p1", displayName: "Alice Example", name: "alice" });
     const tasks = [
       makeTask({
         id: "root",
@@ -48,7 +48,7 @@ describe("task view filtering", () => {
   });
 
   it("filters by prefiltered ids, focus descendants, search, and channel match mode", () => {
-    const people = [makePerson({ id: "p1", displayName: "Alice" })];
+    const people = [makePerson({ pubkey: "p1", displayName: "Alice" })];
     const tasks = [
       makeTask({
         id: "root",

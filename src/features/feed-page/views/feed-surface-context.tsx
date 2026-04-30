@@ -1,16 +1,16 @@
 import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import type { Channel, ChannelMatchMode, QuickFilterState, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson, SidebarPerson } from "@/types/person";
 
 export interface FeedSurfaceState {
   relays: Relay[];
   channels: Channel[];
   visibleChannels?: Channel[];
   composeChannels?: Channel[];
-  people: Person[];
-  visiblePeople?: Person[];
-  mentionablePeople?: Person[];
+  people: SelectablePerson[];
+  visiblePeople?: SidebarPerson[];
+  mentionablePeople?: SelectablePerson[];
   searchQuery: string;
   quickFilters: QuickFilterState;
   channelMatchMode?: ChannelMatchMode;
@@ -61,7 +61,7 @@ export function useFeedPeopleById() {
   return useMemo(
     () =>
       new Map(
-        people.map((person) => [person.id.toLowerCase(), person] as const)
+        people.map((person) => [person.pubkey.toLowerCase(), person] as const)
       ),
     [people]
   );

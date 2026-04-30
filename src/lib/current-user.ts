@@ -9,7 +9,7 @@ export function resolveCurrentUser(
   authUser?: AuthUserLike | null
 ): Person | undefined {
   if (authUser?.pubkey) {
-    const byPubkey = people.find((person) => person.id === authUser.pubkey);
+    const byPubkey = people.find((person) => person.pubkey === authUser.pubkey);
     if (byPubkey) return byPubkey;
   }
 

@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNod
 import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import type { Person } from "@/types/person";
+import type { Person, PersonPresenceSnapshot } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getCompactPersonLabel } from "@/types/person";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PersonHoverCardProps {
-  person: Person;
+  person: Person & { presence?: PersonPresenceSnapshot };
   children: ReactNode;
   openDelay?: number;
   side?: "top" | "right" | "bottom" | "left";
@@ -67,9 +67,8 @@ export function resumePersonHoverCards() {
   emitHoverCardStore();
 }
 
-function getStatusKey(person: Person): "online" | "recent" | "offline" {
-  if (person.onlineStatus) return person.onlineStatus;
-  return person.isOnline ? "online" : "offline";
+function getStatusKey(person: { presence?: PersonPresenceSnapshot }): "online" | "recent" | "offline" {
+  return person.presence?.state ?? "offline";
 }
 
 export function PersonHoverCard({
@@ -102,16 +101,18 @@ export function PersonHoverCard({
   );
   const [requestedOpen, setRequestedOpen] = useState(false);
   const compactLabel = getCompactPersonLabel(person);
-  const pubkeyLabel = toUserFacingPubkey(person.id);
+  const pubkeyLabel = toUserFacingPubkey(person.pubkey);
   const statusKey = getStatusKey(person);
-  const resolvedPresenceTaskTitle = person.presenceTaskId
+  const presenceTaskId = person.presence?.context?.taskId;
+  const presenceView = person.presence?.context?.view;
+  const resolvedPresenceTaskTitle = presenceTaskId
     ? getTrimmedFirstTaskContentLine(
-        allTasks.find((task) => task.id === person.presenceTaskId)?.content
+        allTasks.find((task) => task.id === presenceTaskId)?.content
       )
     : "";
-  const presenceViewLabel = person.presenceView
-    ? t(`shell:navigation.views.${person.presenceView}`, {
-        defaultValue: person.presenceView,
+  const presenceViewLabel = presenceView
+    ? t(`shell:navigation.views.${presenceView}`, {
+        defaultValue: presenceView,
       })
     : null;
   const viewingLabel = resolvedPresenceTaskTitle || presenceViewLabel;
@@ -197,7 +198,7 @@ export function PersonHoverCard({
       >
         <div className="flex items-start gap-3">
           <UserAvatar
-            id={person.id}
+            id={person.pubkey}
             displayName={person.displayName}
             className="h-11 w-11 shrink-0"
           />

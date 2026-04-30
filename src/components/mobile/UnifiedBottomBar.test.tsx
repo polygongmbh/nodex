@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Relay, TaskCreateResult } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
@@ -53,14 +53,13 @@ const autocompleteChannels: Channel[] = [
   { id: "ops", name: "ops", filterState: "neutral" },
 ];
 
-const people: Person[] = [
+const people: SelectablePerson[] = [
   {
-    id: "e".repeat(64),
+    pubkey: "e".repeat(64),
     name: "alice",
     displayName: "Alice",
     nip05: "alice@example.com",
     avatar: "",
-    isOnline: true,
     isSelected: false,
   },
 ];
@@ -185,21 +184,19 @@ describe("UnifiedBottomBar auth gating", () => {
           composeChannels: channels,
           people: [
             {
-              id: "broad-person",
+              pubkey: "broad-person",
               name: "broad-user",
               displayName: "Broad Person",
               avatar: "",
-              isOnline: false,
               isSelected: false,
             },
           ],
           visiblePeople: [
             {
-              id: "visible-person",
+              pubkey: "visible-person",
               name: "visible-user",
               displayName: "Visible Person",
               avatar: "",
-              isOnline: true,
               isSelected: false,
             },
           ],

@@ -30,7 +30,7 @@ export function InteractivePersonName({
   testId,
 }: InteractivePersonNameProps) {
   const { t } = useTranslation("tasks");
-  const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.id;
+  const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.pubkey;
   const label = ariaLabel ?? t("people.actions.openMenu", { name: resolvedDisplayName });
 
   return (

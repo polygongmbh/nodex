@@ -1,15 +1,14 @@
 import { normalizeTaskStatus, type Channel, type Relay, type Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 const DEFAULT_TIME = new Date("2026-01-01T00:00:00.000Z");
 
-export function makePerson(overrides: Partial<Person> = {}): Person {
+export function makePerson(overrides: Partial<SelectablePerson> = {}): SelectablePerson {
   return {
-    id: "person-id",
+    pubkey: "person-pubkey",
     name: "person",
     displayName: "Person",
     avatar: "",
-    isOnline: true,
     isSelected: false,
     ...overrides,
   };
@@ -35,7 +34,7 @@ export function makeChannel(overrides: Partial<Channel> = {}): Channel {
 }
 
 export function makeTask(overrides: Partial<Task> = {}): Task {
-  const author = overrides.author ?? makePerson({ id: "author-id", name: "author", displayName: "Author" });
+  const author = overrides.author ?? makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
   const timestamp = overrides.timestamp ?? DEFAULT_TIME;
   return {
     id: "task-1",

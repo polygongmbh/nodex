@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } fr
 import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, HandHelping, MapPin, AlertTriangle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, TaskCreateResult, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
-import type { Person } from "@/types/person";
+import type { SidebarPerson } from "@/types/person";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -69,7 +69,7 @@ interface UnifiedBottomBarProps {
   selectedCalendarDate?: Date | null;
   relays?: Relay[];
   channels?: Channel[];
-  people?: Person[];
+  people?: SidebarPerson[];
   // Default content for composing
   defaultContent?: string;
   canCreateContent: boolean;
@@ -1129,8 +1129,8 @@ export function UnifiedBottomBar({
     captureCurrentLocation();
   };
 
-  const addMentionTagOnly = (person: Person) => {
-    const normalizedPubkey = person.id.trim().toLowerCase();
+  const addMentionTagOnly = (person: SidebarPerson) => {
+    const normalizedPubkey = person.pubkey.trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/i.test(normalizedPubkey)) {
       return;
     }
@@ -1285,9 +1285,9 @@ export function UnifiedBottomBar({
                 const personLabel = getCompactPersonLabel(person);
                 return (
                   <button
-                    key={person.id}
+                    key={person.pubkey}
                     onClick={() => {
-                      void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
+                      void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.pubkey });
                     }}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
@@ -1297,7 +1297,7 @@ export function UnifiedBottomBar({
                     )}
                   >
                     <UserAvatar
-                      id={person.id}
+                      id={person.pubkey}
                       displayName={personDisplayName}
                       className="w-6 h-6"
                     />
@@ -1768,7 +1768,7 @@ export function UnifiedBottomBar({
                     const mentionDisplay = formatMentionIdentifierForDisplay(mentionIdentifier);
                     return (
                       <button
-                        key={person.id}
+                        key={person.pubkey}
                         type="button"
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={(e) => {
@@ -1785,7 +1785,7 @@ export function UnifiedBottomBar({
                         )}
                       >
                         <UserAvatar
-                          id={person.id}
+                          id={person.pubkey}
                           displayName={person.displayName || person.name}
                           className="w-4 h-4"
                         />

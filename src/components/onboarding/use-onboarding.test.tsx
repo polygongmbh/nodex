@@ -9,8 +9,8 @@ import { usePreferencesStore } from "@/features/feed-page/stores/preferences-sto
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 
 const peopleSeed: Person[] = [
-  makePerson({ id: "alice", name: "alice", displayName: "Alice", isSelected: true }),
-  makePerson({ id: "bob", name: "bob", displayName: "Bob", isSelected: false }),
+  makePerson({ pubkey: "alice", name: "alice", displayName: "Alice", isSelected: true }),
+  makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false }),
 ];
 
 function Harness({
@@ -54,7 +54,7 @@ function Harness({
       <output data-testid="relay-ids">{Array.from(storeRelayIds).sort().join(",")}</output>
       <output data-testid="channel-state">{storeChannelStates.get("general") || "neutral"}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.id).join(",")}
+        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
       </output>
       <output data-testid="auth-open">{String(authOpen)}</output>
       <output data-testid="guide-open">{String(onboarding.isOnboardingOpen)}</output>

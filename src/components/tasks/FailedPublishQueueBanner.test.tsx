@@ -15,7 +15,6 @@ const baseDraft: FailedPublishDraft = {
     id: "author-1",
     name: "Author",
     displayName: "Author",
-    isOnline: true,
     isSelected: false,
   },
   content: "failed content",

@@ -61,14 +61,14 @@ function findMatchingPerson(identifier: string, people: Person[]): Person | unde
   const needle = normalizeIdentity(identifier);
   if (!needle) return undefined;
   return people.find((person) => {
-    const candidates = [person.id, person.name, person.displayName, person.nip05].map(normalizeIdentity);
+    const candidates = [person.pubkey, person.name, person.displayName, person.nip05].map(normalizeIdentity);
     return candidates.some((candidate) => candidate === needle);
   });
 }
 
 function getNormalizedUserIdentifiers(user?: Person): Set<string> {
   return new Set(
-    [user?.id, user?.name, user?.displayName, user?.nip05]
+    [user?.pubkey, user?.name, user?.displayName, user?.nip05]
       .flatMap((value) => getIdentityVariants(value))
   );
 }
@@ -76,7 +76,7 @@ function getNormalizedUserIdentifiers(user?: Person): Set<string> {
 function isTaskOwnedByUser(task: Task, currentUser?: Person): boolean {
   const userIdentifiers = getNormalizedUserIdentifiers(currentUser);
   if (userIdentifiers.size === 0) return false;
-  const ownerIdentifiers = [task.author.id, task.author.name, task.author.displayName, task.author.nip05]
+  const ownerIdentifiers = [task.author.pubkey, task.author.name, task.author.displayName, task.author.nip05]
     .flatMap((value) => getIdentityVariants(value));
   return ownerIdentifiers.some((value) => userIdentifiers.has(value));
 }
@@ -84,7 +84,7 @@ function isTaskOwnedByUser(task: Task, currentUser?: Person): boolean {
 function isTaskOwnedByPubkey(task: Task, pubkey?: string): boolean {
   const normalizedPubkey = normalizeIdentity(pubkey);
   if (!normalizedPubkey) return false;
-  return normalizeIdentity(task.author.id) === normalizedPubkey;
+  return normalizeIdentity(task.author.pubkey) === normalizedPubkey;
 }
 
 function areAssignedTaskEditsOpenToEveryone(): boolean {
@@ -149,7 +149,7 @@ export function getTaskStatusChangeBlockedReason(
   const assignees = getTaskAssignees(task);
   if (assignees.length > 0) {
     const assignee = assignees[0];
-    const enrichedOwner = findMatchingPerson(task.author.id, knownPeople) || task.author;
+    const enrichedOwner = findMatchingPerson(task.author.pubkey, knownPeople) || task.author;
     const matchedPerson = findMatchingPerson(assignee, [enrichedOwner, ...knownPeople]);
     const assigneeLabel = matchedPerson ? formatAuthorMetaLabel(matchedPerson) : formatPrincipalLabel(assignee);
     return `Editing is not possible because this task is assigned to ${assigneeLabel}. Only tagged assignees and the creator can update it.`;

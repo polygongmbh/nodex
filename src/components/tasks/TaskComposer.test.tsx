@@ -28,12 +28,11 @@ const baseChannels: Channel[] = [
 const alicePubkey = "f".repeat(64);
 const basePeople: Person[] = [
   {
-    id: alicePubkey,
+    pubkey: alicePubkey,
     name: "alice",
     displayName: "Alice",
     nip05: "alice@example.com",
     avatar: "",
-    isOnline: true,
     isSelected: false,
   },
 ];
@@ -68,7 +67,7 @@ function buildRuntimeValue({
         .map((channel) => channel.name.trim().toLowerCase()),
       selectedPeoplePubkeys: people
         .filter((person) => person.isSelected)
-        .map((person) => person.id.trim().toLowerCase()),
+        .map((person) => person.pubkey.trim().toLowerCase()),
     },
     draftStorageKey: COMPOSE_DRAFT_STORAGE_KEY,
   };

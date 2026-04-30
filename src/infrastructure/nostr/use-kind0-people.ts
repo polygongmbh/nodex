@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import {
@@ -34,8 +34,8 @@ interface NostrUserLike {
 }
 
 interface UseKind0PeopleResult {
-  people: Person[];
-  setPeople: Dispatch<SetStateAction<Person[]>>;
+  people: SelectablePerson[];
+  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
   cachedKind0Events: Kind0LikeEvent[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   supplementalLatestActivityByAuthor: Map<string, number>;
@@ -55,19 +55,17 @@ function areKind0EventListsEqual(previous: Kind0LikeEvent[], next: Kind0LikeEven
   return true;
 }
 
-function arePeopleListsEqual(previous: Person[], next: Person[]): boolean {
+function arePeopleListsEqual(previous: SelectablePerson[], next: SelectablePerson[]): boolean {
   if (previous.length !== next.length) return false;
   return previous.every((person, index) => {
     const candidate = next[index];
     return (
-      person.id === candidate.id &&
+      person.pubkey === candidate.pubkey &&
       person.name === candidate.name &&
       person.displayName === candidate.displayName &&
       person.nip05 === candidate.nip05 &&
       person.about === candidate.about &&
       person.avatar === candidate.avatar &&
-      person.isOnline === candidate.isOnline &&
-      person.onlineStatus === candidate.onlineStatus &&
       person.isSelected === candidate.isSelected
     );
   });
@@ -83,7 +81,7 @@ export function useKind0People(
     [selectedRelayUrls]
   );
   const selectedRelayScopeKey = normalizedSelectedRelayUrls.join("|");
-  const [people, setPeople] = useState<Person[]>([]);
+  const [people, setPeople] = useState<SelectablePerson[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState<Kind0LikeEvent[]>(() =>
     loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls)
   );
@@ -246,10 +244,10 @@ export function useKind0People(
     const priorityLookup = new Map(
       loggedInIdentityPriority.map((pubkey, index) => [pubkey.toLowerCase(), index] as const)
     );
-    const sortPeopleByPriority = (value: Person[]): Person[] =>
+    const sortPeopleByPriority = (value: SelectablePerson[]): SelectablePerson[] =>
       [...value].sort((a, b) => {
-        const aPriority = priorityLookup.get(a.id.toLowerCase());
-        const bPriority = priorityLookup.get(b.id.toLowerCase());
+        const aPriority = priorityLookup.get(a.pubkey.toLowerCase());
+        const bPriority = priorityLookup.get(b.pubkey.toLowerCase());
         if (aPriority !== undefined && bPriority !== undefined) return aPriority - bPriority;
         if (aPriority !== undefined) return -1;
         if (bPriority !== undefined) return 1;
@@ -261,18 +259,16 @@ export function useKind0People(
         prioritizedPubkeys: loggedInIdentityPriority,
       });
 
-      if (user?.pubkey && !next.some((person) => person.id === user.pubkey)) {
+      if (user?.pubkey && !next.some((person) => person.pubkey === user.pubkey)) {
         next = [
           ...next,
           {
-            id: user.pubkey,
+            pubkey: user.pubkey,
             name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
             displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
             nip05: user.profile?.nip05?.trim().toLowerCase(),
             avatar: user.profile?.picture,
-            isOnline: true,
-            onlineStatus: "online",
-            isSelected: prev.find((person) => person.id === user.pubkey)?.isSelected || false,
+            isSelected: prev.find((person) => person.pubkey === user.pubkey)?.isSelected || false,
           },
         ];
       }

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson, SidebarPerson } from "@/types/person";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 function normalizePersonId(id: string): string {
@@ -10,13 +10,13 @@ function normalizePersonId(id: string): string {
 export interface UsePinnedSidebarPeopleOptions {
   userPubkey: string | undefined;
   effectiveActiveRelayIds: Set<string>;
-  people: Person[];
+  people: SelectablePerson[];
   allTasks: Task[];
 }
 
 export interface UsePinnedSidebarPeopleResult {
   pinnedPersonIds: string[];
-  peopleWithState: Person[];
+  peopleWithState: SidebarPerson[];
   handlePersonPin: (id: string) => void;
   handlePersonUnpin: (id: string) => void;
 }
@@ -30,7 +30,7 @@ export function usePinnedSidebarPeople({
   const personRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const task of allTasks) {
-      const authorId = normalizePersonId(task.author?.id || "");
+      const authorId = normalizePersonId(task.author?.pubkey || "");
       if (!authorId) continue;
       let relays = map.get(authorId);
       if (!relays) {
@@ -55,24 +55,22 @@ export function usePinnedSidebarPeople({
     normalizeEntityId: normalizePersonId,
   });
 
-  const peopleWithState: Person[] = useMemo(() => {
+  const peopleWithState: SidebarPerson[] = useMemo(() => {
     const pinnedIndexMap = new Map(pinnedPersonIds.map((id, idx) => [normalizePersonId(id), idx]));
-    const existingIds = new Set(people.map((person) => normalizePersonId(person.id)));
-    const stubs: Person[] = pinnedPersonIds
+    const existingIds = new Set(people.map((person) => normalizePersonId(person.pubkey)));
+    const stubs: SelectablePerson[] = pinnedPersonIds
       .filter((id) => !existingIds.has(normalizePersonId(id)))
       .map((id) => ({
-        id,
+        pubkey: id,
         name: id,
         displayName: id,
-        isOnline: false,
-        onlineStatus: "offline" as const,
         isSelected: false,
       }));
 
     return [...stubs, ...people]
       .map((person) => ({
         ...person,
-        pinIndex: pinnedIndexMap.get(normalizePersonId(person.id)),
+        pinIndex: pinnedIndexMap.get(normalizePersonId(person.pubkey)),
       }))
       .sort((a, b) => (a.pinIndex ?? Infinity) - (b.pinIndex ?? Infinity));
   }, [people, pinnedPersonIds]);

@@ -9,7 +9,7 @@ import type { Person } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
-  useNDK: () => ({ user: { id: "me" } }),
+  useNDK: () => ({ user: { pubkey: "me" } }),
 }));
 
 const dispatchFeedInteraction = vi.fn();
@@ -25,11 +25,9 @@ const people: Person[] = [];
 const rootTask: Task = {
   id: "root",
   author: {
-    id: "me",
+    pubkey: "me",
     name: "me",
     displayName: "Me",
-    isOnline: true,
-    isSelected: false,
   },
   content: "Root task",
   tags: ["general"],

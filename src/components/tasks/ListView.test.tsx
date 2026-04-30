@@ -25,7 +25,7 @@ describe("ListView priority control", () => {
     const child = makeTask({ id: "child", parentId: "root", content: "Child task #general", status: "open" });
     const relays = [makeRelay()];
     const channels = [makeChannel()];
-    const people = [makePerson({ id: root.author.id, name: root.author.name, displayName: root.author.displayName })];
+    const people = [makePerson({ pubkey: root.author.pubkey, name: root.author.name, displayName: root.author.displayName })];
     render(
       <ListView
         focusedTaskId={null}
@@ -47,7 +47,7 @@ describe("ListView priority control", () => {
     const leaf = makeTask({ id: "leaf", parentId: "middle", content: "Leaf task #general", status: "open" });
     const relays = [makeRelay()];
     const channels = [makeChannel()];
-    const people = [makePerson({ id: root.author.id, name: root.author.name, displayName: root.author.displayName })];
+    const people = [makePerson({ pubkey: root.author.pubkey, name: root.author.name, displayName: root.author.displayName })];
 
     render(
       <ListView
@@ -72,7 +72,7 @@ describe("ListView priority control", () => {
     const tasks = [task];
     const relays = [makeRelay()];
     const channels = [makeChannel()];
-    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     const onUpdatePriority = vi.fn();
 
     const { rerender } = render(
@@ -145,7 +145,7 @@ describe("ListView priority control", () => {
     const tasks = [task];
     const relays = [makeRelay()];
     const channels = [makeChannel()];
-    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     render(
       <ListView
         focusedTaskId={null}
@@ -168,7 +168,7 @@ describe("ListView priority control", () => {
     });
     const relays = [makeRelay()];
     const channels = [makeChannel()];
-    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     render(
       <ListView
         focusedTaskId={null}
@@ -196,7 +196,7 @@ describe("ListView priority control", () => {
     });
     const relays = [makeRelay()];
     const channels = [makeChannel()];
-    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
 
     render(
       <ListView
@@ -221,7 +221,7 @@ describe("ListView priority control", () => {
     });
     const relays = [makeRelay()];
     const channels = [makeChannel()];
-    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     render(
       <ListView
         focusedTaskId={null}
@@ -251,7 +251,7 @@ describe("ListView priority control", () => {
     });
     const relays = [makeRelay()];
     const channels = [makeChannel()];
-    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
 
     render(
       <ListView

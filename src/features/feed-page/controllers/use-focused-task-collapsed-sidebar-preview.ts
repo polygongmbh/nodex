@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { buildTaskViewFilterIndex } from "@/domain/content/task-view-filtering";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import type { Channel, Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();
@@ -13,13 +13,13 @@ export interface DeriveFocusedTaskCollapsedSidebarPreviewParams {
   focusedTaskId: string | null;
   activeRelayIds: Set<string>;
   channels: Channel[];
-  people: Person[];
+  people: SelectablePerson[];
   allowUnknownRelayMetadata?: boolean;
 }
 
 export interface FocusedTaskCollapsedSidebarPreview {
   channels: Channel[];
-  people: Person[];
+  people: SelectablePerson[];
 }
 
 export function deriveFocusedTaskCollapsedSidebarPreview({
@@ -55,14 +55,14 @@ export function deriveFocusedTaskCollapsedSidebarPreview({
     focusedScopeTasks.flatMap((task) => task.tags.map((tag) => normalize(tag))).filter(Boolean)
   );
   const activePeopleIds = new Set(
-    focusedScopeTasks.map((task) => normalize(task.author?.id || "")).filter(Boolean)
+    focusedScopeTasks.map((task) => normalize(task.author?.pubkey || "")).filter(Boolean)
   );
 
   return {
     channels: channels.filter(
       (channel) => activeChannelIds.has(normalize(channel.id)) || activeChannelIds.has(normalize(channel.name))
     ),
-    people: people.filter((person) => activePeopleIds.has(normalize(person.id))),
+    people: people.filter((person) => activePeopleIds.has(normalize(person.pubkey))),
   };
 }
 

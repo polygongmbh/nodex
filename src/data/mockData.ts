@@ -1,5 +1,5 @@
 import { Relay, Channel, Task, TaskStatusType, normalizeTaskStatus } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { addDays, subDays } from "date-fns";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { DEMO_RELAY_URL } from "./basic-nostr-events";
@@ -35,17 +35,17 @@ export const mockChannels: Channel[] = [
 // Legacy alias
 export const mockTags = mockChannels;
 
-export const mockPeople: Person[] = [
-  { id: MOCK_PUBKEYS.me, name: "me", displayName: "Local User", isOnline: true, isSelected: false },
-  { id: MOCK_PUBKEYS.alice, name: "alice", displayName: "Alice Chen", isOnline: true, isSelected: false },
-  { id: MOCK_PUBKEYS.bob, name: "bob", displayName: "Bob Smith", isOnline: false, isSelected: false },
-  { id: MOCK_PUBKEYS.carol, name: "carol", displayName: "Carol Davis", isOnline: true, isSelected: false },
-  { id: MOCK_PUBKEYS.david, name: "david", displayName: "David Kim", isOnline: false, isSelected: false },
+export const mockPeople: SelectablePerson[] = [
+  { pubkey: MOCK_PUBKEYS.me, name: "me", displayName: "Local User", isSelected: false },
+  { pubkey: MOCK_PUBKEYS.alice, name: "alice", displayName: "Alice Chen", isSelected: false },
+  { pubkey: MOCK_PUBKEYS.bob, name: "bob", displayName: "Bob Smith", isSelected: false },
+  { pubkey: MOCK_PUBKEYS.carol, name: "carol", displayName: "Carol Davis", isSelected: false },
+  { pubkey: MOCK_PUBKEYS.david, name: "david", displayName: "David Kim", isSelected: false },
 ];
 
 export const mockKind0Events = mockPeople.map((person, index) => ({
   kind: NostrEventKind.Metadata,
-  pubkey: person.id,
+  pubkey: person.pubkey,
   created_at: Math.floor(Date.now() / 1000) - index,
   content: JSON.stringify({
     name: person.name,

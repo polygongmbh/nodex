@@ -13,7 +13,7 @@ export function TaskAuthorProfilesProvider({
   children,
 }: TaskAuthorProfilesProviderProps) {
   const authorPubkeys = useMemo(() => {
-    const pubkeys = tasks.map((task) => task.author.id);
+    const pubkeys = tasks.map((task) => task.author.pubkey);
     return Array.from(new Set(pubkeys));
   }, [tasks]).filter((authorId): authorId is string =>
     authorId.length === 64 && /^[a-f0-9]+$/i.test(authorId)

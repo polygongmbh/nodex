@@ -12,9 +12,9 @@ const channels: Channel[] = [
 ];
 
 const people: Person[] = [
-  makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
-  makePerson({ id: "bob", name: "bob", displayName: "Bob" }),
-  makePerson({ id: "cara", name: "cara", displayName: "Cara" }),
+  makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
+  makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
+  makePerson({ pubkey: "cara", name: "cara", displayName: "Cara" }),
 ];
 
 const allTasks: Task[] = [
@@ -22,7 +22,7 @@ const allTasks: Task[] = [
     id: "root",
     content: "Root #general",
     tags: ["general"],
-    author: makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
+    author: makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
     relays: ["relay-one"],
   }),
   makeTask({
@@ -30,14 +30,14 @@ const allTasks: Task[] = [
     parentId: "root",
     content: "Child #ops",
     tags: ["ops"],
-    author: makePerson({ id: "bob", name: "bob", displayName: "Bob" }),
+    author: makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
     relays: ["relay-one"],
   }),
   makeTask({
     id: "other-root",
     content: "Other #random",
     tags: ["random"],
-    author: makePerson({ id: "cara", name: "cara", displayName: "Cara" }),
+    author: makePerson({ pubkey: "cara", name: "cara", displayName: "Cara" }),
     relays: ["relay-one"],
   }),
 ];
@@ -62,7 +62,7 @@ function Harness({
   return (
     <>
       <output data-testid="channels">{preview.channels.map((channel) => channel.id).join(",")}</output>
-      <output data-testid="people">{preview.people.map((person) => person.id).join(",")}</output>
+      <output data-testid="people">{preview.people.map((person) => person.pubkey).join(",")}</output>
     </>
   );
 }
@@ -89,7 +89,7 @@ describe("useFocusedTaskCollapsedSidebarPreview", () => {
       <Harness
         focusedTaskId="root"
         sidebarChannels={[...channels, makeChannel({ id: "release", name: "release" })]}
-        sidebarPeople={[...people, makePerson({ id: "dora", name: "dora", displayName: "Dora" })]}
+        sidebarPeople={[...people, makePerson({ pubkey: "dora", name: "dora", displayName: "Dora" })]}
       />
     );
 

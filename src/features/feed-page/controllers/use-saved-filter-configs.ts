@@ -5,7 +5,7 @@ import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { areFilterSnapshotsEqual, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useSavedFilterStore } from "@/features/feed-page/stores/saved-filter-store";
 import type {   Channel, ChannelMatchMode, QuickFilterState, Relay, SavedFilterConfiguration, SavedFilterController } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 interface UseSavedFilterConfigsOptions {
   currentFilterSnapshot: FilterSnapshot;
@@ -13,7 +13,7 @@ interface UseSavedFilterConfigsOptions {
   setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setChannelMatchMode: Dispatch<SetStateAction<ChannelMatchMode>>;
-  setPeople: Dispatch<SetStateAction<Person[]>>;
+  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
   setQuickFilters: Dispatch<SetStateAction<QuickFilterState>>;
   resetFiltersToDefault: () => void;
 }
@@ -109,7 +109,7 @@ export function useSavedFilterConfigs({
     setChannelMatchMode(configuration.channelMatchMode);
 
     const selectedPeopleIdSet = new Set(configuration.selectedPeopleIds);
-    setPeople((previous) => mapPeopleSelection(previous, (person) => selectedPeopleIdSet.has(person.id)));
+    setPeople((previous) => mapPeopleSelection(previous, (person) => selectedPeopleIdSet.has(person.pubkey)));
     setQuickFilters(normalizeQuickFilterState(configuration.quickFilters));
 
     setActiveConfigurationId(configurationId);

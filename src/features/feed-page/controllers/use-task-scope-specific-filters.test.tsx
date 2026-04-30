@@ -11,8 +11,8 @@ import {
 } from "./use-task-scope-specific-filters";
 
 const peopleSeed: Person[] = [
-  makePerson({ id: "alice", name: "alice", displayName: "Alice", isSelected: true }),
-  makePerson({ id: "bob", name: "bob", displayName: "Bob", isSelected: false }),
+  makePerson({ pubkey: "alice", name: "alice", displayName: "Alice", isSelected: true }),
+  makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false }),
 ];
 
 function Harness({
@@ -41,7 +41,7 @@ function Harness({
         channelStates: Object.fromEntries(
           Array.from(channelFilterStates.entries()).filter(([, state]) => state === "included" || state === "excluded")
         ) as Record<string, "included" | "excluded">,
-        selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.id).sort(),
+        selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.pubkey).sort(),
         channelMatchMode,
       }),
     [channelFilterStates, channelMatchMode, people]
@@ -68,7 +68,7 @@ function Harness({
         onClick={() => {
           setChannelFilterStates(new Map([["ops", "included"]]));
           setChannelMatchMode("and");
-          setPeople((previous) => previous.map((person) => ({ ...person, isSelected: person.id === "bob" })));
+          setPeople((previous) => previous.map((person) => ({ ...person, isSelected: person.pubkey === "bob" })));
         }}
       >
         MutateWhileScoped
@@ -79,7 +79,7 @@ function Harness({
       <output data-testid="channel-ops">{channelFilterStates.get("ops") || "neutral"}</output>
       <output data-testid="match-mode">{channelMatchMode}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.id).join(",")}
+        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
       </output>
     </>
   );

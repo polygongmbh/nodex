@@ -16,11 +16,9 @@ function toDisplayPubkey(value: string): string {
 function buildFallbackPersonFromPubkey(pubkey: string): Person {
   const label = toDisplayPubkey(pubkey);
   return {
-    id: pubkey,
+    pubkey,
     name: label,
     displayName: label,
-    isOnline: false,
-    isSelected: false,
   };
 }
 
@@ -60,7 +58,7 @@ export function TaskMentionChips({
 
   const chips = mentionPubkeys.map((pubkey) => {
     const matchedPerson = peopleProp
-      ? people.find((person) => person.id.toLowerCase() === pubkey)
+      ? people.find((person) => person.pubkey.toLowerCase() === pubkey)
       : getPersonById(pubkey);
     const fallbackPerson = buildFallbackPersonFromPubkey(pubkey);
     const clickablePerson = matchedPerson || fallbackPerson;

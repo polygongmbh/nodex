@@ -6,21 +6,17 @@ import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-
 import { makeTask } from "@/test/fixtures";
 
 const alice: Person = {
-  id: "a".repeat(64),
+  pubkey: "a".repeat(64),
   name: "alice",
   displayName: "Alice",
   about: "Alice bio",
-  isOnline: true,
-  isSelected: false,
 };
 
 const bob: Person = {
-  id: "b".repeat(64),
+  pubkey: "b".repeat(64),
   name: "bob",
   displayName: "Bob",
   about: "Bob bio",
-  isOnline: false,
-  isSelected: false,
 };
 
 describe("PersonHoverCard", () => {
@@ -130,10 +126,11 @@ describe("PersonHoverCard", () => {
         <PersonHoverCard
           person={{
             ...alice,
-            onlineStatus: "online",
-            lastPresenceAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
-            presenceView: "feed",
-            presenceTaskId: "task-123",
+            presence: {
+              state: "online",
+              reportedAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
+              context: { view: "feed", taskId: "task-123" },
+            },
           }}
         >
           <button type="button">Alice trigger</button>
@@ -157,10 +154,11 @@ describe("PersonHoverCard", () => {
       <PersonHoverCard
         person={{
           ...alice,
-          onlineStatus: "online",
-          lastPresenceAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
-          presenceView: "tree",
-          presenceTaskId: "missing-task",
+          presence: {
+            state: "online",
+            reportedAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
+            context: { view: "tree", taskId: "missing-task" },
+          },
         }}
       >
         <button type="button">Alice trigger</button>

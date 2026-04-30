@@ -21,11 +21,9 @@ const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 function buildFallbackPersonFromPubkey(pubkey: string): Person {
   const label = formatUserFacingPubkey(pubkey);
   return {
-    id: pubkey,
+    pubkey,
     name: label,
     displayName: label,
-    isOnline: false,
-    isSelected: false,
   };
 }
 
@@ -44,9 +42,9 @@ export function TaskAssigneeAvatars({
   const pubkeys = useMemo(() => {
     const list = (task.assigneePubkeys ?? []).filter((p) => PUBKEY_PATTERN.test(p));
     if (list.length > 0) return list;
-    if (task.author?.id && PUBKEY_PATTERN.test(task.author.id)) return [task.author.id];
+    if (task.author?.pubkey && PUBKEY_PATTERN.test(task.author.pubkey)) return [task.author.pubkey];
     return [];
-  }, [task.assigneePubkeys, task.author?.id]);
+  }, [task.assigneePubkeys, task.author?.pubkey]);
 
   const { getProfile } = useNostrProfiles(pubkeys);
   const { getPersonById } = useFeedPersonLookup();
@@ -71,7 +69,7 @@ export function TaskAssigneeAvatars({
           profile?.name ||
           matchedPerson?.displayName ||
           matchedPerson?.name ||
-          (pubkey === task.author?.id ? task.author.displayName || task.author.name : undefined) ||
+          (pubkey === task.author?.pubkey ? task.author.displayName || task.author.name : undefined) ||
           fallbackPerson.displayName;
 
         return (

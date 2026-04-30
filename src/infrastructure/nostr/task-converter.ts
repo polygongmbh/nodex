@@ -149,11 +149,9 @@ function getFeedMessageType(event: NostrEventWithRelay): FeedMessageType | undef
 export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const authorFallbackLabel = formatUserFacingPubkey(event.pubkey);
   const author: Person = {
-    id: event.pubkey,
+    pubkey: event.pubkey,
     name: authorFallbackLabel,
     displayName: getDisplayNameFromPubkey(event.pubkey),
-    isOnline: true,
-    isSelected: false,
   };
 
   const normalizedContent = replaceIndexedPersonMentions(event.content, event.tags);

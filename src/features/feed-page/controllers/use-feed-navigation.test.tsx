@@ -155,7 +155,7 @@ describe("useFeedNavigation", () => {
       tags: [],
       relays: ["relay-a"],
       relayIds: ["relay-a"],
-      author: { id: "pubkey-1", name: "Author" },
+      author: { pubkey: "pubkey-1", name: "Author" },
       taskType: "task",
     } as unknown as Task;
 

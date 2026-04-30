@@ -15,11 +15,10 @@ import { NostrEventKind } from "@/lib/nostr/types";
 
 const prevPeople: Person[] = [
   {
-    id: "a".repeat(64),
+    pubkey: "a".repeat(64),
     name: "alice",
     displayName: "Alice",
     avatar: "",
-    isOnline: true,
     isSelected: true,
   },
 ];
@@ -108,8 +107,8 @@ describe("derivePeopleFromKind0Events", () => {
       { prioritizedPubkeys: [bPubkey] }
     );
 
-    expect(people[0].id).toBe(bPubkey);
-    expect(people[1].id).toBe(aPubkey);
+    expect(people[0].pubkey).toBe(bPubkey);
+    expect(people[1].pubkey).toBe(aPubkey);
   });
 
   it("stores and loads cached kind:0 events per relay", () => {

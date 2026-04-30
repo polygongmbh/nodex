@@ -6,7 +6,7 @@ import { makePerson, makeTask } from "@/test/fixtures";
 import { getTaskStatusType } from "@/types";
 import * as taskStateConfig from "@/domain/task-states/task-state-config";
 
-const author = makePerson({ id: "author-pubkey", name: "author", displayName: "Author" });
+const author = makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
 const initialTask = makeTask({
   id: "task-1",
   author,
@@ -16,7 +16,7 @@ const initialTask = makeTask({
       id: "relay-state-1",
       status: { type: "open" },
       timestamp: new Date("2026-01-01T00:00:00.000Z"),
-      authorPubkey: author.id,
+      authorPubkey: author.pubkey,
     },
   ],
 });

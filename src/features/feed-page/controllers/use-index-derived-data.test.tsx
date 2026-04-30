@@ -167,8 +167,8 @@ function SidebarPeopleHarness() {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
   const [personFrecencyState, setPersonFrecencyState] = useState<PersonFrecencyState>({});
 
-  const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice" });
-  const bob = makePerson({ id: "bob", name: "bob", displayName: "Bob" });
+  const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" });
+  const bob = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" });
   const tasks = [
     makeTask({ id: "a1", author: alice, tags: ["ops"], relays: ["relay-one"] }),
     makeTask({ id: "a2", author: alice, tags: ["ops"], relays: ["relay-one"] }),
@@ -205,7 +205,7 @@ function SidebarPeopleHarness() {
         RefreshAlice
       </button>
       <output data-testid="sidebar-people-ids">
-        {derived.sidebarPeople.map((person) => person.id).join(",")}
+        {derived.sidebarPeople.map((person) => person.pubkey).join(",")}
       </output>
     </>
   );
@@ -214,8 +214,8 @@ function SidebarPeopleHarness() {
 describe("useIndexDerivedData sidebar people", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice" });
-    const bob = makePerson({ id: "bob", name: "bob", displayName: "Bob" });
+    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" });
+    const bob = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" });
     useTaskMutationStore.setState({
       localTasks: [
         makeTask({ id: "a1", author: alice, tags: ["ops"], relays: ["relay-one"] }),
@@ -360,9 +360,9 @@ describe("useIndexDerivedData current user profile metadata", () => {
 function MentionAutocompleteHarness() {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
 
-  const alice = makePerson({ id: "a".repeat(64), name: "alice", displayName: "Alice" });
+  const alice = makePerson({ pubkey: "a".repeat(64), name: "alice", displayName: "Alice" });
   const bobPubkey = "b".repeat(64);
-  const carol = makePerson({ id: "c".repeat(64), name: "carol", displayName: "Carol" });
+  const carol = makePerson({ pubkey: "c".repeat(64), name: "carol", displayName: "Carol" });
 
   const derived = useIndexDerivedData({
     nostrEvents,
@@ -389,7 +389,7 @@ function MentionAutocompleteHarness() {
     <>
       <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
       <output data-testid="mention-autocomplete-people-ids">
-        {derived.mentionAutocompletePeople.map((person) => person.id).join(",")}
+        {derived.mentionAutocompletePeople.map((person) => person.pubkey).join(",")}
       </output>
     </>
   );

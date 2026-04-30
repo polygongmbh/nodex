@@ -1,5 +1,5 @@
 import type { Channel } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 export function buildChannelFilterMap(
   channels: Channel[],
@@ -49,9 +49,9 @@ export function shouldToggleOffExclusiveChannel(
 }
 
 export function mapPeopleSelection(
-  people: Person[],
-  isSelectedFor: (person: Person) => boolean
-): Person[] {
+  people: SelectablePerson[],
+  isSelectedFor: (person: SelectablePerson) => boolean
+): SelectablePerson[] {
   return people.map((person) => ({
     ...person,
     isSelected: isSelectedFor(person),
@@ -59,8 +59,8 @@ export function mapPeopleSelection(
 }
 
 export function shouldToggleOffExclusivePerson(
-  people: Person[],
-  targetPersonId: string
+  people: SelectablePerson[],
+  targetPersonPubkey: string
 ): boolean {
   let selectedCount = 0;
   let targetSelected = false;
@@ -68,7 +68,7 @@ export function shouldToggleOffExclusivePerson(
   for (const person of people) {
     if (!person.isSelected) continue;
     selectedCount += 1;
-    if (person.id === targetPersonId) {
+    if (person.pubkey === targetPersonPubkey) {
       targetSelected = true;
     }
   }

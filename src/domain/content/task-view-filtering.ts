@@ -27,7 +27,7 @@ export function buildTaskViewFilterIndex(
   const searchableTextByTaskId = new Map<string, string>();
   const normalizedTagsByTaskId = new Map<string, Set<string>>();
   const peopleById = new Map(
-    people.map((person) => [person.id.trim().toLowerCase(), person] as const)
+    people.map((person) => [person.pubkey.trim().toLowerCase(), person] as const)
   );
 
   for (const task of allTasks) {

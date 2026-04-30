@@ -6,12 +6,10 @@ import type { Person } from "@/types/person";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const alice: Person = {
-  id: "a".repeat(64),
+  pubkey: "a".repeat(64),
   name: "alice",
   displayName: "Alice",
   nip05: "alice@example.com",
-  isOnline: true,
-  isSelected: false,
 };
 
 describe("linkifyContent interaction styles", () => {
@@ -71,7 +69,7 @@ describe("linkifyContent interaction styles", () => {
         {linkifyContent("Ping @averyveryveryverylongusername about #averyveryveryverylongtag", undefined, {
           people: [{
             ...alice,
-            id: "c".repeat(64),
+            pubkey: "c".repeat(64),
             name: "averyveryveryverylongusername",
             displayName: "Avery Long",
           }],
@@ -90,7 +88,7 @@ describe("linkifyContent interaction styles", () => {
 
   it("renders @mentions with resolved @name labels and supports modifier shortcuts", () => {
     const dispatch = renderWithDispatch(
-      linkifyContent(`Assign to @${alice.id}`, undefined, {
+      linkifyContent(`Assign to @${alice.pubkey}`, undefined, {
         people: [alice],
       })
     );
@@ -110,16 +108,14 @@ describe("linkifyContent interaction styles", () => {
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.compose.mention",
       person: expect.objectContaining({
-        id: unresolvedPubkey,
-        isOnline: false,
-        isSelected: false,
+        pubkey: unresolvedPubkey,
       }),
     });
   });
 
   it("routes Ctrl/Cmd+Alt mention shortcuts to filter and mention before opening the menu", () => {
     const dispatch = renderWithDispatch(
-      linkifyContent(`Assign to @${alice.id}`, undefined, {
+      linkifyContent(`Assign to @${alice.pubkey}`, undefined, {
         people: [alice],
       })
     );
@@ -141,7 +137,7 @@ describe("linkifyContent interaction styles", () => {
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
       person: expect.objectContaining({
-        id: unresolvedPubkey,
+        pubkey: unresolvedPubkey,
       }),
     });
   });

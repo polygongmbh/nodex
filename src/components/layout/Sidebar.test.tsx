@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Sidebar } from "./Sidebar";
 import type { Channel, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { SidebarPerson } from "@/types/person";
 import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 
 const baseRelays: Relay[] = [
@@ -29,7 +29,7 @@ const nostrRelays: NDKRelayStatus[] = [
 ];
 
 const channels: Channel[] = [{ id: "general", name: "general", filterState: "neutral" }];
-const people: Person[] = [{ id: "alice", name: "alice", displayName: "Alice", avatar: "", isOnline: true, isSelected: false }];
+const people: SidebarPerson[] = [{ pubkey: "alice", name: "alice", displayName: "Alice", avatar: "", isSelected: false }];
 
 function renderSidebar(relays: Relay[]) {
   return render(

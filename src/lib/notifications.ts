@@ -116,9 +116,9 @@ export function notifyFrequentPeopleDeselected(options: FilterToastOptions = {})
 function resolvePersonToastName(person?: Person | null): string {
   if (!person) return i18n.t("composer:toasts.success.selectedUserFallback");
   const displayName = person.displayName.trim();
-  if (displayName && !isPubkeyDerivedPlaceholder(displayName, person.id)) return displayName;
+  if (displayName && !isPubkeyDerivedPlaceholder(displayName, person.pubkey)) return displayName;
   const username = person.name.trim();
-  if (username && !isPubkeyDerivedPlaceholder(username, person.id)) return username;
+  if (username && !isPubkeyDerivedPlaceholder(username, person.pubkey)) return username;
   return i18n.t("composer:toasts.success.selectedUserFallback");
 }
 

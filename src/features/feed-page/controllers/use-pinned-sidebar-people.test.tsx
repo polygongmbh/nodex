@@ -19,12 +19,12 @@ function Harness({ people, allRelays = ["relay-one"] }: { people: Person[]; allR
     allTasks: [
       makeTask({
         id: "task-one",
-        author: makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
+        author: makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
         relays: ["relay-one"],
       }),
       makeTask({
         id: "task-two",
-        author: makePerson({ id: "bob", name: "bob", displayName: "Bob" }),
+        author: makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
         relays: ["relay-two"],
       }),
     ],
@@ -36,7 +36,7 @@ function Harness({ people, allRelays = ["relay-one"] }: { people: Person[]; allR
   return (
     <>
       <output data-testid="people-with-state">
-        {result.peopleWithState.map((person) => person.id).join(",")}
+        {result.peopleWithState.map((person) => person.pubkey).join(",")}
       </output>
       <output data-testid="pinned-person-ids">
         {result.pinnedPersonIds.join(",")}
@@ -58,8 +58,8 @@ describe("usePinnedSidebarPeople", () => {
     render(
       <Harness
         people={[
-          makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
-          makePerson({ id: "bob", name: "bob", displayName: "Bob" }),
+          makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
+          makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
         ]}
       />
     );
@@ -74,7 +74,7 @@ describe("usePinnedSidebarPeople", () => {
     render(
       <Harness
         people={[
-          makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
+          makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
         ]}
       />
     );
@@ -89,7 +89,7 @@ describe("usePinnedSidebarPeople", () => {
     render(
       <Harness
         people={[
-          makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
+          makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
         ]}
       />
     );
@@ -104,7 +104,7 @@ describe("usePinnedSidebarPeople", () => {
     render(
       <Harness
         people={[
-          makePerson({ id: "alice", name: "alice", displayName: "Alice" }),
+          makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
         ]}
       />
     );

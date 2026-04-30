@@ -1569,10 +1569,10 @@ export function TaskComposer({
             {filteredPeople.map((person) => {
                   const mentionIdentifier = person.identifier;
                   const mentionDisplay = person.mentionDisplay;
-                  const isActive = filteredPeople[activeSuggestionIndex]?.id === person.id;
+                  const isActive = filteredPeople[activeSuggestionIndex]?.pubkey === person.pubkey;
                   return (
                     <button
-                      key={person.id}
+                      key={person.pubkey}
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={(e) => {
@@ -1584,7 +1584,7 @@ export function TaskComposer({
                         insertMention(mentionIdentifier);
                       }}
                   onMouseEnter={() => {
-                    const index = filteredPeople.findIndex((p) => p.id === person.id);
+                    const index = filteredPeople.findIndex((p) => p.pubkey === person.pubkey);
                     setActiveSuggestionIndex(index >= 0 ? index : 0);
                   }}
                   className={cn(

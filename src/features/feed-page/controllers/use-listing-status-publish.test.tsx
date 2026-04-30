@@ -10,7 +10,7 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const currentUser = makePerson({ id: "a".repeat(64), name: "Alice", displayName: "Alice" });
+const currentUser = makePerson({ pubkey: "a".repeat(64), name: "Alice", displayName: "Alice" });
 const listingTask = makeTask({
   id: "b".repeat(64),
   author: currentUser,

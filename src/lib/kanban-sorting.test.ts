@@ -10,7 +10,6 @@ const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
     displayName: "Me",
     avatar: "",
     isSelected: false,
-    isOnline: true,
   },
   content: id,
   tags: ["x"],

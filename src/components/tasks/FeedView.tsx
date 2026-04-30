@@ -387,11 +387,11 @@ export function FeedView({
         peopleById.get(update.authorPubkey.toLowerCase()) ||
         task.author;
       const updateAuthorMeta = formatAuthorMetaParts({
-        id: resolvedUpdateAuthor.id,
+        pubkey: resolvedUpdateAuthor.pubkey,
         displayName: resolvedUpdateAuthor.displayName,
         name: resolvedUpdateAuthor.name,
       });
-      const updateAuthorUserFacingId = toUserFacingPubkey(resolvedUpdateAuthor.id);
+      const updateAuthorUserFacingId = toUserFacingPubkey(resolvedUpdateAuthor.pubkey);
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
@@ -464,7 +464,7 @@ export function FeedView({
     const breadcrumb = getParentBreadcrumb(task);
     const isKeyboardFocused = keyboardFocusedTaskId === task.id;
     const resolvedAuthor =
-      peopleById.get(task.author.id.toLowerCase()) ??
+      peopleById.get(task.author.pubkey.toLowerCase()) ??
       task.author;
     const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);

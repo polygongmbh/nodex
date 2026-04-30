@@ -7,12 +7,10 @@ import type { Person } from "@/types/person";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const alice: Person = {
-  id: "a".repeat(64),
+  pubkey: "a".repeat(64),
   name: "alice",
   displayName: "Alice",
   avatar: "",
-  isOnline: true,
-  isSelected: false,
 };
 
 const baseTask: Task = {
@@ -46,7 +44,7 @@ describe("TaskMentionChips", () => {
   it("renders mention chips from non-text assignee pubkeys", () => {
     renderWithDispatch(
       <TaskMentionChips
-        task={{ ...baseTask, assigneePubkeys: [alice.id] }}
+        task={{ ...baseTask, assigneePubkeys: [alice.pubkey] }}
         people={[alice]}
       />
     );
@@ -57,7 +55,7 @@ describe("TaskMentionChips", () => {
   it("applies an exclusive person filter on Ctrl/Cmd+click", () => {
     const dispatch = renderWithDispatch(
       <TaskMentionChips
-        task={{ ...baseTask, mentions: [alice.id] }}
+        task={{ ...baseTask, mentions: [alice.pubkey] }}
         people={[alice]}
       />
     );
@@ -72,7 +70,7 @@ describe("TaskMentionChips", () => {
     renderWithDispatch(
       <div onClick={parentClick}>
         <TaskMentionChips
-          task={{ ...baseTask, mentions: [alice.id] }}
+          task={{ ...baseTask, mentions: [alice.pubkey] }}
           people={[alice]}
         />
       </div>
@@ -111,9 +109,7 @@ describe("TaskMentionChips", () => {
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.compose.mention",
       person: expect.objectContaining({
-        id: unmatchedPubkey,
-        isOnline: false,
-        isSelected: false,
+        pubkey: unmatchedPubkey,
       }),
     });
   });

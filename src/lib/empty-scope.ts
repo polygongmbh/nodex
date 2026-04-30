@@ -130,7 +130,7 @@ export function buildEmptyScopeModel({
     activePeople.length > 0
       ? t("tasks.empty.scope.people", {
           people: formatNaturalList(
-            activePeople.map((person) => person.displayName || person.name || person.id),
+            activePeople.map((person) => person.displayName || person.name || person.pubkey),
             locale
           ),
         })

@@ -27,11 +27,9 @@ vi.mock("@/components/ui/calendar", () => ({
 }));
 
 const author: Person = {
-  id: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  pubkey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   name: "alice",
   displayName: "Alice Doe",
-  isOnline: true,
-  isSelected: false,
 };
 
 const tasks: Task[] = [makeTask({ id: "task-1", author, status: "open" })];
@@ -112,7 +110,7 @@ describe("FeedView", () => {
       status: "open",
       rawNostrEvent: {
         id: "event-raw-1",
-        pubkey: author.id,
+        pubkey: author.pubkey,
         created_at: 1700000000,
         kind: 1,
         tags: [["t", "general"]],
@@ -578,11 +576,9 @@ describe("FeedView", () => {
 
   it("shows a shortened fallback npub on slim desktop", async () => {
     const pubkeyOnlyAuthor: Person = {
-      id: author.id,
-      name: author.id,
-      displayName: author.id,
-      isOnline: true,
-      isSelected: false,
+      pubkey: author.pubkey,
+      name: author.pubkey,
+      displayName: author.pubkey,
     };
     const pubkeyTask = makeTask({ id: "task-pubkey", author: pubkeyOnlyAuthor, status: "open" });
     const matchMediaSpy = vi
@@ -618,11 +614,9 @@ describe("FeedView", () => {
 
   it("shows the full fallback npub on xl desktop widths", async () => {
     const pubkeyOnlyAuthor: Person = {
-      id: author.id,
-      name: author.id,
-      displayName: author.id,
-      isOnline: true,
-      isSelected: false,
+      pubkey: author.pubkey,
+      name: author.pubkey,
+      displayName: author.pubkey,
     };
     const pubkeyTask = makeTask({ id: "task-pubkey-2xl", author: pubkeyOnlyAuthor, status: "open" });
     const matchMediaSpy = vi
@@ -750,7 +744,7 @@ describe("FeedView", () => {
             id: "state-timestamp-yesterday",
             status: { type: "active", description: "Working on relay reconnect" },
             timestamp: new Date("2026-04-02T18:45:00.000Z"),
-            authorPubkey: author.id,
+            authorPubkey: author.pubkey,
           },
         ],
       });
@@ -874,7 +868,7 @@ describe("FeedView", () => {
   });
 
   it("renders pubkey mentions as @name links and supports modifier shortcuts", () => {
-    const mentionedPubkey = author.id;
+    const mentionedPubkey = author.pubkey;
     const mentionTask = makeTask({
       id: "task-mention",
       author,
@@ -923,7 +917,7 @@ describe("FeedView", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.compose.mention",
       person: expect.objectContaining({
-        id: unresolvedPubkey,
+        pubkey: unresolvedPubkey,
       }),
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
@@ -938,8 +932,8 @@ describe("FeedView", () => {
       author,
       content: "Please review #frontend",
       status: "open",
-      assigneePubkeys: [author.id],
-      mentions: [author.id],
+      assigneePubkeys: [author.pubkey],
+      mentions: [author.pubkey],
     });
 
     renderFeedView({
@@ -962,13 +956,13 @@ describe("FeedView", () => {
           id: "state-2",
           status: { type: "active", description: "Working on relay reconnect" },
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          authorPubkey: author.id,
+          authorPubkey: author.pubkey,
         },
         {
           id: "state-1",
           status: { type: "open", description: "Unblocked" },
           timestamp: new Date(Date.now() - 20 * 60 * 1000),
-          authorPubkey: author.id,
+          authorPubkey: author.pubkey,
         },
       ],
     });
@@ -1007,7 +1001,7 @@ describe("FeedView", () => {
           id: "state-title-tooltip",
           status: { type: "active", description: "Working on relay reconnect" },
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          authorPubkey: author.id,
+          authorPubkey: author.pubkey,
         },
       ],
     });
@@ -1105,7 +1099,7 @@ describe("FeedView", () => {
           id: "close-update-1",
           status: { type: "closed" },
           timestamp: new Date(Date.now() - 30_000),
-          authorPubkey: author.id,
+          authorPubkey: author.pubkey,
         },
       ],
     });
@@ -1193,11 +1187,9 @@ describe("FeedView", () => {
   it("ignores selected people as well as channel filters for the mobile fallback", () => {
     const selectedAuthor = { ...author, isSelected: true };
     const otherAuthor: Person = {
-      id: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      pubkey: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       name: "bob",
       displayName: "Bob Doe",
-      isOnline: true,
-      isSelected: false,
     };
     const otherTask = makeTask({
       id: "task-2",

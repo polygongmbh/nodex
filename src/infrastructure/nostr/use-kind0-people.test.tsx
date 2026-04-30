@@ -32,7 +32,7 @@ describe("useKind0People", () => {
 
     expect(result.current.people[0]).toEqual(
       expect.objectContaining({
-        id: "a".repeat(64),
+        pubkey: "a".repeat(64),
         name: "alice",
         displayName: "Alice Demo",
         nip05: "alice@example.com",

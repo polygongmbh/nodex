@@ -93,11 +93,9 @@ function buildFallbackMentionPerson(identifier: string): Person | null {
 
   const label = formatUserFacingPubkey(pubkey);
   return {
-    id: pubkey,
+    pubkey,
     name: label,
     displayName: label,
-    isOnline: false,
-    isSelected: false,
   };
 }
 
@@ -410,7 +408,7 @@ function renderMarkdownBlock(
       const clickablePerson = resolvedPerson || fallbackPerson;
       const mentionLabel = resolvedPerson?.name
         || resolvedPerson?.displayName
-        || (fallbackPerson ? formatPubkeyMention(fallbackPerson.id) : formatPubkeyMention(mentionIdentifier));
+        || (fallbackPerson ? formatPubkeyMention(fallbackPerson.pubkey) : formatPubkeyMention(mentionIdentifier));
       const userFacingMentionIdentifier = toUserFacingPubkey(mentionIdentifier);
 
       if (clickablePerson) {

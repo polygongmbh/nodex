@@ -131,13 +131,13 @@ export function FeedTaskCard({
       ? t("tasks.listing.fulfilled")
       : t("tasks.listing.sold");
   const authorMeta = formatAuthorMetaParts({
-    id: resolvedAuthor.id,
+    pubkey: resolvedAuthor.pubkey,
     displayName: resolvedAuthor.displayName,
     name: resolvedAuthor.name,
   });
-  const authorUserFacingId = toUserFacingPubkey(resolvedAuthor.id);
+  const authorUserFacingId = toUserFacingPubkey(resolvedAuthor.pubkey);
   const isPubkeyPrimary =
-    authorMeta.primary === resolvedAuthor.id ||
+    authorMeta.primary === resolvedAuthor.pubkey ||
     authorMeta.primary === authorUserFacingId;
   const displayNpub = formatFeedNpubLabel(authorUserFacingId, isXLDesktop);
   const primaryAuthorLabel = isPubkeyPrimary ? displayNpub : authorMeta.primary;
@@ -160,7 +160,7 @@ export function FeedTaskCard({
   const canUpdateListingStatus =
     !isInteractionBlocked &&
     isListing &&
-    Boolean(currentUser?.id && currentUser.id.toLowerCase() === task.author.id.toLowerCase());
+    Boolean(currentUser?.pubkey && currentUser.pubkey.toLowerCase() === task.author.pubkey.toLowerCase());
   const standaloneEmbedUrls = new Set(
     getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
   );

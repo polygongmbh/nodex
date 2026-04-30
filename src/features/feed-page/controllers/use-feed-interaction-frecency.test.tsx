@@ -41,10 +41,9 @@ function DispatchButtons() {
           void dispatch({
             type: "filter.applyAuthorExclusive",
             author: {
-              id: "alice",
+              pubkey: "alice",
               name: "alice",
               displayName: "Alice",
-              isOnline: false,
               isSelected: false,
             },
           })

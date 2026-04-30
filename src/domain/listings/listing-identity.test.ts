@@ -8,7 +8,7 @@ describe("getListingReplaceableKey", () => {
       {
         id: "event-id-1",
         feedMessageType: "offer",
-        author: { id: "A".repeat(64) },
+        author: { pubkey: "A".repeat(64) },
         nip99: { identifier: "listing-123" },
       },
       NostrEventKind.ClassifiedListing
@@ -21,7 +21,7 @@ describe("getListingReplaceableKey", () => {
       {
         id: "legacy-event-id",
         feedMessageType: "request",
-        author: { id: "b".repeat(64) },
+        author: { pubkey: "b".repeat(64) },
         nip99: {},
       },
       NostrEventKind.ClassifiedListing
@@ -34,7 +34,7 @@ describe("getListingReplaceableKey", () => {
       {
         id: "event-id-2",
         feedMessageType: undefined,
-        author: { id: "c".repeat(64) },
+        author: { pubkey: "c".repeat(64) },
         nip99: { identifier: "listing-456" },
       },
       NostrEventKind.ClassifiedListing

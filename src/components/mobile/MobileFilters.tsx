@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Relay, Channel, ChannelMatchMode } from "@/types";
-import type { Person } from "@/types/person";
+import type { SidebarPerson } from "@/types/person";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -34,7 +34,7 @@ interface MobileFiltersProps {
   relays?: Relay[];
   channels?: Channel[];
   channelMatchMode?: ChannelMatchMode;
-  people?: Person[];
+  people?: SidebarPerson[];
   profileEditorOpenSignal?: number;
 }
 
@@ -80,7 +80,7 @@ export function MobileFilters({
   } = useProfileEditor({
     userPubkey: user?.pubkey,
     knownProfileNames: people
-      .filter((person) => person.id !== user?.pubkey)
+      .filter((person) => person.pubkey !== user?.pubkey)
       .map((person) => person.name),
     t: translateMixedKey,
     updateUserProfile,
@@ -362,9 +362,9 @@ export function MobileFilters({
               const personLabel = getCompactPersonLabel(person);
               return (
                 <button
-                  key={person.id}
+                  key={person.pubkey}
                   onClick={() => {
-                    void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
+                    void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.pubkey });
                   }}
                   className={cn(
                     "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm active:scale-95",
@@ -374,7 +374,7 @@ export function MobileFilters({
                   )}
                 >
                   <UserAvatar
-                    id={person.id}
+                    id={person.pubkey}
                     displayName={personDisplayName}
                     className="w-6 h-6"
                   />

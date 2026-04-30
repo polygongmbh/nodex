@@ -4,7 +4,7 @@ import type { Task, TaskStatusType } from "@/types";
 const LISTING_EVENT_KIND = 30402;
 
 export function buildPendingPublishDedupKey(task: Task): string {
-  const authorId = task.author.id?.trim().toLowerCase() || "";
+  const authorId = task.author.pubkey?.trim().toLowerCase() || "";
   const normalizedContent = task.content.trim();
   const normalizedTags = [...task.tags].map((tag) => tag.trim().toLowerCase()).sort().join(",");
   const feedMessageType = task.feedMessageType || "";

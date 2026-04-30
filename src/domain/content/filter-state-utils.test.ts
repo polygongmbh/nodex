@@ -16,8 +16,8 @@ const channels: Channel[] = [
 ];
 
 const people: Person[] = [
-  { id: "alice", name: "alice", displayName: "Alice", isOnline: true, isSelected: false },
-  { id: "bob", name: "bob", displayName: "Bob", isOnline: true, isSelected: false },
+  { pubkey: "alice", name: "alice", displayName: "Alice", isSelected: false },
+  { pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false },
 ];
 
 describe("filter-state-utils", () => {
@@ -50,13 +50,13 @@ describe("filter-state-utils", () => {
   });
 
   it("maps people selection via callback", () => {
-    const result = mapPeopleSelection(people, (person) => person.id === "bob");
-    expect(result.find((person) => person.id === "alice")?.isSelected).toBe(false);
-    expect(result.find((person) => person.id === "bob")?.isSelected).toBe(true);
+    const result = mapPeopleSelection(people, (person) => person.pubkey === "bob");
+    expect(result.find((person) => person.pubkey === "alice")?.isSelected).toBe(false);
+    expect(result.find((person) => person.pubkey === "bob")?.isSelected).toBe(true);
   });
 
   it("detects when exclusive person click should toggle off", () => {
-    const selectedPeople = mapPeopleSelection(people, (person) => person.id === "alice");
+    const selectedPeople = mapPeopleSelection(people, (person) => person.pubkey === "alice");
     expect(shouldToggleOffExclusivePerson(selectedPeople, "alice")).toBe(true);
     expect(shouldToggleOffExclusivePerson(selectedPeople, "bob")).toBe(false);
   });

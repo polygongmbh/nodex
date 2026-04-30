@@ -70,6 +70,8 @@ function renderPane(currentView: "feed" | "tree" | "kanban" | "calendar" | "list
   );
 }
 
+const author = makePerson({ pubkey: "me", name: "me", displayName: "Me" });
+
 describe("DesktopViewsPane overlay", () => {
   it("renders the shared overlay above an empty tree surface", () => {
     renderPane("tree", {
@@ -94,7 +96,6 @@ describe("DesktopViewsPane overlay", () => {
   });
 
   it("does not render the shared overlay when scoped tasks are present", async () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: true });
     const task = makeTask({
       id: "pane-task",
       author,
@@ -113,7 +114,6 @@ describe("DesktopViewsPane overlay", () => {
   });
 
   it("shows the shared overlay for a focused leaf task in table view", async () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: true });
     const leaf = makeTask({
       id: "focused-leaf",
       author,
@@ -132,7 +132,6 @@ describe("DesktopViewsPane overlay", () => {
   });
 
   it("does not show the shared overlay for a focused leaf task in timeline view", async () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: true });
     const leaf = makeTask({
       id: "focused-feed-leaf",
       author,

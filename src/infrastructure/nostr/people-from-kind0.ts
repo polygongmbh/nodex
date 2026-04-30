@@ -1,4 +1,4 @@
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { normalizeCachedRelayUrl } from "@/infrastructure/nostr/event-cache";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
@@ -258,10 +258,10 @@ export function derivePeopleFromKind0Events(
   visiblePubkeys: string[],
   selectedEvents: Kind0LikeEvent[],
   fallbackEvents: Kind0LikeEvent[],
-  previousPeople: Person[],
+  previousPeople: SelectablePerson[],
   options?: { prioritizedPubkeys?: string[] }
-): Person[] {
-  const previousSelection = new Map(previousPeople.map((person) => [normalizePubkey(person.id), person.isSelected]));
+): SelectablePerson[] {
+  const previousSelection = new Map(previousPeople.map((person) => [normalizePubkey(person.pubkey), person.isSelected]));
   const priorityLookup = new Map(
     (options?.prioritizedPubkeys || [])
       .map((value, index) => [normalizePubkey(value), index] as const)
@@ -282,20 +282,19 @@ export function derivePeopleFromKind0Events(
     const displayName = (parsed.displayName || parsed.name || fallbackPubkeyLabel).trim();
 
     return {
-      id: pubkey,
+      pubkey,
       name,
       displayName,
       nip05: parsed.nip05?.trim().toLowerCase(),
       about: parsed.about?.trim(),
       avatar: parsed.picture,
-      isOnline: true,
       isSelected: previousSelection.get(pubkey) || false,
-    } satisfies Person;
+    } satisfies SelectablePerson;
   });
 
   return people.sort((a, b) => {
-    const aPriority = priorityLookup.get(normalizePubkey(a.id));
-    const bPriority = priorityLookup.get(normalizePubkey(b.id));
+    const aPriority = priorityLookup.get(normalizePubkey(a.pubkey));
+    const bPriority = priorityLookup.get(normalizePubkey(b.pubkey));
     if (aPriority !== undefined && bPriority !== undefined) return aPriority - bPriority;
     if (aPriority !== undefined) return -1;
     if (bPriority !== undefined) return 1;

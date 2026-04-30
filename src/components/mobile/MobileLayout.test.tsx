@@ -156,7 +156,7 @@ vi.mock("@/components/tasks/CalendarView", () => ({
 
 const relays: Relay[] = [makeRelay()];
 const channels: Channel[] = [makeChannel()];
-const people: Person[] = [makePerson({ id: "me", name: "Me", displayName: "Me" })];
+const people: Person[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
 const tasks: Task[] = [];
 
 const baseFeedViewState: FeedViewState = {
@@ -405,7 +405,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
+    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
     const sampleTasks: Task[] = [
       makeTask({ id: "task-alice", content: "Ship #general", author: alice }),
     ];
@@ -536,8 +536,8 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const selectedPerson = makePerson({ id: "me", name: "me", displayName: "Me", isSelected: true });
-    const otherPerson = makePerson({ id: "bob", name: "bob", displayName: "Bob", isSelected: false });
+    const selectedPerson = makePerson({ pubkey: "me", name: "me", displayName: "Me", isSelected: true });
+    const otherPerson = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false });
     const sampleTasks: Task[] = [
       makeTask({ id: "task-1", content: "Ship #general", tags: ["general"], author: otherPerson }),
     ];

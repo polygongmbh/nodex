@@ -47,7 +47,7 @@ describe("nostrEventToTask", () => {
     expect(task.id).toBe("abc123");
     expect(task.content).toBe("Hello world");
     expect(task.taskType).toBe("comment");
-    expect(task.author.id).toBe(baseEvent.pubkey);
+    expect(task.author.pubkey).toBe(baseEvent.pubkey);
   });
 
   it("converts kind 1621 to a task", () => {

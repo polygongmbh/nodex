@@ -8,7 +8,7 @@ import {
 } from "./task-collections";
 import type { Task } from "@/types";
 
-const baseAuthor = makePerson({ id: "user-1", name: "me", displayName: "Me" });
+const baseAuthor = makePerson({ pubkey: "user-1", name: "me", displayName: "Me" });
 
 function buildTask(id: string, timestampIso: string, overrides: Partial<Task> = {}): Task {
   return makeTask({
@@ -29,12 +29,12 @@ describe("buildPendingPublishDedupKey", () => {
     const first = buildTask("1", "2026-03-16T10:00:00.000Z", {
       content: " Same content ",
       tags: ["B", "a"],
-      author: makePerson({ id: "ABC123", name: "a", displayName: "A" }),
+      author: makePerson({ pubkey: "ABC123", name: "a", displayName: "A" }),
     });
     const second = buildTask("2", "2026-03-16T11:00:00.000Z", {
       content: "Same content",
       tags: ["a", "b"],
-      author: makePerson({ id: "abc123", name: "a", displayName: "A" }),
+      author: makePerson({ pubkey: "abc123", name: "a", displayName: "A" }),
     });
 
     expect(buildPendingPublishDedupKey(first)).toBe(buildPendingPublishDedupKey(second));
@@ -47,13 +47,13 @@ describe("filterPendingLocalTasksForMerge", () => {
       pendingPublishToken: "pending-1",
       content: "Hello world",
       tags: ["general"],
-      author: makePerson({ id: "abc123", name: "a", displayName: "A" }),
+      author: makePerson({ pubkey: "abc123", name: "a", displayName: "A" }),
     });
     const persisted = buildTask("persisted", "2026-03-16T09:00:00.000Z");
     const incoming = buildTask("remote", "2026-03-16T10:00:00.000Z", {
       content: "Hello world",
       tags: ["general"],
-      author: makePerson({ id: "abc123", name: "a", displayName: "A" }),
+      author: makePerson({ pubkey: "abc123", name: "a", displayName: "A" }),
     });
 
     expect(filterPendingLocalTasksForMerge([localPending, persisted], [incoming])).toEqual([persisted]);
@@ -76,13 +76,13 @@ describe("dedupeMergedTasks", () => {
     const listingA = buildTask("listing-a", "2026-03-16T09:00:00.000Z", {
       taskType: "comment",
       feedMessageType: "offer",
-      author: makePerson({ id: "a".repeat(64), name: "a", displayName: "A" }),
+      author: makePerson({ pubkey: "a".repeat(64), name: "a", displayName: "A" }),
       nip99: { identifier: "listing-1", title: "Listing 1", status: "active" },
     });
     const listingB = buildTask("listing-b", "2026-03-16T10:00:00.000Z", {
       taskType: "comment",
       feedMessageType: "offer",
-      author: makePerson({ id: "a".repeat(64), name: "a", displayName: "A" }),
+      author: makePerson({ pubkey: "a".repeat(64), name: "a", displayName: "A" }),
       nip99: { identifier: "listing-1", title: "Listing 1", status: "sold" },
     });
 

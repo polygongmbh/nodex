@@ -15,7 +15,6 @@ const baseTask: Task = {
     id: "me",
     name: "me",
     displayName: "Me",
-    isOnline: true,
     isSelected: false,
   },
   content: "Root task",

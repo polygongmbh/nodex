@@ -65,7 +65,6 @@ export interface TaskComposerChannelOption {
 }
 
 export interface TaskComposerMentionOption {
-  id: string;
   pubkey: string;
   identifier: string;
   mentionDisplay: string;
@@ -137,7 +136,7 @@ export function useResolvedTaskComposerEnvironment({
         .filter(Boolean),
       selectedPeoplePubkeys: resolvedPeople
         .filter((person) => person.isSelected)
-        .map((person) => person.id.trim().toLowerCase())
+        .map((person) => person.pubkey.trim().toLowerCase())
         .filter((value) => /^[a-f0-9]{64}$/i.test(value)),
     }),
     [mentionablePeople, resolvedChannels, resolvedPeople, resolvedRelays]
@@ -169,8 +168,7 @@ export function useTaskComposerModel(): TaskComposerModel {
       const primaryLabel = (person.name || person.displayName || "").trim()
         || formatMentionIdentifierForDisplay(identifier);
       return {
-        id: person.id,
-        pubkey: person.id.trim().toLowerCase(),
+        pubkey: person.pubkey,
         identifier,
         mentionDisplay: formatMentionIdentifierForDisplay(identifier),
         primaryLabel,
@@ -186,7 +184,7 @@ export function useTaskComposerModel(): TaskComposerModel {
     const selectedPersonIdByPubkey = new Map(
       mentionOptions
         .filter((person) => person.isSelected)
-        .map((person) => [person.pubkey, person.id] as const)
+        .map((person) => [person.pubkey, person.pubkey] as const)
     );
     const mentionOptionByPubkey = new Map(
       mentionOptions.map((person) => [person.pubkey, person] as const)

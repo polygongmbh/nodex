@@ -6,19 +6,19 @@ describe("deriveSidebarPeople", () => {
   it("keeps only people with at least three posts and sorts by latest post first", () => {
     const now = new Date("2026-02-17T12:00:00.000Z");
     const alice = makePerson({
-      id: "alice-pk",
+      pubkey: "alice-pk",
       name: "alice",
       displayName: "Alice",
       isSelected: true,
     });
     const bob = makePerson({
-      id: "bob-pk",
+      pubkey: "bob-pk",
       name: "bob",
       displayName: "Bob",
       isSelected: false,
     });
     const carol = makePerson({
-      id: "carol-pk",
+      pubkey: "carol-pk",
       name: "carol",
       displayName: "Carol",
       isSelected: false,
@@ -37,14 +37,14 @@ describe("deriveSidebarPeople", () => {
 
     const sidebarPeople = deriveSidebarPeople([alice, bob, carol], tasks, new Map(), now);
 
-    expect(sidebarPeople.map((person) => person.id)).toEqual(["alice-pk", "bob-pk"]);
+    expect(sidebarPeople.map((person) => person.pubkey)).toEqual(["alice-pk", "bob-pk"]);
     expect(sidebarPeople[0].isSelected).toBe(true);
   });
 
   it("sets online only for people with a post in the last three minutes", () => {
     const now = new Date("2026-02-17T12:00:00.000Z");
-    const recent = makePerson({ id: "recent-pk", name: "recent", displayName: "Recent" });
-    const stale = makePerson({ id: "stale-pk", name: "stale", displayName: "Stale" });
+    const recent = makePerson({ pubkey: "recent-pk", name: "recent", displayName: "Recent" });
+    const stale = makePerson({ pubkey: "stale-pk", name: "stale", displayName: "Stale" });
 
     const tasks = [
       makeTask({ id: "r1", author: recent, timestamp: new Date("2026-02-17T11:57:30.000Z") }),
@@ -56,16 +56,14 @@ describe("deriveSidebarPeople", () => {
     ];
 
     const sidebarPeople = deriveSidebarPeople([recent, stale], tasks, new Map(), now);
-    expect(sidebarPeople.find((person) => person.id === "recent-pk")?.isOnline).toBe(true);
-    expect(sidebarPeople.find((person) => person.id === "stale-pk")?.isOnline).toBe(false);
-    expect(sidebarPeople.find((person) => person.id === "stale-pk")?.onlineStatus).toBe(
+    expect(sidebarPeople.find((person) => person.pubkey === "stale-pk")?.presence?.state).toBe(
       "recent"
     );
   });
 
   it("uses NIP-38 activity timestamps for online status", () => {
     const now = new Date("2026-02-17T12:00:00.000Z");
-    const alice = makePerson({ id: "alice-pk", name: "alice", displayName: "Alice" });
+    const alice = makePerson({ pubkey: "alice-pk", name: "alice", displayName: "Alice" });
     const tasks = [
       makeTask({ id: "a1", author: alice, timestamp: new Date("2026-02-17T10:30:00.000Z") }),
       makeTask({ id: "a2", author: alice, timestamp: new Date("2026-02-17T10:20:00.000Z") }),
@@ -82,16 +80,15 @@ describe("deriveSidebarPeople", () => {
 
     const sidebarPeople = deriveSidebarPeople([alice], tasks, presence, now);
 
-    expect(sidebarPeople[0].isOnline).toBe(true);
-    expect(sidebarPeople[0].onlineStatus).toBe("online");
-    expect(sidebarPeople[0].lastPresenceAtMs).toBe(new Date("2026-02-17T11:58:30.000Z").getTime());
-    expect(sidebarPeople[0].presenceView).toBe("feed");
-    expect(sidebarPeople[0].presenceTaskId).toBe("task-123");
+    expect(sidebarPeople[0].presence?.state).toBe("online");
+    expect(sidebarPeople[0].presence?.reportedAtMs).toBe(new Date("2026-02-17T11:58:30.000Z").getTime());
+    expect(sidebarPeople[0].presence?.context?.view).toBe("feed");
+    expect(sidebarPeople[0].presence?.context?.taskId).toBe("task-123");
   });
 
   it("shows offline when the latest presence explicitly reports offline", () => {
     const now = new Date("2026-02-17T12:00:00.000Z");
-    const alice = makePerson({ id: "alice-pk", name: "alice", displayName: "Alice" });
+    const alice = makePerson({ pubkey: "alice-pk", name: "alice", displayName: "Alice" });
     const tasks = [
       makeTask({ id: "a1", author: alice, timestamp: new Date("2026-02-17T11:59:30.000Z") }),
       makeTask({ id: "a2", author: alice, timestamp: new Date("2026-02-17T11:58:10.000Z") }),
@@ -106,17 +103,15 @@ describe("deriveSidebarPeople", () => {
 
     const sidebarPeople = deriveSidebarPeople([alice], tasks, presence, now);
 
-    expect(sidebarPeople[0].isOnline).toBe(false);
-    expect(sidebarPeople[0].onlineStatus).toBe("offline");
-    expect(sidebarPeople[0].lastPresenceAtMs).toBe(new Date("2026-02-17T11:59:45.000Z").getTime());
-    expect(sidebarPeople[0].presenceView).toBeUndefined();
-    expect(sidebarPeople[0].presenceTaskId).toBeUndefined();
+    expect(sidebarPeople[0].presence?.state).toBe("offline");
+    expect(sidebarPeople[0].presence?.reportedAtMs).toBe(new Date("2026-02-17T11:59:45.000Z").getTime());
+    expect(sidebarPeople[0].presence?.context).toBeUndefined();
   });
 
   it("uses person frecency only as a tiebreaker inside the visible relay scope", () => {
     const now = new Date("2026-02-17T12:00:00.000Z");
-    const frequent = makePerson({ id: "frequent-pk", name: "frequent", displayName: "Frequent" });
-    const manual = makePerson({ id: "manual-pk", name: "manual", displayName: "Manual" });
+    const frequent = makePerson({ pubkey: "frequent-pk", name: "frequent", displayName: "Frequent" });
+    const manual = makePerson({ pubkey: "manual-pk", name: "manual", displayName: "Manual" });
     const tasks = [
       makeTask({ id: "f1", author: frequent, timestamp: new Date("2026-02-17T11:59:30.000Z") }),
       makeTask({ id: "f2", author: frequent, timestamp: new Date("2026-02-17T11:58:10.000Z") }),
@@ -134,13 +129,13 @@ describe("deriveSidebarPeople", () => {
       { personalizeScores: new Map([["manual-pk", 2]]) }
     );
 
-    expect(sidebarPeople.map((person) => person.id)).toEqual(["manual-pk", "frequent-pk"]);
+    expect(sidebarPeople.map((person) => person.pubkey)).toEqual(["manual-pk", "frequent-pk"]);
   });
 
   it("does not let person frecency pull hidden-relay people back into the visible list", () => {
     const now = new Date("2026-02-17T12:00:00.000Z");
-    const scoped = makePerson({ id: "scoped-pk", name: "scoped", displayName: "Scoped" });
-    const hidden = makePerson({ id: "hidden-pk", name: "hidden", displayName: "Hidden" });
+    const scoped = makePerson({ pubkey: "scoped-pk", name: "scoped", displayName: "Scoped" });
+    const hidden = makePerson({ pubkey: "hidden-pk", name: "hidden", displayName: "Hidden" });
     const tasks = [
       makeTask({ id: "s1", author: scoped, timestamp: new Date("2026-02-17T11:59:30.000Z") }),
       makeTask({ id: "s2", author: scoped, timestamp: new Date("2026-02-17T11:58:10.000Z") }),
@@ -155,6 +150,6 @@ describe("deriveSidebarPeople", () => {
       { personalizeScores: new Map([["hidden-pk", 2]]) }
     );
 
-    expect(sidebarPeople.map((person) => person.id)).toEqual(["scoped-pk"]);
+    expect(sidebarPeople.map((person) => person.pubkey)).toEqual(["scoped-pk"]);
   });
 });

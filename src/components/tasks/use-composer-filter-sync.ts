@@ -24,7 +24,7 @@ export function useComposerFilterSync(
       new Map(
         environment.people
           .filter((p) => p.isSelected)
-          .map((p) => [p.id.trim().toLowerCase(), p.id] as const)
+          .map((p) => [p.pubkey, p.pubkey] as const)
       ),
     [environment.people]
   );
@@ -39,7 +39,7 @@ export function useComposerFilterSync(
 
   const onRemoveFilterMention = useCallback(
     (pubkey: string) => {
-      const personId = selectedPersonIdByPubkey.get(pubkey.trim().toLowerCase());
+      const personId = selectedPersonIdByPubkey.get(pubkey);
       if (personId) void dispatch({ type: "filter.clearPerson", personId });
     },
     [selectedPersonIdByPubkey, dispatch]

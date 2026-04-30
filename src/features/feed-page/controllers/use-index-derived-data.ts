@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Task, Channel, Relay, TaskStatusType, PostedTag } from "@/types";
-import type { Person } from "@/types/person";
+import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
 import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
@@ -40,7 +40,7 @@ const INITIAL_CHANNEL_SEED_LIMIT = 16;
 export interface UseIndexDerivedDataOptions {
   nostrEvents: CachedNostrEvent[];
   demoTasks: Task[];
-  people: Person[];
+  people: SelectablePerson[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   cachedKind0Events: Kind0LikeEvent[];
   user: NDKUser | null;
@@ -60,8 +60,8 @@ export interface UseIndexDerivedDataResult {
   scopedNostrEventsForChannels: CachedNostrEvent[];
   channels: Channel[];
   composeChannels: Channel[];
-  mentionAutocompletePeople: Person[];
-  sidebarPeople: Person[];
+  mentionAutocompletePeople: SelectablePerson[];
+  sidebarPeople: SidebarPerson[];
   currentUser: Person | undefined;
   hasCurrentUserProfileMetadata: boolean;
 }

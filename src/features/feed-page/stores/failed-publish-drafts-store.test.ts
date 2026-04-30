@@ -12,7 +12,6 @@ const sampleDraft: FailedPublishDraft = {
     id: "pubkey-1",
     name: "alice",
     displayName: "Alice",
-    isOnline: true,
     isSelected: false,
   },
   content: "Ship #go task",

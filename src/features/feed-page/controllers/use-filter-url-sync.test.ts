@@ -60,11 +60,10 @@ describe("parseFilterSearchParams", () => {
 });
 
 describe("buildFilterSearchParams", () => {
-  const makePerson = (id: string, isSelected: boolean): Person => ({
-    id,
-    name: id,
-    displayName: id,
-    isOnline: false,
+  const makePerson = (pubkey: string, isSelected: boolean): Person => ({
+    pubkey,
+    name: pubkey,
+    displayName: pubkey,
     isSelected,
   });
 

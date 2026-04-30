@@ -32,7 +32,7 @@ export function buildFeedDisclosureResetKey({
     .join(",");
   const selectedPeopleKey = people
     .filter((person) => person.isSelected)
-    .map((person) => person.id)
+    .map((person) => person.pubkey)
     .sort()
     .join(",");
   const quickFiltersKey = [

@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import type { FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type { Channel, ChannelMatchMode } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 export const TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -13,7 +13,7 @@ interface UseTaskScopeSpecificFiltersOptions {
   shouldRestoreSnapshot?: (snapshot: FilterSnapshot) => boolean;
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setChannelMatchMode: Dispatch<SetStateAction<ChannelMatchMode>>;
-  setPeople: Dispatch<SetStateAction<Person[]>>;
+  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
   restoreTimeoutMs?: number;
   now?: () => number;
 }
@@ -73,7 +73,7 @@ export function useTaskScopeSpecificFilters({
         setChannelFilterStates(restoreChannelFilterStates(snapshot));
         setChannelMatchMode(snapshot.channelMatchMode);
         setPeople((previous) =>
-          mapPeopleSelection(previous, (person) => snapshot.selectedPeopleIds.includes(person.id))
+          mapPeopleSelection(previous, (person) => snapshot.selectedPeopleIds.includes(person.pubkey))
         );
       }
 

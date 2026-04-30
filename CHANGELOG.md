@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- `Person` now uses `pubkey` instead of `id`; presence state is grouped under a `presence` snapshot object rather than flat fields on the person
+
 ## [2.15.4] - 2026-04-28
 Patch release for onboarding flow stabilization, welcome cleanup, and profile cache consistency.
 

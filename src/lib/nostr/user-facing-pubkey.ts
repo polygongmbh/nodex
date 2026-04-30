@@ -63,6 +63,17 @@ export function toUserFacingPubkey(value: string): string {
   return npub || trimmed;
 }
 
+export function canonicalizePubkey(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (isHexPubkey(normalized)) return normalized;
+  const hex = npubToHexPubkey(normalized);
+  return hex ?? normalized;
+}
+
+export function pubkeysEqual(a: string, b: string): boolean {
+  return canonicalizePubkey(a) === canonicalizePubkey(b);
+}
+
 export function formatUserFacingPubkey(
   value: string,
   options: PubkeyDisplayOptions = {}

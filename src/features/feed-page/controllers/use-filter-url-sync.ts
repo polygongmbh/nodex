@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { Channel } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 const RELAY_PARAM = "r";
 const CHANNEL_INCLUDE_PARAM = "ch";
@@ -62,7 +62,7 @@ export function parseFilterSearchParams(searchParams: URLSearchParams): {
 export function buildFilterSearchParams(
   activeRelayIds: Set<string>,
   channelFilterStates: Map<string, Channel["filterState"]>,
-  people: Person[]
+  people: SelectablePerson[]
 ): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -81,7 +81,7 @@ export function buildFilterSearchParams(
 
   const selectedPeople = people
     .filter((p) => p.isSelected)
-    .map((p) => p.id);
+    .map((p) => p.pubkey);
   if (selectedPeople.length > 0) params.set(PEOPLE_PARAM, selectedPeople.sort().join(","));
 
   return params;
@@ -123,9 +123,9 @@ interface UseFilterUrlSyncOptions {
   activeRelayIds: Set<string>;
   setActiveRelayIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   channelFilterStates: Map<string, Channel["filterState"]>;
-  people: Person[];
+  people: SelectablePerson[];
   setChannelFilterStates: React.Dispatch<React.SetStateAction<Map<string, Channel["filterState"]>>>;
-  setPeople: React.Dispatch<React.SetStateAction<Person[]>>;
+  setPeople: React.Dispatch<React.SetStateAction<SelectablePerson[]>>;
 }
 
 /**
@@ -180,7 +180,7 @@ export function useFilterUrlSync({
       setPeople((prev) =>
         prev.map((person) => ({
           ...person,
-          isSelected: selectedPersonIds.has(person.id),
+          isSelected: selectedPersonIds.has(person.pubkey),
         }))
       );
     }
@@ -193,7 +193,7 @@ export function useFilterUrlSync({
 
     const matchedIds = new Set(
       people
-        .map((person) => person.id)
+        .map((person) => person.pubkey)
         .filter((id) => pendingIds.has(id))
     );
 
@@ -202,7 +202,7 @@ export function useFilterUrlSync({
     setPeople((prev) => {
       let changed = false;
       const next = prev.map((person) => {
-        if (!matchedIds.has(person.id)) return person;
+        if (!matchedIds.has(person.pubkey)) return person;
         if (person.isSelected) return person;
         changed = true;
         return { ...person, isSelected: true };
@@ -240,7 +240,7 @@ export function useFilterUrlSync({
         const [oldRelayId] = prevRelayIds;
         perRelayMemoryRef.current.set(oldRelayId, {
           channelStates: prevChannelStates,
-          selectedPeopleIds: new Set(prevPeople.filter((p) => p.isSelected).map((p) => p.id)),
+          selectedPeopleIds: new Set(prevPeople.filter((p) => p.isSelected).map((p) => p.pubkey)),
         });
       }
 
@@ -256,7 +256,7 @@ export function useFilterUrlSync({
             setChannelFilterStates(saved.channelStates);
             const savedIds = saved.selectedPeopleIds;
             setPeople((prev) =>
-              prev.map((person) => ({ ...person, isSelected: savedIds.has(person.id) }))
+              prev.map((person) => ({ ...person, isSelected: savedIds.has(person.pubkey) }))
             );
           }
         }

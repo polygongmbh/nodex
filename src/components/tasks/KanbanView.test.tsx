@@ -75,6 +75,8 @@ vi.mock("@hello-pangea/dnd", () => ({
     ),
 }));
 
+const author = makePerson({ pubkey: "me", name: "me", displayName: "Me" });
+
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
   usePreferencesStore.setState({ compactTaskCardsEnabled: false });
@@ -84,7 +86,6 @@ describe("KanbanView", () => {
   // Column structure
 
   it("renders a closed column to the right of done", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const todoTask = makeTask({ id: "todo-task", author, status: "open", content: "Todo task #general" });
     const doneTask = makeTask({ id: "done-task", author, status: "done", content: "Done task #general" });
     const closedTask = makeTask({ id: "closed-task", author, status: "closed", content: "Closed task #general" });
@@ -107,7 +108,6 @@ describe("KanbanView", () => {
   });
 
   it("uses shared priority-first ordering for active kanban columns", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const olderHighPriority = makeTask({
       id: "older-high-priority",
       author,
@@ -143,7 +143,6 @@ describe("KanbanView", () => {
   });
 
   it("renders a separate column for a custom task status", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const blockedTask = makeTask({
       id: "blocked-task",
       author,
@@ -165,7 +164,6 @@ describe("KanbanView", () => {
   });
 
   it("renders a droppable target for empty columns", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
 
     const { container } = render(
       <KanbanView
@@ -183,7 +181,6 @@ describe("KanbanView", () => {
   // Card content
 
   it("shows priority chips only for tasks with numeric priority", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const prioritizedTask = makeTask({
       id: "priority-task",
       author,
@@ -213,7 +210,6 @@ describe("KanbanView", () => {
   });
 
   it("keeps priority pinned outside the metadata chip row", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({
       id: "priority-and-tag-task",
       author,
@@ -241,7 +237,6 @@ describe("KanbanView", () => {
   });
 
   it("renders due date row above metadata chips", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({
       id: "due-before-chip-task",
       author,
@@ -269,7 +264,6 @@ describe("KanbanView", () => {
   });
 
   it("does not render attachment previews in kanban cards", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({
       id: "attachment-task",
       author,
@@ -298,7 +292,6 @@ describe("KanbanView", () => {
   });
 
   it("hides tag chips in compact mode while keeping due date and priority", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({
       id: "compact-kanban-task",
       author,
@@ -330,7 +323,6 @@ describe("KanbanView", () => {
   // Interaction
 
   it("focuses branch tasks on click", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const parent = makeTask({ id: "parent-task", author, status: "open", content: "Parent task #general" });
     const child = makeTask({
       id: "child-task",
@@ -355,7 +347,6 @@ describe("KanbanView", () => {
   });
 
   it("does not focus leaf tasks on click", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const leaf = makeTask({ id: "leaf-task", author, status: "open", content: "Leaf task #general" });
 
     render(
@@ -373,7 +364,6 @@ describe("KanbanView", () => {
   });
 
   it("optimistically moves card to destination column on drop", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({ id: "drag-task", author, status: "open", content: "Drag me #general" });
     const { container } = render(
       <KanbanView
@@ -414,7 +404,6 @@ describe("KanbanView", () => {
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
 
     try {
-      const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
       const task = makeTask({ id: "edge-scroll-task", author, status: "open", content: "Task #general" });
 
       const { container } = render(

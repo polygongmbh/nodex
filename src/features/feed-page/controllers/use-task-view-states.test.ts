@@ -96,8 +96,8 @@ describe("buildTreeVisibilityState", () => {
 
 describe("createTreeSelectors", () => {
   it("treats selected people as active matching filters", () => {
-    const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
-    const bob = makePerson({ id: "bob", name: "bob", displayName: "Bob Doe" });
+    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
+    const bob = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob Doe" });
     const aliceTask = makeTask({ id: "alice-task", author: alice, content: "Ship #general" });
     const bobTask = makeTask({ id: "bob-task", author: bob, content: "Review #general" });
     const tasks = [aliceTask, bobTask];

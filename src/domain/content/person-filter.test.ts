@@ -4,21 +4,17 @@ import type { Person } from "@/types/person";
 import { taskMatchesSelectedPeople } from "./person-filter";
 
 const alice: Person = {
-  id: "alice-pubkey",
+  pubkey: "alice-pubkey",
   name: "alice",
   displayName: "Alice",
   avatar: "",
-  isOnline: true,
-  isSelected: true,
 };
 
 const bob: Person = {
-  id: "bob-pubkey",
+  pubkey: "bob-pubkey",
   name: "bob",
   displayName: "Bob",
   avatar: "",
-  isOnline: true,
-  isSelected: false,
 };
 
 const baseTask: Task = {
@@ -84,7 +80,7 @@ describe("taskMatchesSelectedPeople", () => {
   it("does not crash when author id is missing at runtime", () => {
     const task = {
       ...baseTask,
-      author: { ...baseTask.author, id: undefined },
+      author: { ...baseTask.author, pubkey: undefined },
       mentions: ["alice-pubkey"],
     } as unknown as Task;
 

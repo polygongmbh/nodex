@@ -22,7 +22,7 @@ export function selectPeople(people: Person[], selectedIds: string[]): Person[] 
   const selectedIdSet = new Set(selectedIds);
   return people.map((person) => ({
     ...person,
-    isSelected: selectedIdSet.has(person.id),
+    isSelected: selectedIdSet.has(person.pubkey),
   }));
 }
 

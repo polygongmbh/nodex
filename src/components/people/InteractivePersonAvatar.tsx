@@ -41,7 +41,7 @@ export function InteractivePersonAvatar({
   displayName,
 }: InteractivePersonAvatarProps) {
   const { t } = useTranslation("tasks");
-  const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.id;
+  const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.pubkey;
   const label = ariaLabel ?? t("people.actions.openMenu", { name: resolvedDisplayName });
 
   return (
@@ -56,7 +56,7 @@ export function InteractivePersonAvatar({
           aria-label={label}
         >
           <UserAvatar
-            id={person.id}
+            id={person.pubkey}
             displayName={resolvedDisplayName}
             className={cn(sizeClassName, "flex-shrink-0", avatarClassName)}
             beamTestId={beamTestId}

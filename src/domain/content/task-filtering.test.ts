@@ -4,19 +4,15 @@ import type { Person } from "@/types/person";
 import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";
 
 const alice: Person = {
-  id: "alice-id",
+  pubkey: "alice-id",
   name: "alice",
   displayName: "Alice",
-  isOnline: true,
-  isSelected: false,
 };
 
 const bob: Person = {
-  id: "bob-id",
+  pubkey: "bob-id",
   name: "bob",
   displayName: "Bob",
-  isOnline: true,
-  isSelected: false,
 };
 
 function buildTask(overrides: Partial<Task> = {}): Task {

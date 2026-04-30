@@ -24,7 +24,7 @@ import {
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, QuickFilterState, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
@@ -34,9 +34,9 @@ interface UseChannelFilterControllerOptions {
   relays: Relay[];
   channels: Channel[];
   composeChannels: Channel[];
-  people: Person[];
-  setPeople: Dispatch<SetStateAction<Person[]>>;
-  sidebarPeople: Person[];
+  people: SelectablePerson[];
+  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
+  sidebarPeople: SidebarPerson[];
   hasLiveHydratedScope?: boolean;
   isHydrating?: boolean;
 }
@@ -123,11 +123,11 @@ export function useChannelFilterController({
 
   useEffect(() => {
     if (!isFilterPruneReady) return;
-    const sidebarPersonIds = new Set(sidebarPeople.map((person) => person.id));
+    const sidebarPersonIds = new Set(sidebarPeople.map((person) => person.pubkey));
     setPeople((prev) => {
       let changed = false;
       const next = prev.map((person) => {
-        if (!person.isSelected || sidebarPersonIds.has(person.id)) return person;
+        if (!person.isSelected || sidebarPersonIds.has(person.pubkey)) return person;
         changed = true;
         return { ...person, isSelected: false };
       });
@@ -145,15 +145,13 @@ export function useChannelFilterController({
     setPeople,
   });
 
-  const normalizeInteractivePerson = useCallback((person: Person): Person => ({
+  const normalizeInteractivePerson = useCallback((person: Person): SelectablePerson => ({
     ...person,
     avatar: person.avatar || "",
-    isOnline: person.isOnline ?? true,
-    onlineStatus: person.onlineStatus ?? "online",
-    isSelected: person.isSelected ?? false,
+    isSelected: (person as SelectablePerson).isSelected ?? false,
   }), []);
 
-  const queueMentionForPerson = useCallback((person: Person) => {
+  const queueMentionForPerson = useCallback((person: SelectablePerson) => {
     const mention = `@${getPreferredMentionIdentifier(person)}`;
     setMentionRequest({ mention, id: Date.now() });
     return mention;
@@ -162,12 +160,12 @@ export function useChannelFilterController({
   const applyExclusivePersonFilter = useCallback((person: Person) => {
     const normalizedPerson = normalizeInteractivePerson(person);
     setPeople((prev) => {
-      const next = prev.some((entry) => entry.id === normalizedPerson.id)
+      const next = prev.some((entry) => entry.pubkey === normalizedPerson.pubkey)
         ? prev
         : [...prev, normalizedPerson];
       return next.map((entry) => ({
         ...entry,
-        isSelected: entry.id === normalizedPerson.id,
+        isSelected: entry.pubkey === normalizedPerson.pubkey,
       }));
     });
   }, [normalizeInteractivePerson, setPeople]);
@@ -175,11 +173,11 @@ export function useChannelFilterController({
   const toggleInteractivePerson = useCallback((person: Person) => {
     const normalizedPerson = normalizeInteractivePerson(person);
     setPeople((prev) => {
-      const next = prev.some((entry) => entry.id === normalizedPerson.id)
+      const next = prev.some((entry) => entry.pubkey === normalizedPerson.pubkey)
         ? prev
         : [...prev, normalizedPerson];
       return next.map((entry) =>
-        entry.id === normalizedPerson.id ? { ...entry, isSelected: !entry.isSelected } : entry
+        entry.pubkey === normalizedPerson.pubkey ? { ...entry, isSelected: !entry.isSelected } : entry
       );
     });
   }, [normalizeInteractivePerson, setPeople]);
@@ -224,7 +222,7 @@ export function useChannelFilterController({
   const togglePerson = useCallback((personId: string) => {
     setPeople((prev) =>
       prev.map((person) =>
-        person.id === personId ? { ...person, isSelected: !person.isSelected } : person
+        person.pubkey === personId ? { ...person, isSelected: !person.isSelected } : person
       )
     );
   }, [setPeople]);
@@ -235,7 +233,7 @@ export function useChannelFilterController({
       return;
     }
     const restoreSnapshot = captureFilterSnapshot();
-    setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === personId));
+    setPeople((prev) => mapPeopleSelection(prev, (person) => person.pubkey === personId));
     const person = people.find((entry) => entry.id === personId);
     notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
   }, [captureFilterSnapshot, people, setPeople]);
@@ -245,13 +243,13 @@ export function useChannelFilterController({
       notifyNoFrequentPeople();
       return;
     }
-    const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
-    const hasSelectedPeople = people.some((person) => sidebarIds.has(person.id) && person.isSelected);
+    const sidebarIds = new Set(sidebarPeople.map((person) => person.pubkey));
+    const hasSelectedPeople = people.some((person) => sidebarIds.has(person.pubkey) && person.isSelected);
     if (!hasSelectedPeople) return;
     const restoreSnapshot = captureFilterSnapshot();
     setPeople((prev) =>
       prev.map((person) =>
-        sidebarIds.has(person.id)
+        sidebarIds.has(person.pubkey)
           ? { ...person, isSelected: false }
           : person
       )
@@ -307,7 +305,7 @@ export function useChannelFilterController({
     "filter.clearPerson": (intent) => {
       setPeople((prev) =>
         prev.map((person) =>
-          person.id === intent.personId && person.isSelected ? { ...person, isSelected: false } : person
+          person.pubkey === intent.personId && person.isSelected ? { ...person, isSelected: false } : person
         )
       );
     },
@@ -317,7 +315,7 @@ export function useChannelFilterController({
       notifyShowingOnlyPersonExclusive(intent.person, { onUndo: restoreSnapshot });
     },
     "person.filter.toggle": (intent) => {
-      const wasSelected = people.find((person) => person.id === intent.person.id)?.isSelected ?? intent.person.isSelected;
+      const wasSelected = people.find((person) => person.pubkey === intent.person.pubkey)?.isSelected ?? intent.person.isSelected;
       const restoreSnapshot = captureFilterSnapshot();
       toggleInteractivePerson(intent.person);
       notifyPersonFilterToggled(intent.person, wasSelected, { onUndo: restoreSnapshot });

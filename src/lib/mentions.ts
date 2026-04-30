@@ -37,7 +37,7 @@ export function getPreferredMentionIdentifier(person: Person): string {
     return normalizedNip05;
   }
 
-  const normalizedId = normalizeMentionIdentifier(person.id);
+  const normalizedId = normalizeMentionIdentifier(person.pubkey);
   if (isHexPubkey(normalizedId) || isNpub(normalizedId)) {
     return toUserFacingPubkey(normalizedId);
   }
@@ -52,11 +52,11 @@ export function getMentionAliases(person: Person): string[] {
     if (normalized) aliases.add(normalized);
   };
 
-  push(person.id);
+  push(person.pubkey);
   push(person.name);
   push(person.displayName);
   push(person.nip05);
-  const userFacingPubkey = toUserFacingPubkey(person.id || "");
+  const userFacingPubkey = toUserFacingPubkey(person.pubkey || "");
   if (isNpub(userFacingPubkey)) {
     push(userFacingPubkey);
   }
@@ -101,7 +101,7 @@ export function resolveMentionIdentifiersToPubkeys(
   }
 
   for (const person of people) {
-    const normalizedPersonId = normalizeMentionIdentifier(person.id);
+    const normalizedPersonId = normalizeMentionIdentifier(person.pubkey);
     const pubkey = isHexPubkey(normalizedPersonId)
       ? normalizedPersonId
       : npubToHexPubkey(normalizedPersonId);

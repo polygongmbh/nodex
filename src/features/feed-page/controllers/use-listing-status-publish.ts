@@ -43,7 +43,7 @@ export function useListingStatusPublish({
 
     const existing = allTasks.find((task) => task.id === taskId);
     if (!existing?.feedMessageType || !existing.nip99) return;
-    if (!currentUser?.id || currentUser.id.toLowerCase() !== existing.author.id.toLowerCase()) return;
+    if (!currentUser?.pubkey || currentUser.pubkey.toLowerCase() !== existing.author.pubkey.toLowerCase()) return;
 
     const previousStatus = existing.nip99.status;
     const replaceableKey = getListingReplaceableKey(existing, LISTING_EVENT_KIND);

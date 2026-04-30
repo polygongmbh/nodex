@@ -24,7 +24,6 @@ function buildTask(overrides: Partial<Task> & Pick<Task, "id" | "relays">): Task
       id: "author",
       name: "Author",
       displayName: "Author",
-      isOnline: false,
       isSelected: false,
     },
     content: overrides.content ?? "Task",
