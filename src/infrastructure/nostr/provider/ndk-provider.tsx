@@ -94,7 +94,6 @@ import {
 } from "@/lib/nostr/relay-write-targets";
 import { resolveManualRelayReconnectAction } from "@/domain/relays/relay-reconnect-policy";
 import { useProfileSync } from "./use-profile-sync";
-import { showLoginSuccessToast } from "./auth-login-toast";
 export type { AuthMethod, NDKUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
@@ -108,6 +107,46 @@ const KIND0_PROFILE_FAILURE_COOLDOWN_MS = 15000;
 type RelayOperation = "read" | "write" | "unknown";
 const WS_READY_STATE_CONNECTING = 0;
 const WS_READY_STATE_OPEN = 1;
+
+function resolveNoasLoginHandle(username: string, apiBaseUrl: string): string {
+  const normalizedUsername = String(username || "").trim();
+  if (!normalizedUsername) return "";
+  if (normalizedUsername.includes("@")) return normalizedUsername;
+
+  try {
+    const domain = new URL(apiBaseUrl).hostname;
+    return domain ? `${normalizedUsername}@${domain}` : normalizedUsername;
+  } catch {
+    return normalizedUsername;
+  }
+}
+
+function showLoginSuccessToast(params: {
+  authMethod: Exclude<AuthMethod, null>;
+  noasUsername?: string;
+  noasApiBaseUrl?: string;
+}) {
+  switch (params.authMethod) {
+    case "extension":
+      toast.success(i18n.t("auth:modal.success.extension"));
+      return;
+    case "privateKey":
+      toast.success(i18n.t("auth:modal.success.privateKey"));
+      return;
+    case "guest":
+      toast.success(i18n.t("auth:modal.success.guest"));
+      return;
+    case "nostrConnect":
+      toast.success(i18n.t("auth:modal.success.signer"));
+      return;
+    case "noas": {
+      const handle = resolveNoasLoginHandle(params.noasUsername || "", params.noasApiBaseUrl || "");
+      toast.success(i18n.t("auth:modal.success.noas"), {
+        description: i18n.t("auth:modal.success.noasDescription", { handle }),
+      });
+    }
+  }
+}
 
 function resolveOfflinePresenceRelayUrls(params: {
   relayUrlsOverride?: string[];
