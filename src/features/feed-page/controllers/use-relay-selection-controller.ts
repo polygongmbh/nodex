@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { Relay } from "@/types";
-import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { notifyRelayReconnectFailed, notifyRelayReconnectAttempt } from "@/lib/notifications";
 import { getRelayDomain, useRelayFilterController } from "./use-relay-filter-controller";
@@ -38,7 +37,7 @@ function resolveRelayStatus(relay: Relay | undefined): NonNullable<Relay["connec
 }
 
 function isFailedRelaySelectionTarget(relay: Relay): boolean {
-  return shouldReconnectRelayOnSelection(relay.connectionStatus);
+  return relay.connectionStatus === "verification-failed" || relay.connectionStatus === "read-only";
 }
 
 function shouldShowReconnectAttemptOnSelection(relay: Relay): boolean {
