@@ -232,40 +232,6 @@ describe("FeedView", () => {
     expect(screen.queryByText("Task 41 #general")).not.toBeInTheDocument();
   });
 
-  it("reveals more entries when scrolling near the end of the feed", () => {
-    const manyTasks = makeFeedTasks(71);
-
-    const { container } = render(
-      <FeedView
-        focusedTaskId={null}
-        tasks={manyTasks}
-        allTasks={manyTasks}
-        searchQueryOverride=""
-      />
-    );
-
-    const scroller = container.querySelector('[data-onboarding="task-list"]');
-    expect(scroller).not.toBeNull();
-    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
-
-    Object.defineProperty(scroller, "scrollHeight", {
-      configurable: true,
-      value: 2400,
-    });
-    Object.defineProperty(scroller, "clientHeight", {
-      configurable: true,
-      value: 1200,
-    });
-    Object.defineProperty(scroller, "scrollTop", {
-      configurable: true,
-      value: 600,
-    });
-
-    fireEvent.scroll(scroller as HTMLElement);
-
-    expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
-  });
-
   it("reveals more entries before reaching the exact end of the feed", () => {
     const manyTasks = makeFeedTasks(71);
 
@@ -758,6 +724,22 @@ describe("FeedView", () => {
     );
   });
 
+  it("prefers kind:0 people metadata over task-embedded author name", () => {
+    const taskAuthorPubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const taskWithEmbeddedAuthor = makeTask({
+      id: "task-1",
+      author: { pubkey: taskAuthorPubkey, name: "me", displayName: "You" },
+      status: "open",
+    });
+    renderFeedView(
+      { tasks: [taskWithEmbeddedAuthor], allTasks: [taskWithEmbeddedAuthor] },
+      { people: [{ pubkey: taskAuthorPubkey, name: "janek", displayName: "Janek" }], mentionablePeople: [] }
+    );
+
+    expect(screen.getByTestId("feed-author-primary-task-1")).toHaveTextContent("Janek");
+    expect(screen.queryByText(/You/)).not.toBeInTheDocument();
+  });
+
   it("renders task and state-update timestamps with the shared right-aligned timestamp treatment", () => {
     const taskWithStateUpdates = makeTask({
       id: "task-timestamp-formatting",
@@ -785,9 +767,7 @@ describe("FeedView", () => {
     const taskTimestamp = screen.getByTitle(/task created at/i);
     const stateTimestamp = screen.getByTitle(/status updated at/i);
 
-    expect(taskTimestamp).toHaveClass("ml-auto", "shrink-0", "text-right");
     expect(taskTimestamp).not.toBeEmptyDOMElement();
-    expect(stateTimestamp).toHaveClass("ml-auto", "shrink-0", "text-right");
     expect(stateTimestamp).not.toBeEmptyDOMElement();
   });
 

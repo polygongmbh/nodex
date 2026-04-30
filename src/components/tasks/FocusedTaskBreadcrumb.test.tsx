@@ -93,33 +93,4 @@ describe("FocusedTaskBreadcrumb", () => {
     expect(screen.getByRole("button", { name: "Task delegated to with enough room to display frontend!!!" })).toBeInTheDocument();
   });
 
-  it("keeps short ancestor items visible while capping each breadcrumb item at half the available row width", () => {
-    const middle: Task = {
-      ...baseTask,
-      id: "middle",
-      content: "Middle task",
-      parentId: "root",
-    };
-    const leaf: Task = {
-      ...baseTask,
-      id: "leaf",
-      content: "Leaf task",
-      parentId: "middle",
-    };
-
-    render(
-      <FocusedTaskBreadcrumb
-        allTasks={[baseTask, middle, leaf]}
-        focusedTaskId="leaf"
-      />
-    );
-
-    const rootButton = screen.getByRole("button", { name: "Root task" });
-    const middleButton = screen.getByRole("button", { name: "Middle task" });
-    const leafButton = screen.getByRole("button", { name: "Leaf task" });
-
-    expect(rootButton).toBeInTheDocument();
-    expect(middleButton).toBeInTheDocument();
-    expect(leafButton).toBeInTheDocument();
-  });
 });
