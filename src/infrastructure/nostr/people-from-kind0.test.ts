@@ -122,6 +122,18 @@ describe("derivePeopleFromKind0Events", () => {
     expect(loaded[0].created_at).toBe(42);
   });
 
+  it("drops unreadable legacy kind:0 cache keys instead of migrating them", () => {
+    const pubkey = "a".repeat(64);
+    localStorage.setItem(
+      "nodex.kind0.cache.v1",
+      JSON.stringify([
+        { kind: NostrEventKind.Metadata, pubkey, created_at: 42, content: JSON.stringify({ name: "alice" }) },
+      ])
+    );
+
+    expect(loadCachedKind0Events()).toEqual([]);
+  });
+
   it("keeps per-relay profile variants for the same pubkey", () => {
     const pubkey = "a".repeat(64);
     saveCachedKind0Events(

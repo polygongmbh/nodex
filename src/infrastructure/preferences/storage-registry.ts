@@ -32,10 +32,8 @@ export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts.v1
 export const PROFILE_COMPLETION_PROMPTED_STORAGE_KEY_PREFIX = "nodex.profile-completion-prompted.v1";
 
 // ── Cache ────────────────────────────────────────────────────────────────────
-export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
-export const KIND0_CACHE_STORAGE_KEY = "nodex.kind0.cache.v2:local";
-/** Legacy kind0 cache key kept for one-time migration reads */
-export const KIND0_CACHE_LEGACY_STORAGE_KEY = "nodex.kind0.cache.v1";
+export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache";
+export const KIND0_CACHE_STORAGE_KEY = "nodex.kind0.cache:local";
 export const NIP05_CACHE_STORAGE_KEY = "nodex.nip05-resolver.cache.v1";
 export const RELAY_STATUS_CACHE_STORAGE_KEY = "nodex.relay-status-cache.v1";
 export const CHANNEL_FRECENCY_STORAGE_KEY = "nodex.channel-frecency.v1";

@@ -10,7 +10,7 @@ describe("isProfileNameTaken", () => {
   it("returns true when candidate matches a cached profile name", () => {
     const pubkey = "a".repeat(64);
     window.localStorage.setItem(
-      "nodex.kind0.cache.v1",
+      "nodex.kind0.cache:local",
       JSON.stringify([
         {
           kind: NostrEventKind.Metadata,
@@ -28,7 +28,7 @@ describe("isProfileNameTaken", () => {
   it("ignores current user pubkey when checking taken names", () => {
     const pubkey = "b".repeat(64);
     window.localStorage.setItem(
-      "nodex.kind0.cache.v1",
+      "nodex.kind0.cache:local",
       JSON.stringify([
         {
           kind: NostrEventKind.Metadata,

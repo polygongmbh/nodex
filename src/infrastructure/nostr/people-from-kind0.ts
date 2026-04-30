@@ -20,10 +20,9 @@ interface CachedProfileSnapshot {
   nip05?: string;
 }
 
-const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache.v2";
+const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache";
 const KIND0_CACHE_RELAY_PREFIX = `${KIND0_CACHE_STORAGE_PREFIX}:relay:`;
 const KIND0_CACHE_LOCAL_STORAGE_KEY = `${KIND0_CACHE_STORAGE_PREFIX}:local`;
-const LEGACY_KIND0_CACHE_STORAGE_KEY = "nodex.kind0.cache.v1";
 const LOGIN_HISTORY_STORAGE_KEY = "nodex.identity.login-history.v1";
 const MAX_CACHED_KIND0_EVENTS = 500;
 const MAX_LOGGED_IN_IDENTITIES = 50;
@@ -140,7 +139,6 @@ export function loadCachedKind0Events(relayUrl?: string): Kind0LikeEvent[] {
   }
 
   return mergeKind0EventLists(
-    readStoredKind0Events(LEGACY_KIND0_CACHE_STORAGE_KEY),
     readStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY),
     ...listKnownRelayStorageKeys().map((storageKey) => readStoredKind0Events(storageKey))
   );

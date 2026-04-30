@@ -2,9 +2,8 @@ import { z } from "zod";
 import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/infrastructure/nostr/replaceable-events";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 
-export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
+export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache";
 export const NOSTR_EVENT_CACHE_SCOPE_PREFIX = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:`;
-export const NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope-meta.v1`;
 export const NOSTR_EVENT_CACHE_RETENTION_SECONDS = 7 * 24 * 60 * 60;
 export const NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE = 500;
 
@@ -22,12 +21,6 @@ export interface CachedNostrEvent {
 
 export const EMPTY_RELAY_SCOPE_KEY = "none";
 export const ALL_RELAYS_SCOPE_KEY = "all";
-
-interface CacheScopeMetadata {
-  lastUsedAt: number;
-}
-
-type CacheScopeMetadataRecord = Record<string, CacheScopeMetadata>;
 
 function hasLocalStorage(): boolean {
   return typeof window !== "undefined" && Boolean(window.localStorage);
@@ -78,35 +71,6 @@ function loadCachedEventsFromStorageKey(storageKey: string): CachedNostrEvent[] 
   }
 }
 
-function readScopeMetadata(): CacheScopeMetadataRecord {
-  if (!hasLocalStorage()) return {};
-  try {
-    const raw = window.localStorage.getItem(NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return {};
-    const entries = Object.entries(parsed as Record<string, unknown>);
-    const next: CacheScopeMetadataRecord = {};
-    entries.forEach(([scope, value]) => {
-      if (!scope || typeof value !== "object" || !value) return;
-      const candidate = value as { lastUsedAt?: unknown };
-      if (typeof candidate.lastUsedAt !== "number" || !Number.isFinite(candidate.lastUsedAt)) return;
-      next[scope] = { lastUsedAt: candidate.lastUsedAt };
-    });
-    return next;
-  } catch {
-    return {};
-  }
-}
-
-function writeScopeMetadata(next: CacheScopeMetadataRecord): void {
-  if (!hasLocalStorage()) return;
-  try {
-    window.localStorage.setItem(NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    // Ignore metadata persistence failures.
-  }
-}
 
 const cachedNostrEventSchema = z.object({
   id: z.string(),
@@ -205,55 +169,13 @@ function applyRetentionLimits(events: CachedNostrEvent[], nowSeconds = Math.floo
     .slice(0, NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE);
 }
 
-function markScopeUsed(scopeKey: string, metadata: CacheScopeMetadataRecord, nowMs: number): void {
-  metadata[scopeKey] = { lastUsedAt: nowMs };
-}
-
-function pruneMetadataForKnownScopes(metadata: CacheScopeMetadataRecord): CacheScopeMetadataRecord {
-  const knownScopeKeys = new Set(
-    listKnownCacheStorageKeys()
-      .map(extractScopeFromStorageKey)
-      .filter((scope) => Boolean(scope))
-  );
-  const next: CacheScopeMetadataRecord = {};
-  Object.entries(metadata).forEach(([scope, value]) => {
-    if (!knownScopeKeys.has(scope)) return;
-    next[scope] = value;
-  });
-  return next;
-}
-
-function removeScopeCache(storageKey: string, metadata: CacheScopeMetadataRecord): void {
+function removeScopeCache(storageKey: string): void {
   if (!hasLocalStorage()) return;
   try {
     window.localStorage.removeItem(storageKey);
   } catch {
     // Ignore remove failures and continue best-effort pruning.
   }
-  const scope = extractScopeFromStorageKey(storageKey);
-  if (scope) {
-    delete metadata[scope];
-  }
-}
-
-function getEvictionCandidates(
-  metadata: CacheScopeMetadataRecord,
-  preserveScopeKey: string
-): Array<{ storageKey: string; scope: string; lastUsedAt: number }> {
-  const candidates = listKnownCacheStorageKeys()
-    .map((storageKey) => {
-      const scope = extractScopeFromStorageKey(storageKey);
-      if (!scope || scope === preserveScopeKey) return null;
-      return {
-        storageKey,
-        scope,
-        lastUsedAt: metadata[scope]?.lastUsedAt || 0,
-      };
-    })
-    .filter((candidate): candidate is { storageKey: string; scope: string; lastUsedAt: number } => candidate !== null);
-
-  candidates.sort((left, right) => left.lastUsedAt - right.lastUsedAt);
-  return candidates;
 }
 
 export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
@@ -285,35 +207,15 @@ export function saveCachedNostrEvents(events: CachedNostrEvent[], scopeKey?: str
   const normalizedScope = normalizeCacheScope(scopeKey);
   if (normalizedScope === EMPTY_RELAY_SCOPE_KEY) return;
   const storageKey = getScopedCacheStorageKey(normalizedScope);
-  const nowMs = Date.now();
-  const nowSeconds = Math.floor(nowMs / 1000);
+  const nowSeconds = Math.floor(Date.now() / 1000);
   const normalizedEvents = applyRetentionLimits(events, nowSeconds);
-  const metadata = readScopeMetadata();
-  markScopeUsed(normalizedScope, metadata, nowMs);
   try {
     window.localStorage.setItem(storageKey, JSON.stringify(normalizedEvents));
-    writeScopeMetadata(pruneMetadataForKnownScopes(metadata));
   } catch {
-    // Try to recover from quota pressure by evicting least-recently-used scopes.
-    const candidates = getEvictionCandidates(metadata, normalizedScope);
-    let persisted = false;
-    for (const candidate of candidates) {
-      removeScopeCache(candidate.storageKey, metadata);
-      try {
-        window.localStorage.setItem(storageKey, JSON.stringify(normalizedEvents));
-        persisted = true;
-        break;
-      } catch {
-        // Continue evicting older scopes.
-      }
-    }
-    if (!persisted) {
-      console.warn("Failed to persist nostr event cache after pruning", {
-        scope: normalizedScope,
-        eventCount: normalizedEvents.length,
-      });
-    }
-    writeScopeMetadata(pruneMetadataForKnownScopes(metadata));
+    console.warn("Failed to persist nostr event cache", {
+      scope: normalizedScope,
+      eventCount: normalizedEvents.length,
+    });
   }
 }
 
@@ -378,5 +280,19 @@ export function removeCachedNostrEventsByRelayUrl(relayUrl: string): void {
     } catch {
       // Ignore malformed cache payloads and continue.
     }
+  });
+}
+
+export function removeCachedNostrEventScopesByRelayId(relayId: string): void {
+  if (!hasLocalStorage()) return;
+  const normalizedRelayId = relayId.trim().toLowerCase();
+  if (!normalizedRelayId) return;
+
+  listKnownCacheStorageKeys().forEach((storageKey) => {
+    const scope = extractScopeFromStorageKey(storageKey);
+    if (!scope || scope === "global" || scope === ALL_RELAYS_SCOPE_KEY || scope === EMPTY_RELAY_SCOPE_KEY) return;
+    const scopeRelayIds = scope.split(",").map((value) => value.trim().toLowerCase()).filter(Boolean);
+    if (!scopeRelayIds.includes(normalizedRelayId)) return;
+    removeScopeCache(storageKey);
   });
 }
