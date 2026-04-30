@@ -10,6 +10,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Relay verification success toasts are no longer shown for relays that don't require auth per NIP-11 or that the user has already published to this session.
 - Relay verification toasts (success and failure) are suppressed when no user is signed in.
 - Relay access-denied toasts are shorter and no longer mention signer internals.
+- Signing in no longer tears down and recreates sockets for relays that are already connected; a fresh NIP-42 auth request is sent on the existing connection instead.
+- Logging out now clears per-relay auth rejection state and resets any relays stuck as verification-failed or read-only back to connected.
+- Spurious read-rejected toasts no longer appear on page reload when a NOAS (or other) session is restored and NIP-42 auth completes successfully.
 
 ## [2.15.5] - 2026-04-30
 Patch release for auth-toast cleanup, profile prompt gating, and draft/presence model stabilization.

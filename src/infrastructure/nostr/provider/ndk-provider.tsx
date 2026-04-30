@@ -440,6 +440,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const shouldSetStatus = options?.setStatus ?? false;
     const shouldShowToast = options?.showToast ?? true;
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const hadPendingAuth = pendingRelayVerificationRef.current.has(normalizedRelayUrl);
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     if (shouldSetStatus) {
       if (operation === "read") {
@@ -448,7 +449,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         markRelayWriteOutcome(relayUrl, false);
       }
     }
-    if (!shouldShowToast || !authMethodRef.current || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
+    if (!shouldShowToast || !authMethodRef.current || hadPendingAuth || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
       return;
     }
     if (operation === "read") {
@@ -839,10 +840,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     kind0ProfileFailureUntilRef.current.clear();
     kind0ProfileCacheRef.current.clear();
 
-    const relayUrlsToRetry = relays
+    // Use relaysRef so this function is stable and safe to call from async contexts
+    // (e.g. session restore) without capturing a stale relays snapshot.
+    const currentRelays = relaysRef.current;
+    const relayUrlsToRetry = currentRelays
       .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
       .map((relay) => normalizeRelayUrl(relay.url));
-    const authCapableRelayUrls = relays
+    const authCapableRelayUrls = currentRelays
       .filter((relay) => relay.nip11?.supportsNip42 || relay.nip11?.authRequired)
       .map((relay) => normalizeRelayUrl(relay.url));
 
@@ -868,8 +872,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     relayUrlsToTouch.forEach((relayUrl) => {
       const isAuthCapable = authCapableSet.has(relayUrl);
+      const needsReconnect = retrySet.has(relayUrl);
       relaysPendingAuthSubscriptionReplayRef.current.add(relayUrl);
-      if (retrySet.has(relayUrl)) {
+      if (needsReconnect) {
         relayInitialFailureCountsRef.current.delete(relayUrl);
         relayAuthRetryHistoryRef.current.delete(relayUrl);
         pendingRelayVerificationRef.current.delete(relayUrl);
@@ -878,15 +883,16 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         // Force a fresh auth challenge pass immediately after sign-in.
         relayAuthPreflightHistoryRef.current.delete(relayUrl);
       }
-      // Some relays emit a fresh NIP-42 challenge only on a new websocket session.
+      // Only force a new socket for relays that need reconnecting. Healthy connected relays
+      // can receive a fresh NIP-42 challenge on the existing socket via primeRelayAuthChallenge.
       connectManagedRelay(ndk, relayUrl, {
-        forceNewSocket: isAuthCapable,
+        forceNewSocket: needsReconnect,
       });
       if (isAuthCapable) {
         primeRelayAuthChallenge(ndk, relayUrl);
       }
     });
-  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, relays]);
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge]);
 
   const applyAuthenticatedState = useCallback((
     ndkInstance: NDK,
@@ -1903,6 +1909,20 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     setAuthMethod(null);
     relayAuthPreflightHistoryRef.current.clear();
     relaysPendingAuthSubscriptionReplayRef.current.clear();
+    pendingRelayVerificationRef.current.clear();
+    relayAuthRetryHistoryRef.current.clear();
+    relayReadRejectedRef.current.clear();
+    relayWriteRejectedRef.current.clear();
+    relaySuccessfulWriteRef.current.clear();
+    // Re-evaluate statuses now that rejection state is cleared so relays that were
+    // verification-failed or read-only due to the previous session go back to connected.
+    setRelays((previous) =>
+      previous.map((relay) =>
+        relay.status === "verification-failed" || relay.status === "read-only"
+          ? { ...relay, status: "connected" }
+          : relay
+      )
+    );
     kind0ProfileCacheRef.current.clear();
     kind0ProfileInFlightRef.current.clear();
     kind0ProfileFailureUntilRef.current.clear();
