@@ -198,6 +198,21 @@ policies:
     allowed_hardcoded_user_facing_string_exceptions:
       - jurisdiction_or_compliance_text_explicitly_documented_in_code
     locale_updates_must_cover_all_supported_languages: true
+  persistence:
+    backwards_compatibility_required: false
+    rationale: durable application state is stored on relays; local state is transient
+    applies_to:
+      - local_storage_state
+      - persisted_drafts
+      - caches
+    no_versioning_required_for:
+      - local_persistence
+      - caches
+      - transient_state_shapes
+    old_state_policy:
+      - may_ignore
+      - may_drop
+      - may_overwrite
   release:
     bump_from_commit_types:
       fix: patch
@@ -234,6 +249,13 @@ policies:
 - Route production user-facing strings through i18n and keep `en`, `de`, and `es` aligned unless a documented compliance or jurisdiction exception applies.
 - Ignore unrelated incidental file changes unless they directly conflict with the target work.
 - Surface blockers or uncertainty with `⚠️` and revised estimates.
+
+### Persistence and Cache Compatibility
+- Treat relays as the durable source for permanent application state; local persistence is transient recovery/cache state.
+- Do not preserve backwards compatibility for local persistence, persisted drafts, or caches by default.
+- Do not add schema versioning or migration code solely to keep old local transient state readable.
+- When local persistence or cache shapes change, old state may be ignored, dropped, or overwritten.
+- Document user-visible data loss in release or push notes when relevant.
 
 ### Test and Verification
 - Follow the verification matrix for required commands.
