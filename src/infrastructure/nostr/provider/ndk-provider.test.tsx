@@ -1435,6 +1435,44 @@ describe("NDKProvider relay lifecycle", () => {
     });
   });
 
+  it("reruns auth preflight on sign-in for verification-failed relays without nip-11 auth metadata", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      relay.emitServerMessage('["CLOSED","subid","auth-required: pubkey not in whitelist"]');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+    });
+
+    ndk.subscribeCalls.length = 0;
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
+    await waitFor(() => {
+      expect(ndk.subscribeCalls.some((call) => {
+        const options = (call.options || {}) as { closeOnEose?: boolean; relayUrls?: string[] };
+        return options.closeOnEose === true
+          && Array.isArray(options.relayUrls)
+          && options.relayUrls.includes("wss://relay.one");
+      })).toBe(true);
+    });
+  });
+
   it("replays active subscriptions after relay auth succeeds on sign-in", async () => {
     const fetchedAt = Date.now();
     window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({

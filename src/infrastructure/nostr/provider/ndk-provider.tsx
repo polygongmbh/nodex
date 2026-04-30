@@ -845,13 +845,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     relayUrlsToTouch.forEach((relayUrl) => {
       const isAuthCapable = authCapableSet.has(relayUrl);
       const needsReconnect = retrySet.has(relayUrl);
+      const shouldPrimeAuth = isAuthCapable || needsReconnect;
       relaysPendingAuthSubscriptionReplayRef.current.add(relayUrl);
       if (needsReconnect) {
         relayInitialFailureCountsRef.current.delete(relayUrl);
         relayAuthRetryHistoryRef.current.delete(relayUrl);
         pendingRelayVerificationRef.current.delete(relayUrl);
       }
-      if (isAuthCapable) {
+      if (shouldPrimeAuth) {
         // Force a fresh auth challenge pass immediately after sign-in.
         relayAuthPreflightHistoryRef.current.delete(relayUrl);
       }
@@ -860,7 +861,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       connectManagedRelay(ndk, relayUrl, {
         forceNewSocket: needsReconnect,
       });
-      if (isAuthCapable) {
+      if (shouldPrimeAuth) {
         primeRelayAuthChallenge(ndk, relayUrl);
       }
     });
