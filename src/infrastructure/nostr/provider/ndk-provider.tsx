@@ -94,6 +94,7 @@ import {
 } from "@/lib/nostr/relay-write-targets";
 import { resolveManualRelayReconnectAction } from "@/domain/relays/relay-reconnect-policy";
 import { useProfileSync } from "./use-profile-sync";
+import { showNoasLoginToast } from "./noas-login-toast";
 export type { AuthMethod, NDKUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
@@ -1289,6 +1290,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           };
           applyAuthenticatedState(ndkInstance, signer, ndkUser, "noas");
           connectResolvedAuthRelayUrlsRef.current(noasSession.relayUrls || []);
+          showNoasLoginToast({
+            username: noasSession.username,
+            apiBaseUrl: noasSession.apiBaseUrl,
+          });
         } catch {
           clearStoredAuthMethod();
           clearSessionPrivateKey();
@@ -1604,6 +1609,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       });
       connectResolvedAuthRelayUrls(noasRelayUrls);
       retryNip42RelaysAfterSignIn();
+      showNoasLoginToast({
+        username,
+        apiBaseUrl: noasApiUrl,
+      });
       return { success: true };
     } catch (error) {
       console.error("Noas login failed:", error);

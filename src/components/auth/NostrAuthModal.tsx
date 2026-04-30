@@ -286,7 +286,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     try {
       const result = await loginWithNoas(username, password, config);
       if (result.success) {
-        toast.success(t("auth.modal.success.noas"));
         onClose();
         return true;
       } else {

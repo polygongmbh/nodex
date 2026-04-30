@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect, useRef, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { NDKProvider, useNDK } from "./ndk-provider";
 import { fetchRelayInfo } from "../relay-info";
 import { RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
@@ -346,6 +347,13 @@ vi.mock("./session-restore", () => ({
   waitForNostrExtensionAvailability: vi.fn(async () => false),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 function Harness() {
   const {
     addRelay,
@@ -513,6 +521,7 @@ describe("NDKProvider relay lifecycle", () => {
     window.sessionStorage.clear();
     vi.mocked(fetchRelayInfo).mockReset();
     vi.mocked(fetchRelayInfo).mockResolvedValue(null);
+    vi.mocked(toast.success).mockReset();
   });
 
   it("adds a relay without rebuilding the provider or reconnecting healthy relays", async () => {
@@ -671,6 +680,7 @@ describe("NDKProvider relay lifecycle", () => {
     expect(window.sessionStorage.getItem(STORAGE_KEY_SESSION_PRIVATE_KEY)).toMatch(/^nsec/);
     expect(window.sessionStorage.getItem(STORAGE_KEY_SESSION_NOAS_STATE)).toContain("\"username\":\"alice\"");
     expect(screen.getByTestId("user-picture")).toHaveTextContent("https://noas.example/api/v1/picture/pub");
+    expect(toast.success).toHaveBeenCalledTimes(1);
   });
 
   it("restores a Noas session from session storage without a fresh sign-in", async () => {
@@ -693,6 +703,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
     expect(screen.getByTestId("user-name")).toHaveTextContent("alice");
     expect(screen.getByTestId("user-picture")).toHaveTextContent("https://noas.example/api/v1/picture/pub");
+    expect(toast.success).toHaveBeenCalledTimes(1);
   });
 
   it("clears stale legacy private-key auth without session material", async () => {
