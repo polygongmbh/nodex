@@ -305,7 +305,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     setPendingAuthMethod("noas");
     try {
       const result = await signupWithNoas(username, password, privateKey, pubkey, config);
-      if (result.message) {
+      if (result.message && !result.success) {
         toast.success(result.message);
       }
       if (result.success) {

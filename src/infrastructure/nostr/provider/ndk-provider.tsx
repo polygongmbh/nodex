@@ -125,25 +125,26 @@ function showLoginSuccessToast(params: {
   authMethod: Exclude<AuthMethod, null>;
   noasUsername?: string;
   noasApiBaseUrl?: string;
+  noasMode?: "signin" | "signup";
 }) {
   switch (params.authMethod) {
     case "extension":
-      toast.success(i18n.t("auth:modal.success.extension"));
+      toast.success(i18n.t("auth:auth.modal.success.extension"));
       return;
     case "privateKey":
-      toast.success(i18n.t("auth:modal.success.privateKey"));
+      toast.success(i18n.t("auth:auth.modal.success.privateKey"));
       return;
     case "guest":
-      toast.success(i18n.t("auth:modal.success.guest"));
+      toast.success(i18n.t("auth:auth.modal.success.guest"));
       return;
     case "nostrConnect":
-      toast.success(i18n.t("auth:modal.success.signer"));
+      toast.success(i18n.t("auth:auth.modal.success.signer"));
       return;
     case "noas": {
       const handle = resolveNoasLoginHandle(params.noasUsername || "", params.noasApiBaseUrl || "");
-      toast.success(i18n.t("auth:modal.success.noas"), {
-        description: i18n.t("auth:modal.success.noasDescription", { handle }),
-      });
+      const successKey = params.noasMode === "signup" ? "auth:auth.modal.success.noasSignUp" : "auth:auth.modal.success.noas";
+      toast.success(i18n.t(successKey, { handle }));
+      return;
     }
   }
 }
@@ -1676,6 +1677,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         authMethod: "noas",
         noasUsername: username,
         noasApiBaseUrl: noasApiUrl,
+        noasMode: "signin",
       });
       return { success: true };
     } catch (error) {
@@ -1808,6 +1810,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         authMethod: "noas",
         noasUsername: username,
         noasApiBaseUrl: noasApiUrl,
+        noasMode: "signup",
       });
       return {
         success: true,

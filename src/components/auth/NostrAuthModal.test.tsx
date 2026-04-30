@@ -381,7 +381,7 @@ describe("NostrAuthModal", () => {
     expect(screen.getByText(/invalid private key\. please check and try again\./i)).toBeInTheDocument();
   });
 
-  it("suppresses the generic signup toast when the Noas server returns an active signup message", async () => {
+  it("does not emit a modal-owned signup toast when active Noas signup succeeds", async () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.signupWithNoas = vi.fn(async () => ({
       success: true,
@@ -399,8 +399,7 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(toast.success).toHaveBeenCalledWith("Account activated.");
-    expect(toast.success).not.toHaveBeenCalledWith("Account created successfully");
+    expect(toast.success).not.toHaveBeenCalledWith("Account activated.");
   });
 
   it("applies sign-up initialStep when the modal opens after mount", () => {
