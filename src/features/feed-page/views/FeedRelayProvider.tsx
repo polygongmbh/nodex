@@ -123,7 +123,7 @@ export function FeedRelayProvider({ children }: PropsWithChildren) {
     [
       relays, ndkRelays, demoFeedActive, demoTasks,
       isConnected, subscribe,
-      activeRelayIds, effectiveActiveRelayIds,
+      activeRelayIds, setActiveRelayIds, effectiveActiveRelayIds,
       selectedRelayUrls, nostrRelayIdSet, allRelayIds,
       handleRelayToggle, handleRelayExclusive, handleRelaySelectIntent, handleToggleAllRelays,
       reconnectRelay, reorderRelays, addRelay, removeRelay,

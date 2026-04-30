@@ -19,7 +19,7 @@ export function useAuthModalRoute() {
     }
     setAuthModalInitialStep(initialStep);
     setIsAuthModalOpen(true);
-  }, [navigate]);
+  }, [navigate, setIsAuthModalOpen]);
 
   const handleCloseAuthModal = useCallback(() => {
     setAuthModalInitialStep(undefined);
@@ -27,14 +27,14 @@ export function useAuthModalRoute() {
     if (resolveAuthRouteStep(location.pathname)) {
       navigate({ pathname: "/feed", search: location.search, hash: location.hash }, { replace: true });
     }
-  }, [location.pathname, location.search, location.hash, navigate]);
+  }, [location.pathname, location.search, location.hash, navigate, setIsAuthModalOpen]);
 
   useEffect(() => {
     const authRouteStep = resolveAuthRouteStep(location.pathname);
     if (!authRouteStep) return;
     setAuthModalInitialStep(authRouteStep);
     setIsAuthModalOpen(true);
-  }, [location.pathname]);
+  }, [location.pathname, setIsAuthModalOpen]);
 
   return {
     isAuthModalOpen,

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -25,7 +25,7 @@ export function useRelayEnrichment(
 ): void {
   const relaysRef = useRef(relays);
   useEffect(() => { relaysRef.current = relays; }, [relays]);
-  const fetchLatestNip65RelayUrls = async (pubkey: string): Promise<string[]> => {
+  const fetchLatestNip65RelayUrls = useCallback(async (pubkey: string): Promise<string[]> => {
     if (!ndk) return [];
 
     return await new Promise((resolve) => {
@@ -62,7 +62,7 @@ export function useRelayEnrichment(
       // Fallback so the UI does not hang if eose never arrives.
       const fallbackTimeoutId = window.setTimeout(finish, 6000);
     });
-  };
+  }, [beginRelayOperation, endRelayOperation, ndk]);
 
   useEffect(() => {
     if (!user?.pubkey || !ndk) return;
@@ -122,5 +122,12 @@ export function useRelayEnrichment(
     return () => {
       cancelled = true;
     };
-  }, [addRelay, ndk, user?.profile?.nip05, user?.pubkey]);
+  }, [
+    addRelay,
+    complementaryRelaySyncKeyRef,
+    fetchLatestNip65RelayUrls,
+    ndk,
+    removedRelaysRef,
+    user,
+  ]);
 }

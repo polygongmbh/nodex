@@ -1396,7 +1396,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       inFlightKind0ProfileRequests.clear();
       relayCurrentInstance.clear();
     };
-  }, [applyAuthenticatedState, attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, clearRelayConnectWatchdog, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayConnectWatchdog, scheduleRelayTimeout]);
+  }, [applyAuthenticatedState, attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, clearRelayConnectWatchdog, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayReadOutcome, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayConnectWatchdog, scheduleRelayTimeout]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;

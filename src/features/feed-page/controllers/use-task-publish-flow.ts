@@ -697,6 +697,7 @@ export function useTaskPublishFlow({
     relays,
     resolveMentionPubkeys,
     resolveRelayUrlsFromIds,
+    setFailedPublishDrafts,
     setLocalTasks,
     setPostedTags,
     user,
@@ -792,6 +793,7 @@ export function useTaskPublishFlow({
     parseStoredDate,
     publishEvent,
     publishTaskCreateFollowUps,
+    setFailedPublishDrafts,
     setLocalTasks,
     suppressFailedPublishEvent,
   ]);
@@ -810,11 +812,11 @@ export function useTaskPublishFlow({
 
   const handleDismissFailedPublish = useCallback((draftId: string) => {
     setFailedPublishDrafts((prev) => prev.filter((draft) => draft.id !== draftId));
-  }, []);
+  }, [setFailedPublishDrafts]);
 
   const handleDismissAllFailedPublish = useCallback(() => {
     setFailedPublishDrafts([]);
-  }, []);
+  }, [setFailedPublishDrafts]);
 
   const handleDueDateChange = useCallback((
     taskId: string,

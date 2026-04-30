@@ -153,7 +153,7 @@ export function Sidebar({
           }
         ).map((channel) => channel.id)
       ),
-    [channels, collapsedPreviewChannels, collapsedPreviewLimit]
+    [channels, collapsedPreviewChannels, collapsedPreviewLimit, pinnedChannelIds]
   );
   const collapsedPreviewPersonIds = useMemo(
     () =>
