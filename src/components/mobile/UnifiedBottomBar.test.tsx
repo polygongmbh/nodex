@@ -19,6 +19,7 @@ import { makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
@@ -98,6 +99,7 @@ describe("UnifiedBottomBar auth gating", () => {
     dispatchFeedInteraction.mockReset();
     dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
     attachmentUploadEnabledSpy.mockReturnValue(true);
+    window.localStorage.removeItem(COMPOSE_DRAFT_STORAGE_KEY);
     Object.defineProperty(navigator, "geolocation", {
       configurable: true,
       value: {
@@ -374,6 +376,12 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.focus(field);
+    await waitFor(() => {
+      expect(screen.getByText(format(dueDate, "MMM d"))).toBeInTheDocument();
+    });
+
     fireEvent.change(screen.getByLabelText("Priority"), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: /^create task$/i }));
 
@@ -381,7 +389,6 @@ describe("UnifiedBottomBar auth gating", () => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
 
-    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     expect(field).toHaveFocus();
     expect(screen.getByText(format(dueDate, "MMM d"))).toBeInTheDocument();
     expect(screen.getByLabelText("Priority")).toHaveValue("2");
@@ -748,7 +755,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.queryByRole("button", { name: /add comment/i })).not.toBeInTheDocument();
   });
 
-  it("prefills due date with today in calendar view", () => {
+  it("prefills due date with today in calendar view once the composer is focused", async () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -761,11 +768,16 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByText(format(new Date(), "MMM d"))).toBeInTheDocument();
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.focus(field);
+
+    await waitFor(() => {
+      expect(screen.getByText(format(new Date(), "MMM d"))).toBeInTheDocument();
+    });
     expect(screen.getByLabelText(/date type/i)).toBeInTheDocument();
   });
 
-  it("updates due date when selected calendar date changes", () => {
+  it("updates due date when selected calendar date changes while composing", async () => {
     const nextDay = addDays(new Date(), 1);
     const { rerender } = render(
       <UnifiedBottomBar
@@ -780,6 +792,9 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.focus(field);
+
     rerender(
       <UnifiedBottomBar
         searchQuery=""
@@ -793,7 +808,9 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByText(format(nextDay, "MMM d"))).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(format(nextDay, "MMM d"))).toBeInTheDocument();
+    });
   });
 
   it("hides date type until a due date is selected", () => {

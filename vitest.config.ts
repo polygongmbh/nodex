@@ -17,10 +17,49 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
     env: {
       NODE_NO_WARNINGS: "1",
     },
+    maxWorkers: 2,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "components",
+          include: ["src/components/**/*.{test,spec}.{ts,tsx}", "src/App.test.tsx"],
+          sequence: {
+            groupOrder: 0,
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "infrastructure",
+          include: ["src/infrastructure/**/*.{test,spec}.{ts,tsx}"],
+          sequence: {
+            groupOrder: 1,
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "application-logic",
+          include: [
+            "src/features/**/*.{test,spec}.{ts,tsx}",
+            "src/domain/**/*.{test,spec}.{ts,tsx}",
+            "src/lib/**/*.{test,spec}.{ts,tsx}",
+            "src/hooks/**/*.{test,spec}.{ts,tsx}",
+            "src/types/**/*.{test,spec}.{ts,tsx}",
+            "src/data/**/*.{test,spec}.{ts,tsx}",
+          ],
+          sequence: {
+            groupOrder: 2,
+          },
+        },
+      },
+    ],
   },
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },

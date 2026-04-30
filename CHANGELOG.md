@@ -6,8 +6,17 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.5] - 2026-04-30
+Patch release for auth-toast cleanup, profile prompt gating, and draft/presence model stabilization.
+
 ### Changed
-- `Person` now uses `pubkey` instead of `id`; presence state is grouped under a `presence` snapshot object rather than flat fields on the person
+- `Person` now uses `pubkey` instead of `id`, and presence state is grouped under a `presence` snapshot object rather than flat fields on the person API.
+- Mobile composer drafts now persist more reliably through a unified storage key, so reopening the composer restores in-progress task text more consistently.
+
+### Fixed
+- Noas and NIP-42 auth flows now show cleaner success toasts, restore relay read access more reliably after authentication, and suppress redundant relay verification success noise.
+- The guest profile completion prompt now stays quiet when the active relay set has no writable space, avoiding repeated background prompts that the user cannot act on.
+- Feed task text selection is preserved more reliably during interaction, reducing accidental selection loss while reading and copying task content.
 
 ## [2.15.4] - 2026-04-28
 Patch release for onboarding flow stabilization, welcome cleanup, and profile cache consistency.

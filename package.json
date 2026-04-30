@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "2.15.4",
+  "version": "2.15.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:teardown": "npx vitest run src/components/mobile/MobileLayout.test.tsx src/components/mobile/MobileFilters.test.tsx src/components/mobile/UnifiedBottomBar.test.tsx src/components/onboarding/OnboardingGuide.test.tsx src/components/tasks/CalendarView.test.tsx src/lib/nostr/provider/ndk-provider.test.tsx --maxWorkers=2"
+    "test:teardown": "npx vitest run src/components/mobile/MobileLayout.test.tsx src/components/mobile/MobileFilters.test.tsx src/components/mobile/UnifiedBottomBar.test.tsx src/components/onboarding/OnboardingGuide.test.tsx src/components/tasks/CalendarView.test.tsx src/infrastructure/nostr/provider/ndk-provider.test.tsx --maxWorkers=2"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
