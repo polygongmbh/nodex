@@ -20,7 +20,6 @@ export default defineConfig({
     env: {
       NODE_NO_WARNINGS: "1",
     },
-    maxWorkers: 2,
     projects: [
       {
         extends: true,

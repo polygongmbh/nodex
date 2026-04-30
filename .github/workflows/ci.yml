@@ -45,7 +45,7 @@ jobs:
 
       - name: Run tests
         timeout-minutes: 12
-        run: npx vitest run --pool=forks --maxWorkers=50%
+        run: npx vitest run
 
       - name: Build
         run: npm run build
