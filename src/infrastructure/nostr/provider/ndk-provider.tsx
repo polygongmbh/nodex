@@ -440,7 +440,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const shouldSetStatus = options?.setStatus ?? false;
     const shouldShowToast = options?.showToast ?? true;
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
-    const hadPendingAuth = pendingRelayVerificationRef.current.has(normalizedRelayUrl);
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     if (shouldSetStatus) {
       if (operation === "read") {
@@ -449,7 +448,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         markRelayWriteOutcome(relayUrl, false);
       }
     }
-    if (!shouldShowToast || !authMethodRef.current || hadPendingAuth || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
+    if (!shouldShowToast || !authMethodRef.current || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
       return;
     }
     if (operation === "read") {
@@ -2274,8 +2273,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         });
       }
       markRelayVerificationFailure(relay.url, "read", {
-        setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
-        showToast: true,
+        setStatus: !shouldRetry && shouldSetVerificationFailedStatus("subscription-closed", "read"),
+        showToast: !shouldRetry,
       });
     });
     let finished = false;

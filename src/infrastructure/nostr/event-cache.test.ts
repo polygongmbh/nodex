@@ -9,6 +9,7 @@ import {
   loadCachedNostrEventsForBootstrap,
   removeCachedNostrEventById,
   removeCachedNostrEventsByRelayUrl,
+  removeCachedNostrEventScopesByRelayId,
   removeRelayUrlFromCachedEvents,
   saveCachedNostrEvents,
   type CachedNostrEvent,
@@ -53,6 +54,16 @@ describe("nostr event cache", () => {
     saveCachedNostrEvents([eventA, eventB]);
     const loaded = loadCachedNostrEvents();
     expect(loaded.map((event) => event.id)).toEqual(["b", "a"]);
+  });
+
+  it("drops unreadable legacy event cache keys instead of migrating them", () => {
+    localStorage.setItem(
+      "nodex.nostr-events.cache.v1",
+      JSON.stringify([eventA])
+    );
+
+    expect(loadCachedNostrEvents()).toEqual([]);
+    expect(loadCachedNostrEventsForBootstrap()).toEqual([]);
   });
 
   it("deduplicates events by id while saving", () => {
@@ -192,6 +203,18 @@ describe("nostr event cache", () => {
     removeCachedNostrEventsByRelayUrl("wss://relay.a/");
 
     expect(loadCachedNostrEvents("all").map((event) => event.id)).toEqual(["b"]);
+  });
+
+  it("removes dedicated relay scope buckets when a relay is deleted", () => {
+    saveCachedNostrEvents([{ ...eventA, relayUrl: "wss://relay.a" }], "relay-a");
+    saveCachedNostrEvents([{ ...eventB, relayUrl: "wss://relay.b" }], "relay-b");
+    saveCachedNostrEvents([{ ...eventA, relayUrl: "wss://relay.a" }], "all");
+
+    removeCachedNostrEventScopesByRelayId("relay-a");
+
+    expect(loadCachedNostrEvents("relay-a")).toEqual([]);
+    expect(loadCachedNostrEvents("relay-b").map((event) => event.id)).toEqual(["b"]);
+    expect(loadCachedNostrEvents("all").map((event) => event.id)).toEqual(["a"]);
   });
 
   it("returns empty data for the empty relay scope", () => {
