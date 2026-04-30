@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.6] - 2026-04-30
+Patch release for relay auth lifecycle cleanup, quieter verification feedback, and cache simplification.
+
 ### Fixed
 - Relay verification success toasts are no longer shown for relays that don't require auth per NIP-11 or that the user has already published to this session.
 - Relay verification toasts (success and failure) are suppressed when no user is signed in.
