@@ -1971,12 +1971,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const relayStatus = relaysRef.current.find((entry) => normalizeRelayUrl(entry.url) === normalized)?.status;
     const forceNewSocket = (options?.forceNewSocket ?? false) || relayStatus === "connecting";
     removedRelaysRef.current.delete(normalized);
-    relayInitialFailureCountsRef.current.delete(normalized);
-    relayConnectedOnceRef.current.delete(normalized);
     pendingRelayVerificationRef.current.delete(normalized);
     relayAuthRetryHistoryRef.current.delete(normalized);
-    relayReadRejectedRef.current.delete(normalized);
-    relayWriteRejectedRef.current.delete(normalized);
+    if (forceNewSocket) {
+      relayInitialFailureCountsRef.current.delete(normalized);
+      relayConnectedOnceRef.current.delete(normalized);
+    }
     if (ndk.signer) {
       relayAuthPreflightHistoryRef.current.delete(normalized);
       pendingRelayVerificationRef.current.set(normalized, {

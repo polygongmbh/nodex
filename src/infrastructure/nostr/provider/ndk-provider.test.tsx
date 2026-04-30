@@ -988,7 +988,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
   });
 
-  it("clears relay read-only status on soft reconnect so auth can retry cleanly", async () => {
+  it("keeps relay read-only status during soft reconnect until auth succeeds", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
         <Harness />
@@ -1017,7 +1017,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
     });
   });
 
