@@ -155,9 +155,9 @@
       "locationPermissionDenied": "Se denegó el permiso de ubicación",
       "locationPositionUnavailable": "No se pudo determinar tu ubicación actual",
       "locationTimeout": "La solicitud de ubicación expiró",
-      "relayVerificationReadFailed": "La verificación del relay para lectura falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
-      "relayVerificationWriteFailed": "La verificación del relay para publicación falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
-      "relayVerificationUnknownFailed": "La verificación del relay falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
+      "relayVerificationReadFailed": "Acceso de lectura rechazado por {{relayUrl}}",
+      "relayVerificationWriteFailed": "Publicación rechazada por {{relayUrl}}",
+      "relayVerificationUnknownFailed": "Acceso rechazado por {{relayUrl}}",
       "relayReconnectFailedDeselected": "No se pudo reconectar {{relayDomain}}. El space volvió a deseleccionarse."
     },
     "success": {

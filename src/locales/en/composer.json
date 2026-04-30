@@ -155,9 +155,9 @@
       "locationPermissionDenied": "Location permission was denied",
       "locationPositionUnavailable": "Your current location could not be determined",
       "locationTimeout": "Location request timed out",
-      "relayVerificationReadFailed": "Relay verification failed for reading on {{relayUrl}}. Check signer access and relay permissions.",
-      "relayVerificationWriteFailed": "Relay verification failed for publishing on {{relayUrl}}. Check signer access and relay permissions.",
-      "relayVerificationUnknownFailed": "Relay verification failed on {{relayUrl}}. Check signer access and relay permissions.",
+      "relayVerificationReadFailed": "Read access rejected by {{relayUrl}}",
+      "relayVerificationWriteFailed": "Publish rejected by {{relayUrl}}",
+      "relayVerificationUnknownFailed": "Access rejected by {{relayUrl}}",
       "relayReconnectFailedDeselected": "Unable to connect to {{relayDomain}}. It was deselected again."
     },
     "success": {

@@ -249,6 +249,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const relayInfoFetchedAtRef = useRef<Map<string, number>>(new Map());
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
+  const relaySuccessfulWriteRef = useRef<Set<string>>(new Set());
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
   const relayConnectWatchdogIdsRef = useRef<Map<string, number>>(new Map());
   const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
@@ -371,6 +372,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
     if (allowed) {
       relayWriteRejectedRef.current.delete(normalizedRelayUrl);
+      relaySuccessfulWriteRef.current.add(normalizedRelayUrl);
     } else {
       relayWriteRejectedRef.current.set(normalizedRelayUrl, true);
     }
@@ -408,6 +410,17 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {
       return;
     }
+    if (!authMethodRef.current) {
+      return;
+    }
+    const normalizedUrl = relayUrl.replace(/\/+$/, "");
+    const info = relayInfoRef.current.get(normalizedUrl);
+    if (info?.authRequired === false) {
+      return;
+    }
+    if (relaySuccessfulWriteRef.current.has(normalizedUrl)) {
+      return;
+    }
     if (operation === "read") {
       toast.success(i18n.t("composer:toasts.success.relayVerificationRead", { relayUrl }));
       return;
@@ -435,7 +448,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         markRelayWriteOutcome(relayUrl, false);
       }
     }
-    if (!shouldShowToast || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
+    if (!shouldShowToast || !authMethodRef.current || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
       return;
     }
     if (operation === "read") {

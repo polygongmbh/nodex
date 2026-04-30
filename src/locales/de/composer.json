@@ -155,9 +155,9 @@
       "locationPermissionDenied": "Standortzugriff wurde verweigert",
       "locationPositionUnavailable": "Dein aktueller Standort konnte nicht bestimmt werden",
       "locationTimeout": "Standortabfrage hat zu lange gedauert",
-      "relayVerificationReadFailed": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
-      "relayVerificationWriteFailed": "Relay-Verifizierung fürs Veröffentlichen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
-      "relayVerificationUnknownFailed": "Relay-Verifizierung auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
+      "relayVerificationReadFailed": "Lesezugriff von {{relayUrl}} abgelehnt",
+      "relayVerificationWriteFailed": "Veröffentlichung von {{relayUrl}} abgelehnt",
+      "relayVerificationUnknownFailed": "Zugriff von {{relayUrl}} abgelehnt",
       "relayReconnectFailedDeselected": "Verbindung zu {{relayDomain}} konnte nicht wiederhergestellt werden. Der Space wurde wieder abgewählt."
     },
     "success": {

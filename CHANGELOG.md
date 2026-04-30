@@ -6,6 +6,11 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Relay verification success toasts are no longer shown for relays that don't require auth per NIP-11 or that the user has already published to this session.
+- Relay verification toasts (success and failure) are suppressed when no user is signed in.
+- Relay access-denied toasts are shorter and no longer mention signer internals.
+
 ## [2.15.5] - 2026-04-30
 Patch release for auth-toast cleanup, profile prompt gating, and draft/presence model stabilization.
 
