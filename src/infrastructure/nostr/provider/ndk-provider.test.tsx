@@ -626,6 +626,7 @@ describe("NDKProvider relay lifecycle", () => {
         relays: ["wss://relay.one", "wss://relay.two"],
       })
     );
+    expect(toast.success).toHaveBeenCalledTimes(1);
   });
 
   it("stores private-key auth in session storage and restores it on reload", async () => {
@@ -645,6 +646,7 @@ describe("NDKProvider relay lifecycle", () => {
     expect(window.localStorage.getItem(STORAGE_KEY_AUTH)).toBeNull();
     expect(window.sessionStorage.getItem(STORAGE_KEY_AUTH)).toBe("privateKey");
     expect(window.sessionStorage.getItem(STORAGE_KEY_SESSION_PRIVATE_KEY)).toBe("nsec1privatekey");
+    expect(toast.success).toHaveBeenCalledTimes(1);
 
     unmount();
 
@@ -658,6 +660,7 @@ describe("NDKProvider relay lifecycle", () => {
       expect(screen.getByTestId("auth-method")).toHaveTextContent("privateKey");
     });
     expect(screen.getByTestId("user-pubkey")).toHaveTextContent("pub");
+    expect(toast.success).toHaveBeenCalledTimes(2);
   });
 
   it("stores Noas auth in session storage and restores it on reload", async () => {
@@ -681,6 +684,36 @@ describe("NDKProvider relay lifecycle", () => {
     expect(window.sessionStorage.getItem(STORAGE_KEY_SESSION_NOAS_STATE)).toContain("\"username\":\"alice\"");
     expect(screen.getByTestId("user-picture")).toHaveTextContent("https://noas.example/api/v1/picture/pub");
     expect(toast.success).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the login success toast again when a Noas session is restored after reload", async () => {
+    const { unmount } = render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]} defaultNoasHostUrl="https://noas.example">
+        <AuthSessionHarness />
+      </NDKProvider>
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login with noas" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-method")).toHaveTextContent("noas");
+    });
+    expect(toast.success).toHaveBeenCalledTimes(1);
+
+    unmount();
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <AuthSessionHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-method")).toHaveTextContent("noas");
+    });
+    expect(toast.success).toHaveBeenCalledTimes(2);
   });
 
   it("restores a Noas session from session storage without a fresh sign-in", async () => {

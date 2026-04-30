@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
-import { resolveNoasLoginHandle, showNoasLoginToast } from "./noas-login-toast";
+import { resolveNoasLoginHandle, showLoginSuccessToast } from "./auth-login-toast";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -11,6 +11,10 @@ vi.mock("sonner", () => ({
 vi.mock("@/lib/i18n/config", () => ({
   default: {
     t: vi.fn((key: string, params?: { handle?: string }) => {
+      if (key === "auth.modal.success.extension") return "Signed in with Nostr extension!";
+      if (key === "auth.modal.success.privateKey") return "Signed in with private key!";
+      if (key === "auth.modal.success.guest") return "Signed in as guest! A new identity was created for you.";
+      if (key === "auth.modal.success.signer") return "Connected to signer app!";
       if (key === "auth.modal.success.noas") return "Signed in with Noas!";
       if (key === "auth.modal.success.noasDescription") {
         return `Logged in as ${params?.handle} via Noas.`;
@@ -30,11 +34,22 @@ describe("resolveNoasLoginHandle", () => {
   });
 });
 
-describe("showNoasLoginToast", () => {
+describe("showLoginSuccessToast", () => {
+  it.each([
+    ["extension", "Signed in with Nostr extension!"],
+    ["privateKey", "Signed in with private key!"],
+    ["guest", "Signed in as guest! A new identity was created for you."],
+    ["nostrConnect", "Connected to signer app!"],
+  ] as const)("shows the localized success toast for %s", (authMethod, message) => {
+    showLoginSuccessToast({ authMethod });
+    expect(toast.success).toHaveBeenCalledWith(message);
+  });
+
   it("shows a detailed Noas login toast with the resolved handle", () => {
-    showNoasLoginToast({
-      username: "alice",
-      apiBaseUrl: "https://noas.example/api/v1",
+    showLoginSuccessToast({
+      authMethod: "noas",
+      noasUsername: "alice",
+      noasApiBaseUrl: "https://noas.example/api/v1",
     });
 
     expect(toast.success).toHaveBeenCalledWith("Signed in with Noas!", {

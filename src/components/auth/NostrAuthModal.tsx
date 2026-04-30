@@ -206,7 +206,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     try {
       const success = await loginWithExtension();
       if (success) {
-        toast.success(t("auth.modal.success.extension"));
         onClose();
       } else {
         setError(t("auth.modal.errors.extensionFailed"));
@@ -227,7 +226,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     try {
       const success = await loginWithPrivateKey(privateKey.trim());
       if (success) {
-        toast.success(t("auth.modal.success.privateKey"));
         setPrivateKey("");
         setShowPrivateKeyInput(false);
         onClose();
@@ -245,7 +243,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     try {
       const success = await loginAsGuest();
       if (success) {
-        toast.success(t("auth.modal.success.guest"));
         onClose();
       } else {
         setError(t("auth.modal.errors.guestFailed"));
@@ -265,7 +262,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     try {
       const success = await loginWithNostrConnect(bunkerUrl.trim());
       if (success) {
-        toast.success(t("auth.modal.success.signer"));
         setBunkerUrl("");
         onClose();
       } else {
