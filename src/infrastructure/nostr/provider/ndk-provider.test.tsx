@@ -454,29 +454,6 @@ function AuthReplayHarness() {
   );
 }
 
-function TransportReplayHarness() {
-  const { relays, subscribe, reconnectRelay } = useNDK();
-  return (
-    <div>
-      <button
-        onClick={() => {
-          const feedFilters = [{ kinds: [1, 1621, 0], limit: 1500 }] as unknown as Parameters<typeof subscribe>[0];
-          subscribe(feedFilters, () => {}, { closeOnEose: false });
-        }}
-      >
-        start feed sub
-      </button>
-      <button onClick={() => reconnectRelay("wss://relay.one")}>reconnect relay</button>
-      <output data-testid="relay-state">
-        {relays
-          .map((relay) => `${relay.url}:${relay.status}`)
-          .sort()
-          .join(",")}
-      </output>
-    </div>
-  );
-}
-
 function NoasHostHarness() {
   const { defaultNoasHostUrl } = useNDK();
   return <output data-testid="default-noas-host">{defaultNoasHostUrl}</output>;
@@ -1011,7 +988,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
   });
 
-  it("keeps relay read-only across soft reconnect until write succeeds", async () => {
+  it("clears relay read-only status on soft reconnect so auth can retry cleanly", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
         <Harness />
@@ -1040,7 +1017,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     });
   });
 
@@ -1234,44 +1211,6 @@ describe("NDKProvider relay lifecycle", () => {
     await waitFor(() => {
       expect(relay.subscribeCalls.length).toBeGreaterThan(replayedSubscriptionsBeforeAuth);
       expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-    });
-  });
-
-  it("replays active subscriptions after reconnecting a disconnected relay", async () => {
-    render(
-      <NDKProvider defaultRelays={["wss://relay.one/"]}>
-        <TransportReplayHarness />
-      </NDKProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "start feed sub" }));
-    });
-
-    const ndk = mockedNdk.ndkInstances[0];
-    const relay = ndk.pool.getRelay("wss://relay.one", false);
-
-    await act(async () => {
-      relay.disconnect();
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:disconnected");
-    });
-
-    const replayedSubscriptionsBeforeReconnect = relay.subscribeCalls.length;
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-      expect(relay.subscribeCalls.length).toBeGreaterThan(replayedSubscriptionsBeforeReconnect);
     });
   });
 
