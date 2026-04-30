@@ -92,7 +92,7 @@ import {
   filterRelayUrlsToWritableSet,
   resolveWritableNdkRelayUrls,
 } from "@/lib/nostr/relay-write-targets";
-import { resolveManualRelayReconnectAction } from "@/domain/relays/relay-reconnect-policy";
+import { resolveRelayAuthRecoveryAction } from "@/domain/relays/relay-reconnect-policy";
 import { useProfileSync } from "./use-profile-sync";
 export type { AuthMethod, NDKUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
@@ -1970,8 +1970,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     if (!ndk) return;
     const normalized = normalizeRelayUrl(url);
     const relayStatus = relaysRef.current.find((entry) => normalizeRelayUrl(entry.url) === normalized)?.status;
-    const reconnectAction = resolveManualRelayReconnectAction(relayStatus);
     const forceNewSocket = (options?.forceNewSocket ?? false) || relayStatus === "connecting";
+    const authRecoveryAction = resolveRelayAuthRecoveryAction(relayStatus);
     removedRelaysRef.current.delete(normalized);
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
@@ -1979,13 +1979,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     relayAuthRetryHistoryRef.current.delete(normalized);
     relayReadRejectedRef.current.delete(normalized);
     relayWriteRejectedRef.current.delete(normalized);
-    if (reconnectAction.retryAuth && ndk.signer) {
+    if (authRecoveryAction && ndk.signer) {
       relayAuthPreflightHistoryRef.current.delete(normalized);
       pendingRelayVerificationRef.current.set(normalized, {
-        operation: reconnectAction.verificationOperation,
+        operation: authRecoveryAction.verificationOperation,
         requestedAt: Date.now(),
       });
-      if (reconnectAction.replaySubscriptionsAfterAuth) {
+      if (authRecoveryAction.verificationOperation === "read") {
         relaysPendingAuthSubscriptionReplayRef.current.add(normalized);
       } else {
         relaysPendingAuthSubscriptionReplayRef.current.delete(normalized);
@@ -1994,13 +1994,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     nostrDevLog("relay", "Relay reconnect requested", {
       relayUrl: normalized,
       relayStatus,
-      retryAuth: reconnectAction.retryAuth && Boolean(ndk.signer),
-      replaySubscriptionsAfterAuth: reconnectAction.replaySubscriptionsAfterAuth && Boolean(ndk.signer),
+      retryAuth: Boolean(authRecoveryAction) && Boolean(ndk.signer),
+      replaySubscriptionsAfterAuth: authRecoveryAction?.verificationOperation === "read" && Boolean(ndk.signer),
       reconnectMode: forceNewSocket ? "hard" : "soft",
     });
 
     const relay = connectManagedRelay(ndk, normalized, { forceNewSocket });
-    if (reconnectAction.retryAuth && ndk.signer) {
+    if (authRecoveryAction && ndk.signer) {
       primeRelayAuthChallenge(ndk, normalized);
     }
     const mappedStatus = mapRelayTransportStatus(relay);
