@@ -21,6 +21,7 @@ describe("resolveManualRelayReconnectAction", () => {
   it("retries auth and replays subscriptions for verification-failed relays", () => {
     expect(resolveManualRelayReconnectAction("verification-failed")).toEqual({
       reconnectTransport: false,
+      replaySubscriptionsAfterConnect: false,
       retryAuth: true,
       replaySubscriptionsAfterAuth: true,
       verificationOperation: "read",
@@ -30,6 +31,7 @@ describe("resolveManualRelayReconnectAction", () => {
   it("retries auth on the current session for read-only relays", () => {
     expect(resolveManualRelayReconnectAction("read-only")).toEqual({
       reconnectTransport: false,
+      replaySubscriptionsAfterConnect: false,
       retryAuth: true,
       replaySubscriptionsAfterAuth: false,
       verificationOperation: "write",
@@ -39,12 +41,14 @@ describe("resolveManualRelayReconnectAction", () => {
   it("keeps transport reconnect semantics for dead relay connections", () => {
     expect(resolveManualRelayReconnectAction("disconnected")).toEqual({
       reconnectTransport: true,
+      replaySubscriptionsAfterConnect: true,
       retryAuth: false,
       replaySubscriptionsAfterAuth: false,
       verificationOperation: "unknown",
     });
     expect(resolveManualRelayReconnectAction("connection-error")).toEqual({
       reconnectTransport: true,
+      replaySubscriptionsAfterConnect: true,
       retryAuth: false,
       replaySubscriptionsAfterAuth: false,
       verificationOperation: "unknown",
@@ -54,18 +58,21 @@ describe("resolveManualRelayReconnectAction", () => {
   it("does nothing extra for healthy or unavailable statuses", () => {
     expect(resolveManualRelayReconnectAction("connected")).toEqual({
       reconnectTransport: false,
+      replaySubscriptionsAfterConnect: false,
       retryAuth: false,
       replaySubscriptionsAfterAuth: false,
       verificationOperation: "unknown",
     });
     expect(resolveManualRelayReconnectAction("connecting")).toEqual({
       reconnectTransport: false,
+      replaySubscriptionsAfterConnect: false,
       retryAuth: false,
       replaySubscriptionsAfterAuth: false,
       verificationOperation: "unknown",
     });
     expect(resolveManualRelayReconnectAction(undefined)).toEqual({
       reconnectTransport: false,
+      replaySubscriptionsAfterConnect: false,
       retryAuth: false,
       replaySubscriptionsAfterAuth: false,
       verificationOperation: "unknown",

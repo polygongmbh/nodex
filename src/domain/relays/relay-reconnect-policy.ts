@@ -2,6 +2,7 @@ import type { Relay } from "@/types";
 
 export interface ManualRelayReconnectAction {
   reconnectTransport: boolean;
+  replaySubscriptionsAfterConnect: boolean;
   retryAuth: boolean;
   replaySubscriptionsAfterAuth: boolean;
   verificationOperation: "read" | "write" | "unknown";
@@ -9,6 +10,7 @@ export interface ManualRelayReconnectAction {
 
 const DEFAULT_MANUAL_RECONNECT_ACTION: ManualRelayReconnectAction = {
   reconnectTransport: false,
+  replaySubscriptionsAfterConnect: false,
   retryAuth: false,
   replaySubscriptionsAfterAuth: false,
   verificationOperation: "unknown",
@@ -25,6 +27,7 @@ export function resolveManualRelayReconnectAction(
   switch (status) {
     case "verification-failed":
       return {
+        ...DEFAULT_MANUAL_RECONNECT_ACTION,
         reconnectTransport: false,
         retryAuth: true,
         replaySubscriptionsAfterAuth: true,
@@ -32,6 +35,7 @@ export function resolveManualRelayReconnectAction(
       };
     case "read-only":
       return {
+        ...DEFAULT_MANUAL_RECONNECT_ACTION,
         reconnectTransport: false,
         retryAuth: true,
         replaySubscriptionsAfterAuth: false,
@@ -42,6 +46,7 @@ export function resolveManualRelayReconnectAction(
       return {
         ...DEFAULT_MANUAL_RECONNECT_ACTION,
         reconnectTransport: true,
+        replaySubscriptionsAfterConnect: true,
       };
     default:
       return DEFAULT_MANUAL_RECONNECT_ACTION;
