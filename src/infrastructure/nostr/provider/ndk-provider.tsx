@@ -347,31 +347,19 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     );
   }, []);
 
-  const markRelayReadOutcome = useCallback((relayUrl: string, allowed: boolean) => {
+  const updateRelayCapabilityStatus = useCallback((
+    relayUrl: string,
+    nextStatus: "connected" | "read-only" | "verification-failed",
+    options?: { trackSuccessfulWrite?: boolean }
+  ) => {
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
-    updateRelayEntry(normalizedRelayUrl, (relay) => {
-      if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
-        return relay;
-      }
-      const nextStatus = allowed
-        ? (relay.status === "read-only" ? "read-only" : "connected")
-        : "verification-failed";
-      return relay.status === nextStatus ? relay : { ...relay, status: nextStatus };
-    });
-  }, [updateRelayEntry]);
-
-  const markRelayWriteOutcome = useCallback((relayUrl: string, allowed: boolean) => {
-    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
-    if (allowed) {
+    if (options?.trackSuccessfulWrite) {
       relaySuccessfulWriteRef.current.add(normalizedRelayUrl);
     }
     updateRelayEntry(normalizedRelayUrl, (relay) => {
       if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
         return relay;
       }
-      const nextStatus = allowed
-        ? "connected"
-        : (relay.status === "verification-failed" ? "verification-failed" : "read-only");
       return relay.status === nextStatus ? relay : { ...relay, status: nextStatus };
     });
   }, [updateRelayEntry]);
@@ -393,11 +381,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
   const markRelayVerificationSuccess = useCallback((relayUrl: string, operation: RelayOperation) => {
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
-    updateRelayEntry(normalizedRelayUrl, (relay) => {
-      if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
-        return relay;
-      }
-      return relay.status === "connected" ? relay : { ...relay, status: "connected" };
+    updateRelayCapabilityStatus(normalizedRelayUrl, "connected", {
+      trackSuccessfulWrite: operation === "write",
     });
     if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {
       return;
@@ -423,7 +408,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       return;
     }
     toast.success(i18n.t("composer:toasts.success.relayVerificationUnknown", { relayUrl }));
-  }, [shouldShowRelayVerificationToast, updateRelayEntry]);
+  }, [shouldShowRelayVerificationToast, updateRelayCapabilityStatus]);
 
   const markRelayVerificationFailure = useCallback((
     relayUrl: string,
@@ -436,9 +421,15 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     if (shouldSetStatus) {
       if (operation === "read") {
-        markRelayReadOutcome(relayUrl, false);
+        updateRelayCapabilityStatus(relayUrl, "verification-failed");
       } else if (operation === "write") {
-        markRelayWriteOutcome(relayUrl, false);
+        updateRelayEntry(normalizedRelayUrl, (relay) => {
+          if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
+            return relay;
+          }
+          const nextStatus = relay.status === "verification-failed" ? "verification-failed" : "read-only";
+          return relay.status === nextStatus ? relay : { ...relay, status: nextStatus };
+        });
       }
     }
     if (!shouldShowToast || !authMethodRef.current || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
@@ -451,7 +442,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } else {
       toast.error(i18n.t("composer:toasts.errors.relayVerificationUnknownFailed", { relayUrl }));
     }
-  }, [markRelayReadOutcome, markRelayWriteOutcome, shouldShowRelayVerificationToast]);
+  }, [shouldShowRelayVerificationToast, updateRelayCapabilityStatus, updateRelayEntry]);
 
   const attachRelayOkRejectObserver = useCallback((relay: NDKRelay) => {
     const normalizedRelayUrl = normalizeRelayUrl(relay.url);
@@ -1117,7 +1108,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         // Auth succeeded without a tracked pending challenge (e.g. relay sent the auth
         // challenge before our preflight probe or after a reconnect). Clear read rejection
         // directly since relay:authed is the definitive success signal.
-        markRelayReadOutcome(normalized, true);
+        updateRelayCapabilityStatus(normalized, "connected");
         nostrDevLog("relay", "Relay authentication completed without pending verification challenge", {
           relayUrl: normalized,
         });
@@ -1389,7 +1380,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       inFlightKind0ProfileRequests.clear();
       relayCurrentInstance.clear();
     };
-  }, [applyAuthenticatedState, attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, clearRelayConnectWatchdog, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayReadOutcome, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayConnectWatchdog, scheduleRelayTimeout]);
+  }, [applyAuthenticatedState, attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, clearRelayConnectWatchdog, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayConnectWatchdog, scheduleRelayTimeout, updateRelayCapabilityStatus]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -2110,7 +2101,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
 
       publishedRelayUrls.forEach((relayUrl) => {
-        markRelayWriteOutcome(relayUrl, true);
+        updateRelayCapabilityStatus(relayUrl, "connected", {
+          trackSuccessfulWrite: true,
+        });
       });
       nostrDevLog("publish", "Event published", {
         eventId: event.id,
@@ -2144,7 +2137,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       endRelayOperation("write");
     }
-  }, [beginRelayOperation, endRelayOperation, markRelayVerificationFailure, markRelayWriteOutcome, ndk, relays, resolvedDefaultRelays]);
+  }, [beginRelayOperation, endRelayOperation, markRelayVerificationFailure, ndk, relays, resolvedDefaultRelays, updateRelayCapabilityStatus]);
 
   const createHttpAuthHeader = useCallback(async (
     url: string,
@@ -2224,7 +2217,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     
     subscription.on("event", (event: NDKEvent) => {
       if (event.relay?.url) {
-        markRelayReadOutcome(event.relay.url, true);
+        updateRelayCapabilityStatus(event.relay.url, "connected");
       }
       onEvent(event);
     });
@@ -2273,7 +2266,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     subscription.on("close", finishRead);
 
     return subscription;
-  }, [beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayReadOutcome, markRelayVerificationFailure, ndk, primeRelayAuthChallenge]);
+  }, [beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayVerificationFailure, ndk, primeRelayAuthChallenge, updateRelayCapabilityStatus]);
 
   const isConnected = useMemo(() => {
     return relays.some((r) => r.status === "connected" || r.status === "read-only");
