@@ -624,14 +624,17 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     detachRelayOkRejectObserver(normalizedRelayUrl);
     relayCurrentInstanceRef.current.delete(normalizedRelayUrl);
 
+    // Remove from pool before calling disconnect() so that any synchronous NDK event
+    // handlers that fire inside disconnect() see an already-clean pool and cannot
+    // re-schedule a reconnect for the same URL.
+    ndkInstance.pool.removeRelay(normalizedRelayUrl);
+
     if (trackedRelay) {
       trackedRelay.disconnect();
     }
     if (pooledRelay && pooledRelay !== trackedRelay) {
       pooledRelay.disconnect();
     }
-
-    ndkInstance.pool.removeRelay(normalizedRelayUrl);
   }, [clearRelayConnectWatchdog, detachRelayOkRejectObserver]);
 
   const scheduleRelayConnectWatchdogRef = useRef<(ndkInstance: NDK, relay: NDKRelay) => void>(() => undefined);
@@ -1047,6 +1050,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     ndkInstance.pool.on("relay:authed", (relay: NDKRelay) => {
       const normalized = normalizeRelayUrl(relay.url);
+      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
+      if (currentRelay && currentRelay !== relay) {
+        return;
+      }
       const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
       if (pendingVerification) {
         pendingRelayVerificationRef.current.delete(normalized);
@@ -1054,6 +1061,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         nostrDevLog("relay", "Relay authentication completed for pending verification challenge", {
           relayUrl: normalized,
           operation: pendingVerification.operation,
+        });
+      } else {
+        // Auth succeeded without a tracked pending challenge (e.g. relay sent the auth
+        // challenge before our preflight probe or after a reconnect). Clear read rejection
+        // directly since relay:authed is the definitive success signal.
+        markRelayReadOutcome(normalized, true);
+        nostrDevLog("relay", "Relay authentication completed without pending verification challenge", {
+          relayUrl: normalized,
         });
       }
       const shouldReplaySubscriptions = relaysPendingAuthSubscriptionReplayRef.current.delete(normalized);

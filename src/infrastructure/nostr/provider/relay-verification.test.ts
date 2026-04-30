@@ -37,10 +37,12 @@ describe("shouldSetVerificationFailedStatus", () => {
 });
 
 describe("verification success capability clearing", () => {
-  it("clears read rejection only for explicit read verification success", () => {
+  it("clears read rejection for read and unknown verification success", () => {
     expect(shouldClearReadRejectionAfterVerificationSuccess("read")).toBe(true);
+    // "unknown" covers the NIP-42 auth policy path which always emits unknown operation;
+    // auth success means the relay accepted credentials, so read rejection should clear
+    expect(shouldClearReadRejectionAfterVerificationSuccess("unknown")).toBe(true);
     expect(shouldClearReadRejectionAfterVerificationSuccess("write")).toBe(false);
-    expect(shouldClearReadRejectionAfterVerificationSuccess("unknown")).toBe(false);
   });
 
   it("clears write rejection only for explicit write verification success", () => {

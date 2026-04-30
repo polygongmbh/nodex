@@ -45,7 +45,10 @@ export function shouldSetVerificationFailedStatus(
 export function shouldClearReadRejectionAfterVerificationSuccess(
   operation: RelayVerificationEvent["operation"]
 ): boolean {
-  return operation === "read";
+  // "unknown" covers the NIP-42 policy path, which always emits "unknown" regardless of
+  // whether the challenge was triggered by a read or write attempt. Auth success means the
+  // relay accepted our credentials, so read access (the most common auth gate) is cleared.
+  return operation === "read" || operation === "unknown";
 }
 
 export function shouldClearWriteRejectionAfterVerificationSuccess(
