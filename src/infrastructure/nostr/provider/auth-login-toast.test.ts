@@ -11,12 +11,12 @@ vi.mock("sonner", () => ({
 vi.mock("@/lib/i18n/config", () => ({
   default: {
     t: vi.fn((key: string, params?: { handle?: string }) => {
-      if (key === "auth.modal.success.extension") return "Signed in with Nostr extension!";
-      if (key === "auth.modal.success.privateKey") return "Signed in with private key!";
-      if (key === "auth.modal.success.guest") return "Signed in as guest! A new identity was created for you.";
-      if (key === "auth.modal.success.signer") return "Connected to signer app!";
-      if (key === "auth.modal.success.noas") return "Signed in with Noas!";
-      if (key === "auth.modal.success.noasDescription") {
+      if (key === "auth:modal.success.extension") return "Signed in with Nostr extension!";
+      if (key === "auth:modal.success.privateKey") return "Signed in with private key!";
+      if (key === "auth:modal.success.guest") return "Signed in as guest! A new identity was created for you.";
+      if (key === "auth:modal.success.signer") return "Connected to signer app!";
+      if (key === "auth:modal.success.noas") return "Signed in with Noas!";
+      if (key === "auth:modal.success.noasDescription") {
         return `Logged in as ${params?.handle} via Noas.`;
       }
       return key;

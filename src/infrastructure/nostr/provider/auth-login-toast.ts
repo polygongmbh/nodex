@@ -22,21 +22,21 @@ export function showLoginSuccessToast(params: {
 }) {
   switch (params.authMethod) {
     case "extension":
-      toast.success(i18n.t("auth.modal.success.extension"));
+      toast.success(i18n.t("auth:modal.success.extension"));
       return;
     case "privateKey":
-      toast.success(i18n.t("auth.modal.success.privateKey"));
+      toast.success(i18n.t("auth:modal.success.privateKey"));
       return;
     case "guest":
-      toast.success(i18n.t("auth.modal.success.guest"));
+      toast.success(i18n.t("auth:modal.success.guest"));
       return;
     case "nostrConnect":
-      toast.success(i18n.t("auth.modal.success.signer"));
+      toast.success(i18n.t("auth:modal.success.signer"));
       return;
     case "noas": {
       const handle = resolveNoasLoginHandle(params.noasUsername || "", params.noasApiBaseUrl || "");
-      toast.success(i18n.t("auth.modal.success.noas"), {
-        description: i18n.t("auth.modal.success.noasDescription", { handle }),
+      toast.success(i18n.t("auth:modal.success.noas"), {
+        description: i18n.t("auth:modal.success.noasDescription", { handle }),
       });
       return;
     }
