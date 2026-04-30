@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState, type UIEvent } from "react";
+import { useCallback, useEffect, useRef, useMemo, useState, type UIEvent } from "react";
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatusType, normalizeTaskStatus } from "@/types";
@@ -363,9 +363,9 @@ export function FeedView({
     }
   }, [keyboardFocusedTaskId]);
 
-  const canCompleteTask = (task: Task) => {
+  const canCompleteTask = useCallback((task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
-  };
+  }, [currentUser, isInteractionBlocked]);
   const getStateLabel = (status: Task["status"]) => t(`status.${status || "open"}`);
   const normalizeLabelText = (value?: string) =>
     (value || "")
@@ -379,6 +379,33 @@ export function FeedView({
   };
 
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
+  const timeLabelFormatter = useCallback(
+    (date: Date) => formatTimelineTimestamp(date, i18n.resolvedLanguage),
+    [i18n.resolvedLanguage]
+  );
+  const handleToggleExpandedContent = useCallback((taskId: string) => {
+    setExpandedContentByTaskId((prev) => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
+  }, []);
+  const handleOpenRawEvent = useCallback((event: RawNostrEvent) => {
+    setActiveRawEvent(event);
+    setRawEventDialogOpen(true);
+  }, []);
+  const renderPriorityChip = useCallback((task: Task) => (
+    <FeedPriorityChip
+      task={task}
+      editable={canCompleteTask(task)}
+    />
+  ), [canCompleteTask]);
+  const renderDueDateChip = useCallback((task: Task) => (
+    <FeedDueDateChip
+      task={task}
+      editable={canCompleteTask(task)}
+      dueDateColor={getDueDateColorClass(task.dueDate, task.status)}
+    />
+  ), [canCompleteTask]);
 
   const renderFeedEntry = (entry: FeedEntry) => {
     if (entry.type === "state-update" && entry.update) {
@@ -475,7 +502,7 @@ export function FeedView({
         currentUser={currentUser}
         resolvedAuthor={resolvedAuthor}
         breadcrumb={breadcrumb}
-        focusedTaskId={focusedTaskId}
+        isActiveTask={focusedTaskId === task.id}
         isKeyboardFocused={isKeyboardFocused}
         isMobile={isMobile}
         isSlimDesktop={isSlimDesktop}
@@ -483,31 +510,12 @@ export function FeedView({
         isInteractionBlocked={isInteractionBlocked}
         isPendingPublish={isPendingPublish}
         expandedContent={isContentExpanded}
-        timeLabelFormatter={(date) => formatTimelineTimestamp(date, i18n.resolvedLanguage)}
+        timeLabelFormatter={timeLabelFormatter}
         onOpenTaskMedia={openTaskMedia}
-        onToggleExpandedContent={(taskId) => {
-          setExpandedContentByTaskId((prev) => ({
-            ...prev,
-            [taskId]: !prev[taskId],
-          }));
-        }}
-        onOpenRawEvent={(event) => {
-          setActiveRawEvent(event);
-          setRawEventDialogOpen(true);
-        }}
-        renderPriorityChip={(task) => (
-          <FeedPriorityChip
-            task={task}
-            editable={canCompleteTask(task)}
-          />
-        )}
-        renderDueDateChip={(task) => (
-          <FeedDueDateChip
-            task={task}
-            editable={canCompleteTask(task)}
-            dueDateColor={getDueDateColorClass(task.dueDate, task.status)}
-          />
-        )}
+        onToggleExpandedContent={handleToggleExpandedContent}
+        onOpenRawEvent={handleOpenRawEvent}
+        renderPriorityChip={renderPriorityChip}
+        renderDueDateChip={renderDueDateChip}
       />
     );
   };

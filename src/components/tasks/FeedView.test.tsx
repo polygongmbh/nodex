@@ -7,6 +7,7 @@ import type { Person } from "@/types/person";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
+import * as linkify from "@/lib/linkify";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: (): { user: null } => ({ user: null }),
@@ -134,6 +135,70 @@ describe("FeedView", () => {
     expect(screen.getByText("Raw Nostr Event")).toBeInTheDocument();
     expect(screen.getByText(/"id": "event-raw-1"/)).toBeInTheDocument();
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-raw" });
+  });
+
+  it("does not rebuild unrelated task content when focus moves to a sibling task", () => {
+    const firstTask = makeTask({
+      id: "task-1",
+      content: "First task #general https://example.com/alpha",
+      author,
+      status: "open",
+    });
+    const secondTask = makeTask({
+      id: "task-2",
+      content: "Second task #general",
+      author,
+      status: "open",
+    });
+    const linkifySpy = vi.spyOn(linkify, "linkifyContent");
+
+    const { rerender } = render(
+      <FeedSurfaceProvider
+        value={{
+          relays,
+          channels,
+          composeChannels: channels,
+          people: [author],
+          mentionablePeople: [author],
+          searchQuery: "",
+          quickFilters: makeQuickFilterState(),
+          channelMatchMode: "and",
+        }}
+      >
+        <FeedView
+          focusedTaskId={null}
+          tasks={[firstTask, secondTask]}
+          allTasks={[firstTask, secondTask]}
+        />
+      </FeedSurfaceProvider>
+    );
+
+    const initialFirstTaskCalls = linkifySpy.mock.calls.filter(([content]) => content === firstTask.content).length;
+    expect(initialFirstTaskCalls).toBeGreaterThan(0);
+
+    rerender(
+      <FeedSurfaceProvider
+        value={{
+          relays,
+          channels,
+          composeChannels: channels,
+          people: [author],
+          mentionablePeople: [author],
+          searchQuery: "",
+          quickFilters: makeQuickFilterState(),
+          channelMatchMode: "and",
+        }}
+      >
+        <FeedView
+          focusedTaskId="task-2"
+          tasks={[firstTask, secondTask]}
+          allTasks={[firstTask, secondTask]}
+        />
+      </FeedSurfaceProvider>
+    );
+
+    const nextFirstTaskCalls = linkifySpy.mock.calls.filter(([content]) => content === firstTask.content).length;
+    expect(nextFirstTaskCalls).toBe(initialFirstTaskCalls);
   });
 
   it("hydrates the feed incrementally instead of mounting all entries at once", () => {

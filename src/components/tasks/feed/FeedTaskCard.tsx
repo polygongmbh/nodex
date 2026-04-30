@@ -1,7 +1,7 @@
+import { memo, useMemo, type ReactNode } from "react";
 import { HandHelping, MessageSquare, Package } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
-import type { ReactNode } from "react";
 
 import {
   DropdownMenu,
@@ -43,7 +43,7 @@ interface FeedTaskCardProps {
   currentUser?: Person;
   resolvedAuthor: Person;
   breadcrumb: { id: string; text: string }[];
-  focusedTaskId: string | null;
+  isActiveTask: boolean;
   isKeyboardFocused: boolean;
   isMobile: boolean;
   isSlimDesktop: boolean;
@@ -59,13 +59,13 @@ interface FeedTaskCardProps {
   renderDueDateChip: (task: Task) => ReactNode;
 }
 
-export function FeedTaskCard({
+export const FeedTaskCard = memo(function FeedTaskCard({
   task,
   people,
   currentUser,
   resolvedAuthor,
   breadcrumb,
-  focusedTaskId,
+  isActiveTask,
   isKeyboardFocused,
   isMobile,
   isSlimDesktop,
@@ -156,26 +156,57 @@ export function FeedTaskCard({
   })();
   const timeLabel = timeLabelFormatter(task.timestamp);
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
-  const isActiveTask = focusedTaskId === task.id;
   const canUpdateListingStatus =
     !isInteractionBlocked &&
     isListing &&
     Boolean(currentUser?.pubkey && currentUser.pubkey.toLowerCase() === task.author.pubkey.toLowerCase());
-  const standaloneEmbedUrls = new Set(
-    getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
+  const standaloneEmbedUrls = useMemo(
+    () => new Set(getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())),
+    [task.content]
   );
-  const mediaCaptionByUrl = new Map<string, string>();
-  for (const attachment of task.attachments || []) {
-    const normalizedUrl = attachment.url?.trim().toLowerCase();
-    const caption = attachment.alt?.trim() || attachment.name?.trim();
-    if (normalizedUrl && caption) {
-      mediaCaptionByUrl.set(normalizedUrl, caption);
+  const mediaCaptionByUrl = useMemo(() => {
+    const captionByUrl = new Map<string, string>();
+    for (const attachment of task.attachments || []) {
+      const normalizedUrl = attachment.url?.trim().toLowerCase();
+      const caption = attachment.alt?.trim() || attachment.name?.trim();
+      if (normalizedUrl && caption) {
+        captionByUrl.set(normalizedUrl, caption);
+      }
     }
-  }
-  const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
-    const normalizedUrl = attachment.url?.trim().toLowerCase();
-    return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
-  });
+    return captionByUrl;
+  }, [task.attachments]);
+  const attachmentsWithoutInlineEmbeds = useMemo(
+    () =>
+      (task.attachments || []).filter((attachment) => {
+        const normalizedUrl = attachment.url?.trim().toLowerCase();
+        return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
+      }),
+    [standaloneEmbedUrls, task.attachments]
+  );
+  const linkedContent = useMemo(
+    () =>
+      linkifyContent(task.content, (tag) => {
+        void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+      }, {
+        plainHashtags: isCompletedVisual,
+        people,
+        disableStandaloneEmbeds: hasCollapsibleContent && !expandedContent && !isActiveTask,
+        onStandaloneMediaClick: (url) => onOpenTaskMedia(task.id, url),
+        getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
+      }),
+    [
+      dispatchFeedInteraction,
+      expandedContent,
+      hasCollapsibleContent,
+      isActiveTask,
+      isCompletedVisual,
+      mediaCaptionByUrl,
+      onOpenTaskMedia,
+      people,
+      task.content,
+      task.id,
+    ]
+  );
 
   const tooltipPreview = getTaskTooltipPreview(task.content);
   const tooltipTypeLabel = isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase();
@@ -374,15 +405,7 @@ export function FeedTaskCard({
                 isCompletedVisual && "line-through text-muted-foreground"
               )}
             >
-              {linkifyContent(task.content, (tag) => {
-                void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-              }, {
-                plainHashtags: isCompletedVisual,
-                people,
-                disableStandaloneEmbeds: hasCollapsibleContent && !expandedContent && !isActiveTask,
-                onStandaloneMediaClick: (url) => onOpenTaskMedia(task.id, url),
-                getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
-              })}
+              {linkedContent}
             </div>
             {hasCollapsibleContent && !isActiveTask ? (
               <button
@@ -405,4 +428,4 @@ export function FeedTaskCard({
       </div>
     </TaskSurface>
   );
-}
+});
