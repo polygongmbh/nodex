@@ -244,7 +244,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
   const relayInfoFetchedAtRef = useRef<Map<string, number>>(new Map());
-  const relaySuccessfulWriteRef = useRef<Set<string>>(new Set());
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
   const relayConnectWatchdogIdsRef = useRef<Map<string, number>>(new Map());
   const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
@@ -349,13 +348,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
   const updateRelayCapabilityStatus = useCallback((
     relayUrl: string,
-    nextStatus: "connected" | "read-only" | "verification-failed",
-    options?: { trackSuccessfulWrite?: boolean }
+    nextStatus: "connected" | "read-only" | "verification-failed"
   ) => {
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
-    if (options?.trackSuccessfulWrite) {
-      relaySuccessfulWriteRef.current.add(normalizedRelayUrl);
-    }
     updateRelayEntry(normalizedRelayUrl, (relay) => {
       if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
         return relay;
@@ -381,9 +376,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
   const markRelayVerificationSuccess = useCallback((relayUrl: string, operation: RelayOperation) => {
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
-    updateRelayCapabilityStatus(normalizedRelayUrl, "connected", {
-      trackSuccessfulWrite: operation === "write",
-    });
+    updateRelayCapabilityStatus(normalizedRelayUrl, "connected");
     if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {
       return;
     }
@@ -395,15 +388,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     if (info?.authRequired === false) {
       return;
     }
-    if (relaySuccessfulWriteRef.current.has(normalizedUrl)) {
-      return;
-    }
     if (operation === "read") {
       toast.success(i18n.t("composer:toasts.success.relayVerificationRead", { relayUrl }));
       return;
     }
     if (operation === "write") {
-      relaySuccessfulWriteRef.current.add(normalizedUrl);
       toast.success(i18n.t("composer:toasts.success.relayVerificationWrite", { relayUrl }));
       return;
     }
@@ -1894,7 +1883,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     relaysPendingAuthSubscriptionReplayRef.current.clear();
     pendingRelayVerificationRef.current.clear();
     relayAuthRetryHistoryRef.current.clear();
-    relaySuccessfulWriteRef.current.clear();
     // Re-evaluate statuses now that rejection state is cleared so relays that were
     // verification-failed or read-only due to the previous session go back to connected.
     setRelays((previous) =>
@@ -2101,9 +2089,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
 
       publishedRelayUrls.forEach((relayUrl) => {
-        updateRelayCapabilityStatus(relayUrl, "connected", {
-          trackSuccessfulWrite: true,
-        });
+        updateRelayCapabilityStatus(relayUrl, "connected");
       });
       nostrDevLog("publish", "Event published", {
         eventId: event.id,
