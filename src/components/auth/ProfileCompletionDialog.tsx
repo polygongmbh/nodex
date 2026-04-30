@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -60,11 +59,8 @@ export function ProfileCompletionDialog() {
   useEffect(() => {
     if (profileCompletionPromptSignal <= 0 || !user) return;
     if (profileCompletionPromptSignal === lastHandledSignalRef.current) return;
+    if (!hasWritableRelayConnection) return;
     lastHandledSignalRef.current = profileCompletionPromptSignal;
-    if (!hasWritableRelayConnection) {
-      toast.warning(t("auth:auth.profile.noRelayConnected"), { id: "need-writable-relay" });
-      return;
-    }
     resetFromProfile(effectiveProfile);
     if (user.pubkey) markProfileCompletionPromptShown(user.pubkey);
     setIsOpen(true);
