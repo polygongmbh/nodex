@@ -262,6 +262,9 @@ export function TreeTaskItem({
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
   const editableMetadata = !isComment && canCompleteTask();
+  // Priority editing is disabled for terminal-state tasks (done/closed) — render a non-interactive
+  // chip rather than the full select control to avoid unnecessary overhead.
+  const editablePriority = editableMetadata && !isTaskTerminalStatus(task.status);
   const statusBlockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
   const showCompactPriority = compactView && !isComment && typeof task.priority === "number";
   const showFullMetadataChips =
@@ -614,15 +617,15 @@ export function TreeTaskItem({
             <div className={cn(task.dueDate ? "mt-1.5" : "mt-1")}>
               <TaskPrioritySelect
                 id={`task-priority-${task.id}`}
-                taskId={editableMetadata ? task.id : undefined}
+                taskId={editablePriority ? task.id : undefined}
                 priority={task.priority}
                 stopPropagation
                 title={`Priority ${task.priority}`}
                 className={cn(
                   TASK_CHIP_STYLES.priority,
                   "focus:outline-none",
-                  editableMetadata && "cursor-pointer hover:bg-warning/20",
-                  !editableMetadata && "cursor-not-allowed opacity-60"
+                  editablePriority && "cursor-pointer hover:bg-warning/20",
+                  !editablePriority && "cursor-not-allowed opacity-60"
                 )}
               />
             </div>
@@ -633,15 +636,15 @@ export function TreeTaskItem({
               {typeof task.priority === "number" && !isComment && (
                 <TaskPrioritySelect
                   id={`task-priority-${task.id}`}
-                  taskId={editableMetadata ? task.id : undefined}
+                  taskId={editablePriority ? task.id : undefined}
                   priority={task.priority}
                   stopPropagation
                   title={`Priority ${task.priority}`}
                   className={cn(
                     TASK_CHIP_STYLES.priority,
                     "focus:outline-none",
-                    editableMetadata && "cursor-pointer hover:bg-warning/20",
-                    !editableMetadata && "cursor-not-allowed opacity-60"
+                    editablePriority && "cursor-pointer hover:bg-warning/20",
+                    !editablePriority && "cursor-not-allowed opacity-60"
                   )}
                 />
               )}

@@ -60,6 +60,9 @@ export function KanbanTaskCard({
   const dueDateColor = getDueDateColorClass(task.dueDate, displayStatus);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+  // Priority editing is also disabled for tasks in terminal states (done/closed) — render as a
+  // disabled-looking chip to avoid the overhead of a select that can't change anything meaningful.
+  const canEditPriority = canChangeStatus && !isTaskTerminalStatus(displayStatus);
   const surfaceBlockedFeedback = () => {
     if (isInteractionBlocked && onBlockedInteractionAttempt) {
       onBlockedInteractionAttempt();
@@ -97,23 +100,23 @@ export function KanbanTaskCard({
       {typeof task.priority === "number" ? (
         <div
           className="absolute right-2 top-2 z-10"
-          onClickCapture={canChangeStatus ? undefined : (e) => {
+          onClickCapture={canEditPriority ? undefined : (e) => {
             // Soft-disabled: still surface feedback when tapped on touch devices.
             e.preventDefault();
             e.stopPropagation();
-            surfaceBlockedFeedback();
+            if (!canChangeStatus) surfaceBlockedFeedback();
           }}
         >
           <TaskPrioritySelect
             id={`kanban-priority-${task.id}`}
-            taskId={canChangeStatus ? task.id : undefined}
+            taskId={canEditPriority ? task.id : undefined}
             priority={task.priority}
             stopPropagation
             className={cn(
               "px-1.5 py-0.5 text-sm focus:outline-none",
               TASK_CHIP_STYLES.priority,
               "text-sm",
-              canChangeStatus ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed opacity-60"
+              canEditPriority ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed opacity-60"
             )}
           />
         </div>

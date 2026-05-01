@@ -548,7 +548,7 @@ export function ListView({
                         taskId={task.id}
                         taskContent={task.content}
                         priority={task.priority}
-                        editable={editable}
+                        editable={editable && !isTaskTerminalStatus(task.status)}
                       />
                     )}
                     renderTagsCell={(task) => <TagsCell task={task} />}

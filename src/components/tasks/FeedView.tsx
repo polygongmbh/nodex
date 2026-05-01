@@ -396,7 +396,7 @@ export function FeedView({
   const renderPriorityChip = useCallback((task: Task) => (
     <FeedPriorityChip
       task={task}
-      editable={canCompleteTask(task)}
+      editable={canCompleteTask(task) && !isTaskTerminalStatus(task.status)}
     />
   ), [canCompleteTask]);
   const renderDueDateChip = useCallback((task: Task) => (
