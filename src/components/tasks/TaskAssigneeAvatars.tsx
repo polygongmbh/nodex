@@ -40,6 +40,7 @@ export function TaskAssigneeAvatars({
   avatarSizeClassName = "w-5 h-5",
   maxVisible = 3,
 }: TaskAssigneeAvatarsProps) {
+  const isMobile = useIsMobile();
   const pubkeys = useMemo(() => {
     const list = (task.assigneePubkeys ?? []).filter((p) => PUBKEY_PATTERN.test(p));
     if (list.length > 0) return list;
