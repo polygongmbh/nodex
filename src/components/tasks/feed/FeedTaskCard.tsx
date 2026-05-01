@@ -330,7 +330,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
             // On mobile the timeline behaves like the other views — a tap
             // immediately filters by this person rather than opening the
             // menu. Desktop keeps the menu as the primary affordance.
-            directFilterOnClick={isMobile}
+            directFilterOnClick={false}
           />
           <div className="flex-1 min-w-0">
             <div className={cn("mb-1 flex min-w-0 items-start text-muted-foreground", isMobile ? "gap-1 text-xs" : "gap-2 text-sm")}>
