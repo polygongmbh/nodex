@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TaskAssigneeAvatarsProps {
   task: Task;
