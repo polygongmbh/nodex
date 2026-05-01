@@ -95,6 +95,7 @@ export function TreeTaskItem({
   sortContext,
 }: TreeTaskItemProps) {
   const { t } = useTranslation("tasks");
+  const isMobile = useIsMobile();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
   const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
