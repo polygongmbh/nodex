@@ -345,8 +345,13 @@ export function ListView({
     const statusLabel = stateDef.label;
 
     if (!editable) {
+      // When the user isn't signed in, render the cell normally — the row is
+      // still non-interactive but shouldn't draw extra attention to that fact.
+      // Only show the muted/locked treatment when signed-in users hit a
+      // task-specific restriction (e.g. owned by someone else).
+      const showLockedTreatment = authPolicy.isSignedIn;
       return (
-        <span className={cn(statusClassName, "opacity-60 cursor-not-allowed")}>
+        <span className={cn(statusClassName, showLockedTreatment && "opacity-60 cursor-not-allowed")}>
           {statusLabel}
         </span>
       );
