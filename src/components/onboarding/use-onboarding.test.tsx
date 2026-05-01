@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useState } from "react";
 import { useOnboarding } from "./use-onboarding";
 import { makePerson } from "@/test/fixtures";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 
-const peopleSeed: Person[] = [
+const peopleSeed: SelectablePerson[] = [
   makePerson({ pubkey: "alice", name: "alice", displayName: "Alice", isSelected: true }),
   makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false }),
 ];
@@ -23,7 +23,7 @@ function Harness({
   const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
   const [currentView, setCurrentView] = useState<"feed" | "tree" | "kanban" | "calendar" | "list">("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
-  const [people, setPeople] = useState<Person[]>(peopleSeed);
+  const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
 
   const storeRelayIds = useFilterStore((s) => s.activeRelayIds);
   const storeChannelStates = useFilterStore((s) => s.channelFilterStates);

@@ -4,7 +4,7 @@ import {
   mergeFilterSearchParams,
   parseFilterSearchParams,
 } from "./use-filter-url-sync";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 describe("parseFilterSearchParams", () => {
   it("returns null when no filter params present", () => {
@@ -60,7 +60,7 @@ describe("parseFilterSearchParams", () => {
 });
 
 describe("buildFilterSearchParams", () => {
-  const makePerson = (pubkey: string, isSelected: boolean): Person => ({
+  const makePerson = (pubkey: string, isSelected: boolean): SelectablePerson => ({
     pubkey,
     name: pubkey,
     displayName: pubkey,

@@ -1,16 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { getTaskStatusType, type Task } from "@/types";
 import { applyTaskStatusUpdate } from "./task-status";
+import { makePerson } from "@/test/fixtures";
 
 const baseTask: Task = {
   id: "n1",
-  author: {
-    id: "u1",
-    name: "me",
-    displayName: "Me",
-    avatar: "",
-    isSelected: false,
-  },
+  author: makePerson({ pubkey: "u1", name: "me", displayName: "Me", avatar: "" }),
   content: "Task",
   tags: ["x"],
   relays: ["demo"],

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Channel } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import {
   buildChannelFilterMap,
   mapPeopleSelection,
@@ -15,7 +15,7 @@ const channels: Channel[] = [
   { id: "release", name: "release", filterState: "neutral" },
 ];
 
-const people: Person[] = [
+const people: SelectablePerson[] = [
   { pubkey: "alice", name: "alice", displayName: "Alice", isSelected: false },
   { pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false },
 ];

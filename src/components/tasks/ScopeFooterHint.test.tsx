@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ScopeFooterHint } from "./ScopeFooterHint";
 import type { Channel, Relay, Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { makeTask, makePerson } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
@@ -31,14 +31,14 @@ const channels: Channel[] = [
   { id: "frontend", name: "frontend", filterState: "excluded" },
 ];
 
-const people: Person[] = [
-  {
+const people: SelectablePerson[] = [
+  makePerson({
     pubkey: "alice",
     name: "alice",
     displayName: "Alice",
     avatar: "",
     isSelected: true,
-  },
+  }),
 ];
 
 const author = makePerson({ pubkey: "author", name: "author", displayName: "Author" });
@@ -51,7 +51,7 @@ const PRIORITY_SCOPE = "at priority P4 or higher";
 
 function renderHint(
   viewModel: { focusedTaskId?: string | null; allTasks?: Task[] } = {},
-  surface: { relays?: Relay[]; channels?: Channel[]; people?: Person[]; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
+  surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
   return render(
     <FeedSurfaceProvider

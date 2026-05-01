@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "./use-mobile-toast-offset";
 import type { Channel, Relay, Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import type { FeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
@@ -156,7 +156,7 @@ vi.mock("@/components/tasks/CalendarView", () => ({
 
 const relays: Relay[] = [makeRelay()];
 const channels: Channel[] = [makeChannel()];
-const people: Person[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
+const people: SelectablePerson[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
 const tasks: Task[] = [];
 
 const baseFeedViewState: FeedViewState = {

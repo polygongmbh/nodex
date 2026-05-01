@@ -1,6 +1,6 @@
 import type { FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type { QuickFilterState } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 export function makeFilterSnapshot(overrides: Partial<FilterSnapshot> = {}): FilterSnapshot {
   return {
@@ -18,7 +18,7 @@ export function makeFilterSnapshot(overrides: Partial<FilterSnapshot> = {}): Fil
   };
 }
 
-export function selectPeople(people: Person[], selectedIds: string[]): Person[] {
+export function selectPeople(people: SelectablePerson[], selectedIds: string[]): SelectablePerson[] {
   const selectedIdSet = new Set(selectedIds);
   return people.map((person) => ({
     ...person,

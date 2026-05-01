@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay } from "@/types";
-import type { Person } from "@/types/person";
-import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
+import type { SelectablePerson } from "@/types/person";
+import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import * as linkify from "@/lib/linkify";
@@ -27,11 +27,11 @@ vi.mock("@/components/ui/calendar", () => ({
   ),
 }));
 
-const author: Person = {
+const author: SelectablePerson = makePerson({
   pubkey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   name: "alice",
   displayName: "Alice Doe",
-};
+});
 
 const tasks: Task[] = [makeTask({ id: "task-1", author, status: "open" })];
 const channels: Channel[] = [makeChannel()];
@@ -570,10 +570,11 @@ describe("FeedView", () => {
   });
 
   it("shows a shortened fallback npub on slim desktop", async () => {
-    const pubkeyOnlyAuthor: Person = {
+    const pubkeyOnlyAuthor: SelectablePerson = {
       pubkey: author.pubkey,
       name: author.pubkey,
       displayName: author.pubkey,
+      isSelected: false,
     };
     const pubkeyTask = makeTask({ id: "task-pubkey", author: pubkeyOnlyAuthor, status: "open" });
     const matchMediaSpy = vi
@@ -608,10 +609,11 @@ describe("FeedView", () => {
   });
 
   it("shows the full fallback npub on xl desktop widths", async () => {
-    const pubkeyOnlyAuthor: Person = {
+    const pubkeyOnlyAuthor: SelectablePerson = {
       pubkey: author.pubkey,
       name: author.pubkey,
       displayName: author.pubkey,
+      isSelected: false,
     };
     const pubkeyTask = makeTask({ id: "task-pubkey-2xl", author: pubkeyOnlyAuthor, status: "open" });
     const matchMediaSpy = vi
@@ -728,12 +730,15 @@ describe("FeedView", () => {
     const taskAuthorPubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const taskWithEmbeddedAuthor = makeTask({
       id: "task-1",
-      author: { pubkey: taskAuthorPubkey, name: "me", displayName: "You" },
+      author: makePerson({ pubkey: taskAuthorPubkey, name: "me", displayName: "You" }),
       status: "open",
     });
     renderFeedView(
       { tasks: [taskWithEmbeddedAuthor], allTasks: [taskWithEmbeddedAuthor] },
-      { people: [{ pubkey: taskAuthorPubkey, name: "janek", displayName: "Janek" }], mentionablePeople: [] }
+      {
+        people: [makePerson({ pubkey: taskAuthorPubkey, name: "janek", displayName: "Janek" })],
+        mentionablePeople: [],
+      }
     );
 
     expect(screen.getByTestId("feed-author-primary-task-1")).toHaveTextContent("Janek");
@@ -1160,10 +1165,11 @@ describe("FeedView", () => {
 
   it("ignores selected people as well as channel filters for the mobile fallback", () => {
     const selectedAuthor = { ...author, isSelected: true };
-    const otherAuthor: Person = {
+    const otherAuthor: SelectablePerson = {
       pubkey: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       name: "bob",
       displayName: "Bob Doe",
+      isSelected: false,
     };
     const otherTask = makeTask({
       id: "task-2",

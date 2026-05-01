@@ -6,14 +6,14 @@ import { useSavedFilterStore } from "@/features/feed-page/stores/saved-filter-st
 import { makePerson, makeRelay } from "@/test/fixtures";
 import { makeFilterSnapshot, makeQuickFilters, selectPeople } from "@/test/filter-state";
 import type { Channel, ChannelMatchMode, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 const relays: Relay[] = [
   makeRelay({ id: "relay-one", name: "Relay One" }),
   makeRelay({ id: "relay-two", name: "Relay Two" }),
 ];
 
-const peopleSeed: Person[] = [
+const peopleSeed: SelectablePerson[] = [
   makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
   makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
 ];
@@ -24,7 +24,7 @@ function Harness() {
     new Map([["general", "included"]])
   );
   const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>("or");
-  const [people, setPeople] = useState<Person[]>(selectPeople(peopleSeed, ["alice"]));
+  const [people, setPeople] = useState<SelectablePerson[]>(selectPeople(peopleSeed, ["alice"]));
   const [quickFilters, setQuickFilters] = useState(makeQuickFilters({
     recentEnabled: true,
     recentDays: 7,

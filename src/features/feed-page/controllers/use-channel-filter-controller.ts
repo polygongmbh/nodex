@@ -387,6 +387,7 @@ export function useChannelFilterController({
     people,
     setPeople,
     applyExclusivePersonFilter,
+    normalizeInteractivePerson,
     queueMentionForPerson,
     setQuickFilters,
     setChannelFilterStates,

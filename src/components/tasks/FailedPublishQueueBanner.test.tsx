@@ -12,10 +12,9 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 const baseDraft: FailedPublishDraft = {
   id: "draft-1",
   author: {
-    id: "author-1",
+    pubkey: "author-1",
     name: "Author",
     displayName: "Author",
-    isSelected: false,
   },
   content: "failed content",
   tags: ["tag"],

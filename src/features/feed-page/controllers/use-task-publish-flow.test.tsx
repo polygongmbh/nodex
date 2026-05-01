@@ -6,7 +6,7 @@ import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-
 import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay, Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(() => "toast-id"), {
@@ -34,7 +34,7 @@ function Harness({
   publishEvent = vi.fn(async () => ({ success: true, eventId: "b".repeat(64), publishedRelayUrls: ["wss://relay.one"] })),
   initialTasks = [] as Task[],
   currentUser = makePerson({ pubkey: "a".repeat(64), name: "Alice", displayName: "Alice" }),
-  people = [] as Person[],
+  people = [] as SelectablePerson[],
   dispatchFrecencyIntent = vi.fn(),
   publishTaskDueUpdate = vi.fn(async () => true),
   publishTaskPriorityUpdate = vi.fn(async () => true),
@@ -45,8 +45,8 @@ function Harness({
 }: {
   publishEvent?: ReturnType<typeof vi.fn>;
   initialTasks?: Task[];
-  currentUser?: Person;
-  people?: Person[];
+  currentUser?: SelectablePerson;
+  people?: SelectablePerson[];
   dispatchFrecencyIntent?: ReturnType<typeof vi.fn>;
   publishTaskDueUpdate?: ReturnType<typeof vi.fn>;
   publishTaskPriorityUpdate?: ReturnType<typeof vi.fn>;
@@ -66,7 +66,7 @@ function Harness({
     relays,
     people: availablePeople,
     currentUser,
-    user: { pubkey: currentUser.id, npub: "npub1alice", profile: { name: "Alice" } },
+    user: { pubkey: currentUser.pubkey, npub: "npub1alice", profile: { name: "Alice" } },
     canCreateContent: true,
     effectiveActiveRelayIds: forceLocalMode ? new Set() : new Set(relays.map((relay) => relay.id)),
     demoFeedActive: forceLocalMode,
@@ -314,17 +314,18 @@ describe("useTaskPublishFlow", () => {
     const publishTaskDueUpdate = vi.fn(async () => true);
     const publishTaskPriorityUpdate = vi.fn(async () => true);
     const currentUser = makePerson({ pubkey: "viewer-pubkey", name: "viewer", displayName: "Viewer" });
+    const taskAuthor = makePerson({ pubkey: "creator-pubkey", name: "creator", displayName: "Creator" });
     const initialTask = makeTask({
       id: "task-1",
       relays: ["relay-one"],
-      author: makePerson({ pubkey: "creator-pubkey", name: "creator", displayName: "Creator" }),
+      author: taskAuthor,
       assigneePubkeys: ["assignee-pubkey"],
     });
 
     renderHarness({
       initialTasks: [initialTask],
       currentUser,
-      people: [currentUser, initialTask.author],
+      people: [currentUser, taskAuthor],
       publishTaskDueUpdate,
       publishTaskPriorityUpdate,
     });

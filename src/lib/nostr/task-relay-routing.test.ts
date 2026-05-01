@@ -6,6 +6,7 @@ import {
   resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
 } from "./task-relay-routing";
+import { makePerson } from "@/test/fixtures";
 
 const makeRelay = (id: string, url: string = `wss://${id}.example`): Relay => ({
   id,
@@ -17,12 +18,7 @@ const makeRelay = (id: string, url: string = `wss://${id}.example`): Relay => ({
 
 const makeTask = (overrides: Partial<Task> = {}): Task => ({
   id: "a".repeat(64),
-  author: {
-    id: "b".repeat(64),
-    name: "alice",
-    displayName: "Alice",
-    isSelected: false,
-  },
+  author: makePerson({ pubkey: "b".repeat(64), name: "alice", displayName: "Alice" }),
   content: "Task",
   tags: ["backend"],
   relays: ["relay-a"],

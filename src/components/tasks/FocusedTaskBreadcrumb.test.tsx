@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import type { Task } from "@/types";
+import { makePerson } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
 
@@ -11,12 +12,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 
 const baseTask: Task = {
   id: "root",
-  author: {
-    id: "me",
-    name: "me",
-    displayName: "Me",
-    isSelected: false,
-  },
+  author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
   content: "Root task",
   tags: [],
   relays: [],

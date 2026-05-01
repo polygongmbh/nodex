@@ -4,13 +4,13 @@ import { useMemo, useRef, useState } from "react";
 import { makePerson } from "@/test/fixtures";
 import { makeFilterSnapshot } from "@/test/filter-state";
 import type { Channel, ChannelMatchMode } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import {
   TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS,
   useTaskScopeSpecificFilters,
 } from "./use-task-scope-specific-filters";
 
-const peopleSeed: Person[] = [
+const peopleSeed: SelectablePerson[] = [
   makePerson({ pubkey: "alice", name: "alice", displayName: "Alice", isSelected: true }),
   makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false }),
 ];
@@ -32,7 +32,7 @@ function Harness({
     ])
   );
   const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>("or");
-  const [people, setPeople] = useState<Person[]>(peopleSeed);
+  const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
   const nowRef = useRef(0);
 
   const currentFilterSnapshot = useMemo(

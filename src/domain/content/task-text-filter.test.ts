@@ -34,7 +34,7 @@ describe("taskMatchesTextQuery", () => {
   it("matches via resolved people metadata when task author only has pubkey", () => {
     const task = makeTask({
       author: makePerson({
-        id: "f".repeat(64),
+        pubkey: "f".repeat(64),
         name: "",
         displayName: "",
       }),
@@ -42,7 +42,7 @@ describe("taskMatchesTextQuery", () => {
     });
     const people = [
       makePerson({
-        id: "f".repeat(64),
+        pubkey: "f".repeat(64),
         name: "alice",
         displayName: "Alice Example",
       }),
@@ -54,7 +54,7 @@ describe("taskMatchesTextQuery", () => {
 
   it("matches via resolved mention display names and usernames", () => {
     const person = makePerson({
-      id: "f".repeat(64),
+      pubkey: "f".repeat(64),
       name: "alice",
       displayName: "Alice Example",
       nip05: "alice@example.com",

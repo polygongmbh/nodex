@@ -1,16 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Task } from "@/types";
 import { sortByLatestModified } from "./kanban-sorting";
+import { makePerson } from "@/test/fixtures";
 
 const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
   id,
-  author: {
-    id: "u1",
-    name: "me",
-    displayName: "Me",
-    avatar: "",
-    isSelected: false,
-  },
+  author: makePerson({ pubkey: "u1", name: "me", displayName: "Me", avatar: "" }),
   content: id,
   tags: ["x"],
   relays: ["demo"],

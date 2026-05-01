@@ -9,7 +9,7 @@ import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Channel, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson, SidebarPerson } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ const channels: Channel[] = [
   makeChannel({ id: "ops", name: "ops" }),
 ];
 
-const peopleSeed: Person[] = [
+const peopleSeed: SelectablePerson[] = [
   makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
   makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
 ];
@@ -58,12 +58,12 @@ function Harness({
   startWithEmptyScope?: boolean;
   startWithEmptyPeople?: boolean;
 }) {
-  const [people, setPeople] = useState<Person[]>(startWithEmptyPeople ? [] : peopleSeed);
+  const [people, setPeople] = useState<SelectablePerson[]>(startWithEmptyPeople ? [] : peopleSeed);
   const [visibleChannels, setVisibleChannels] = useState<Channel[]>(startWithEmptyScope ? [] : channels);
   const [visibleComposeChannels, setVisibleComposeChannels] = useState<Channel[]>(
     startWithEmptyScope ? [] : channels
   );
-  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<Person[]>(
+  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<SidebarPerson[]>(
     startWithEmptyScope ? [] : peopleSeed
   );
   const postedTags = useTaskMutationStore((s) => s.postedTags);

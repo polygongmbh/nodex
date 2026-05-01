@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { usePinnedSidebarPeople } from "./use-pinned-sidebar-people";
 import { makePerson, makeTask } from "@/test/fixtures";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import {
   createEmptyPinnedPeopleState,
   getPinnedPersonIdsForRelays,
@@ -11,7 +11,7 @@ import {
 } from "@/domain/preferences/pinned-person-state";
 import { loadPinnedPeopleState, savePinnedPeopleState } from "@/infrastructure/preferences/pinned-people-storage";
 
-function Harness({ people, allRelays = ["relay-one"] }: { people: Person[]; allRelays?: string[] }) {
+function Harness({ people, allRelays = ["relay-one"] }: { people: SelectablePerson[]; allRelays?: string[] }) {
   const result = usePinnedSidebarPeople({
     userPubkey: undefined,
     effectiveActiveRelayIds: new Set(allRelays),

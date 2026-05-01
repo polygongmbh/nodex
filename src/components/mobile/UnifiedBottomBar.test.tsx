@@ -420,6 +420,14 @@ describe("UnifiedBottomBar auth gating", () => {
 
   it("uses toast feedback instead of an inline alert while attachments are uploading", () => {
     const toastInfoSpy = vi.spyOn(toast, "info").mockImplementation(() => "");
+    const uploadAttachmentSpy = vi.spyOn(attachmentUpload, "uploadAttachment");
+    let resolveUpload: ((value: Awaited<ReturnType<typeof attachmentUpload.uploadAttachment>>) => void) | null = null;
+    uploadAttachmentSpy.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveUpload = resolve;
+        })
+    );
 
     render(
       <UnifiedBottomBar
@@ -429,26 +437,22 @@ describe("UnifiedBottomBar auth gating", () => {
         channels={channels}
         people={people}
         canCreateContent
-        composeRestoreRequest={{
-          id: 3,
-          state: {
-            content: "Ship #general",
-            taskType: "task",
-            explicitTagNames: [],
-            explicitMentionPubkeys: [],
-            attachments: [
-              {
-                id: "upload-1",
-                fileName: "diagram.png",
-                url: "https://example.test/diagram.png",
-                status: "uploading",
-                source: "upload",
-              },
-            ],
-          },
-        }}
       />
     );
+
+    const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!fileInput) {
+      throw new Error("Expected file input");
+    }
+
+    fireEvent.change(fileInput, {
+      target: {
+        files: [new File(["diagram"], "diagram.png", { type: "image/png" })],
+      },
+    });
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Ship #general" },
+    });
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
@@ -456,6 +460,12 @@ describe("UnifiedBottomBar auth gating", () => {
 
     expect(toastInfoSpy).toHaveBeenCalledWith(expect.any(String), { id: "task-composer-uploading-blocked" });
     expect(getTaskCreateCalls()).toHaveLength(0);
+    resolveUpload?.({
+      url: "https://cdn.example.com/uploaded.png",
+      mimeType: "image/png",
+      size: 1234,
+      name: "diagram.png",
+    });
   });
 
   it("submits a root task when exactly one active relay is writable", async () => {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import {
   derivePeopleFromKind0Events,
   loadCachedKind0Events,
@@ -13,7 +13,7 @@ import {
 } from "./people-from-kind0";
 import { NostrEventKind } from "@/lib/nostr/types";
 
-const prevPeople: Person[] = [
+const prevPeople: SelectablePerson[] = [
   {
     pubkey: "a".repeat(64),
     name: "alice",

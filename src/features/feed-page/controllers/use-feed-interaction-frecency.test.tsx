@@ -44,7 +44,6 @@ function DispatchButtons() {
               pubkey: "alice",
               name: "alice",
               displayName: "Alice",
-              isSelected: false,
             },
           })
         }

@@ -1,18 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { Channel, Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";
 
-const alice: Person = {
+const alice: SelectablePerson = {
   pubkey: "alice-id",
   name: "alice",
   displayName: "Alice",
+  isSelected: false,
 };
 
-const bob: Person = {
+const bob: SelectablePerson = {
   pubkey: "bob-id",
   name: "bob",
   displayName: "Bob",
+  isSelected: false,
 };
 
 function buildTask(overrides: Partial<Task> = {}): Task {
@@ -139,7 +141,7 @@ describe("filterTasks", () => {
   });
 
   it("matches selected people by author id or mentions", () => {
-    const selectedBob: Person = { ...bob, isSelected: true };
+    const selectedBob: SelectablePerson = { ...bob, isSelected: true };
     const tasks = [
       buildTask({ id: "author", author: bob }),
       buildTask({ id: "mention", author: alice, content: "ping @bob" }),
@@ -182,7 +184,7 @@ describe("filterTasks", () => {
   });
 
   it("can prefilter by relay and people without applying channel filters", () => {
-    const selectedBob: Person = { ...bob, isSelected: true };
+    const selectedBob: SelectablePerson = { ...bob, isSelected: true };
     const tasks = [
       buildTask({ id: "relay-one-general", relays: ["r1"], author: bob, tags: ["general"] }),
       buildTask({ id: "relay-one-ops", relays: ["r1"], author: bob, tags: ["ops"] }),

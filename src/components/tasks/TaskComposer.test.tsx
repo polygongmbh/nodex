@@ -8,8 +8,9 @@ import {
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import type { Channel, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { toast } from "sonner";
+import { makePerson } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -26,15 +27,14 @@ const baseChannels: Channel[] = [
 ];
 
 const alicePubkey = "f".repeat(64);
-const basePeople: Person[] = [
-  {
+const basePeople: SelectablePerson[] = [
+  makePerson({
     pubkey: alicePubkey,
     name: "alice",
     displayName: "Alice",
     nip05: "alice@example.com",
     avatar: "",
-    isSelected: false,
-  },
+  }),
 ];
 
 const uploadConfiguredSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
@@ -53,8 +53,8 @@ function buildRuntimeValue({
   mentionablePeople = people,
 }: {
   channels?: Channel[];
-  people?: Person[];
-  mentionablePeople?: Person[];
+  people?: SelectablePerson[];
+  mentionablePeople?: SelectablePerson[];
 } = {}) {
   return {
     environment: {
@@ -83,8 +83,8 @@ function renderComposer({
   ...props
 }: Partial<ComponentProps<typeof TaskComposer>> & {
   channels?: Channel[];
-  people?: Person[];
-  mentionablePeople?: Person[];
+  people?: SelectablePerson[];
+  mentionablePeople?: SelectablePerson[];
 } = {}) {
   const renderResult = render(
     <TaskComposerRuntimeProvider

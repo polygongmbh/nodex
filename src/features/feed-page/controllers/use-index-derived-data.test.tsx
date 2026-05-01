@@ -10,7 +10,7 @@ import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -63,7 +63,7 @@ const nostrEvents: CachedNostrEvent[] = [
 ];
 
 function Harness() {
-  const [people, setPeople] = useState<Person[]>([]);
+  const [people, setPeople] = useState<SelectablePerson[]>([]);
   const activeRelayIds = useFilterStore((s) => s.activeRelayIds);
   const setActiveRelayIds = useFilterStore((s) => s.setActiveRelayIds);
   const relaysWithActiveState = relays.map((relay) => ({

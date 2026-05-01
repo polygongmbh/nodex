@@ -5,15 +5,11 @@ import {
   type FailedPublishDraft,
 } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import { useFailedPublishDraftsStore } from "./failed-publish-drafts-store";
+import { makePerson } from "@/test/fixtures";
 
 const sampleDraft: FailedPublishDraft = {
   id: "draft-1",
-  author: {
-    id: "pubkey-1",
-    name: "alice",
-    displayName: "Alice",
-    isSelected: false,
-  },
+  author: makePerson({ pubkey: "pubkey-1", name: "alice", displayName: "Alice" }),
   content: "Ship #go task",
   tags: ["go"],
   relayIds: ["relay-a"],

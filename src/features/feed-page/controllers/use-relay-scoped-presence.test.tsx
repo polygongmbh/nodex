@@ -6,6 +6,7 @@ import {
   useRelayScopedPresence,
 } from "./use-relay-scoped-presence";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
+import { makePerson } from "@/test/fixtures";
 
 function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id" | "url">): Relay {
   return {
@@ -20,12 +21,7 @@ function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id" | "url">): Rela
 function buildTask(overrides: Partial<Task> & Pick<Task, "id" | "relays">): Task {
   return {
     id: overrides.id,
-    author: overrides.author ?? {
-      id: "author",
-      name: "Author",
-      displayName: "Author",
-      isSelected: false,
-    },
+    author: overrides.author ?? makePerson({ pubkey: "author", name: "Author", displayName: "Author" }),
     content: overrides.content ?? "Task",
     tags: overrides.tags ?? [],
     relays: overrides.relays,

@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CalendarView } from "./CalendarView";
 import type { Channel, Relay, Task } from "@/types";
-import type { Person } from "@/types/person";
-import { makeTask } from "@/test/fixtures";
+import type { SelectablePerson } from "@/types/person";
+import { makePerson, makeTask } from "@/test/fixtures";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
@@ -28,13 +28,12 @@ const channels: Channel[] = [
   { id: "general", name: "general", filterState: "neutral" },
 ];
 
-const people: Person[] = [
-  {
-    id: "me",
+const people: SelectablePerson[] = [
+  makePerson({
+    pubkey: "me",
     name: "me",
     displayName: "Me",
-    isSelected: false,
-  },
+  }),
 ];
 
 const tasks: Task[] = [];

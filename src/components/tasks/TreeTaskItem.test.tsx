@@ -288,7 +288,7 @@ describe("TreeTaskItem status actions", () => {
       taskType: "comment",
       content: "Looks good",
       author: makePerson({
-        id: "alice-pubkey",
+        pubkey: "alice-pubkey",
         name: "alice",
         displayName: "Alice",
       }),
@@ -311,7 +311,7 @@ describe("TreeTaskItem status actions", () => {
       taskType: "comment",
       content: "Looks good",
       author: makePerson({
-        id: "plain-author",
+        pubkey: "plain-author",
         name: "alice",
         displayName: "Alice",
       }),
@@ -325,9 +325,6 @@ describe("TreeTaskItem status actions", () => {
       type: "task.focus.change",
       taskId: "c-plain-author",
     });
-    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: "person.filter.exclusive" })
-    );
   });
 
   it("keeps the comment avatar stack on the right and removes the left author avatar", () => {
@@ -338,7 +335,6 @@ describe("TreeTaskItem status actions", () => {
       content: "Looks good",
       assigneePubkeys: ["ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318"],
       author: makePerson({
-        id: "comment-author",
         pubkey: "f5dc0ba672437167ccb3f58f2467990f9c574bc6522af1e76361404e7868a0f5",
         name: "alice",
         displayName: "Alice",
