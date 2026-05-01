@@ -8,6 +8,7 @@ import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 
 import { TaskAssigneeAvatars } from "./TaskAssigneeAvatars";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
