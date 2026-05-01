@@ -198,7 +198,7 @@ export function KanbanTaskCard({
             {t("composer:toasts.actions.undo")}
           </button>
         ) : null}
-        {!canChangeStatus ? (
+        {authPolicy.isSignedIn && !canChangeStatus ? (
           <div
             className="rounded-full bg-muted/80 p-1 text-muted-foreground"
             title={t("tasks.readOnly")}
