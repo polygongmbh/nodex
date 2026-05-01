@@ -8,7 +8,19 @@ import {
   toTaskStatusFromStateDefinition,
   type TaskStateDefinition,
 } from "@/domain/task-states/task-state-config";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+  pointerWithin,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import { getTaskStatusType, normalizeTaskStatus, type Task, type TaskStatus, type ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
@@ -75,6 +87,54 @@ function getColumns(tasks: Task[]): KanbanColumn[] {
   return columns;
 }
 
+// Sub-components using @dnd-kit hooks — must be separate components so hooks run per instance
+
+interface DroppableColumnContentProps {
+  id: string;
+  isDraggingOver: boolean;
+  children: React.ReactNode;
+  className?: string;
+}
+
+function DroppableColumnContent({ id, children, className }: DroppableColumnContentProps) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      data-droppable-id={id}
+      className={cn(className, isOver && "bg-primary/5")}
+    >
+      {children}
+    </div>
+  );
+}
+
+interface DraggableCardWrapperProps {
+  id: string;
+  disabled: boolean;
+  isActiveOverlay?: boolean;
+  children: React.ReactNode;
+}
+
+function DraggableCardWrapper({ id, disabled, isActiveOverlay, children }: DraggableCardWrapperProps) {
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({ id, disabled });
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      data-draggable-id={id}
+      data-dnd-handle="true"
+      className={cn(
+        isDragging && !isActiveOverlay && "opacity-40",
+        isDragging && !isActiveOverlay && "shadow-lg ring-2 ring-primary/20"
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function KanbanView({
   tasks,
   allTasks,
@@ -93,6 +153,7 @@ export function KanbanView({
   const { people } = useFeedSurfaceState();
   const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatus>>({});
   const [composingColumnId, setComposingColumnId] = useState<string | null>(null);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     tasks,
     allTasks,
@@ -170,10 +231,13 @@ export function KanbanView({
     },
     [dispatchFeedInteraction]
   );
+
   // Scroll container ref — declared early so edge-scroll callbacks can close over it
   const columnsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Edge-scroll during drag: scroll the board when the pointer nears the horizontal edges
+  // Edge-scroll during drag: scroll the board when the pointer nears the horizontal edges.
+  // Safe with @dnd-kit/core because DragOverlay renders in a viewport-fixed portal and
+  // collision detection calls getBoundingClientRect() on each sensor move event (no stale cache).
   const isDraggingRef = useRef(false);
   const pointerXRef = useRef(0);
   const rafIdRef = useRef<number | null>(null);
@@ -213,25 +277,34 @@ export function KanbanView({
     window.removeEventListener("touchmove", handlePointerMove as EventListener);
   }, [handlePointerMove]);
 
-  const handleDragStart = useCallback(() => {
+  useEffect(() => () => { stopEdgeScroll(); }, [stopEdgeScroll]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveTaskId(String(event.active.id));
     isDraggingRef.current = true;
     window.addEventListener("mousemove", handlePointerMove);
     window.addEventListener("touchmove", handlePointerMove as EventListener);
     startEdgeScroll();
   }, [handlePointerMove, startEdgeScroll]);
 
-  useEffect(() => () => { stopEdgeScroll(); }, [stopEdgeScroll]);
-
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveTaskId(null);
     stopEdgeScroll();
-    if (!result.destination) return;
+
+    const taskId = String(event.active.id);
+    const destColumnId = event.over ? String(event.over.id) : null;
+    if (!destColumnId) return;
     if (isInteractionBlocked) {
       guardModify();
       return;
     }
-    
-    const taskId = result.draggableId;
-    const targetColumn = columns.find((column) => column.id === result.destination?.droppableId);
+
+    const targetColumn = columns.find((column) => column.id === destColumnId);
     const task = kanbanTasks.find((item) => item.id === taskId);
     if (!task || !targetColumn || !canUserChangeTaskStatus(task, currentUser)) return;
     const nextStatus = toTaskStatusFromStateDefinition(targetColumn.state);
@@ -239,7 +312,6 @@ export function KanbanView({
     if (targetColumn.id === currentStateId) return;
 
     setOptimisticStatusByTaskId((previous) => ({ ...previous, [taskId]: nextStatus }));
-
     dispatchStatusChange(taskId, nextStatus);
   };
 
@@ -258,7 +330,7 @@ export function KanbanView({
   const [keyboardFocusedTaskId, setKeyboardFocusedTaskId] = useState<string | null>(null);
   const keyboardFocusedTaskIdRef = useRef<string | null>(null);
   const pendingRefocusRef = useRef<string | null>(null);
-  
+
   // Keep ref in sync with state
   useEffect(() => {
     keyboardFocusedTaskIdRef.current = keyboardFocusedTaskId;
@@ -278,7 +350,7 @@ export function KanbanView({
       guardModify();
       return;
     }
-    
+
     const currentColumnIndex = columns.findIndex(
       (column) => column.id === resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id
     );
@@ -303,7 +375,7 @@ export function KanbanView({
       guardModify();
       return;
     }
-    
+
     const currentColumnIndex = columns.findIndex(
       (column) => column.id === resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id
     );
@@ -336,7 +408,6 @@ export function KanbanView({
     if (pendingRefocusRef.current) {
       const taskIdToFocus = pendingRefocusRef.current;
       pendingRefocusRef.current = null;
-      // Use requestAnimationFrame to ensure the state has fully updated
       requestAnimationFrame(() => {
         setFocusByTaskId(taskIdToFocus);
       });
@@ -354,7 +425,9 @@ export function KanbanView({
       }
     }
   }, [keyboardFocusedTaskId]);
-  
+
+  const activeTask = activeTaskId ? kanbanTasks.find(t => t.id === activeTaskId) : null;
+
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Kanban Columns */}
@@ -363,7 +436,12 @@ export function KanbanView({
         className="scrollbar-auto relative flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4"
         data-onboarding="kanban-board"
       >
-        <DragDropContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={pointerWithin}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
           <div className="flex gap-4 h-full min-w-max" data-onboarding="kanban-columns">
             {columns.map((column) => (
               <div
@@ -420,65 +498,66 @@ export function KanbanView({
                 )}
 
                 {/* Column Content - Droppable */}
-                <Droppable droppableId={column.id}>
-                  {(provided, snapshot) => (
-                    <div
-                      className={cn(
-                        "flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2",
-                        snapshot.isDraggingOver && "bg-primary/5"
-                      )}
-                    >
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className="flex h-full min-h-full min-w-0 flex-col gap-2"
-                      >
-                        {(tasksByColumnId[column.id] || []).map((task, index) => {
-                          const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
-                          return (
-                            <Draggable
-                              key={task.id}
-                              draggableId={task.id}
-                              index={index}
-                              isDragDisabled={!canChangeStatus}
-                            >
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className={cn(snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "")}
-                                >
-                                  <KanbanTaskCard
-                                    task={task}
-                                    currentUser={currentUser}
-                                    people={people}
-                                    displayStatus={getTaskEffectiveStatus(task)}
-                                    ancestorChain={!compactTaskCardsEnabled && showContext ? getAncestorChain(task.id) : []}
-                                    showContext={showContext}
-                                    compactTaskCardsEnabled={compactTaskCardsEnabled}
-                                    isKeyboardFocused={keyboardFocusedTaskId === task.id && !snapshot.isDragging}
-                                    isInteractionBlocked={isInteractionBlocked}
-                                    isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
-                                    hasChildren={hasChildren}
-                                  />
-                                </div>
-                              )}
-                            </Draggable>
-                          );
-                        })}
-                        {(tasksByColumnId[column.id] || []).length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
-                        {provided.placeholder}
-                        {/* Bottom buffer so the last card isn't flush against the scroll edge */}
-                        <div className="h-6 shrink-0" aria-hidden="true" />
-                      </div>
-                    </div>
-                  )}
-                </Droppable>
+                <DroppableColumnContent
+                  id={column.id}
+                  isDraggingOver={false}
+                  className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2"
+                >
+                  <div className="flex h-full min-h-full min-w-0 flex-col gap-2">
+                    {(tasksByColumnId[column.id] || []).map((task) => {
+                      const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+                      return (
+                        <DraggableCardWrapper
+                          key={task.id}
+                          id={task.id}
+                          disabled={!canChangeStatus}
+                        >
+                          <KanbanTaskCard
+                            task={task}
+                            currentUser={currentUser}
+                            people={people}
+                            displayStatus={getTaskEffectiveStatus(task)}
+                            ancestorChain={!compactTaskCardsEnabled && showContext ? getAncestorChain(task.id) : []}
+                            showContext={showContext}
+                            compactTaskCardsEnabled={compactTaskCardsEnabled}
+                            isKeyboardFocused={keyboardFocusedTaskId === task.id && activeTaskId === null}
+                            isInteractionBlocked={isInteractionBlocked}
+                            isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
+                            hasChildren={hasChildren}
+                          />
+                        </DraggableCardWrapper>
+                      );
+                    })}
+                    {(tasksByColumnId[column.id] || []).length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
+                    {/* Bottom buffer so the last card isn't flush against the scroll edge */}
+                    <div className="h-6 shrink-0" aria-hidden="true" />
+                  </div>
+                </DroppableColumnContent>
               </div>
             ))}
           </div>
-        </DragDropContext>
+
+          {/* Viewport-fixed overlay card — not trapped in any scroll container */}
+          <DragOverlay>
+            {activeTask ? (
+              <div className="shadow-2xl ring-2 ring-primary/30 rounded-lg rotate-1 scale-105">
+                <KanbanTaskCard
+                  task={activeTask}
+                  currentUser={currentUser}
+                  people={people}
+                  displayStatus={getTaskEffectiveStatus(activeTask)}
+                  ancestorChain={!compactTaskCardsEnabled && showContext ? getAncestorChain(activeTask.id) : []}
+                  showContext={showContext}
+                  compactTaskCardsEnabled={compactTaskCardsEnabled}
+                  isKeyboardFocused={false}
+                  isInteractionBlocked={isInteractionBlocked}
+                  isPendingPublish={Boolean(isPendingPublishTask?.(activeTask.id))}
+                  hasChildren={hasChildren}
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </div>
     </main>
   );

@@ -6,12 +6,8 @@ import { makePerson, makeTask } from "@/test/fixtures";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 
 const dndMockState: {
-  onDragEnd: ((result: {
-    draggableId: string;
-    source: { droppableId: string; index: number };
-    destination: { droppableId: string; index: number } | null;
-  }) => void) | null;
-  onDragStart: (() => void) | null;
+  onDragEnd: ((event: { active: { id: string }; over: { id: string } | null }) => void) | null;
+  onDragStart: ((event: { active: { id: string } }) => void) | null;
 } = {
   onDragEnd: null,
   onDragStart: null,
@@ -26,54 +22,45 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
 
-vi.mock("@hello-pangea/dnd", () => ({
-  DragDropContext: ({ children, onDragEnd, onDragStart }: { children: ReactNode; onDragEnd: (result: {
-    draggableId: string;
-    source: { droppableId: string; index: number };
-    destination: { droppableId: string; index: number } | null;
-  }) => void; onDragStart?: () => void }) => {
-    dndMockState.onDragEnd = onDragEnd;
-    dndMockState.onDragStart = onDragStart ?? null;
-    return <div>{children}</div>;
-  },
-  Droppable: ({
-    children,
-    droppableId,
-  }: {
-    children: (provided: { innerRef: () => void; droppableProps: Record<string, unknown> }, snapshot: { isDraggingOver: boolean }) => ReactNode;
-    droppableId: string;
-  }) =>
-    children(
-      {
-        innerRef: () => {},
-        droppableProps: { "data-droppable-id": droppableId },
+vi.mock("@dnd-kit/core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@dnd-kit/core")>();
+  return {
+    ...actual,
+    DndContext: ({
+      children,
+      onDragEnd,
+      onDragStart,
+    }: {
+      children: ReactNode;
+      onDragEnd?: (event: { active: { id: string }; over: { id: string } | null }) => void;
+      onDragStart?: (event: { active: { id: string } }) => void;
+    }) => {
+      dndMockState.onDragEnd = onDragEnd ?? null;
+      dndMockState.onDragStart = onDragStart ?? null;
+      return <div>{children}</div>;
+    },
+    DragOverlay: ({ children }: { children: ReactNode }) => <div data-testid="drag-overlay">{children}</div>,
+    useDroppable: ({ id }: { id: string }) => ({
+      setNodeRef: (el: HTMLElement | null) => {
+        if (el) el.setAttribute("data-droppable-id", String(id));
       },
-      { isDraggingOver: false }
-    ),
-  Draggable: ({
-    children,
-    draggableId,
-  }: {
-    children: (
-      provided: {
-        innerRef: () => void;
-        draggableProps: Record<string, unknown>;
-        dragHandleProps: Record<string, unknown>;
+      isOver: false,
+    }),
+    useDraggable: ({ id }: { id: string; disabled?: boolean }) => ({
+      setNodeRef: (el: HTMLElement | null) => {
+        if (el) el.setAttribute("data-draggable-id", String(id));
       },
-      snapshot: { isDragging: boolean }
-    ) => ReactNode;
-    draggableId: string;
-    disableInteractiveElementBlocking?: boolean;
-  }) =>
-    children(
-      {
-        innerRef: () => {},
-        draggableProps: { "data-draggable-id": draggableId },
-        dragHandleProps: {},
-      },
-      { isDragging: false }
-    ),
-}));
+      listeners: {},
+      attributes: {},
+      isDragging: false,
+    }),
+    useSensor: vi.fn().mockReturnValue({}),
+    useSensors: vi.fn().mockReturnValue([]),
+    PointerSensor: class {},
+    TouchSensor: class {},
+    pointerWithin: vi.fn(),
+  };
+});
 
 const author = makePerson({ pubkey: "me", name: "me", displayName: "Me" });
 
@@ -380,9 +367,8 @@ describe("KanbanView", () => {
 
     act(() => {
       dndMockState.onDragEnd?.({
-        draggableId: "drag-task",
-        source: { droppableId: "open", index: 0 },
-        destination: { droppableId: "done", index: 0 },
+        active: { id: "drag-task" },
+        over: { id: "done" },
       });
     });
 
@@ -416,7 +402,7 @@ describe("KanbanView", () => {
         toJSON: () => ({}),
       } as DOMRect);
 
-      act(() => { dndMockState.onDragStart?.(); });
+      act(() => { dndMockState.onDragStart?.({ active: { id: "edge-scroll-task" } }); });
       fireEvent.mouseMove(window, { clientX: 720, clientY: 300 });
 
       act(() => {
