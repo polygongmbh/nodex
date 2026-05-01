@@ -120,7 +120,11 @@ export function KanbanTaskCard({
               "px-1.5 py-0.5 text-sm focus:outline-none",
               TASK_CHIP_STYLES.priority,
               "text-sm",
-              canEditPriority ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed opacity-60"
+              canEditPriority
+                ? "cursor-pointer hover:bg-warning/20"
+                : authPolicy.isSignedIn
+                  ? "cursor-not-allowed opacity-60"
+                  : "cursor-default"
             )}
           />
         </div>
