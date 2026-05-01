@@ -148,10 +148,6 @@ export function PersonActionMenu({
           {children}
         </span>
       </DropdownMenuTrigger>
-        >
-          {children}
-        </span>
-      </DropdownMenuTrigger>
       <PersonActionMenuContent
         person={person}
         align={align}
