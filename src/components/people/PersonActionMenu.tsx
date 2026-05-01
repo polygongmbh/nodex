@@ -48,6 +48,7 @@ export function PersonActionMenu({
 }: PersonActionMenuProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const handledPointerShortcutRef = React.useRef(false);
+  const handledDirectFilterRef = React.useRef(false);
   const shouldPreventCloseAutoFocusRef = React.useRef(false);
   const [open, setOpen] = React.useState(false);
   const touchStartRef = React.useRef<{ x: number; y: number; time: number } | null>(null);
@@ -65,6 +66,17 @@ export function PersonActionMenu({
     event.preventDefault();
     event.stopPropagation();
     void dispatchFeedInteraction(toPersonShortcutInteraction(person, intent));
+    return true;
+  };
+
+  const handleDirectFilter = (
+    event: Pick<React.MouseEvent<HTMLElement>, "preventDefault" | "stopPropagation">,
+  ) => {
+    if (!directFilterOnClick) return false;
+
+    event.preventDefault();
+    event.stopPropagation();
+    void dispatchFeedInteraction({ type: "person.filter.exclusive", person });
     return true;
   };
 
@@ -112,10 +124,19 @@ export function PersonActionMenu({
             if (event.button !== 0) return;
             if (handleShortcut(event)) {
               handledPointerShortcutRef.current = true;
+              return;
+            }
+            if (handleDirectFilter(event)) {
+              handledDirectFilterRef.current = true;
             }
           }}
           onMouseDownCapture={(event: React.MouseEvent<HTMLElement>) => {
             if (event.button !== 0) return;
+            if (handledDirectFilterRef.current) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
             if (handleShortcut(event)) {
               handledPointerShortcutRef.current = true;
             }
@@ -134,12 +155,12 @@ export function PersonActionMenu({
               handledPointerShortcutRef.current = false;
               return;
             }
+            if (handledDirectFilterRef.current) {
+              handledDirectFilterRef.current = false;
+              return;
+            }
             if (handleShortcut(event)) return;
-            if (directFilterOnClick) {
-              // Skip the menu and immediately apply an exclusive filter on
-              // this person — the same action as the sidebar's person row.
-              event.preventDefault();
-              void dispatchFeedInteraction({ type: "person.filter.exclusive", person });
+            if (handleDirectFilter(event)) {
               return;
             }
             setOpen((prev) => !prev);
