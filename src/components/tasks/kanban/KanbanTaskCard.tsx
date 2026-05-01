@@ -53,7 +53,7 @@ export function KanbanTaskCard({
 }: KanbanTaskCardProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { focusTask } = useTaskViewServices();
+  const { focusTask, authPolicy } = useTaskViewServices();
   const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
