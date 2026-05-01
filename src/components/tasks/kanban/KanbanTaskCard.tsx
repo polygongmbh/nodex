@@ -60,6 +60,9 @@ export function KanbanTaskCard({
   const dueDateColor = getDueDateColorClass(task.dueDate, displayStatus);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+  // Priority editing is also disabled for tasks in terminal states (done/closed) — render as a
+  // disabled-looking chip to avoid the overhead of a select that can't change anything meaningful.
+  const canEditPriority = canChangeStatus && !isTaskTerminalStatus(displayStatus);
   const surfaceBlockedFeedback = () => {
     if (isInteractionBlocked && onBlockedInteractionAttempt) {
       onBlockedInteractionAttempt();
