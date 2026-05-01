@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TaskAssigneeAvatarsProps {
   task: Task;
@@ -39,6 +40,7 @@ export function TaskAssigneeAvatars({
   avatarSizeClassName = "w-5 h-5",
   maxVisible = 3,
 }: TaskAssigneeAvatarsProps) {
+  const isMobile = useIsMobile();
   const pubkeys = useMemo(() => {
     const list = (task.assigneePubkeys ?? []).filter((p) => PUBKEY_PATTERN.test(p));
     if (list.length > 0) return list;
@@ -79,7 +81,7 @@ export function TaskAssigneeAvatars({
             sizeClassName={avatarSizeClassName}
             avatarClassName="ring-1 ring-background hover:scale-110 transition-transform"
             displayName={displayName}
-            directFilterOnClick
+            directFilterOnClick={!isMobile}
           />
         );
       })}

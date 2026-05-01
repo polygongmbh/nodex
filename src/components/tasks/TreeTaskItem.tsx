@@ -8,6 +8,7 @@ import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 
 import { TaskAssigneeAvatars } from "./TaskAssigneeAvatars";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
@@ -94,6 +95,7 @@ export function TreeTaskItem({
   sortContext,
 }: TreeTaskItemProps) {
   const { t } = useTranslation("tasks");
+  const isMobile = useIsMobile();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
   const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
@@ -481,7 +483,7 @@ export function TreeTaskItem({
             beamTestId={`task-item-beam-${task.id}`}
             ariaLabel={t("people.actions.openMenu", { name: authorName })}
             displayName={authorName}
-            directFilterOnClick
+            directFilterOnClick={!isMobile}
           />
         )}
 
