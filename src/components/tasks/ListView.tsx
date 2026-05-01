@@ -390,7 +390,11 @@ export function ListView({
         className={cn(
           "flex w-full min-w-0 items-center gap-1.5 overflow-hidden px-2 py-1 text-sm rounded transition-colors",
           dueDateColor,
-          editable ? "cursor-pointer hover:bg-muted/50" : "cursor-not-allowed opacity-60"
+          editable
+            ? "cursor-pointer hover:bg-muted/50"
+            : authPolicy.isSignedIn
+              ? "cursor-not-allowed opacity-60"
+              : "cursor-default"
         )}
       >
         {task.dueDate ? (
