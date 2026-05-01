@@ -80,6 +80,54 @@ export function PersonActionMenu({
     return true;
   };
 
+  if (directFilterOnClick) {
+    return (
+      <span
+        className="inline-flex"
+        onPointerDownCapture={(event: React.PointerEvent<HTMLElement>) => {
+          if (event.button !== 0) return;
+          if (handleShortcut(event)) {
+            handledPointerShortcutRef.current = true;
+            return;
+          }
+          if (handleDirectFilter(event)) {
+            handledDirectFilterRef.current = true;
+          }
+        }}
+        onMouseDownCapture={(event: React.MouseEvent<HTMLElement>) => {
+          if (event.button !== 0) return;
+          if (handledDirectFilterRef.current) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+          if (handleShortcut(event)) {
+            handledPointerShortcutRef.current = true;
+          }
+        }}
+        onPointerDown={(event: React.PointerEvent<HTMLElement>) => {
+          if (event.pointerType === "touch") return;
+          event.stopPropagation();
+        }}
+        onClick={(event: React.MouseEvent<HTMLElement>) => {
+          event.stopPropagation();
+          if (handledPointerShortcutRef.current) {
+            handledPointerShortcutRef.current = false;
+            return;
+          }
+          if (handledDirectFilterRef.current) {
+            handledDirectFilterRef.current = false;
+            return;
+          }
+          if (handleShortcut(event)) return;
+          handleDirectFilter(event);
+        }}
+      >
+        {children}
+      </span>
+    );
+  }
+
   return (
     <DropdownMenu
       open={open}
