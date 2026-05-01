@@ -30,6 +30,12 @@ interface PersonActionMenuProps {
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   enableModifierShortcuts?: boolean;
+  /**
+   * When true, a plain click immediately filters the feed by this person
+   * (sidebar exclusive selection) instead of opening the menu. Modifier-key
+   * shortcuts still take precedence so power-user flows are preserved.
+   */
+  directFilterOnClick?: boolean;
 }
 
 export function PersonActionMenu({
@@ -38,6 +44,7 @@ export function PersonActionMenu({
   align = "start",
   side = "bottom",
   enableModifierShortcuts = false,
+  directFilterOnClick = false,
 }: PersonActionMenuProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const handledPointerShortcutRef = React.useRef(false);
