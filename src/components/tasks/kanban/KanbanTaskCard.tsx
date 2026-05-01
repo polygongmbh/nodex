@@ -90,7 +90,11 @@ export function KanbanTaskCard({
       }}
       className={cn(
         `relative min-w-0 bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-        !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
+        // Only mark cards as visually "locked" when the user is signed in but
+        // can't change this particular task (e.g. owned by someone else).
+        // When signed out, render normally — the card stays non-editable but
+        // doesn't draw extra attention to its read-only state.
+        authPolicy.isSignedIn && !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
         isTaskTerminalStatus(displayStatus) && "opacity-70",
         isLockedUntilStart && "opacity-50 grayscale",
         isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background"
