@@ -139,6 +139,10 @@ export function PersonActionMenu({
             }
             if (handleShortcut(event)) {
               handledPointerShortcutRef.current = true;
+              return;
+            }
+            if (handleDirectFilter(event)) {
+              handledDirectFilterRef.current = true;
             }
           }}
           onPointerDown={(event: React.PointerEvent<HTMLElement>) => {
