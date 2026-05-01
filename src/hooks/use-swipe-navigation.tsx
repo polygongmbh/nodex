@@ -1,4 +1,5 @@
 import { useRef, useCallback, TouchEvent, WheelEvent } from "react";
+import { hasTextSelection } from "@/lib/click-intent";
 
 interface UseSwipeNavigationOptions {
   onSwipeLeft?: () => void;
@@ -139,12 +140,14 @@ export function useSwipeNavigation({
       : false;
     
     // Only trigger swipe if horizontal movement is greater than vertical (to avoid conflicts with scrolling)
+    // Skip when the user has an active text selection — they're selecting, not navigating.
     if (
       Math.abs(deltaX) > threshold &&
       Math.abs(deltaX) > deltaY &&
       !scrollCouldConsumeAtStart &&
       !scrollConsumedGesture &&
-      !scrollCanConsumeGesture
+      !scrollCanConsumeGesture &&
+      !hasTextSelection()
     ) {
       if (preventDefaultOnSwipe) {
         e.preventDefault();
