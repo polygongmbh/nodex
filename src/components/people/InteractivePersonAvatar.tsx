@@ -46,6 +46,7 @@ export function InteractivePersonAvatar({
   ariaLabel,
   enableModifierShortcuts = true,
   displayName,
+  directFilterOnClick = false,
 }: InteractivePersonAvatarProps) {
   const { t } = useTranslation("tasks");
   const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.pubkey;
@@ -53,7 +54,11 @@ export function InteractivePersonAvatar({
 
   return (
     <PersonHoverCard person={person} triggerClassName="rounded-full">
-      <PersonActionMenu person={person} enableModifierShortcuts={enableModifierShortcuts}>
+      <PersonActionMenu
+        person={person}
+        enableModifierShortcuts={enableModifierShortcuts}
+        directFilterOnClick={directFilterOnClick}
+      >
         <button
           type="button"
           className={cn(
