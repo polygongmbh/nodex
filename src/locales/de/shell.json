@@ -19,7 +19,7 @@
   },
   "version": {
     "openChangelogAria": "Nodex-Version {{version}} (Changelog öffnen)",
-    "hintWithChangelog": "v{{version}} Changelog"
+    "hintWithChangelog": "v{{version}}"
   },
   "motd": {
     "dismiss": "Nachricht schließen"
