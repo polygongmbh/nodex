@@ -135,8 +135,19 @@ export function PersonActionMenu({
               return;
             }
             if (handleShortcut(event)) return;
+            if (directFilterOnClick) {
+              // Skip the menu and immediately apply an exclusive filter on
+              // this person — the same action as the sidebar's person row.
+              event.preventDefault();
+              void dispatchFeedInteraction({ type: "person.filter.exclusive", person });
+              return;
+            }
             setOpen((prev) => !prev);
           }}
+        >
+          {children}
+        </span>
+      </DropdownMenuTrigger>
         >
           {children}
         </span>
