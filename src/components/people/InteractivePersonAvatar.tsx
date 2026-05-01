@@ -20,6 +20,13 @@ interface InteractivePersonAvatarProps {
   enableModifierShortcuts?: boolean;
   /** Optional displayName override (e.g. when a richer profile is available). */
   displayName?: string;
+  /**
+   * When true, a plain click immediately filters the feed by this person
+   * (sidebar exclusive selection) instead of opening the action menu.
+   * Modifier-key shortcuts still apply. Used everywhere except the desktop
+   * timeline, where the menu is the primary affordance.
+   */
+  directFilterOnClick?: boolean;
 }
 
 /**
