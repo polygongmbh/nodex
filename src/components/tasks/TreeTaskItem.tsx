@@ -262,6 +262,9 @@ export function TreeTaskItem({
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
   const editableMetadata = !isComment && canCompleteTask();
+  // Priority editing is disabled for terminal-state tasks (done/closed) — render a non-interactive
+  // chip rather than the full select control to avoid unnecessary overhead.
+  const editablePriority = editableMetadata && !isTaskTerminalStatus(task.status);
   const statusBlockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
   const showCompactPriority = compactView && !isComment && typeof task.priority === "number";
   const showFullMetadataChips =
