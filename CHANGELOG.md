@@ -6,6 +6,19 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.7] - 2026-05-01
+Patch release for kanban drag migration, relay reconnect/auth recovery, and person-filter feed fixes.
+
+### Changed
+- Kanban drag-and-drop now runs on `@dnd-kit/core`, reducing dependency weight while keeping the board interaction model aligned with the existing task workflow.
+- Feed composition support is mounted more lazily, and disabled priority controls now render through static output to keep task views lighter.
+
+### Fixed
+- Signing in now retries NIP-42 relay auth more reliably for relays that were previously verification-failed, and reconnect flows preserve rejection state more coherently across soft reconnects.
+- Relay reconnect handling now replays subscriptions more consistently and separates relay selection from forced reconnects, reducing avoidable feed interruptions.
+- Person-filtered feeds now continue showing tasks that only have status updates from the selected person.
+- Swipe navigation now stays disabled while text is selected, reducing accidental view changes during task reading and copy interactions.
+
 ## [2.15.6] - 2026-04-30
 Patch release for relay auth lifecycle cleanup, quieter verification feedback, and cache simplification.
 
