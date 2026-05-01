@@ -20,6 +20,13 @@ interface InteractivePersonAvatarProps {
   enableModifierShortcuts?: boolean;
   /** Optional displayName override (e.g. when a richer profile is available). */
   displayName?: string;
+  /**
+   * When true, a plain click immediately filters the feed by this person
+   * (sidebar exclusive selection) instead of opening the action menu.
+   * Modifier-key shortcuts still apply. Used everywhere except the desktop
+   * timeline, where the menu is the primary affordance.
+   */
+  directFilterOnClick?: boolean;
 }
 
 /**
@@ -39,6 +46,7 @@ export function InteractivePersonAvatar({
   ariaLabel,
   enableModifierShortcuts = true,
   displayName,
+  directFilterOnClick = false,
 }: InteractivePersonAvatarProps) {
   const { t } = useTranslation("tasks");
   const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.pubkey;
@@ -46,7 +54,11 @@ export function InteractivePersonAvatar({
 
   return (
     <PersonHoverCard person={person} triggerClassName="rounded-full">
-      <PersonActionMenu person={person} enableModifierShortcuts={enableModifierShortcuts}>
+      <PersonActionMenu
+        person={person}
+        enableModifierShortcuts={enableModifierShortcuts}
+        directFilterOnClick={directFilterOnClick}
+      >
         <button
           type="button"
           className={cn(

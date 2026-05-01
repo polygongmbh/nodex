@@ -481,6 +481,7 @@ export function TreeTaskItem({
             beamTestId={`task-item-beam-${task.id}`}
             ariaLabel={t("people.actions.openMenu", { name: authorName })}
             displayName={authorName}
+            directFilterOnClick
           />
         )}
 

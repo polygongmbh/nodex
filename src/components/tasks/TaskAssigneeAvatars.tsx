@@ -79,6 +79,7 @@ export function TaskAssigneeAvatars({
             sizeClassName={avatarSizeClassName}
             avatarClassName="ring-1 ring-background hover:scale-110 transition-transform"
             displayName={displayName}
+            directFilterOnClick
           />
         );
       })}
