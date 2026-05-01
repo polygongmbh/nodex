@@ -471,6 +471,7 @@ export function CalendarView({
                        {group.tasks.map((task) => {
                          const authorColor = getAuthorColor(task.author);
                          const canChangeStatus = canCompleteTask(task);
+                         const canEditPriority = canChangeStatus && !isTaskTerminalStatus(task.status);
                          return (
                            <div
                              key={task.id}
@@ -481,14 +482,14 @@ export function CalendarView({
                                <div className="absolute right-2 top-2 z-10">
                                  <TaskPrioritySelect
                                    id={`upcoming-priority-${task.id}`}
-                                   taskId={canChangeStatus ? task.id : undefined}
+                                   taskId={canEditPriority ? task.id : undefined}
                                    priority={task.priority}
                                    stopPropagation
                                    className={cn(
                                      "px-1.5 py-0.5 text-sm focus:outline-none",
                                      TASK_CHIP_STYLES.priority,
                                      "text-sm",
-                                     canChangeStatus ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed"
+                                     canEditPriority ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed opacity-60"
                                    )}
                                  />
                                </div>
