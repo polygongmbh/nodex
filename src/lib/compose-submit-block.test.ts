@@ -34,6 +34,23 @@ describe("compose-submit-block", () => {
     expect(block).toBeNull();
   });
 
+  it("uses the dedicated non-writable spaces message when selected spaces cannot be posted to", () => {
+    const block = resolveComposeSubmitBlock({
+      isSignedIn: true,
+      hasMeaningfulContent: true,
+      hasAtLeastOneTag: true,
+      canInheritParentTags: false,
+      hasInvalidRootTaskRelaySelection: true,
+      hasNoWritableSelectedSpaces: true,
+      hasPendingAttachmentUploads: false,
+      hasFailedAttachmentUploads: false,
+      t,
+    });
+
+    expect(block?.code).toBe("relay");
+    expect(block?.reason).toBe("composer.blocked.selectedSpacesNotWritable");
+  });
+
   it("prioritizes content blockers ahead of pending uploads", () => {
     const block = resolveComposeSubmitBlock({
       isSignedIn: true,

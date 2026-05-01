@@ -2,6 +2,7 @@ import type { Relay, Task, TaskEntryType } from "@/types";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 export const RELAY_SELECTION_ERROR_KEY = "toasts.errors.selectRelayOrParent";
+export const RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY = "toasts.errors.selectedSpacesNotWritable";
 
 function dedupeRelayIds(relayIds: string[]): string[] {
   return Array.from(new Set(relayIds.filter(Boolean)));
@@ -95,11 +96,16 @@ export function resolveRelaySelectionForSubmission(params: {
       return { relayIds: [fallbackSingleRelayId] };
     }
     if (selectedNonDemoRelays.length !== 1) {
+      const errorKey =
+        normalizedSelectedRelayIds.length > 0 && writableSelectedRelayIds.length === 0
+          ? RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY
+          : RELAY_SELECTION_ERROR_KEY;
       nostrDevLog("routing", "Task submission rejected due to invalid non-demo relay count", {
         selectedNonDemoRelays,
         count: selectedNonDemoRelays.length,
+        errorKey,
       });
-      return { relayIds: writableSelectedRelayIds, errorKey: RELAY_SELECTION_ERROR_KEY };
+      return { relayIds: writableSelectedRelayIds, errorKey };
     }
     return { relayIds: [selectedNonDemoRelays[0]] };
   }
@@ -110,8 +116,18 @@ export function resolveRelaySelectionForSubmission(params: {
     }
     nostrDevLog("routing", "Comment-like submission rejected due to empty relay selection", {
       taskType,
+      errorKey:
+        normalizedSelectedRelayIds.length > 0
+          ? RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY
+          : RELAY_SELECTION_ERROR_KEY,
     });
-    return { relayIds: [], errorKey: RELAY_SELECTION_ERROR_KEY };
+    return {
+      relayIds: [],
+      errorKey:
+        normalizedSelectedRelayIds.length > 0
+          ? RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY
+          : RELAY_SELECTION_ERROR_KEY,
+    };
   }
 
   return { relayIds: writableSelectedRelayIds };

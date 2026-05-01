@@ -36,8 +36,9 @@
       "signin": "Se requiere iniciar sesión",
       "write": "Escribe primero un mensaje",
       "tag": "Añade o selecciona al menos un #canal",
-      "commentRelay": "Selecciona una tarea padre o un space escribible (punto verde) para publicar.",
-      "relay": "Selecciona un space escribible (punto verde) o una tarea padre para publicar.",
+      "rootPostPostingContext": "Selecciona un space o una publicación para responder.",
+      "rootTaskExclusivePostingContext": "Selecciona un solo space o una publicación para responder.",
+      "selectedSpacesNotWritable": "No se puede publicar en los spaces seleccionados.",
       "uploading": "Espera a que se suban los archivos.",
       "publishing": "Publicando..."
     },
@@ -46,8 +47,8 @@
       "cta": {
         "write": "Escribir mensaje",
         "tag": "Añadir #canal",
-        "commentRelay": "Seleccionar space",
-        "relay": "Seleccionar space",
+        "rootPostPostingContext": "Seleccionar space",
+        "rootTaskExclusivePostingContext": "Seleccionar space",
         "uploading": "Esperar subidas",
         "uploadFailed": "Corregir archivos"
       }
@@ -138,7 +139,8 @@
       "needSigninPost": "Se requiere iniciar sesión para publicar",
       "needSigninModify": "Se requiere iniciar sesión para modificar tareas",
       "statusRestricted": "Las actualizaciones de tareas están restringidas a los asignados etiquetados y al creador",
-      "selectRelayOrParent": "Selecciona un único space o una tarea padre para crear una nueva tarea",
+      "selectRelayOrParent": "Selecciona un único space o un hilo / tarea padre para crear una nueva tarea",
+      "selectedSpacesNotWritable": "No se puede publicar en los spaces seleccionados.",
       "publishStatusFailed": "No se pudo publicar la actualización de estado en los relays",
       "publishDateFailed": "No se pudo publicar la actualización de fecha en el relay",
       "publishPriorityFailed": "No se pudo publicar la actualización de prioridad en el relay",

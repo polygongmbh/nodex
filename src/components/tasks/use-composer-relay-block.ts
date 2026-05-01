@@ -32,14 +32,19 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
     return parentTask.relays.every((relayId) => !isWritableRelay(relaysById.get(relayId)));
   }, [parentTask, relays]);
 
+  const activeRelayIds = useMemo(
+    () => relays.filter((relay) => relay.isActive).map((relay) => relay.id),
+    [relays]
+  );
   const activeWritableRelayIds = useMemo(
     () => relays.filter((relay) => relay.isActive && isWritableRelay(relay)).map((relay) => relay.id),
     [relays]
   );
   const effectiveWritableRelayIds = useMemo(
-    () => resolveEffectiveWritableRelayIds({ selectedRelayIds: activeWritableRelayIds, relays }),
-    [activeWritableRelayIds, relays]
+    () => resolveEffectiveWritableRelayIds({ selectedRelayIds: activeRelayIds, relays }),
+    [activeRelayIds, relays]
   );
+  const hasNoWritableSelectedSpaces = activeRelayIds.length > 0 && activeWritableRelayIds.length === 0;
 
   const externalSubmitBlockByType = useMemo<Partial<Record<PostType, ComposeSubmitBlockState | null>>>(() => {
     const taskBlock = resolveComposeSubmitBlock({
@@ -50,6 +55,7 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
       hasInvalidRootTaskRelaySelection: !focusedTaskId && effectiveWritableRelayIds.length !== 1,
+      hasNoWritableSelectedSpaces,
       t,
     });
     const replyBlock = resolveComposeSubmitBlock({
@@ -60,13 +66,16 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
       hasInvalidRootCommentRelaySelection: !focusedTaskId && effectiveWritableRelayIds.length === 0,
+      hasNoWritableSelectedSpaces,
       t,
     });
     return { task: taskBlock, comment: replyBlock, offer: replyBlock, request: replyBlock };
   }, [
+    activeWritableRelayIds.length,
     authPolicy.canCreateContent,
     effectiveWritableRelayIds,
     focusedTaskId,
+    hasNoWritableSelectedSpaces,
     t,
   ]);
 

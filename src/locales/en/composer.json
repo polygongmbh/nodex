@@ -36,8 +36,9 @@
       "signin": "Sign in required",
       "write": "Write a message first",
       "tag": "Add or select at least one #channel",
-      "commentRelay": "Select a parent task or a writable (green dot) space to post.",
-      "relay": "Select one writable (green dot) space or a parent task to post.",
+      "rootPostPostingContext": "Select a space or a post to reply to.",
+      "rootTaskExclusivePostingContext": "Select a single space or a post to reply to.",
+      "selectedSpacesNotWritable": "Posting is not available in the selected spaces.",
       "uploading": "Wait for attachments to upload.",
       "publishing": "Publishing..."
     },
@@ -46,8 +47,8 @@
       "cta": {
         "write": "Write message",
         "tag": "Add #channel",
-        "commentRelay": "Select space",
-        "relay": "Select space",
+        "rootPostPostingContext": "Select space",
+        "rootTaskExclusivePostingContext": "Select space",
         "uploading": "Wait for uploads",
         "uploadFailed": "Fix attachments"
       }
@@ -138,7 +139,8 @@
       "needSigninPost": "Sign in required to post",
       "needSigninModify": "Sign in required to modify tasks",
       "statusRestricted": "Task updates are restricted to tagged assignees and the creator",
-      "selectRelayOrParent": "Select a single space or a parent task to create a new task",
+      "selectRelayOrParent": "Select a single space or a thread / parent task to create a new task",
+      "selectedSpacesNotWritable": "Posting is not available in the selected spaces.",
       "publishStatusFailed": "Failed to publish status update to relays",
       "publishDateFailed": "Failed to publish date update to relay",
       "publishPriorityFailed": "Failed to publish priority update to relay",

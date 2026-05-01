@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Relay, Task } from "@/types";
 import {
   RELAY_SELECTION_ERROR_KEY,
+  RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY,
   resolveEffectiveWritableRelayIds,
   resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
@@ -102,7 +103,7 @@ describe("resolveRelaySelectionForSubmission", () => {
     });
 
     expect(result.relayIds).toEqual([]);
-    expect(result.errorKey).toBe(RELAY_SELECTION_ERROR_KEY);
+    expect(result.errorKey).toBe(RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY);
   });
 
   it("routes child task and comment submissions to parent origin relay", () => {
@@ -134,6 +135,21 @@ describe("resolveRelaySelectionForSubmission", () => {
       demoRelayId: undefined,
     });
     expect(result.errorKey).toBe(RELAY_SELECTION_ERROR_KEY);
+  });
+
+  it("warns when root task creation only targets non-writable selected spaces", () => {
+    const result = resolveRelaySelectionForSubmission({
+      taskType: "task",
+      selectedRelayIds: ["relay-a"],
+      relays: [
+        { ...makeRelay("relay-a", "wss://a.example"), connectionStatus: "read-only" },
+        { ...makeRelay("relay-b", "wss://b.example"), connectionStatus: "disconnected" },
+      ],
+      demoRelayId: undefined,
+    });
+
+    expect(result.relayIds).toEqual([]);
+    expect(result.errorKey).toBe(RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY);
   });
 
   it("defaults to the only active postable relay when none is explicitly selected", () => {

@@ -58,7 +58,10 @@ import {
   resolveTaskComposerInitialState,
   persistTaskComposerDraft,
 } from "@/components/tasks/task-composer-runtime";
-import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
+import {
+  RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY,
+  resolveEffectiveWritableRelayIds,
+} from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
@@ -563,15 +566,22 @@ export function UnifiedBottomBar({
         alt: attachment.alt,
         name: attachment.name || attachment.fileName,
       }));
-    const activeWritableRelayIds = relays
-      .filter((relay) => relay.isActive && isWritableRelay(relay))
+    const activeRelayIds = relays
+      .filter((relay) => relay.isActive)
       .map((relay) => relay.id);
     const relayIds = resolveEffectiveWritableRelayIds({
-      selectedRelayIds: activeWritableRelayIds,
+      selectedRelayIds: activeRelayIds,
       relays,
     });
     if (submitType === "task" && !focusedTaskId && relayIds.length !== 1) {
-      toast.error(t("composer:toasts.errors.selectRelayOrParent"));
+      const hasSelectedSpaces = activeRelayIds.length > 0;
+      toast.error(
+        t(
+          hasSelectedSpaces
+            ? `composer:${RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY}`
+            : "composer:toasts.errors.selectRelayOrParent"
+        )
+      );
       return;
     }
     const listingMetadata: Nip99Metadata | undefined =
@@ -795,13 +805,17 @@ export function UnifiedBottomBar({
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
+  const activeRelayIds = relays
+    .filter((relay) => relay.isActive)
+    .map((relay) => relay.id);
   const activeWritableRelayIds = relays
     .filter((relay) => relay.isActive && isWritableRelay(relay))
     .map((relay) => relay.id);
   const effectiveWritableRelayIds = resolveEffectiveWritableRelayIds({
-    selectedRelayIds: activeWritableRelayIds,
+    selectedRelayIds: activeRelayIds,
     relays,
   });
+  const hasNoWritableSelectedSpaces = activeRelayIds.length > 0 && activeWritableRelayIds.length === 0;
   const hasInvalidRootTaskRelaySelection = !focusedTaskId && effectiveWritableRelayIds.length !== 1;
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
@@ -815,6 +829,7 @@ export function UnifiedBottomBar({
     hasAtLeastOneTag,
     canInheritParentTags,
     hasInvalidRootTaskRelaySelection,
+    hasNoWritableSelectedSpaces,
     hasPendingAttachmentUploads,
     hasFailedAttachmentUploads,
     t,

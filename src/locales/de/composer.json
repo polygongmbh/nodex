@@ -36,8 +36,9 @@
       "signin": "Anmeldung erforderlich",
       "write": "Schreibe zuerst eine Nachricht",
       "tag": "Mindestens einen #channel hinzufügen oder auswählen",
-      "commentRelay": "Wähle eine übergeordnete Aufgabe oder einen beschreibbaren Space (grüner Punkt), um zu posten.",
-      "relay": "Wähle einen beschreibbaren Space (grüner Punkt) oder eine übergeordnete Aufgabe, um zu posten.",
+      "rootPostPostingContext": "Wähle einen Space oder einen Beitrag zum Antworten aus.",
+      "rootTaskExclusivePostingContext": "Wähle einen einzelnen Space oder einen Beitrag zum Antworten aus.",
+      "selectedSpacesNotWritable": "In den ausgewählten Spaces kann nicht gepostet werden.",
       "uploading": "Warte, bis die Anhänge hochgeladen sind.",
       "publishing": "Wird veröffentlicht..."
     },
@@ -46,8 +47,8 @@
       "cta": {
         "write": "Nachricht schreiben",
         "tag": "#channel hinzufügen",
-        "commentRelay": "Space wählen",
-        "relay": "Space auswählen",
+        "rootPostPostingContext": "Space wählen",
+        "rootTaskExclusivePostingContext": "Space auswählen",
         "uploading": "Auf Uploads warten",
         "uploadFailed": "Anhänge korrigieren"
       }
@@ -138,7 +139,8 @@
       "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
       "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",
       "statusRestricted": "Aufgaben-Updates sind auf markierte Zuständige und den Ersteller beschränkt",
-      "selectRelayOrParent": "Wähle einen einzelnen Space oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
+      "selectRelayOrParent": "Wähle einen einzelnen Space oder einen Thread bzw. eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
+      "selectedSpacesNotWritable": "In den ausgewählten Spaces kann nicht gepostet werden.",
       "publishStatusFailed": "Status-Update konnte nicht an Relays veröffentlicht werden",
       "publishDateFailed": "Datums-Update konnte nicht an Relay veröffentlicht werden",
       "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden",
