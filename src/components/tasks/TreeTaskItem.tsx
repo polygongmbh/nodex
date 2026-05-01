@@ -475,18 +475,6 @@ export function TreeTaskItem({
           <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
         )}
 
-        {/* Avatar - only show for comments */}
-        {isComment && !compactView && (
-          <InteractivePersonAvatar
-            person={authorPerson}
-            sizeClassName="w-6 h-6"
-            beamTestId={`task-item-beam-${task.id}`}
-            ariaLabel={t("people.actions.openMenu", { name: authorName })}
-            displayName={authorName}
-            directFilterOnClick={!isMobile}
-          />
-        )}
-
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Meta info - author/time only for comments, counts only for tasks */}
@@ -676,7 +664,6 @@ export function TreeTaskItem({
             </div>
           )}
         </div>
-        {/* Assignee avatars - bottom right of row */}
         <div className="flex-shrink-0 self-end pb-0.5">
           <TaskAssigneeAvatars task={task} />
         </div>

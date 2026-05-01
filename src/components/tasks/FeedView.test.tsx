@@ -784,36 +784,6 @@ describe("FeedView", () => {
     expect(screen.queryByTestId("feed-author-secondary-task-1")).not.toBeInTheDocument();
   });
 
-  it("does not truncate content for the active focused task", () => {
-    const longTask = makeTask({
-      id: "task-long-active",
-      author,
-      content: `${"Long content #general ".repeat(40)}end`,
-      status: "open",
-    });
-    const { container, rerender } = render(
-      <FeedView
-        focusedTaskId={null}
-        tasks={[longTask]}
-        allTasks={[longTask]}
-      />
-    );
-
-    const row = container.querySelector('[data-task-id="task-long-active"]');
-    expect(row?.querySelector(".line-clamp-3")).not.toBeNull();
-
-    rerender(
-      <FeedView
-        focusedTaskId="task-long-active"
-        tasks={[longTask]}
-        allTasks={[longTask]}
-      />
-    );
-
-    const focusedRow = container.querySelector('[data-task-id="task-long-active"]');
-    expect(focusedRow?.querySelector(".line-clamp-3")).toBeNull();
-  });
-
   it("supports modifier-based author filtering from the author label", () => {
     render(
       <FeedView

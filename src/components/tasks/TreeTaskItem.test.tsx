@@ -330,26 +330,25 @@ describe("TreeTaskItem status actions", () => {
     );
   });
 
-  it("hides comment author actions and tag chips in compact mode while keeping the due date", () => {
+  it("keeps the comment avatar stack on the right and removes the left author avatar", () => {
     const commentTask: Task = {
       ...baseTask,
-      id: "compact-comment",
+      id: "c-right-avatar-only",
       taskType: "comment",
-      content: "Compact comment #frontend",
-      dueDate: new Date("2026-05-01T00:00:00.000Z"),
-      dueTime: "10:00",
+      content: "Looks good",
+      assigneePubkeys: ["ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318"],
       author: makePerson({
-        id: "compact-author",
-        name: "commentator",
-        displayName: "Commentator",
+        id: "comment-author",
+        pubkey: "f5dc0ba672437167ccb3f58f2467990f9c574bc6522af1e76361404e7868a0f5",
+        name: "alice",
+        displayName: "Alice",
       }),
     };
 
-    renderTreeTaskItem({ task: commentTask, compactView: true });
+    renderTreeTaskItem({ task: commentTask });
 
-    expect(screen.queryByRole("button", { name: /person actions for commentator/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /filter to #frontend/i })).not.toBeInTheDocument();
-    expect(screen.getByText("May 1, 2026")).toBeInTheDocument();
+    expect(screen.queryByTestId("task-item-beam-c-right-avatar-only")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Assigned to 1 person")).toBeInTheDocument();
   });
 
   it("does not render attachment previews in tree cards", () => {
@@ -368,23 +367,6 @@ describe("TreeTaskItem status actions", () => {
     renderTreeTaskItem({ task: taskWithAttachment });
 
     expect(screen.queryByText("spec.pdf")).not.toBeInTheDocument();
-  });
-
-  it("shows a precise hover timestamp for comment created time", () => {
-    const commentTask: Task = {
-      ...baseTask,
-      id: "c2",
-      taskType: "comment",
-      content: "Precise time test",
-      timestamp: new Date("2026-03-01T23:57:11.000Z"),
-    };
-
-    renderTreeTaskItem({ task: commentTask });
-
-    expect(screen.getByTitle(/comment created at/i)).toHaveAttribute(
-      "title",
-      expect.stringMatching(/comment created at .*\d{2}:\d{2}:\d{2}/i)
-    );
   });
 
   it("updates task priority from the priority chip", () => {

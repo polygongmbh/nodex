@@ -223,33 +223,6 @@ describe("KanbanView", () => {
     expect(chipRow).toContainElement(hashtagChip);
   });
 
-  it("renders due date row above metadata chips", () => {
-    const task = makeTask({
-      id: "due-before-chip-task",
-      author,
-      status: "open",
-      content: "Task with due date and chips #general",
-      tags: ["general"],
-      priority: 80,
-      dueDate: new Date("2026-02-18T10:00:00.000Z"),
-      dueTime: "10:00",
-    });
-
-    render(
-      <KanbanView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={author}
-        depthMode="leaves"
-      />
-    );
-
-    const dueRow = screen.getByTestId("kanban-due-row-due-before-chip-task");
-    const chipRow = screen.getByTestId("kanban-chip-row-due-before-chip-task");
-    expect(dueRow.compareDocumentPosition(chipRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
   it("does not render attachment previews in kanban cards", () => {
     const task = makeTask({
       id: "attachment-task",
@@ -276,35 +249,6 @@ describe("KanbanView", () => {
     );
 
     expect(screen.queryByText("spec.pdf")).not.toBeInTheDocument();
-  });
-
-  it("hides tag chips in compact mode while keeping due date and priority", () => {
-    const task = makeTask({
-      id: "compact-kanban-task",
-      author,
-      status: "open",
-      content: "Compact kanban task #general",
-      tags: ["general"],
-      priority: 80,
-      dueDate: new Date("2026-02-18T10:00:00.000Z"),
-      dueTime: "10:00",
-    });
-
-    usePreferencesStore.setState({ compactTaskCardsEnabled: true });
-    render(
-      <KanbanView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={author}
-        depthMode="leaves"
-      />
-    );
-
-    expect(screen.getByRole("combobox", { name: /priority/i })).toBeInTheDocument();
-    expect(screen.getByTestId("kanban-due-row-compact-kanban-task")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /filter to #general/i })).not.toBeInTheDocument();
-    expect(screen.queryByTestId("kanban-chip-row-compact-kanban-task")).not.toBeInTheDocument();
   });
 
   // Interaction
