@@ -6,6 +6,18 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.8] - 2026-05-01
+Patch release for posting-context clarity, person-filter interaction polish, and cleaner locked-state rendering.
+
+### Changed
+- Root composer and reply posting guidance now explains space-selection requirements more clearly, including a distinct blocked state when the currently selected spaces are not writable.
+- Person avatars and assignee chips now direct-filter more consistently across desktop task surfaces, while desktop timeline cards keep the action menu as the primary click affordance.
+- Signed-out task rows and Kanban cards now render their non-editable state more normally, and the mobile changelog action uses a shorter label.
+
+### Fixed
+- Tree comments no longer repeat a redundant author avatar beside the content row.
+- Terminal-state tasks now render priority as a disabled display chip instead of exposing an editable control in tree, list, Kanban, and calendar task surfaces.
+
 ## [2.15.7] - 2026-05-01
 Patch release for kanban drag migration, relay reconnect/auth recovery, and person-filter feed fixes.
 

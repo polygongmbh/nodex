@@ -71,7 +71,6 @@ export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRel
     });
     return { task: taskBlock, comment: replyBlock, offer: replyBlock, request: replyBlock };
   }, [
-    activeWritableRelayIds.length,
     authPolicy.canCreateContent,
     effectiveWritableRelayIds,
     focusedTaskId,
