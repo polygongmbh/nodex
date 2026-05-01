@@ -815,40 +815,22 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // Use relaysRef so this function is stable and safe to call from async contexts
     // (e.g. session restore) without capturing a stale relays snapshot.
     const currentRelays = relaysRef.current;
-    const relayActions = currentRelays
-      .map((relay) => {
-        const relayUrl = normalizeRelayUrl(relay.url);
-        const needsReconnect = shouldReconnectRelayAfterSignIn(relay);
-        const shouldPrimeAuth = needsReconnect || Boolean(relay.nip11?.supportsNip42 || relay.nip11?.authRequired);
-        return { relayUrl, needsReconnect, shouldPrimeAuth };
-      })
-      .filter(({ needsReconnect, shouldPrimeAuth }) => needsReconnect || shouldPrimeAuth);
+    let touchedRelay = false;
+    let hasReconnectRelay = false;
 
-    if (relayActions.length === 0) return;
+    currentRelays.forEach((relay) => {
+      const relayUrl = normalizeRelayUrl(relay.url);
+      const needsReconnect = shouldReconnectRelayAfterSignIn(relay);
+      const shouldPrimeAuth = needsReconnect || Boolean(relay.nip11?.supportsNip42 || relay.nip11?.authRequired);
 
-    const reconnectRelayUrls = relayActions
-      .filter(({ needsReconnect }) => needsReconnect)
-      .map(({ relayUrl }) => relayUrl);
-    const authCapableRelayUrls = relayActions
-      .filter(({ shouldPrimeAuth, needsReconnect }) => shouldPrimeAuth && !needsReconnect)
-      .map(({ relayUrl }) => relayUrl);
-    nostrDevLog("relay", "Refreshing relay auth state after sign in", {
-      reconnectRelayUrls,
-      authCapableRelayUrls,
-    });
+      if (!needsReconnect && !shouldPrimeAuth) {
+        return;
+      }
 
-    if (reconnectRelayUrls.length > 0) {
-      const reconnectSet = new Set(reconnectRelayUrls);
-      setRelays((previous) =>
-        previous.map((relay) =>
-          reconnectSet.has(normalizeRelayUrl(relay.url))
-            ? { ...relay, status: "connecting" }
-            : relay
-        )
-      );
-    }
-
-    relayActions.forEach(({ relayUrl, needsReconnect, shouldPrimeAuth }) => {
+      touchedRelay = true;
+      if (needsReconnect) {
+        hasReconnectRelay = true;
+      }
       relaysPendingAuthSubscriptionReplayRef.current.add(relayUrl);
       if (needsReconnect) {
         relayInitialFailureCountsRef.current.delete(relayUrl);
@@ -867,6 +849,22 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       if (shouldPrimeAuth) {
         primeRelayAuthChallenge(ndk, relayUrl);
       }
+    });
+
+    if (!touchedRelay) return;
+
+    if (hasReconnectRelay) {
+      setRelays((previous) =>
+        previous.map((relay) =>
+          shouldReconnectRelayAfterSignIn(relay)
+            ? { ...relay, status: "connecting" }
+            : relay
+        )
+      );
+    }
+
+    nostrDevLog("relay", "Refreshing relay auth state after sign in", {
+      hasReconnectRelay,
     });
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge]);
 
