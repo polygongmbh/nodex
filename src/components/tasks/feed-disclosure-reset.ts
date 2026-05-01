@@ -1,12 +1,12 @@
 import type { Channel, ChannelMatchMode, QuickFilterState, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 interface BuildFeedDisclosureResetKeyOptions {
   focusedTaskId: string | null;
   searchQuery: string;
   relays: Relay[];
   channels: Channel[];
-  people: Person[];
+  people: SelectablePerson[];
   quickFilters: QuickFilterState;
   channelMatchMode?: ChannelMatchMode;
 }

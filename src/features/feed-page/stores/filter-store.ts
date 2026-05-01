@@ -67,7 +67,7 @@ interface FilterStoreState {
 
   setActiveRelayIds: (updater: SetStateUpdater<Set<string>>) => void;
   setChannelFilterStates: (updater: SetStateUpdater<Map<string, Channel["filterState"]>>) => void;
-  setChannelMatchMode: (mode: ChannelMatchMode) => void;
+  setChannelMatchMode: (updater: SetStateUpdater<ChannelMatchMode>) => void;
 }
 
 export const useFilterStore = create<FilterStoreState>()(
@@ -89,7 +89,11 @@ export const useFilterStore = create<FilterStoreState>()(
             typeof updater === "function" ? updater(state.channelFilterStates) : updater,
         })),
 
-      setChannelMatchMode: (mode) => set({ channelMatchMode: mode }),
+      setChannelMatchMode: (updater) =>
+        set((state) => ({
+          channelMatchMode:
+            typeof updater === "function" ? updater(state.channelMatchMode) : updater,
+        })),
     }),
     {
       name: "filter-store",

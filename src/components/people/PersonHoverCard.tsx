@@ -220,17 +220,17 @@ export function PersonHoverCard({
             </p>
           </div>
         </div>
-        {person.lastPresenceAtMs || viewingLabel ? (
+        {person.presence?.reportedAtMs || viewingLabel ? (
           <div className="mt-3 rounded-md border border-border/60 bg-muted/40 p-3">
             <div className="grid gap-2 text-xs text-muted-foreground">
-              {person.lastPresenceAtMs ? (
+              {person.presence?.reportedAtMs ? (
                 <div className="flex items-start justify-between gap-3">
                   <span>{t("people.presence.lastSeen")}</span>
                   <span className="text-right text-foreground">
                     {new Intl.DateTimeFormat(i18n.language, {
                       dateStyle: "medium",
                       timeStyle: "short",
-                    }).format(new Date(person.lastPresenceAtMs))}
+                    }).format(new Date(person.presence.reportedAtMs))}
                   </span>
                 </div>
               ) : null}
@@ -239,7 +239,7 @@ export function PersonHoverCard({
                   <span>{t("people.presence.viewing")}</span>
                   <span
                     className="max-w-[12rem] text-right text-foreground"
-                    title={resolvedPresenceTaskTitle || presenceViewLabel || person.presenceTaskId || ""}
+                    title={resolvedPresenceTaskTitle || presenceViewLabel || presenceTaskId || ""}
                   >
                     {viewingLabel}
                   </span>

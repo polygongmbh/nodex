@@ -926,7 +926,6 @@ export function UnifiedBottomBar({
       case "focus-attachments":
         focusAttachments();
         break;
-      case "focus-task-context":
       case "review-blocker":
       case null:
         break;

@@ -1,12 +1,12 @@
 import type { Channel, ChannelMatchMode, Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 
 interface FilterTasksByRelayAndPeopleParams {
   tasks: Task[];
   activeRelayIds: Set<string>;
-  people: Person[];
+  people: SelectablePerson[];
   allowUnknownRelayMetadata?: boolean;
 }
 
@@ -14,7 +14,7 @@ interface FilterTasksParams {
   tasks: Task[];
   activeRelayIds: Set<string>;
   channels: Channel[];
-  people: Person[];
+  people: SelectablePerson[];
   channelMatchMode: ChannelMatchMode;
   allowUnknownRelayMetadata?: boolean;
 }

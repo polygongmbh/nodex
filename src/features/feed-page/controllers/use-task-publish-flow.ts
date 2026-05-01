@@ -376,24 +376,19 @@ export function useTaskPublishFlow({
 
     const createdAt = new Date();
     const fallbackAuthor: Person = people[0] || {
-      id: user?.pubkey || "local-user",
+      pubkey: user?.pubkey || "local-user",
       name: "You",
       displayName: "You",
-      isOnline: true,
-      isSelected: false,
     };
     const taskAuthor: Person = (() => {
       if (currentUser) return currentUser;
       if (user?.pubkey) {
         return {
-          id: user.pubkey,
+          pubkey: user.pubkey,
           name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
           displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
           nip05: user.profile?.nip05?.trim().toLowerCase(),
           avatar: user.profile?.picture,
-          isOnline: true,
-          onlineStatus: "online",
-          isSelected: false,
         };
       }
       return fallbackAuthor;

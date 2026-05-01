@@ -24,7 +24,7 @@ import { sortByLatestModified } from "@/lib/kanban-sorting";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import type { EmptyScopeModel } from "@/lib/empty-scope";
 import { getTaskStatusType, type Channel, type ChannelMatchMode, type Relay, type Task, type TaskStateUpdate, type TaskStatusType } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 interface BaseViewStateInput {
   tasks: Task[];
@@ -91,7 +91,7 @@ export interface TaskViewSource {
   activeRelays: Relay[];
   channels: Channel[];
   neutralChannels: Channel[];
-  people: Person[];
+  people: SelectablePerson[];
   quickFilters: ReturnType<typeof useFeedSurfaceState>["quickFilters"];
   channelMatchMode: ChannelMatchMode;
   taskById: Map<string, Task>;
@@ -166,7 +166,7 @@ export function sortKanbanColumnTasks(tasks: Task[], status: TaskStatusType, sor
   return isTaskTerminalStatus(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
 }
 
-function clearSelectedPeople(people: Person[]): Person[] {
+function clearSelectedPeople(people: SelectablePerson[]): SelectablePerson[] {
   return people.map((person) => (person.isSelected ? { ...person, isSelected: false } : person));
 }
 

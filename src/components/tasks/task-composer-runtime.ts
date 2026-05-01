@@ -15,7 +15,7 @@ import type {
   Relay,
   TaskDateType,
 } from "@/types";
-import type { Person } from "@/types/person";
+import type { Person, SelectablePerson } from "@/types/person";
 
 export interface TaskComposerDraftState {
   content?: string;
@@ -52,8 +52,8 @@ export interface TaskComposerInitialState {
 export interface ResolvedTaskComposerEnvironment {
   relays: Relay[];
   channels: Channel[];
-  people: Person[];
-  mentionablePeople: Person[];
+  people: SelectablePerson[];
+  mentionablePeople: SelectablePerson[];
   includedChannels: string[];
   selectedPeoplePubkeys: string[];
 }
@@ -116,7 +116,7 @@ export function useResolvedTaskComposerEnvironment({
 }: {
   relays?: Relay[];
   channels?: Channel[];
-  people?: Person[];
+  people?: SelectablePerson[];
 }): ResolvedTaskComposerEnvironment {
   const composerOptions = useFeedComposerOptions();
   const resolvedRelays = relays ?? composerOptions.relays;

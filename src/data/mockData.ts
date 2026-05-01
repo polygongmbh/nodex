@@ -1,5 +1,5 @@
 import { Relay, Channel, Task, TaskStatusType, normalizeTaskStatus } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person, SelectablePerson } from "@/types/person";
 import { addDays, subDays } from "date-fns";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { DEMO_RELAY_URL } from "./basic-nostr-events";

@@ -2,12 +2,12 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel, type EmptyScopeModel } from "@/lib/empty-scope";
 import type { Channel, QuickFilterState, Relay, Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 interface UseEmptyScopeModelOptions {
   relays: Relay[];
   channels: Channel[];
-  people: Person[];
+  people: SelectablePerson[];
   quickFilters?: QuickFilterState;
   searchQuery?: string;
   contextTaskTitle?: string;

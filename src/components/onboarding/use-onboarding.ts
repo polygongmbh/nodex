@@ -12,7 +12,7 @@ import {
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
@@ -25,7 +25,7 @@ interface UseOnboardingOptions {
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
-  setPeople: Dispatch<SetStateAction<Person[]>>;
+  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
 }
 
 export function useOnboarding({

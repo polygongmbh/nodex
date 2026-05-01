@@ -2,7 +2,7 @@ import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constra
 import { displayPriorityFromStored } from "@/domain/content/task-priority";
 import { formatContextTaskTitle } from "@/lib/context-task-title";
 import type { Channel, QuickFilterState, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 interface TranslateFn {
   (key: string, options?: Record<string, unknown>): string;
@@ -11,7 +11,7 @@ interface TranslateFn {
 interface BuildEmptyScopeModelParams {
   relays: Relay[];
   channels: Channel[];
-  people: Person[];
+  people: SelectablePerson[];
   quickFilters?: QuickFilterState;
   searchQuery?: string;
   contextTaskTitle?: string;

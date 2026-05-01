@@ -37,7 +37,7 @@ export const useFailedPublishDraftsStore = create<FailedPublishDraftsState>()(
         const parsed = failedPublishDraftsSchema.safeParse(stored?.failedPublishDrafts ?? []);
         return {
           ...current,
-          failedPublishDrafts: parsed.success ? (parsed.data as FailedPublishDraft[]) : [],
+          failedPublishDrafts: parsed.success ? parsed.data : [],
         };
       },
     }

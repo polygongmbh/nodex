@@ -6,7 +6,7 @@ import {
   searchableTextMatchesQuery,
 } from "@/domain/content/task-search-document";
 import { getTaskStatusType, type ChannelMatchMode, type QuickFilterState, type Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { Person, SelectablePerson } from "@/types/person";
 
 function normalize(value: string): string {
   return normalizeTaskSearchValue(value);
@@ -21,7 +21,7 @@ export interface TaskViewFilterIndex {
 
 export function buildTaskViewFilterIndex(
   allTasks: Task[],
-  people: Person[] = []
+  people: SelectablePerson[] = []
 ): TaskViewFilterIndex {
   const childrenByParentId = new Map<string, string[]>();
   const searchableTextByTaskId = new Map<string, string>();
@@ -111,7 +111,7 @@ export interface TaskViewFilterSource {
   allTasks: Task[];
   filterIndex?: TaskViewFilterIndex;
   prefilteredTaskIds: Set<string>;
-  people: Person[];
+  people: SelectablePerson[];
 }
 
 export interface TaskViewFilterScope {

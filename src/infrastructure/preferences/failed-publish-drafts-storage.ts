@@ -38,13 +38,11 @@ const taskStatusSchema = z.object({
   description: z.string().optional(),
 });
 const personSchema = z.object({
-  id: z.string(),
+  pubkey: z.string(),
   name: z.string(),
   displayName: z.string(),
   nip05: z.string().optional(),
   avatar: z.string().optional(),
-  isOnline: z.boolean(),
-  isSelected: z.boolean(),
 });
 const failedPublishDraftSchema = z.object({
   id: z.string(),

@@ -6,7 +6,7 @@ import {
   type TaskViewFilterRequest,
 } from "@/domain/content/task-view-filtering";
 import type { Channel, ChannelMatchMode, QuickFilterState, Task } from "@/types";
-import type { Person } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 interface UseTaskViewFilteringParams {
   allTasks: Task[];
@@ -15,7 +15,7 @@ interface UseTaskViewFilteringParams {
   includeFocusedTask?: boolean;
   hideClosedTasks?: boolean;
   searchQuery: string;
-  people: Person[];
+  people: SelectablePerson[];
   quickFilters?: QuickFilterState;
   channels: Channel[];
   channelMatchMode: ChannelMatchMode;
