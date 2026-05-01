@@ -617,15 +617,15 @@ export function TreeTaskItem({
             <div className={cn(task.dueDate ? "mt-1.5" : "mt-1")}>
               <TaskPrioritySelect
                 id={`task-priority-${task.id}`}
-                taskId={editableMetadata ? task.id : undefined}
+                taskId={editablePriority ? task.id : undefined}
                 priority={task.priority}
                 stopPropagation
                 title={`Priority ${task.priority}`}
                 className={cn(
                   TASK_CHIP_STYLES.priority,
                   "focus:outline-none",
-                  editableMetadata && "cursor-pointer hover:bg-warning/20",
-                  !editableMetadata && "cursor-not-allowed opacity-60"
+                  editablePriority && "cursor-pointer hover:bg-warning/20",
+                  !editablePriority && "cursor-not-allowed opacity-60"
                 )}
               />
             </div>
