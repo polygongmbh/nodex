@@ -53,7 +53,7 @@ export function KanbanTaskCard({
 }: KanbanTaskCardProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { focusTask } = useTaskViewServices();
+  const { focusTask, authPolicy } = useTaskViewServices();
   const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
@@ -90,7 +90,11 @@ export function KanbanTaskCard({
       }}
       className={cn(
         `relative min-w-0 bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-        !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
+        // Only mark cards as visually "locked" when the user is signed in but
+        // can't change this particular task (e.g. owned by someone else).
+        // When signed out, render normally — the card stays non-editable but
+        // doesn't draw extra attention to its read-only state.
+        authPolicy.isSignedIn && !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
         isTaskTerminalStatus(displayStatus) && "opacity-70",
         isLockedUntilStart && "opacity-50 grayscale",
         isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background"
@@ -116,7 +120,11 @@ export function KanbanTaskCard({
               "px-1.5 py-0.5 text-sm focus:outline-none",
               TASK_CHIP_STYLES.priority,
               "text-sm",
-              canEditPriority ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed opacity-60"
+              canEditPriority
+                ? "cursor-pointer hover:bg-warning/20"
+                : authPolicy.isSignedIn
+                  ? "cursor-not-allowed opacity-60"
+                  : "cursor-default"
             )}
           />
         </div>
@@ -194,7 +202,7 @@ export function KanbanTaskCard({
             {t("composer:toasts.actions.undo")}
           </button>
         ) : null}
-        {!canChangeStatus ? (
+        {authPolicy.isSignedIn && !canChangeStatus ? (
           <div
             className="rounded-full bg-muted/80 p-1 text-muted-foreground"
             title={t("tasks.readOnly")}
