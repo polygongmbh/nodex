@@ -64,6 +64,16 @@ High-impact areas that require test coverage:
 - Nostr event conversion, mapping, and publishing tags
 - Permission and status transition rules
 
+## Shell Commands
+
+- Prefer Bash commands whose leading token is auto-allowed (e.g. `grep`, `find`, `git`, `npx vitest`, `npx tsc`) over complex scripts that require extra permission prompts.
+- Use the `Write` tool instead of `cat > /tmp/script << 'EOF'` heredocs — heredocs trigger a shell-parser bug ("Unhandled node type: string") that bypasses the allowlist.
+- For cross-cutting symbol renames across many files, use `jscodeshift` with an inline transform rather than `sed -i` or ad-hoc Python scripts; it handles AST-level renames safely and avoids regex edge cases.
+
+  ```sh
+  npx jscodeshift -t <transform-file-or-inline> src/**/*.{ts,tsx}
+  ```
+
 ## Workflow
 
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash` and warn if there are multiple unrelated changed files.

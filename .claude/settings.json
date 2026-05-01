@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(git stash:*)",
+      "Bash(git restore:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git pull:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npm run:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(du:*)",
+      "Bash(cp:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(node:*)",
+      "Bash(npx eslint:*)",
+      "Bash(awk:*)",
+      "Bash(do echo:*)",
+      "Read(//Users/tj/IT/nodex/**)",
+      "Bash(for pattern:*)",
+      "Bash(wait)",
+      "Bash(cat)",
+      "Bash(python3 /tmp/fix_*)"
+    ]
+  }
+}
