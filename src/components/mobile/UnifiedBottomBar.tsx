@@ -54,14 +54,10 @@ import {
 } from "@/domain/content/task-priority";
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 import {
-  isWritableRelay,
   resolveTaskComposerInitialState,
   persistTaskComposerDraft,
 } from "@/components/tasks/task-composer-runtime";
-import {
-  RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY,
-  resolveEffectiveWritableRelayIds,
-} from "@/lib/nostr/task-relay-routing";
+import { resolveRelayRoutingState } from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
@@ -73,7 +69,6 @@ interface UnifiedBottomBarProps {
   relays?: Relay[];
   channels?: Channel[];
   people?: SidebarPerson[];
-  // Default content for composing
   defaultContent?: string;
   canCreateContent: boolean;
   forceComposeMode?: boolean;
@@ -132,6 +127,10 @@ export function UnifiedBottomBar({
     [dispatchFeedInteraction]
   );
   const { createHttpAuthHeader } = useNDK();
+  const { effectiveWritableRelayIds, hasNoWritableSelectedRelays, hasInvalidRootTaskRelaySelection } = useMemo(
+    () => resolveRelayRoutingState(relays, focusedTaskId),
+    [relays, focusedTaskId]
+  );
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const contextTaskTitle = focusedTaskId
     ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
@@ -566,24 +565,6 @@ export function UnifiedBottomBar({
         alt: attachment.alt,
         name: attachment.name || attachment.fileName,
       }));
-    const activeRelayIds = relays
-      .filter((relay) => relay.isActive)
-      .map((relay) => relay.id);
-    const relayIds = resolveEffectiveWritableRelayIds({
-      selectedRelayIds: activeRelayIds,
-      relays,
-    });
-    if (submitType === "task" && !focusedTaskId && relayIds.length !== 1) {
-      const hasSelectedSpaces = activeRelayIds.length > 0;
-      toast.error(
-        t(
-          hasSelectedSpaces
-            ? `composer:${RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY}`
-            : "composer:toasts.errors.selectRelayOrParent"
-        )
-      );
-      return;
-    }
     const listingMetadata: Nip99Metadata | undefined =
       submitType === "offer" || submitType === "request"
         ? {
@@ -600,7 +581,7 @@ export function UnifiedBottomBar({
         type: "task.create",
         content: sharedText,
         tags: submitChannels,
-        relays: relayIds,
+        relays: effectiveWritableRelayIds,
         taskType: submitType,
         dueDate,
         dueTime: dueTime || undefined,
@@ -801,22 +782,10 @@ export function UnifiedBottomBar({
     setActiveSelector(activeSelector === type ? null : type);
   };
 
-  // Count active filters
+  // Count active filters for badge display
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
-  const activeRelayIds = relays
-    .filter((relay) => relay.isActive)
-    .map((relay) => relay.id);
-  const activeWritableRelayIds = relays
-    .filter((relay) => relay.isActive && isWritableRelay(relay))
-    .map((relay) => relay.id);
-  const effectiveWritableRelayIds = resolveEffectiveWritableRelayIds({
-    selectedRelayIds: activeRelayIds,
-    relays,
-  });
-  const hasNoWritableSelectedSpaces = activeRelayIds.length > 0 && activeWritableRelayIds.length === 0;
-  const hasInvalidRootTaskRelaySelection = !focusedTaskId && effectiveWritableRelayIds.length !== 1;
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
   const hasAtLeastOneTag = countHashtagsInContent(sharedText) + explicitTagNames.length > 0;
@@ -829,7 +798,8 @@ export function UnifiedBottomBar({
     hasAtLeastOneTag,
     canInheritParentTags,
     hasInvalidRootTaskRelaySelection,
-    hasNoWritableSelectedSpaces,
+    hasInvalidRootCommentRelaySelection: false,
+    hasNoWritableSelectedRelays,
     hasPendingAttachmentUploads,
     hasFailedAttachmentUploads,
     t,

@@ -12,6 +12,25 @@ function isWritableRelay(relay: Relay): boolean {
   return relay.connectionStatus === undefined || relay.connectionStatus === "connected";
 }
 
+export interface RelayRoutingState {
+  effectiveWritableRelayIds: string[];
+  hasNoWritableSelectedRelays: boolean;
+  hasInvalidRootTaskRelaySelection: boolean;
+  hasInvalidRootCommentRelaySelection: boolean;
+}
+
+export function resolveRelayRoutingState(relays: Relay[], focusedTaskId: string | null): RelayRoutingState {
+  const activeRelayIds = relays.filter((r) => r.isActive).map((r) => r.id);
+  const hasAnyActiveWritable = relays.some((r) => r.isActive && isWritableRelay(r));
+  const effectiveWritableRelayIds = resolveEffectiveWritableRelayIds({ selectedRelayIds: activeRelayIds, relays });
+  return {
+    effectiveWritableRelayIds,
+    hasNoWritableSelectedRelays: activeRelayIds.length > 0 && !hasAnyActiveWritable,
+    hasInvalidRootTaskRelaySelection: !focusedTaskId && effectiveWritableRelayIds.length !== 1,
+    hasInvalidRootCommentRelaySelection: !focusedTaskId && effectiveWritableRelayIds.length === 0,
+  };
+}
+
 export function resolveEffectiveWritableRelayIds(params: {
   selectedRelayIds: string[];
   relays: Relay[];

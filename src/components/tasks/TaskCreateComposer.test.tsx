@@ -1,4 +1,5 @@
-import { render, fireEvent, screen, waitFor } from "@testing-library/react";
+import { render, fireEvent, screen, waitFor, act } from "@testing-library/react";
+import { useState } from "react";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
@@ -334,6 +335,53 @@ describe("TaskCreateComposer", () => {
         content: "Great progress",
         taskType: "comment",
         focusedTaskId: "parent-task",
+      }));
+    });
+  });
+
+  it("uses the current relay selection at submit time, not the one captured at mount", async () => {
+    function RelaySwappingWrapper() {
+      const [activeRelayId, setActiveRelayId] = useState("relay-a");
+      const relaysWithSelection: Relay[] = [
+        {
+          id: "relay-a",
+          name: "Relay A",
+          url: "wss://relay-a.example.com",
+          isActive: activeRelayId === "relay-a",
+          connectionStatus: "connected",
+        },
+        {
+          id: "relay-b",
+          name: "Relay B",
+          url: "wss://relay-b.example.com",
+          isActive: activeRelayId === "relay-b",
+          connectionStatus: "connected",
+        },
+      ];
+      return (
+        <FeedSurfaceProvider value={{ relays: relaysWithSelection, channels, people, searchQuery: "", quickFilters: makeQuickFilterState(), channelMatchMode: "and" }}>
+          <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+            <button onClick={() => setActiveRelayId("relay-b")}>Switch to Relay B</button>
+            <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} allowComment={false} />
+          </FeedTaskViewModelProvider>
+        </FeedSurfaceProvider>
+      );
+    }
+
+    render(<RelaySwappingWrapper />);
+
+    fireEvent.change(getTaskComposerInput(), { target: { value: "Ship #backend" } });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: /switch to relay b/i }));
+    });
+
+    fireEvent.click(getComposerPrimaryAction());
+
+    await waitFor(() => {
+      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
+        type: "task.create",
+        relays: ["relay-b"],
       }));
     });
   });

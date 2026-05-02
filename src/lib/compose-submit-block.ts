@@ -35,9 +35,9 @@ interface ResolveComposeSubmitBlockOptions {
   hasMeaningfulContent: boolean;
   hasAtLeastOneTag: boolean;
   canInheritParentTags: boolean;
-  hasInvalidRootCommentRelaySelection?: boolean;
-  hasInvalidRootTaskRelaySelection?: boolean;
-  hasNoWritableSelectedSpaces?: boolean;
+  hasInvalidRootCommentRelaySelection: boolean;
+  hasInvalidRootTaskRelaySelection: boolean;
+  hasNoWritableSelectedRelays: boolean;
   hasPendingAttachmentUploads: boolean;
   hasFailedAttachmentUploads: boolean;
   t: TFunction;
@@ -48,9 +48,9 @@ export function resolveComposeSubmitBlock({
   hasMeaningfulContent,
   hasAtLeastOneTag,
   canInheritParentTags,
-  hasInvalidRootCommentRelaySelection = false,
-  hasInvalidRootTaskRelaySelection = false,
-  hasNoWritableSelectedSpaces = false,
+  hasInvalidRootCommentRelaySelection,
+  hasInvalidRootTaskRelaySelection,
+  hasNoWritableSelectedRelays,
   hasPendingAttachmentUploads,
   hasFailedAttachmentUploads,
   t,
@@ -98,7 +98,7 @@ export function resolveComposeSubmitBlock({
   if (hasInvalidRootCommentRelaySelection) {
     return {
       code: "commentRelay",
-      reason: hasNoWritableSelectedSpaces
+      reason: hasNoWritableSelectedRelays
         ? t("composer.blocked.selectedSpacesNotWritable")
         : t("composer.blocked.rootPostPostingContext"),
       ctaLabel: t("composer.blockedDetail.cta.rootPostPostingContext"),
@@ -110,7 +110,7 @@ export function resolveComposeSubmitBlock({
   if (hasInvalidRootTaskRelaySelection) {
     return {
       code: "relay",
-      reason: hasNoWritableSelectedSpaces
+      reason: hasNoWritableSelectedRelays
         ? t("composer.blocked.selectedSpacesNotWritable")
         : t("composer.blocked.rootTaskExclusivePostingContext"),
       ctaLabel: t("composer.blockedDetail.cta.rootTaskExclusivePostingContext"),

@@ -55,8 +55,13 @@ export function TaskCreateComposer({
   const { createHttpAuthHeader } = useNDK();
   const { allTasks } = useFeedTaskViewModel();
   const environment = useResolvedTaskComposerEnvironment({});
-  const { shouldHideComposer, effectiveWritableRelayIds, canCreateContent, externalSubmitBlockByType } =
-    useComposerRelayBlock(focusedTaskId);
+  const {
+    shouldHideComposer,
+    canCreateContent,
+    hasInvalidRootTaskRelaySelection,
+    hasInvalidRootCommentRelaySelection,
+    hasNoWritableSelectedRelays,
+  } = useComposerRelayBlock(focusedTaskId);
   const filterSync = useComposerFilterSync(environment);
   const contextTaskTitle = focusedTaskId
     ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
@@ -64,7 +69,6 @@ export function TaskCreateComposer({
   const handleSubmit = useComposerSubmitHandler({
     focusedTaskId,
     initialStatus,
-    activeRelayIds: effectiveWritableRelayIds,
     closeOnSuccess,
     onCancel,
   });
@@ -76,7 +80,9 @@ export function TaskCreateComposer({
       <TaskComposer
         onSubmit={handleSubmit}
         onCancel={onCancel}
-        externalSubmitBlockByType={externalSubmitBlockByType}
+        hasInvalidRootTaskRelaySelection={hasInvalidRootTaskRelaySelection}
+        hasInvalidRootCommentRelaySelection={hasInvalidRootCommentRelaySelection}
+        hasNoWritableSelectedRelays={hasNoWritableSelectedRelays}
         canCreateContent={canCreateContent}
         getUploadAuthHeader={async (url, method) => createHttpAuthHeader(url, method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE")}
         filterSync={filterSync}

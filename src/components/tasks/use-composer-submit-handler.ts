@@ -1,15 +1,16 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { notifyTaskCreationFailed } from "@/lib/notifications";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import type { TaskComposerFormData } from "./TaskComposer";
 import type { TaskCreateResult, TaskStatusLike } from "@/types";
 
 interface UseComposerSubmitHandlerOptions {
   focusedTaskId: string | null;
   initialStatus?: TaskStatusLike;
-  activeRelayIds: string[];
   closeOnSuccess?: boolean;
   onCancel: () => void;
 }
@@ -17,15 +18,27 @@ interface UseComposerSubmitHandlerOptions {
 export function useComposerSubmitHandler({
   focusedTaskId,
   initialStatus,
-  activeRelayIds,
   closeOnSuccess = false,
   onCancel,
 }: UseComposerSubmitHandlerOptions): (data: TaskComposerFormData) => void {
+  const { relays } = useFeedSurfaceState();
+  const relaysRef = useRef(relays);
+  relaysRef.current = relays;
+
   const dispatch = useFeedInteractionDispatch();
   const { t } = useTranslation("composer");
 
   return useCallback(
     (data: TaskComposerFormData) => {
+      const currentRelays = relaysRef.current;
+      const activeRelayIds = currentRelays
+        .filter((relay) => relay.isActive)
+        .map((relay) => relay.id);
+      const relayIds = resolveEffectiveWritableRelayIds({
+        selectedRelayIds: activeRelayIds,
+        relays: currentRelays,
+      });
+
       const publishingToastId = "task-composer-publishing";
       toast.loading(t("composer.blocked.publishing"), { id: publishingToastId });
 
@@ -36,7 +49,7 @@ export function useComposerSubmitHandler({
             type: "task.create",
             content: data.content,
             tags: data.tags,
-            relays: activeRelayIds,
+            relays: relayIds,
             taskType: data.taskType,
             dueDate: data.dueDate,
             dueTime: data.dueTime,
@@ -66,6 +79,6 @@ export function useComposerSubmitHandler({
         }
       })();
     },
-    [activeRelayIds, closeOnSuccess, dispatch, focusedTaskId, initialStatus, onCancel, t]
+    [closeOnSuccess, dispatch, focusedTaskId, initialStatus, onCancel, t]
   );
 }

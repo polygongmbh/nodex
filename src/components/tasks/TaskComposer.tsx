@@ -37,7 +37,6 @@ import { filterChannelsForAutocomplete, getComposerAutocompleteMatch, hasMention
 import {
   getComposeSubmitBlockFocusTarget,
   resolveComposeSubmitBlock,
-  type ComposeSubmitBlockState,
 } from "@/lib/compose-submit-block";
 import {
   DISPLAY_PRIORITY_OPTIONS,
@@ -60,7 +59,9 @@ import { getTaskDateTypeLabel } from "@/lib/task-dates";
 interface TaskComposerProps {
   onSubmit: (data: TaskComposerFormData) => void;
   onCancel: () => void;
-  externalSubmitBlockByType?: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
+  hasInvalidRootTaskRelaySelection?: boolean;
+  hasInvalidRootCommentRelaySelection?: boolean;
+  hasNoWritableSelectedRelays?: boolean;
   /** Filter-sync state injected by the wrapper (TaskCreateComposer). Leaf does not construct this. */
   filterSync?: ComposerFilterSync;
   getUploadAuthHeader?: (url: string, method: string) => Promise<string | null>;
@@ -171,7 +172,9 @@ function extractPlainTextFromDataTransfer(dataTransfer: DataTransfer | null | un
 export function TaskComposer({
   onSubmit,
   onCancel,
-  externalSubmitBlockByType,
+  hasInvalidRootTaskRelaySelection = false,
+  hasInvalidRootCommentRelaySelection = false,
+  hasNoWritableSelectedRelays = false,
   filterSync,
   getUploadAuthHeader,
   canCreateContent: canCreateContentProp = true,
@@ -1031,16 +1034,18 @@ export function TaskComposer({
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
-  const localSubmitBlock = resolveComposeSubmitBlock({
+  const submitBlock = resolveComposeSubmitBlock({
     isSignedIn: canCreateContent,
     hasMeaningfulContent,
     hasAtLeastOneTag,
     canInheritParentTags: allowEmptyTags,
+    hasInvalidRootTaskRelaySelection: taskType === "task" && hasInvalidRootTaskRelaySelection,
+    hasInvalidRootCommentRelaySelection: taskType !== "task" && hasInvalidRootCommentRelaySelection,
+    hasNoWritableSelectedRelays,
     hasPendingAttachmentUploads,
     hasFailedAttachmentUploads,
     t,
   });
-  const submitBlock = localSubmitBlock ?? externalSubmitBlockByType?.[taskType] ?? null;
   const submitBlockedReason = submitBlock?.reason ?? null;
   const showSubmitBlockBanner = submitBlock?.code !== "write" && submitBlock?.code !== "uploading";
   const isSubmitButtonEmptyDisabled = canCreateContent && content.trim().length === 0;

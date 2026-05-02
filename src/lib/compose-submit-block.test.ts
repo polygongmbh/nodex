@@ -10,9 +10,11 @@ describe("compose-submit-block", () => {
       hasMeaningfulContent: true,
       hasAtLeastOneTag: true,
       canInheritParentTags: true,
+      hasInvalidRootCommentRelaySelection: true,
+      hasInvalidRootTaskRelaySelection: false,
+      hasNoWritableSelectedRelays: false,
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
-      hasInvalidRootCommentRelaySelection: true,
       t,
     });
 
@@ -26,6 +28,9 @@ describe("compose-submit-block", () => {
       hasMeaningfulContent: true,
       hasAtLeastOneTag: true,
       canInheritParentTags: true,
+      hasInvalidRootCommentRelaySelection: false,
+      hasInvalidRootTaskRelaySelection: false,
+      hasNoWritableSelectedRelays: false,
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
       t,
@@ -34,14 +39,15 @@ describe("compose-submit-block", () => {
     expect(block).toBeNull();
   });
 
-  it("uses the dedicated non-writable spaces message when selected spaces cannot be posted to", () => {
+  it("uses the dedicated non-writable relay message when selected relays cannot be posted to", () => {
     const block = resolveComposeSubmitBlock({
       isSignedIn: true,
       hasMeaningfulContent: true,
       hasAtLeastOneTag: true,
       canInheritParentTags: false,
+      hasInvalidRootCommentRelaySelection: false,
       hasInvalidRootTaskRelaySelection: true,
-      hasNoWritableSelectedSpaces: true,
+      hasNoWritableSelectedRelays: true,
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
       t,
@@ -57,6 +63,9 @@ describe("compose-submit-block", () => {
       hasMeaningfulContent: true,
       hasAtLeastOneTag: false,
       canInheritParentTags: false,
+      hasInvalidRootCommentRelaySelection: false,
+      hasInvalidRootTaskRelaySelection: false,
+      hasNoWritableSelectedRelays: false,
       hasPendingAttachmentUploads: true,
       hasFailedAttachmentUploads: false,
       t,
