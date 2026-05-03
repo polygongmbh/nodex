@@ -28,7 +28,7 @@ import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { TaskPrioritySelect } from "./TaskMetadataEditors";
 import { getAuthorColor } from "@/lib/author-color";
-import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
+
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES, TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
@@ -533,19 +533,10 @@ export function CalendarView({
                                         focusOnQuickToggle: hasChildren(task.id),
                                       });
                                    }}
-                                   onFocus={(e) => {
-                                     if (!canCompleteTask(task)) return;
-                                     if (
-                                       shouldAutoOpenStatusMenuOnFocus(
-                                         e.currentTarget,
-                                         statusTriggerPointerDownTaskIdsRef.current.has(task.id)
-                                       )
-                                     ) {
-                                       allowStatusMenuOpen(task.id);
-                                       openStatusMenu(task.id);
-                                     }
-                                     statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                                   }}
+                                    onFocus={() => {
+                                      // Tab focus must not auto-open the status menu.
+                                      statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                                    }}
                                    onPointerDown={() => {
                                      statusTriggerPointerDownTaskIdsRef.current.add(task.id);
                                      clearStatusMenuOpenIntent(task.id);
@@ -1005,19 +996,10 @@ export function CalendarView({
                                     focusOnQuickToggle: hasChildren(task.id),
                                   });
                                 }}
-                                onFocus={(e) => {
-                                  if (!canCompleteTask(task)) return;
-                                  if (
-                                    shouldAutoOpenStatusMenuOnFocus(
-                                      e.currentTarget,
-                                      statusTriggerPointerDownTaskIdsRef.current.has(task.id)
-                                    )
-                                  ) {
-                                    allowStatusMenuOpen(task.id);
-                                    openStatusMenu(task.id);
-                                  }
-                                  statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                                }}
+                                 onFocus={() => {
+                                   // Tab focus must not auto-open the status menu.
+                                   statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                                 }}
                                 onPointerDown={() => {
                                   statusTriggerPointerDownTaskIdsRef.current.add(task.id);
                                   clearStatusMenuOpenIntent(task.id);
