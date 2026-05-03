@@ -2189,7 +2189,7 @@ export function TaskComposer({
               aria-label={submitActionLabel}
               title={submitButtonTitle}
               className={cn(
-                "min-w-[12.5rem] px-4 py-2 text-sm disabled:cursor-not-allowed flex items-center justify-center gap-2 outline-none focus-visible:brightness-125 focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary-foreground)),inset_0_0_0_4px_hsl(var(--primary))]",
+                "min-w-[12.5rem] px-4 py-2 rounded-md text-sm disabled:cursor-not-allowed flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isSubmitButtonEmptyDisabled
                   ? "border border-primary/40 bg-primary/45 text-primary-foreground/85 disabled:opacity-100"
                   : submitBlock && !submitBlock.isHardDisabled
