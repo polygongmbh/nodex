@@ -1,7 +1,7 @@
 import { memo, useMemo, type ReactNode } from "react";
 import { HandHelping, MessageSquare, Package } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
+import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 
 import {
   DropdownMenu,
