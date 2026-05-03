@@ -131,12 +131,9 @@ export function useTaskStatusMenu({
         focusOnQuickToggle,
       });
     },
-    onFocus: (event: FocusEvent<HTMLElement>) => {
-      if (!canCompleteTask) return;
-      if (shouldAutoOpenStatusMenuOnFocus(event.currentTarget, statusTriggerPointerDownRef.current)) {
-        allowStatusMenuOpenRef.current = true;
-        setStatusMenuOpen(true);
-      }
+    onFocus: () => {
+      // Tab focus must not auto-open the status menu — keyboard users open it
+      // explicitly via Space/Enter/ArrowDown (handled by Radix on the trigger).
       statusTriggerPointerDownRef.current = false;
     },
     onPointerDown: (event: PointerEvent<HTMLElement>) => {
