@@ -110,6 +110,20 @@ export function useTaskStatusMenu({
         event.stopPropagation();
         return;
       }
+      // Keyboard-activated click (Space/Enter): event.detail === 0. Open the
+      // status menu so keyboard users can pick a state, instead of running the
+      // pointer toggle path which would close whatever Radix just opened.
+      if (event.detail === 0) {
+        event.stopPropagation();
+        event.preventDefault();
+        if (statusMenuOpen) {
+          closeStatusMenu();
+        } else {
+          allowStatusMenuOpenRef.current = true;
+          setStatusMenuOpen(true);
+        }
+        return;
+      }
       handleTaskStatusToggleClick(event, {
         status: task.status,
         hasStatusChangeHandler: canCompleteTask,
