@@ -37,4 +37,31 @@ describe("useTaskNavigation", () => {
     expect(screen.getByTestId("focused-task")).toHaveTextContent("task-1");
     expect(onSelectTask).not.toHaveBeenCalled();
   });
+
+  it("ignores arrow keys while a Radix dropdown menu is open", () => {
+    const onSelectTask = vi.fn();
+    render(<Harness onSelectTask={onSelectTask} />);
+
+    // Move feed selection to task-1 first.
+    fireEvent.keyDown(window, { key: "ArrowDown" });
+    expect(screen.getByTestId("focused-task")).toHaveTextContent("task-1");
+
+    // Simulate an open Radix DropdownMenu.Content in the DOM.
+    const menu = document.createElement("div");
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("data-state", "open");
+    document.body.appendChild(menu);
+
+    try {
+      fireEvent.keyDown(window, { key: "ArrowDown" });
+      // Selection must not advance while the menu is open.
+      expect(screen.getByTestId("focused-task")).toHaveTextContent("task-1");
+    } finally {
+      menu.remove();
+    }
+
+    // Once the menu is gone, navigation resumes.
+    fireEvent.keyDown(window, { key: "ArrowDown" });
+    expect(screen.getByTestId("focused-task")).toHaveTextContent("task-2");
+  });
 });
