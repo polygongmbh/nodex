@@ -8,6 +8,7 @@ import { FeedTaskCard } from "./feed/FeedTaskCard";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
+import { useScrollPositionRestore } from "@/hooks/use-scroll-position-restore";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { formatAuthorMetaParts } from "@/types/person";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -295,6 +296,7 @@ export function FeedView({
 
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useScrollPositionRestore(focusedTaskId, scrollContainerRef);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
 
   const getRevealThresholdPx = (container: HTMLDivElement) =>

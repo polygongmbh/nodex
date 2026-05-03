@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Tree and timeline views now restore their scroll position when navigating back up from a subtask.
+
 ### Fixed
 - Production deployments now return a real `404` for missing built files under `/assets/` instead of falling back to `index.html`, preventing stale chunk requests from failing with `text/html is not a valid JavaScript MIME type`.
 

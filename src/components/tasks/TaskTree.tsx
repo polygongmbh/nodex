@@ -5,6 +5,7 @@ import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
+import { useScrollPositionRestore } from "@/hooks/use-scroll-position-restore";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import {
@@ -108,6 +109,7 @@ export function TaskTree({
 
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useScrollPositionRestore(normalizedFocusedTaskId, scrollContainerRef);
   const previousRowPositionsRef = useRef<Map<string, number>>(new Map());
   const previousTopLevelOrderRef = useRef<string[]>([]);
   const prefersReducedMotionRef = useRef(false);
