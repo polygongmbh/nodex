@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,6 +31,7 @@ import { useListingStatusPublish } from "@/features/feed-page/controllers/use-li
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
 import { useRelayScopedPresence } from "@/features/feed-page/controllers/use-relay-scoped-presence";
 import { type FeedPageCoreHandlers } from "@/features/feed-page/views/FeedPageProviders";
+import { type ScrollCaptureRef } from "@/features/feed-page/views/scroll-capture-context";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
@@ -458,6 +459,12 @@ function FeedIndexContent() {
     }).length > 0;
   }, [allTasks, people, relayScopedTasks, searchQuery]);
 
+  const scrollCaptureRef = useRef<ScrollCaptureRef["current"]>(null);
+  const onCaptureScrollTop = useCallback(() => scrollCaptureRef.current?.getScrollTop(), []);
+  const onRestoreScrollTop = useCallback((scrollTop: number) => {
+    scrollCaptureRef.current?.setScrollTop(scrollTop);
+  }, []);
+
   const { discardTaskScopeFilterRestore } = useTaskScopeSpecificFilters({
     focusedTaskId,
     currentFilterSnapshot,
@@ -465,6 +472,8 @@ function FeedIndexContent() {
     setChannelFilterStates,
     setChannelMatchMode,
     setPeople,
+    onCaptureScrollTop,
+    onRestoreScrollTop,
   });
 
   const {
@@ -775,6 +784,7 @@ function FeedIndexContent() {
       viewCommands={viewCommands}
       taskCommands={taskCommands}
       sidebarController={isMobile ? undefined : desktopSidebarController}
+      scrollCaptureRef={scrollCaptureRef}
     >
       <MotdBanner />
       {isMobile ? (

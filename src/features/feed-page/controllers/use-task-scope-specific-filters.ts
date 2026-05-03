@@ -14,6 +14,10 @@ interface UseTaskScopeSpecificFiltersOptions {
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setChannelMatchMode: Dispatch<SetStateAction<ChannelMatchMode>>;
   setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
+  /** Called when entering a scoped task to capture the current scroll position. */
+  onCaptureScrollTop?: () => number | undefined;
+  /** Called when leaving a scoped task, only if filters are being restored. */
+  onRestoreScrollTop?: (scrollTop: number) => void;
   restoreTimeoutMs?: number;
   now?: () => number;
 }
@@ -31,6 +35,8 @@ export function useTaskScopeSpecificFilters({
   setChannelFilterStates,
   setChannelMatchMode,
   setPeople,
+  onCaptureScrollTop,
+  onRestoreScrollTop,
   restoreTimeoutMs = TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS,
   now = () => Date.now(),
 }: UseTaskScopeSpecificFiltersOptions) {
@@ -38,6 +44,7 @@ export function useTaskScopeSpecificFilters({
   const suspendedSnapshotRef = useRef<{
     snapshot: FilterSnapshot;
     enteredScopedAtMs: number;
+    scrollTop?: number;
   } | null>(null);
 
   useEffect(() => {
@@ -50,6 +57,7 @@ export function useTaskScopeSpecificFilters({
         suspendedSnapshotRef.current = {
           snapshot: currentFilterSnapshot,
           enteredScopedAtMs: now(),
+          scrollTop: onCaptureScrollTop?.(),
         };
       }
 
@@ -62,7 +70,7 @@ export function useTaskScopeSpecificFilters({
     }
 
     if (leavingScopedTask && suspendedSnapshotRef.current !== null) {
-      const { snapshot, enteredScopedAtMs } = suspendedSnapshotRef.current;
+      const { snapshot, enteredScopedAtMs, scrollTop } = suspendedSnapshotRef.current;
       const hasCurrentChannelFilters = Object.keys(currentFilterSnapshot.channelStates).length > 0;
       const hasCurrentPeopleFilters = currentFilterSnapshot.selectedPeopleIds.length > 0;
       const shouldPreserveCurrentSelections = hasCurrentChannelFilters || hasCurrentPeopleFilters;
@@ -75,6 +83,9 @@ export function useTaskScopeSpecificFilters({
         setPeople((previous) =>
           mapPeopleSelection(previous, (person) => snapshot.selectedPeopleIds.includes(person.pubkey))
         );
+        if (scrollTop !== undefined) {
+          onRestoreScrollTop?.(scrollTop);
+        }
       }
 
       suspendedSnapshotRef.current = null;
@@ -85,6 +96,8 @@ export function useTaskScopeSpecificFilters({
     currentFilterSnapshot,
     focusedTaskId,
     now,
+    onCaptureScrollTop,
+    onRestoreScrollTop,
     restoreTimeoutMs,
     setChannelFilterStates,
     setChannelMatchMode,

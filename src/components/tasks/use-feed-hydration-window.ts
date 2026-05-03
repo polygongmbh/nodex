@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 const INITIAL_VISIBLE_FEED_ENTRIES = 40;
@@ -20,6 +20,8 @@ export function useFeedHydrationWindow({
   disclosureKey,
   totalEntryCount,
 }: UseFeedHydrationWindowOptions): UseFeedHydrationWindowResult {
+  const keyCountHistoryRef = useRef<Map<string, number>>(new Map());
+
   const [windowState, setWindowState] = useState(() => ({
     key: disclosureKey,
     visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
@@ -28,14 +30,22 @@ export function useFeedHydrationWindow({
   const visibleEntryCount =
     windowState.key === disclosureKey
       ? windowState.visibleEntryCount
-      : INITIAL_VISIBLE_FEED_ENTRIES;
+      : (keyCountHistoryRef.current.get(disclosureKey) ?? INITIAL_VISIBLE_FEED_ENTRIES);
   const hasMoreEntries = totalEntryCount > visibleEntryCount;
 
   useEffect(() => {
     startTransition(() => {
-      setWindowState({
-        key: disclosureKey,
-        visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
+      setWindowState((prev) => {
+        if (prev.key === disclosureKey) return prev;
+        // Save the count for the key we're leaving so it can be restored on return.
+        keyCountHistoryRef.current.set(prev.key, prev.visibleEntryCount);
+        if (keyCountHistoryRef.current.size > 2) {
+          keyCountHistoryRef.current.delete(keyCountHistoryRef.current.keys().next().value!);
+        }
+        return {
+          key: disclosureKey,
+          visibleEntryCount: keyCountHistoryRef.current.get(disclosureKey) ?? INITIAL_VISIBLE_FEED_ENTRIES,
+        };
       });
     });
   }, [disclosureKey]);

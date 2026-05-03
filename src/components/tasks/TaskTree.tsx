@@ -5,7 +5,7 @@ import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { useScrollPositionRestore } from "@/hooks/use-scroll-position-restore";
+import { useScrollCapture } from "@/features/feed-page/views/scroll-capture-context";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import {
@@ -109,7 +109,22 @@ export function TaskTree({
 
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  useScrollPositionRestore(normalizedFocusedTaskId, scrollContainerRef);
+  const currentScrollTopRef = useRef(0);
+  const scrollCaptureRef = useScrollCapture();
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const handleScroll = () => { currentScrollTopRef.current = el.scrollTop; };
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
+  useEffect(() => {
+    scrollCaptureRef.current = {
+      getScrollTop: () => currentScrollTopRef.current,
+      setScrollTop: (n) => { if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = n; },
+    };
+    return () => { scrollCaptureRef.current = null; };
+  }, [scrollCaptureRef]);
   const previousRowPositionsRef = useRef<Map<string, number>>(new Map());
   const previousTopLevelOrderRef = useRef<string[]>([]);
   const prefersReducedMotionRef = useRef(false);

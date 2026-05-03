@@ -8,7 +8,7 @@ import { FeedTaskCard } from "./feed/FeedTaskCard";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { useScrollPositionRestore } from "@/hooks/use-scroll-position-restore";
+import { useScrollCapture } from "@/features/feed-page/views/scroll-capture-context";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { formatAuthorMetaParts } from "@/types/person";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -296,7 +296,22 @@ export function FeedView({
 
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  useScrollPositionRestore(focusedTaskId, scrollContainerRef);
+  const currentScrollTopRef = useRef(0);
+  const scrollCaptureRef = useScrollCapture();
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const handleScroll = () => { currentScrollTopRef.current = el.scrollTop; };
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
+  useEffect(() => {
+    scrollCaptureRef.current = {
+      getScrollTop: () => currentScrollTopRef.current,
+      setScrollTop: (n) => { if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = n; },
+    };
+    return () => { scrollCaptureRef.current = null; };
+  }, [scrollCaptureRef]);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
 
   const getRevealThresholdPx = (container: HTMLDivElement) =>

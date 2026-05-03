@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { makePerson } from "@/test/fixtures";
 import { makeFilterSnapshot } from "@/test/filter-state";
 import type { Channel, ChannelMatchMode } from "@/types";
@@ -19,10 +19,12 @@ function Harness({
   initialFocusedTaskId = null,
   restoreTimeoutMs = TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS,
   shouldRestoreSnapshot,
+  initialScrollTop = 0,
 }: {
   initialFocusedTaskId?: string | null;
   restoreTimeoutMs?: number;
   shouldRestoreSnapshot?: Parameters<typeof useTaskScopeSpecificFilters>[0]["shouldRestoreSnapshot"];
+  initialScrollTop?: number;
 }) {
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(initialFocusedTaskId);
   const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
@@ -34,6 +36,8 @@ function Harness({
   const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>("or");
   const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
   const nowRef = useRef(0);
+  const scrollTopRef = useRef(initialScrollTop);
+  const restoredScrollTopRef = useRef<number | null>(null);
 
   const currentFilterSnapshot = useMemo(
     () =>
@@ -47,6 +51,9 @@ function Harness({
     [channelFilterStates, channelMatchMode, people]
   );
 
+  const onCaptureScrollTop = useCallback(() => scrollTopRef.current, []);
+  const onRestoreScrollTop = useCallback((scrollTop: number) => { restoredScrollTopRef.current = scrollTop; }, []);
+
   const { discardTaskScopeFilterRestore } = useTaskScopeSpecificFilters({
     focusedTaskId,
     currentFilterSnapshot,
@@ -54,6 +61,8 @@ function Harness({
     setChannelFilterStates,
     setChannelMatchMode,
     setPeople,
+    onCaptureScrollTop,
+    onRestoreScrollTop,
     restoreTimeoutMs,
     now: () => nowRef.current,
   });
@@ -64,6 +73,7 @@ function Harness({
       <button onClick={() => setFocusedTaskId("task-2")}>FocusTwo</button>
       <button onClick={() => setFocusedTaskId(null)}>Unfocus</button>
       <button onClick={() => { nowRef.current = restoreTimeoutMs + 1; }}>AdvancePastTimeout</button>
+      <button onClick={() => { scrollTopRef.current = 300; }}>ScrollTo300</button>
       <button
         onClick={() => {
           setChannelFilterStates(new Map([["ops", "included"]]));
@@ -81,6 +91,7 @@ function Harness({
       <output data-testid="selected-people">
         {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
       </output>
+      <output data-testid="restored-scroll">{restoredScrollTopRef.current ?? "none"}</output>
     </>
   );
 }
@@ -197,5 +208,66 @@ describe("useTaskScopeSpecificFilters", () => {
     expect(screen.getByTestId("channel-ops")).toHaveTextContent("excluded");
     expect(screen.getByTestId("match-mode")).toHaveTextContent("or");
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
+  });
+
+  describe("scroll position capture and restore", () => {
+    it("restores scroll position when leaving task scope", () => {
+      render(<Harness restoreTimeoutMs={1000} initialScrollTop={300} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "FocusOne" }));
+      fireEvent.click(screen.getByRole("button", { name: "Unfocus" }));
+
+      expect(screen.getByTestId("restored-scroll")).toHaveTextContent("300");
+    });
+
+    it("does not restore scroll when the timeout has expired", () => {
+      render(<Harness restoreTimeoutMs={1000} initialScrollTop={300} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "FocusOne" }));
+      fireEvent.click(screen.getByRole("button", { name: "AdvancePastTimeout" }));
+      fireEvent.click(screen.getByRole("button", { name: "Unfocus" }));
+
+      expect(screen.getByTestId("restored-scroll")).toHaveTextContent("none");
+    });
+
+    it("does not restore scroll when the user set new filters while scoped", () => {
+      render(<Harness restoreTimeoutMs={1000} initialScrollTop={300} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "FocusOne" }));
+      fireEvent.click(screen.getByRole("button", { name: "MutateWhileScoped" }));
+      fireEvent.click(screen.getByRole("button", { name: "Unfocus" }));
+
+      expect(screen.getByTestId("restored-scroll")).toHaveTextContent("none");
+    });
+
+    it("does not restore scroll when restore is discarded", () => {
+      render(<Harness restoreTimeoutMs={1000} initialScrollTop={300} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "FocusOne" }));
+      fireEvent.click(screen.getByRole("button", { name: "DiscardRestore" }));
+      fireEvent.click(screen.getByRole("button", { name: "Unfocus" }));
+
+      expect(screen.getByTestId("restored-scroll")).toHaveTextContent("none");
+    });
+
+    it("captures the scroll position at the moment of entering scope", () => {
+      render(<Harness restoreTimeoutMs={1000} initialScrollTop={100} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "ScrollTo300" }));
+      fireEvent.click(screen.getByRole("button", { name: "FocusOne" }));
+      fireEvent.click(screen.getByRole("button", { name: "Unfocus" }));
+
+      expect(screen.getByTestId("restored-scroll")).toHaveTextContent("300");
+    });
+
+    it("preserves the original scroll position when moving between focused tasks", () => {
+      render(<Harness restoreTimeoutMs={1000} initialScrollTop={400} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "FocusOne" }));
+      fireEvent.click(screen.getByRole("button", { name: "FocusTwo" }));
+      fireEvent.click(screen.getByRole("button", { name: "Unfocus" }));
+
+      expect(screen.getByTestId("restored-scroll")).toHaveTextContent("400");
+    });
   });
 });
