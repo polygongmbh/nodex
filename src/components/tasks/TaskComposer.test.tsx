@@ -272,6 +272,12 @@ describe("TaskComposer", () => {
     expect(mentionChip).toHaveAttribute("tabindex", "-1");
   });
 
+  it("keeps the hidden desktop kind select out of the sequential tab order", () => {
+    renderComposer();
+
+    expect(screen.getByLabelText(/kind/i)).toHaveAttribute("tabindex", "-1");
+  });
+
   it("does not restore drafts without text, attachments, or NIP-99 content", () => {
     // Auxiliary state alone (date/priority/tags/mentions/location) must not
     // leak from a previous composer context (e.g. the calendar view) into a

@@ -2077,6 +2077,7 @@ export function TaskComposer({
                   aria-label={t("composer.labels.kind")}
                   value={taskType}
                   onChange={(event) => setTaskType(event.target.value as ComposerMessageType)}
+                  tabIndex={-1}
                   className="sr-only"
                 >
                   <option value="task">{t("composer.labels.task")}</option>
