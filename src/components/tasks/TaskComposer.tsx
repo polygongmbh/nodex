@@ -2065,7 +2065,7 @@ export function TaskComposer({
         </div>
 
         <div className="ml-auto flex min-w-0 flex-col gap-1 sm:items-end">
-          <div className="inline-flex self-end rounded-xl border border-border/40 shadow-sm">
+          <div className="inline-flex self-end overflow-hidden rounded-xl border border-border/40 shadow-sm">
             {allowComment && (
               <div
                 data-onboarding="compose-kind"
@@ -2167,7 +2167,7 @@ export function TaskComposer({
                   <button
                     type="button"
                     onClick={handleSubmit}
-                    className="min-w-[12.5rem] px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90 flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="min-w-[12.5rem] px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 flex items-center justify-center gap-2 outline-none focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary-foreground))]"
                     aria-label={t("composer.actions.signin")}
                     title={t("composer.blocked.signin")}
                   >
@@ -2189,7 +2189,7 @@ export function TaskComposer({
               aria-label={submitActionLabel}
               title={submitButtonTitle}
               className={cn(
-                "min-w-[12.5rem] px-4 py-2 rounded-md text-sm disabled:cursor-not-allowed flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "min-w-[12.5rem] px-4 py-2 text-sm disabled:cursor-not-allowed flex items-center justify-center gap-2 outline-none focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary-foreground))]",
                 isSubmitButtonEmptyDisabled
                   ? "border border-primary/40 bg-primary/45 text-primary-foreground/85 disabled:opacity-100"
                   : submitBlock && !submitBlock.isHardDisabled
