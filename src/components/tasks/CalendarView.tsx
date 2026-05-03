@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect, type KeyboardEvent } from "react";
 import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
@@ -399,6 +399,15 @@ export function CalendarView({
 
   const clearStatusMenuOpenIntent = (taskId: string) => {
     allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
+  };
+
+  const handleStatusTriggerKeyDown = (event: KeyboardEvent<HTMLElement>, task: Task) => {
+    if (!canCompleteTask(task)) return;
+    if (event.key !== "Enter" && event.key !== " " && event.key !== "ArrowDown") return;
+    event.preventDefault();
+    event.stopPropagation();
+    allowStatusMenuOpen(task.id);
+    openStatusMenu(task.id);
   };
 
   const navigateMonth = (direction: "prev" | "next") => {
