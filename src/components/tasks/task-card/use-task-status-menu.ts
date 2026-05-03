@@ -132,12 +132,8 @@ export function useTaskStatusMenu({
       if (event.detail === 0) {
         event.stopPropagation();
         event.preventDefault();
-        if (statusMenuOpen) {
-          closeStatusMenu();
-        } else {
-          allowStatusMenuOpenRef.current = true;
-          setStatusMenuOpen(true);
-        }
+        allowStatusMenuOpenRef.current = true;
+        setStatusMenuOpen(true);
         return;
       }
       handleTaskStatusToggleClick(event, {
