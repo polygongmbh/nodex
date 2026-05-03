@@ -532,6 +532,11 @@ export function CalendarView({
                                        e.stopPropagation();
                                        return;
                                      }
+                                      if (statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id)) {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        return;
+                                      }
                                      handleTaskStatusToggleClick(e, {
                                        status: task.status,
                                        hasStatusChangeHandler: canCompleteTask(task),
@@ -996,6 +1001,11 @@ export function CalendarView({
                                     e.stopPropagation();
                                     return;
                                   }
+                                      if (statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id)) {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        return;
+                                      }
                                   handleTaskStatusToggleClick(e, {
                                     status: task.status,
                                     hasStatusChangeHandler: canCompleteTask(task),
