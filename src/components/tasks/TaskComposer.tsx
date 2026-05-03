@@ -2065,7 +2065,7 @@ export function TaskComposer({
         </div>
 
         <div className="ml-auto flex min-w-0 flex-col gap-1 sm:items-end">
-          <div className="inline-flex self-end rounded-xl border border-border/40 shadow-sm">
+          <div className="inline-flex self-end overflow-hidden rounded-xl border border-border/40 shadow-sm">
             {allowComment && (
               <div
                 data-onboarding="compose-kind"
