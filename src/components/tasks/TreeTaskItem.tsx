@@ -438,23 +438,18 @@ export function TreeTaskItem({
               </button>
             </DropdownMenuTrigger>
             {canCompleteTask() && (
-              <DropdownMenuContent
-                align="start"
-                onOpenAutoFocus={(event) => {
-                  const content = event.currentTarget as HTMLElement | null;
-                  const current = content?.querySelector<HTMLElement>('[data-current-status="true"]');
-                  if (current) {
-                    event.preventDefault();
-                    current.focus();
-                  }
-                }}
-              >
+              <DropdownMenuContent align="start">
                 {getTaskStateRegistry().map((state) => {
                   const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
                   return (
                     <DropdownMenuItem
                       key={state.id}
                       data-current-status={isCurrent || undefined}
+                      ref={isCurrent ? (node) => {
+                        if (node && statusMenuOpen) {
+                          requestAnimationFrame(() => node.focus());
+                        }
+                      } : undefined}
                       onClick={(e) => {
                         e.stopPropagation();
                         void dispatchFeedInteraction({
