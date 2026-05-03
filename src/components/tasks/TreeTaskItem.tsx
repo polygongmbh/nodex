@@ -438,24 +438,38 @@ export function TreeTaskItem({
               </button>
             </DropdownMenuTrigger>
             {canCompleteTask() && (
-              <DropdownMenuContent align="start">
-                {getTaskStateRegistry().map((state) => (
-                  <DropdownMenuItem
-                    key={state.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void dispatchFeedInteraction({
-                        type: "task.changeStatus",
-                        taskId: task.id,
-                        status: toTaskStatusFromStateDefinition(state),
-                      });
-                    }}
-                    className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
-                  >
-                    <TaskStateDefIcon state={state} className="mr-2" />
-                    {state.label}
-                  </DropdownMenuItem>
-                ))}
+              <DropdownMenuContent
+                align="start"
+                onOpenAutoFocus={(event) => {
+                  const content = event.currentTarget as HTMLElement | null;
+                  const current = content?.querySelector<HTMLElement>('[data-current-status="true"]');
+                  if (current) {
+                    event.preventDefault();
+                    current.focus();
+                  }
+                }}
+              >
+                {getTaskStateRegistry().map((state) => {
+                  const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
+                  return (
+                    <DropdownMenuItem
+                      key={state.id}
+                      data-current-status={isCurrent || undefined}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void dispatchFeedInteraction({
+                          type: "task.changeStatus",
+                          taskId: task.id,
+                          status: toTaskStatusFromStateDefinition(state),
+                        });
+                      }}
+                      className={cn(isCurrent && "bg-muted")}
+                    >
+                      <TaskStateDefIcon state={state} className="mr-2" />
+                      {state.label}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             )}
           </DropdownMenu>
