@@ -71,6 +71,7 @@ export function useTaskStatusMenu({
 
   const closeStatusMenu = useCallback(() => {
     allowStatusMenuOpenRef.current = false;
+    statusMenuOpenedFromKeyboardRef.current = false;
     statusMenuOpenedOnPointerDownRef.current = false;
     setStatusMenuOpen(false);
   }, []);
