@@ -577,6 +577,7 @@ export function CalendarView({
                                    onBlur={() => {
                                      statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                      clearStatusMenuOpenIntent(task.id);
+                                      statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id);
                                      statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                                    }}
                                    disabled={!canCompleteTask(task)}
@@ -1046,6 +1047,7 @@ export function CalendarView({
                                 onBlur={() => {
                                   statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                   clearStatusMenuOpenIntent(task.id);
+                                   statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id);
                                   statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                                 }}
                                 disabled={!canCompleteTask(task)}
