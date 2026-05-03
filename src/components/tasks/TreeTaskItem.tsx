@@ -439,23 +439,32 @@ export function TreeTaskItem({
             </DropdownMenuTrigger>
             {canCompleteTask() && (
               <DropdownMenuContent align="start">
-                {getTaskStateRegistry().map((state) => (
-                  <DropdownMenuItem
-                    key={state.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void dispatchFeedInteraction({
-                        type: "task.changeStatus",
-                        taskId: task.id,
-                        status: toTaskStatusFromStateDefinition(state),
-                      });
-                    }}
-                    className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
-                  >
-                    <TaskStateDefIcon state={state} className="mr-2" />
-                    {state.label}
-                  </DropdownMenuItem>
-                ))}
+                {getTaskStateRegistry().map((state) => {
+                  const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
+                  return (
+                    <DropdownMenuItem
+                      key={state.id}
+                      data-current-status={isCurrent || undefined}
+                      ref={isCurrent ? (node) => {
+                        if (node && statusMenuOpen) {
+                          requestAnimationFrame(() => node.focus());
+                        }
+                      } : undefined}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void dispatchFeedInteraction({
+                          type: "task.changeStatus",
+                          taskId: task.id,
+                          status: toTaskStatusFromStateDefinition(state),
+                        });
+                      }}
+                      className={cn(isCurrent && "bg-muted")}
+                    >
+                      <TaskStateDefIcon state={state} className="mr-2" />
+                      {state.label}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             )}
           </DropdownMenu>

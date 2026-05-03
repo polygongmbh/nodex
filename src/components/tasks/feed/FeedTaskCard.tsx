@@ -1,7 +1,7 @@
 import { memo, useMemo, type ReactNode } from "react";
 import { HandHelping, MessageSquare, Package } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry } from "@/domain/task-states/task-state-config";
+import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 
 import {
   DropdownMenu,
@@ -270,12 +270,24 @@ export const FeedTaskCard = memo(function FeedTaskCard({
               </DropdownMenuTrigger>
               {canCompleteTask ? (
                 <DropdownMenuContent align="start">
-                  {getTaskStateRegistry().map((state) => (
-                    <DropdownMenuItem key={state.id} onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id); }}>
-                      <TaskStateDefIcon state={state} className="mr-2" />
-                      {state.label}
-                    </DropdownMenuItem>
-                  ))}
+                  {getTaskStateRegistry().map((state) => {
+                    const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
+                    return (
+                      <DropdownMenuItem
+                        key={state.id}
+                        ref={isCurrent ? (node) => {
+                          if (node && statusMenuOpen) {
+                            requestAnimationFrame(() => node.focus());
+                          }
+                        } : undefined}
+                        className={cn(isCurrent && "bg-muted")}
+                        onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id); }}
+                      >
+                        <TaskStateDefIcon state={state} className="mr-2" />
+                        {state.label}
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuContent>
               ) : null}
             </DropdownMenu>

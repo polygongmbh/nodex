@@ -592,21 +592,29 @@ export function CalendarView({
                                  </button>
                                </DropdownMenuTrigger>
                                {canCompleteTask(task) && (
-                                 <DropdownMenuContent align="start">
-                                   {getTaskStateRegistry().map((state) => (
-                                     <DropdownMenuItem
-                                       key={state.id}
-                                       onClick={(event) => {
-                                         event.stopPropagation();
-                                         dispatchStatusChange(task.id, state.id);
-                                       }}
-                                       className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
-                                     >
-                                       <TaskStateDefIcon state={state} className="mr-2" />
-                                       {state.label}
-                                     </DropdownMenuItem>
-                                   ))}
-                                 </DropdownMenuContent>
+                                  <DropdownMenuContent align="start">
+                                    {getTaskStateRegistry().map((state) => {
+                                      const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
+                                      return (
+                                        <DropdownMenuItem
+                                          key={state.id}
+                                          ref={isCurrent ? (node) => {
+                                            if (node && statusMenuOpenByTaskId[task.id]) {
+                                              requestAnimationFrame(() => node.focus());
+                                            }
+                                          } : undefined}
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            dispatchStatusChange(task.id, state.id);
+                                          }}
+                                          className={cn(isCurrent && "bg-muted")}
+                                        >
+                                          <TaskStateDefIcon state={state} className="mr-2" />
+                                          {state.label}
+                                        </DropdownMenuItem>
+                                      );
+                                    })}
+                                  </DropdownMenuContent>
                                )}
                              </DropdownMenu>
                              <div className="flex-1 min-w-0">
@@ -1063,19 +1071,27 @@ export function CalendarView({
                             </DropdownMenuTrigger>
                             {canCompleteTask(task) && (
                               <DropdownMenuContent align="start">
-                                {getTaskStateRegistry().map((state) => (
-                                  <DropdownMenuItem
-                                    key={state.id}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      dispatchStatusChange(task.id, state.id);
-                                    }}
-                                    className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
-                                  >
-                                    <TaskStateDefIcon state={state} className="mr-2" />
-                                    {state.label}
-                                  </DropdownMenuItem>
-                                ))}
+                                {getTaskStateRegistry().map((state) => {
+                                  const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
+                                  return (
+                                    <DropdownMenuItem
+                                      key={state.id}
+                                      ref={isCurrent ? (node) => {
+                                        if (node && statusMenuOpenByTaskId[task.id]) {
+                                          requestAnimationFrame(() => node.focus());
+                                        }
+                                      } : undefined}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        dispatchStatusChange(task.id, state.id);
+                                      }}
+                                      className={cn(isCurrent && "bg-muted")}
+                                    >
+                                      <TaskStateDefIcon state={state} className="mr-2" />
+                                      {state.label}
+                                    </DropdownMenuItem>
+                                  );
+                                })}
                               </DropdownMenuContent>
                             )}
                           </DropdownMenu>
