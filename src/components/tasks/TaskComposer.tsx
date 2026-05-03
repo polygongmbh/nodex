@@ -2167,7 +2167,7 @@ export function TaskComposer({
                   <button
                     type="button"
                     onClick={handleSubmit}
-                    className="min-w-[12.5rem] px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 flex items-center justify-center gap-2 outline-none focus-visible:brightness-125 focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary-foreground)),inset_0_0_0_4px_hsl(var(--primary))]"
+                    className="min-w-[12.5rem] px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:bg-primary/90 flex items-center justify-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-label={t("composer.actions.signin")}
                     title={t("composer.blocked.signin")}
                   >
