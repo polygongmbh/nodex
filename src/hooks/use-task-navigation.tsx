@@ -123,8 +123,14 @@ export function useTaskNavigation({
         return;
       }
 
-      // Pause task-list navigation while any modal dialog is open.
-      if (document.querySelector('[role="dialog"][data-state="open"]')) {
+      // Pause task-list navigation while any open overlay owns keyboard focus
+      // (modals, dropdown menus, listboxes, comboboxes). Without this, arrow
+      // keys would both navigate the open menu AND move the feed selection.
+      if (
+        document.querySelector(
+          '[role="dialog"][data-state="open"], [role="menu"][data-state="open"], [role="listbox"][data-state="open"], [role="combobox"][aria-expanded="true"]'
+        )
+      ) {
         return;
       }
 
