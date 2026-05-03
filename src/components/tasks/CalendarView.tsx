@@ -523,6 +523,7 @@ export function CalendarView({
                              >
                                <DropdownMenuTrigger asChild>
                                  <button
+                                    onKeyDown={(event) => handleStatusTriggerKeyDown(event, task)}
                                    onClick={(e) => {
                                      if (!canCompleteTask(task)) return;
                                      if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
@@ -986,6 +987,7 @@ export function CalendarView({
                           >
                             <DropdownMenuTrigger asChild>
                               <button
+                                onKeyDown={(event) => handleStatusTriggerKeyDown(event, task)}
                                 onClick={(e) => {
                                   if (!canCompleteTask(task)) return;
                                   if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
