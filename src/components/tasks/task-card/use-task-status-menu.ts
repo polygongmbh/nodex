@@ -1,6 +1,5 @@
-import { useCallback, useRef, useState, type FocusEvent, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
-import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
 import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -131,12 +130,9 @@ export function useTaskStatusMenu({
         focusOnQuickToggle,
       });
     },
-    onFocus: (event: FocusEvent<HTMLElement>) => {
-      if (!canCompleteTask) return;
-      if (shouldAutoOpenStatusMenuOnFocus(event.currentTarget, statusTriggerPointerDownRef.current)) {
-        allowStatusMenuOpenRef.current = true;
-        setStatusMenuOpen(true);
-      }
+    onFocus: () => {
+      // Tab focus must not auto-open the status menu — keyboard users open it
+      // explicitly via Space/Enter/ArrowDown (handled by Radix on the trigger).
       statusTriggerPointerDownRef.current = false;
     },
     onPointerDown: (event: PointerEvent<HTMLElement>) => {

@@ -12,7 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
-import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
+
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_CHIP_STYLES, TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
@@ -395,17 +395,8 @@ export function TreeTaskItem({
                       focusOnQuickToggle: hasChildren,
                     });
                   }}
-                onFocus={(e) => {
-                  if (!canCompleteTask()) return;
-                  if (
-                    shouldAutoOpenStatusMenuOnFocus(
-                      e.currentTarget,
-                      statusTriggerPointerDownRef.current
-                    )
-                  ) {
-                    allowStatusMenuOpenRef.current = true;
-                    setStatusMenuOpen(true);
-                  }
+                onFocus={() => {
+                  // Tab focus must not auto-open the status menu.
                   statusTriggerPointerDownRef.current = false;
                 }}
                 onPointerDown={() => {
