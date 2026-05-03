@@ -4,27 +4,56 @@ import { describe, expect, it, vi } from "vitest";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
 
-function ControlledNoasAuthForm({
-  onLogin = vi.fn(async () => true),
-  onNoasHostUrlChange,
-  initialUsername = "",
-  initialPassword = "",
-  initialNoasHostUrl = "https://noas.example.com",
-  error,
-  allowDirectHostEdit = false,
-}: {
+type ControlledNoasFormProps = {
+  mode?: "signIn" | "signUp";
   onLogin?: Parameters<typeof NoasAuthForm>[0]["onLogin"];
+  onSignUp?: Parameters<typeof NoasSignUpForm>[0]["onSignUp"];
   onNoasHostUrlChange?: (value: string) => void;
   initialUsername?: string;
   initialPassword?: string;
   initialNoasHostUrl?: string;
   error?: string;
   allowDirectHostEdit?: boolean;
-}) {
+};
+
+function ControlledNoasForm({
+  mode = "signIn",
+  onLogin = vi.fn(async () => true),
+  onSignUp = vi.fn(async () => true),
+  onNoasHostUrlChange,
+  initialUsername = "",
+  initialPassword = "",
+  initialNoasHostUrl = "https://noas.example.com",
+  error,
+  allowDirectHostEdit = false,
+}: ControlledNoasFormProps) {
   const [username, setUsername] = useState(initialUsername);
   const [password, setPassword] = useState(initialPassword);
   const [noasHostUrl, setNoasHostUrl] = useState(initialNoasHostUrl);
   const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
+
+  if (mode === "signUp") {
+    return (
+      <NoasSignUpForm
+        onSignUp={onSignUp}
+        onSignIn={vi.fn()}
+        username={username}
+        password={password}
+        isEditingHostUrl={false}
+        allowDirectHostEdit={allowDirectHostEdit}
+        isLoading={false}
+        error={error}
+        noasHostUrl={noasHostUrl}
+        onUsernameChange={setUsername}
+        onPasswordChange={setPassword}
+        onNoasHostUrlChange={(value) => {
+          setNoasHostUrl(value);
+          onNoasHostUrlChange?.(value);
+        }}
+        onToggleHostEdit={vi.fn()}
+      />
+    );
+  }
 
   return (
     <NoasAuthForm
@@ -49,51 +78,19 @@ function ControlledNoasAuthForm({
   );
 }
 
-function ControlledNoasSignUpForm({
-  onSignUp = vi.fn(async () => true),
-  initialUsername = "",
-  initialPassword = "",
-  initialNoasHostUrl = "https://noas.example.com",
-}: {
-  onSignUp?: Parameters<typeof NoasSignUpForm>[0]["onSignUp"];
-  initialUsername?: string;
-  initialPassword?: string;
-  initialNoasHostUrl?: string;
-}) {
-  const [username, setUsername] = useState(initialUsername);
-  const [password, setPassword] = useState(initialPassword);
-
-  return (
-    <NoasSignUpForm
-      onSignUp={onSignUp}
-      onSignIn={vi.fn()}
-      username={username}
-      password={password}
-      isEditingHostUrl={false}
-      isLoading={false}
-      noasHostUrl={initialNoasHostUrl}
-      onUsernameChange={setUsername}
-      onPasswordChange={setPassword}
-      onToggleHostEdit={vi.fn()}
-    />
-  );
-}
-
-function renderControlledSignUpForm(props: Parameters<typeof ControlledNoasSignUpForm>[0] = {}) {
-  render(<ControlledNoasSignUpForm {...props} />);
+function renderControlledNoasForm(props: ControlledNoasFormProps = {}) {
+  render(<ControlledNoasForm {...props} />);
 }
 
 describe("Noas auth forms", () => {
   it("shows a more options button on the sign-in form", () => {
-    render(
-      <ControlledNoasAuthForm />
-    );
+    renderControlledNoasForm();
 
     expect(screen.getByRole("button", { name: /nostr authentication options/i })).toBeInTheDocument();
   });
 
   it("shows the configured host as a grey inline suffix until the user types @", () => {
-    render(<ControlledNoasAuthForm initialNoasHostUrl="https://custom.noas.example:8443" />);
+    renderControlledNoasForm({ initialNoasHostUrl: "https://custom.noas.example:8443" });
 
     expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@custom.noas.example:8443");
 
@@ -103,15 +100,21 @@ describe("Noas auth forms", () => {
   });
 
   it("does not show an inline suffix when no default host is available", () => {
-    render(<ControlledNoasAuthForm initialNoasHostUrl="" allowDirectHostEdit />);
+    renderControlledNoasForm({ initialNoasHostUrl: "", allowDirectHostEdit: true });
 
     expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
+  });
+
+  it("shows allowed username characters guidance on sign-up when no default host is available", () => {
+    renderControlledNoasForm({ mode: "signUp", initialNoasHostUrl: "", allowDirectHostEdit: true });
+
+    expect(screen.getByText(/enter your full handle as username@host\. username may use lowercase letters, numbers, _ and -\./i)).toBeInTheDocument();
   });
 
   it("submits matching noas auth url and nip05 domain", async () => {
     const onLogin = vi.fn(async () => true);
 
-    render(<ControlledNoasAuthForm onLogin={onLogin} initialNoasHostUrl="https://custom.noas.example" />);
+    renderControlledNoasForm({ onLogin, initialNoasHostUrl: "https://custom.noas.example" });
 
     const usernameInput = screen.getByLabelText(/^username$/i);
     fireEvent.change(usernameInput, { target: { value: "alice" } });
@@ -125,7 +128,7 @@ describe("Noas auth forms", () => {
   });
 
   it("fills in the default host on submit-button press before sign-in submit", () => {
-    render(<ControlledNoasAuthForm initialNoasHostUrl="https://custom.noas.example" />);
+    renderControlledNoasForm({ initialNoasHostUrl: "https://custom.noas.example" });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.pointerDown(screen.getByTestId("noas-auth-submit"));
@@ -134,7 +137,7 @@ describe("Noas auth forms", () => {
   });
 
   it("uses explicit credential semantics for username and password fields", () => {
-    render(<ControlledNoasAuthForm />);
+    renderControlledNoasForm();
 
     expect(screen.getByLabelText(/^username$/i)).toHaveAttribute("name", "username");
     expect(screen.getByLabelText(/^username$/i)).toHaveAttribute("autocomplete", "username");
@@ -145,13 +148,7 @@ describe("Noas auth forms", () => {
   it("normalizes a full nip05 handle to https on submit when no default host is configured", () => {
     const onLogin = vi.fn(async () => true);
 
-    render(
-      <ControlledNoasAuthForm
-        allowDirectHostEdit
-        onLogin={onLogin}
-        initialNoasHostUrl=""
-      />
-    );
+    renderControlledNoasForm({ allowDirectHostEdit: true, onLogin, initialNoasHostUrl: "" });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example:7443" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -165,13 +162,7 @@ describe("Noas auth forms", () => {
   it("shows a handle-specific validation error for malformed full handles", () => {
     const onLogin = vi.fn(async () => true);
 
-    render(
-      <ControlledNoasAuthForm
-        allowDirectHostEdit
-        onLogin={onLogin}
-        initialNoasHostUrl=""
-      />
-    );
+    renderControlledNoasForm({ allowDirectHostEdit: true, onLogin, initialNoasHostUrl: "" });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@bad host" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -184,7 +175,7 @@ describe("Noas auth forms", () => {
   it("validates sign-in username with sign-up rules before submitting", () => {
     const onLogin = vi.fn(async () => true);
 
-    render(<ControlledNoasAuthForm onLogin={onLogin} />);
+    renderControlledNoasForm({ onLogin });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "ab" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -197,7 +188,7 @@ describe("Noas auth forms", () => {
   it("accepts dashed usernames for Noas sign-in", () => {
     const onLogin = vi.fn(async () => true);
 
-    render(<ControlledNoasAuthForm onLogin={onLogin} />);
+    renderControlledNoasForm({ onLogin });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice-test" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -211,7 +202,7 @@ describe("Noas auth forms", () => {
   it("keeps an explicit full handle in the field after sign-in submit", () => {
     const onLogin = vi.fn(async () => true);
 
-    render(<ControlledNoasAuthForm onLogin={onLogin} initialNoasHostUrl="https://noas.example.com" />);
+    renderControlledNoasForm({ onLogin, initialNoasHostUrl: "https://noas.example.com" });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@other.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -226,13 +217,7 @@ describe("Noas auth forms", () => {
   it("requires a full nip05 handle when no default host is available", () => {
     const onLogin = vi.fn(async () => true);
 
-    render(
-      <ControlledNoasAuthForm
-        allowDirectHostEdit
-        onLogin={onLogin}
-        initialNoasHostUrl=""
-      />
-    );
+    renderControlledNoasForm({ allowDirectHostEdit: true, onLogin, initialNoasHostUrl: "" });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -247,7 +232,7 @@ describe("Noas auth forms", () => {
     const parentError = "Noas sign-in failed. Please check your username and password.";
 
     render(
-      <ControlledNoasAuthForm
+      <ControlledNoasForm
         onLogin={onLogin}
         initialUsername="alice"
         initialPassword="password123"
@@ -290,7 +275,7 @@ describe("Noas auth forms", () => {
   });
 
   it("updates public key preview when private key input changes", async () => {
-    renderControlledSignUpForm();
+    renderControlledNoasForm({ mode: "signUp" });
 
     const privateKey = "1".repeat(64);
     const privateKeyInput = screen.getByRole("textbox", { name: /^private key$/i });
@@ -306,7 +291,7 @@ describe("Noas auth forms", () => {
   it("fills in the default host in the field before sign-up submit", () => {
     const onSignUp = vi.fn(async () => true);
 
-    renderControlledSignUpForm({ onSignUp });
+    renderControlledNoasForm({ mode: "signUp", onSignUp });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
@@ -326,7 +311,7 @@ describe("Noas auth forms", () => {
   });
 
   it("fills in the default host before sign-up submit interactions", () => {
-    renderControlledSignUpForm({ initialNoasHostUrl: "https://noas.example.com" });
+    renderControlledNoasForm({ mode: "signUp", initialNoasHostUrl: "https://noas.example.com" });
 
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.pointerDown(screen.getByTestId("noas-sign-up-submit"));
