@@ -113,6 +113,7 @@ export function CalendarView({
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
+  const statusMenuOpenedFromKeyboardTaskIdsRef = useRef<Set<string>>(new Set());
   const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const effectiveMobileTab = mobileView ?? mobileTab;
   const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
@@ -407,6 +408,7 @@ export function CalendarView({
     event.preventDefault();
     event.stopPropagation();
     allowStatusMenuOpen(task.id);
+    statusMenuOpenedFromKeyboardTaskIdsRef.current.add(task.id);
     openStatusMenu(task.id);
   };
 
