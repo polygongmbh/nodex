@@ -38,6 +38,7 @@ export function useTaskStatusMenu({
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
+  const statusMenuOpenedFromKeyboardRef = useRef(false);
   const statusMenuOpenedOnPointerDownRef = useRef(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
@@ -97,6 +98,7 @@ export function useTaskStatusMenu({
       event.preventDefault();
       event.stopPropagation();
       allowStatusMenuOpenRef.current = true;
+      statusMenuOpenedFromKeyboardRef.current = true;
       setStatusMenuOpen(true);
     },
     onClick: (event: MouseEvent<HTMLElement>) => {
@@ -116,6 +118,12 @@ export function useTaskStatusMenu({
       if (statusMenuOpenedOnPointerDownRef.current) {
         statusMenuOpenedOnPointerDownRef.current = false;
         event.stopPropagation();
+        return;
+      }
+      if (statusMenuOpenedFromKeyboardRef.current) {
+        statusMenuOpenedFromKeyboardRef.current = false;
+        event.stopPropagation();
+        event.preventDefault();
         return;
       }
       // Keyboard-activated click (Space/Enter): event.detail === 0. Open the
@@ -211,6 +219,7 @@ export function useTaskStatusMenu({
     onBlur: () => {
       statusTriggerPointerDownRef.current = false;
       allowStatusMenuOpenRef.current = false;
+      statusMenuOpenedFromKeyboardRef.current = false;
       statusMenuOpenedOnPointerDownRef.current = false;
       clearLongPressTimer();
     },
@@ -227,6 +236,7 @@ export function useTaskStatusMenu({
       setStatusMenuOpen(false);
     }
     allowStatusMenuOpenRef.current = false;
+    statusMenuOpenedFromKeyboardRef.current = false;
     statusMenuOpenedOnPointerDownRef.current = false;
   };
 
