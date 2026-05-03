@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect, type KeyboardEvent } from "react";
 import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
@@ -113,6 +113,7 @@ export function CalendarView({
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
+  const statusMenuOpenedFromKeyboardTaskIdsRef = useRef<Set<string>>(new Set());
   const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const effectiveMobileTab = mobileView ?? mobileTab;
   const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
@@ -401,6 +402,16 @@ export function CalendarView({
     allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
   };
 
+  const handleStatusTriggerKeyDown = (event: KeyboardEvent<HTMLElement>, task: Task) => {
+    if (!canCompleteTask(task)) return;
+    if (event.key !== "Enter" && event.key !== " " && event.key !== "ArrowDown") return;
+    event.preventDefault();
+    event.stopPropagation();
+    allowStatusMenuOpen(task.id);
+    statusMenuOpenedFromKeyboardTaskIdsRef.current.add(task.id);
+    openStatusMenu(task.id);
+  };
+
   const navigateMonth = (direction: "prev" | "next") => {
     const targetMonth =
       direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1);
@@ -514,12 +525,18 @@ export function CalendarView({
                              >
                                <DropdownMenuTrigger asChild>
                                  <button
+                                    onKeyDown={(event) => handleStatusTriggerKeyDown(event, task)}
                                    onClick={(e) => {
                                      if (!canCompleteTask(task)) return;
                                      if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
                                        e.stopPropagation();
                                        return;
                                      }
+                                      if (statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id)) {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        return;
+                                      }
                                      handleTaskStatusToggleClick(e, {
                                        status: task.status,
                                        hasStatusChangeHandler: canCompleteTask(task),
@@ -560,6 +577,7 @@ export function CalendarView({
                                    onBlur={() => {
                                      statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                      clearStatusMenuOpenIntent(task.id);
+                                      statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id);
                                      statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                                    }}
                                    disabled={!canCompleteTask(task)}
@@ -977,12 +995,18 @@ export function CalendarView({
                           >
                             <DropdownMenuTrigger asChild>
                               <button
+                                onKeyDown={(event) => handleStatusTriggerKeyDown(event, task)}
                                 onClick={(e) => {
                                   if (!canCompleteTask(task)) return;
                                   if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
                                     e.stopPropagation();
                                     return;
                                   }
+                                      if (statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id)) {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        return;
+                                      }
                                   handleTaskStatusToggleClick(e, {
                                     status: task.status,
                                     hasStatusChangeHandler: canCompleteTask(task),
@@ -1023,6 +1047,7 @@ export function CalendarView({
                                 onBlur={() => {
                                   statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                   clearStatusMenuOpenIntent(task.id);
+                                   statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id);
                                   statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                                 }}
                                 disabled={!canCompleteTask(task)}

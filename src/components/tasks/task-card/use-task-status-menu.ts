@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
 import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
@@ -38,6 +38,7 @@ export function useTaskStatusMenu({
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
+  const statusMenuOpenedFromKeyboardRef = useRef(false);
   const statusMenuOpenedOnPointerDownRef = useRef(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
@@ -70,6 +71,7 @@ export function useTaskStatusMenu({
 
   const closeStatusMenu = useCallback(() => {
     allowStatusMenuOpenRef.current = false;
+    statusMenuOpenedFromKeyboardRef.current = false;
     statusMenuOpenedOnPointerDownRef.current = false;
     setStatusMenuOpen(false);
   }, []);
@@ -91,6 +93,15 @@ export function useTaskStatusMenu({
   }, [dispatchFeedInteraction, task.id]);
 
   const triggerProps = {
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+      if (!canCompleteTask) return;
+      if (event.key !== "Enter" && event.key !== " " && event.key !== "ArrowDown") return;
+      event.preventDefault();
+      event.stopPropagation();
+      allowStatusMenuOpenRef.current = true;
+      statusMenuOpenedFromKeyboardRef.current = true;
+      setStatusMenuOpen(true);
+    },
     onClick: (event: MouseEvent<HTMLElement>) => {
       if (!canCompleteTask) {
         event.stopPropagation();
@@ -110,18 +121,20 @@ export function useTaskStatusMenu({
         event.stopPropagation();
         return;
       }
+      if (statusMenuOpenedFromKeyboardRef.current) {
+        statusMenuOpenedFromKeyboardRef.current = false;
+        event.stopPropagation();
+        event.preventDefault();
+        return;
+      }
       // Keyboard-activated click (Space/Enter): event.detail === 0. Open the
       // status menu so keyboard users can pick a state, instead of running the
       // pointer toggle path which would close whatever Radix just opened.
       if (event.detail === 0) {
         event.stopPropagation();
         event.preventDefault();
-        if (statusMenuOpen) {
-          closeStatusMenu();
-        } else {
-          allowStatusMenuOpenRef.current = true;
-          setStatusMenuOpen(true);
-        }
+        allowStatusMenuOpenRef.current = true;
+        setStatusMenuOpen(true);
         return;
       }
       handleTaskStatusToggleClick(event, {
@@ -203,6 +216,7 @@ export function useTaskStatusMenu({
     onBlur: () => {
       statusTriggerPointerDownRef.current = false;
       allowStatusMenuOpenRef.current = false;
+      statusMenuOpenedFromKeyboardRef.current = false;
       statusMenuOpenedOnPointerDownRef.current = false;
       clearLongPressTimer();
     },
@@ -219,6 +233,7 @@ export function useTaskStatusMenu({
       setStatusMenuOpen(false);
     }
     allowStatusMenuOpenRef.current = false;
+    statusMenuOpenedFromKeyboardRef.current = false;
     statusMenuOpenedOnPointerDownRef.current = false;
   };
 
