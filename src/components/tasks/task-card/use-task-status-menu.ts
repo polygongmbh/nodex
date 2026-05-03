@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
 import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
@@ -91,6 +91,14 @@ export function useTaskStatusMenu({
   }, [dispatchFeedInteraction, task.id]);
 
   const triggerProps = {
+    onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+      if (!canCompleteTask) return;
+      if (event.key !== "Enter" && event.key !== " " && event.key !== "ArrowDown") return;
+      event.preventDefault();
+      event.stopPropagation();
+      allowStatusMenuOpenRef.current = true;
+      setStatusMenuOpen(true);
+    },
     onClick: (event: MouseEvent<HTMLElement>) => {
       if (!canCompleteTask) {
         event.stopPropagation();
