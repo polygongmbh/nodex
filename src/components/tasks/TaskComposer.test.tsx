@@ -257,6 +257,21 @@ describe("TaskComposer", () => {
     });
   });
 
+  it("keeps mention and hashtag chips out of the sequential tab order", () => {
+    renderComposer();
+    fireEvent.change(getComposerInput(), {
+      target: { value: "Check with @alice@example.com #backend" },
+    });
+
+    const hashtagChip = document.querySelector<HTMLButtonElement>('[data-chip-kind="hashtag"][data-chip-value="backend"]');
+    const mentionChip = document.querySelector<HTMLButtonElement>('[data-chip-kind="mention"][data-chip-value="alice@example.com"]');
+
+    expect(hashtagChip).not.toBeNull();
+    expect(mentionChip).not.toBeNull();
+    expect(hashtagChip).toHaveAttribute("tabindex", "-1");
+    expect(mentionChip).toHaveAttribute("tabindex", "-1");
+  });
+
   it("does not restore drafts without text, attachments, or NIP-99 content", () => {
     // Auxiliary state alone (date/priority/tags/mentions/location) must not
     // leak from a previous composer context (e.g. the calendar view) into a

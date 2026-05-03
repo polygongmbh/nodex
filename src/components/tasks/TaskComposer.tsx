@@ -1701,6 +1701,7 @@ export function TaskComposer({
             <button
               key={`mention-${mention.identifier}`}
               type="button"
+              tabIndex={-1}
               data-chip-kind="mention"
               data-chip-value={mention.explicitPubkey ?? mention.identifier}
               onClick={() => {
@@ -1735,6 +1736,7 @@ export function TaskComposer({
             <button
               key={`hashtag-${tagChip.tag}`}
               type="button"
+              tabIndex={-1}
               data-chip-kind="hashtag"
               data-chip-value={tagChip.tag}
               onClick={() => {
