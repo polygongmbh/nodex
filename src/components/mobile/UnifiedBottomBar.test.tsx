@@ -421,7 +421,7 @@ describe("UnifiedBottomBar auth gating", () => {
   it("uses toast feedback instead of an inline alert while attachments are uploading", () => {
     const toastInfoSpy = vi.spyOn(toast, "info").mockImplementation(() => "");
     const uploadAttachmentSpy = vi.spyOn(attachmentUpload, "uploadAttachment");
-    let resolveUpload: ((value: Awaited<ReturnType<typeof attachmentUpload.uploadAttachment>>) => void) | null = null;
+    let resolveUpload!: (value: Awaited<ReturnType<typeof attachmentUpload.uploadAttachment>>) => void;
     uploadAttachmentSpy.mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -460,7 +460,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     expect(toastInfoSpy).toHaveBeenCalledWith(expect.any(String), { id: "task-composer-uploading-blocked" });
     expect(getTaskCreateCalls()).toHaveLength(0);
-    resolveUpload?.({
+    resolveUpload({
       url: "https://cdn.example.com/uploaded.png",
       mimeType: "image/png",
       size: 1234,
