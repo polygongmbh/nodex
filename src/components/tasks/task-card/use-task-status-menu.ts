@@ -1,6 +1,5 @@
-import { useCallback, useRef, useState, type FocusEvent, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
-import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
 import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
