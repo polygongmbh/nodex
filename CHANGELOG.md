@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Production deployments now return a real `404` for missing built files under `/assets/` instead of falling back to `index.html`, preventing stale chunk requests from failing with `text/html is not a valid JavaScript MIME type`.
+
 ## [2.15.8] - 2026-05-01
 Patch release for posting-context clarity, person-filter interaction polish, and cleaner locked-state rendering.
 
