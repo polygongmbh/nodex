@@ -63,8 +63,6 @@ export function SavedFilterPresetRow({
       if (state === "included") includedChannels.push(name);
       else if (state === "excluded") excludedChannels.push(name);
     });
-    sortAlpha(includedChannels);
-    sortAlpha(excludedChannels);
 
     const peopleNames = sortAlpha(
       configuration.selectedPeopleIds.map((id) => {
