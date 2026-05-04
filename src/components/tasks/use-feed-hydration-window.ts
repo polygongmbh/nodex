@@ -1,4 +1,4 @@
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 const INITIAL_VISIBLE_FEED_ENTRIES = 40;
@@ -33,7 +33,7 @@ export function useFeedHydrationWindow({
     state.focusedTaskId === focusedTaskId ? state.count : INITIAL_VISIBLE_FEED_ENTRIES;
   const hasMoreEntries = totalEntryCount > visibleEntryCount;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prevId = prevFocusedTaskIdRef.current;
     prevFocusedTaskIdRef.current = focusedTaskId;
 
