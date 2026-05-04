@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Radio, Plus, Trash2, Check } from "lucide-react";
+import { Radio, Plus, Trash2, Check, RotateCcw } from "lucide-react";
 import type { Relay } from "@/types";
 import { cn } from "@/lib/utils";
 import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
