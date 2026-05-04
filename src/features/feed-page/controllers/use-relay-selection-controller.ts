@@ -37,7 +37,11 @@ function resolveRelayStatus(relay: Relay | undefined): NonNullable<Relay["connec
 }
 
 function isFailedRelaySelectionTarget(relay: Relay): boolean {
-  return relay.connectionStatus === "verification-failed" || relay.connectionStatus === "read-only";
+  return relay.connectionStatus === "disconnected"
+    || relay.connectionStatus === "connection-error"
+    || relay.connectionStatus === "connecting"
+    || relay.connectionStatus === "verification-failed"
+    || relay.connectionStatus === "read-only";
 }
 
 function shouldShowReconnectAttemptOnSelection(relay: Relay): boolean {

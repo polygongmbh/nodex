@@ -36,6 +36,10 @@ function buildVerificationFailedRelay(overrides: Partial<Relay> = {}): Relay {
   return buildRelay({ connectionStatus: "verification-failed", ...overrides });
 }
 
+function buildConnectingRelay(overrides: Partial<Relay> = {}): Relay {
+  return buildRelay({ connectionStatus: "connecting", ...overrides });
+}
+
 function renderSelectionController(relays: Relay[], reconnectFailureGraceMs = 50) {
   return renderHook(
     ({ currentRelays }) => useRelaySelectionController({
@@ -153,25 +157,55 @@ describe("useRelaySelectionController", () => {
     expectActiveRelayIds(result, ["relay-one"]);
   });
 
-  it("does not trigger reconnect handling for disconnected relays on selection", () => {
+  it("tries to reconnect and deselects disconnected relays when selection does not recover", () => {
+    vi.useFakeTimers();
     const { result } = renderSelectionController([buildRelay({ connectionStatus: "disconnected" })]);
 
+    expectExclusiveSelectReconnect(result);
+
+    expect(toast.info).toHaveBeenCalled();
+    expectActiveRelayIds(result, ["relay-one"]);
+
     act(() => {
-      expect(result.current.handleRelaySelectIntent("relay-one", "exclusive")).toBeNull();
+      vi.advanceTimersByTime(60);
     });
 
-    expect(toast.info).not.toHaveBeenCalled();
-    expectActiveRelayIds(result, ["relay-one"]);
+    expectActiveRelayIds(result, []);
+    expect(toast.error).toHaveBeenCalled();
   });
 
-  it("does not trigger reconnect handling for connection-error relays on selection", () => {
+  it("tries to reconnect and deselects connection-error relays when selection does not recover", () => {
+    vi.useFakeTimers();
     const { result } = renderSelectionController([buildRelay({ connectionStatus: "connection-error" })]);
 
+    expectExclusiveSelectReconnect(result);
+
+    expect(toast.info).toHaveBeenCalled();
+    expectActiveRelayIds(result, ["relay-one"]);
+
     act(() => {
-      expect(result.current.handleRelaySelectIntent("relay-one", "exclusive")).toBeNull();
+      vi.advanceTimersByTime(60);
     });
 
-    expect(toast.info).not.toHaveBeenCalled();
+    expectActiveRelayIds(result, []);
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it("tries to reconnect connecting relays and deselects when they fail", () => {
+    const { result, rerender } = renderSelectionController([buildConnectingRelay()], 500);
+
+    expectExclusiveSelectReconnect(result);
+
+    expect(toast.info).toHaveBeenCalled();
     expectActiveRelayIds(result, ["relay-one"]);
+
+    act(() => {
+      rerender({
+        currentRelays: [buildRelay({ connectionStatus: "connection-error" })],
+      });
+    });
+
+    expectActiveRelayIds(result, []);
+    expect(toast.error).toHaveBeenCalled();
   });
 });

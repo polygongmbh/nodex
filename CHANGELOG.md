@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Selecting a relay with a connection issue now shows the reconnect attempt feedback again and automatically deselects the relay if reconnecting fails.
+
 ## [2.15.9] - 2026-05-04
 
 ### Changed

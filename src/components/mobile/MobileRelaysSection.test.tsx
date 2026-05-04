@@ -60,4 +60,16 @@ describe("MobileRelaysSection", () => {
       url: "wss://custom.relay",
     });
   });
+
+  it("dispatches typed relay selection intents", () => {
+    render(<MobileRelaysSection relays={relays} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^custom$/i }));
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "sidebar.relay.select",
+      relayId: "custom",
+      mode: "toggle",
+    });
+  });
 });
