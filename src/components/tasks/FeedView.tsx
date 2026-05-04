@@ -273,6 +273,7 @@ export function FeedView({
     revealEntriesThroughIndex,
   } = useFeedHydrationWindow({
     disclosureKey: feedDisclosureKey,
+    focusedTaskId,
     totalEntryCount: activeFeedEntries.length,
   });
   const displayedFeedEntries = useMemo(
