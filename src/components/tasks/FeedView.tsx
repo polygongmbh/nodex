@@ -47,7 +47,6 @@ import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
-import { buildFeedDisclosureResetKey } from "./feed-disclosure-reset";
 
 interface FeedViewProps {
   tasks: Task[];
@@ -208,20 +207,6 @@ export function FeedView({
     searchQueryOverride,
     isMobile,
   });
-  const feedDisclosureKey = useMemo(
-    () =>
-      buildFeedDisclosureResetKey({
-        focusedTaskId,
-        searchQuery,
-        relays,
-        channels,
-        people,
-        quickFilters,
-        channelMatchMode,
-      }),
-    [focusedTaskId, searchQuery, relays, channels, people, quickFilters, channelMatchMode]
-  );
-
   useEffect(() => {
     if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
       setIsSlimDesktop(false);
@@ -272,7 +257,6 @@ export function FeedView({
     revealMoreEntries,
     revealEntriesThroughIndex,
   } = useFeedHydrationWindow({
-    disclosureKey: feedDisclosureKey,
     focusedTaskId,
     totalEntryCount: activeFeedEntries.length,
   });

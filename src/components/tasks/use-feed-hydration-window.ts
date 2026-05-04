@@ -5,7 +5,6 @@ const INITIAL_VISIBLE_FEED_ENTRIES = 40;
 const FEED_REVEAL_BATCH_SIZE = 30;
 
 interface UseFeedHydrationWindowOptions {
-  disclosureKey: string;
   focusedTaskId: string | null;
   totalEntryCount: number;
 }
@@ -18,86 +17,54 @@ interface UseFeedHydrationWindowResult {
 }
 
 export function useFeedHydrationWindow({
-  disclosureKey,
   focusedTaskId,
   totalEntryCount,
 }: UseFeedHydrationWindowOptions): UseFeedHydrationWindowResult {
-  // Captured on scope entry; never cleared so it survives intermediate exit renders.
+  // focusedTaskId acts as the scope key: reveal transitions check it so a
+  // startTransition queued in one scope cannot apply after a scope change.
+  const [state, setState] = useState({ focusedTaskId, count: INITIAL_VISIBLE_FEED_ENTRIES });
   const savedParentCountRef = useRef<number | null>(null);
   const prevFocusedTaskIdRef = useRef<string | null>(null);
-
-  const [windowState, setWindowState] = useState(() => ({
-    key: disclosureKey,
-    visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
-  }));
+  // Always-current raw count so the scope-entry save doesn't capture a stale value.
+  const stateCountRef = useRef(state.count);
+  stateCountRef.current = state.count;
 
   const visibleEntryCount =
-    windowState.key === disclosureKey
-      ? windowState.visibleEntryCount
-      : focusedTaskId === null && savedParentCountRef.current !== null
-        ? savedParentCountRef.current
-        : INITIAL_VISIBLE_FEED_ENTRIES;
+    state.focusedTaskId === focusedTaskId ? state.count : INITIAL_VISIBLE_FEED_ENTRIES;
   const hasMoreEntries = totalEntryCount > visibleEntryCount;
 
   useEffect(() => {
     const prevId = prevFocusedTaskIdRef.current;
     prevFocusedTaskIdRef.current = focusedTaskId;
 
-    if (windowState.key === disclosureKey) return;
-
-    if (prevId === null && focusedTaskId !== null) {
-      // Entering a subtask from parent level: capture the current parent count.
-      // Overwriting is intentional so a subsequent entry always saves the freshest value.
-      savedParentCountRef.current = windowState.visibleEntryCount;
+    if (focusedTaskId !== null) {
+      if (prevId === null) {
+        savedParentCountRef.current = stateCountRef.current;
+      }
+      setState({ focusedTaskId, count: INITIAL_VISIBLE_FEED_ENTRIES });
+    } else if (prevId !== null && savedParentCountRef.current !== null) {
+      setState({ focusedTaskId: null, count: savedParentCountRef.current });
     }
-
-    startTransition(() => {
-      setWindowState({
-        key: disclosureKey,
-        visibleEntryCount:
-          focusedTaskId === null && savedParentCountRef.current !== null
-            ? savedParentCountRef.current
-            : INITIAL_VISIBLE_FEED_ENTRIES,
-      });
-    });
-  // windowState is a dep so that when visibleEntryCount grows the saved count
-  // for the outgoing key stays current (the early return guards excess work).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [disclosureKey, focusedTaskId, windowState]);
-
-  const updateVisibleCount = useCallback(
-    (nextVisibleCount: number, reason: "scroll" | "focus") => {
-      startTransition(() => {
-        setWindowState((previous) => {
-          const previousVisibleCount =
-            previous.key === disclosureKey
-              ? previous.visibleEntryCount
-              : INITIAL_VISIBLE_FEED_ENTRIES;
-          const boundedNextVisibleCount = Math.min(totalEntryCount, nextVisibleCount);
-          if (boundedNextVisibleCount <= previousVisibleCount) {
-            return { key: disclosureKey, visibleEntryCount: previousVisibleCount };
-          }
-          nostrDevLog("feed", "Revealed incremental feed batch", {
-            reason,
-            visibleEntryCount: boundedNextVisibleCount,
-            totalEntryCount,
-          });
-          return { key: disclosureKey, visibleEntryCount: boundedNextVisibleCount };
-        });
-      });
-    },
-    [disclosureKey, totalEntryCount]
-  );
+  }, [focusedTaskId]);
 
   const revealMoreEntries = useCallback((reason: "scroll" | "focus") => {
-    if (!hasMoreEntries) return;
-    updateVisibleCount(visibleEntryCount + FEED_REVEAL_BATCH_SIZE, reason);
-  }, [hasMoreEntries, updateVisibleCount, visibleEntryCount]);
+    if (totalEntryCount <= visibleEntryCount) return;
+    const next = Math.min(totalEntryCount, visibleEntryCount + FEED_REVEAL_BATCH_SIZE);
+    nostrDevLog("feed", "Revealed incremental feed batch", { reason, visibleEntryCount: next, totalEntryCount });
+    startTransition(() => setState(prev => {
+      if (prev.focusedTaskId !== focusedTaskId) return prev;
+      return next > prev.count ? { ...prev, count: next } : prev;
+    }));
+  }, [focusedTaskId, totalEntryCount, visibleEntryCount]);
 
   const revealEntriesThroughIndex = useCallback((entryIndex: number) => {
     if (entryIndex < visibleEntryCount || entryIndex < 0) return;
-    updateVisibleCount(entryIndex + 1 + FEED_REVEAL_BATCH_SIZE, "focus");
-  }, [updateVisibleCount, visibleEntryCount]);
+    startTransition(() => setState(prev => {
+      if (prev.focusedTaskId !== focusedTaskId) return prev;
+      const next = Math.min(totalEntryCount, entryIndex + 1 + FEED_REVEAL_BATCH_SIZE);
+      return next > prev.count ? { ...prev, count: next } : prev;
+    }));
+  }, [focusedTaskId, totalEntryCount, visibleEntryCount]);
 
   return useMemo(() => ({
     hasMoreEntries,

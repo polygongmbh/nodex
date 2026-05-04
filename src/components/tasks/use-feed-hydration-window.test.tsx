@@ -8,17 +8,13 @@ import { useFeedHydrationWindow } from "./use-feed-hydration-window";
 // Separate act() calls simulate each render firing its own passive effects independently,
 // matching browser behaviour where intermediate renders run before startTransition settles.
 
-const PARENT_RESTORED = "null|or|relays|channels|people|quick";
-const PARENT_CLEARED  = "null|and|||quick";    // intermediate: focusedTaskId=null + cleared filters
-const SUBTASK_CLEARED = "taskA|and|||quick";   // subtask with cleared filters
-
 describe("useFeedHydrationWindow", () => {
   it("restores visible entry count on both first and second exit from same subtask", () => {
     const TOTAL = 200;
     const { result, rerender } = renderHook(
-      ({ disclosureKey, focusedTaskId }) =>
-        useFeedHydrationWindow({ disclosureKey, focusedTaskId, totalEntryCount: TOTAL }),
-      { initialProps: { disclosureKey: PARENT_RESTORED, focusedTaskId: null as string | null } }
+      ({ focusedTaskId }) =>
+        useFeedHydrationWindow({ focusedTaskId, totalEntryCount: TOTAL }),
+      { initialProps: { focusedTaskId: null as string | null } }
     );
 
     act(() => { result.current.revealMoreEntries("scroll"); });
@@ -26,18 +22,20 @@ describe("useFeedHydrationWindow", () => {
     act(() => { result.current.revealMoreEntries("scroll"); });
     expect(result.current.visibleEntryCount).toBe(130);
 
-    act(() => { rerender({ disclosureKey: SUBTASK_CLEARED, focusedTaskId: "taskA" }); });
+    act(() => { rerender({ focusedTaskId: "taskA" }); });
     expect(result.current.visibleEntryCount).toBe(40);
 
-    act(() => { rerender({ disclosureKey: PARENT_CLEARED, focusedTaskId: null }); });
-    act(() => { rerender({ disclosureKey: PARENT_RESTORED, focusedTaskId: null }); });
+    // Two separate rerenders simulate the intermediate render pair produced by
+    // useLayoutEffect restoring filters (P_cleared then P_restored).
+    act(() => { rerender({ focusedTaskId: null }); });
+    act(() => { rerender({ focusedTaskId: null }); });
     const after1stExit = result.current.visibleEntryCount;
 
-    act(() => { rerender({ disclosureKey: SUBTASK_CLEARED, focusedTaskId: "taskA" }); });
+    act(() => { rerender({ focusedTaskId: "taskA" }); });
     expect(result.current.visibleEntryCount).toBe(40);
 
-    act(() => { rerender({ disclosureKey: PARENT_CLEARED, focusedTaskId: null }); });
-    act(() => { rerender({ disclosureKey: PARENT_RESTORED, focusedTaskId: null }); });
+    act(() => { rerender({ focusedTaskId: null }); });
+    act(() => { rerender({ focusedTaskId: null }); });
     const after2ndExit = result.current.visibleEntryCount;
 
     expect(after1stExit).toBe(130);
