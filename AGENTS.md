@@ -337,6 +337,7 @@ When asked to create a plan to fix or implement something:
 - reconcile the pending release against `CHANGELOG.md` `Unreleased`, `git log --first-parent <latest-tag>..HEAD`, and `git diff --stat <latest-tag>..HEAD` so already-pushed-but-unreleased entries are included in the version scope unless explicitly deferred
 - omit cosmetic-only and internal details from the changelog
 - update `package.json` version semantically based on the release policy above
+- run npm install to make sure the lockfile is up to date
 - when bumping a patch/minor version, include a short explicit rationale in release/push notes (for example: "patch for fixes only" or "minor for broader user-facing feature scope")
 - create annotated tag matching version (for example `v1.1.0`)
 - apply the changelog discipline and verification matrix above

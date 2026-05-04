@@ -145,7 +145,9 @@ describe("ListView priority control", () => {
       />
     );
 
-    fireEvent.click(screen.getByLabelText("Set status"));
+    const statusButton = screen.getByLabelText("Set status");
+    fireEvent.pointerDown(statusButton);
+    fireEvent.click(statusButton, { detail: 1 });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.toggleComplete",

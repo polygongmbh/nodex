@@ -6,10 +6,16 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.15.9] - 2026-05-04
+
 ### Changed
 - Tree and timeline views now restore their scroll position when navigating back up from a subtask.
+- Composer and saved-filter interactions received broader keyboard and focus polish, including better tooltip behavior, cleaner collapsed saved-filter actions, and more predictable status-menu focus handling.
+- Tags and Mention chips are now ordered alphabetically.
 
 ### Fixed
+- Composer accessibility fixes remove hidden or non-interactive controls from the tab order, including the kind selector and chip row.
+- Feed hydration now restores the parent window reliably after subtask navigation, while narrowed relay or quick-filter scopes preserve the expanded window and cap it to the smaller result set.
 - Production deployments now return a real `404` for missing built files under `/assets/` instead of falling back to `index.html`, preventing stale chunk requests from failing with `text/html is not a valid JavaScript MIME type`.
 
 ## [2.15.8] - 2026-05-01
