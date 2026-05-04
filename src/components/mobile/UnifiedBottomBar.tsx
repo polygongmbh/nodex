@@ -60,6 +60,10 @@ import {
 import { resolveRelayRoutingState } from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
+import {
+  getRelayChipClassName,
+  resolveRelayConnectionStatus,
+} from "@/components/relay/relayChipStyles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 interface UnifiedBottomBarProps {
@@ -1219,10 +1223,7 @@ export function UnifiedBottomBar({
             <div className="flex flex-wrap gap-2">
               {relays.map((relay) => {
                 const RelayIcon = resolveRelayIcon(relay.url);
-                const resolvedConnectionStatus =
-                  relay.id === "demo" || !relay.connectionStatus
-                    ? "connected"
-                    : relay.connectionStatus;
+                const resolvedConnectionStatus = resolveRelayConnectionStatus(relay);
                 const showStatusDot = resolvedConnectionStatus !== "connected";
                 const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
                 return (
@@ -1231,12 +1232,7 @@ export function UnifiedBottomBar({
                     onClick={() => {
                       void dispatchFeedInteraction({ type: "sidebar.relay.select", relayId: relay.id, mode: "toggle" });
                     }}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
-                      relay.isActive
-                        ? "bg-primary/10 border-primary text-primary motion-filter-pop"
-                        : "border-border"
-                    )}
+                    className={getRelayChipClassName(relay, resolvedConnectionStatus, "active:scale-95")}
                   >
                     <RelayIcon className="w-4 h-4" />
                     {relay.name}
@@ -1246,7 +1242,6 @@ export function UnifiedBottomBar({
                         aria-label={resolvedConnectionStatus}
                       />
                     )}
-                    {relay.isActive && <Check className="w-3.5 h-3.5" />}
                   </button>
                 );
               })}
