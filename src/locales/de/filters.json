@@ -21,9 +21,18 @@
     "savedFilters": {
       "actions": {
         "saveCurrent": "Filter speichern",
+        "saveCurrentTooltip": "Aktuelle Filterauswahl als neues Preset speichern",
         "rename": "Umbenennen",
         "delete": "Löschen",
         "menu": "Gespeicherte Filteroptionen"
+      },
+      "tooltip": {
+        "relays": "Spaces",
+        "channelsAnd": "Kanäle (alle)",
+        "channelsOr": "Kanäle (mindestens einer)",
+        "channelsExcluded": "Ausgeschlossene Kanäle",
+        "people": "Personen",
+        "empty": "Keine Filter gesetzt"
       },
       "prompts": {
         "save": "Name für dieses Filter-Preset",
