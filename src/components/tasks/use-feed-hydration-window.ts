@@ -34,21 +34,23 @@ export function useFeedHydrationWindow({
   const hasMoreEntries = totalEntryCount > visibleEntryCount;
 
   useEffect(() => {
+    if (windowState.key === disclosureKey) return;
+    // Save the outgoing key's count synchronously so it is available to any
+    // render that fires before the deferred transition below is processed.
+    keyCountHistoryRef.current.set(windowState.key, windowState.visibleEntryCount);
+    if (keyCountHistoryRef.current.size > 5) {
+      keyCountHistoryRef.current.delete(keyCountHistoryRef.current.keys().next().value!);
+    }
     startTransition(() => {
-      setWindowState((prev) => {
-        if (prev.key === disclosureKey) return prev;
-        // Save the count for the key we're leaving so it can be restored on return.
-        keyCountHistoryRef.current.set(prev.key, prev.visibleEntryCount);
-        if (keyCountHistoryRef.current.size > 2) {
-          keyCountHistoryRef.current.delete(keyCountHistoryRef.current.keys().next().value!);
-        }
-        return {
-          key: disclosureKey,
-          visibleEntryCount: keyCountHistoryRef.current.get(disclosureKey) ?? INITIAL_VISIBLE_FEED_ENTRIES,
-        };
+      setWindowState({
+        key: disclosureKey,
+        visibleEntryCount: keyCountHistoryRef.current.get(disclosureKey) ?? INITIAL_VISIBLE_FEED_ENTRIES,
       });
     });
-  }, [disclosureKey]);
+  // windowState is a dep so that when visibleEntryCount grows the saved count
+  // for the outgoing key stays current (the early return guards excess work).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disclosureKey, windowState]);
 
   const updateVisibleCount = useCallback(
     (nextVisibleCount: number, reason: "scroll" | "focus") => {

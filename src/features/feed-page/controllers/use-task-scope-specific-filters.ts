@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import type { FilterSnapshot } from "@/domain/content/filter-snapshot";
@@ -6,6 +6,8 @@ import type { Channel, ChannelMatchMode } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
 export const TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS = 5 * 60 * 1000;
+
+const DEFAULT_NOW = () => Date.now();
 
 interface UseTaskScopeSpecificFiltersOptions {
   focusedTaskId: string | null;
@@ -38,7 +40,7 @@ export function useTaskScopeSpecificFilters({
   onCaptureScrollTop,
   onRestoreScrollTop,
   restoreTimeoutMs = TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS,
-  now = () => Date.now(),
+  now = DEFAULT_NOW,
 }: UseTaskScopeSpecificFiltersOptions) {
   const previousFocusedTaskIdRef = useRef<string | null>(null);
   const suspendedSnapshotRef = useRef<{
@@ -47,7 +49,7 @@ export function useTaskScopeSpecificFilters({
     scrollTop?: number;
   } | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previousFocusedTaskId = previousFocusedTaskIdRef.current;
     const enteringScopedTask = previousFocusedTaskId === null && focusedTaskId !== null;
     const leavingScopedTask = previousFocusedTaskId !== null && focusedTaskId === null;

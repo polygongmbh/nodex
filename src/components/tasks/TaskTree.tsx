@@ -110,6 +110,7 @@ export function TaskTree({
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentScrollTopRef = useRef(0);
+  const [pendingScrollTop, setPendingScrollTop] = useState<number | null>(null);
   const scrollCaptureRef = useScrollCapture();
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -121,10 +122,17 @@ export function TaskTree({
   useEffect(() => {
     scrollCaptureRef.current = {
       getScrollTop: () => currentScrollTopRef.current,
-      setScrollTop: (n) => { if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = n; },
+      setScrollTop: setPendingScrollTop,
     };
     return () => { scrollCaptureRef.current = null; };
   }, [scrollCaptureRef]);
+  useLayoutEffect(() => {
+    if (pendingScrollTop !== null && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = pendingScrollTop;
+      currentScrollTopRef.current = pendingScrollTop;
+      setPendingScrollTop(null);
+    }
+  }, [pendingScrollTop]);
   const previousRowPositionsRef = useRef<Map<string, number>>(new Map());
   const previousTopLevelOrderRef = useRef<string[]>([]);
   const prefersReducedMotionRef = useRef(false);
@@ -242,7 +250,7 @@ export function TaskTree({
 
       {/* Task List */}
       <TaskAuthorProfilesProvider tasks={allTasks}>
-        <div ref={scrollContainerRef} className="scrollbar-main-view flex-1 px-2 sm:px-3 py-4 space-y-1" data-onboarding="task-list">
+        <div ref={scrollContainerRef} className="scrollbar-main-view flex-1 px-2 sm:px-3 py-4 space-y-1" style={pendingScrollTop !== null ? { overflowAnchor: "none" } : undefined} data-onboarding="task-list">
           {displayedTasks.map((task) => (
             <TreeTaskItem
               key={task.id}

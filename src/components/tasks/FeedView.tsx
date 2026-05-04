@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useMemo, useState, type UIEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState, type UIEvent } from "react";
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatusType, normalizeTaskStatus } from "@/types";
@@ -297,6 +297,7 @@ export function FeedView({
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentScrollTopRef = useRef(0);
+  const [pendingScrollTop, setPendingScrollTop] = useState<number | null>(null);
   const scrollCaptureRef = useScrollCapture();
   useEffect(() => {
     const el = scrollContainerRef.current;
@@ -308,10 +309,17 @@ export function FeedView({
   useEffect(() => {
     scrollCaptureRef.current = {
       getScrollTop: () => currentScrollTopRef.current,
-      setScrollTop: (n) => { if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = n; },
+      setScrollTop: setPendingScrollTop,
     };
     return () => { scrollCaptureRef.current = null; };
   }, [scrollCaptureRef]);
+  useLayoutEffect(() => {
+    if (pendingScrollTop !== null && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = pendingScrollTop;
+      currentScrollTopRef.current = pendingScrollTop;
+      setPendingScrollTop(null);
+    }
+  }, [pendingScrollTop]);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
 
   const getRevealThresholdPx = (container: HTMLDivElement) =>
@@ -558,6 +566,7 @@ export function FeedView({
       <div
         ref={scrollContainerRef}
         className="scrollbar-main-view flex-1 overflow-y-auto"
+        style={pendingScrollTop !== null ? { overflowAnchor: "none" } : undefined}
         data-onboarding="task-list"
         onScroll={handleFeedScroll}
       >
