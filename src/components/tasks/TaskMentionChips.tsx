@@ -63,7 +63,7 @@ export function TaskMentionChips({
     const fallbackPerson = buildFallbackPersonFromPubkey(pubkey);
     const clickablePerson = matchedPerson || fallbackPerson;
     const label = matchedPerson?.name || matchedPerson?.displayName || fallbackPerson.displayName;
-    return { pubkey, matchedPerson, fallbackPerson, clickablePerson, label };
+    return { pubkey, clickablePerson, label };
   });
 
   resolvedMentions.sort((a, b) =>
