@@ -56,14 +56,21 @@ export function TaskMentionChips({
   const mentionPubkeys = collectMentionPubkeys(task);
   if (mentionPubkeys.length === 0) return null;
 
-  const chips = mentionPubkeys.map((pubkey) => {
+  const resolvedMentions = mentionPubkeys.map((pubkey) => {
     const matchedPerson = peopleProp
       ? people.find((person) => person.pubkey.toLowerCase() === pubkey)
       : getPersonById(pubkey);
     const fallbackPerson = buildFallbackPersonFromPubkey(pubkey);
     const clickablePerson = matchedPerson || fallbackPerson;
     const label = matchedPerson?.name || matchedPerson?.displayName || fallbackPerson.displayName;
+    return { pubkey, matchedPerson, fallbackPerson, clickablePerson, label };
+  });
 
+  resolvedMentions.sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+  );
+
+  const chips = resolvedMentions.map(({ pubkey, matchedPerson, fallbackPerson, clickablePerson, label }) => {
     if (clickablePerson) {
       return (
         <PersonHoverCard
