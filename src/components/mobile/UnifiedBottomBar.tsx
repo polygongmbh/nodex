@@ -1218,11 +1218,17 @@ export function UnifiedBottomBar({
             <div className="flex flex-wrap gap-2">
               {relays.map((relay) => {
                 const RelayIcon = resolveRelayIcon(relay.url);
+                const resolvedConnectionStatus =
+                  relay.id === "demo" || !relay.connectionStatus
+                    ? "connected"
+                    : relay.connectionStatus;
+                const showStatusDot = resolvedConnectionStatus !== "connected";
+                const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
                 return (
                   <button
                     key={relay.id}
                     onClick={() => {
-                      void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: relay.id });
+                      void dispatchFeedInteraction({ type: "sidebar.relay.select", relayId: relay.id, mode: "toggle" });
                     }}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
@@ -1233,6 +1239,12 @@ export function UnifiedBottomBar({
                   >
                     <RelayIcon className="w-4 h-4" />
                     {relay.name}
+                    {showStatusDot && (
+                      <span
+                        className={cn("inline-block h-2 w-2 rounded-full shrink-0", connectionDotClass)}
+                        aria-label={resolvedConnectionStatus}
+                      />
+                    )}
                     {relay.isActive && <Check className="w-3.5 h-3.5" />}
                   </button>
                 );
