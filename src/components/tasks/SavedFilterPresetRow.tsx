@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface SavedFilterPresetRowProps {
   configurations: SavedFilterConfiguration[];
@@ -23,6 +24,7 @@ export function SavedFilterPresetRow({
 }: SavedFilterPresetRowProps) {
   const { t } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { relays, channels, people } = useFeedSurfaceState();
 
   const promptAndSaveCurrent = () => {
     const initialName = `Preset ${configurations.length + 1}`;
@@ -45,18 +47,82 @@ export function SavedFilterPresetRow({
     });
   };
 
+  const buildConfigurationTooltip = (configuration: SavedFilterConfiguration): string => {
+    const sortAlpha = (values: string[]) =>
+      [...values].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+    const relayNames = sortAlpha(
+      configuration.relayIds
+        .map((id) => relays.find((r) => r.id === id)?.name || relays.find((r) => r.id === id)?.url || id)
+    );
+
+    const includedChannels: string[] = [];
+    const excludedChannels: string[] = [];
+    Object.entries(configuration.channelStates).forEach(([id, state]) => {
+      const name = channels.find((c) => c.id === id)?.name || id;
+      if (state === "included") includedChannels.push(name);
+      else if (state === "excluded") excludedChannels.push(name);
+    });
+    sortAlpha(includedChannels);
+    sortAlpha(excludedChannels);
+
+    const peopleNames = sortAlpha(
+      configuration.selectedPeopleIds.map((id) => {
+        const person = people.find((p) => p.pubkey === id);
+        return person?.name || person?.displayName || id.slice(0, 8);
+      })
+    );
+
+    const lines: string[] = [configuration.name];
+
+    if (relayNames.length > 0) {
+      lines.push(`${t("filters.savedFilters.tooltip.relays")}: ${relayNames.join(", ")}`);
+    }
+    if (includedChannels.length > 0) {
+      const matchModeLabel =
+        configuration.channelMatchMode === "or"
+          ? t("filters.savedFilters.tooltip.channelsOr")
+          : t("filters.savedFilters.tooltip.channelsAnd");
+      lines.push(`${matchModeLabel}: ${sortAlpha(includedChannels).join(", ")}`);
+    }
+    if (excludedChannels.length > 0) {
+      lines.push(
+        `${t("filters.savedFilters.tooltip.channelsExcluded")}: ${sortAlpha(excludedChannels).join(", ")}`
+      );
+    }
+    if (peopleNames.length > 0) {
+      lines.push(`${t("filters.savedFilters.tooltip.people")}: ${peopleNames.join(", ")}`);
+    }
+    if (lines.length === 1) {
+      lines.push(t("filters.savedFilters.tooltip.empty"));
+    }
+    return lines.join("\n");
+  };
+
+  const hasConfigurations = configurations.length > 0;
+  const saveLabel = t("filters.savedFilters.actions.saveCurrent");
+  const saveTooltip = hasConfigurations
+    ? t("filters.savedFilters.actions.saveCurrentTooltip")
+    : saveLabel;
+
   return (
     <div className={cn("flex items-center gap-2 overflow-x-auto pb-1", className)}>
       <button
         type="button"
         onClick={promptAndSaveCurrent}
-        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-dashed border-primary/40 bg-primary/5 px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+        title={saveTooltip}
+        aria-label={saveTooltip}
+        className={cn(
+          "inline-flex h-8 shrink-0 items-center rounded-full border border-dashed border-primary/40 bg-primary/5 text-xs font-medium text-primary transition-colors hover:bg-primary/10",
+          hasConfigurations ? "w-8 justify-center px-0" : "gap-1.5 px-3"
+        )}
       >
         <Bookmark className="h-3.5 w-3.5" />
-        <span>{t("filters.savedFilters.actions.saveCurrent")}</span>
+        {hasConfigurations ? null : <span>{saveLabel}</span>}
       </button>
       {configurations.map((configuration) => {
         const isActive = configuration.id === activeConfigurationId;
+        const tooltip = buildConfigurationTooltip(configuration);
         return (
           <div
             key={configuration.id}
@@ -76,7 +142,8 @@ export function SavedFilterPresetRow({
                 });
               }}
               className="inline-flex items-center rounded-full px-2 text-xs font-medium hover:text-foreground"
-              title={configuration.name}
+              title={tooltip}
+              aria-label={tooltip}
             >
               {configuration.name}
             </button>
