@@ -21,9 +21,18 @@
     "savedFilters": {
       "actions": {
         "saveCurrent": "Guardar filtros",
+        "saveCurrentTooltip": "Guardar la selección actual de filtros como un nuevo preset",
         "rename": "Renombrar",
         "delete": "Eliminar",
         "menu": "Opciones de filtros guardados"
+      },
+      "tooltip": {
+        "relays": "Espacios",
+        "channelsAnd": "Canales (todos)",
+        "channelsOr": "Canales (cualquiera)",
+        "channelsExcluded": "Canales excluidos",
+        "people": "Personas",
+        "empty": "Sin filtros"
       },
       "prompts": {
         "save": "Nombre para este preset de filtros",
