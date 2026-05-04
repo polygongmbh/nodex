@@ -59,6 +59,7 @@ import {
 } from "@/components/tasks/task-composer-runtime";
 import { resolveRelayRoutingState } from "@/lib/nostr/task-relay-routing";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
+import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 interface UnifiedBottomBarProps {
