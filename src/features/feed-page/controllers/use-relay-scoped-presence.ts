@@ -17,6 +17,7 @@ import {
 import type { Relay, Task } from "@/types";
 
 const OFFLINE_PRESENCE_FINGERPRINT = "offline";
+const ACTIVE_PRESENCE_PUBLISH_DEBOUNCE_MS = 3000;
 
 interface PublishResult {
   success: boolean;
@@ -274,10 +275,9 @@ export function useRelayScopedPresence({
     refreshRegisteredRelayUrls();
   }, [refreshRegisteredRelayUrls]);
 
-  // Publish when scope or fingerprint changes. No periodic refresh — presence
-  // expires naturally via the NIP-38 expiration tag; re-navigation republishes.
-  // Effect cleanup cancels in-flight publishes on re-render (rapid relay switching
-  // naturally drops superseded publishes without an explicit debounce).
+  // Publish when scope or fingerprint settles. No periodic refresh — presence
+  // expires naturally via the NIP-38 expiration tag, and active updates are
+  // intentionally delayed because they are only a best-effort status signal.
   useEffect(() => {
     let cancelled = false;
 
@@ -293,18 +293,25 @@ export function useRelayScopedPresence({
       relayStateByRelayUrlRef.current.clear();
     }
 
-    const targetsToPublish = filterTargetsNeedingPublish(
-      activeTargets,
-      relayStateByRelayUrlRef.current
-    );
-    if (targetsToPublish.length === 0) return;
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) return;
 
-    void (async () => {
-      await publishPresenceTargets(targetsToPublish, publishEvent, relayStateByRelayUrlRef.current);
-      if (!cancelled && mountedRef.current) refreshRegisteredRelayUrls();
-    })();
+      const targetsToPublish = filterTargetsNeedingPublish(
+        activeTargets,
+        relayStateByRelayUrlRef.current
+      );
+      if (targetsToPublish.length === 0) return;
 
-    return () => { cancelled = true; };
+      void (async () => {
+        await publishPresenceTargets(targetsToPublish, publishEvent, relayStateByRelayUrlRef.current);
+        if (!cancelled && mountedRef.current) refreshRegisteredRelayUrls();
+      })();
+    }, ACTIVE_PRESENCE_PUBLISH_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [activeTargets, presenceEnabled, publishEvent, refreshRegisteredRelayUrls, userPubkey]);
 
   return {

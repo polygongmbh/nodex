@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Relay, Task } from "@/types";
 import {
   buildRelayScopedPresenceTargets,
@@ -31,6 +31,14 @@ function buildTask(overrides: Partial<Task> & Pick<Task, "id" | "relays">): Task
     replies: overrides.replies ?? 0,
     reposts: overrides.reposts ?? 0,
   };
+}
+
+const PRESENCE_DEBOUNCE_MS = 3000;
+
+async function flushPresenceDebounce() {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(PRESENCE_DEBOUNCE_MS);
+  });
 }
 
 describe("buildRelayScopedPresenceTargets", () => {
@@ -80,7 +88,12 @@ describe("buildRelayScopedPresenceTargets", () => {
 
 describe("useRelayScopedPresence", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     usePreferencesStore.setState({ presencePublishingEnabled: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("publishes relay-specific presence payloads and skips unchanged fingerprints", async () => {
@@ -107,7 +120,8 @@ describe("useRelayScopedPresence", () => {
       }
     );
 
-    await act(async () => {});
+    expect(publishEvent).not.toHaveBeenCalled();
+    await flushPresenceDebounce();
 
     expect(publishEvent).toHaveBeenCalledTimes(2);
     expect(publishEvent.mock.calls).toEqual([
@@ -128,14 +142,55 @@ describe("useRelayScopedPresence", () => {
     ]);
 
     rerender({ currentView: "feed" });
-    await act(async () => {});
+    await flushPresenceDebounce();
     expect(publishEvent).toHaveBeenCalledTimes(2);
 
     rerender({ currentView: "list" });
-    await act(async () => {});
+    expect(publishEvent).toHaveBeenCalledTimes(2);
+    await flushPresenceDebounce();
     expect(publishEvent).toHaveBeenCalledTimes(4);
     expect(publishEvent.mock.calls[2]?.[1]).toContain(`"view":"list"`);
     expect(publishEvent.mock.calls[3]?.[1]).toContain(`"view":"list"`);
+  });
+
+  it("only publishes the latest active presence after rapid view changes", async () => {
+    const publishEvent = vi.fn(async (_kind, _content, _tags, _parentId, relayUrls) => ({
+      success: true,
+      publishedRelayUrls: relayUrls ?? [],
+    }));
+
+    const { rerender } = renderHook(
+      ({ currentView }) =>
+        useRelayScopedPresence({
+          userPubkey: "pub",
+          currentView,
+          focusedTask: null,
+          relayScopeIds: new Set(["relay-a"]),
+          relays: [
+            buildRelay({ id: "relay-a", url: "wss://relay.a" }),
+          ],
+          publishEvent,
+        }),
+      {
+        initialProps: { currentView: "feed" },
+      }
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PRESENCE_DEBOUNCE_MS - 1);
+    });
+    rerender({ currentView: "list" });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PRESENCE_DEBOUNCE_MS - 1);
+    });
+    rerender({ currentView: "calendar" });
+
+    expect(publishEvent).not.toHaveBeenCalled();
+
+    await flushPresenceDebounce();
+
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    expect(publishEvent.mock.calls[0]?.[1]).toContain(`"view":"calendar"`);
   });
 
   it("switches relays without implicit offline and only publishes offline on demand", async () => {
@@ -162,13 +217,14 @@ describe("useRelayScopedPresence", () => {
       }
     );
 
-    await act(async () => {});
+    await flushPresenceDebounce();
 
     expect(publishEvent).toHaveBeenCalledTimes(1);
     expect(publishEvent.mock.calls[0]?.[4]).toEqual(["wss://relay.a"]);
 
     rerender({ relayScopeIds: new Set(["relay-b"]) });
-    await act(async () => {});
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    await flushPresenceDebounce();
 
     expect(publishEvent).toHaveBeenCalledTimes(2);
     expect(publishEvent.mock.calls[1]?.[4]).toEqual(["wss://relay.b"]);
