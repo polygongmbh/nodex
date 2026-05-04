@@ -22,9 +22,9 @@ export function useFeedHydrationWindow({
   focusedTaskId,
   totalEntryCount,
 }: UseFeedHydrationWindowOptions): UseFeedHydrationWindowResult {
-  const keyCountHistoryRef = useRef<Map<string, number>>(new Map());
-  // Saved outside the LRU so it cannot be evicted by subtask navigation.
+  // Captured on scope entry; never cleared so it survives intermediate exit renders.
   const savedParentCountRef = useRef<number | null>(null);
+  const prevFocusedTaskIdRef = useRef<string | null>(null);
 
   const [windowState, setWindowState] = useState(() => ({
     key: disclosureKey,
@@ -36,29 +36,29 @@ export function useFeedHydrationWindow({
       ? windowState.visibleEntryCount
       : focusedTaskId === null && savedParentCountRef.current !== null
         ? savedParentCountRef.current
-        : (keyCountHistoryRef.current.get(disclosureKey) ?? INITIAL_VISIBLE_FEED_ENTRIES);
+        : INITIAL_VISIBLE_FEED_ENTRIES;
   const hasMoreEntries = totalEntryCount > visibleEntryCount;
 
   useEffect(() => {
-    if (windowState.key === disclosureKey) {
-      // Settled back at parent level — safe to release the saved count.
-      if (focusedTaskId === null) savedParentCountRef.current = null;
-      return;
-    }
-    if (focusedTaskId !== null && savedParentCountRef.current === null) {
-      // Entering a subtask: protect the parent count outside the LRU.
+    const prevId = prevFocusedTaskIdRef.current;
+    prevFocusedTaskIdRef.current = focusedTaskId;
+
+    if (windowState.key === disclosureKey) return;
+
+    if (prevId === null && focusedTaskId !== null) {
+      // Entering a subtask from parent level: capture the current parent count.
+      // Overwriting is intentional so a subsequent entry always saves the freshest value.
       savedParentCountRef.current = windowState.visibleEntryCount;
     }
-    keyCountHistoryRef.current.set(windowState.key, windowState.visibleEntryCount);
-    if (keyCountHistoryRef.current.size > 5) {
-      keyCountHistoryRef.current.delete(keyCountHistoryRef.current.keys().next().value!);
-    }
-    const restoredCount =
-      focusedTaskId === null && savedParentCountRef.current !== null
-        ? savedParentCountRef.current
-        : (keyCountHistoryRef.current.get(disclosureKey) ?? INITIAL_VISIBLE_FEED_ENTRIES);
+
     startTransition(() => {
-      setWindowState({ key: disclosureKey, visibleEntryCount: restoredCount });
+      setWindowState({
+        key: disclosureKey,
+        visibleEntryCount:
+          focusedTaskId === null && savedParentCountRef.current !== null
+            ? savedParentCountRef.current
+            : INITIAL_VISIBLE_FEED_ENTRIES,
+      });
     });
   // windowState is a dep so that when visibleEntryCount grows the saved count
   // for the outgoing key stays current (the early return guards excess work).
