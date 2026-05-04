@@ -21,9 +21,18 @@
     "savedFilters": {
       "actions": {
         "saveCurrent": "Save filters",
+        "saveCurrentTooltip": "Save current filter selection as a new preset",
         "rename": "Rename",
         "delete": "Delete",
         "menu": "Saved filter options"
+      },
+      "tooltip": {
+        "relays": "Spaces",
+        "channelsAnd": "Channels (all of)",
+        "channelsOr": "Channels (any of)",
+        "channelsExcluded": "Excluded channels",
+        "people": "People",
+        "empty": "No filters set"
       },
       "prompts": {
         "save": "Name this filter preset",
