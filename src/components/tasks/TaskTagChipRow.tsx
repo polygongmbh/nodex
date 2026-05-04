@@ -103,7 +103,7 @@ function TaskTagChipContent({
         people={people}
         inline
       />
-      {task.tags.map((tag) => (
+      {[...task.tags].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).map((tag) => (
         <button
           key={tag}
           type="button"
