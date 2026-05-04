@@ -41,4 +41,5 @@ describe("useFeedHydrationWindow", () => {
     expect(after1stExit).toBe(130);
     expect(after2ndExit).toBe(130);
   });
+
 });

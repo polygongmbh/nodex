@@ -362,7 +362,7 @@ describe("FeedView", () => {
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
   });
 
-  it("re-clamps the visible feed window when active relay scope changes", async () => {
+  it("keeps the expanded feed window when active relay scope changes", async () => {
     const relayOne = makeRelay({ id: "relay-one", name: "Relay One", url: "wss://relay.one", isActive: true });
     const relayTwo = makeRelay({ id: "relay-two", name: "Relay Two", url: "wss://relay.two", isActive: true });
     const manyTasks = makeFeedTasks(82, (index) => ({
@@ -424,10 +424,10 @@ describe("FeedView", () => {
       </FeedSurfaceProvider>
     );
 
-    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(41);
   });
 
-  it("re-clamps the visible feed window when quick filters change", async () => {
+  it("keeps the expanded feed window when quick filters change", async () => {
     const manyTasks = makeFeedTasks(82, (index) => ({
       priority: index < 41 ? 80 : 20,
     }));
@@ -484,7 +484,7 @@ describe("FeedView", () => {
       </FeedSurfaceProvider>
     );
 
-    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(41);
   });
 
   it("renders breadcrumb focus buttons for long labels", () => {

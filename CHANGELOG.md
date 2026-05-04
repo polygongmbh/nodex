@@ -6,8 +6,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-### Fixed
+## [2.15.10] - 2026-05-04
+Patch release for relay reconnect recovery, relay popover polish, and feed restoration stability.
+
+- Relay popovers now share a more consistent visual treatment across desktop and mobile surfaces.
 - Selecting a relay with a connection issue now shows the reconnect attempt feedback again and automatically deselects the relay if reconnecting fails.
+- Make scroll position restore more reliable.
 
 ## [2.15.9] - 2026-05-04
 
