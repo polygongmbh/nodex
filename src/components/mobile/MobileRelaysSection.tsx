@@ -78,8 +78,9 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
               <button
                 onClick={() => {
                   void dispatchFeedInteraction({
-                    type: "sidebar.relay.toggle",
+                    type: "sidebar.relay.select",
                     relayId: relay.id,
+                    mode: "toggle",
                   });
                 }}
                 className="flex items-center gap-2 flex-1 min-w-0"
@@ -104,6 +105,22 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
                 />
                 {relay.isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
               </button>
+              {relay.url && relay.id !== "demo" && resolvedConnectionStatus !== "connected" && (
+                <button
+                  onClick={() => {
+                    void dispatchFeedInteraction({
+                      type: "sidebar.relay.reconnect",
+                      url: relay.url!,
+                      forceNewSocket: true,
+                    });
+                  }}
+                  className="ml-1 p-1.5 rounded text-muted-foreground hover:text-foreground active:bg-muted inline-flex items-center gap-1 touch-target-sm"
+                  aria-label={t("relay:relay.reconnect")}
+                  title={t("relay:relay.reconnect")}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              )}
               {relay.url && relay.id !== "demo" && (
                 <button
                   onClick={() => {
