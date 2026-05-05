@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { readStartupRelayBootstrap, resolveStartupRelayBootstrap } from "./startup-relays";
+import {
+  extractPathRelayOverride,
+  readStartupRelayBootstrap,
+  resolveStartupRelayBootstrap,
+} from "./startup-relays";
 
 const defaultRelaysModule = vi.hoisted(() => ({
   getConfiguredDefaultRelays: vi.fn<() => string[]>(),
