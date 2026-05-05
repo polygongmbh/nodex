@@ -34,11 +34,17 @@ function RootFeedRedirect() {
 
 function ViewRoute() {
   const location = useLocation();
-  const firstSegment = location.pathname.split("/").filter(Boolean)[0];
+  const segments = location.pathname.split("/").filter(Boolean);
+  const firstSegment = segments[0];
   if (firstSegment && firstSegment.includes(".")) {
+    const taskId = segments[1];
     return (
       <Navigate
-        to={{ pathname: "/feed", search: location.search, hash: location.hash }}
+        to={{
+          pathname: taskId ? `/feed/${taskId}` : "/feed",
+          search: location.search,
+          hash: location.hash,
+        }}
         replace
       />
     );
