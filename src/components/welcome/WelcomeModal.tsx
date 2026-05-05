@@ -71,7 +71,7 @@ export function WelcomeModal({
 
   return (
     <>
-      <OverlayScrim isOpen={isVisible} zIndex={134} />
+      <OverlayScrim isOpen={isOpen} zIndex={134} />
       <div
         className="fixed inset-0 z-[135] flex items-center justify-center pointer-events-none"
         data-state={state}
