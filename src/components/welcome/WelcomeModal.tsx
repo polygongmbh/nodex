@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogIn, Sparkles, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { OverlayScrim, OVERLAY_SCRIM_FADE_MS } from "@/components/ui/overlay-scrim";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-const FADE_DURATION_MS = OVERLAY_SCRIM_FADE_MS;
+import {
+  OverlayScrim,
+  OVERLAY_SCRIM_FADE_MS,
+  OVERLAY_FADE_EASING,
+} from "@/components/ui/overlay-scrim";
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -23,7 +24,6 @@ export function WelcomeModal({
   onSignIn,
 }: WelcomeModalProps) {
   const { t } = useTranslation(["welcome", "auth"]);
-  const isMobile = useIsMobile();
   const [isRendered, setIsRendered] = useState(isOpen);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -50,7 +50,7 @@ export function WelcomeModal({
 
     const closeTimeout = window.setTimeout(() => {
       setIsRendered(false);
-    }, FADE_DURATION_MS);
+    }, OVERLAY_SCRIM_FADE_MS);
 
     return () => {
       window.clearTimeout(closeTimeout);
@@ -62,11 +62,9 @@ export function WelcomeModal({
   const state = isVisible ? "open" : "closed";
   const dialogStyle = {
     opacity: isVisible ? 1 : 0,
-    transform: isMobile ? "none" : isVisible ? "scale(1)" : "scale(0.95)",
-    transformOrigin: "100% 0%",
-    transitionProperty: "opacity, transform",
-    transitionDuration: `${FADE_DURATION_MS}ms`,
-    transitionTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
+    transitionProperty: "opacity",
+    transitionDuration: `${OVERLAY_SCRIM_FADE_MS}ms`,
+    transitionTimingFunction: OVERLAY_FADE_EASING,
   } as const;
 
   return (

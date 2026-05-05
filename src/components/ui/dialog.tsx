@@ -3,15 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { OVERLAY_SCRIM_FADE_MS } from "@/components/ui/overlay-scrim";
-
-/** Inline style applied to overlay/content so all dialog surfaces share the
- * same gentle fade timing as the onboarding intro popover, keeping
- * cross-overlay transitions visually consistent. */
-const dialogFadeStyle: React.CSSProperties = {
-  animationDuration: `${OVERLAY_SCRIM_FADE_MS}ms`,
-  animationTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
-};
+import { overlayFadeStyle } from "@/components/ui/overlay-scrim";
 
 type PointerDownOutsideHandler = NonNullable<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>["onPointerDownOutside"]
@@ -52,7 +44,7 @@ const DialogOverlay = React.forwardRef<
       "fixed inset-0 z-[200] bg-overlay-scrim data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
-    style={{ ...dialogFadeStyle, ...style }}
+    style={{ ...overlayFadeStyle, ...style }}
     {...props}
   />
 ));
@@ -74,14 +66,10 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        // Unified overlay motion: fade + (desktop only) a subtle zoom that emanates from the
-        // top-right of the viewport, where the login/profile entry points live. On mobile we
-        // intentionally drop the zoom for a lighter fade-only entrance that feels calmer on
-        // touch devices and avoids competing with the bottom navigation motion.
-        "fixed left-[50%] top-[50%] z-[210] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg origin-[100%_0%] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95",
+        "fixed left-[50%] top-[50%] z-[210] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className,
       )}
-      style={{ ...dialogFadeStyle, ...style }}
+      style={{ ...overlayFadeStyle, ...style }}
       onPointerDownOutside={(event) =>
         handleDialogOutsideInteraction(dismissOnOutsideInteract, event, onPointerDownOutside)
       }

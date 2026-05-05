@@ -3,12 +3,20 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 /**
- * Unified scrim duration shared by every overlay surface (dialogs, sheets,
- * alert dialogs, onboarding intro, onboarding guide). Matches the gentle
- * fade used by the onboarding intro so transitions between overlays feel
- * consistent and never compound visually for long.
+ * Shared overlay motion config. Every modal surface (Dialog, AlertDialog,
+ * WelcomeModal, onboarding intro/guide scrims) animates with the same
+ * duration and easing so cross-surface transitions feel unified and don't
+ * drift. Dialogs are pure fades — no scale or directional slide — to keep
+ * the motion language calm.
  */
 export const OVERLAY_SCRIM_FADE_MS = 400;
+export const OVERLAY_FADE_EASING = "cubic-bezier(0, 0, 0.2, 1)";
+
+/** Inline style for surfaces that fade via Tailwind `animate-in`/`animate-out`. */
+export const overlayFadeStyle: CSSProperties = {
+  animationDuration: `${OVERLAY_SCRIM_FADE_MS}ms`,
+  animationTimingFunction: OVERLAY_FADE_EASING,
+};
 
 interface OverlayScrimProps {
   /** Whether the scrim should be visible. */
@@ -65,7 +73,7 @@ export function OverlayScrim({
     opacity: isVisible ? 1 : 0,
     transitionProperty: "opacity",
     transitionDuration: `${OVERLAY_SCRIM_FADE_MS}ms`,
-    transitionTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
+    transitionTimingFunction: OVERLAY_FADE_EASING,
     zIndex,
   };
 
