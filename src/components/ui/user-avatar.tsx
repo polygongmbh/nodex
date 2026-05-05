@@ -22,16 +22,15 @@ export function UserAvatar({ id, displayName, className, beamTestId }: UserAvata
   const cachedProfile = useCachedNostrProfile(id);
   const resolvedDisplayName = displayName || cachedProfile?.displayName || cachedProfile?.name;
   const resolvedAvatarUrl = cachedProfile?.picture || undefined;
-  const initial = (resolvedDisplayName || id || "?").charAt(0).toUpperCase();
 
   return (
     <Avatar className={className}>
       {resolvedAvatarUrl ? <AvatarImage src={resolvedAvatarUrl} alt={resolvedDisplayName || id} /> : null}
       <AvatarFallback className="p-0 overflow-hidden bg-transparent text-foreground text-xs">
-        {!resolvedAvatarUrl && id ? (
+        {id ? (
           <BeamAvatar seed={id} size={64} className="w-full h-full" data-testid={beamTestId} />
         ) : (
-          <span>{initial}</span>
+          <span>?</span>
         )}
       </AvatarFallback>
     </Avatar>

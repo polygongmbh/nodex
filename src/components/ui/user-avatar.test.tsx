@@ -38,9 +38,8 @@ describe("UserAvatar", () => {
       />
     );
 
-    expect(screen.queryByTestId("user-beam")).not.toBeInTheDocument();
-    // Avatar image renders as soon as it loads; until then the fallback initial is shown.
-    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByTestId("user-beam")).toBeInTheDocument();
+    expect(screen.queryByText("A")).not.toBeInTheDocument();
   });
 
   it("renders avataaars-like cached pictures without special casing", () => {
@@ -59,7 +58,7 @@ describe("UserAvatar", () => {
       />
     );
 
-    expect(screen.queryByTestId("user-beam")).not.toBeInTheDocument();
-    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByTestId("user-beam")).toBeInTheDocument();
+    expect(screen.queryByText("A")).not.toBeInTheDocument();
   });
 });
