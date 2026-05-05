@@ -75,7 +75,6 @@
     "tailwindcss-animate": "^1.0.7",
     "unique-names-generator": "^4.7.1",
     "vaul": "^1.1.2",
-    "vitest": "^3.2.4",
     "zod": "^4.4.3",
     "zustand": "^5.0.13"
   },
@@ -96,6 +95,7 @@
     "tailwindcss": "^3.4.19",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.2",
-    "vite": "^7.3.2"
+    "vite": "^8.0.10",
+    "vitest": "^3.2.4"
   }
 }
