@@ -40,7 +40,6 @@ import {
   loadSessionNoasState,
   loadSessionPrivateKey,
   loadPersistedNoasDefaultHostUrl,
-  loadPersistedRelayUrls,
   loadStoredAuthMethod,
   savePersistentAuthMethod,
   savePersistedRelayUrls,
