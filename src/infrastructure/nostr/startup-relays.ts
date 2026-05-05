@@ -3,6 +3,7 @@ import {
   getConfiguredDefaultRelaysWithFallback,
 } from "@/infrastructure/nostr/default-relays";
 import { loadPersistedRelayUrls, savePersistedRelayUrls } from "@/infrastructure/nostr/provider/storage";
+import { clearAllCachedNostrEvents } from "@/infrastructure/nostr/event-cache";
 
 export interface StartupRelayBootstrap {
   relayUrls: string[];
