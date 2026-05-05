@@ -6,6 +6,17 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.16.1] - 2026-05-06
+Patch release for targeted anti-spam composer filtering, safer cache subscription behavior, and dependency refreshes.
+
+### Changed
+- The composer now blocks obviously spam-matching posts before publish and uses a narrower keyword set to reduce collateral filtering.
+- Core frontend and Nostr dependencies were refreshed, including React 19, React Router 7.15, Vite 8, and related tooling updates.
+
+### Fixed
+- Legitimate task events are no longer dropped by earlier spam-filter false positives.
+- NDK event-cache subscriptions now reuse a single empty-filter subscription path, avoiding duplicate subscription races that could leave caches empty.
+
 ## [2.16.0] - 2026-05-05
 Minor release for account-session recovery, NIP-05 identity visibility, and broader auth/profile polish.
 
