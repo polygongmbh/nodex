@@ -71,6 +71,7 @@ describe("startup relay bootstrap", () => {
       relayUrls: [],
       source: "fallback",
       needsAsyncFallback: false,
+    });
     expect(storageModule.savePersistedRelayUrls).not.toHaveBeenCalled();
   });
 
