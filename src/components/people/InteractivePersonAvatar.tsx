@@ -7,19 +7,14 @@ import { cn } from "@/lib/utils";
 
 interface InteractivePersonAvatarProps {
   person: Person;
-  /** Tailwind size class applied to the avatar (e.g. "w-8 h-8"). */
+  /** Tailwind size class applied to the button wrapper (e.g. "w-8 h-8"). */
   sizeClassName?: string;
-  /** Extra classes for the inner UserAvatar (ring, transitions, etc.). */
-  avatarClassName?: string;
   /** Extra classes for the outer button wrapper. */
   className?: string;
-  beamTestId?: string;
   /** Optional accessible label override; defaults to the person's name. */
   ariaLabel?: string;
   /** Forwarded to PersonActionMenu. Defaults to true so cmd/alt-clicks dispatch shortcuts. */
   enableModifierShortcuts?: boolean;
-  /** Optional displayName override (e.g. when a richer profile is available). */
-  displayName?: string;
   /**
    * When true, a plain click immediately filters the feed by this person
    * (sidebar exclusive selection) instead of opening the action menu.
@@ -40,16 +35,13 @@ interface InteractivePersonAvatarProps {
 export function InteractivePersonAvatar({
   person,
   sizeClassName = "w-8 h-8",
-  avatarClassName,
   className,
-  beamTestId,
   ariaLabel,
   enableModifierShortcuts = true,
-  displayName,
   directFilterOnClick = false,
 }: InteractivePersonAvatarProps) {
   const { t } = useTranslation("tasks");
-  const resolvedDisplayName = displayName ?? person.displayName ?? person.name ?? person.pubkey;
+  const resolvedDisplayName = person.displayName ?? person.name ?? person.pubkey;
   const label = ariaLabel ?? t("people.actions.openMenu", { name: resolvedDisplayName });
 
   return (
@@ -62,17 +54,13 @@ export function InteractivePersonAvatar({
         <button
           type="button"
           className={cn(
-            "rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 hover:ring-2 hover:ring-primary/40 transition-shadow",
+            "shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 hover:ring-2 hover:ring-primary/40 transition-shadow",
+            sizeClassName,
             className,
           )}
           aria-label={label}
         >
-          <UserAvatar
-            id={person.pubkey}
-            displayName={resolvedDisplayName}
-            className={cn(sizeClassName, "flex-shrink-0", avatarClassName)}
-            beamTestId={beamTestId}
-          />
+          <UserAvatar pubkey={person.pubkey} />
         </button>
       </PersonActionMenu>
     </PersonHoverCard>

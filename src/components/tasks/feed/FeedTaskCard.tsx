@@ -339,7 +339,6 @@ export const FeedTaskCard = memo(function FeedTaskCard({
           <InteractivePersonAvatar
             person={resolvedAuthor}
             sizeClassName={isMobile ? "w-7 h-7" : "w-8 h-8"}
-            beamTestId={`feed-beam-${task.id}`}
             ariaLabel={t("people.actions.openMenu", { name: authorMeta.primary })}
             // On mobile the timeline behaves like the other views — a tap
             // immediately filters by this person rather than opening the

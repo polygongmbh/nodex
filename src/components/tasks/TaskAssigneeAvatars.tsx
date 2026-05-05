@@ -79,8 +79,8 @@ export function TaskAssigneeAvatars({
             key={pubkey}
             person={clickablePerson}
             sizeClassName={avatarSizeClassName}
-            avatarClassName="ring-1 ring-background hover:scale-110 transition-transform"
-            displayName={displayName}
+            className="ring-1 ring-background hover:scale-110 transition-transform"
+            ariaLabel={displayName}
             directFilterOnClick={!isMobile}
           />
         );

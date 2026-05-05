@@ -939,7 +939,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             <DropdownTriggerContent
               className="max-w-full"
               leading={
-                <UserAvatar id={user.pubkey} displayName={displayName} className="w-5 h-5" />
+                <div className="w-5 h-5"><UserAvatar pubkey={user.pubkey} /></div>
               }
               label={displayName}
               labelClassName="max-w-[8rem] text-sm font-medium"
@@ -951,7 +951,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             <DropdownMenuLabel className="px-2 py-1">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <UserAvatar id={user.pubkey} displayName={displayName} className="w-6 h-6" />
+                  <div className="w-6 h-6"><UserAvatar pubkey={user.pubkey} /></div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-medium truncate">{displayName}</span>

@@ -1288,11 +1288,9 @@ export function UnifiedBottomBar({
                         : "border-border"
                     )}
                   >
-                    <UserAvatar
-                      id={person.pubkey}
-                      displayName={personDisplayName}
-                      className="w-6 h-6"
-                    />
+                    <div className="w-6 h-6">
+                      <UserAvatar pubkey={person.pubkey} />
+                    </div>
                     <span className="truncate max-w-[8rem]" title={personDisplayName}>
                       {personLabel}
                     </span>
@@ -1776,11 +1774,9 @@ export function UnifiedBottomBar({
                           activeMentionIndex === index ? "bg-muted motion-magnet-active" : "hover:bg-muted"
                         )}
                       >
-                        <UserAvatar
-                          id={person.pubkey}
-                          displayName={person.displayName || person.name}
-                          className="w-4 h-4"
-                        />
+                        <div className="w-4 h-4">
+                          <UserAvatar pubkey={person.pubkey} />
+                        </div>
                         <span className="text-sm min-w-0 flex-1 truncate">@{person.name || person.displayName}</span>
                         <span
                           className="text-xs text-muted-foreground max-w-[9rem] truncate"

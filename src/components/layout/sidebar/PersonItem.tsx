@@ -86,19 +86,14 @@ export function PersonItem({
               handlePersonShortcut(event, "toggle");
             }}
             aria-label={t("sidebar.filters.togglePerson", { name: personName })}
-            className="relative rounded-full hover:ring-2 hover:ring-primary/50"
+            className={cn(
+              "relative w-7 h-7 rounded-full transition-colors hover:ring-2 hover:ring-primary/50",
+              person.isSelected
+                ? "ring-2 ring-primary/50 motion-filter-pop"
+                : "group-hover:opacity-90"
+            )}
           >
-            <UserAvatar
-              id={person.pubkey}
-              displayName={person.displayName}
-              className={cn(
-                "w-7 h-7 transition-colors",
-                person.isSelected
-                  ? "ring-2 ring-primary/50 motion-filter-pop"
-                  : "group-hover:opacity-90"
-              )}
-              beamTestId={`sidebar-person-beam-${person.pubkey}`}
-            />
+            <UserAvatar pubkey={person.pubkey} />
             {statusDotClassName && (
               <div className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar", statusDotClassName)} />
             )}

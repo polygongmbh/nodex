@@ -1597,11 +1597,9 @@ export function TaskComposer({
                     isActive ? "bg-muted motion-magnet-active" : "hover:bg-muted"
                   )}
                   >
-                  <UserAvatar
-                    id={person.pubkey}
-                    displayName={person.primaryLabel}
-                    className="w-4 h-4"
-                  />
+                  <div className="w-4 h-4">
+                    <UserAvatar pubkey={person.pubkey} />
+                  </div>
                   <span className="text-sm min-w-0 flex-1 truncate">@{person.primaryLabel}</span>
                   <span
                     className="text-xs text-muted-foreground max-w-[11rem] truncate"

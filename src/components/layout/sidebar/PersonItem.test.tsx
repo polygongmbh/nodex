@@ -29,7 +29,7 @@ describe("PersonItem", () => {
   it("renders beam avatar fallback when person has no profile image", () => {
     renderPersonItem(basePerson);
 
-    expect(screen.getByTestId("sidebar-person-beam-npub123")).toBeInTheDocument();
+    expect(screen.getByTestId("user-avatar-beam-npub123")).toBeInTheDocument();
   });
 
   it("enables exclusive filter when clicking the person text", () => {

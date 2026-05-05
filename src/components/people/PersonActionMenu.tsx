@@ -295,11 +295,9 @@ export function PersonActionMenuContent({
       >
         <div className="px-2 py-2">
           <div className="flex items-start gap-3">
-            <UserAvatar
-              id={person.pubkey}
-              displayName={person.displayName}
-              className="h-10 w-10 shrink-0"
-            />
+            <div className="h-10 w-10 shrink-0">
+              <UserAvatar pubkey={person.pubkey} />
+            </div>
             <div className="min-w-0 flex-1 space-y-0.5">
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-semibold text-foreground">{compactLabel}</p>

@@ -383,11 +383,9 @@ export function MobileFilters({
                       : "border-border hover:bg-muted"
                   )}
                 >
-                  <UserAvatar
-                    id={person.pubkey}
-                    displayName={personDisplayName}
-                    className="w-6 h-6"
-                  />
+                  <div className="w-6 h-6">
+                    <UserAvatar pubkey={person.pubkey} />
+                  </div>
                   <span className="truncate max-w-[9rem]" title={personDisplayName}>
                     {personLabel}
                   </span>
