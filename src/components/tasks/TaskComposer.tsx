@@ -18,7 +18,8 @@ import {
   normalizeMentionIdentifier,
 } from "@/lib/mentions";
 import { hasComposerSubstance, hasMeaningfulComposerText } from "@/lib/composer-content";
-import { notifyNeedTag } from "@/lib/notifications";
+import { notifyNeedTag, notifySpamRejected } from "@/lib/notifications";
+import { findSpamKeyword } from "@/lib/nostr/spam-filter";
 import {
   isAlternateSubmitKey,
   isAutocompleteAcceptKey,
@@ -873,6 +874,12 @@ export function TaskComposer({
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
     if (submitTags.length === 0 && !allowEmptyTags) {
       notifyNeedTag();
+      return;
+    }
+    const spamKeyword = findSpamKeyword(content);
+    if (spamKeyword) {
+      console.warn(`[spam-filter] composer rejected post (matched "${spamKeyword}")`);
+      notifySpamRejected();
       return;
     }
     const listingMetadata =

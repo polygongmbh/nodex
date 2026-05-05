@@ -6,13 +6,13 @@ describe("isSpamContent", () => {
     expect(isSpamContent("Check out my onlyfans")).toBe(true);
     expect(isSpamContent("NSFW content here")).toBe(true);
     expect(isSpamContent("Adult content 18+")).toBe(true);
+    expect(isSpamContent("nudes in DM")).toBe(true);
   });
 
-  it("detects spam patterns", () => {
-    expect(isSpamContent("Free bitcoin giveaway")).toBe(true);
-    expect(isSpamContent("DM me for details")).toBe(true);
-    expect(isSpamContent("Click here now")).toBe(true);
-    expect(isSpamContent("Follow me for follow back")).toBe(true);
+  it("detects crypto-spam patterns", () => {
+    expect(isSpamContent("Free bitcoin giveaway happening now")).toBe(true);
+    expect(isSpamContent("crypto giveaway, click link")).toBe(true);
+    expect(isSpamContent("free btc to first 100")).toBe(true);
   });
 
   it("does not flag normal content", () => {
@@ -28,10 +28,16 @@ describe("isSpamContent", () => {
     expect(isSpamContent("scumbag detector")).toBe(false);
   });
 
-  it("does not flag foreign-language words that overlap English keywords", () => {
+  it("does not flag everyday or foreign-language phrases", () => {
     expect(isSpamContent("Cum ești astăzi?")).toBe(false);
     expect(isSpamContent("magna cum laude")).toBe(false);
     expect(isSpamContent("Dick ist ein deutscher Vorname")).toBe(false);
+    expect(isSpamContent("Subscribe to the newsletter please")).toBe(false);
+    expect(isSpamContent("Casino Royale was a good film")).toBe(false);
+    expect(isSpamContent("Send via Telegram or WhatsApp")).toBe(false);
+    expect(isSpamContent("DM me when you have a sec")).toBe(false);
+    expect(isSpamContent("Click here to read more")).toBe(false);
+    expect(isSpamContent("That's a sexy API design")).toBe(false);
   });
 
   it("is case insensitive", () => {

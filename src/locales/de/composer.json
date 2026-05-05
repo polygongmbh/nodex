@@ -136,6 +136,7 @@
   "toasts": {
     "errors": {
       "needTag": "Mindestens einen #channel vor dem Veröffentlichen hinzufügen",
+      "spamRejected": "Beitrag blockiert: vom Spam-Filter erkannt",
       "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
       "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",
       "statusRestricted": "Aufgaben-Updates sind auf markierte Zuständige und den Ersteller beschränkt",

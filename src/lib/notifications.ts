@@ -169,6 +169,10 @@ export function notifyNeedTag(): void {
   toast.error(i18n.t("composer:toasts.errors.needTag"));
 }
 
+export function notifySpamRejected(): void {
+  toast.error(i18n.t("composer:toasts.errors.spamRejected"), { id: "spam-rejected" });
+}
+
 export function notifyTaskCreationFailed(): void {
   toast.error(i18n.t("composer:toasts.errors.taskCreationFailed"));
 }
