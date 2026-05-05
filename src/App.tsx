@@ -32,6 +32,20 @@ function RootFeedRedirect() {
   );
 }
 
+function ViewRoute() {
+  const location = useLocation();
+  const firstSegment = location.pathname.split("/").filter(Boolean)[0];
+  if (firstSegment && firstSegment.includes(".")) {
+    return (
+      <Navigate
+        to={{ pathname: "/feed", search: location.search, hash: location.hash }}
+        replace
+      />
+    );
+  }
+  return <Index />;
+}
+
 function NostrBootstrapProvider({ children }: { children: ReactNode }) {
   const pathRelayOverride =
     typeof window !== "undefined" ? extractPathRelayOverride(window.location.pathname) : null;
