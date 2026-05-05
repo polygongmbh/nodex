@@ -449,7 +449,7 @@ export class NoasClient {
       return await decryptNip49PrivateKey(encryptedKey, password);
     } catch (error) {
       console.error('Private key decryption failed:', error);
-      throw new Error(`Could not decrypt private key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Could not decrypt private key: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
     }
   }
 }

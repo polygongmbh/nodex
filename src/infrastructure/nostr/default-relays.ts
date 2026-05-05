@@ -46,7 +46,7 @@ function getHostFallbackCacheKey(hostname: string, protocol: RelayProtocol): str
 function readHostFallbackCache(hostname: string, protocol: RelayProtocol): string[] | null {
   if (typeof window === "undefined" || !window.localStorage) return null;
   const key = getHostFallbackCacheKey(hostname, protocol);
-  let raw: string | null = null;
+  let raw: string | null;
   try {
     raw = window.localStorage.getItem(key);
   } catch (error) {

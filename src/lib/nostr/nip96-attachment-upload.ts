@@ -213,11 +213,11 @@ export async function uploadAttachment(
       uploadUrl,
       error: error instanceof Error ? error.message : String(error),
     });
-    throw new Error(i18n.t("composer:composer.attachments.networkError"));
+    throw new Error(i18n.t("composer:composer.attachments.networkError"), { cause: error });
   }
 
   if (!response.ok) {
-    let bodyPreview = "";
+    let bodyPreview: string;
     try {
       bodyPreview = (await response.clone().text()).slice(0, 300);
     } catch {

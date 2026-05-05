@@ -132,7 +132,7 @@ function formatNoasServerErrorPayload(errorMessage: string | undefined, httpStat
     return null;
   }
 
-  let statusText = "";
+  let statusText: string;
   try {
     statusText = new Response(null, { status: httpStatus }).statusText.trim();
   } catch {

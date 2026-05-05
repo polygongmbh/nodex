@@ -209,7 +209,7 @@ export async function decryptNip49PrivateKey(encryptedKey: string, password: str
 
     throw new Error('Unsupported private key format');
   } catch (error) {
-    throw new Error(`Failed to decrypt private key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Failed to decrypt private key: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
   }
 }
 

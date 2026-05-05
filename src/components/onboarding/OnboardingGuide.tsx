@@ -841,7 +841,6 @@ export function OnboardingGuide({
       const area = overlapArea(candidate.left, candidate.top);
       if (area === 0) {
         bestCandidate = candidate;
-        bestOverlap = 0;
         break;
       }
       if (area < bestOverlap) {
