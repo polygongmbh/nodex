@@ -6,10 +6,8 @@ import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
 import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
-import {
-  nostrEventsToTasks,
-  findSpamKeyword,
-} from "@/infrastructure/nostr/task-converter";
+import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
+import { findSpamKeyword } from "@/lib/nostr/spam-filter";
 import {
   applyTaskSortOverlays,
   dedupeMergedTasks,
