@@ -72,6 +72,34 @@ describe("startup relay bootstrap", () => {
       source: "fallback",
       needsAsyncFallback: false,
     });
-    expect(storageModule.savePersistedRelayUrls).not.toHaveBeenCalled();
+  it("uses a path-derived relay override and persists it, ignoring persisted/env relays", () => {
+    storageModule.loadPersistedRelayUrls.mockReturnValue(["wss://relay.persisted"]);
+    defaultRelaysModule.getConfiguredDefaultRelays.mockReturnValue(["wss://relay.env"]);
+
+    expect(
+      readStartupRelayBootstrap({ pathRelayOverride: "wss://relay.example.com" })
+    ).toEqual({
+      relayUrls: ["wss://relay.example.com"],
+      source: "path-override",
+      needsAsyncFallback: false,
+    });
+    expect(storageModule.savePersistedRelayUrls).toHaveBeenCalledWith(["wss://relay.example.com"]);
+    expect(storageModule.loadPersistedRelayUrls).not.toHaveBeenCalled();
+    expect(defaultRelaysModule.getConfiguredDefaultRelays).not.toHaveBeenCalled();
+  });
+});
+
+describe("extractPathRelayOverride", () => {
+  it("extracts a relay URL from a hostname-like first path segment", () => {
+    expect(extractPathRelayOverride("/relay.example.com")).toBe("wss://relay.example.com");
+    expect(extractPathRelayOverride("/relay.example.com/")).toBe("wss://relay.example.com");
+  });
+
+  it("returns null for normal app routes", () => {
+    expect(extractPathRelayOverride("/")).toBeNull();
+    expect(extractPathRelayOverride("/feed")).toBeNull();
+    expect(extractPathRelayOverride("/tree")).toBeNull();
+    expect(extractPathRelayOverride("/manage")).toBeNull();
+    expect(extractPathRelayOverride("/feed/abc123")).toBeNull();
   });
 });
