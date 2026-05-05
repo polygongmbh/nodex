@@ -6,6 +6,20 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.16.0] - 2026-05-05
+Minor release for account-session recovery, NIP-05 identity visibility, and broader auth/profile polish.
+
+### Changed
+- Profile editing and people surfaces now expose NIP-05 verification status more clearly, including feed badges and stronger identity cues around verified accounts.
+- Noas sign-in now supports trust-this-browser sessions and unlocking previously locked sessions, reducing repeat sign-in friction on returning devices.
+- Dialogs, sheets, and related scrims now share a more consistent motion model across welcome and auth flows.
+- User-avatar handling now centers on the signed-in user's pubkey, simplifying shared avatar rendering while preserving generated fallbacks when profile media is missing.
+
+### Fixed
+- Welcome sign-in now routes to the chooser flow when no Noas host is configured, and auth modals stay in sync when their requested step changes while open.
+- Navigating between the main feed and sign-in or sign-up surfaces no longer tears down the mounted `Index` view, reducing flicker and state loss during auth transitions.
+- Relay-scoped presence and NDK cache persistence now recover more reliably across startup and reconnect paths, improving profile and presence continuity in active sessions.
+
 ## [2.15.10] - 2026-05-04
 Patch release for relay reconnect recovery, relay popover polish, and feed restoration stability.
 
