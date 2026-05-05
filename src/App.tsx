@@ -6,7 +6,11 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { NDKProvider } from "@/infrastructure/nostr/ndk-context";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { resolveStartupRelayBootstrap, readStartupRelayBootstrap } from "@/infrastructure/nostr/startup-relays";
+import {
+  resolveStartupRelayBootstrap,
+  readStartupRelayBootstrap,
+  extractPathRelayOverride,
+} from "@/infrastructure/nostr/startup-relays";
 import { readStartupNoasBootstrap, resolveStartupNoasBootstrap } from "@/infrastructure/nostr/startup-noas";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
