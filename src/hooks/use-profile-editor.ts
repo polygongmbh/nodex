@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TFunction } from "i18next";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -26,12 +26,15 @@ function normalizeSnapshotValue(value?: string) {
   return value || "";
 }
 
+export type Nip05VerifyStatus = "idle" | "verifying" | "verified" | "invalid" | "error";
+
 interface UseProfileEditorOptions {
   userPubkey?: string;
   knownProfileNames?: string[];
   t: TFunction;
   updateUserProfile: (profile: EditableNostrProfile) => Promise<boolean>;
   publishEvent: (kind: NostrEventKind, content: string, tags?: string[][]) => Promise<{ success: boolean; eventId?: string }>;
+  validateNip05?: (nip05: string) => Promise<boolean | null>;
   onSaved?: () => void;
 }
 
@@ -39,6 +42,7 @@ export interface ProfileEditorValidation {
   usernameHint: string | null;
   isUsernameHintError: boolean;
   isUsernameValid: boolean;
+  nip05VerifyStatus: Nip05VerifyStatus;
 }
 
 export interface ProfileEditorFieldActions {
@@ -49,12 +53,15 @@ export interface ProfileEditorFieldActions {
   setAbout: (value: string) => void;
 }
 
+const NIP05_VERIFY_DEBOUNCE_MS = 800;
+
 export function useProfileEditor({
   userPubkey,
   knownProfileNames = [],
   t,
   updateUserProfile,
   publishEvent,
+  validateNip05,
   onSaved,
 }: UseProfileEditorOptions) {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -64,6 +71,9 @@ export function useProfileEditor({
   const [nip05, setNip05] = useState("");
   const [about, setAbout] = useState("");
   const [isUsernameAutoFilled, setIsUsernameAutoFilled] = useState(false);
+  const [nip05VerifyStatus, setNip05VerifyStatus] = useState<Nip05VerifyStatus>("idle");
+  const nip05VerifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nip05VerifySeqRef = useRef(0);
   const [initialProfileSnapshot, setInitialProfileSnapshot] = useState<Required<ProfileEditorSnapshot>>({
     name: "",
     displayName: "",
@@ -100,6 +110,31 @@ export function useProfileEditor({
         : null;
   const isUsernameHintError = Boolean(usernameHint);
 
+  useEffect(() => {
+    if (nip05VerifyTimerRef.current) clearTimeout(nip05VerifyTimerRef.current);
+    const trimmed = nip05.trim();
+    if (!trimmed || !validateNip05) {
+      setNip05VerifyStatus("idle");
+      return;
+    }
+    setNip05VerifyStatus("verifying");
+    const seq = ++nip05VerifySeqRef.current;
+    nip05VerifyTimerRef.current = setTimeout(() => {
+      validateNip05(trimmed).then((result) => {
+        if (seq !== nip05VerifySeqRef.current) return;
+        if (result === true) setNip05VerifyStatus("verified");
+        else if (result === false) setNip05VerifyStatus("invalid");
+        else setNip05VerifyStatus("error");
+      }).catch(() => {
+        if (seq !== nip05VerifySeqRef.current) return;
+        setNip05VerifyStatus("error");
+      });
+    }, NIP05_VERIFY_DEBOUNCE_MS);
+    return () => {
+      if (nip05VerifyTimerRef.current) clearTimeout(nip05VerifyTimerRef.current);
+    };
+  }, [nip05, validateNip05]);
+
   const resetFromProfile = useCallback((profile: ProfileEditorSnapshot) => {
     const nextSnapshot = {
       name: normalizeSnapshotValue(profile.name),
@@ -115,6 +150,7 @@ export function useProfileEditor({
     setNip05(nextSnapshot.nip05);
     setAbout(nextSnapshot.about);
     setIsUsernameAutoFilled(false);
+    setNip05VerifyStatus("idle");
   }, []);
 
   const handleUsernameChange = useCallback((value: string) => {
@@ -178,6 +214,10 @@ export function useProfileEditor({
       toast.error(showUsernameTaken
         ? t("auth.profile.nameTaken")
         : t("auth.profile.nameInvalidNip05"));
+      return false;
+    }
+    if (nip05.trim() && nip05VerifyStatus !== "verified") {
+      toast.error(t("auth.profile.nip05VerifyBlocksSave"));
       return false;
     }
     setIsSavingProfile(true);
@@ -246,11 +286,13 @@ export function useProfileEditor({
       usernameHint,
       isUsernameHintError,
       isUsernameValid,
+      nip05VerifyStatus,
     }),
     [
       isUsernameHintError,
       isUsernameValid,
       usernameHint,
+      nip05VerifyStatus,
     ]
   );
 

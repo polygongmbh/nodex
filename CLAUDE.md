@@ -78,8 +78,8 @@ High-impact areas that require test coverage:
 
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash` and warn if there are multiple unrelated changed files.
 - Use Conventional Commits: `feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`
+- After implementing a change, commit, then concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
 - Amend the immediately previous local commit when the change is a direct fixup of it; use a new commit otherwise.
-- In post-implementation summaries, after committing your changes, concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
 
 When the user says `squash`, inspect recent unpushed commits and suggest sensible squashes for fixups or tightly related follow-ups; list candidates with original and target messages before executing anything.
 

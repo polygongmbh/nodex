@@ -47,6 +47,7 @@ import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
+import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
 
 interface FeedViewProps {
   tasks: Task[];
@@ -172,6 +173,7 @@ export function FeedView({
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { relays, channels, people, quickFilters, channelMatchMode = "and" } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
+  const nip05VerifiedPubkeys = useNip05VerifiedPubkeys(people);
   const interactionModel = useFeedViewInteractionModel();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const getStatusToggleHint = (status?: Task["status"]): string => {
@@ -519,6 +521,7 @@ export function FeedView({
         isXLDesktop={isXLDesktop}
         isInteractionBlocked={isInteractionBlocked}
         isPendingPublish={isPendingPublish}
+        isNip05Verified={nip05VerifiedPubkeys.has(resolvedAuthor.pubkey)}
         expandedContent={isContentExpanded}
         timeLabelFormatter={timeLabelFormatter}
         onOpenTaskMedia={openTaskMedia}

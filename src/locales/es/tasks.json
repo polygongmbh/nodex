@@ -209,6 +209,7 @@
       "copyPubkeyHexAria": "Copiar clave hex",
       "privateChat": "Chat privado (próximamente)"
     },
+    "nip05Verified": "Identidad verificada",
     "toasts": {
       "pubkeyCopied": "Clave pública copiada al portapapeles.",
       "npubCopied": "npub copiado al portapapeles.",

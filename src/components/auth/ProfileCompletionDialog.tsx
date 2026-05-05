@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -29,13 +29,22 @@ export function ProfileCompletionDialog() {
     return t(key, values);
   }) as TFunction;
 
-  const { user, hasWritableRelayConnection, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
+  const { ndk, user, hasWritableRelayConnection, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
   const { profileCompletionPromptSignal } = useFeedViewState();
 
   const [isOpen, setIsOpen] = useState(false);
   const lastHandledSignalRef = useRef(0);
 
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
+  const validateNip05 = useCallback(async (nip05Id: string): Promise<boolean | null> => {
+    if (!ndk || !user?.pubkey) return null;
+    try {
+      const ndkUser = ndk.getUser({ pubkey: user.pubkey });
+      return await ndkUser.validateNip05(nip05Id);
+    } catch {
+      return null;
+    }
+  }, [ndk, user?.pubkey]);
   const {
     fields,
     fieldActions,
@@ -49,6 +58,7 @@ export function ProfileCompletionDialog() {
     t: translate,
     updateUserProfile,
     publishEvent,
+    validateNip05,
     onSaved: () => {
       if (user?.pubkey) markProfileCompletionPromptShown(user.pubkey);
       setIsOpen(false);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Hash, Users, Check, X, Minus, User, LogOut, Sparkles, LogIn, Pencil, Mail, Scale, ShieldCheck, History } from "lucide-react";
 import {
   Dialog,
@@ -62,10 +62,19 @@ export function MobileFilters({
   const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
 
-  const { user, authMethod, hasWritableRelayConnection, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
+  const { ndk, user, authMethod, hasWritableRelayConnection, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
+  const validateNip05 = useCallback(async (nip05Id: string): Promise<boolean | null> => {
+    if (!ndk || !user?.pubkey) return null;
+    try {
+      const ndkUser = ndk.getUser({ pubkey: user.pubkey });
+      return await ndkUser.validateNip05(nip05Id);
+    } catch {
+      return null;
+    }
+  }, [ndk, user?.pubkey]);
   const {
     fields,
     fieldActions,
@@ -85,6 +94,7 @@ export function MobileFilters({
     t: translateMixedKey,
     updateUserProfile,
     publishEvent,
+    validateNip05,
     onSaved: () => setIsProfileEditorOpen(false),
   });
   const { presencePublishingEnabled, publishDelayEnabled, autoCaptionEnabled } = fields;

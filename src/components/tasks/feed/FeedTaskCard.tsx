@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from "react";
-import { HandHelping, MessageSquare, Package } from "lucide-react";
+import { BadgeCheck, HandHelping, MessageSquare, Package } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 
@@ -50,6 +50,7 @@ interface FeedTaskCardProps {
   isXLDesktop: boolean;
   isInteractionBlocked: boolean;
   isPendingPublish: boolean;
+  isNip05Verified: boolean;
   expandedContent: boolean;
   timeLabelFormatter: (date: Date) => string;
   onOpenTaskMedia: (taskId: string, url: string) => void;
@@ -72,6 +73,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   isXLDesktop,
   isInteractionBlocked,
   isPendingPublish,
+  isNip05Verified,
   expandedContent,
   timeLabelFormatter,
   onOpenTaskMedia,
@@ -355,6 +357,13 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                       <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate font-medium text-foreground">
                         {primaryAuthorLabel}
                       </span>
+                      {isNip05Verified ? (
+                        <BadgeCheck
+                          className="inline-block align-middle h-3.5 w-3.5 ml-0.5 text-blue-500"
+                          title={resolvedAuthor.nip05}
+                          aria-label={t("people.nip05Verified")}
+                        />
+                      ) : null}
                       {secondaryAuthorLabel && !isMobile ? (
                         <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
                           {` (${secondaryAuthorLabel})`}

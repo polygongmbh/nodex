@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { BadgeCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -9,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
 
 interface PersonHoverCardProps {
   person: Person & { presence?: PersonPresenceSnapshot };
@@ -82,6 +84,9 @@ export function PersonHoverCard({
   const { t, i18n } = useTranslation("tasks");
   const { allTasks } = useFeedTaskViewModel();
   const isMobile = useIsMobile();
+  const personForVerification = useMemo(() => [person], [person]);
+  const nip05VerifiedPubkeys = useNip05VerifiedPubkeys(personForVerification);
+  const isNip05Verified = nip05VerifiedPubkeys.has(person.pubkey);
   const hoverCardId = useId();
   const openSourceRef = useRef<HoverCardOpenSource>("focus");
   const activeId = useSyncExternalStore(
@@ -213,7 +218,12 @@ export function PersonHoverCard({
               <p className="truncate text-xs text-muted-foreground">@{person.name}</p>
             ) : null}
             {person.nip05 ? (
-              <p className="truncate text-xs text-muted-foreground">{person.nip05}</p>
+              <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                <span className="truncate">{person.nip05}</span>
+                {isNip05Verified ? (
+                  <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-blue-500" title={t("people.nip05Verified")} />
+                ) : null}
+              </p>
             ) : null}
             <p className="break-all font-mono text-[11px] text-muted-foreground">
               {pubkeyLabel}

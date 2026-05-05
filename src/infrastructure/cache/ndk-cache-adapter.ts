@@ -6,12 +6,43 @@ import type {
   NDKRelay,
   NDKRelayInformation,
   NDKSubscription,
+  ProfilePointer,
 } from "@nostr-dev-kit/ndk";
-import { RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
+import { NIP05_CACHE_STORAGE_KEY, RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { summarizeRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 
 export const RELAY_NIP11_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const NIP05_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+interface Nip05CacheEntry {
+  pointer: ProfilePointer | null;
+  fetchedAt: number;
+}
+
+type Nip05Cache = Record<string, Nip05CacheEntry>;
+
+function loadNip05Cache(): Nip05Cache {
+  if (!hasLocalStorage()) return {};
+  try {
+    const raw = window.localStorage.getItem(NIP05_CACHE_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    return parsed as Nip05Cache;
+  } catch {
+    return {};
+  }
+}
+
+function saveNip05Cache(cache: Nip05Cache): void {
+  if (!hasLocalStorage()) return;
+  try {
+    window.localStorage.setItem(NIP05_CACHE_STORAGE_KEY, JSON.stringify(cache));
+  } catch {
+    // Ignore storage persistence failures.
+  }
+}
 
 interface PersistedRelayStatusEntry {
   nip11?: {
@@ -125,6 +156,18 @@ export function createNodexCacheAdapter(): NDKCacheAdapter {
     },
     async setEvent(_event: NDKEvent, _filters: NDKFilter[], _relay?: NDKRelay): Promise<void> {
       // Relay status caching is handled through getRelayStatus/updateRelayStatus only.
+    },
+    async loadNip05(nip05: string): Promise<ProfilePointer | null | "missing"> {
+      const cache = loadNip05Cache();
+      const entry = cache[nip05];
+      if (!entry) return "missing";
+      if (Date.now() - entry.fetchedAt > NIP05_CACHE_TTL_MS) return "missing";
+      return entry.pointer;
+    },
+    saveNip05(nip05: string, pointer: ProfilePointer | null): void {
+      const cache = loadNip05Cache();
+      cache[nip05] = { pointer, fetchedAt: Date.now() };
+      saveNip05Cache(cache);
     },
     updateRelayStatus(relayUrl, info) {
       const normalizedRelayUrl = normalizeRelayUrl(relayUrl);

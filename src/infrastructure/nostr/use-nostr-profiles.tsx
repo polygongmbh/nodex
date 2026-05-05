@@ -88,12 +88,12 @@ export function useNostrProfiles(pubkeys: string[]) {
   // Fetch missing profiles
   useEffect(() => {
     if (!ndk || normalizedPubkeys.length === 0) return;
-    
+
     // Filter out already cached and pending profiles
-    const missingPubkeys = normalizedPubkeys.filter(pk => 
+    const missingPubkeys = normalizedPubkeys.filter(pk =>
       !profileCache[pk] && !pendingRequests.has(pk)
     );
-    
+
     if (missingPubkeys.length === 0) return;
     
     // Mark as pending
@@ -120,11 +120,11 @@ export function useNostrProfiles(pubkeys: string[]) {
           website: content.website,
           lud16: content.lud16,
         };
-        
+
         // Update cache
         profileCache[event.pubkey] = profile;
         pendingRequests.delete(event.pubkey);
-        
+
         // Notify subscribers
         notifySubscribers();
       } catch (e) {

@@ -31,7 +31,7 @@ import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus } from "./contracts";
-import { seedNostrProfile, verifyProfileNip05 } from "@/infrastructure/nostr/use-nostr-profiles";
+import { seedNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
 import {
   clearSessionNoasState,
   clearSessionPrivateKey,
@@ -2263,10 +2263,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       website: profile.website,
       lud16: profile.lud16,
     });
-    if (profile.nip05 && ndk) {
-      verifyProfileNip05(user.pubkey, profile.nip05, ndk);
-    }
-  }, [ndk, user?.pubkey, user?.profile]);
+  }, [user?.pubkey, user?.profile]);
 
 
   const subscribe = useCallback((

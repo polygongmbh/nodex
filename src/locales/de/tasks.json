@@ -209,6 +209,7 @@
       "copyPubkeyHexAria": "Hex-Schlüssel kopieren",
       "privateChat": "Privater Chat (kommt bald)"
     },
+    "nip05Verified": "Identität verifiziert",
     "toasts": {
       "pubkeyCopied": "Öffentlicher Schlüssel in die Zwischenablage kopiert.",
       "npubCopied": "npub in die Zwischenablage kopiert.",
