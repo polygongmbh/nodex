@@ -46,7 +46,6 @@ const SPAM_KEYWORDS = [
   "18+",
   "🔞",
   "cum",
-  "dick",
   "pussy",
   "cock",
   "boobs",
@@ -89,9 +88,23 @@ const SPAM_KEYWORDS = [
   "jackpot",
 ];
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const SPAM_KEYWORD_REGEXES = SPAM_KEYWORDS.map(
+  (keyword) => new RegExp(`(?:^|[^\\p{L}\\p{N}])${escapeRegex(keyword)}(?:[^\\p{L}\\p{N}]|$)`, "iu")
+);
+
+export function findSpamKeyword(content: string): string | null {
+  for (let i = 0; i < SPAM_KEYWORD_REGEXES.length; i++) {
+    if (SPAM_KEYWORD_REGEXES[i].test(content)) return SPAM_KEYWORDS[i];
+  }
+  return null;
+}
+
 export function isSpamContent(content: string): boolean {
-  const lowerContent = content.toLowerCase();
-  return SPAM_KEYWORDS.some((keyword) => lowerContent.includes(keyword));
+  return findSpamKeyword(content) !== null;
 }
 
 function getRelayIdsFromEvent(event: NostrEventWithRelay): string[] {

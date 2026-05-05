@@ -8,7 +8,7 @@ import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 import {
   nostrEventsToTasks,
-  isSpamContent,
+  findSpamKeyword,
 } from "@/infrastructure/nostr/task-converter";
 import {
   applyTaskSortOverlays,
@@ -36,6 +36,20 @@ import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-
 import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
 
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
+
+const spamDropCountsByRelay = new Map<string, number>();
+function logSpamDrop(event: CachedNostrEvent, keyword: string): void {
+  const relayKey = event.relayUrl || event.relayUrls?.[0] || "unknown";
+  const prev = spamDropCountsByRelay.get(relayKey) ?? 0;
+  spamDropCountsByRelay.set(relayKey, prev + 1);
+  if (prev === 0) {
+    console.debug(
+      `[spam-filter] dropped kind-1 event ${event.id} from ${relayKey} (matched "${keyword}")`
+    );
+  } else if (prev + 1 === 10 || (prev + 1) % 100 === 0) {
+    console.debug(`[spam-filter] ${prev + 1} kind-1 events dropped from ${relayKey}`);
+  }
+}
 
 export interface UseIndexDerivedDataOptions {
   nostrEvents: CachedNostrEvent[];
@@ -112,7 +126,13 @@ export function useIndexDerivedData({
         event.tags.some((tag) => tag[0]?.toLowerCase() === "t" && tag[1]) ||
         /#\w+/.test(event.content);
       if (!hasTags) return false;
-      if (isSpamContent(event.content)) return false;
+      if (event.kind === NostrEventKind.TextNote) {
+        const spamKeyword = findSpamKeyword(event.content);
+        if (spamKeyword) {
+          logSpamDrop(event, spamKeyword);
+          return false;
+        }
+      }
       return true;
     });
   }, [nostrEvents, suppressedNostrEventIds]);

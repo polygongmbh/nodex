@@ -944,6 +944,13 @@ describe("isSpamContent", () => {
     expect(isSpamContent("Meeting at 3pm to discuss roadmap")).toBe(false);
   });
 
+  it("matches whole words only (no false positives on substrings)", () => {
+    expect(isSpamContent("document routes in the api docs")).toBe(false);
+    expect(isSpamContent("Dickens novel discussion")).toBe(false);
+    expect(isSpamContent("essex meeting notes")).toBe(false);
+    expect(isSpamContent("scumbag detector")).toBe(false);
+  });
+
   it("is case insensitive", () => {
     expect(isSpamContent("FREE BITCOIN")).toBe(true);
     expect(isSpamContent("OnlyFans")).toBe(true);
