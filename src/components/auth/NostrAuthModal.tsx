@@ -190,6 +190,11 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   const defaultNoasUrl = resolveNoasHostDisplayValue(defaultNoasHostUrl || noasHostUrl || "");
 
   const [step, setStep] = useState<AuthStep>(resolvedDefaultStep);
+  const previousIsOpenRef = useRef(isOpen);
+  if (isOpen && !previousIsOpenRef.current && step !== resolvedDefaultStep) {
+    setStep(resolvedDefaultStep);
+  }
+  previousIsOpenRef.current = isOpen;
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
@@ -373,12 +378,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     setError(null);
     setStep(hasConfiguredNoasHost ? "noas" : "choose");
   };
-
-  useEffect(() => {
-    if (isOpen) {
-      setStep(resolvedDefaultStep);
-    }
-  }, [isOpen, resolvedDefaultStep]);
 
   useEffect(() => {
     const previousDefaultNoasUrl = previousDefaultNoasUrlRef.current;
