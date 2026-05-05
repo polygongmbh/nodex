@@ -33,7 +33,7 @@ export function WelcomeController({
       showCreateAccount={showCreateAccount}
       onStartTour={handleStartTour}
       onCreateAccount={() => onOpenAuthModal("noasSignUp")}
-      onSignIn={() => onOpenAuthModal("noas")}
+      onSignIn={() => onOpenAuthModal(showCreateAccount ? "noas" : undefined)}
     />
   );
 }
