@@ -71,7 +71,9 @@ describe("startup relay bootstrap", () => {
       relayUrls: [],
       source: "fallback",
       needsAsyncFallback: false,
-    });
+    expect(storageModule.savePersistedRelayUrls).not.toHaveBeenCalled();
+  });
+
   it("uses a path-derived relay override and persists it, ignoring persisted/env relays", () => {
     storageModule.loadPersistedRelayUrls.mockReturnValue(["wss://relay.persisted"]);
     defaultRelaysModule.getConfiguredDefaultRelays.mockReturnValue(["wss://relay.env"]);
