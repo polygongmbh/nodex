@@ -33,7 +33,9 @@ function RootFeedRedirect() {
 }
 
 function NostrBootstrapProvider({ children }: { children: ReactNode }) {
-  const initialBootstrap = readStartupRelayBootstrap();
+  const pathRelayOverride =
+    typeof window !== "undefined" ? extractPathRelayOverride(window.location.pathname) : null;
+  const initialBootstrap = readStartupRelayBootstrap({ pathRelayOverride });
   const initialNoasBootstrap = readStartupNoasBootstrap();
   const [relayUrls, setRelayUrls] = useState(initialBootstrap.relayUrls);
   const [defaultNoasHostUrl, setDefaultNoasHostUrl] = useState(initialNoasBootstrap.defaultHostUrl);
