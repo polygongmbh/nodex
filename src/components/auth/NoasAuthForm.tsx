@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Loader2, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -6,8 +6,10 @@ import { NoasSharedFields } from "./NoasSharedFields";
 import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
 import { resolveNoasCredentialsForSubmit } from "./noas-form-helpers";
 
+const TRUST_BROWSER_STORAGE_KEY = "nostr_noas_trust_browser";
+
 interface NoasAuthFormProps {
-  onLogin: (username: string, password: string, config?: { baseUrl?: string }) => Promise<boolean>;
+  onLogin: (username: string, password: string, config?: { baseUrl?: string; trustBrowser?: boolean }) => Promise<boolean>;
   onSignUp?: () => void;
   onBack?: () => void;
   username: string;
@@ -41,6 +43,19 @@ export function NoasAuthForm({
 }: NoasAuthFormProps) {
   const { t } = useTranslation("auth");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [trustBrowser, setTrustBrowser] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(TRUST_BROWSER_STORAGE_KEY) === "true";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (trustBrowser) {
+      window.localStorage.setItem(TRUST_BROWSER_STORAGE_KEY, "true");
+    } else {
+      window.localStorage.removeItem(TRUST_BROWSER_STORAGE_KEY);
+    }
+  }, [trustBrowser]);
   const displayedError = localError ?? error;
 
   const normalizeUsernameFieldForSubmit = () => {
@@ -73,6 +88,7 @@ export function NoasAuthForm({
     onUsernameChange(normalizedFullHandle);
     await onLogin(normalizedUsername, password, {
       baseUrl: normalizedNoasBaseUrl,
+      trustBrowser,
     });
   };
 
@@ -107,6 +123,19 @@ export function NoasAuthForm({
           onNoasHostUrlChange={onNoasHostUrlChange}
           onToggleHostEdit={onToggleHostEdit}
         />
+
+        <label className="flex cursor-pointer items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={trustBrowser}
+            onChange={(e) => setTrustBrowser(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+          />
+          <span>
+            <span className="font-medium">{t("auth.noas.trustBrowser")}</span>
+            <span className="block text-xs text-muted-foreground">{t("auth.noas.trustBrowserHint")}</span>
+          </span>
+        </label>
 
         <Button
           type="submit"

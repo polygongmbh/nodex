@@ -97,7 +97,7 @@ function decodePrivateKeyToBytes(privateKey: string): Uint8Array {
   throw new Error("Private key must be a valid nsec or 64-character hex key");
 }
 
-function hashNoasPassword(password: string): string {
+export function hashNoasPassword(password: string): string {
   return bytesToHex(sha256(new TextEncoder().encode(password)));
 }
 
@@ -344,6 +344,45 @@ export class NoasClient {
       return {
         error: 'Network error fetching profile picture',
       };
+    }
+  }
+
+  /**
+   * Update profile picture via Noas
+   */
+  async updateProfilePicture(
+    username: string,
+    passwordHash: string,
+    base64Data: string,
+    contentType: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await fetch(this.buildApiUrl("/auth/update"), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          password_hash: passwordHash,
+          updates: {
+            profile_picture_data: base64Data,
+            profile_picture_content_type: contentType,
+          },
+        }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return {
+          success: false,
+          error: typeof errorData.error === "string" ? errorData.error : 'Failed to update profile picture',
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Profile picture update error:', error);
+      return { success: false, error: 'Network error updating profile picture' };
     }
   }
 

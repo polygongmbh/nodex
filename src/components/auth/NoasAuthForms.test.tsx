@@ -121,9 +121,9 @@ describe("Noas auth forms", () => {
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.submit(usernameInput.closest("form") as HTMLFormElement);
 
-    expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
+    expect(onLogin).toHaveBeenCalledWith("alice", "password123", expect.objectContaining({
       baseUrl: "https://custom.noas.example",
-    });
+    }));
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@custom.noas.example");
   });
 
@@ -154,9 +154,9 @@ describe("Noas auth forms", () => {
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
-    expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
+    expect(onLogin).toHaveBeenCalledWith("alice", "password123", expect.objectContaining({
       baseUrl: "https://custom.noas.example:7443",
-    });
+    }));
   });
 
   it("shows a handle-specific validation error for malformed full handles", () => {
@@ -194,9 +194,9 @@ describe("Noas auth forms", () => {
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
-    expect(onLogin).toHaveBeenCalledWith("alice-test", "password123", {
+    expect(onLogin).toHaveBeenCalledWith("alice-test", "password123", expect.objectContaining({
       baseUrl: "https://noas.example.com",
-    });
+    }));
   });
 
   it("keeps an explicit full handle in the field after sign-in submit", () => {
@@ -208,9 +208,9 @@ describe("Noas auth forms", () => {
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
-    expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
+    expect(onLogin).toHaveBeenCalledWith("alice", "password123", expect.objectContaining({
       baseUrl: "https://other.example",
-    });
+    }));
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@other.example");
   });
 

@@ -252,6 +252,7 @@ const noasClientModule = vi.hoisted(() => {
       status: "active",
       message: "Account activated.",
     },
+    hashNoasPassword: vi.fn((password: string) => `hashed:${password}`),
     resolveNoasApiBaseUrl: vi.fn(async () => "https://noas.example/api/v1"),
     normalizeNoasBaseUrl: vi.fn((value: string) => {
       const trimmed = value.trim();
@@ -320,6 +321,7 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
 
 vi.mock("@/lib/nostr/noas-client", () => ({
   NoasClient: noasClientModule.NoasClient,
+  hashNoasPassword: noasClientModule.hashNoasPassword,
 }));
 
 vi.mock("@/lib/nostr/noas-discovery", () => ({
@@ -490,7 +492,7 @@ function AuthSessionHarness() {
   return (
     <div>
       <button onClick={() => void loginWithPrivateKey("nsec1privatekey")}>login with private key</button>
-      <button onClick={() => void loginWithNoas("alice", "hunter2")}>login with noas</button>
+      <button onClick={() => void loginWithNoas("alice", "hunter2", { trustBrowser: true })}>login with noas</button>
       <output data-testid="auth-method">{authMethod ?? ""}</output>
       <output data-testid="user-pubkey">{user?.pubkey ?? ""}</output>
       <output data-testid="user-name">{user?.profile?.name ?? ""}</output>

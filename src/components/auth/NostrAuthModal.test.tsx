@@ -276,9 +276,9 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getByTestId("noas-auth-submit"));
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
-    expect(ndkMock.loginWithNoas).toHaveBeenCalledWith("alice", "password123", {
+    expect(ndkMock.loginWithNoas).toHaveBeenCalledWith("alice", "password123", expect.objectContaining({
       baseUrl: "https://example.com",
-    });
+    }));
   });
 
   it("shows a connection-specific Noas error when the host request fails", async () => {

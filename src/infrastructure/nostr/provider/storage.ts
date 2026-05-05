@@ -17,6 +17,7 @@ export const STORAGE_KEY_SESSION_NOAS_STATE = "nostr_session_noas_state";
 interface NoasSessionState {
   apiBaseUrl: string;
   username: string;
+  passwordHash?: string;
   relayUrls?: string[];
 }
 
@@ -149,10 +150,11 @@ export function loadSessionNoasState(): NoasSessionState | null {
     const apiBaseUrl = normalizeNoasBaseUrl(parsed.apiBaseUrl || "");
     const username = typeof parsed.username === "string" ? parsed.username.trim() : "";
     if (!apiBaseUrl || !username || !isValidNoasBaseUrl(apiBaseUrl)) return null;
+    const passwordHash = typeof parsed.passwordHash === "string" ? parsed.passwordHash.trim() : undefined;
     const relayUrls = Array.isArray(parsed.relayUrls)
       ? parsed.relayUrls.filter((entry): entry is string => typeof entry === "string" && entry.trim().length > 0)
       : undefined;
-    return { apiBaseUrl, username, relayUrls };
+    return { apiBaseUrl, username, passwordHash, relayUrls };
   } catch {
     return null;
   }
@@ -169,6 +171,7 @@ export function saveSessionNoasState(state: NoasSessionState): void {
   const payload: NoasSessionState = {
     apiBaseUrl,
     username,
+    passwordHash: state.passwordHash?.trim() || undefined,
     relayUrls: state.relayUrls?.filter((entry) => entry.trim().length > 0),
   };
 

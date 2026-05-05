@@ -14,7 +14,7 @@ import NDK, {
   profileFromEvent,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { NoasClient, type NoasAuthResult } from "@/lib/nostr/noas-client";
+import { NoasClient, hashNoasPassword, type NoasAuthResult } from "@/lib/nostr/noas-client";
 import { isValidNoasBaseUrl, normalizeNoasBaseUrl, resolveNoasApiBaseUrl } from "@/lib/nostr/noas-discovery";
 import { privateKeyHexToNsec } from "@/lib/nostr/nip49-utils";
 import type { EditableNostrProfile } from "@/infrastructure/nostr/profile-metadata";
@@ -31,7 +31,7 @@ import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus } from "./contracts";
-import { seedNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
+import { seedNostrProfile, verifyProfileNip05 } from "@/infrastructure/nostr/use-nostr-profiles";
 import {
   clearSessionNoasState,
   clearSessionPrivateKey,
@@ -92,7 +92,7 @@ import {
 import { useProfileSync } from "./use-profile-sync";
 export type { AuthMethod, NDKUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
-const NDKContext = createContext<NDKContextValue | null>(null);
+export const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
 const RELAY_PUBLISH_TIMEOUT_MS = 3000;
 const RELAY_AUTH_PREFLIGHT_TIMEOUT_MS = 4000;
@@ -224,6 +224,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const [user, setUser] = useState<NDKUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isSessionLocked, setIsSessionLocked] = useState(false);
+  const [lockedNoasUsername, setLockedNoasUsername] = useState<string | null>(null);
+  const lockedNoasKeyRef = useRef<string | null>(null);
+  const sessionPasswordHashRef = useRef<string | null>(null);
   const [relays, setRelays] = useState<NDKRelayStatus[]>([]);
   const relaysRef = useRef<NDKRelayStatus[]>([]);
   relaysRef.current = relays;
@@ -887,12 +891,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     privateKey: string;
     apiBaseUrl: string;
     username: string;
+    passwordHash: string;
     relayUrls: string[];
   }) => {
     saveSessionPrivateKey(params.privateKey);
     saveSessionNoasState({
       apiBaseUrl: params.apiBaseUrl,
       username: params.username,
+      passwordHash: params.passwordHash,
       relayUrls: params.relayUrls,
     });
     saveSessionAuthMethod("noas");
@@ -1331,6 +1337,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           return;
         }
 
+        // Encrypted key (not trusted): lock session, prompt for password
+        if (sessionPrivateKey.startsWith('ncryptsec')) {
+          setIsSessionLocked(true);
+          setLockedNoasUsername(noasSession.username);
+          lockedNoasKeyRef.current = sessionPrivateKey;
+          return;
+        }
+
         try {
           const signer = new NDKPrivateKeySigner(sessionPrivateKey);
           const ndkUser = await signer.user();
@@ -1580,7 +1594,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const loginWithNoas = useCallback(async (
     username: string,
     password: string,
-    config?: { baseUrl?: string }
+    config?: { baseUrl?: string; trustBrowser?: boolean }
   ): Promise<NoasAuthResult> => {
     if (!ndk) return { success: false, errorCode: "server_error" };
 
@@ -1649,6 +1663,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         });
         return { success: false, errorCode: "key_mismatch" };
       }
+      const trustBrowser = config?.trustBrowser ?? false;
+      const passwordHash = hashNoasPassword(password);
+      sessionPasswordHashRef.current = passwordHash;
       const noasRelayUrls = resolveNoasAuthRelayUrls(signInResponse);
       ndkUser.profile = {
         name: username,
@@ -1658,9 +1675,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       applyAuthenticatedState(ndk, signer, ndkUser, "noas");
       clearTransientAuthState();
       persistNoasSession({
-        privateKey: signer.privateKey || privateKeyHexToNsec(decryptedPrivateKey),
+        privateKey: trustBrowser
+          ? (signer.privateKey || privateKeyHexToNsec(decryptedPrivateKey))
+          : signInResponse.encryptedPrivateKey,
         apiBaseUrl: noasApiUrl,
         username,
+        passwordHash: trustBrowser ? passwordHash : undefined,
         relayUrls: noasRelayUrls,
       });
       connectResolvedAuthRelayUrls(noasRelayUrls);
@@ -1794,6 +1814,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         privateKey: nsecKey,
         apiBaseUrl: noasApiUrl,
         username,
+        passwordHash: hashNoasPassword(password),
         relayUrls: noasRelayUrls,
       });
       connectResolvedAuthRelayUrls(noasRelayUrls);
@@ -1823,6 +1844,82 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     if (authMethod !== "guest") return null;
     return localStorage.getItem(STORAGE_KEY_NSEC);
   }, [authMethod]);
+
+  const updateNoasProfilePicture = useCallback(async (file: File): Promise<string | null> => {
+    if (authMethod !== "noas" || !user) return null;
+
+    const noasSession = loadSessionNoasState();
+    const passwordHash = sessionPasswordHashRef.current || noasSession?.passwordHash;
+    if (!passwordHash || !noasSession) return null;
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64Data = result.split(',')[1];
+          if (!base64Data) { reject(new Error('Failed to read file as base64')); return; }
+          resolve(base64Data);
+        };
+        reader.onerror = () => reject(new Error('File read error'));
+        reader.readAsDataURL(file);
+      });
+
+      const noasClient = new NoasClient(noasSession.apiBaseUrl);
+      const result = await noasClient.updateProfilePicture(
+        noasSession.username,
+        passwordHash,
+        base64,
+        file.type || 'image/png'
+      );
+
+      if (!result.success) {
+        console.warn("Failed to update Noas profile picture:", result.error);
+        return null;
+      }
+
+      return `${noasSession.apiBaseUrl}/picture/${user.pubkey}?t=${Date.now()}`;
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      return null;
+    }
+  }, [authMethod, user]);
+
+  const unlockNoasSession = useCallback(async (password: string): Promise<boolean> => {
+    const encryptedKey = lockedNoasKeyRef.current;
+    if (!encryptedKey || !ndk) return false;
+
+    const noasSession = loadSessionNoasState();
+    if (!noasSession) return false;
+
+    try {
+      const noasClient = new NoasClient(noasSession.apiBaseUrl);
+      const decryptedKey = await noasClient.decryptPrivateKey(encryptedKey, password);
+      const nsecKey = privateKeyHexToNsec(decryptedKey);
+      const signer = new NDKPrivateKeySigner(nsecKey);
+      const ndkUser = await signer.user();
+
+      ndkUser.profile = {
+        name: noasSession.username,
+        displayName: noasSession.username,
+        picture: `${noasSession.apiBaseUrl}/picture/${ndkUser.pubkey}`,
+      };
+
+      applyAuthenticatedState(ndk, signer, ndkUser, "noas");
+      sessionPasswordHashRef.current = hashNoasPassword(password);
+      setIsSessionLocked(false);
+      setLockedNoasUsername(null);
+      lockedNoasKeyRef.current = null;
+
+      connectResolvedAuthRelayUrls(noasSession.relayUrls || []);
+      retryNip42RelaysAfterSignIn();
+
+      return true;
+    } catch (error) {
+      console.error("Failed to unlock Noas session:", error);
+      return false;
+    }
+  }, [ndk, applyAuthenticatedState, connectResolvedAuthRelayUrls, retryNip42RelaysAfterSignIn]);
 
   const publishPresenceOffline = useCallback(async (relayUrlsOverride?: string[]) => {
     if (!ndk || !ndk.signer) return;
@@ -1899,6 +1996,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     clearStoredAuthMethod();
     clearSessionPrivateKey();
     clearSessionNoasState();
+    setIsSessionLocked(false);
+    setLockedNoasUsername(null);
+    lockedNoasKeyRef.current = null;
+    sessionPasswordHashRef.current = null;
     localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
     localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
     // Keep guest key for potential re-login
@@ -2162,7 +2263,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       website: profile.website,
       lud16: profile.lud16,
     });
-  }, [user?.pubkey, user?.profile]);
+    if (profile.nip05 && ndk) {
+      verifyProfileNip05(user.pubkey, profile.nip05, ndk);
+    }
+  }, [ndk, user?.pubkey, user?.profile]);
 
 
   const subscribe = useCallback((
@@ -2291,7 +2395,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     isProfileSyncing,
     subscribe,
     getGuestPrivateKey,
-    
+    updateNoasProfilePicture,
+    isSessionLocked,
+    lockedNoasUsername,
+    unlockNoasSession,
   }), [
     ndk,
     isConnected,
@@ -2320,6 +2427,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     isProfileSyncing,
     subscribe,
     getGuestPrivateKey,
+    updateNoasProfilePicture,
+    isSessionLocked,
+    lockedNoasUsername,
+    unlockNoasSession,
   ]);
 
   return (

@@ -56,7 +56,7 @@ function FeedIndexContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { publishEvent, setPresenceRelayUrls, user, defaultNoasHostUrl } = useNDK();
+  const { publishEvent, setPresenceRelayUrls, user, defaultNoasHostUrl, isSessionLocked } = useNDK();
 
   const {
     isAuthModalOpen,
@@ -552,6 +552,12 @@ function FeedIndexContent() {
     publishEvent,
     setPresenceRelayUrls,
   });
+
+  useEffect(() => {
+    if (isSessionLocked && !isAuthModalOpen) {
+      handleOpenAuthModal();
+    }
+  }, [isSessionLocked, isAuthModalOpen, handleOpenAuthModal]);
 
   useEffect(() => {
     if (!user?.pubkey) return;

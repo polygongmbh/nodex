@@ -36,7 +36,7 @@ export interface NDKContextValue {
   loginWithNoas: (
     username: string,
     password: string,
-    config?: { baseUrl?: string }
+    config?: { baseUrl?: string; trustBrowser?: boolean }
   ) => Promise<NoasAuthResult>;
   signupWithNoas: (
     username: string,
@@ -71,6 +71,10 @@ export interface NDKContextValue {
     options?: { closeOnEose?: boolean }
   ) => NDKSubscription | null;
   getGuestPrivateKey: () => string | null;
+  updateNoasProfilePicture: (file: File) => Promise<string | null>;
+  isSessionLocked: boolean;
+  lockedNoasUsername: string | null;
+  unlockNoasSession: (password: string) => Promise<boolean>;
 }
 
 export interface NDKProviderProps {

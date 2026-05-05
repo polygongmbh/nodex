@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, LogIn, Link2, CircleHelp, Pencil, Eye, EyeOff } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, LogIn, Link2, CircleHelp, Pencil, Eye, EyeOff, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +45,7 @@ interface NostrAuthModalProps {
   initialStep?: "choose" | "noas" | "noasSignUp";
 }
 
-type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas" | "noasSignUp";
+type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas" | "noasSignUp" | "noasUnlock";
 type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | "noas" | null;
 type WindowWithNostr = Window & { nostr?: unknown };
 
@@ -171,19 +171,24 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     signupWithNoas,
     isAuthenticating,
     defaultNoasHostUrl,
+    isSessionLocked,
+    lockedNoasUsername,
+    unlockNoasSession,
+    logout,
   } = useNDK();
 
   const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
   const allowGuestSignIn = resolveBooleanEnvFlag(import.meta.env.VITE_ALLOW_GUEST_SIGN_IN, true);
   const hasConfiguredNoasHost = Boolean(noasHostUrl || defaultNoasHostUrl);
   const resolvedDefaultStep = useMemo<AuthStep>(() => {
+    if (isSessionLocked) return "noasUnlock";
     if (initialStep === "noasSignUp") return "noasSignUp";
     if (initialStep === "noas") return "noas";
     if (initialStep === "choose") return "choose";
     return hasConfiguredNoasHost ? "noas" : "choose";
-  }, [hasConfiguredNoasHost, initialStep]);
+  }, [isSessionLocked, hasConfiguredNoasHost, initialStep]);
   const defaultNoasUrl = resolveNoasHostDisplayValue(defaultNoasHostUrl || noasHostUrl || "");
-  
+
   const [step, setStep] = useState<AuthStep>(resolvedDefaultStep);
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
   const [privateKey, setPrivateKey] = useState("");
@@ -194,7 +199,9 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   const [noasPassword, setNoasPassword] = useState("");
   const [isEditingNoasHost, setIsEditingNoasHost] = useState(false);
   const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false);
-  const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
+  const [unlockPassword, setUnlockPassword] = useState("");
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0 || step === "noasUnlock";
   const previousDefaultNoasUrlRef = useRef(defaultNoasUrl);
 
   const hasExtension = hasNostrExtension();
@@ -328,6 +335,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   };
 
   const handleClose = () => {
+    if (isSessionLocked) return;
     setStep(resolvedDefaultStep);
     setPrivateKey("");
     setShowPrivateKeyInput(false);
@@ -338,7 +346,32 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     setNoasUsername("");
     setNoasPassword("");
     setIsEditingNoasHost(false);
+    setUnlockPassword("");
     onClose();
+  };
+
+  const handleUnlockSession = async () => {
+    if (!unlockPassword) return;
+    setIsUnlocking(true);
+    setError(null);
+    try {
+      const success = await unlockNoasSession(unlockPassword);
+      if (success) {
+        setUnlockPassword("");
+        onClose();
+      } else {
+        setError(t("auth.noas.unlockFailed"));
+      }
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+  const handleUseDifferentAccount = () => {
+    logout();
+    setUnlockPassword("");
+    setError(null);
+    setStep(hasConfiguredNoasHost ? "noas" : "choose");
   };
 
   useEffect(() => {
@@ -363,7 +396,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     });
   }, [defaultNoasUrl, isEditingNoasHost]);
 
-  const shouldShowModalHeader = step !== "noas" && step !== "noasSignUp";
+  const shouldShowModalHeader = step !== "noas" && step !== "noasSignUp" && step !== "noasUnlock";
   const authMethodOptionClassName =
     "w-full flex items-center gap-2.5 rounded-md border p-3 text-left transition-colors sm:p-3.5";
   const authMethodOptionIconClassName =
@@ -373,6 +406,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
         className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-xl"
+        showCloseButton={step !== "noasUnlock"}
         dismissOnOutsideInteract={!hasUnsavedAuthInput}
       >
         <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-3 sm:p-4">
@@ -395,7 +429,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             </DialogHeader>
           )}
 
-          {error && step !== "noas" && step !== "noasSignUp" && (
+          {error && step !== "noas" && step !== "noasSignUp" && step !== "noasUnlock" && (
             <div className="mt-2 flex items-start gap-2 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <span>{error}</span>
@@ -614,6 +648,63 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                 onNoasHostUrlChange={setEditableNoasUrl}
                 onToggleHostEdit={() => setIsEditingNoasHost((current) => !current)}
               />
+            ) : step === "noasUnlock" ? (
+              <form
+                className="space-y-5"
+                onSubmit={(e) => { e.preventDefault(); void handleUnlockSession(); }}
+              >
+                <div className="flex flex-col items-center gap-3 pt-2 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                    <Lock className="h-7 w-7 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold">
+                      {t("auth.noas.unlockTitle", { username: lockedNoasUsername || "" })}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">{t("auth.noas.unlockDescription")}</p>
+                  </div>
+                </div>
+                {error && (
+                  <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="unlock-password">{t("auth.password")}</Label>
+                  <Input
+                    id="unlock-password"
+                    type="password"
+                    value={unlockPassword}
+                    onChange={(e) => setUnlockPassword(e.target.value)}
+                    placeholder={t("auth.passwordPlaceholder")}
+                    autoComplete="current-password"
+                    autoFocus
+                    disabled={isUnlocking}
+                  />
+                </div>
+                <Button type="submit" className="w-full gap-2" disabled={isUnlocking || !unlockPassword}>
+                  {isUnlocking ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>{t("auth.noas.unlocking")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-4 w-4" />
+                      <span>{t("auth.noas.unlock")}</span>
+                    </>
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  onClick={handleUseDifferentAccount}
+                  disabled={isUnlocking}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors disabled:pointer-events-none"
+                >
+                  {t("auth.noas.useDifferentAccount")}
+                </button>
+              </form>
             ) : (
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -670,6 +761,7 @@ const desktopTopbarControlClassName =
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const { t } = useTranslation("auth");
   const {
+    ndk,
     user,
     authMethod,
     isConnected,
@@ -680,11 +772,21 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     isProfileSyncing,
     updateUserProfile,
     publishEvent,
+    updateNoasProfilePicture,
   } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [hasForcedProfileSetupOpen, setHasForcedProfileSetupOpen] = useState(false);
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
+  const validateNip05 = useCallback(async (nip05Id: string): Promise<boolean | null> => {
+    if (!ndk || !user?.pubkey) return null;
+    try {
+      const ndkUser = ndk.getUser({ pubkey: user.pubkey });
+      return await ndkUser.validateNip05(nip05Id);
+    } catch {
+      return null;
+    }
+  }, [ndk, user?.pubkey]);
   const {
     fields,
     fieldActions,
@@ -701,6 +803,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     t,
     updateUserProfile,
     publishEvent,
+    validateNip05,
     onSaved: () => setIsProfileEditorOpen(false),
   });
   const { presencePublishingEnabled, publishDelayEnabled, autoCaptionEnabled } = fields;
@@ -974,6 +1077,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 validation={validation}
                 fieldActions={fieldActions}
                 t={t}
+                onNoasPictureUpload={authMethod === "noas" ? updateNoasProfilePicture : undefined}
               />
             </DialogScrollBody>
             <div className="mt-3 flex shrink-0 justify-end gap-2 bg-background/95 pt-2">
