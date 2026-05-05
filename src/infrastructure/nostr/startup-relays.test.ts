@@ -87,7 +87,6 @@ describe("startup relay bootstrap", () => {
       needsAsyncFallback: false,
     });
     expect(storageModule.savePersistedRelayUrls).toHaveBeenCalledWith(["wss://relay.example.com"]);
-    expect(storageModule.loadPersistedRelayUrls).not.toHaveBeenCalled();
     expect(defaultRelaysModule.getConfiguredDefaultRelays).not.toHaveBeenCalled();
   });
 });

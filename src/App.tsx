@@ -34,11 +34,17 @@ function RootFeedRedirect() {
 
 function ViewRoute() {
   const location = useLocation();
-  const firstSegment = location.pathname.split("/").filter(Boolean)[0];
+  const segments = location.pathname.split("/").filter(Boolean);
+  const firstSegment = segments[0];
   if (firstSegment && firstSegment.includes(".")) {
+    const taskId = segments[1];
     return (
       <Navigate
-        to={{ pathname: "/feed", search: location.search, hash: location.hash }}
+        to={{
+          pathname: taskId ? `/feed/${taskId}` : "/feed",
+          search: location.search,
+          hash: location.hash,
+        }}
         replace
       />
     );
@@ -117,7 +123,7 @@ const App = () => (
               <Route path="/signin" element={<Index />} />
               <Route path="/signup" element={<Index />} />
               <Route path="/:view" element={<ViewRoute />} />
-              <Route path="/:view/:taskId" element={<Index />} />
+              <Route path="/:view/:taskId" element={<ViewRoute />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -3,6 +3,7 @@ import {
   getConfiguredDefaultRelaysWithFallback,
 } from "@/infrastructure/nostr/default-relays";
 import { loadPersistedRelayUrls, savePersistedRelayUrls } from "@/infrastructure/nostr/provider/storage";
+import { clearAllCachedNostrEvents } from "@/infrastructure/nostr/event-cache";
 
 export interface StartupRelayBootstrap {
   relayUrls: string[];
@@ -37,6 +38,14 @@ export function readStartupRelayBootstrap(
 ): StartupRelayBootstrap {
   const pathRelayOverride = options?.pathRelayOverride ?? null;
   if (pathRelayOverride) {
+    const previouslyPersisted = loadPersistedRelayUrls() ?? [];
+    const isSameSoleRelay =
+      previouslyPersisted.length === 1 && previouslyPersisted[0] === pathRelayOverride;
+    if (!isSameSoleRelay) {
+      // Discard cached events from any other relays so the path-scoped session
+      // only renders content from the requested relay.
+      clearAllCachedNostrEvents();
+    }
     savePersistedRelayUrls([pathRelayOverride]);
     return {
       relayUrls: [pathRelayOverride],
