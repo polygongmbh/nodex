@@ -120,8 +120,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<RootFeedRedirect />} />
-              <Route path="/signin" element={<Index />} />
-              <Route path="/signup" element={<Index />} />
+              <Route path="/signin" element={<ViewRoute />} />
+              <Route path="/signup" element={<ViewRoute />} />
               <Route path="/:view" element={<ViewRoute />} />
               <Route path="/:view/:taskId" element={<ViewRoute />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
