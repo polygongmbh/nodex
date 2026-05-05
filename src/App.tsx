@@ -116,7 +116,7 @@ const App = () => (
               <Route path="/" element={<RootFeedRedirect />} />
               <Route path="/signin" element={<Index />} />
               <Route path="/signup" element={<Index />} />
-              <Route path="/:view" element={<Index />} />
+              <Route path="/:view" element={<ViewRoute />} />
               <Route path="/:view/:taskId" element={<Index />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
