@@ -283,6 +283,11 @@ export function removeCachedNostrEventsByRelayUrl(relayUrl: string): void {
   });
 }
 
+export function clearAllCachedNostrEvents(): void {
+  if (!hasLocalStorage()) return;
+  listKnownCacheStorageKeys().forEach((storageKey) => removeScopeCache(storageKey));
+}
+
 export function removeCachedNostrEventScopesByRelayId(relayId: string): void {
   if (!hasLocalStorage()) return;
   const normalizedRelayId = relayId.trim().toLowerCase();
