@@ -191,10 +191,14 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
 
   const [step, setStep] = useState<AuthStep>(resolvedDefaultStep);
   const previousIsOpenRef = useRef(isOpen);
-  if (isOpen && !previousIsOpenRef.current && step !== resolvedDefaultStep) {
+  const previousResolvedStepRef = useRef(resolvedDefaultStep);
+  const isOpenTransitionedToTrue = isOpen && !previousIsOpenRef.current;
+  const resolvedDefaultStepChanged = resolvedDefaultStep !== previousResolvedStepRef.current;
+  if (isOpen && (isOpenTransitionedToTrue || resolvedDefaultStepChanged) && step !== resolvedDefaultStep) {
     setStep(resolvedDefaultStep);
   }
   previousIsOpenRef.current = isOpen;
+  previousResolvedStepRef.current = resolvedDefaultStep;
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
