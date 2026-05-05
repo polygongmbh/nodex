@@ -4,19 +4,16 @@ import { cn } from "@/lib/utils";
 
 /**
  * Shared overlay motion config. Every modal surface (Dialog, AlertDialog,
- * WelcomeModal, onboarding intro/guide scrims) animates with the same
- * duration and easing so cross-surface transitions feel unified and don't
- * drift. Dialogs are pure fades — no scale or directional slide — to keep
- * the motion language calm.
+ * Sheet overlay, WelcomeModal, onboarding intro/guide scrims) animates with
+ * the same duration and easing so cross-surface transitions feel unified.
+ * Dialogs are pure opacity fades via the `.overlay-fade` class in index.css —
+ * we avoid Tailwind's `animate-in`/`fade-in-0` for centered surfaces because
+ * those keyframes interpolate `transform` between identity and the author's
+ * `translate(-50%, -50%)`, which manifests as the dialog drifting toward the
+ * bottom-right while fading.
  */
 export const OVERLAY_SCRIM_FADE_MS = 400;
 export const OVERLAY_FADE_EASING = "cubic-bezier(0, 0, 0.2, 1)";
-
-/** Inline style for surfaces that fade via Tailwind `animate-in`/`animate-out`. */
-export const overlayFadeStyle: CSSProperties = {
-  animationDuration: `${OVERLAY_SCRIM_FADE_MS}ms`,
-  animationTimingFunction: OVERLAY_FADE_EASING,
-};
 
 interface OverlayScrimProps {
   /** Whether the scrim should be visible. */

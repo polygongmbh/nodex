@@ -4,13 +4,6 @@ import { X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { OVERLAY_SCRIM_FADE_MS } from "@/components/ui/overlay-scrim";
-
-/** Shared timing so sheet overlay fades match dialogs and the onboarding intro. */
-const sheetFadeStyle: React.CSSProperties = {
-  animationDuration: `${OVERLAY_SCRIM_FADE_MS}ms`,
-  animationTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
-};
 
 const Sheet = SheetPrimitive.Root;
 
@@ -25,11 +18,8 @@ const SheetOverlay = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
 >(({ className, style, ...props }, ref) => (
   <SheetPrimitive.Overlay
-    className={cn(
-      "fixed inset-0 z-50 bg-overlay-scrim data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className,
-    )}
-    style={{ ...sheetFadeStyle, ...style }}
+    className={cn("fixed inset-0 z-50 bg-overlay-scrim overlay-fade", className)}
+    style={style}
     {...props}
     ref={ref}
   />
