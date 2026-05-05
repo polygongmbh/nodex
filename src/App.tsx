@@ -123,7 +123,7 @@ const App = () => (
               <Route path="/signin" element={<Index />} />
               <Route path="/signup" element={<Index />} />
               <Route path="/:view" element={<ViewRoute />} />
-              <Route path="/:view/:taskId" element={<Index />} />
+              <Route path="/:view/:taskId" element={<ViewRoute />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
