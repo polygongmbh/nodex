@@ -1,13 +1,5 @@
 const SPAM_KEYWORDS = [
-  "onlyfans",
-  "nsfw",
-  "nudes",
   "🔞",
-  "adult content",
-  "18+",
-  "milf",
-  "blowjob",
-  "handjob",
   "f4f",
   "crypto giveaway",
   "free btc",

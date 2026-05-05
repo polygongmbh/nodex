@@ -2,15 +2,13 @@ import { describe, it, expect } from "vitest";
 import { isSpamContent } from "./spam-filter";
 
 describe("isSpamContent", () => {
-  it("detects sexual content", () => {
-    expect(isSpamContent("Check out my onlyfans")).toBe(true);
-    expect(isSpamContent("NSFW content here")).toBe(true);
-    expect(isSpamContent("Adult content 18+")).toBe(true);
-    expect(isSpamContent("nudes in DM")).toBe(true);
+  it("detects unambiguous adult/spam markers", () => {
+    expect(isSpamContent("post tagged 🔞 here")).toBe(true);
+    expect(isSpamContent("f4f anyone?")).toBe(true);
   });
 
   it("detects crypto-spam patterns", () => {
-    expect(isSpamContent("Free bitcoin giveaway happening now")).toBe(true);
+    expect(isSpamContent("Free bitcoin to first 100")).toBe(true);
     expect(isSpamContent("crypto giveaway, click link")).toBe(true);
     expect(isSpamContent("free btc to first 100")).toBe(true);
   });
@@ -42,6 +40,6 @@ describe("isSpamContent", () => {
 
   it("is case insensitive", () => {
     expect(isSpamContent("FREE BITCOIN")).toBe(true);
-    expect(isSpamContent("OnlyFans")).toBe(true);
+    expect(isSpamContent("Crypto Giveaway today")).toBe(true);
   });
 });
