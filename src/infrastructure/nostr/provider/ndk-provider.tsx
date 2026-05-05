@@ -40,7 +40,6 @@ import {
   loadSessionNoasState,
   loadSessionPrivateKey,
   loadPersistedNoasDefaultHostUrl,
-  loadPersistedRelayUrls,
   loadStoredAuthMethod,
   savePersistentAuthMethod,
   savePersistedRelayUrls,
@@ -217,10 +216,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ),
     [defaultNoasHostUrl]
   );
-  const resolvedDefaultRelays = useMemo(() => {
-    const persisted = loadPersistedRelayUrls();
-    return persisted ?? configuredDefaultRelays;
-  }, [configuredDefaultRelays]);
+  // Note: relay persistence is resolved upstream by the startup relay bootstrap
+  // and surfaced via `defaultRelays`. The provider does not re-read persisted
+  // relays itself so a single source of truth controls which relays are used.
+  const resolvedDefaultRelays = configuredDefaultRelays;
   const [ndk, setNdk] = useState<NDK | null>(null);
   const [user, setUser] = useState<NDKUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);

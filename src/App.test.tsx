@@ -6,6 +6,7 @@ import App from "./App";
 const startupRelaysModule = vi.hoisted(() => ({
   readStartupRelayBootstrap: vi.fn(),
   resolveStartupRelayBootstrap: vi.fn(),
+  extractPathRelayOverride: vi.fn(() => null),
 }));
 
 const startupNoasModule = vi.hoisted(() => ({

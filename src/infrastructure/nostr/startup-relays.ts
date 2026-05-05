@@ -6,11 +6,45 @@ import { loadPersistedRelayUrls, savePersistedRelayUrls } from "@/infrastructure
 
 export interface StartupRelayBootstrap {
   relayUrls: string[];
-  source: "persisted" | "env" | "fallback";
+  source: "path-override" | "persisted" | "env" | "fallback";
   needsAsyncFallback: boolean;
 }
 
-export function readStartupRelayBootstrap(): StartupRelayBootstrap {
+export interface ReadStartupRelayBootstrapOptions {
+  pathRelayOverride?: string | null;
+}
+
+/**
+ * Extracts a relay URL from a pathname like `/relay.example.com` (only when the
+ * first path segment looks like a hostname, i.e. contains a `.`).
+ * Returns `null` for normal app routes (`/feed`, `/tree`, ...).
+ */
+export function extractPathRelayOverride(pathname: string): string | null {
+  const segment = pathname.split("/").filter(Boolean)[0];
+  if (!segment || !segment.includes(".")) return null;
+  try {
+    const candidate = `wss://${segment}`;
+    const parsed = new URL(candidate);
+    if (!parsed.hostname || !parsed.hostname.includes(".")) return null;
+    return candidate;
+  } catch {
+    return null;
+  }
+}
+
+export function readStartupRelayBootstrap(
+  options?: ReadStartupRelayBootstrapOptions
+): StartupRelayBootstrap {
+  const pathRelayOverride = options?.pathRelayOverride ?? null;
+  if (pathRelayOverride) {
+    savePersistedRelayUrls([pathRelayOverride]);
+    return {
+      relayUrls: [pathRelayOverride],
+      source: "path-override",
+      needsAsyncFallback: false,
+    };
+  }
+
   const persistedRelayUrls = loadPersistedRelayUrls();
   if (persistedRelayUrls && persistedRelayUrls.length > 0) {
     return {
@@ -36,8 +70,10 @@ export function readStartupRelayBootstrap(): StartupRelayBootstrap {
   };
 }
 
-export async function resolveStartupRelayBootstrap(): Promise<StartupRelayBootstrap> {
-  const bootstrap = readStartupRelayBootstrap();
+export async function resolveStartupRelayBootstrap(
+  options?: ReadStartupRelayBootstrapOptions
+): Promise<StartupRelayBootstrap> {
+  const bootstrap = readStartupRelayBootstrap(options);
   if (!bootstrap.needsAsyncFallback) return bootstrap;
 
   const discoveredRelayUrls = await getConfiguredDefaultRelaysWithFallback();

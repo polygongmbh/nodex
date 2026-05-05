@@ -6,7 +6,11 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { NDKProvider } from "@/infrastructure/nostr/ndk-context";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { resolveStartupRelayBootstrap, readStartupRelayBootstrap } from "@/infrastructure/nostr/startup-relays";
+import {
+  resolveStartupRelayBootstrap,
+  readStartupRelayBootstrap,
+  extractPathRelayOverride,
+} from "@/infrastructure/nostr/startup-relays";
 import { readStartupNoasBootstrap, resolveStartupNoasBootstrap } from "@/infrastructure/nostr/startup-noas";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -28,8 +32,24 @@ function RootFeedRedirect() {
   );
 }
 
+function ViewRoute() {
+  const location = useLocation();
+  const firstSegment = location.pathname.split("/").filter(Boolean)[0];
+  if (firstSegment && firstSegment.includes(".")) {
+    return (
+      <Navigate
+        to={{ pathname: "/feed", search: location.search, hash: location.hash }}
+        replace
+      />
+    );
+  }
+  return <Index />;
+}
+
 function NostrBootstrapProvider({ children }: { children: ReactNode }) {
-  const initialBootstrap = readStartupRelayBootstrap();
+  const pathRelayOverride =
+    typeof window !== "undefined" ? extractPathRelayOverride(window.location.pathname) : null;
+  const initialBootstrap = readStartupRelayBootstrap({ pathRelayOverride });
   const initialNoasBootstrap = readStartupNoasBootstrap();
   const [relayUrls, setRelayUrls] = useState(initialBootstrap.relayUrls);
   const [defaultNoasHostUrl, setDefaultNoasHostUrl] = useState(initialNoasBootstrap.defaultHostUrl);
@@ -96,7 +116,7 @@ const App = () => (
               <Route path="/" element={<RootFeedRedirect />} />
               <Route path="/signin" element={<Index />} />
               <Route path="/signup" element={<Index />} />
-              <Route path="/:view" element={<Index />} />
+              <Route path="/:view" element={<ViewRoute />} />
               <Route path="/:view/:taskId" element={<Index />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
