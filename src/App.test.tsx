@@ -79,7 +79,7 @@ describe("App routes", () => {
     await screen.findByTestId("index-page");
     expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
       expect.objectContaining({ defaultRelays: ["wss://relay.env"], defaultNoasHostUrl: "" }),
-      expect.anything()
+      undefined
     );
   });
 
@@ -124,7 +124,7 @@ describe("App routes", () => {
     await screen.findByTestId("index-page");
     expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
       expect.objectContaining({ defaultRelays: [], defaultNoasHostUrl: "" }),
-      expect.anything()
+      undefined
     );
 
     resolveBootstrap({
@@ -136,7 +136,7 @@ describe("App routes", () => {
     await waitFor(() => {
       expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
         expect.objectContaining({ defaultRelays: ["wss://relay.fallback"], defaultNoasHostUrl: "" }),
-        expect.anything()
+        undefined
       );
     });
   });
@@ -153,13 +153,13 @@ describe("App routes", () => {
     await screen.findByTestId("index-page");
     expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
       expect.objectContaining({ defaultNoasHostUrl: "" }),
-      expect.anything()
+      undefined
     );
 
     await waitFor(() => {
       expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
         expect.objectContaining({ defaultNoasHostUrl: "https://example.test" }),
-        expect.anything()
+        undefined
       );
     });
   });
