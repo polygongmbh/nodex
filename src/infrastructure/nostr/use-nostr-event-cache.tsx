@@ -293,30 +293,53 @@ export function useNostrEventCache({
     schedulePendingEventFlush();
   }, [markLiveHydratedScope, schedulePendingEventFlush]);
 
+  const pushEventRef = useRef(pushEvent);
+  const finalizeBootstrapScopeRef = useRef(finalizeBootstrapScope);
+  const flushPendingEventsRef = useRef(flushPendingEvents);
+  const subscribeRef = useRef(subscribe);
+  const subscribedKindsRef = useRef(subscribedKinds);
+  useEffect(() => { pushEventRef.current = pushEvent; }, [pushEvent]);
+  useEffect(() => { finalizeBootstrapScopeRef.current = finalizeBootstrapScope; }, [finalizeBootstrapScope]);
+  useEffect(() => { flushPendingEventsRef.current = flushPendingEvents; }, [flushPendingEvents]);
+  useEffect(() => { subscribeRef.current = subscribe; }, [subscribe]);
+  useEffect(() => { subscribedKindsRef.current = subscribedKinds; }, [subscribedKinds]);
+
+  const subscriptionRef = useRef<NDKSubscription | null>(null);
+  const bootstrapTimeoutRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (!isConnected) return;
+    if (subscriptionRef.current) return;
     setIsHydrating(true);
-    const timeoutId = window.setTimeout(() => {
-      finalizeBootstrapScope();
+    bootstrapTimeoutRef.current = window.setTimeout(() => {
+      finalizeBootstrapScopeRef.current();
     }, CACHE_BOOTSTRAP_MAX_AGE_MS);
 
-    const subscription = subscribe(
-      [{ kinds: subscribedKinds }],
-      pushEvent,
+    const subscription = subscribeRef.current(
+      [{ kinds: subscribedKindsRef.current }],
+      (event) => pushEventRef.current(event as EventLike),
       { closeOnEose: false }
     );
+    subscriptionRef.current = subscription;
     subscription?.on("event:dup", (event, relay) => {
-      pushEvent(event as EventLike, relay);
+      pushEventRef.current(event as EventLike, relay);
     });
-    subscription?.on("eose", finalizeBootstrapScope);
-    subscription?.on("close", finalizeBootstrapScope);
+    subscription?.on("eose", () => finalizeBootstrapScopeRef.current());
+    subscription?.on("close", () => finalizeBootstrapScopeRef.current());
+  }, [isConnected]);
+
+  useEffect(() => {
     return () => {
-      window.clearTimeout(timeoutId);
-      flushPendingEvents(true);
+      if (bootstrapTimeoutRef.current !== null) {
+        window.clearTimeout(bootstrapTimeoutRef.current);
+        bootstrapTimeoutRef.current = null;
+      }
+      flushPendingEventsRef.current(true);
       setIsHydrating(false);
-      subscription?.stop();
+      subscriptionRef.current?.stop();
+      subscriptionRef.current = null;
     };
-  }, [finalizeBootstrapScope, flushPendingEvents, isConnected, pushEvent, subscribe, subscribedKinds]);
+  }, []);
 
   const flushPersist = useCallback(() => {
     if (typeof window !== "undefined" && persistTimerRef.current !== null) {
