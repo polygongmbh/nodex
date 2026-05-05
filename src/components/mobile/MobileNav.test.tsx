@@ -149,7 +149,7 @@ describe("MobileNav", () => {
 
     rerender(<MobileNav currentView="feed" onViewChange={vi.fn()} isManageActive={false} />);
 
-    const pill = container.querySelector('[aria-hidden="true"]') as HTMLDivElement | null;
+    const pill = container.querySelector('[data-testid="mobile-nav-pill"]') as HTMLDivElement | null;
 
     expect(pill).not.toBeNull();
     expect(pill?.style.width).toBe("80px");

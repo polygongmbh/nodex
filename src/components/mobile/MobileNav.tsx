@@ -294,6 +294,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
                 : '0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)',
             }}
             aria-hidden="true"
+            data-testid="mobile-nav-pill"
           />
 
           {allSegments.map((seg, i) => (
