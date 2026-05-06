@@ -746,9 +746,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ndkInstance.pool.relays.get(normalizedRelayUrl);
 
     if (trackedRelay && !forceNewSocket) {
-      relayCurrentInstanceRef.current.set(normalizedRelayUrl, trackedRelay);
       const mappedStatus = mapRelayTransportStatus(trackedRelay);
       if (mappedStatus === "connected" || mappedStatus === "connecting") {
+        relayCurrentInstanceRef.current.set(normalizedRelayUrl, trackedRelay);
         if (mappedStatus === "connected") {
           clearRelayConnectWatchdog(normalizedRelayUrl);
         } else {
@@ -756,23 +756,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         }
         return trackedRelay;
       }
-
-      // Recover from stale native CONNECTING status with no active websocket attempt.
-      if (mapNativeRelayStatus(trackedRelay.status) === "connecting") {
-        disconnectTrackedRelayInstance(ndkInstance, normalizedRelayUrl);
-        const freshRelay = ndkInstance.pool.getRelay(normalizedRelayUrl, false);
-        relayCurrentInstanceRef.current.set(normalizedRelayUrl, freshRelay);
-        scheduleRelayConnectWatchdog(ndkInstance, freshRelay);
-        freshRelay.connect();
-        return freshRelay;
-      }
-
-      scheduleRelayConnectWatchdog(ndkInstance, trackedRelay);
-      trackedRelay.connect();
-      return trackedRelay;
+      // Stale/disconnected: fall through to rebuild. Calling .connect() on the
+      // existing NDKRelay races NDK's own handleReconnection — both reassign
+      // connectivity.ws without closing the previous socket, leaving an orphan
+      // WebSocket alive while traffic flows on the new one.
     }
 
-    if (forceNewSocket) {
+    if (trackedRelay) {
       disconnectTrackedRelayInstance(ndkInstance, normalizedRelayUrl);
     }
 

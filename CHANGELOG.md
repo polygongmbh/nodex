@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Fixed
 - A "Publishing..." toast no longer occasionally lingers after a delayed send finishes; the redundant loading toast is now skipped when the undo-send delay is enabled.
+- Reconnecting to a relay no longer occasionally leaves an orphan WebSocket open in parallel; soft reconnects now rebuild the pool entry instead of racing NDK's own reconnect on the same relay instance.
 
 ## [2.16.1] - 2026-05-06
 Patch release for targeted anti-spam composer filtering, safer cache subscription behavior, and dependency refreshes.
