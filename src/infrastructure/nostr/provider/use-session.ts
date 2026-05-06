@@ -269,6 +269,13 @@ export function useSession({ setUser, setAuthMethod }: UseSessionArgs) {
     };
   }, [applyAuthenticatedState]);
 
+  const clearLockedSession = useCallback(() => {
+    setIsSessionLocked(false);
+    setLockedNoasUsername(null);
+    lockedNoasKeyRef.current = null;
+    sessionPasswordHashRef.current = null;
+  }, []);
+
   return {
     isSessionLocked,
     setIsSessionLocked,
@@ -280,5 +287,6 @@ export function useSession({ setUser, setAuthMethod }: UseSessionArgs) {
     clearTransientAuthState,
     persistNoasSession,
     createRestoreSession,
+    clearLockedSession,
   };
 }

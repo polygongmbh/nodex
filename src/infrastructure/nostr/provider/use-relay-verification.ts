@@ -261,9 +261,15 @@ export function useRelayVerification({
     }
   }, [markRelayVerificationFailure, resolveRelayVerificationOperation]);
 
+  const clearVerificationStateOnLogout = useCallback(() => {
+    pendingRelayVerificationRef.current.clear();
+    relayAuthRetryHistoryRef.current.clear();
+  }, []);
+
   return {
     pendingRelayVerificationRef,
     relayAuthRetryHistoryRef,
+    clearVerificationStateOnLogout,
     updateRelayCapabilityStatus,
     markRelayVerificationSuccess,
     markRelayVerificationFailure,

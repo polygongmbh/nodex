@@ -58,6 +58,7 @@ import { usePresence } from "./use-presence";
 import { usePublish } from "./use-publish";
 import { useSubscribe } from "./use-subscribe";
 import { useSession, showLoginSuccessToast, profileFromCachedKind0 } from "./use-session";
+import { useAuthActions } from "./use-auth-actions";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
 import {
   filterRelayUrlsToWritableSet,
@@ -130,6 +131,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     clearTransientAuthState,
     persistNoasSession,
     createRestoreSession,
+    clearLockedSession,
   } = useSession({ setUser, setAuthMethod });
   const poolDepsRef = useRef<UseRelayPoolDeps>({} as UseRelayPoolDeps);
   const {
@@ -139,6 +141,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     removedRelaysRef,
     updateRelayEntry,
     attachPoolHandlers,
+    resetRejectedRelayStatuses,
   } = useRelayPool(poolDepsRef);
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
   const [isProfileSyncing, setIsProfileSyncing] = useState(false);
@@ -246,6 +249,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const {
     pendingRelayVerificationRef,
     relayAuthRetryHistoryRef,
+    clearVerificationStateOnLogout,
     updateRelayCapabilityStatus,
     markRelayVerificationSuccess,
     markRelayVerificationFailure,
@@ -264,10 +268,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   okDetachRef.current = realDetachRelayOkRejectObserver;
 
   const {
-    kind0ProfileCacheRef,
     kind0ProfileInFlightRef,
-    kind0ProfileFailureUntilRef,
     fetchLatestKind0Profile,
+    clearKind0Caches,
+    clearKind0CachesForResignIn,
   } = useProfile({
     ndk,
     beginRelayOperation,
@@ -305,8 +309,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const retryNip42RelaysAfterSignIn = useCallback(() => {
     if (!ndk) return;
     // Flush kind-0 profile request cache so post-sign-in auth can rehydrate profile metadata immediately.
-    kind0ProfileFailureUntilRef.current.clear();
-    kind0ProfileCacheRef.current.clear();
+    clearKind0CachesForResignIn();
 
     // Use relaysRef so this function is stable and safe to call from async contexts
     // (e.g. session restore) without capturing a stale relays snapshot.
@@ -452,127 +455,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       relayCurrentInstance.clear();
     };
   }, [attachPoolHandlers, clearAllTrackedRelayTimeouts, createRestoreSession, detachAllRelayOkRejectObservers, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolvedDefaultRelays]);
-
-  const loginWithExtension = useCallback(async (): Promise<boolean> => {
-    if (!ndk) return false;
-    
-    if (!hasNostrExtension()) {
-      console.error("No Nostr extension found");
-      return false;
-    }
-
-    setIsAuthenticating(true);
-    try {
-      const signer = new NDKNip07Signer();
-      const ndkUser = await signer.user();
-      if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-      applyAuthenticatedState(ndk, signer, ndkUser, "extension");
-      showLoginSuccessToast({ authMethod: "extension" });
-      clearTransientAuthState();
-      savePersistentAuthMethod("extension");
-      retryNip42RelaysAfterSignIn();
-      return true;
-    } catch (error) {
-      console.error("Extension login failed:", error);
-      return false;
-    } finally {
-      setIsAuthenticating(false);
-    }
-  }, [applyAuthenticatedState, clearTransientAuthState, ndk, retryNip42RelaysAfterSignIn]);
-
-  const loginWithPrivateKey = useCallback(async (nsecOrHex: string): Promise<boolean> => {
-    if (!ndk) return false;
-
-    setIsAuthenticating(true);
-    try {
-      const signer = new NDKPrivateKeySigner(nsecOrHex);
-      const ndkUser = await signer.user();
-      if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-      applyAuthenticatedState(ndk, signer, ndkUser, "privateKey");
-      showLoginSuccessToast({ authMethod: "privateKey" });
-      clearTransientAuthState();
-      saveSessionPrivateKey(nsecOrHex);
-      saveSessionAuthMethod("privateKey");
-      retryNip42RelaysAfterSignIn();
-      return true;
-    } catch (error) {
-      console.error("Private key login failed:", error);
-      return false;
-    } finally {
-      setIsAuthenticating(false);
-    }
-  }, [applyAuthenticatedState, clearTransientAuthState, ndk, retryNip42RelaysAfterSignIn]);
-
-  const loginAsGuest = useCallback(async (): Promise<boolean> => {
-    if (!ndk) return false;
-
-    setIsAuthenticating(true);
-    try {
-      // Check for existing guest key
-      const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
-      let signer: NDKPrivateKeySigner;
-      
-      if (nsec) {
-        signer = new NDKPrivateKeySigner(nsec);
-      } else {
-        signer = NDKPrivateKeySigner.generate();
-        // Store for session persistence
-        const privateKey = signer.privateKey;
-        if (privateKey) {
-          localStorage.setItem(STORAGE_KEY_NSEC, privateKey);
-        }
-      }
-      
-      const ndkUser = await signer.user();
-      ndkUser.profile = { name: buildDeterministicGuestName(ndkUser.pubkey) };
-      applyAuthenticatedState(ndk, signer, ndkUser, "guest");
-      showLoginSuccessToast({ authMethod: "guest" });
-      clearTransientAuthState();
-      savePersistentAuthMethod("guest");
-      retryNip42RelaysAfterSignIn();
-      return true;
-    } catch (error) {
-      console.error("Guest login failed:", error);
-      return false;
-    } finally {
-      setIsAuthenticating(false);
-    }
-  }, [applyAuthenticatedState, clearTransientAuthState, ndk, retryNip42RelaysAfterSignIn]);
-
-  const loginWithNostrConnect = useCallback(async (bunkerUrl: string): Promise<boolean> => {
-    if (!ndk) return false;
-    if (!bunkerUrl.trim().startsWith("bunker://")) {
-      console.error("Invalid NIP-46 bunker URL");
-      return false;
-    }
-
-    setIsAuthenticating(true);
-    try {
-      const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
-      const signer = NDKNip46Signer.bunker(ndk, bunkerUrl.trim(), localKey);
-      const ndkUser = await signer.blockUntilReady();
-      const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
-      if (profile) ndkUser.profile = profile;
-      else if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
-      applyAuthenticatedState(ndk, signer, ndkUser, "nostrConnect");
-      showLoginSuccessToast({ authMethod: "nostrConnect" });
-      clearTransientAuthState();
-      savePersistentAuthMethod("nostrConnect");
-      localStorage.setItem(STORAGE_KEY_NIP46_BUNKER, bunkerUrl.trim());
-      if (signer.localSigner?.privateKey) {
-        localStorage.setItem(STORAGE_KEY_NIP46_LOCAL_NSEC, signer.localSigner.privateKey);
-      }
-      retryNip42RelaysAfterSignIn();
-      return true;
-    } catch (error) {
-      console.error("Nostr Connect login failed:", error);
-      return false;
-    } finally {
-      setIsAuthenticating(false);
-    }
-  }, [applyAuthenticatedState, clearTransientAuthState, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
-
-
 
   const addRelay = useCallback((url: string) => {
     if (!ndk) return;
@@ -997,42 +879,35 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     markRelayVerificationFailure,
   });
 
-  const logout = useCallback(() => {
-    void publishPresenceOffline();
-    profileSyncRunRef.current += 1;
-    setIsProfileSyncing(false);
-    if (ndk) {
-      ndk.signer = undefined;
-    }
-    setUser(null);
-    setAuthMethod(null);
+  const resetAuthSessionRefs = useCallback(() => {
     relayAuthPreflightHistoryRef.current.clear();
     relaysPendingAuthSubscriptionReplayRef.current.clear();
-    pendingRelayVerificationRef.current.clear();
-    relayAuthRetryHistoryRef.current.clear();
-    // Re-evaluate statuses now that rejection state is cleared so relays that were
-    // verification-failed or read-only due to the previous session go back to connected.
-    setRelays((previous) =>
-      previous.map((relay) =>
-        relay.status === "verification-failed" || relay.status === "read-only"
-          ? { ...relay, status: "connected" }
-          : relay
-      )
-    );
-    kind0ProfileCacheRef.current.clear();
-    kind0ProfileInFlightRef.current.clear();
-    kind0ProfileFailureUntilRef.current.clear();
-    clearStoredAuthMethod();
-    clearSessionPrivateKey();
-    clearSessionNoasState();
-    setIsSessionLocked(false);
-    setLockedNoasUsername(null);
-    lockedNoasKeyRef.current = null;
-    sessionPasswordHashRef.current = null;
-    localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
-    localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
-    // Keep guest key for potential re-login
-  }, [ndk, publishPresenceOffline]);
+  }, []);
+
+  const {
+    loginWithExtension,
+    loginWithPrivateKey,
+    loginAsGuest,
+    loginWithNostrConnect,
+    logout,
+  } = useAuthActions({
+    ndk,
+    applyAuthenticatedState,
+    clearTransientAuthState,
+    fetchLatestKind0Profile,
+    retryNip42RelaysAfterSignIn,
+    setUser,
+    setAuthMethod,
+    setIsAuthenticating,
+    setIsProfileSyncing,
+    publishPresenceOffline,
+    profileSyncRunRef,
+    resetAuthSessionRefs,
+    clearVerificationStateOnLogout,
+    resetRejectedRelayStatuses,
+    clearKind0Caches,
+    clearLockedSession,
+  });
 
 
 

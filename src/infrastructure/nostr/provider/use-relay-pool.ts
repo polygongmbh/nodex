@@ -305,6 +305,16 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const resetRejectedRelayStatuses = useCallback(() => {
+    setRelays((previous) =>
+      previous.map((relay) =>
+        relay.status === "verification-failed" || relay.status === "read-only"
+          ? { ...relay, status: "connected" }
+          : relay
+      )
+    );
+  }, []);
+
   return {
     relays,
     setRelays,
@@ -312,5 +322,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     removedRelaysRef,
     updateRelayEntry,
     attachPoolHandlers,
+    resetRejectedRelayStatuses,
   };
 }

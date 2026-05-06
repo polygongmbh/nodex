@@ -109,10 +109,23 @@ export function useProfile({
     return await request;
   }, [beginRelayOperation, clearTrackedRelayTimeout, endRelayOperation, ndk, scheduleRelayTimeout]);
 
+  const clearKind0Caches = useCallback(() => {
+    kind0ProfileCacheRef.current.clear();
+    kind0ProfileInFlightRef.current.clear();
+    kind0ProfileFailureUntilRef.current.clear();
+  }, []);
+
+  // For retryNip42RelaysAfterSignIn: clear cache + failure cooldown but keep
+  // in-flight requests so concurrent reads are still deduplicated.
+  const clearKind0CachesForResignIn = useCallback(() => {
+    kind0ProfileCacheRef.current.clear();
+    kind0ProfileFailureUntilRef.current.clear();
+  }, []);
+
   return {
-    kind0ProfileCacheRef,
     kind0ProfileInFlightRef,
-    kind0ProfileFailureUntilRef,
     fetchLatestKind0Profile,
+    clearKind0Caches,
+    clearKind0CachesForResignIn,
   };
 }
