@@ -5,6 +5,7 @@ import { notifyTaskCreationFailed } from "@/lib/notifications";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import type { TaskComposerFormData } from "./TaskComposer";
 import type { TaskCreateResult, TaskStatusLike } from "@/types";
 
@@ -40,7 +41,10 @@ export function useComposerSubmitHandler({
       });
 
       const publishingToastId = "task-composer-publishing";
-      toast.loading(t("composer.blocked.publishing"), { id: publishingToastId });
+      const skipLoadingToast = usePreferencesStore.getState().publishDelayEnabled;
+      if (!skipLoadingToast) {
+        toast.loading(t("composer.blocked.publishing"), { id: publishingToastId });
+      }
 
       void (async () => {
         let result: TaskCreateResult;
@@ -70,7 +74,7 @@ export function useComposerSubmitHandler({
         } catch (error) {
           console.error("Task submit failed", error);
           notifyTaskCreationFailed();
-          toast.dismiss(publishingToastId);
+          if (!skipLoadingToast) toast.dismiss(publishingToastId);
           return;
         }
         toast.dismiss(publishingToastId);

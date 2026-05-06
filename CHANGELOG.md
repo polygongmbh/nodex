@@ -6,6 +6,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Clicking a hashtag chip on a task now adds the tag to the active channel filters instead of replacing them.
+
+### Fixed
+- A "Publishing..." toast no longer occasionally lingers after a delayed send finishes; the redundant loading toast is now skipped when the undo-send delay is enabled.
+
 ## [2.16.1] - 2026-05-06
 Patch release for targeted anti-spam composer filtering, safer cache subscription behavior, and dependency refreshes.
 
