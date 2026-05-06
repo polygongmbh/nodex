@@ -200,10 +200,10 @@ function FeedInteractionBusFromContexts({
         taskCommands.undoPendingPublish(intent.taskId);
       },
       "publish.failed.retry": (intent) => {
-        taskCommands.retryFailedPublish(intent.draftId);
+        return taskCommands.retryFailedPublish(intent.draftId);
       },
       "publish.failed.repost": (intent) => {
-        taskCommands.repostFailedPublish(intent.draftId);
+        return taskCommands.repostFailedPublish(intent.draftId);
       },
       "publish.failed.dismiss": (intent) => {
         taskCommands.dismissFailedPublish(intent.draftId);

@@ -35,8 +35,8 @@ export interface FeedTaskCommands {
   updatePriority(taskId: string, priority: number): void;
   changeListingStatus(taskId: string, status: Nip99ListingStatus): void;
   undoPendingPublish(taskId: string): void;
-  retryFailedPublish(draftId: string): void;
-  repostFailedPublish(draftId: string): void;
+  retryFailedPublish(draftId: string): Promise<void>;
+  repostFailedPublish(draftId: string): Promise<void>;
   dismissFailedPublish(draftId: string): void;
   dismissAllFailedPublish(): void;
 }
@@ -50,8 +50,8 @@ const defaultCommands: FeedTaskCommands = {
   updatePriority: () => {},
   changeListingStatus: () => {},
   undoPendingPublish: () => {},
-  retryFailedPublish: () => {},
-  repostFailedPublish: () => {},
+  retryFailedPublish: async () => {},
+  repostFailedPublish: async () => {},
   dismissFailedPublish: () => {},
   dismissAllFailedPublish: () => {},
 };

@@ -195,6 +195,17 @@ export function notifyPublishUndone(): void {
   toast.info(i18n.t("composer:toasts.success.publishUndone"));
 }
 
+export function notifyRetryInProgress(scope: "retry" | "repost"): string | number {
+  const message = scope === "repost"
+    ? i18n.t("composer:publishQueue.reposting")
+    : i18n.t("composer:publishQueue.retrying");
+  return toast.loading(message, { id: `failed-publish-${scope}` });
+}
+
+export function dismissRetryInProgress(toastId: string | number): void {
+  toast.dismiss(toastId);
+}
+
 export function notifyRetryRelayMissing(): void {
   toast.error(i18n.t("composer:toasts.errors.retryRelayMissing"));
 }
