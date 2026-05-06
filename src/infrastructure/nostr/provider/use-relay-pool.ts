@@ -30,7 +30,6 @@ export interface UseRelayPoolDeps {
   replayActiveSubscriptionsForRelay: (ndkInstance: NDK, relayUrl: string) => void;
   scheduleRelayTimeout: (callback: () => void, delayMs: number) => number;
   resolveRelayConnectRetryDelay: (failureCount: number) => number;
-  relayCurrentInstanceRef: MutableRefObject<Map<string, NDKRelay>>;
   relayInfoRef: MutableRefObject<Map<string, RelayInfoSummary>>;
   relayInfoFetchedAtRef: MutableRefObject<Map<string, number>>;
   relayInitialFailureCountsRef: MutableRefObject<Map<string, number>>;
@@ -61,7 +60,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
 
   const attachPoolHandlers = useCallback((ndkInstance: NDK): (() => void) => {
     const syncRelayStatusesFromPool = () => {
-      const { relayCurrentInstanceRef } = depsRef.current;
       setRelays((prev) => {
         const previousEntryByUrl = new Map(
           prev.map((entry) => [normalizeRelayUrl(entry.url), entry] as const)
@@ -69,9 +67,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         const updates: typeof prev = [];
         ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
           const normalized = normalizeRelayUrl(relay.url);
-          const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-          if (currentRelay && currentRelay !== relay) return;
-          relayCurrentInstanceRef.current.set(normalized, relay);
           if (removedRelaysRef.current.has(normalized)) return;
           const previousEntry = previousEntryByUrl.get(normalized);
           const mappedStatus = mapRelayTransportStatus(relay);
@@ -88,11 +83,10 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     };
 
     const onRelayConnecting = (relay: NDKRelay) => {
-      const { relayCurrentInstanceRef, scheduleRelayConnectWatchdog } = depsRef.current;
+      const { scheduleRelayConnectWatchdog } = depsRef.current;
       const normalized = normalizeRelayUrl(relay.url);
-      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-      if (!currentRelay || currentRelay === relay) {
-        relayCurrentInstanceRef.current.set(normalized, relay);
+      const pooledRelay = ndkInstance.pool.relays.get(normalized);
+      if (!pooledRelay || pooledRelay === relay) {
         scheduleRelayConnectWatchdog(ndkInstance, relay);
       }
       syncRelayStatusesFromPool();
@@ -100,7 +94,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
 
     const onRelayConnect = (relay: NDKRelay) => {
       const {
-        relayCurrentInstanceRef,
         clearRelayConnectWatchdog,
         handleRelayPublishFailed,
         relayConnectedOnceRef,
@@ -112,11 +105,10 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         markRelayVerificationSuccess,
       } = depsRef.current;
       const normalized = normalizeRelayUrl(relay.url);
-      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-      if (currentRelay && currentRelay !== relay) {
+      const pooledRelay = ndkInstance.pool.relays.get(normalized);
+      if (pooledRelay && pooledRelay !== relay) {
         return;
       }
-      relayCurrentInstanceRef.current.set(normalized, relay);
       clearRelayConnectWatchdog(normalized);
       const publishFailedHandler = (_event: unknown, error: Error) => {
         handleRelayPublishFailed(relay, error);
@@ -165,7 +157,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
 
     const onRelayAuthed = (relay: NDKRelay) => {
       const {
-        relayCurrentInstanceRef,
         pendingRelayVerificationRef,
         markRelayVerificationSuccess,
         updateRelayCapabilityStatus,
@@ -173,8 +164,8 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         replayActiveSubscriptionsForRelay,
       } = depsRef.current;
       const normalized = normalizeRelayUrl(relay.url);
-      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-      if (currentRelay && currentRelay !== relay) {
+      const pooledRelay = ndkInstance.pool.relays.get(normalized);
+      if (pooledRelay && pooledRelay !== relay) {
         return;
       }
       const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
@@ -202,7 +193,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     const onRelayDisconnect = (relay: NDKRelay) => {
       const {
         clearRelayConnectWatchdog,
-        relayCurrentInstanceRef,
         relayConnectedOnceRef,
         relayInitialFailureCountsRef,
         scheduleRelayTimeout,
@@ -217,18 +207,13 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         offFn?.call(publishFailedEntry.relay, "publish:failed", publishFailedEntry.handler);
         publishFailedHandlersRef.current.delete(normalized);
       }
-      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-      if (currentRelay && currentRelay !== relay) {
-        return;
-      }
-      const activeRelay = ndkInstance.pool.relays.get(normalized);
-      if (!currentRelay && !activeRelay) {
-        return;
-      }
-
       // Ignore late disconnects from a removed relay instance after the same normalized URL
-      // has already been re-added to the pool.
+      // has already been re-added to the pool, or events for relays no longer in the pool.
+      const activeRelay = ndkInstance.pool.relays.get(normalized);
       if (activeRelay && activeRelay !== relay) {
+        return;
+      }
+      if (!activeRelay && !relayConnectedOnceRef.current.has(normalized) && !relayInitialFailureCountsRef.current.has(normalized)) {
         return;
       }
 
@@ -251,7 +236,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         if (!removedRelaysRef.current.has(normalized)) {
           scheduleRelayTimeout(() => {
             if (
-              relayCurrentInstanceRef.current.get(normalized) === relay &&
+              ndkInstance.pool.relays.get(normalized) === relay &&
               !removedRelaysRef.current.has(normalized)
             ) {
               relay.connect();
@@ -271,7 +256,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         const delay = resolveRelayConnectRetryDelay(nextFailureCount);
         scheduleRelayTimeout(() => {
           if (
-            relayCurrentInstanceRef.current.get(normalized) === relay &&
+            ndkInstance.pool.relays.get(normalized) === relay &&
             !removedRelaysRef.current.has(normalized)
           ) {
             relay.connect();

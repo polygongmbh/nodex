@@ -172,7 +172,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   }, []);
 
   const {
-    relayCurrentInstanceRef,
     connectManagedRelay,
     disconnectTrackedRelayInstance,
     scheduleRelayConnectWatchdog,
@@ -251,9 +250,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
   const replayActiveSubscriptionsForRelay = useCallback((ndkInstance: NDK, relayUrl: string) => {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
-    const relay =
-      relayCurrentInstanceRef.current.get(normalizedRelayUrl) ??
-      ndkInstance.pool.relays.get(normalizedRelayUrl);
+    const relay = ndkInstance.pool.relays.get(normalizedRelayUrl);
     if (!relay) return;
 
     const activeSubscriptions = ndkInstance.subManager?.subscriptions;
@@ -347,7 +344,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     replayActiveSubscriptionsForRelay,
     scheduleRelayTimeout,
     resolveRelayConnectRetryDelay,
-    relayCurrentInstanceRef,
     relayInfoRef,
     relayInfoFetchedAtRef,
     relayInitialFailureCountsRef,
@@ -372,7 +368,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     // Initialize relay states
     removedRelaysRef.current.clear();
-    relayCurrentInstanceRef.current.clear();
     hydrateStartupCache(resolvedDefaultRelays);
     setRelays(resolvedDefaultRelays.map((url) => {
       const normalizedUrl = normalizeRelayUrl(url);
@@ -408,7 +403,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     void ndkInstance.connect();
     void session.restore();
-    const relayCurrentInstance = relayCurrentInstanceRef.current;
     const inFlightKind0ProfileRequests = kind0ProfileInFlightRef.current;
 
     return () => {
@@ -419,7 +413,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         relay.disconnect();
       });
       inFlightKind0ProfileRequests.clear();
-      relayCurrentInstance.clear();
     };
   }, [attachPoolHandlers, clearAllTrackedRelayTimeouts, createRestoreSession, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolvedDefaultRelays]);
 
