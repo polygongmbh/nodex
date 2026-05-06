@@ -5,7 +5,6 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { getRelayIdFromUrl, getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { deriveSelectedRelayUrls } from "@/features/feed-page/controllers/use-index-relay-shell";
 import { useRelaySelectionController } from "@/features/feed-page/controllers/use-relay-selection-controller";
-import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
 import { isDemoFeedEnabled, DEMO_RELAY_ID } from "@/lib/demo-feed-config";
 import { initializeDemoFeedData } from "@/data/demo-feed";
 import { mockRelays as demoRelays } from "@/data/mockData";
@@ -82,8 +81,6 @@ export function FeedRelayProvider({ children }: PropsWithChildren) {
     handleRelaySelectIntent,
     handleToggleAllRelays,
   } = useRelaySelectionController({ relays });
-
-  useRelayAutoReconnect({ relays, activeRelayIds, reconnectRelay });
 
   const nostrRelayIds = useMemo(
     () => relays.map((relay) => relay.id).filter((id) => id !== DEMO_RELAY_ID),
