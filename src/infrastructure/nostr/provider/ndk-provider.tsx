@@ -51,10 +51,11 @@ import {
   STORAGE_KEY_NSEC,
 } from "./storage";
 import {
-  mapNativeRelayStatus,
-  mapRelayStatuses,
-  mergeRelayStatusUpdates,
-} from "./relay-status";
+  mapRelayTransportStatus,
+  resolveConnectedRelayStatus,
+  useRelayPool,
+  type UseRelayPoolDeps,
+} from "./use-relay-pool";
 import { reorderResolvedRelayStatuses } from "./relay-list";
 import { waitForNostrExtensionAvailability } from "./session-restore";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
@@ -101,8 +102,6 @@ const RELAY_CONNECT_RETRY_BASE_MS = 1000;
 const KIND0_PROFILE_CACHE_TTL_MS = 120000;
 const KIND0_PROFILE_FAILURE_COOLDOWN_MS = 15000;
 type RelayOperation = "read" | "write" | "unknown";
-const WS_READY_STATE_CONNECTING = 0;
-const WS_READY_STATE_OPEN = 1;
 
 function resolveNoasLoginHandle(username: string, apiBaseUrl: string): string {
   const normalizedUsername = String(username || "").trim();
@@ -160,24 +159,6 @@ function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
   return typeof value === "object" && value !== null && "then" in value;
 }
 
-function mapRelayTransportStatus(relay: NDKRelay): NDKRelayStatus["status"] {
-  const mappedStatus = mapNativeRelayStatus(relay.status);
-  const connectivity = (relay as unknown as { connectivity?: { ws?: { readyState?: number } } }).connectivity;
-  if (!connectivity) return mappedStatus;
-  const wsReadyState = connectivity.ws?.readyState;
-
-  if (mappedStatus === "connecting") {
-    if (wsReadyState === WS_READY_STATE_CONNECTING) return "connecting";
-    return "disconnected";
-  }
-  if (mappedStatus === "connected") {
-    if (wsReadyState === WS_READY_STATE_OPEN) return "connected";
-    return "disconnected";
-  }
-
-  return mappedStatus;
-}
-
 function updateExplicitRelayUrlsInPlace(ndkInstance: NDK, relayUrls: string[]): void {
   const nextRelayUrls = dedupeNormalizedRelayUrls(relayUrls);
   const explicitRelayUrls = ndkInstance.explicitRelayUrls;
@@ -228,10 +209,15 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const [lockedNoasUsername, setLockedNoasUsername] = useState<string | null>(null);
   const lockedNoasKeyRef = useRef<string | null>(null);
   const sessionPasswordHashRef = useRef<string | null>(null);
-  const [relays, setRelays] = useState<NDKRelayStatus[]>([]);
-  const relaysRef = useRef<NDKRelayStatus[]>([]);
-  relaysRef.current = relays;
-  const removedRelaysRef = useRef<Set<string>>(new Set());
+  const poolDepsRef = useRef<UseRelayPoolDeps>({} as UseRelayPoolDeps);
+  const {
+    relays,
+    setRelays,
+    relaysRef,
+    removedRelaysRef,
+    updateRelayEntry,
+    attachPoolHandlers,
+  } = useRelayPool(poolDepsRef);
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
   const [isProfileSyncing, setIsProfileSyncing] = useState(false);
   const profileSyncRunRef = useRef(0);
@@ -328,25 +314,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       return;
     }
     relayVerificationWriteOpsRef.current = Math.max(0, relayVerificationWriteOpsRef.current - 1);
-  }, []);
-
-  const resolveConnectedRelayStatus = useCallback((status?: NDKRelayStatus["status"]): NDKRelayStatus["status"] => {
-    if (status === "verification-failed") return "verification-failed";
-    if (status === "read-only") return "read-only";
-    return "connected";
-  }, []);
-
-  const updateRelayEntry = useCallback((
-    normalizedRelayUrl: string,
-    transform: (relay: NDKRelayStatus) => NDKRelayStatus
-  ) => {
-    setRelays((previous) =>
-      mapRelayStatuses(previous, (relay) => (
-        relay.url.replace(/\/+$/, "") === normalizedRelayUrl
-          ? transform(relay)
-          : relay
-      ))
-    );
   }, []);
 
   const updateRelayCapabilityStatus = useCallback((
@@ -978,6 +945,27 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     return await request;
   }, [beginRelayOperation, clearTrackedRelayTimeout, endRelayOperation, ndk, scheduleRelayTimeout]);
 
+  // Sync pool-hook deps every render so attach-time handlers see latest callbacks.
+  poolDepsRef.current = {
+    scheduleRelayConnectWatchdog,
+    clearRelayConnectWatchdog,
+    attachRelayOkRejectObserver,
+    detachRelayOkRejectObserver,
+    primeRelayAuthChallenge,
+    markRelayVerificationSuccess,
+    updateRelayCapabilityStatus,
+    replayActiveSubscriptionsForRelay,
+    scheduleRelayTimeout,
+    resolveRelayConnectRetryDelay,
+    relayCurrentInstanceRef,
+    relayInfoRef,
+    relayInfoFetchedAtRef,
+    relayInitialFailureCountsRef,
+    relayConnectedOnceRef,
+    pendingRelayVerificationRef,
+    relaysPendingAuthSubscriptionReplayRef,
+  };
+
   // Initialize NDK
   useEffect(() => {
     nostrDevLog("provider", "Initializing NDK provider", {
@@ -990,188 +978,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     ndkInstance.relayAuthDefaultPolicy = createRelayNip42AuthPolicy(ndkInstance, notifyRelayVerificationEvent);
 
-    // Set up relay event handlers
-    const syncRelayStatusesFromPool = () => {
-      setRelays((prev) => {
-        const previousEntryByUrl = new Map(
-          prev.map((entry) => [normalizeRelayUrl(entry.url), entry] as const)
-        );
-        const updates: typeof prev = [];
-        ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
-          const normalized = normalizeRelayUrl(relay.url);
-          const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-          if (currentRelay && currentRelay !== relay) return;
-          relayCurrentInstanceRef.current.set(normalized, relay);
-          if (removedRelaysRef.current.has(normalized)) return;
-          const previousEntry = previousEntryByUrl.get(normalized);
-          const mappedStatus = mapRelayTransportStatus(relay);
-          updates.push({
-            ...previousEntry,
-            url: normalized,
-            status: mappedStatus === "connected"
-              ? resolveConnectedRelayStatus(previousEntry?.status)
-              : mappedStatus,
-          });
-        });
-        return mergeRelayStatusUpdates(prev, updates);
-      });
-    };
-
-    ndkInstance.pool.on("relay:connecting", (relay: NDKRelay) => {
-      const normalized = normalizeRelayUrl(relay.url);
-      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-      if (!currentRelay || currentRelay === relay) {
-        relayCurrentInstanceRef.current.set(normalized, relay);
-        scheduleRelayConnectWatchdog(ndkInstance, relay);
-      }
-      syncRelayStatusesFromPool();
-    });
-
-    ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
-      const normalized = normalizeRelayUrl(relay.url);
-      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-      if (currentRelay && currentRelay !== relay) {
-        return;
-      }
-      relayCurrentInstanceRef.current.set(normalized, relay);
-      clearRelayConnectWatchdog(normalized);
-      attachRelayOkRejectObserver(relay);
-      nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
-      relayConnectedOnceRef.current.add(normalized);
-      relayInitialFailureCountsRef.current.delete(normalized);
-      const relayInfo = relayInfoRef.current.get(normalized);
-      if (relayInfo?.authRequired) {
-        primeRelayAuthChallenge(ndkInstance, normalized);
-      }
-      const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
-      if (pendingVerification) {
-        pendingRelayVerificationRef.current.delete(normalized);
-        markRelayVerificationSuccess(normalized, pendingVerification.operation);
-      }
-      if (removedRelaysRef.current.has(normalized)) return;
-      setRelays((prev) => {
-        const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);
-        const newStatus = resolveConnectedRelayStatus(existing?.status);
-        if (existing) {
-          if (existing.status === newStatus) return prev;
-          return prev.map((r) =>
-            normalizeRelayUrl(r.url) === normalized
-              ? { ...r, url: normalized, status: newStatus }
-              : r
-          );
-        }
-        const info = relayInfoRef.current.get(normalized);
-        const checkedAt = relayInfoFetchedAtRef.current.get(normalized);
-        return [...prev, {
-          url: normalized,
-          status: newStatus,
-          nip11: info
-            ? {
-                authRequired: info.authRequired,
-                supportsNip42: info.supportsNip42,
-                checkedAt: checkedAt ?? Date.now(),
-              }
-            : undefined,
-        }];
-      });
-    });
-
-    ndkInstance.pool.on("relay:authed", (relay: NDKRelay) => {
-      const normalized = normalizeRelayUrl(relay.url);
-      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-      if (currentRelay && currentRelay !== relay) {
-        return;
-      }
-      const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
-      if (pendingVerification) {
-        pendingRelayVerificationRef.current.delete(normalized);
-        markRelayVerificationSuccess(normalized, pendingVerification.operation);
-        nostrDevLog("relay", "Relay authentication completed for pending verification challenge", {
-          relayUrl: normalized,
-          operation: pendingVerification.operation,
-        });
-      } else {
-        // Auth succeeded without a tracked pending challenge (e.g. relay sent the auth
-        // challenge before our preflight probe or after a reconnect). Clear read rejection
-        // directly since relay:authed is the definitive success signal.
-        updateRelayCapabilityStatus(normalized, "connected");
-        nostrDevLog("relay", "Relay authentication completed without pending verification challenge", {
-          relayUrl: normalized,
-        });
-      }
-      const shouldReplaySubscriptions = relaysPendingAuthSubscriptionReplayRef.current.delete(normalized);
-      if (shouldReplaySubscriptions) {
-        replayActiveSubscriptionsForRelay(ndkInstance, normalized);
-      }
-    });
-
-    ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
-      const normalized = normalizeRelayUrl(relay.url);
-      nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
-      clearRelayConnectWatchdog(normalized);
-      detachRelayOkRejectObserver(normalized);
-      const currentRelay = relayCurrentInstanceRef.current.get(normalized);
-      if (currentRelay && currentRelay !== relay) {
-        return;
-      }
-      const activeRelay = ndkInstance.pool.relays.get(normalized);
-      if (!currentRelay && !activeRelay) {
-        return;
-      }
-
-      // Ignore late disconnects from a removed relay instance after the same normalized URL
-      // has already been re-added to the pool.
-      if (activeRelay && activeRelay !== relay) {
-        return;
-      }
-
-      if (!removedRelaysRef.current.has(normalized)) {
-        setRelays((prev) => {
-          const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);
-          if (!existing || existing.status === "disconnected") return prev;
-          return prev.map((r) =>
-            normalizeRelayUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
-          );
-        });
-      }
-
-      if (relayConnectedOnceRef.current.has(normalized)) {
-        // Relay had connected before. NDK normally handles reconnection via handleReconnection(),
-        // but NDK's handleStaleConnection() (wsStateMonitor / keepalive probe) sets status to
-        // DISCONNECTED *before* calling onDisconnect(), so handleReconnection is never scheduled.
-        // Scheduling relay.connect() here covers that gap; NDK's internal guard makes it a no-op
-        // if NDK is already reconnecting.
-        if (!removedRelaysRef.current.has(normalized)) {
-          scheduleRelayTimeout(() => {
-            if (
-              relayCurrentInstanceRef.current.get(normalized) === relay &&
-              !removedRelaysRef.current.has(normalized)
-            ) {
-              relay.connect();
-            }
-          }, 3000);
-        }
-        return;
-      }
-
-      // Relay has never connected. NDK skips handleReconnection() when the initial WebSocket
-      // closes while still in CONNECTING state (because status wasn't CONNECTED). Track failures
-      // and schedule retries with exponential backoff ourselves.
-      const nextFailureCount = (relayInitialFailureCountsRef.current.get(normalized) ?? 0) + 1;
-      relayInitialFailureCountsRef.current.set(normalized, nextFailureCount);
-
-      if (!removedRelaysRef.current.has(normalized)) {
-        const delay = resolveRelayConnectRetryDelay(nextFailureCount);
-        scheduleRelayTimeout(() => {
-          if (
-            relayCurrentInstanceRef.current.get(normalized) === relay &&
-            !removedRelaysRef.current.has(normalized)
-          ) {
-            relay.connect();
-          }
-        }, delay);
-      }
-    });
+    attachPoolHandlers(ndkInstance);
 
     // Initialize relay states
     removedRelaysRef.current.clear();
@@ -1374,7 +1181,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       inFlightKind0ProfileRequests.clear();
       relayCurrentInstance.clear();
     };
-  }, [applyAuthenticatedState, attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, clearRelayConnectWatchdog, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayConnectWatchdog, scheduleRelayTimeout, updateRelayCapabilityStatus]);
+  }, [applyAuthenticatedState, attachPoolHandlers, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolvedDefaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
