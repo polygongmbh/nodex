@@ -79,6 +79,7 @@ import { useRelayNip11 } from "./use-relay-nip11";
 import { useRelayTransport } from "./use-relay-transport";
 import { useRelayVerification } from "./use-relay-verification";
 import { useProfile } from "./use-profile";
+import { usePresence } from "./use-presence";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
@@ -212,7 +213,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const profileSyncRunRef = useRef(0);
   const relayInitialFailureCountsRef = useRef<Map<string, number>>(new Map());
   const relayConnectedOnceRef = useRef<Set<string>>(new Set());
-  const presenceRelayUrlsRef = useRef<string[]>([]);
   const connectResolvedAuthRelayUrlsRef = useRef<(relayUrls: string[]) => void>(() => undefined);
   const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
   const {
@@ -1222,52 +1222,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     }
   }, [ndk, applyAuthenticatedState, connectResolvedAuthRelayUrls, retryNip42RelaysAfterSignIn]);
 
-  const publishPresenceOffline = useCallback(async (relayUrlsOverride?: string[]) => {
-    if (!ndk || !ndk.signer) return;
-
-    try {
-      const event = new NDKEvent(ndk);
-      event.kind = NostrEventKind.UserStatus;
-      event.content = buildOfflinePresenceContent();
-      event.tags = buildPresenceTags(
-        Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
-      );
-      await event.sign();
-
-      const relayUrls = resolveOfflinePresenceRelayUrls({
-        relayUrlsOverride,
-        registeredRelayUrls: presenceRelayUrlsRef.current,
-        writableRelayUrls: resolveWritableNdkRelayUrls(relays),
-      });
-      if (relayUrls.length === 0) return;
-      const relaySet = NDKRelaySet.fromRelayUrls(
-        relayUrls,
-        ndk,
-        true
-      );
-      await event.publish(relaySet);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error || "");
-      const rejectionReason = extractRelayRejectionReason(error);
-      if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason })) {
-        const failedRelayUrls = extractRelayUrlsFromError(error);
-        const relayUrlsToMark = failedRelayUrls.length > 0
-          ? failedRelayUrls
-          : relays.map((relay) => normalizeRelayUrl(relay.url));
-        relayUrlsToMark.forEach((relayUrl) => {
-          markRelayVerificationFailure(relayUrl, "write", {
-            setStatus: true,
-            showToast: false,
-          });
-        });
-      }
-      console.warn("Failed to publish offline presence event during logout", error);
-    }
-  }, [markRelayVerificationFailure, ndk, relays]);
-
-  const setPresenceRelayUrls = useCallback((relayUrls: string[]) => {
-    presenceRelayUrlsRef.current = dedupeNormalizedRelayUrls(relayUrls);
-  }, []);
+  const { setPresenceRelayUrls, publishPresenceOffline } = usePresence({
+    ndk,
+    relays,
+    markRelayVerificationFailure,
+  });
 
   const logout = useCallback(() => {
     void publishPresenceOffline();
