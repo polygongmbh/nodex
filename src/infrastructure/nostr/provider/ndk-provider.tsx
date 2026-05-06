@@ -27,8 +27,6 @@ import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { getConfiguredDefaultRelays } from "@/infrastructure/nostr/default-relays";
 import { dedupeNormalizedRelayUrls, isRelayUrl, normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { extractHashtagsFromContent } from "@/lib/hashtags";
-import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus } from "./contracts";
 import { seedNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
@@ -70,7 +68,6 @@ import {
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
 import {
-  extractRelayErrorMessage,
   extractRelayUrlsFromError,
   extractRelayRejectionReason,
 } from "./relay-error";
@@ -80,6 +77,7 @@ import { useRelayTransport } from "./use-relay-transport";
 import { useRelayVerification } from "./use-relay-verification";
 import { useProfile } from "./use-profile";
 import { usePresence } from "./use-presence";
+import { usePublish } from "./use-publish";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
@@ -92,7 +90,6 @@ import { useProfileSync } from "./use-profile-sync";
 export type { AuthMethod, NDKUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 export const NDKContext = createContext<NDKContextValue | null>(null);
-const RELAY_PUBLISH_TIMEOUT_MS = 3000;
 const RELAY_AUTH_PREFLIGHT_TIMEOUT_MS = 4000;
 const RELAY_CONNECT_RETRY_BASE_MS = 1000;
 type RelayOperation = "read" | "write" | "unknown";
@@ -1335,155 +1332,15 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus, updateRelayEntry]);
 
-  const publishEvent = useCallback(async (
-    kind: NostrEventKind,
-    content: string,
-    tags: string[][] = [],
-    parentId?: string,
-    relayUrls?: string[]
-  ): Promise<{ success: boolean; eventId?: string; rejectionReason?: string; publishedRelayUrls?: string[] }> => {
-    if (!ndk || !ndk.signer) {
-      console.error("Not authenticated or NDK not ready");
-      return { success: false };
-    }
-
-    let signedEventId: string | undefined;
-    let targetRelayUrls: string[] = [];
-    try {
-      beginRelayOperation("write");
-      const event = new NDKEvent(ndk);
-      event.kind = kind;
-      event.content = content;
-      
-      // Build tags
-      const eventTags: string[][] = [...tags];
-      
-      // Add reply tag if this is a reply
-      if (parentId) {
-        eventTags.push(["e", parentId, "", "reply"]);
-      }
-
-      // Extract hashtags for text content kinds only.
-      if (kind === NostrEventKind.TextNote || kind === NostrEventKind.Task) {
-        extractHashtagsFromContent(content).forEach((hashtag) => {
-          eventTags.push(["t", hashtag]);
-        });
-        extractNostrReferenceTagsFromContent(content).forEach((tag) => {
-          eventTags.push(tag);
-        });
-      }
-      
-      event.tags = eventTags;
-      
-      await event.sign();
-      signedEventId = event.id;
-
-      const writableRelayUrls = resolveWritableNdkRelayUrls(relays);
-      if (relayUrls && relayUrls.length > 0) {
-        targetRelayUrls = filterRelayUrlsToWritableSet(relayUrls, new Set(writableRelayUrls));
-      } else if (writableRelayUrls.length > 0) {
-        targetRelayUrls = writableRelayUrls;
-      } else {
-        targetRelayUrls = dedupeNormalizedRelayUrls(resolvedDefaultRelays);
-      }
-      nostrDevLog("publish", "Preparing publish relay set", {
-        kind,
-        eventTagCount: eventTags.length,
-        parentId: parentId || null,
-        reason: relayUrls && relayUrls.length > 0 ? "explicit relay override" : "active relays fallback",
-        targetRelayUrls,
-      });
-      if (targetRelayUrls.length === 0) {
-        console.warn("Event publish skipped: no writable relay targets available");
-        return { success: false, eventId: event.id };
-      }
-      const publishedRelayUrlSet = new Set<string>();
-      let rejectionReason: string | undefined;
-
-      for (const relayUrl of targetRelayUrls) {
-        try {
-          const relaySet = NDKRelaySet.fromRelayUrls([relayUrl], ndk, true);
-          const publishedTo = await event.publish(relaySet, RELAY_PUBLISH_TIMEOUT_MS, 1);
-          Array.from(publishedTo)
-            .map((relay) => normalizeRelayUrl(relay.url))
-            .filter(Boolean)
-            .forEach((url) => publishedRelayUrlSet.add(url));
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error || "");
-          const relayErrorMessage = extractRelayErrorMessage(error, relayUrl);
-          const extractedReason =
-            extractRelayRejectionReason(relayErrorMessage || "") ??
-            extractRelayRejectionReason(error);
-          if (!rejectionReason && extractedReason) {
-            rejectionReason = extractedReason;
-          }
-          const decisionErrorMessage = relayErrorMessage || errorMessage;
-          const shouldMarkReadOnly =
-            shouldMarkRelayReadOnlyAfterPublishReject({
-              errorMessage: decisionErrorMessage,
-              rejectionReason: extractedReason,
-            }) ||
-            (decisionErrorMessage !== errorMessage &&
-              shouldMarkRelayReadOnlyAfterPublishReject({
-                errorMessage,
-                rejectionReason: extractedReason,
-              }));
-          if (shouldMarkReadOnly) {
-            markRelayVerificationFailure(relayUrl, "write", {
-              setStatus: true,
-              showToast: false,
-            });
-          }
-          nostrDevLog("publish", "Relay publish attempt failed", {
-            relayUrl,
-            rejectionReason: extractedReason || null,
-            error: decisionErrorMessage,
-          });
-        }
-      }
-
-      const publishedRelayUrls = Array.from(publishedRelayUrlSet);
-      if (publishedRelayUrls.length === 0) {
-        console.warn("Event publish completed but no relays confirmed receipt");
-        return { success: false, eventId: event.id, rejectionReason };
-      }
-
-      publishedRelayUrls.forEach((relayUrl) => {
-        updateRelayCapabilityStatus(relayUrl, "connected");
-      });
-      nostrDevLog("publish", "Event published", {
-        eventId: event.id,
-        kind,
-        targetRelayUrls,
-        publishedRelayUrls,
-      });
-      return { success: true, eventId: event.id, publishedRelayUrls };
-    } catch (error) {
-      console.error("Failed to publish event:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error || "");
-      const rejectionReason = extractRelayRejectionReason(error);
-      if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason })) {
-        const failedRelayUrls = [...targetRelayUrls];
-        if (failedRelayUrls.length === 0 && relayUrls && relayUrls.length === 1) {
-          failedRelayUrls.push(relayUrls[0].replace(/\/+$/, ""));
-        }
-        failedRelayUrls.forEach((relayUrl) => {
-          markRelayVerificationFailure(relayUrl, "write", {
-            setStatus: true,
-            showToast: false,
-          });
-        });
-        nostrDevLog("relay", "Publish write-rejection failure scope", {
-          targetRelayUrls,
-          failedRelayUrls,
-          rejectionReason,
-        });
-      }
-      return { success: false, eventId: signedEventId, rejectionReason };
-    } finally {
-      endRelayOperation("write");
-    }
-  }, [beginRelayOperation, endRelayOperation, markRelayVerificationFailure, ndk, relays, resolvedDefaultRelays, updateRelayCapabilityStatus]);
+  const { publishEvent } = usePublish({
+    ndk,
+    relays,
+    resolvedDefaultRelays,
+    beginRelayOperation,
+    endRelayOperation,
+    markRelayVerificationFailure,
+    updateRelayCapabilityStatus,
+  });
 
   const createHttpAuthHeader = useCallback(async (
     url: string,
