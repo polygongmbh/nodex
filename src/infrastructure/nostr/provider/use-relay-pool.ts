@@ -51,9 +51,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
   ) => {
     setRelays((previous) =>
       mapRelayStatuses(previous, (relay) => (
-        relay.url.replace(/\/+$/, "") === normalizedRelayUrl
-          ? transform(relay)
-          : relay
+        relay.url === normalizedRelayUrl ? transform(relay) : relay
       ))
     );
   }, []);
@@ -62,7 +60,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     const syncRelayStatusesFromPool = () => {
       setRelays((prev) => {
         const previousEntryByUrl = new Map(
-          prev.map((entry) => [normalizeRelayUrl(entry.url), entry] as const)
+          prev.map((entry) => [entry.url, entry] as const)
         );
         const updates: typeof prev = [];
         ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
@@ -129,14 +127,12 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
       }
       if (removedRelaysRef.current.has(normalized)) return;
       setRelays((prev) => {
-        const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);
+        const existing = prev.find((r) => r.url === normalized);
         const newStatus = resolveConnectedRelayStatus(existing?.status);
         if (existing) {
           if (existing.status === newStatus) return prev;
           return prev.map((r) =>
-            normalizeRelayUrl(r.url) === normalized
-              ? { ...r, url: normalized, status: newStatus }
-              : r
+            r.url === normalized ? { ...r, status: newStatus } : r
           );
         }
         const info = relayInfoRef.current.get(normalized);
@@ -219,10 +215,10 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
 
       if (!removedRelaysRef.current.has(normalized)) {
         setRelays((prev) => {
-          const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);
+          const existing = prev.find((r) => r.url === normalized);
           if (!existing || existing.status === "disconnected") return prev;
           return prev.map((r) =>
-            normalizeRelayUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
+            r.url === normalized ? { ...r, status: "disconnected" } : r
           );
         });
       }

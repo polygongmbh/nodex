@@ -440,9 +440,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // Add to relays state
     setRelays((prev) => {
       let next: NDKRelayStatus[];
-      if (prev.some((r) => normalizeRelayUrl(r.url) === normalized)) {
+      if (prev.some((r) => r.url === normalized)) {
         next = prev.map((r) =>
-          normalizeRelayUrl(r.url) === normalized ? { ...r, url: normalized, status: "connecting" } : r
+          r.url === normalized ? { ...r, status: "connecting" } : r
         );
         savePersistedRelayUrls(next.map((relay) => relay.url));
         return next;
@@ -569,7 +569,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // Mark as intentionally removed so disconnect events don't re-add it
     removedRelaysRef.current.add(normalized);
     setRelays((prev) => {
-      const next = prev.filter((r) => normalizeRelayUrl(r.url) !== normalized);
+      const next = prev.filter((r) => r.url !== normalized);
       savePersistedRelayUrls(next.map((relay) => relay.url));
       return next;
     });
@@ -590,7 +590,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const reconnectRelay = useCallback((url: string, options?: { forceNewSocket?: boolean }) => {
     if (!ndk) return;
     const normalized = normalizeRelayUrl(url);
-    const relayStatus = relaysRef.current.find((entry) => normalizeRelayUrl(entry.url) === normalized)?.status;
+    const relayStatus = relaysRef.current.find((entry) => entry.url === normalized)?.status;
     const forceNewSocket = (options?.forceNewSocket ?? false) || relayStatus === "connecting";
     removedRelaysRef.current.delete(normalized);
     pendingRelayVerificationRef.current.delete(normalized);
