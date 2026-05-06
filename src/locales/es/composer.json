@@ -178,7 +178,7 @@
       "showingOnlyChannel": "Mostrando el canal #{{channelName}}",
       "allChannelsIncluded": "Mostrando todos los canales",
       "allChannelsReset": "Se limpiaron los canales activos",
-      "showingOnlyTag": "Mostrando #{{tag}}",
+      "showingTag": "#{{tag}} añadido a los filtros",
       "showingOnlyPerson": "Mostrando publicaciones que involucran a {{personName}}",
       "showingOnlyPersonExclusive": "Mostrando solo publicaciones con {{personName}}",
       "removedPersonFilter": "Se quitó el filtro de {{personName}}",

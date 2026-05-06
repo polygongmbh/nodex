@@ -61,7 +61,7 @@ export function useFeedInteractionFrecency(): UseFeedInteractionFrecencyResult {
         if (event.outcome.status !== "handled") return;
 
         switch (event.envelope.intent.type) {
-          case "filter.applyHashtagExclusive":
+          case "filter.applyHashtagInclude":
             dispatchFrecencyIntent({
               type: "channel.bump",
               tag: event.envelope.intent.tag,

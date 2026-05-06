@@ -178,7 +178,7 @@
       "showingOnlyChannel": "Showing channel #{{channelName}}",
       "allChannelsIncluded": "Showing all channels",
       "allChannelsReset": "Cleared active channels",
-      "showingOnlyTag": "Showing #{{tag}}",
+      "showingTag": "Added #{{tag}} to filters",
       "showingOnlyPerson": "Showing posts involving {{personName}}",
       "showingOnlyPersonExclusive": "Showing only posts with {{personName}}",
       "removedPersonFilter": "Removed filter for {{personName}}",

@@ -95,7 +95,7 @@ function Harness({
       <button onClick={() => filters.setChannelMatchMode("or")}>ModeOr</button>
       <button onClick={() => filters.showOnlyPerson("alice")}>PersonExclusive</button>
       <button onClick={() => filters.toggleAllPeople()}>PersonClearAll</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagExclusive", tag: "urgent" })}>HashtagExclusive</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagInclude", tag: "urgent" })}>HashtagInclude</button>
       <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralSidebarChannel</button>
       <button onClick={() => {
         setVisibleChannels([channels[1]]);
@@ -167,11 +167,11 @@ describe("useChannelFilterController", () => {
     });
   });
 
-  it("adds a missing hashtag to postedTags and applies an exclusive channel filter", () => {
+  it("adds a missing hashtag to postedTags and includes it without resetting other channel filters", () => {
     renderHarness();
 
     fireEvent.click(screen.getByRole("button", { name: "RelayExclusive" }));
-    fireEvent.click(screen.getByRole("button", { name: "HashtagExclusive" }));
+    fireEvent.click(screen.getByRole("button", { name: "HashtagInclude" }));
 
     expect(screen.getByTestId("posted-tags")).toHaveTextContent("urgent:relay-one");
     expect(screen.getByTestId("channel-state-urgent")).toHaveTextContent("included");

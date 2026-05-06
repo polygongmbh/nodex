@@ -145,7 +145,7 @@ export function KanbanTaskCard({
         )}
       >
         {linkifyContent(task.content, (tag) => {
-          void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+          void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
         }, {
           plainHashtags: isTaskTerminalStatus(displayStatus),
           people,

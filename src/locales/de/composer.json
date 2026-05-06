@@ -178,7 +178,7 @@
       "showingOnlyChannel": "Kanal #{{channelName}} wird angezeigt",
       "allChannelsIncluded": "Alle Kanäle werden angezeigt",
       "allChannelsReset": "Aktive Kanäle zurückgesetzt",
-      "showingOnlyTag": "#{{tag}} wird angezeigt",
+      "showingTag": "#{{tag}} zu Filtern hinzugefügt",
       "showingOnlyPerson": "Zeige Inhalte mit {{personName}}",
       "showingOnlyPersonExclusive": "Zeige nur Inhalte mit {{personName}}",
       "removedPersonFilter": "Filter für {{personName}} entfernt",

@@ -24,7 +24,7 @@ export type FeedInteractionIntent =
   | { type: "ui.search.change"; query: string }
   | { type: "ui.displayDepth.change"; mode: DisplayDepthMode }
   | { type: "ui.manageRoute.change"; isActive: boolean }
-  | { type: "filter.applyHashtagExclusive"; tag: string }
+  | { type: "filter.applyHashtagInclude"; tag: string }
   | { type: "filter.applyAuthorExclusive"; author: Person }
   | { type: "person.filter.exclusive"; person: Person }
   | { type: "person.filter.toggle"; person: Person }

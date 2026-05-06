@@ -101,8 +101,8 @@ export function notifyAllChannelsReset(options: FilterToastOptions = {}): void {
   toast(i18n.t("composer:toasts.success.allChannelsReset"), withUndoAction(options));
 }
 
-export function notifyShowingOnlyTag(tag: string, options: FilterToastOptions = {}): void {
-  toast(i18n.t("composer:toasts.success.showingOnlyTag", { tag }), withUndoAction(options));
+export function notifyShowingTag(tag: string, options: FilterToastOptions = {}): void {
+  toast(i18n.t("composer:toasts.success.showingTag", { tag }), withUndoAction(options));
 }
 
 export function notifyNoFrequentPeople(): void {

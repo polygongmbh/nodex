@@ -104,7 +104,7 @@ function Harness() {
       <button onClick={() => filters.toggleChannel("ops")}>ToggleOps</button>
       <button onClick={() => setActiveRelayIds(new Set(["relay-one"]))}>RelayOne</button>
       <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagExclusive", tag: "urgent" })}>HashtagExclusive</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagInclude", tag: "urgent" })}>HashtagInclude</button>
       <output data-testid="compose-channel-names">
         {filters.composeChannelsWithState.map((channel) => channel.name).join(",")}
       </output>
@@ -151,7 +151,7 @@ describe("useIndexDerivedData compose channels", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "RelayOne" }));
-    fireEvent.click(screen.getByRole("button", { name: "HashtagExclusive" }));
+    fireEvent.click(screen.getByRole("button", { name: "HashtagInclude" }));
 
     expect(screen.getByTestId("compose-channel-names")).toHaveTextContent("ops");
     expect(screen.getByTestId("compose-channel-names")).toHaveTextContent("urgent");

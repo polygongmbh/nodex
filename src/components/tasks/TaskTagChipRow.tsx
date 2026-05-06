@@ -109,7 +109,7 @@ function TaskTagChipContent({
           type="button"
           onClick={(event) => {
             if (stopPropagation) event.stopPropagation();
-            void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+            void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
           }}
           className={cn(
             TASK_CHIP_STYLES.base,

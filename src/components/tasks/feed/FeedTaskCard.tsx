@@ -188,7 +188,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const linkedContent = useMemo(
     () =>
       linkifyContent(task.content, (tag) => {
-        void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+        void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
       }, {
         plainHashtags: isCompletedVisual,
         people,

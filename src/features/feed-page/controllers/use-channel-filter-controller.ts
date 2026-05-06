@@ -3,7 +3,7 @@ import { getPreferredMentionIdentifier } from "@/lib/mentions";
 import {
   notifyShowingOnlyChannel,
   notifyAllChannelsReset,
-  notifyShowingOnlyTag,
+  notifyShowingTag,
   notifyNoFrequentPeople,
   notifyFrequentPeopleDeselected,
   notifyShowingOnlyPersonExclusive,
@@ -277,30 +277,29 @@ export function useChannelFilterController({
         return next;
       });
     },
-    "filter.applyHashtagExclusive": (intent) => {
+    "filter.applyHashtagInclude": (intent) => {
       const normalizedTag = intent.tag.trim().toLowerCase();
       if (!normalizedTag) return;
-      const existsInSidebar = channels.some((channel) => channel.name.toLowerCase() === normalizedTag);
+      const existingChannel = channels.find((channel) => channel.name.toLowerCase() === normalizedTag);
+      const channelId = existingChannel?.id || normalizedTag;
       const scopedRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
 
       const restoreSnapshot = captureFilterSnapshot();
 
-      if (!existsInSidebar) {
+      if (!existingChannel) {
         setPostedTags((prev) => {
           const next = prev.filter((entry) => entry.name !== normalizedTag);
           return [...next, { name: normalizedTag, relayIds: scopedRelayIds }];
         });
       }
 
-      setChannelFilterStates(() => {
-        const channelId = channels.find((channel) => channel.name.toLowerCase() === normalizedTag)?.id || normalizedTag;
-        const allChannels = existsInSidebar
-          ? channels
-          : [...channels, { id: normalizedTag, name: normalizedTag, filterState: "neutral" as const }];
-        return setExclusiveChannelFilter(allChannels, channelId);
+      setChannelFilterStates((prev) => {
+        const next = new Map(prev);
+        next.set(channelId, "included");
+        return next;
       });
 
-      notifyShowingOnlyTag(normalizedTag, { onUndo: restoreSnapshot });
+      notifyShowingTag(normalizedTag, { onUndo: restoreSnapshot });
     },
     "filter.clearPerson": (intent) => {
       setPeople((prev) =>

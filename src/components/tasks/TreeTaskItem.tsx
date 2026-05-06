@@ -149,8 +149,8 @@ export function TreeTaskItem({
     displayName: authorName,
     avatar: authorAvatar,
   };
-  const dispatchHashtagExclusive = (tag: string) => {
-    void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+  const dispatchHashtagInclude = (tag: string) => {
+    void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
   };
 
   // Reset fold state when filters change
@@ -541,7 +541,7 @@ export function TreeTaskItem({
                 : "whitespace-pre-wrap",
             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
           )}>
-            {linkifyContent(task.content, dispatchHashtagExclusive, {
+            {linkifyContent(task.content, dispatchHashtagInclude, {
               plainHashtags: isTaskTerminalStatus(task.status),
               people,
               disableStandaloneEmbeds: true,
