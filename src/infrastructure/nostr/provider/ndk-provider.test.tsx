@@ -22,6 +22,7 @@ const mockedNdk = vi.hoisted(() => {
   const ndkInstances: NdkLike[] = [];
   const publishedEvents: Array<{ kind?: number; content?: string; tags?: string[][]; relayUrls: string[] }> = [];
   const relayConnectModes = new Map<string, "success" | "hang">();
+  const relayRejectionReasons = new Map<string, string>();
 
   enum MockNDKRelayStatus {
     DISCONNECTING = 0,
@@ -94,7 +95,7 @@ const mockedNdk = vi.hoisted(() => {
         const payload = JSON.parse(data);
         if (!Array.isArray(payload)) return;
         if (payload[0] === "OK" && payload[2] === false) {
-          this.emit("publish:failed", null, new Error(typeof payload[3] === "string" ? payload[3] : ""));
+          relayRejectionReasons.set(this.url, typeof payload[3] === "string" ? payload[3] : "");
         } else if (payload[0] === "CLOSED") {
           const reason = typeof payload[2] === "string" ? payload[2] : "";
           ndkInstances.forEach((ndk) => {
@@ -269,6 +270,7 @@ const mockedNdk = vi.hoisted(() => {
     ndkInstances,
     publishedEvents,
     relayConnectModes,
+    relayRejectionReasons,
   };
 });
 
@@ -328,13 +330,30 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
 
     async publish(relaySet: { relayUrls?: string[] }) {
       const relayUrls = relaySet.relayUrls ?? [];
+      const succeeded: Array<{ url: string }> = [];
+      const errors = new Map<{ url: string }, Error>();
+      for (const relayUrl of relayUrls) {
+        const reason = mockedNdk.relayRejectionReasons.get(relayUrl);
+        if (reason) {
+          errors.set({ url: relayUrl }, new Error(reason));
+        } else {
+          succeeded.push({ url: relayUrl });
+        }
+      }
       mockedNdk.publishedEvents.push({
         kind: this.kind,
         content: this.content,
         tags: this.tags,
         relayUrls,
       });
-      return new Set(relayUrls.map((relayUrl) => ({ url: relayUrl })));
+      if (succeeded.length === 0 && errors.size > 0) {
+        const error = new Error(
+          `Not enough relays received the event (0 published, 1 required)`
+        ) as Error & { errors: Map<{ url: string }, Error> };
+        error.errors = errors;
+        throw error;
+      }
+      return new Set(succeeded);
     }
   },
   NDKNip07Signer: class {},
@@ -452,7 +471,7 @@ function Harness() {
 }
 
 function SubscribeIdentityHarness() {
-  const { relays, subscribe } = useNDK();
+  const { relays, subscribe, publishEvent, loginAsGuest } = useNDK();
   const previousSubscribeRef = useRef(subscribe);
   const [subscribeIdentityChanges, setSubscribeIdentityChanges] = useState(0);
 
@@ -464,6 +483,20 @@ function SubscribeIdentityHarness() {
 
   return (
     <div>
+      <button onClick={() => void loginAsGuest()}>login as guest</button>
+      <button
+        onClick={() => {
+          void publishEvent(
+            NostrEventKind.TextNote,
+            "hello",
+            [],
+            undefined,
+            ["wss://relay.one"]
+          );
+        }}
+      >
+        publish to relay one
+      </button>
       <output data-testid="relay-state">
         {relays
           .map((relay) => `${relay.url}:${relay.status}`)
@@ -550,6 +583,7 @@ describe("NDKProvider relay lifecycle", () => {
     mockedNdk.ndkInstances.length = 0;
     mockedNdk.publishedEvents.length = 0;
     mockedNdk.relayConnectModes.clear();
+    mockedNdk.relayRejectionReasons.clear();
     noasClientModule.instances.length = 0;
     noasClientModule.nextSignInResponse = {
       success: true,
@@ -978,7 +1012,7 @@ describe("NDKProvider relay lifecycle", () => {
     vi.useRealTimers();
   });
 
-  it("marks relay read-only when websocket returns OK false with auth-required reason", async () => {
+  it("marks relay read-only when a publish is rejected with auth-required reason", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
         <Harness />
@@ -989,6 +1023,10 @@ describe("NDKProvider relay lifecycle", () => {
       expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     });
 
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
     const ndk = mockedNdk.ndkInstances[0];
     const relay = ndk.pool.getRelay("wss://relay.one", false);
 
@@ -996,6 +1034,7 @@ describe("NDKProvider relay lifecycle", () => {
       relay.emitServerMessage(
         '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
       );
+      fireEvent.click(screen.getByRole("button", { name: "publish to both relays" }));
     });
 
     await waitFor(() => {
@@ -1014,6 +1053,10 @@ describe("NDKProvider relay lifecycle", () => {
       expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     });
 
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
     const ndk = mockedNdk.ndkInstances[0];
     const relay = ndk.pool.getRelay("wss://relay.one", false);
 
@@ -1021,6 +1064,7 @@ describe("NDKProvider relay lifecycle", () => {
       relay.emitServerMessage(
         '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
       );
+      fireEvent.click(screen.getByRole("button", { name: "publish to both relays" }));
     });
 
     await waitFor(() => {
@@ -1058,6 +1102,7 @@ describe("NDKProvider relay lifecycle", () => {
       relay.emitServerMessage(
         '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
       );
+      fireEvent.click(screen.getByRole("button", { name: "publish to both relays" }));
     });
 
     await waitFor(() => {
@@ -1291,6 +1336,7 @@ describe("NDKProvider relay lifecycle", () => {
       relay.emitServerMessage(
         '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
       );
+      fireEvent.click(screen.getByRole("button", { name: "publish to both relays" }));
     });
 
     await waitFor(() => {
@@ -1336,6 +1382,7 @@ describe("NDKProvider relay lifecycle", () => {
       relay.emitServerMessage(
         '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
       );
+      fireEvent.click(screen.getByRole("button", { name: "publish to both relays" }));
     });
 
     await waitFor(() => {
@@ -1395,6 +1442,10 @@ describe("NDKProvider relay lifecycle", () => {
     await waitFor(() => {
       expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
     const baselineIdentityChanges = Number(
       screen.getByTestId("subscribe-identity-changes").textContent ?? "0"
     );
@@ -1406,6 +1457,7 @@ describe("NDKProvider relay lifecycle", () => {
       relay.emitServerMessage(
         '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
       );
+      fireEvent.click(screen.getByRole("button", { name: "publish to relay one" }));
     });
 
     await waitFor(() => {

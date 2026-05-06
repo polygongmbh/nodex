@@ -1,12 +1,9 @@
 import { useCallback, useRef, type MutableRefObject } from "react";
-import { type NDKRelay } from "@nostr-dev-kit/ndk";
 import { toast } from "sonner";
 import i18n from "@/lib/i18n/config";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { extractRelayRejectionReason } from "./relay-error";
 import {
   AUTH_RETRY_COOLDOWN_MS,
-  shouldMarkRelayReadOnlyAfterPublishReject,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
 import type { RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
@@ -176,27 +173,6 @@ export function useRelayVerification({
     }
   }, [authMethodRef, shouldShowRelayVerificationToast, updateRelayCapabilityStatus, updateRelayEntry]);
 
-  const handleRelayPublishFailed = useCallback((relay: NDKRelay, error: Error) => {
-    const normalizedRelayUrl = relay.url.replace(/\/+$/, "");
-    const reason = error?.message ?? "";
-    const rejectionReason = extractRelayRejectionReason(reason) ?? reason;
-    if (!shouldMarkRelayReadOnlyAfterPublishReject({
-      errorMessage: reason,
-      rejectionReason,
-    })) {
-      return;
-    }
-    markRelayVerificationFailure(normalizedRelayUrl, "write", {
-      setStatus: true,
-      showToast: false,
-    });
-    nostrDevLog("relay", "Relay write rejection observed via publish:failed", {
-      relayUrl: normalizedRelayUrl,
-      reason,
-      rejectionReason,
-    });
-  }, [markRelayVerificationFailure]);
-
   const notifyRelayVerificationEvent = useCallback((incoming: RelayVerificationEvent) => {
     const normalizedRelayUrl = incoming.relayUrl.replace(/\/+$/, "");
     const existingPendingVerification = pendingRelayVerificationRef.current.get(normalizedRelayUrl);
@@ -234,7 +210,6 @@ export function useRelayVerification({
     updateRelayCapabilityStatus,
     markRelayVerificationSuccess,
     markRelayVerificationFailure,
-    handleRelayPublishFailed,
     notifyRelayVerificationEvent,
     beginRelayOperation,
     endRelayOperation,

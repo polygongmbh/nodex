@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo, u
 import NDK, {
   NDKSubscriptionCacheUsage,
   NDKUser,
-  type NDKRelay,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-discovery";
@@ -158,14 +157,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   }, []);
   const clearAllRelayConnectWatchdogIdsRef = useRef<() => void>(() => undefined);
 
-  // Stable wrapper over verification.handleRelayPublishFailed — set
-  // after the verification hook returns, so the pool deps can hold a
-  // stable reference that resolves at call time.
-  const publishFailedRef = useRef<(relay: NDKRelay, error: Error) => void>(() => undefined);
-  const handleRelayPublishFailed = useCallback((relay: NDKRelay, error: Error) => {
-    publishFailedRef.current(relay, error);
-  }, []);
-
   const primeAuthRef = useRef<(ndkInstance: NDK, relayUrl: string) => void>(() => undefined);
   const primeRelayAuthChallenge = useCallback((ndkInstance: NDK, relayUrl: string) => {
     primeAuthRef.current(ndkInstance, relayUrl);
@@ -191,7 +182,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     updateRelayCapabilityStatus,
     markRelayVerificationSuccess,
     markRelayVerificationFailure,
-    handleRelayPublishFailed: realHandleRelayPublishFailed,
     notifyRelayVerificationEvent,
     beginRelayOperation,
     endRelayOperation,
@@ -205,7 +195,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     relayInfoRef,
     authMethodRef,
   });
-  publishFailedRef.current = realHandleRelayPublishFailed;
 
   primeAuthRef.current = (ndkInstance: NDK, relayUrl: string) => {
     if (!ndkInstance.signer) return;
@@ -337,7 +326,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   poolDepsRef.current = {
     scheduleRelayConnectWatchdog,
     clearRelayConnectWatchdog,
-    handleRelayPublishFailed,
     primeRelayAuthChallenge,
     markRelayVerificationSuccess,
     updateRelayCapabilityStatus,

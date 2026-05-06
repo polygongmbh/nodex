@@ -20,7 +20,6 @@ export function resolveConnectedRelayStatus(status?: NDKRelayStatus["status"]): 
 export interface UseRelayPoolDeps {
   scheduleRelayConnectWatchdog: (ndkInstance: NDK, relay: NDKRelay) => void;
   clearRelayConnectWatchdog: (normalizedRelayUrl: string) => void;
-  handleRelayPublishFailed: (relay: NDKRelay, error: Error) => void;
   primeRelayAuthChallenge: (ndkInstance: NDK, relayUrl: string) => void;
   markRelayVerificationSuccess: (relayUrl: string, operation: "read" | "write" | "unknown") => void;
   updateRelayCapabilityStatus: (
@@ -43,7 +42,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
   const relaysRef = useRef<NDKRelayStatus[]>([]);
   relaysRef.current = relays;
   const removedRelaysRef = useRef<Set<string>>(new Set());
-  const publishFailedHandlersRef = useRef<Map<string, { relay: NDKRelay; handler: (...args: unknown[]) => void }>>(new Map());
 
   const updateRelayEntry = useCallback((
     normalizedRelayUrl: string,
@@ -93,7 +91,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     const onRelayConnect = (relay: NDKRelay) => {
       const {
         clearRelayConnectWatchdog,
-        handleRelayPublishFailed,
         relayConnectedOnceRef,
         relayInitialFailureCountsRef,
         relayInfoRef,
@@ -108,11 +105,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         return;
       }
       clearRelayConnectWatchdog(normalized);
-      const publishFailedHandler = (_event: unknown, error: Error) => {
-        handleRelayPublishFailed(relay, error);
-      };
-      relay.on("publish:failed", publishFailedHandler);
-      publishFailedHandlersRef.current.set(normalized, { relay, handler: publishFailedHandler });
       nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
@@ -197,12 +189,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
       const normalized = normalizeRelayUrl(relay.url);
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
       clearRelayConnectWatchdog(normalized);
-      const publishFailedEntry = publishFailedHandlersRef.current.get(normalized);
-      if (publishFailedEntry) {
-        const offFn = (publishFailedEntry.relay as unknown as { off?: (event: string, handler: (...args: unknown[]) => void) => void }).off;
-        offFn?.call(publishFailedEntry.relay, "publish:failed", publishFailedEntry.handler);
-        publishFailedHandlersRef.current.delete(normalized);
-      }
       // Ignore late disconnects from a removed relay instance after the same normalized URL
       // has already been re-added to the pool, or events for relays no longer in the pool.
       const activeRelay = ndkInstance.pool.relays.get(normalized);
