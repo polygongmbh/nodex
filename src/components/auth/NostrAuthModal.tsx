@@ -315,7 +315,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     password: string,
     privateKey: string,
     pubkey: string,
-    config?: { baseUrl?: string }
+    config?: { baseUrl?: string; email?: string }
   ) => {
     setError(null);
     setPendingAuthMethod("noas");

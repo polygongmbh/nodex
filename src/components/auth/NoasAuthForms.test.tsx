@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
+import { clearNoasApiBaseDiscoverySessionCacheForTests } from "@/lib/nostr/noas-discovery";
 
 type ControlledNoasFormProps = {
   mode?: "signIn" | "signUp";
@@ -317,5 +318,83 @@ describe("Noas auth forms", () => {
     fireEvent.pointerDown(screen.getByTestId("noas-sign-up-submit"));
 
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@noas.example.com");
+  });
+
+  describe("email verification discovery on sign-up", () => {
+    beforeEach(() => {
+      clearNoasApiBaseDiscoverySessionCacheForTests();
+    });
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    function mockDiscovery(emailVerificationMode: string | undefined) {
+      return vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            noas: {
+              api_base: "https://noas.example.com/api/v1",
+              ...(emailVerificationMode ? { email_verification_mode: emailVerificationMode } : {}),
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      );
+    }
+
+    it("renders an email field when the host reports email_verification_mode required", async () => {
+      mockDiscovery("required");
+
+      renderControlledNoasForm({ mode: "signUp", initialNoasHostUrl: "https://noas.example.com" });
+
+      expect(await screen.findByLabelText(/^email$/i)).toBeInTheDocument();
+    });
+
+    it("does not render the email field when verification is not required", async () => {
+      mockDiscovery("optional");
+
+      renderControlledNoasForm({ mode: "signUp", initialNoasHostUrl: "https://noas.example.com" });
+
+      await waitFor(() => {
+        // Wait for the discovery promise to resolve before asserting absence.
+        expect(globalThis.fetch).toHaveBeenCalled();
+      });
+      expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument();
+    });
+
+    it("blocks sign-up and forwards email when verification is required", async () => {
+      mockDiscovery("required");
+      const onSignUp = vi.fn(async () => true);
+
+      renderControlledNoasForm({
+        mode: "signUp",
+        onSignUp,
+        initialNoasHostUrl: "https://noas.example.com",
+      });
+
+      const emailInput = await screen.findByLabelText(/^email$/i);
+
+      fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+      fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+      fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
+        target: { value: "1".repeat(64) },
+      });
+      fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
+
+      expect(onSignUp).not.toHaveBeenCalled();
+      expect(screen.getByText(/email is required/i)).toBeInTheDocument();
+
+      fireEvent.change(emailInput, { target: { value: "alice@example.com" } });
+      fireEvent.click(screen.getByTestId("noas-sign-up-submit"));
+
+      await waitFor(() => expect(onSignUp).toHaveBeenCalled());
+      expect(onSignUp).toHaveBeenCalledWith(
+        "alice",
+        "password123",
+        expect.any(String),
+        expect.any(String),
+        expect.objectContaining({ email: "alice@example.com" })
+      );
+    });
   });
 });

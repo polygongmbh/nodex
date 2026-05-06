@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -10,6 +10,12 @@ import { NoasSharedFields } from "./NoasSharedFields";
 import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
 import { resolveNoasCredentialsForSubmit } from "./noas-form-helpers";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import {
+  discoverNoasEmailVerificationMode,
+  isValidNoasBaseUrl,
+  normalizeNoasBaseUrl,
+  type NoasEmailVerificationMode,
+} from "@/lib/nostr/noas-discovery";
 
 interface NoasSignUpFormProps {
   onSignUp: (
@@ -17,7 +23,7 @@ interface NoasSignUpFormProps {
     password: string,
     privateKey: string,
     pubkey: string,
-    config?: { baseUrl?: string }
+    config?: { baseUrl?: string; email?: string }
   ) => Promise<boolean>;
   onSignIn?: () => void;
   username: string;
@@ -51,10 +57,32 @@ export function NoasSignUpForm({
   const { t } = useTranslation("auth");
   const [privateKey, setPrivateKey] = useState("");
   const [pubkey, setPubkey] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailVerificationMode, setEmailVerificationMode] = useState<NoasEmailVerificationMode>("none");
   const [localError, setLocalError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const displayedError = localError ?? error;
   const userFacingPubkey = toUserFacingPubkey(pubkey);
+
+  useEffect(() => {
+    const handleParts = username.trim().split("@");
+    const explicitHost = handleParts.length === 2 ? handleParts[1] : "";
+    const candidateHost = explicitHost || noasHostUrl || "";
+    const baseUrl = normalizeNoasBaseUrl(candidateHost);
+    if (!baseUrl || !isValidNoasBaseUrl(baseUrl)) {
+      setEmailVerificationMode("none");
+      return;
+    }
+    let cancelled = false;
+    void discoverNoasEmailVerificationMode(baseUrl).then((mode) => {
+      if (!cancelled) setEmailVerificationMode(mode);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [username, noasHostUrl]);
+
+  const emailRequired = emailVerificationMode === "required";
 
   const normalizeUsernameFieldForSubmit = () => {
     const { fullHandle, error: noasCredentialError } = resolveNoasCredentialsForSubmit(username, noasHostUrl, t);
@@ -157,6 +185,18 @@ export function NoasSignUpForm({
       return;
     }
 
+    const trimmedEmail = email.trim();
+    if (emailRequired) {
+      if (!trimmedEmail) {
+        setLocalError(t("auth.errors.emailRequired"));
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        setLocalError(t("auth.errors.emailInvalid"));
+        return;
+      }
+    }
+
     let finalPubkey = pubkey.trim();
     if (!finalPubkey) {
       finalPubkey = derivePublicKey(privateKey.trim()) || "";
@@ -169,6 +209,7 @@ export function NoasSignUpForm({
     onUsernameChange(normalizedFullHandle);
     await onSignUp(normalizedUsername, password, privateKey.trim(), finalPubkey, {
       baseUrl: normalizedNoasBaseUrl,
+      email: trimmedEmail || undefined,
     });
   };
 
@@ -205,6 +246,27 @@ export function NoasSignUpForm({
           onNoasHostUrlChange={onNoasHostUrlChange}
           onToggleHostEdit={onToggleHostEdit}
         />
+
+        {emailRequired ? (
+          <div className="space-y-2">
+            <Label htmlFor="noas-email">{t("auth.email")}</Label>
+            <Input
+              id="noas-email"
+              name="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("auth.emailPlaceholder")}
+              disabled={isLoading}
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">{t("auth.noas.emailHint")}</p>
+          </div>
+        ) : null}
 
         <div className="space-y-2 rounded-lg bg-muted/50 p-3">
           <div className="flex items-center justify-between">

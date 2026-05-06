@@ -1705,7 +1705,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     password: string,
     privateKey: string,
     pubkey: string,
-    config?: { baseUrl?: string }
+    config?: { baseUrl?: string; email?: string }
   ): Promise<NoasAuthResult> => {
     if (!ndk) return { success: false, errorCode: "server_error" };
 
@@ -1757,12 +1757,15 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         password,
         nsecKey,
         pubkey,
-        buildNoasSignupOptions(
-          relays
-            .filter((relay) => relay.status === "connected" || relay.status === "read-only")
-            .map((relay) => relay.url),
-          typeof window !== "undefined" ? window.location.origin : undefined
-        )
+        {
+          ...buildNoasSignupOptions(
+            relays
+              .filter((relay) => relay.status === "connected" || relay.status === "read-only")
+              .map((relay) => relay.url),
+            typeof window !== "undefined" ? window.location.origin : undefined
+          ),
+          email: config?.email,
+        }
       );
 
       if (!signUpResponse.success || !signUpResponse.user) {

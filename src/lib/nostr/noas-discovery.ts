@@ -3,15 +3,33 @@ import { nostrDevLog } from "@/lib/nostr/dev-logs";
 interface NoasDiscoveryDocument {
   noas?: {
     api_base?: unknown;
+    email_verification_mode?: unknown;
   };
 }
+
+export type NoasEmailVerificationMode = "required" | "optional" | "none";
 
 export interface NoasDiscoveryResult {
   discoveryOrigin: string;
   discoveredApiBaseUrl: string;
+  emailVerificationMode: NoasEmailVerificationMode;
 }
 
-const noasApiBaseDiscoverySessionCache = new Map<string, string>();
+interface NoasDiscoveryCacheEntry {
+  apiBaseUrl: string;
+  emailVerificationMode: NoasEmailVerificationMode;
+}
+
+const noasApiBaseDiscoverySessionCache = new Map<string, NoasDiscoveryCacheEntry>();
+
+function resolveEmailVerificationMode(rawValue: unknown): NoasEmailVerificationMode {
+  if (typeof rawValue !== "string") return "none";
+  const normalized = rawValue.trim().toLowerCase();
+  if (normalized === "required" || normalized === "optional" || normalized === "none") {
+    return normalized;
+  }
+  return "none";
+}
 
 function resolveDiscoveredNoasApiBaseUrl(discoveryOrigin: string, rawApiBase: unknown): string {
   if (typeof rawApiBase !== "string") return "";
@@ -97,14 +115,16 @@ function resolveNoasDiscoveryOrigin(rawValue: string): string {
   }
 }
 
-function loadSessionCachedNoasApiBaseUrl(discoveryOrigin: string): string {
-  const cachedApiBaseUrl = noasApiBaseDiscoverySessionCache.get(discoveryOrigin) || "";
-  const normalizedApiBaseUrl = normalizeNoasBaseUrl(cachedApiBaseUrl);
-  return isValidNoasBaseUrl(normalizedApiBaseUrl) ? normalizedApiBaseUrl : "";
+function loadSessionCachedDiscovery(discoveryOrigin: string): NoasDiscoveryCacheEntry | null {
+  const cached = noasApiBaseDiscoverySessionCache.get(discoveryOrigin);
+  if (!cached) return null;
+  const normalizedApiBaseUrl = normalizeNoasBaseUrl(cached.apiBaseUrl);
+  if (!isValidNoasBaseUrl(normalizedApiBaseUrl)) return null;
+  return { apiBaseUrl: normalizedApiBaseUrl, emailVerificationMode: cached.emailVerificationMode };
 }
 
-function cacheNoasApiBaseUrlInSession(discoveryOrigin: string, apiBaseUrl: string): void {
-  noasApiBaseDiscoverySessionCache.set(discoveryOrigin, apiBaseUrl);
+function cacheNoasDiscoveryInSession(discoveryOrigin: string, entry: NoasDiscoveryCacheEntry): void {
+  noasApiBaseDiscoverySessionCache.set(discoveryOrigin, entry);
 }
 
 export function clearNoasApiBaseDiscoverySessionCacheForTests(): void {
@@ -117,16 +137,18 @@ export async function discoverNoasApiBaseUrl(rawValue: string): Promise<NoasDisc
 
   const discoveryOrigin = resolveNoasDiscoveryOrigin(normalizedBaseUrl);
   if (!discoveryOrigin) return null;
-  const cachedApiBaseUrl = loadSessionCachedNoasApiBaseUrl(discoveryOrigin);
+  const cachedDiscovery = loadSessionCachedDiscovery(discoveryOrigin);
 
-  if (cachedApiBaseUrl) {
-    nostrDevLog("noas", "Using in-session cached NoaS API base URL", {
+  if (cachedDiscovery) {
+    nostrDevLog("noas", "Using in-session cached NoaS discovery", {
       submittedBaseUrl: normalizedBaseUrl,
-      apiBaseUrl: cachedApiBaseUrl,
+      apiBaseUrl: cachedDiscovery.apiBaseUrl,
+      emailVerificationMode: cachedDiscovery.emailVerificationMode,
     });
     return {
       discoveryOrigin,
-      discoveredApiBaseUrl: cachedApiBaseUrl,
+      discoveredApiBaseUrl: cachedDiscovery.apiBaseUrl,
+      emailVerificationMode: cachedDiscovery.emailVerificationMode,
     };
   }
 
@@ -150,6 +172,9 @@ export async function discoverNoasApiBaseUrl(rawValue: string): Promise<NoasDisc
     discoveryOrigin,
     discoveryDocument.noas?.api_base
   );
+  const emailVerificationMode = resolveEmailVerificationMode(
+    discoveryDocument.noas?.email_verification_mode
+  );
 
   if (!isValidNoasBaseUrl(discoveredApiBaseUrl)) {
     nostrDevLog("noas", "NoaS API base discovery missing a valid api_base entry", {
@@ -160,16 +185,32 @@ export async function discoverNoasApiBaseUrl(rawValue: string): Promise<NoasDisc
     return null;
   }
 
-  cacheNoasApiBaseUrlInSession(discoveryOrigin, discoveredApiBaseUrl);
+  cacheNoasDiscoveryInSession(discoveryOrigin, {
+    apiBaseUrl: discoveredApiBaseUrl,
+    emailVerificationMode,
+  });
   nostrDevLog("noas", "Discovered NoaS API base URL", {
     submittedBaseUrl: normalizedBaseUrl,
     discoveryOrigin,
     apiBaseUrl: discoveredApiBaseUrl,
+    emailVerificationMode,
   });
   return {
     discoveryOrigin,
     discoveredApiBaseUrl,
+    emailVerificationMode,
   };
+}
+
+export async function discoverNoasEmailVerificationMode(
+  rawValue: string
+): Promise<NoasEmailVerificationMode> {
+  try {
+    const result = await discoverNoasApiBaseUrl(rawValue);
+    return result?.emailVerificationMode ?? "none";
+  } catch {
+    return "none";
+  }
 }
 
 export async function resolveNoasApiBaseUrl(rawValue: string): Promise<string> {

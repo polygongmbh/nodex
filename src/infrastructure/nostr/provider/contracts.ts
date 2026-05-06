@@ -43,7 +43,7 @@ export interface NDKContextValue {
     password: string,
     privateKey: string,
     pubkey: string,
-    config?: { baseUrl?: string }
+    config?: { baseUrl?: string; email?: string }
   ) => Promise<NoasAuthResult>;
   logout: () => void;
   addRelay: (url: string) => void;

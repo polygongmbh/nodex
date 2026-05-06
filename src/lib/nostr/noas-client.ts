@@ -236,7 +236,7 @@ export class NoasClient {
     password: string,
     privateKey: string,
     pubkey: string,
-    options?: { redirect?: string; relays?: string[] }
+    options?: { redirect?: string; relays?: string[]; email?: string }
   ): Promise<NoasRegisterResponse> {
     try {
       const privateKeyBytes = decodePrivateKeyToBytes(privateKey);
@@ -253,6 +253,10 @@ export class NoasClient {
       const redirect = resolveRegisterRedirect(options?.redirect);
       if (redirect) {
         payload.redirect = redirect;
+      }
+      const trimmedEmail = options?.email?.trim();
+      if (trimmedEmail) {
+        payload.email = trimmedEmail;
       }
 
       const response = await fetch(this.buildApiUrl("/auth/register"), {
