@@ -75,15 +75,9 @@ import {
   extractRelayRejectionReason,
 } from "./relay-error";
 import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
-import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
+import { useRelayNip11 } from "./use-relay-nip11";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
-import {
-  createNodexCacheAdapter,
-  getFreshRelayInfoSummaryFromCache,
-  RELAY_NIP11_CACHE_TTL_MS,
-  relayInfoSummaryToNip11Document,
-} from "@/infrastructure/cache/ndk-cache-adapter";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
 import { loadCachedKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 import {
@@ -153,10 +147,6 @@ function resolveOfflinePresenceRelayUrls(params: {
     ...(params.relayUrlsOverride || []),
     ...(params.registeredRelayUrls || []),
   ], new Set(dedupeNormalizedRelayUrls(params.writableRelayUrls || [])));
-}
-
-function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
-  return typeof value === "object" && value !== null && "then" in value;
 }
 
 function updateExplicitRelayUrlsInPlace(ndkInstance: NDK, relayUrls: string[]): void {
@@ -231,8 +221,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const presenceRelayUrlsRef = useRef<string[]>([]);
   const connectResolvedAuthRelayUrlsRef = useRef<(relayUrls: string[]) => void>(() => undefined);
   const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
-  const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
-  const relayInfoFetchedAtRef = useRef<Map<string, number>>(new Map());
+  const {
+    relayInfoRef,
+    relayInfoFetchedAtRef,
+    relayStatusCacheAdapter,
+    probeRelayInfo,
+    hydrateStartupCache,
+    clearRelayInfo,
+  } = useRelayNip11({ updateRelayEntry });
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
   const relayConnectWatchdogIdsRef = useRef<Map<string, number>>(new Map());
   const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
@@ -241,7 +237,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const kind0ProfileFailureUntilRef = useRef<Map<string, number>>(new Map());
   const relayCurrentInstanceRef = useRef<Map<string, NDKRelay>>(new Map());
   const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
-  const relayStatusCacheAdapter = useMemo(() => createNodexCacheAdapter(), []);
   const authMethodRef = useRef<AuthMethod>(null);
   authMethodRef.current = authMethod;
 
@@ -495,89 +490,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       });
     }
   }, [markRelayVerificationFailure, resolveRelayVerificationOperation]);
-
-  const probeRelayInfo = useCallback(async (relayUrl: string) => {
-    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
-    const inMemoryFetchedAt = relayInfoFetchedAtRef.current.get(normalizedRelayUrl);
-    const hasFreshInMemoryInfo = typeof inMemoryFetchedAt === "number"
-      && relayInfoRef.current.has(normalizedRelayUrl)
-      && (Date.now() - inMemoryFetchedAt) <= RELAY_NIP11_CACHE_TTL_MS;
-
-    if (hasFreshInMemoryInfo) {
-      return;
-    }
-
-    const cachedRelayStatus = relayStatusCacheAdapter.getRelayStatus?.(normalizedRelayUrl);
-    const resolvedCachedRelayStatus = isPromiseLike<NDKCacheRelayInfo | undefined>(cachedRelayStatus)
-      ? await cachedRelayStatus
-      : cachedRelayStatus;
-    const cached = getFreshRelayInfoSummaryFromCache(resolvedCachedRelayStatus, {
-      now: Date.now(),
-      maxAgeMs: RELAY_NIP11_CACHE_TTL_MS,
-    });
-    if (cached) {
-      relayInfoRef.current.set(normalizedRelayUrl, cached.summary);
-      relayInfoFetchedAtRef.current.set(normalizedRelayUrl, cached.fetchedAt);
-      updateRelayEntry(normalizedRelayUrl, (relay) => {
-        const nextNip11 = {
-          authRequired: cached.summary.authRequired,
-          supportsNip42: cached.summary.supportsNip42,
-          checkedAt: cached.fetchedAt,
-        };
-        if (
-          relay.nip11?.authRequired === nextNip11.authRequired
-          && relay.nip11?.supportsNip42 === nextNip11.supportsNip42
-          && relay.nip11?.checkedAt === nextNip11.checkedAt
-        ) {
-          return relay;
-        }
-        return { ...relay, nip11: nextNip11 };
-      });
-      nostrDevLog("relay", "Relay NIP-11 info restored from cache", {
-        relayUrl: normalizedRelayUrl,
-        authRequired: cached.summary.authRequired,
-        supportsNip42: cached.summary.supportsNip42,
-      });
-      return;
-    }
-
-    const info = await fetchRelayInfo(normalizedRelayUrl);
-    if (!info) {
-      nostrDevLog("relay", "Relay NIP-11 info unavailable", {
-        relayUrl: normalizedRelayUrl,
-      });
-      return;
-    }
-    const checkedAt = Date.now();
-    relayInfoRef.current.set(normalizedRelayUrl, info);
-    relayInfoFetchedAtRef.current.set(normalizedRelayUrl, checkedAt);
-    void relayStatusCacheAdapter.updateRelayStatus?.(normalizedRelayUrl, {
-      nip11: {
-        data: relayInfoSummaryToNip11Document(info),
-        fetchedAt: checkedAt,
-      },
-    });
-    updateRelayEntry(normalizedRelayUrl, (relay) => {
-      const nextNip11 = {
-        authRequired: info.authRequired,
-        supportsNip42: info.supportsNip42,
-        checkedAt,
-      };
-      if (
-        relay.nip11?.authRequired === nextNip11.authRequired
-        && relay.nip11?.supportsNip42 === nextNip11.supportsNip42
-        && relay.nip11?.checkedAt === nextNip11.checkedAt
-      ) {
-        return relay;
-      }
-      return { ...relay, nip11: nextNip11 };
-    });
-    nostrDevLog("relay", "Relay NIP-11 info loaded", {
-      relayUrl: normalizedRelayUrl,
-      authRequired: info.authRequired,
-      supportsNip42: info.supportsNip42,
-    });
-  }, [relayStatusCacheAdapter, updateRelayEntry]);
 
   const primeRelayAuthChallenge = useCallback((ndkInstance: NDK, relayUrl: string) => {
     if (!ndkInstance.signer) return;
@@ -983,26 +895,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // Initialize relay states
     removedRelaysRef.current.clear();
     relayCurrentInstanceRef.current.clear();
-    relayInfoFetchedAtRef.current.clear();
-    resolvedDefaultRelays.forEach((relayUrl) => {
-      const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
-      const cachedRelayStatus = relayStatusCacheAdapter.getRelayStatus?.(normalizedRelayUrl);
-      if (isPromiseLike<NDKCacheRelayInfo | undefined>(cachedRelayStatus)) {
-        return;
-      }
-      const cached = getFreshRelayInfoSummaryFromCache(cachedRelayStatus, {
-        now: Date.now(),
-        maxAgeMs: RELAY_NIP11_CACHE_TTL_MS,
-      });
-      if (!cached) return;
-      relayInfoRef.current.set(normalizedRelayUrl, cached.summary);
-      relayInfoFetchedAtRef.current.set(normalizedRelayUrl, cached.fetchedAt);
-      nostrDevLog("relay", "Relay NIP-11 info restored from startup cache", {
-        relayUrl: normalizedRelayUrl,
-        authRequired: cached.summary.authRequired,
-        supportsNip42: cached.summary.supportsNip42,
-      });
-    });
+    hydrateStartupCache(resolvedDefaultRelays);
     setRelays(resolvedDefaultRelays.map((url) => {
       const normalizedUrl = normalizeRelayUrl(url);
       const info = relayInfoRef.current.get(normalizedUrl);
@@ -1181,7 +1074,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       inFlightKind0ProfileRequests.clear();
       relayCurrentInstance.clear();
     };
-  }, [applyAuthenticatedState, attachPoolHandlers, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolvedDefaultRelays]);
+  }, [applyAuthenticatedState, attachPoolHandlers, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolvedDefaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -1822,9 +1715,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     relayAuthPreflightHistoryRef.current.delete(normalized);
-    relayInfoRef.current.delete(normalized);
-    relayInfoFetchedAtRef.current.delete(normalized);
-    void relayStatusCacheAdapter.updateRelayStatus?.(normalized, {});
+    clearRelayInfo(normalized);
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
 
     // Remove from NDK's explicit relay list so subscriptions stop routing to it.
@@ -1834,7 +1725,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     );
 
     disconnectTrackedRelayInstance(ndk, normalized);
-  }, [disconnectTrackedRelayInstance, ndk, relayStatusCacheAdapter]);
+  }, [clearRelayInfo, disconnectTrackedRelayInstance, ndk]);
 
   const reconnectRelay = useCallback((url: string, options?: { forceNewSocket?: boolean }) => {
     if (!ndk) return;
