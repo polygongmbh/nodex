@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState, type UIEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState, type UIEvent, useDeferredValue } from "react";
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatusType, normalizeTaskStatus } from "@/types";
@@ -253,6 +253,14 @@ export function FeedView({
     return () => mediaQuery.removeListener(handleMediaQueryChange);
   }, [isMobile]);
 
+  const filterKey = useMemo(() =>
+    channels
+      .filter((c) => c.filterState !== "neutral")
+      .map((c) => `${c.id}:${c.filterState}`)
+      .sort()
+      .join("|"),
+    [channels]
+  );
   const {
     hasMoreEntries,
     visibleEntryCount,
@@ -261,6 +269,7 @@ export function FeedView({
   } = useFeedHydrationWindow({
     focusedTaskId,
     totalEntryCount: activeFeedEntries.length,
+    filterKey,
   });
   const displayedFeedEntries = useMemo(
     () => activeFeedEntries.slice(0, visibleEntryCount),

@@ -523,6 +523,8 @@ export function useFeedViewState({
     useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredSearchQuery = useDeferredValue(searchQuery);
+  const deferredChannels = useDeferredValue(channels);
+  const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
   const neutralPeople = useMemo(() => clearSelectedPeople(people), [people]);
   const filteredFeedTasks = useTaskViewFiltering({
     allTasks,
@@ -533,12 +535,12 @@ export function useFeedViewState({
     searchQuery: deferredSearchQuery,
     people,
     quickFilters,
-    channels,
-    channelMatchMode,
+    channels: deferredChannels,
+    channelMatchMode: deferredChannelMatchMode,
   });
   const neutralChannels = useMemo(
-    () => channels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
-    [channels]
+    () => deferredChannels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
+    [deferredChannels]
   );
   const unfilteredFeedTasks = useTaskViewFiltering({
     allTasks,
@@ -550,7 +552,7 @@ export function useFeedViewState({
     people: neutralPeople,
     quickFilters,
     channels: neutralChannels,
-    channelMatchMode,
+    channelMatchMode: deferredChannelMatchMode,
   });
   const filteredFeedTasksWithClosed = useTaskViewFiltering({
     allTasks,
@@ -561,8 +563,8 @@ export function useFeedViewState({
     searchQuery: deferredSearchQuery,
     people,
     quickFilters,
-    channels,
-    channelMatchMode,
+    channels: deferredChannels,
+    channelMatchMode: deferredChannelMatchMode,
   });
   const unfilteredFeedTasksWithClosed = useTaskViewFiltering({
     allTasks,
@@ -574,7 +576,7 @@ export function useFeedViewState({
     people: neutralPeople,
     quickFilters,
     channels: neutralChannels,
-    channelMatchMode,
+    channelMatchMode: deferredChannelMatchMode,
   });
   const feedTasks = useMemo(
     () => [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
@@ -636,6 +638,8 @@ export function useListViewState({
   const { relays, channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
     useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
+  const deferredChannels = useDeferredValue(channels);
+  const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
   const filteredTaskCandidates = useTaskViewFiltering({
     allTasks,
     tasks,
@@ -643,8 +647,8 @@ export function useListViewState({
     searchQuery,
     people,
     quickFilters,
-    channels,
-    channelMatchMode,
+    channels: deferredChannels,
+    channelMatchMode: deferredChannelMatchMode,
     taskPredicate: (task) => task.taskType === "task",
   });
   const baseListTaskCandidates = useTaskViewFiltering({
@@ -654,8 +658,8 @@ export function useListViewState({
     searchQuery: "",
     people,
     quickFilters,
-    channels: channels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
-    channelMatchMode,
+    channels: deferredChannels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
+    channelMatchMode: deferredChannelMatchMode,
     taskPredicate: (task) => task.taskType === "task",
   });
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
@@ -690,6 +694,8 @@ export function useKanbanViewState({
 }: BaseViewStateInput & { depthMode: DisplayDepthMode }): KanbanViewState {
   const { channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
+  const deferredChannels = useDeferredValue(channels);
+  const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
@@ -722,8 +728,8 @@ export function useKanbanViewState({
     searchQuery,
     people,
     quickFilters,
-    channels,
-    channelMatchMode,
+    channels: deferredChannels,
+    channelMatchMode: deferredChannelMatchMode,
     taskPredicate: (task) => task.taskType === "task",
   });
   const kanbanTasks = useMemo(
