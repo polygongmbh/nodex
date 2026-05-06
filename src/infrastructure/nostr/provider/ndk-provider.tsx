@@ -1,16 +1,11 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import NDK, {
-  type NDKCacheRelayInfo,
   NDKEvent,
   NDKSubscriptionCacheUsage,
   NDKNip07Signer,
   NDKNip46Signer,
   NDKPrivateKeySigner,
-  NDKRelaySet,
   NDKUser,
-  NDKRelay,
-  NDKFilter,
-  NDKSubscription,
   profileFromEvent,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -60,24 +55,15 @@ import { createRelayNip42AuthPolicy } from "@/infrastructure/nostr/nip42-relay-a
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
   AUTH_RETRY_COOLDOWN_MS,
-  isAuthRequiredCloseReason,
-  isPermanentAuthDenialReason,
-  shouldMarkRelayReadOnlyAfterPublishReject,
-  shouldRetryAuthClosedSubscription,
   shouldReconnectRelayAfterSignIn,
-  shouldSetVerificationFailedStatus,
 } from "./relay-verification";
-import {
-  extractRelayUrlsFromError,
-  extractRelayRejectionReason,
-} from "./relay-error";
-import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
 import { useRelayNip11 } from "./use-relay-nip11";
 import { useRelayTransport } from "./use-relay-transport";
 import { useRelayVerification } from "./use-relay-verification";
 import { useProfile } from "./use-profile";
 import { usePresence } from "./use-presence";
 import { usePublish } from "./use-publish";
+import { useSubscribe } from "./use-subscribe";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
@@ -1381,95 +1367,20 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   }, [user?.pubkey, user?.profile]);
 
 
-  const subscribe = useCallback((
-    filters: NDKFilter[],
-    onEvent: (event: NDKEvent) => void,
-    options?: { closeOnEose?: boolean }
-  ): NDKSubscription | null => {
-    if (!ndk) return null;
-    const authScope = authMethodRef.current || "signed-out";
-    const activeRelays = relaysRef.current;
-
-    const limitDecision = applyPerformanceAwareSubscriptionLimits(filters, typeof navigator === "undefined"
-      ? undefined
-      : {
-        hardwareConcurrency: navigator.hardwareConcurrency,
-        deviceMemory: "deviceMemory" in navigator ? (navigator as Record<string, unknown>).deviceMemory as number : undefined,
-      });
-
-    nostrDevLog("subscribe", "Creating subscription", {
-      filterCount: limitDecision.filters.length,
-      filters: limitDecision.filters,
-      performanceClass: limitDecision.performanceClass,
-      subscriptionLimitCap: limitDecision.cap,
-      appliedPerformanceCap: limitDecision.changed,
-      authScope,
-    });
-
-    if (ndk.signer) {
-      activeRelays
-        .filter((relay) => relay.nip11?.authRequired)
-        .map((relay) => normalizeRelayUrl(relay.url))
-        .forEach((relayUrl) => {
-          primeRelayAuthChallenge(ndk, relayUrl);
-        });
-    }
-
-    beginRelayOperation("read");
-    const subscription = ndk.subscribe(limitDecision.filters, { closeOnEose: options?.closeOnEose ?? false });
-    
-    subscription.on("event", (event: NDKEvent) => {
-      if (event.relay?.url) {
-        updateRelayCapabilityStatus(event.relay.url, "connected");
-      }
-      onEvent(event);
-    });
-    subscription.on("closed", (relay: NDKRelay, reason: string) => {
-      if (!isAuthRequiredCloseReason(reason || "")) return;
-      nostrDevLog("relay", "Relay closed subscription due to auth failure", {
-        relayUrl: relay.url,
-        reason,
-      });
-      const normalizedRelayUrl = relay.url.replace(/\/+$/, "");
-      const relayFilters = subscription.relayFilters?.get(normalizedRelayUrl) ?? limitDecision.filters;
-      const shouldRetry = shouldRetryAuthClosedSubscription({
-        hasSigner: Boolean(ndk.signer),
-        hadPendingAuthChallenge: pendingRelayVerificationRef.current.has(normalizedRelayUrl),
-        lastRetryAt: relayAuthRetryHistoryRef.current.get(normalizedRelayUrl),
-        now: Date.now(),
-        reason: reason || "",
-        filters: relayFilters,
-      });
-      if (shouldRetry) {
-        relayAuthRetryHistoryRef.current.set(normalizedRelayUrl, Date.now());
-        nostrDevLog("relay", "Retrying auth-closed relay subscription without forcing a new socket", {
-          relayUrl: normalizedRelayUrl,
-        });
-        const managedRelay = connectManagedRelay(ndk, normalizedRelayUrl);
-        managedRelay.subscribe(subscription, relayFilters);
-      } else {
-        relaysPendingAuthSubscriptionReplayRef.current.add(normalizedRelayUrl);
-        nostrDevLog("relay", "Skipping auth-closed relay subscription retry", {
-          relayUrl: normalizedRelayUrl,
-          reason,
-        });
-      }
-      markRelayVerificationFailure(relay.url, "read", {
-        setStatus: !shouldRetry && shouldSetVerificationFailedStatus("subscription-closed", "read"),
-        showToast: !shouldRetry,
-      });
-    });
-    let finished = false;
-    const finishRead = () => {
-      if (finished) return;
-      finished = true;
-      endRelayOperation("read");
-    };
-    subscription.on("eose", finishRead);
-    subscription.on("close", finishRead);
-
-    return subscription;
-  }, [beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayVerificationFailure, ndk, primeRelayAuthChallenge, updateRelayCapabilityStatus]);
+  const { subscribe } = useSubscribe({
+    ndk,
+    relaysRef,
+    authMethodRef,
+    pendingRelayVerificationRef,
+    relayAuthRetryHistoryRef,
+    relaysPendingAuthSubscriptionReplayRef,
+    beginRelayOperation,
+    endRelayOperation,
+    markRelayVerificationFailure,
+    updateRelayCapabilityStatus,
+    primeRelayAuthChallenge,
+    connectManagedRelay,
+  });
 
   const isConnected = useMemo(() => {
     return relays.some((r) => r.status === "connected" || r.status === "read-only");
