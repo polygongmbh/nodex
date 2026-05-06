@@ -68,16 +68,6 @@ function resolveOfflinePresenceRelayUrls(params: {
   ], new Set(dedupeNormalizedRelayUrls(params.writableRelayUrls || [])));
 }
 
-function updateExplicitRelayUrlsInPlace(ndkInstance: NDK, relayUrls: string[]): void {
-  const nextRelayUrls = dedupeNormalizedRelayUrls(relayUrls);
-  const explicitRelayUrls = ndkInstance.explicitRelayUrls;
-  if (Array.isArray(explicitRelayUrls)) {
-    explicitRelayUrls.splice(0, explicitRelayUrls.length, ...nextRelayUrls);
-    return;
-  }
-  (ndkInstance as unknown as { explicitRelayUrls: string[] }).explicitRelayUrls = nextRelayUrls;
-}
-
 function resolveRelayConnectRetryDelay(failureCount: number): number {
   return RELAY_CONNECT_RETRY_BASE_MS * 2 ** Math.max(failureCount - 1, 0);
 }
@@ -450,7 +440,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // NDK's pool monitor uses explicitRelayUrls to decide whether to send REQ to newly
     // connected relays for existing subscriptions.
     if (!ndk.explicitRelayUrls?.some((entry) => normalizeRelayUrl(entry) === normalized)) {
-      updateExplicitRelayUrlsInPlace(ndk, [...(ndk.explicitRelayUrls || []), normalized]);
+      ndk.explicitRelayUrls = dedupeNormalizedRelayUrls([...(ndk.explicitRelayUrls || []), normalized]);
     }
 
     // Add to relays state
@@ -509,7 +499,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
 
       const nextRelayUrls = next.map((relay) => relay.url);
-      updateExplicitRelayUrlsInPlace(ndk, nextRelayUrls);
+      ndk.explicitRelayUrls = dedupeNormalizedRelayUrls(nextRelayUrls);
       savePersistedRelayUrls(nextRelayUrls);
       nostrDevLog("relay", "Relay order updated", { relayUrls: nextRelayUrls });
       return next;
@@ -601,8 +591,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
 
     // Remove from NDK's explicit relay list so subscriptions stop routing to it.
-    updateExplicitRelayUrlsInPlace(
-      ndk,
+    ndk.explicitRelayUrls = dedupeNormalizedRelayUrls(
       (ndk.explicitRelayUrls || []).filter((u) => normalizeRelayUrl(u) !== normalized)
     );
 
