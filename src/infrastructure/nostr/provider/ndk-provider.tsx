@@ -221,12 +221,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     clearAllRelayConnectWatchdogIds,
   } = useRelayTransport({
     removedRelaysRef,
-    relayInitialFailureCountsRef,
     detachRelayOkRejectObserver,
     scheduleRelayTimeout,
     clearTrackedRelayTimeout,
-    setRelays,
-    resolveRelayConnectRetryDelay,
   });
   clearAllRelayConnectWatchdogIdsRef.current = clearAllRelayConnectWatchdogIds;
 

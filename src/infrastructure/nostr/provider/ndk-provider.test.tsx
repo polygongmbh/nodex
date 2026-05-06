@@ -961,7 +961,7 @@ describe("NDKProvider relay lifecycle", () => {
     expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     expect(screen.getByTestId("relay-state").textContent).not.toContain("connection-error");
     expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
-    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
+    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
     vi.useRealTimers();
   });
 
