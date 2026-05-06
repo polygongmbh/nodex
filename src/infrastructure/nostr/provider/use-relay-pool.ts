@@ -7,25 +7,8 @@ import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 
-const WS_READY_STATE_CONNECTING = 0;
-const WS_READY_STATE_OPEN = 1;
-
 export function mapRelayTransportStatus(relay: NDKRelay): NDKRelayStatus["status"] {
-  const mappedStatus = mapNativeRelayStatus(relay.status);
-  const connectivity = (relay as unknown as { connectivity?: { ws?: { readyState?: number } } }).connectivity;
-  if (!connectivity) return mappedStatus;
-  const wsReadyState = connectivity.ws?.readyState;
-
-  if (mappedStatus === "connecting") {
-    if (wsReadyState === WS_READY_STATE_CONNECTING) return "connecting";
-    return "disconnected";
-  }
-  if (mappedStatus === "connected") {
-    if (wsReadyState === WS_READY_STATE_OPEN) return "connected";
-    return "disconnected";
-  }
-
-  return mappedStatus;
+  return mapNativeRelayStatus(relay.status);
 }
 
 export function resolveConnectedRelayStatus(status?: NDKRelayStatus["status"]): NDKRelayStatus["status"] {

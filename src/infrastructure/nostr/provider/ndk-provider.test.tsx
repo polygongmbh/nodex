@@ -896,36 +896,6 @@ describe("NDKProvider relay lifecycle", () => {
     expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
   });
 
-  it("recovers stale connecting state with no active websocket on reconnect", async () => {
-    render(
-      <NDKProvider defaultRelays={["wss://relay.one/"]}>
-        <Harness />
-      </NDKProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-    });
-
-    const ndk = mockedNdk.ndkInstances[0];
-    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
-    firstRelay.socketOpen = false;
-    firstRelay.status = mockedNdk.MockNDKRelayStatus.CONNECTING;
-    firstRelay.connectivity.ws = undefined;
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-    });
-
-    expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
-    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
-    expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
-  });
-
   it("retries a startup connection that stays stuck connecting without moving to connection-error", async () => {
     vi.useFakeTimers();
     mockedNdk.relayConnectModes.set("wss://relay.one", "hang");
