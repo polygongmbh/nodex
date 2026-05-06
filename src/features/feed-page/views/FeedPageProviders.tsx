@@ -14,6 +14,7 @@ import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-v
 import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-context";
 import { ScrollCaptureProvider, type ScrollCaptureRef } from "./scroll-capture-context";
 import { ProfileCompletionDialog } from "@/components/auth/ProfileCompletionDialog";
+import { dismissRetryInProgress, notifyRetryInProgress } from "@/lib/notifications";
 
 export interface FeedPageCoreHandlers {
   onOpenAuthModal: (initialStep?: "choose" | "noas" | "noasSignUp") => void;
@@ -199,11 +200,21 @@ function FeedInteractionBusFromContexts({
       "task.undoPendingPublish": (intent) => {
         taskCommands.undoPendingPublish(intent.taskId);
       },
-      "publish.failed.retry": (intent) => {
-        return taskCommands.retryFailedPublish(intent.draftId);
+      "publish.failed.retry": async (intent) => {
+        const toastId = notifyRetryInProgress("retry");
+        try {
+          await taskCommands.retryFailedPublish(intent.draftId);
+        } finally {
+          dismissRetryInProgress(toastId);
+        }
       },
-      "publish.failed.repost": (intent) => {
-        return taskCommands.repostFailedPublish(intent.draftId);
+      "publish.failed.repost": async (intent) => {
+        const toastId = notifyRetryInProgress("repost");
+        try {
+          await taskCommands.repostFailedPublish(intent.draftId);
+        } finally {
+          dismissRetryInProgress(toastId);
+        }
       },
       "publish.failed.dismiss": (intent) => {
         taskCommands.dismissFailedPublish(intent.draftId);

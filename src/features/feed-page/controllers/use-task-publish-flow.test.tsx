@@ -29,8 +29,6 @@ vi.mock("@/lib/notifications", () => ({
   notifyPublishUndone: vi.fn(),
   notifyRetryRelayMissing: vi.fn(),
   notifyRetryRejectedByRelay: vi.fn(),
-  notifyRetryInProgress: vi.fn(() => "retry-toast-id"),
-  dismissRetryInProgress: vi.fn(),
 }));
 
 vi.mock("@/lib/user-preferences", () => ({

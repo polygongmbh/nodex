@@ -38,8 +38,6 @@ import {
   notifyPublishUndone,
   notifyRetryRelayMissing,
   notifyRetryRejectedByRelay,
-  notifyRetryInProgress,
-  dismissRetryInProgress,
 } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
@@ -705,8 +703,7 @@ export function useTaskPublishFlow({
 
   const publishFailedDraft = useCallback(async (
     draftId: string,
-    resolveRelayUrls: (draft: FailedPublishDraft) => string[],
-    scope: "retry" | "repost"
+    resolveRelayUrls: (draft: FailedPublishDraft) => string[]
   ) => {
     if (guardInteraction("modify")) return;
     const draft = failedPublishDrafts.find((item) => item.id === draftId);
@@ -718,19 +715,13 @@ export function useTaskPublishFlow({
       return;
     }
 
-    const progressToastId = notifyRetryInProgress(scope);
-    let result;
-    try {
-      result = await publishEvent(
-        draft.publishKind,
-        draft.content,
-        draft.publishTags,
-        draft.publishParentId,
-        relayUrls
-      );
-    } finally {
-      dismissRetryInProgress(progressToastId);
-    }
+    const result = await publishEvent(
+      draft.publishKind,
+      draft.content,
+      draft.publishTags,
+      draft.publishParentId,
+      relayUrls
+    );
     if (!result.success) {
       if (result.eventId) {
         nostrDevLog("publish", "Suppressing retry-failed event from cache and feed", {
@@ -803,22 +794,15 @@ export function useTaskPublishFlow({
   ]);
 
   const handleRetryFailedPublish = useCallback(async (draftId: string) => {
-    await publishFailedDraft(
-      draftId,
-      (draft) =>
-        draft.relayUrls.length > 0
-          ? draft.relayUrls
-          : resolveRelayUrlsFromIds(draft.relayIds),
-      "retry"
+    await publishFailedDraft(draftId, (draft) =>
+      draft.relayUrls.length > 0
+        ? draft.relayUrls
+        : resolveRelayUrlsFromIds(draft.relayIds)
     );
   }, [publishFailedDraft, resolveRelayUrlsFromIds]);
 
   const handleRepostFailedPublish = useCallback(async (draftId: string) => {
-    await publishFailedDraft(
-      draftId,
-      () => resolveRelayUrlsFromIds(Array.from(effectiveActiveRelayIds)),
-      "repost"
-    );
+    await publishFailedDraft(draftId, () => resolveRelayUrlsFromIds(Array.from(effectiveActiveRelayIds)));
   }, [effectiveActiveRelayIds, publishFailedDraft, resolveRelayUrlsFromIds]);
 
   const handleDismissFailedPublish = useCallback((draftId: string) => {
