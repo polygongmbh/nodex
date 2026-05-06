@@ -111,7 +111,7 @@ export function useSession({ setUser, setAuthMethod }: UseSessionArgs) {
     privateKey: string;
     apiBaseUrl: string;
     username: string;
-    passwordHash: string;
+    passwordHash?: string;
     relayUrls: string[];
   }) => {
     saveSessionPrivateKey(params.privateKey);
