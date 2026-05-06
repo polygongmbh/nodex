@@ -13,8 +13,6 @@ import { extractRelayErrorMessage, extractRelayRejectionReason } from "./relay-e
 import { shouldMarkRelayReadOnlyAfterPublishReject } from "./relay-verification";
 import type { NDKRelayStatus } from "./contracts";
 
-const RELAY_PUBLISH_TIMEOUT_MS = 3000;
-
 interface UsePublishArgs {
   ndk: NDK | null;
   relays: NDKRelayStatus[];
@@ -103,7 +101,7 @@ export function usePublish({
       for (const relayUrl of targetRelayUrls) {
         try {
           const relaySet = NDKRelaySet.fromRelayUrls([relayUrl], ndk, true);
-          const publishedTo = await event.publish(relaySet, RELAY_PUBLISH_TIMEOUT_MS, 1);
+          const publishedTo = await event.publish(relaySet, undefined, 1);
           Array.from(publishedTo)
             .map((relay) => normalizeRelayUrl(relay.url))
             .filter(Boolean)
