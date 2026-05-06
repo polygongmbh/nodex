@@ -9,14 +9,12 @@ const RELAY_CONNECTING_WATCHDOG_MS = 15000;
 
 interface UseRelayTransportArgs {
   removedRelaysRef: MutableRefObject<Set<string>>;
-  detachRelayOkRejectObserver: (relayUrl: string) => void;
   scheduleRelayTimeout: (callback: () => void, delayMs: number) => number;
   clearTrackedRelayTimeout: (timeoutId: number | undefined) => void;
 }
 
 export function useRelayTransport({
   removedRelaysRef,
-  detachRelayOkRejectObserver,
   scheduleRelayTimeout,
   clearTrackedRelayTimeout,
 }: UseRelayTransportArgs) {
@@ -40,7 +38,6 @@ export function useRelayTransport({
     const pooledRelay = ndkInstance.pool.relays.get(normalizedRelayUrl);
 
     clearRelayConnectWatchdog(normalizedRelayUrl);
-    detachRelayOkRejectObserver(normalizedRelayUrl);
     relayCurrentInstanceRef.current.delete(normalizedRelayUrl);
 
     // Remove from pool before calling disconnect() so that any synchronous NDK event
@@ -54,7 +51,7 @@ export function useRelayTransport({
     if (pooledRelay && pooledRelay !== trackedRelay) {
       pooledRelay.disconnect();
     }
-  }, [clearRelayConnectWatchdog, detachRelayOkRejectObserver]);
+  }, [clearRelayConnectWatchdog]);
 
   const scheduleRelayConnectWatchdog = useCallback((_ndkInstance: NDK, relay: NDKRelay) => {
     const normalizedRelayUrl = normalizeRelayUrl(relay.url);

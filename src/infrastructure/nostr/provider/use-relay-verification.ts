@@ -2,11 +2,9 @@ import { useCallback, useRef, type MutableRefObject } from "react";
 import { type NDKRelay } from "@nostr-dev-kit/ndk";
 import { toast } from "sonner";
 import i18n from "@/lib/i18n/config";
-import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { extractRelayRejectionReason } from "./relay-error";
 import {
-  isAuthRequiredCloseReason,
   shouldMarkRelayReadOnlyAfterPublishReject,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
@@ -24,37 +22,19 @@ interface UseRelayVerificationArgs {
     transform: (relay: NDKRelayStatus) => NDKRelayStatus
   ) => void;
   relayInfoRef: MutableRefObject<Map<string, RelayInfoSummary>>;
-  relayCurrentInstanceRef: MutableRefObject<Map<string, NDKRelay>>;
   authMethodRef: MutableRefObject<AuthMethod>;
 }
 
 export function useRelayVerification({
   updateRelayEntry,
   relayInfoRef,
-  relayCurrentInstanceRef,
   authMethodRef,
 }: UseRelayVerificationArgs) {
-  const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
   const relayVerificationReadOpsRef = useRef(0);
   const relayVerificationWriteOpsRef = useRef(0);
   const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
-
-  const detachRelayOkRejectObserver = useCallback((relayUrl: string) => {
-    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
-    const observer = relayOkRejectObserverRef.current.get(normalizedRelayUrl);
-    if (!observer) return;
-    observer.ws.removeEventListener("message", observer.handler);
-    relayOkRejectObserverRef.current.delete(normalizedRelayUrl);
-  }, []);
-
-  const detachAllRelayOkRejectObservers = useCallback(() => {
-    relayOkRejectObserverRef.current.forEach((observer) => {
-      observer.ws.removeEventListener("message", observer.handler);
-    });
-    relayOkRejectObserverRef.current.clear();
-  }, []);
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
     const hasRead = relayVerificationReadOpsRef.current > 0;
@@ -168,73 +148,26 @@ export function useRelayVerification({
     }
   }, [authMethodRef, shouldShowRelayVerificationToast, updateRelayCapabilityStatus, updateRelayEntry]);
 
-  const attachRelayOkRejectObserver = useCallback((relay: NDKRelay) => {
-    const normalizedRelayUrl = normalizeRelayUrl(relay.url);
-    const connectivity = relay as unknown as { connectivity?: { ws?: WebSocket } };
-    const ws = connectivity.connectivity?.ws;
-    if (!ws) return;
-
-    const existing = relayOkRejectObserverRef.current.get(normalizedRelayUrl);
-    if (existing?.ws === ws) return;
-    if (existing) {
-      existing.ws.removeEventListener("message", existing.handler);
-      relayOkRejectObserverRef.current.delete(normalizedRelayUrl);
+  const handleRelayPublishFailed = useCallback((relay: NDKRelay, error: Error) => {
+    const normalizedRelayUrl = relay.url.replace(/\/+$/, "");
+    const reason = error?.message ?? "";
+    const rejectionReason = extractRelayRejectionReason(reason) ?? reason;
+    if (!shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: reason,
+      rejectionReason,
+    })) {
+      return;
     }
-
-    const handler = (event: MessageEvent) => {
-      if (relayCurrentInstanceRef.current.get(normalizedRelayUrl) !== relay) return;
-      if (typeof event.data !== "string") return;
-      try {
-        const payload = JSON.parse(event.data);
-        if (!Array.isArray(payload)) return;
-        const [command] = payload as [unknown, ...unknown[]];
-
-        if (command === "CLOSED") {
-          const closeReason = typeof payload[2] === "string" ? payload[2] : "";
-          if (!isAuthRequiredCloseReason(closeReason)) return;
-          markRelayVerificationFailure(normalizedRelayUrl, "read", {
-            setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
-            showToast: false,
-          });
-          nostrDevLog("relay", "Relay read rejection observed from websocket CLOSED response", {
-            relayUrl: normalizedRelayUrl,
-            reason: closeReason,
-          });
-          return;
-        }
-
-        if (command !== "OK") return;
-        const ok = payload[2];
-        const reason = payload[3];
-        if (ok !== false || typeof reason !== "string") return;
-
-        const rejectionReason = extractRelayRejectionReason(reason) ?? reason;
-        if (!shouldMarkRelayReadOnlyAfterPublishReject({
-          errorMessage: reason,
-          rejectionReason,
-        })) {
-          return;
-        }
-        markRelayVerificationFailure(normalizedRelayUrl, "write", {
-          setStatus: true,
-          showToast: false,
-        });
-        nostrDevLog("relay", "Relay write rejection observed from websocket OK response", {
-          relayUrl: normalizedRelayUrl,
-          reason,
-          rejectionReason,
-        });
-      } catch {
-        // Ignore non-JSON relay frames.
-      }
-    };
-
-    ws.addEventListener("message", handler);
-    relayOkRejectObserverRef.current.set(normalizedRelayUrl, {
-      ws,
-      handler,
+    markRelayVerificationFailure(normalizedRelayUrl, "write", {
+      setStatus: true,
+      showToast: false,
     });
-  }, [markRelayVerificationFailure, relayCurrentInstanceRef]);
+    nostrDevLog("relay", "Relay write rejection observed via publish:failed", {
+      relayUrl: normalizedRelayUrl,
+      reason,
+      rejectionReason,
+    });
+  }, [markRelayVerificationFailure]);
 
   const notifyRelayVerificationEvent = useCallback((incoming: RelayVerificationEvent) => {
     const normalizedRelayUrl = incoming.relayUrl.replace(/\/+$/, "");
@@ -273,9 +206,7 @@ export function useRelayVerification({
     updateRelayCapabilityStatus,
     markRelayVerificationSuccess,
     markRelayVerificationFailure,
-    attachRelayOkRejectObserver,
-    detachRelayOkRejectObserver,
-    detachAllRelayOkRejectObservers,
+    handleRelayPublishFailed,
     notifyRelayVerificationEvent,
     beginRelayOperation,
     endRelayOperation,

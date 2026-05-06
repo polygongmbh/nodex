@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo, u
 import NDK, {
   NDKSubscriptionCacheUsage,
   NDKUser,
+  type NDKRelay,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-discovery";
@@ -172,12 +173,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   }, []);
   const clearAllRelayConnectWatchdogIdsRef = useRef<() => void>(() => undefined);
 
-  // Stable wrappers over verification.detachRelayOkRejectObserver — set
-  // after the verification hook returns, so transport (declared later) can
-  // hold stable references to functions that resolve at call time.
-  const okDetachRef = useRef<(url: string) => void>(() => undefined);
-  const detachRelayOkRejectObserver = useCallback((url: string) => {
-    okDetachRef.current(url);
+  // Stable wrapper over verification.handleRelayPublishFailed — set
+  // after the verification hook returns, so the pool deps can hold a
+  // stable reference that resolves at call time.
+  const publishFailedRef = useRef<(relay: NDKRelay, error: Error) => void>(() => undefined);
+  const handleRelayPublishFailed = useCallback((relay: NDKRelay, error: Error) => {
+    publishFailedRef.current(relay, error);
   }, []);
 
   const primeRelayAuthChallenge = useCallback((ndkInstance: NDK, relayUrl: string) => {
@@ -221,7 +222,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     clearAllRelayConnectWatchdogIds,
   } = useRelayTransport({
     removedRelaysRef,
-    detachRelayOkRejectObserver,
     scheduleRelayTimeout,
     clearTrackedRelayTimeout,
   });
@@ -234,19 +234,16 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     updateRelayCapabilityStatus,
     markRelayVerificationSuccess,
     markRelayVerificationFailure,
-    attachRelayOkRejectObserver,
-    detachRelayOkRejectObserver: realDetachRelayOkRejectObserver,
-    detachAllRelayOkRejectObservers,
+    handleRelayPublishFailed: realHandleRelayPublishFailed,
     notifyRelayVerificationEvent,
     beginRelayOperation,
     endRelayOperation,
   } = useRelayVerification({
     updateRelayEntry,
     relayInfoRef,
-    relayCurrentInstanceRef,
     authMethodRef,
   });
-  okDetachRef.current = realDetachRelayOkRejectObserver;
+  publishFailedRef.current = realHandleRelayPublishFailed;
 
   const {
     kind0ProfileInFlightRef,
@@ -352,8 +349,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   poolDepsRef.current = {
     scheduleRelayConnectWatchdog,
     clearRelayConnectWatchdog,
-    attachRelayOkRejectObserver,
-    detachRelayOkRejectObserver,
+    handleRelayPublishFailed,
     primeRelayAuthChallenge,
     markRelayVerificationSuccess,
     updateRelayCapabilityStatus,
@@ -427,7 +423,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     return () => {
       session.abort();
       clearAllTrackedRelayTimeouts();
-      detachAllRelayOkRejectObservers();
       ndkInstance.pool.removeAllListeners();
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();
@@ -435,7 +430,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       inFlightKind0ProfileRequests.clear();
       relayCurrentInstance.clear();
     };
-  }, [attachPoolHandlers, clearAllTrackedRelayTimeouts, createRestoreSession, detachAllRelayOkRejectObservers, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolvedDefaultRelays]);
+  }, [attachPoolHandlers, clearAllTrackedRelayTimeouts, createRestoreSession, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolvedDefaultRelays]);
 
   const addRelay = useCallback((url: string) => {
     if (!ndk) return;

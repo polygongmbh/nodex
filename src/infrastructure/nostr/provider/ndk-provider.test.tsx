@@ -69,12 +69,45 @@ const mockedNdk = vi.hoisted(() => {
     subscribeCalls: Array<{ subscription: unknown; filters: unknown }> = [];
     socketOpen = false;
     connectivity: { ws?: FakeWebSocket } = {};
+    private listeners = new Map<string, Set<(...args: unknown[]) => void>>();
     constructor(url: string, private pool: FakePool) {
       this.url = url.replace(/\/+$/, "");
     }
 
+    on(event: string, callback: (...args: unknown[]) => void) {
+      const listeners = this.listeners.get(event) ?? new Set();
+      listeners.add(callback);
+      this.listeners.set(event, listeners);
+    }
+
+    off(event: string, callback: (...args: unknown[]) => void) {
+      this.listeners.get(event)?.delete(callback);
+    }
+
+    emit(event: string, ...args: unknown[]) {
+      this.listeners.get(event)?.forEach((listener) => listener(...args));
+    }
+
     emitServerMessage(data: string) {
       this.connectivity.ws?.emitMessage(data);
+      try {
+        const payload = JSON.parse(data);
+        if (!Array.isArray(payload)) return;
+        if (payload[0] === "OK" && payload[2] === false) {
+          this.emit("publish:failed", null, new Error(typeof payload[3] === "string" ? payload[3] : ""));
+        } else if (payload[0] === "CLOSED") {
+          const reason = typeof payload[2] === "string" ? payload[2] : "";
+          ndkInstances.forEach((ndk) => {
+            ndk.subManager.subscriptions.forEach((sub) => {
+              if (sub.relayFilters?.has(this.url)) {
+                sub.emit?.("closed", this, reason);
+              }
+            });
+          });
+        }
+      } catch {
+        // ignore non-JSON frames
+      }
     }
 
     connect() {
@@ -207,11 +240,19 @@ const mockedNdk = vi.hoisted(() => {
         relayFilters.set(relayUrl, normalizedFilters);
       });
       const internalId = `sub-${this.subscriptionCounter++}`;
+      const subListeners = new Map<string, Set<(...args: unknown[]) => void>>();
       const fakeSubscription = {
         internalId,
         filters: normalizedFilters,
         relayFilters,
-        on() {},
+        on(event: string, callback: (...args: unknown[]) => void) {
+          const set = subListeners.get(event) ?? new Set();
+          set.add(callback);
+          subListeners.set(event, set);
+        },
+        emit(event: string, ...args: unknown[]) {
+          subListeners.get(event)?.forEach((listener) => listener(...args));
+        },
         stop: () => {
           this.subManager.subscriptions.delete(internalId);
         },
@@ -366,9 +407,11 @@ function Harness() {
     publishEvent,
     relays,
     setPresenceRelayUrls,
+    subscribe,
   } = useNDK();
   return (
     <div>
+      <button onClick={() => subscribe([{ kinds: [1] }] as Parameters<typeof subscribe>[0], () => {})}>start subscription</button>
       <button onClick={() => addRelay("wss://relay.two/")}>add relay</button>
       <button onClick={() => addRelay("wss://relay.one/")}>re-add relay slash</button>
       <button onClick={() => addRelay("wss://relay.one")}>re-add relay no slash</button>
@@ -1058,6 +1101,10 @@ describe("NDKProvider relay lifecycle", () => {
     const relay = ndk.pool.getRelay("wss://relay.one", false);
 
     await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "start subscription" }));
+    });
+
+    await act(async () => {
       relay.emitServerMessage('["CLOSED","kinds-limit-subid","auth-required: pubkey not in whitelist"]');
     });
 
@@ -1111,6 +1158,10 @@ describe("NDKProvider relay lifecycle", () => {
 
     const ndk = mockedNdk.ndkInstances[0];
     const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "start subscription" }));
+    });
 
     await act(async () => {
       firstRelay.emitServerMessage('["CLOSED","kinds-limit-subid","auth-required: pubkey not in whitelist"]');
@@ -1420,6 +1471,10 @@ describe("NDKProvider relay lifecycle", () => {
 
     const ndk = mockedNdk.ndkInstances[0];
     const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "start subscription" }));
+    });
 
     await act(async () => {
       relay.emitServerMessage('["CLOSED","subid","auth-required: pubkey not in whitelist"]');
