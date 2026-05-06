@@ -101,10 +101,10 @@ export function TaskAttachmentList({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(event) => event.stopPropagation()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1 text-xs hover:bg-muted/50"
+            className="flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1 text-xs hover:bg-muted/50"
           >
-            <FileText className="h-3.5 w-3.5" />
-            <span className="max-w-[18rem] truncate">{attachment.name || attachment.url}</span>
+            <FileText className="h-3.5 w-3.5 shrink-0" />
+            <span className="min-w-0 flex-1 truncate">{attachment.name || attachment.url}</span>
           </a>
         );
       })}
