@@ -11,8 +11,9 @@ import {
 } from "@/infrastructure/nostr/profile-metadata";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { saveCachedKind0Events, loadCachedKind0Events } from "@/infrastructure/nostr/people-from-kind0";
-import type { NDKRelayStatus } from "./contracts";
-import type { PublishCallbacks } from "./use-publish";
+import type { NDKRelayStatus, NDKContextValue } from "./contracts";
+
+type PublishEvent = NDKContextValue["publishEvent"];
 
 export interface ProfileSyncCallbacks {
   updateUserProfile: (profile: EditableNostrProfile) => Promise<boolean>;
@@ -23,7 +24,7 @@ export function useProfileSync(
   ndk: NDK | null,
   user: NDKUser | null,
   relays: NDKRelayStatus[],
-  publishEvent: PublishCallbacks["publishEvent"],
+  publishEvent: PublishEvent,
   fetchLatestKind0Profile: (pubkey: string) => Promise<NDKUserProfile | null>,
   profileSyncRunRef: MutableRefObject<number>,
   setUser: React.Dispatch<React.SetStateAction<NDKUser | null>>,
