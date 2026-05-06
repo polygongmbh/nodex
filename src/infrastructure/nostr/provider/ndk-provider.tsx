@@ -31,10 +31,7 @@ import {
 import { reorderResolvedRelayStatuses } from "./relay-list";
 import { createRelayNip42AuthPolicy } from "@/infrastructure/nostr/nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
-import {
-  AUTH_RETRY_COOLDOWN_MS,
-  shouldReconnectRelayAfterSignIn,
-} from "./relay-verification";
+import { shouldReconnectRelayAfterSignIn } from "./relay-verification";
 import { useRelayNip11 } from "./use-relay-nip11";
 import { useRelayTransport } from "./use-relay-transport";
 import { useRelayVerification } from "./use-relay-verification";
@@ -124,7 +121,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const relayInitialFailureCountsRef = useRef<Map<string, number>>(new Map());
   const relayConnectedOnceRef = useRef<Set<string>>(new Set());
   const connectResolvedAuthRelayUrlsRef = useRef<(relayUrls: string[]) => void>(() => undefined);
-  const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
   const {
     relayInfoRef,
     relayInfoFetchedAtRef,
@@ -134,7 +130,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     clearRelayInfo,
   } = useRelayNip11({ updateRelayEntry });
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
-  const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
   const authMethodRef = useRef<AuthMethod>(null);
   authMethodRef.current = authMethod;
 
@@ -171,37 +166,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     publishFailedRef.current(relay, error);
   }, []);
 
+  const primeAuthRef = useRef<(ndkInstance: NDK, relayUrl: string) => void>(() => undefined);
   const primeRelayAuthChallenge = useCallback((ndkInstance: NDK, relayUrl: string) => {
-    if (!ndkInstance.signer) return;
-
-    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
-    const now = Date.now();
-    const lastPrimedAt = relayAuthPreflightHistoryRef.current.get(normalizedRelayUrl) ?? 0;
-    if ((now - lastPrimedAt) < AUTH_RETRY_COOLDOWN_MS) return;
-    relayAuthPreflightHistoryRef.current.set(normalizedRelayUrl, now);
-
-    // Ask the relay for a tiny relay-scoped read to trigger NIP-42 auth flow
-    // before heavier feed subscriptions fan out.
-    const probeSubscription = ndkInstance.subscribe(
-      [{ kinds: [NostrEventKind.Metadata as number], limit: 1 }],
-      {
-        closeOnEose: true,
-        relayUrls: [normalizedRelayUrl],
-        cacheUsage: NDKSubscriptionCacheUsage.ONLY_RELAY,
-        groupable: false,
-      }
-    );
-    const timeoutId = scheduleRelayTimeout(() => {
-      probeSubscription.stop();
-    }, RELAY_AUTH_PREFLIGHT_TIMEOUT_MS);
-    probeSubscription.on("close", () => {
-      clearTrackedRelayTimeout(timeoutId);
-    });
-
-    nostrDevLog("relay", "Priming relay auth challenge before scoped subscriptions", {
-      relayUrl: normalizedRelayUrl,
-    });
-  }, [clearTrackedRelayTimeout, scheduleRelayTimeout]);
+    primeAuthRef.current(ndkInstance, relayUrl);
+  }, []);
 
   const {
     relayCurrentInstanceRef,
@@ -228,12 +196,45 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     notifyRelayVerificationEvent,
     beginRelayOperation,
     endRelayOperation,
+    tryRecordAuthPreflight,
+    forgetAuthPreflight,
+    markRelayPendingSubscriptionReplay,
+    consumeRelayPendingSubscriptionReplay,
+    clearAuthSessionState,
   } = useRelayVerification({
     updateRelayEntry,
     relayInfoRef,
     authMethodRef,
   });
   publishFailedRef.current = realHandleRelayPublishFailed;
+
+  primeAuthRef.current = (ndkInstance: NDK, relayUrl: string) => {
+    if (!ndkInstance.signer) return;
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+    if (!tryRecordAuthPreflight(normalizedRelayUrl)) return;
+
+    // Ask the relay for a tiny relay-scoped read to trigger NIP-42 auth flow
+    // before heavier feed subscriptions fan out.
+    const probeSubscription = ndkInstance.subscribe(
+      [{ kinds: [NostrEventKind.Metadata as number], limit: 1 }],
+      {
+        closeOnEose: true,
+        relayUrls: [normalizedRelayUrl],
+        cacheUsage: NDKSubscriptionCacheUsage.ONLY_RELAY,
+        groupable: false,
+      }
+    );
+    const timeoutId = scheduleRelayTimeout(() => {
+      probeSubscription.stop();
+    }, RELAY_AUTH_PREFLIGHT_TIMEOUT_MS);
+    probeSubscription.on("close", () => {
+      clearTrackedRelayTimeout(timeoutId);
+    });
+
+    nostrDevLog("relay", "Priming relay auth challenge before scoped subscriptions", {
+      relayUrl: normalizedRelayUrl,
+    });
+  };
 
   const {
     kind0ProfileInFlightRef,
@@ -298,7 +299,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       if (needsReconnect) {
         hasReconnectRelay = true;
       }
-      relaysPendingAuthSubscriptionReplayRef.current.add(relayUrl);
+      markRelayPendingSubscriptionReplay(relayUrl);
       if (needsReconnect) {
         relayInitialFailureCountsRef.current.delete(relayUrl);
         relayAuthRetryHistoryRef.current.delete(relayUrl);
@@ -306,7 +307,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
       if (shouldPrimeAuth) {
         // Force a fresh auth challenge pass immediately after sign-in.
-        relayAuthPreflightHistoryRef.current.delete(relayUrl);
+        forgetAuthPreflight(relayUrl);
       }
       // Only force a new socket for relays that need reconnecting. Healthy connected relays
       // can receive a fresh NIP-42 challenge on the existing socket via primeRelayAuthChallenge.
@@ -352,7 +353,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     relayInitialFailureCountsRef,
     relayConnectedOnceRef,
     pendingRelayVerificationRef,
-    relaysPendingAuthSubscriptionReplayRef,
+    consumeRelayPendingSubscriptionReplay,
   };
 
   // Initialize NDK
@@ -540,11 +541,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     markRelayVerificationFailure,
   });
 
-  const resetAuthSessionRefs = useCallback(() => {
-    relayAuthPreflightHistoryRef.current.clear();
-    relaysPendingAuthSubscriptionReplayRef.current.clear();
-  }, []);
-
   const {
     loginWithExtension,
     loginWithPrivateKey,
@@ -563,7 +559,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     setIsProfileSyncing,
     publishPresenceOffline,
     profileSyncRunRef,
-    resetAuthSessionRefs,
+    resetAuthSessionRefs: clearAuthSessionState,
     clearVerificationStateOnLogout,
     resetRejectedRelayStatuses,
     clearKind0Caches,
@@ -586,7 +582,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
-    relayAuthPreflightHistoryRef.current.delete(normalized);
+    forgetAuthPreflight(normalized);
     clearRelayInfo(normalized);
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
 
@@ -611,12 +607,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       relayConnectedOnceRef.current.delete(normalized);
     }
     if (ndk.signer) {
-      relayAuthPreflightHistoryRef.current.delete(normalized);
+      forgetAuthPreflight(normalized);
       pendingRelayVerificationRef.current.set(normalized, {
         operation: relayStatus === "read-only" ? "write" : "read",
         requestedAt: Date.now(),
       });
-      relaysPendingAuthSubscriptionReplayRef.current.add(normalized);
+      markRelayPendingSubscriptionReplay(normalized);
     }
     nostrDevLog("relay", "Relay reconnect requested", {
       relayUrl: normalized,
@@ -694,7 +690,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     authMethodRef,
     pendingRelayVerificationRef,
     relayAuthRetryHistoryRef,
-    relaysPendingAuthSubscriptionReplayRef,
+    markRelayPendingSubscriptionReplay,
     beginRelayOperation,
     endRelayOperation,
     markRelayVerificationFailure,

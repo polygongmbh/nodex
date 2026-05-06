@@ -36,7 +36,7 @@ export interface UseRelayPoolDeps {
   relayInitialFailureCountsRef: MutableRefObject<Map<string, number>>;
   relayConnectedOnceRef: MutableRefObject<Set<string>>;
   pendingRelayVerificationRef: MutableRefObject<Map<string, { operation: "read" | "write" | "unknown"; requestedAt: number }>>;
-  relaysPendingAuthSubscriptionReplayRef: MutableRefObject<Set<string>>;
+  consumeRelayPendingSubscriptionReplay: (normalizedRelayUrl: string) => boolean;
 }
 
 export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
@@ -169,7 +169,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         pendingRelayVerificationRef,
         markRelayVerificationSuccess,
         updateRelayCapabilityStatus,
-        relaysPendingAuthSubscriptionReplayRef,
+        consumeRelayPendingSubscriptionReplay,
         replayActiveSubscriptionsForRelay,
       } = depsRef.current;
       const normalized = normalizeRelayUrl(relay.url);
@@ -194,8 +194,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
           relayUrl: normalized,
         });
       }
-      const shouldReplaySubscriptions = relaysPendingAuthSubscriptionReplayRef.current.delete(normalized);
-      if (shouldReplaySubscriptions) {
+      if (consumeRelayPendingSubscriptionReplay(normalized)) {
         replayActiveSubscriptionsForRelay(ndkInstance, normalized);
       }
     };

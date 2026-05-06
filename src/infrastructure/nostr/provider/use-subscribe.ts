@@ -21,7 +21,7 @@ interface UseSubscribeArgs {
   authMethodRef: MutableRefObject<AuthMethod>;
   pendingRelayVerificationRef: MutableRefObject<Map<string, { operation: "read" | "write"; requestedAt: number }>>;
   relayAuthRetryHistoryRef: MutableRefObject<Map<string, number>>;
-  relaysPendingAuthSubscriptionReplayRef: MutableRefObject<Set<string>>;
+  markRelayPendingSubscriptionReplay: (normalizedRelayUrl: string) => void;
   beginRelayOperation: (op: "read" | "write") => void;
   endRelayOperation: (op: "read" | "write") => void;
   markRelayVerificationFailure: (
@@ -40,7 +40,7 @@ export function useSubscribe({
   authMethodRef,
   pendingRelayVerificationRef,
   relayAuthRetryHistoryRef,
-  relaysPendingAuthSubscriptionReplayRef,
+  markRelayPendingSubscriptionReplay,
   beginRelayOperation,
   endRelayOperation,
   markRelayVerificationFailure,
@@ -115,7 +115,7 @@ export function useSubscribe({
         const managedRelay = connectManagedRelay(ndk, normalizedRelayUrl);
         managedRelay.subscribe(subscription, relayFilters);
       } else {
-        relaysPendingAuthSubscriptionReplayRef.current.add(normalizedRelayUrl);
+        markRelayPendingSubscriptionReplay(normalizedRelayUrl);
         nostrDevLog("relay", "Skipping auth-closed relay subscription retry", {
           relayUrl: normalizedRelayUrl,
           reason,
@@ -136,7 +136,7 @@ export function useSubscribe({
     subscription.on("close", finishRead);
 
     return subscription;
-  }, [authMethodRef, beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayVerificationFailure, ndk, pendingRelayVerificationRef, primeRelayAuthChallenge, relayAuthRetryHistoryRef, relaysPendingAuthSubscriptionReplayRef, relaysRef, updateRelayCapabilityStatus]);
+  }, [authMethodRef, beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayPendingSubscriptionReplay, markRelayVerificationFailure, ndk, pendingRelayVerificationRef, primeRelayAuthChallenge, relayAuthRetryHistoryRef, relaysRef, updateRelayCapabilityStatus]);
 
   return { subscribe };
 }

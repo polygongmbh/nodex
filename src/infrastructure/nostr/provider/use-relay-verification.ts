@@ -5,6 +5,7 @@ import i18n from "@/lib/i18n/config";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { extractRelayRejectionReason } from "./relay-error";
 import {
+  AUTH_RETRY_COOLDOWN_MS,
   shouldMarkRelayReadOnlyAfterPublishReject,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
@@ -35,6 +36,33 @@ export function useRelayVerification({
   const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
+  const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
+  const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
+
+  const tryRecordAuthPreflight = useCallback((normalizedRelayUrl: string): boolean => {
+    const now = Date.now();
+    const lastPrimedAt = relayAuthPreflightHistoryRef.current.get(normalizedRelayUrl) ?? 0;
+    if ((now - lastPrimedAt) < AUTH_RETRY_COOLDOWN_MS) return false;
+    relayAuthPreflightHistoryRef.current.set(normalizedRelayUrl, now);
+    return true;
+  }, []);
+
+  const forgetAuthPreflight = useCallback((normalizedRelayUrl: string) => {
+    relayAuthPreflightHistoryRef.current.delete(normalizedRelayUrl);
+  }, []);
+
+  const markRelayPendingSubscriptionReplay = useCallback((normalizedRelayUrl: string) => {
+    relaysPendingAuthSubscriptionReplayRef.current.add(normalizedRelayUrl);
+  }, []);
+
+  const consumeRelayPendingSubscriptionReplay = useCallback((normalizedRelayUrl: string): boolean => {
+    return relaysPendingAuthSubscriptionReplayRef.current.delete(normalizedRelayUrl);
+  }, []);
+
+  const clearAuthSessionState = useCallback(() => {
+    relayAuthPreflightHistoryRef.current.clear();
+    relaysPendingAuthSubscriptionReplayRef.current.clear();
+  }, []);
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
     const hasRead = relayVerificationReadOpsRef.current > 0;
@@ -210,5 +238,10 @@ export function useRelayVerification({
     notifyRelayVerificationEvent,
     beginRelayOperation,
     endRelayOperation,
+    tryRecordAuthPreflight,
+    forgetAuthPreflight,
+    markRelayPendingSubscriptionReplay,
+    consumeRelayPendingSubscriptionReplay,
+    clearAuthSessionState,
   };
 }
