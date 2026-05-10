@@ -20,6 +20,8 @@ export function resolveConnectedRelayStatus(status?: NDKRelayStatus["status"]): 
 export interface UseRelayPoolDeps {
   scheduleRelayConnectWatchdog: (ndkInstance: NDK, relay: NDKRelay) => void;
   clearRelayConnectWatchdog: (normalizedRelayUrl: string) => void;
+  attachRelayOkRejectObserver: (relay: NDKRelay) => void;
+  detachRelayOkRejectObserver: (relayUrl: string) => void;
   primeRelayAuthChallenge: (ndkInstance: NDK, relayUrl: string) => void;
   markRelayVerificationSuccess: (relayUrl: string, operation: "read" | "write" | "unknown") => void;
   updateRelayCapabilityStatus: (
@@ -91,6 +93,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     const onRelayConnect = (relay: NDKRelay) => {
       const {
         clearRelayConnectWatchdog,
+        attachRelayOkRejectObserver,
         relayConnectedOnceRef,
         relayInitialFailureCountsRef,
         relayInfoRef,
@@ -105,6 +108,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         return;
       }
       clearRelayConnectWatchdog(normalized);
+      attachRelayOkRejectObserver(relay);
       nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
@@ -181,6 +185,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     const onRelayDisconnect = (relay: NDKRelay) => {
       const {
         clearRelayConnectWatchdog,
+        detachRelayOkRejectObserver,
         relayConnectedOnceRef,
         relayInitialFailureCountsRef,
         scheduleRelayTimeout,
@@ -189,6 +194,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
       const normalized = normalizeRelayUrl(relay.url);
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
       clearRelayConnectWatchdog(normalized);
+      detachRelayOkRejectObserver(normalized);
       // Ignore late disconnects from a removed relay instance after the same normalized URL
       // has already been re-added to the pool, or events for relays no longer in the pool.
       const activeRelay = ndkInstance.pool.relays.get(normalized);

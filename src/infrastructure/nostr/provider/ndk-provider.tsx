@@ -182,6 +182,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     updateRelayCapabilityStatus,
     markRelayVerificationSuccess,
     markRelayVerificationFailure,
+    attachRelayOkRejectObserver,
+    detachRelayOkRejectObserver,
     notifyRelayVerificationEvent,
     beginRelayOperation,
     endRelayOperation,
@@ -326,6 +328,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   poolDepsRef.current = {
     scheduleRelayConnectWatchdog,
     clearRelayConnectWatchdog,
+    attachRelayOkRejectObserver,
+    detachRelayOkRejectObserver,
     primeRelayAuthChallenge,
     markRelayVerificationSuccess,
     updateRelayCapabilityStatus,

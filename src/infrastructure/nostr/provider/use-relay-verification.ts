@@ -1,9 +1,13 @@
 import { useCallback, useRef, type MutableRefObject } from "react";
+import { type NDKRelay } from "@nostr-dev-kit/ndk";
 import { toast } from "sonner";
 import i18n from "@/lib/i18n/config";
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { extractRelayRejectionReason } from "./relay-error";
 import {
   AUTH_RETRY_COOLDOWN_MS,
+  shouldMarkRelayReadOnlyAfterPublishReject,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
 import type { RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
@@ -35,6 +39,7 @@ export function useRelayVerification({
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
   const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
   const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
+  const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
 
   const tryRecordAuthPreflight = useCallback((normalizedRelayUrl: string): boolean => {
     const now = Date.now();
@@ -173,6 +178,65 @@ export function useRelayVerification({
     }
   }, [authMethodRef, shouldShowRelayVerificationToast, updateRelayCapabilityStatus, updateRelayEntry]);
 
+  // NDK's connectivity layer silently holds the publish resolver when a relay returns
+  // OK,false with reason "auth-required:" even after we have authenticated, expecting a
+  // retry that never happens. The publish promise then rejects on the 2.5s internal
+  // timeout with "Timeout" instead of the original reason, so the verification policy
+  // in use-publish can't tell read-only relays from transient failures. Read the OK
+  // frames directly off the websocket as a fallback signal.
+  const attachRelayOkRejectObserver = useCallback((relay: NDKRelay) => {
+    const normalizedRelayUrl = normalizeRelayUrl(relay.url);
+    const connectivity = relay as unknown as { connectivity?: { ws?: WebSocket } };
+    const ws = connectivity.connectivity?.ws;
+    if (!ws) return;
+
+    const existing = relayOkRejectObserverRef.current.get(normalizedRelayUrl);
+    if (existing?.ws === ws) return;
+    if (existing) {
+      existing.ws.removeEventListener("message", existing.handler);
+    }
+
+    const handler = (event: MessageEvent) => {
+      if (typeof event.data !== "string") return;
+      let payload: unknown;
+      try {
+        payload = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      if (!Array.isArray(payload)) return;
+      if (payload[0] !== "OK" || payload[2] !== false) return;
+      const reason = typeof payload[3] === "string" ? payload[3] : "";
+      const rejectionReason = extractRelayRejectionReason(reason) ?? reason;
+      if (!shouldMarkRelayReadOnlyAfterPublishReject({
+        errorMessage: reason,
+        rejectionReason,
+      })) {
+        return;
+      }
+      markRelayVerificationFailure(normalizedRelayUrl, "write", {
+        setStatus: true,
+        showToast: false,
+      });
+      nostrDevLog("relay", "Relay write rejection observed from websocket OK response", {
+        relayUrl: normalizedRelayUrl,
+        reason,
+        rejectionReason,
+      });
+    };
+
+    ws.addEventListener("message", handler);
+    relayOkRejectObserverRef.current.set(normalizedRelayUrl, { ws, handler });
+  }, [markRelayVerificationFailure]);
+
+  const detachRelayOkRejectObserver = useCallback((relayUrl: string) => {
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+    const observer = relayOkRejectObserverRef.current.get(normalizedRelayUrl);
+    if (!observer) return;
+    observer.ws.removeEventListener("message", observer.handler);
+    relayOkRejectObserverRef.current.delete(normalizedRelayUrl);
+  }, []);
+
   const notifyRelayVerificationEvent = useCallback((incoming: RelayVerificationEvent) => {
     const normalizedRelayUrl = incoming.relayUrl.replace(/\/+$/, "");
     const existingPendingVerification = pendingRelayVerificationRef.current.get(normalizedRelayUrl);
@@ -210,6 +274,8 @@ export function useRelayVerification({
     updateRelayCapabilityStatus,
     markRelayVerificationSuccess,
     markRelayVerificationFailure,
+    attachRelayOkRejectObserver,
+    detachRelayOkRejectObserver,
     notifyRelayVerificationEvent,
     beginRelayOperation,
     endRelayOperation,
