@@ -6,12 +6,23 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.17.0] - 2026-05-11
+Minor release for Noas verification requirements, relay/publish recovery, and feed interaction reliability.
+
+### Added
+- Noas sign-up now requires an email address when the selected host mandates verification.
+
 ### Changed
 - Clicking a hashtag chip on a task now adds the tag to the active channel filters instead of replacing them.
+- Relay, session, profile, publish, and Noas provider flows were split into focused controllers, reducing coupling in the Nostr runtime layer while preserving the existing app behavior.
 
 ### Fixed
 - A "Publishing..." toast no longer occasionally lingers after a delayed send finishes; the redundant loading toast is now skipped when the undo-send delay is enabled.
 - Reconnecting to a relay no longer occasionally leaves an orphan WebSocket open in parallel; soft reconnects now rebuild the pool entry instead of racing NDK's own reconnect on the same relay instance.
+- Failed publish retry actions now show progress, prevent duplicate clicks, and clean up stale failure state more consistently.
+- Read-only relays are detected more reliably from rejected publish acknowledgements.
+- Switching between large channel filters is less prone to visible lag.
+- Long URLs in mobile task cards no longer overflow their chip layout.
 
 ## [2.16.1] - 2026-05-06
 Patch release for targeted anti-spam composer filtering, safer cache subscription behavior, and dependency refreshes.
