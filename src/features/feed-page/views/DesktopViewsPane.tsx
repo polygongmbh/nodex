@@ -83,8 +83,6 @@ export function DesktopViewsPane() {
       : currentView === "feed"
         ? scopedTasks.length === 0
         : scopedTasks.every((task) => task.taskType !== "task");
-  const viewFallback = <ViewLoadingFallback />;
-
   let viewPane: ReactNode;
   switch (currentView) {
     case "status":
@@ -94,32 +92,16 @@ export function DesktopViewsPane() {
       viewPane = <TaskTree {...viewModel} />;
       break;
     case "feed":
-      viewPane = (
-        <Suspense fallback={viewFallback}>
-          <FeedView {...viewModel} />
-        </Suspense>
-      );
+      viewPane = <FeedView {...viewModel} />;
       break;
     case "kanban":
-      viewPane = (
-        <Suspense fallback={viewFallback}>
-          <KanbanView {...viewModel} depthMode={displayDepthMode} />
-        </Suspense>
-      );
+      viewPane = <KanbanView {...viewModel} depthMode={displayDepthMode} />;
       break;
     case "calendar":
-      viewPane = (
-        <Suspense fallback={viewFallback}>
-          <CalendarView {...viewModel} />
-        </Suspense>
-      );
+      viewPane = <CalendarView {...viewModel} />;
       break;
     case "list":
-      viewPane = (
-        <Suspense fallback={viewFallback}>
-          <ListView {...viewModel} depthMode={displayDepthMode} />
-        </Suspense>
-      );
+      viewPane = <ListView {...viewModel} depthMode={displayDepthMode} />;
       break;
     default:
       viewPane = <TaskTree {...viewModel} />;
@@ -134,7 +116,7 @@ export function DesktopViewsPane() {
         isHydrating={viewModel.isHydrating}
       />
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        {viewPane}
+        <Suspense fallback={<ViewLoadingFallback />}>{viewPane}</Suspense>
         {shouldShowOverlay ? (
           <FilteredEmptyState />
         ) : null}
