@@ -167,7 +167,7 @@
   },
   "kanban": {
     "newTaskIn": "Nueva tarea en {{column}}",
-    "hasSubtasks": "Tiene subtareas"
+    "subtaskCounts": "{{open}} abiertas · {{active}} activas · {{done}} hechas"
   },
   "breadcrumbs": {
     "back": "Atrás",
