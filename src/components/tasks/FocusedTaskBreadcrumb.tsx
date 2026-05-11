@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from "react";
-import { ChevronUp } from "lucide-react";
+import { ArrowLeft, ChevronUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Task } from "@/types";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -20,6 +21,7 @@ export function FocusedTaskBreadcrumb({
   rightSlot,
 }: FocusedTaskBreadcrumbProps) {
   const { t } = useTranslation("tasks");
+  const navigate = useNavigate();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
@@ -54,6 +56,16 @@ export function FocusedTaskBreadcrumb({
         className
       )}
     >
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        aria-label={t("breadcrumbs.back")}
+        title={t("breadcrumbs.goBack")}
+        className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium text-foreground/85 transition-colors hover:text-foreground hover:bg-background/70"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <span>{t("breadcrumbs.back")}</span>
+      </button>
       <button
         type="button"
         onClick={() => focusTask(parentFocusId)}

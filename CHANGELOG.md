@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Breadcrumb now includes a Back button (to the left of Up) that returns to the previous location in browser history.
+
 ## [2.17.0] - 2026-05-11
 Minor release for Noas verification requirements, relay/publish recovery, and feed interaction reliability.
 
