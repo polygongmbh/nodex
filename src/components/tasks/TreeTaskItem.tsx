@@ -165,9 +165,9 @@ export function TreeTaskItem({
   }, [depth, hasMatchingChildren, hasMatchingFilters]);
 
   // Auto-expand when marked in-progress, auto-collapse when marked done.
-  // We compare by status TYPE rather than by reference because normalizeTaskStatus
-  // returns a fresh object every time the task is rebuilt — a reference compare
-  // would re-fire this effect on every render and clobber the user's fold state.
+  // The dep array also includes filter/match state, so we gate on a real
+  // status TYPE transition — otherwise filter toggles would clobber the
+  // user's fold state with the default for the new match context.
   useEffect(() => {
     const currentStatusType = getTaskStatusType(task.status);
     if (prevStatusTypeRef.current === currentStatusType) return;
