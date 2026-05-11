@@ -170,6 +170,8 @@
     "hasSubtasks": "Tiene subtareas"
   },
   "breadcrumbs": {
+    "back": "Atrás",
+    "goBack": "Volver atrás",
     "up": "Subir",
     "goToParent": "Ir a la tarea padre",
     "allTasks": "Todas",

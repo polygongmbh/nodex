@@ -5,9 +5,14 @@ import type { Task } from "@/types";
 import { makePerson } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
+const navigate = vi.fn();
 
 vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
+vi.mock("react-router-dom", () => ({
+  useNavigate: () => navigate,
 }));
 
 const baseTask: Task = {
@@ -27,6 +32,7 @@ const baseTask: Task = {
 
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
+  navigate.mockClear();
 });
 
 describe("FocusedTaskBreadcrumb", () => {
@@ -68,6 +74,12 @@ describe("FocusedTaskBreadcrumb", () => {
     expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(3, { type: "task.focus.change", taskId: "middle" });
     expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(4, { type: "task.focus.change", taskId: "leaf" });
     expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(5, { type: "task.focus.change", taskId: "middle" });
+  });
+
+  it("navigates back in history when clicking back", () => {
+    render(<FocusedTaskBreadcrumb allTasks={[baseTask]} focusedTaskId={null} />);
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(navigate).toHaveBeenCalledWith(-1);
   });
 
   it("formats breadcrumb labels to first-line plain text without mentions or hashtag markers", () => {

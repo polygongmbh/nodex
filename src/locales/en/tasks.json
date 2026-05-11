@@ -170,6 +170,8 @@
     "hasSubtasks": "Has subtasks"
   },
   "breadcrumbs": {
+    "back": "Back",
+    "goBack": "Go back",
     "up": "Up",
     "goToParent": "Go to parent task",
     "allTasks": "All",

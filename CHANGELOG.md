@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Added
 - New **Status** view as the default landing page: project cards for active root tasks with subtasks, a tree of tasks owned by you (or by the selected sidebar people), and a simplified timeline of root-level posts only. Available on both desktop and mobile and reachable as the leftmost view.
+- Breadcrumb now includes a Back button (to the left of Up) that returns to the previous location in browser history.
 
 ## [2.17.0] - 2026-05-11
 Minor release for Noas verification requirements, relay/publish recovery, and feed interaction reliability.
