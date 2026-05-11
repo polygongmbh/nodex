@@ -39,6 +39,35 @@ describe("mergeTasks", () => {
     expect(merged.map((task) => task.id)).toEqual(["newer", "older"]);
   });
 
+  it("reuses the existing reference when the merge yields equivalent values", () => {
+    const existing = {
+      id: "task-1",
+      author: { pubkey: "alice" },
+      content: "Hello",
+      tags: ["work"],
+      taskType: "task",
+      timestamp: new Date("2026-02-17T10:00:00.000Z"),
+      lastEditedAt: new Date("2026-02-17T10:00:00.000Z"),
+      relays: ["relay-a"],
+      status: { type: "open" },
+    } as unknown as Task;
+    const incoming = {
+      id: "task-1",
+      author: { pubkey: "alice" },
+      content: "Hello",
+      tags: ["work"],
+      taskType: "task",
+      timestamp: new Date("2026-02-17T10:00:00.000Z"),
+      relays: ["relay-a"],
+      status: { type: "open" },
+    } as unknown as Task;
+
+    const merged = mergeTasks([existing], [incoming]);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toBe(existing);
+  });
+
   it("preserves relay state update messages when local and relay copies collide", () => {
     const existing = {
       id: "task-1",

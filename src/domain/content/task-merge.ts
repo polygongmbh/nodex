@@ -1,5 +1,6 @@
 import type { Task } from "@/types";
 import { getLastEditedAt } from "@/types";
+import { areTaskFieldsEqual } from "./task-identity";
 
 function mergeStateUpdates(existing: Task["stateUpdates"], incoming: Task["stateUpdates"]): Task["stateUpdates"] {
   const combined = [...(existing || []), ...(incoming || [])];
@@ -47,7 +48,9 @@ export function mergeTasks(existingTasks: Task[], newTasks: Task[]): Task[] {
       status: latestMergedState?.status ?? winner.status,
     };
     mergedTask.lastEditedAt = getLatestEditedAt(mergedTask);
-    byId.set(incoming.id, mergedTask);
+    // Reuse the existing reference when the merged values match — prevents
+    // identity churn for tasks present in both lists across repeated calls.
+    byId.set(incoming.id, areTaskFieldsEqual(existing, mergedTask) ? existing : mergedTask);
   }
   return Array.from(byId.values()).sort(
     (a, b) => b.timestamp.getTime() - a.timestamp.getTime()

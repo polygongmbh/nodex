@@ -14,6 +14,7 @@ import {
   filterPendingLocalTasksForMerge,
 } from "@/domain/content/task-collections";
 import { mergeTasks } from "@/domain/content/task-merge";
+import { preserveTaskListIdentity } from "@/domain/content/task-identity";
 import { deriveChannels } from "@/domain/content/channels";
 import {
   getChannelFrecencyScores,
@@ -138,7 +139,7 @@ export function useIndexDerivedData({
   const lastNostrTasksRef = useRef<Task[]>([]);
   const nostrTasks: Task[] = useMemo(() => {
     if (isHydrating) return lastNostrTasksRef.current;
-    const tasks = nostrEventsToTasks(
+    const fresh = nostrEventsToTasks(
       filteredNostrEvents.map((event) => ({
         id: event.id,
         pubkey: event.pubkey,
@@ -151,6 +152,7 @@ export function useIndexDerivedData({
         relayUrls: event.relayUrls,
       }))
     );
+    const tasks = preserveTaskListIdentity(lastNostrTasksRef.current, fresh);
     lastNostrTasksRef.current = tasks;
     return tasks;
   }, [filteredNostrEvents, isHydrating]);
