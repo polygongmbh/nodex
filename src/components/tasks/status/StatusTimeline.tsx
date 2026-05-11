@@ -5,7 +5,7 @@ import { selectStatusTimelinePosts } from "./status-filters";
 import type { Task } from "@/types";
 
 interface StatusTimelineProps {
-  scopedTasks: Task[];
+  contextTasks: Task[];
   focusedTaskId: string | null;
   peopleScope: Set<string>;
 }
@@ -14,11 +14,11 @@ interface StatusTimelineProps {
  * Simplified, read-only timeline for the status view: only root posts of the
  * current context, no status-update entries, no composer.
  */
-export function StatusTimeline({ scopedTasks, focusedTaskId, peopleScope }: StatusTimelineProps) {
+export function StatusTimeline({ contextTasks, focusedTaskId, peopleScope }: StatusTimelineProps) {
   const { people } = useFeedSurfaceState();
   const posts = useMemo(
-    () => selectStatusTimelinePosts({ scopedTasks, focusedTaskId, peopleScope }),
-    [scopedTasks, focusedTaskId, peopleScope]
+    () => selectStatusTimelinePosts({ contextTasks, focusedTaskId, peopleScope }),
+    [contextTasks, focusedTaskId, peopleScope]
   );
 
   if (posts.length === 0) return null;

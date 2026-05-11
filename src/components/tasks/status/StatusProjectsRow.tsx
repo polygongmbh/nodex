@@ -7,18 +7,18 @@ import { buildChildrenMap } from "@/domain/content/task-sorting";
 import type { Task } from "@/types";
 
 interface StatusProjectsRowProps {
-  scopedTasks: Task[];
+  contextTasks: Task[];
   allTasks: Task[];
   focusedTaskId: string | null;
 }
 
-export function StatusProjectsRow({ scopedTasks, allTasks, focusedTaskId }: StatusProjectsRowProps) {
+export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: StatusProjectsRowProps) {
   const { t } = useTranslation("tasks");
   const { people } = useFeedSurfaceState();
   const childrenByParentId = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
   const projects = useMemo(
-    () => selectStatusProjects({ scopedTasks, childrenByParentId, focusedTaskId }),
-    [scopedTasks, childrenByParentId, focusedTaskId]
+    () => selectStatusProjects({ contextTasks, childrenByParentId, focusedTaskId }),
+    [contextTasks, childrenByParentId, focusedTaskId]
   );
 
   if (projects.length === 0) return null;

@@ -84,7 +84,7 @@ describe("selectStatusProjects", () => {
 
   it("returns only active root tasks that have at least one subtask", () => {
     const result = selectStatusProjects({
-      scopedTasks: allTasks,
+      contextTasks: allTasks,
       childrenByParentId: childrenMap,
       focusedTaskId: null,
     });
@@ -93,7 +93,7 @@ describe("selectStatusProjects", () => {
 
   it("switches to direct children of the focused task when context is narrowed", () => {
     const result = selectStatusProjects({
-      scopedTasks: allTasks,
+      contextTasks: allTasks,
       childrenByParentId: childrenMap,
       focusedTaskId: "p1",
     });
@@ -106,7 +106,7 @@ describe("selectStatusProjects", () => {
     const commentChild = makeTask({ id: "cm-child", parentId: "cm1" });
     const map = buildChildrenMap([comment, commentChild]);
     const result = selectStatusProjects({
-      scopedTasks: [comment, commentChild],
+      contextTasks: [comment, commentChild],
       childrenByParentId: map,
       focusedTaskId: null,
     });
@@ -129,7 +129,7 @@ describe("selectPeopleOwnedTasks", () => {
 
   it("returns tasks assigned to me OR authored by me without assignees", () => {
     const result = selectPeopleOwnedTasks({
-      scopedTasks: [assignedToMe, authoredByMeUnassigned, authoredByMeAssignedToPeer, unrelated],
+      contextTasks: [assignedToMe, authoredByMeUnassigned, authoredByMeAssignedToPeer, unrelated],
       peopleScope: new Set([me]),
     });
     expect(result.map((task) => task.id).sort()).toEqual(["a", "b"]);
@@ -137,7 +137,7 @@ describe("selectPeopleOwnedTasks", () => {
 
   it("returns an empty list when the people scope is empty", () => {
     const result = selectPeopleOwnedTasks({
-      scopedTasks: [assignedToMe, authoredByMeUnassigned],
+      contextTasks: [assignedToMe, authoredByMeUnassigned],
       peopleScope: new Set(),
     });
     expect(result).toEqual([]);
@@ -156,7 +156,7 @@ describe("selectStatusTimelinePosts", () => {
 
   it("returns root posts newest first when no people scope is active", () => {
     const result = selectStatusTimelinePosts({
-      scopedTasks: [root1, root2, child, peerRoot],
+      contextTasks: [root1, root2, child, peerRoot],
       focusedTaskId: null,
       peopleScope: new Set(),
     });
@@ -165,7 +165,7 @@ describe("selectStatusTimelinePosts", () => {
 
   it("restricts root posts to the people scope when one is set", () => {
     const result = selectStatusTimelinePosts({
-      scopedTasks: [root1, root2, peerRoot],
+      contextTasks: [root1, root2, peerRoot],
       focusedTaskId: null,
       peopleScope: new Set(["author-pubkey"]),
     });
@@ -176,7 +176,7 @@ describe("selectStatusTimelinePosts", () => {
     const focused = "r1";
     const sibling = makeTask({ id: "sibling-of-r1", parentId: "r1", timestamp: new Date("2026-05-01") });
     const result = selectStatusTimelinePosts({
-      scopedTasks: [root1, root2, child, sibling],
+      contextTasks: [root1, root2, child, sibling],
       focusedTaskId: focused,
       peopleScope: new Set(),
     });

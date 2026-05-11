@@ -10,18 +10,18 @@ import { selectPeopleOwnedTasks } from "./status-filters";
 import type { Task } from "@/types";
 
 interface StatusMyTasksTreeProps {
-  scopedTasks: Task[];
+  contextTasks: Task[];
   allTasks: Task[];
   peopleScope: Set<string>;
 }
 
 /**
  * The middle column of the status view: a tree of tasks within the current
- * scope that belong to the people scope (either selected sidebar people, or
+ * context owned by the resolved people set (either selected sidebar people, or
  * the signed-in user as fallback). The visible tree is the owned-subgraph —
  * roots are owned tasks whose parent is not also owned.
  */
-export function StatusMyTasksTree({ scopedTasks, allTasks, peopleScope }: StatusMyTasksTreeProps) {
+export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope }: StatusMyTasksTreeProps) {
   const { t } = useTranslation("tasks");
   const { relays } = useFeedSurfaceState();
   const { currentUser, isInteractionBlocked = false, isPendingPublishTask } = useFeedTaskViewModel();
@@ -36,8 +36,8 @@ export function StatusMyTasksTree({ scopedTasks, allTasks, peopleScope }: Status
   );
 
   const ownedTasks = useMemo(
-    () => selectPeopleOwnedTasks({ scopedTasks, peopleScope }),
-    [scopedTasks, peopleScope]
+    () => selectPeopleOwnedTasks({ contextTasks, peopleScope }),
+    [contextTasks, peopleScope]
   );
   const ownedIds = useMemo(() => new Set(ownedTasks.map((task) => task.id)), [ownedTasks]);
 

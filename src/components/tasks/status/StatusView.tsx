@@ -25,7 +25,7 @@ export function StatusView() {
     () => getIncludedExcludedChannelNames(taskSource.channels),
     [taskSource.channels]
   );
-  const scopedTasks = useMemo(
+  const contextTasks = useMemo(
     () =>
       filterTasksForView({
         source: {
@@ -66,7 +66,7 @@ export function StatusView() {
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       <StatusProjectsRow
-        scopedTasks={scopedTasks}
+        contextTasks={contextTasks}
         allTasks={taskSource.allTasks}
         focusedTaskId={taskSource.focusedTaskId}
       />
@@ -75,7 +75,7 @@ export function StatusView() {
           <SectionHeader label={t("status.myTasks.label", { defaultValue: "My tasks" })} />
           <div className="h-[calc(100%-2rem)]">
             <StatusMyTasksTree
-              scopedTasks={scopedTasks}
+              contextTasks={contextTasks}
               allTasks={taskSource.allTasks}
               peopleScope={peopleScope}
             />
@@ -85,7 +85,7 @@ export function StatusView() {
           <SectionHeader label={t("status.timeline.label", { defaultValue: "Recent" })} />
           <div className="h-[calc(100%-2rem)]">
             <StatusTimeline
-              scopedTasks={scopedTasks}
+              contextTasks={contextTasks}
               focusedTaskId={taskSource.focusedTaskId}
               peopleScope={peopleScope}
             />

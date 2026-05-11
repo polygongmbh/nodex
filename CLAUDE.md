@@ -42,11 +42,8 @@ The `useNDK()` hook exposes the entire app state: authenticated user, relay list
 ### Views & Routing
 Routes are `/:view` and `/:view/:taskId`. Views (left-to-right in nav): `status`, `feed`, `tree`, `kanban`, `list`, `calendar`. The canonical order is `VIEW_ORDER` in `src/components/tasks/ViewSwitcher.tsx`; both the URL validator and the keyboard cycler derive from it — do not duplicate. `Index.tsx` renders the appropriate view component via `ViewSwitcher`. `/` redirects to `/status`.
 
-### Scope vs. Context
-- **Scope** = the current sidebar filters (active relays, included/excluded channels, selected people, quick filters, search query). It defines the global slice of content the user is looking at.
-- **Context** = scope **plus** the currently focused task. When no task is focused, scope and context are equivalent; when one is, the context narrows to that task and its descendants.
-
-Views and view-level helpers should consume the context, not just the scope. The Status view in particular is "scoped to the current context" — each of its three sections derives its content from the focused-task-aware filter, not from the unfocused sidebar scope.
+### Context
+The user's **context** is the full current slice of content: sidebar filters (active relays, included/excluded channels, selected people, quick filters, search query) **plus** the currently focused task. Every view-level helper consumes the context — there is no separate "unfocused" mode. The only places that intentionally ignore the focused task (e.g. sidebar list rendering, composer default content) should call that out inline.
 
 ### Component Structure
 - `src/components/tasks/` — view components (`TaskTree`, `ListView`, `KanbanView`, `CalendarView`, `FeedView`) and task display (`TaskItem`, `TaskComposer`)

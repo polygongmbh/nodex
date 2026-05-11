@@ -88,10 +88,9 @@ structure:
 - High-impact behavior areas: compose parsing/submission, channel/tag filtering, Nostr event mapping/publishing tags, and permission/status transitions.
 - `mostr-cli/` is an optional behavioral reference only; never require it as a runtime dependency.
 
-### Scope vs. Context
-- **Scope** = the current sidebar filters (active relays, included/excluded channels, selected people, quick filters, search query). It defines the global slice of content the user is looking at.
-- **Context** = scope **plus** the currently focused task. When no task is focused, scope and context are equivalent; when one is, the context narrows to that task and its descendants.
-- View-level helpers should consume the context, not the bare scope, unless they intentionally want to ignore the focused task.
+### Context
+- The user's **context** is the full current slice of content: sidebar filters (active relays, included/excluded channels, selected people, quick filters, search query) **plus** the currently focused task.
+- Every view-level helper consumes the context — there is no separate "unfocused" mode. The only places that intentionally ignore the focused task (e.g. sidebar list rendering, composer default content) should call that out inline.
 
 ### Startup Repo Check
 - At the start of work, run `git status --short`.
