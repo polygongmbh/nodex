@@ -12,7 +12,7 @@ import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { cn } from "@/lib/utils";
-import { linkifyContent } from "@/lib/linkify";
+import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -146,11 +146,10 @@ export function KanbanTaskCard({
           `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
           // Reserve space for the absolutely-positioned priority chip on the first line(s).
           typeof task.priority === "number" && "pr-14",
-          isProject && "first-line:font-bold",
           isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
         )}
       >
-        {linkifyContent(task.content, (tag) => {
+        {renderTaskContentWithProjectHeading(task.content, isProject, (tag) => {
           void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
         }, {
           plainHashtags: isTaskTerminalStatus(displayStatus),

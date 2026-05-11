@@ -24,7 +24,7 @@ import {
   getISOWeek,
 } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
+import { getStandaloneEmbeddableUrls, renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { TaskTagChipRow, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { TaskPrioritySelect } from "./TaskMetadataEditors";
 import { getAuthorColor } from "@/lib/author-color";
@@ -633,8 +633,7 @@ export function CalendarView({
                                  }}
                                  className={cn(
                                    `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`,
-                                   typeof task.priority === "number" && "pr-14",
-                                   hasNonTerminalChildren(task.id) && "first-line:font-bold"
+                                   typeof task.priority === "number" && "pr-14"
                                  )}
                                  title={(() => {
                                    const typeLabel = t("tasks.task").toLowerCase();
@@ -644,7 +643,7 @@ export function CalendarView({
                                      : t("tasks.focusTaskTitle", { type: typeLabel });
                                  })()}
                                >
-                                 {linkifyContent(task.content, (tag) => {
+                                 {renderTaskContentWithProjectHeading(task.content, hasNonTerminalChildren(task.id), (tag) => {
                                    void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                                  }, {
                                    plainHashtags: isTaskTerminalStatus(task.status),
@@ -1110,11 +1109,10 @@ export function CalendarView({
                                 hasCollapsibleContent && !isContentExpanded
                                   ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                                   : "whitespace-pre-wrap",
-                                hasNonTerminalChildren(task.id) && "first-line:font-bold",
                                 isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                               )}
                             >
-                              {linkifyContent(task.content, (tag) => {
+                              {renderTaskContentWithProjectHeading(task.content, hasNonTerminalChildren(task.id), (tag) => {
                                 void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                               }, {
                                 plainHashtags: isTaskTerminalStatus(task.status),

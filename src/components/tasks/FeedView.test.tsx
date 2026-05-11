@@ -166,7 +166,7 @@ describe("FeedView", () => {
       author,
       status: "open",
     });
-    const linkifySpy = vi.spyOn(linkify, "linkifyContent");
+    const linkifySpy = vi.spyOn(linkify, "renderTaskContentWithProjectHeading");
 
     const { rerender } = render(
       <FeedSurfaceProvider

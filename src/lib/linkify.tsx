@@ -99,7 +99,7 @@ function buildFallbackMentionPerson(identifier: string): Person | null {
   };
 }
 
-interface LinkifyOptions {
+export interface LinkifyOptions {
   plainHashtags?: boolean;
   people?: Person[];
   onStandaloneMediaClick?: (url: string) => void;
@@ -577,4 +577,32 @@ export function linkifyContent(
   flushMarkdownBlock(markdownBlockIndex);
 
   return nodes;
+}
+
+// Renders the same linkified content as `linkifyContent`, but when `isProject`
+// is true wraps the first textual line (or the whole content when it spans a
+// single line) in a bold span. We can't rely on the CSS `::first-line`
+// pseudo-element here because callers use `line-clamp-*`, which sets
+// `display: -webkit-box` and disables `::first-line` styling.
+export function renderTaskContentWithProjectHeading(
+  content: string,
+  isProject: boolean,
+  onHashtagClick?: (tag: string) => void,
+  options?: LinkifyOptions
+): React.ReactNode {
+  if (!isProject) {
+    return linkifyContent(content, onHashtagClick, options);
+  }
+  const newlineIndex = content.indexOf("\n");
+  if (newlineIndex === -1) {
+    return <span className="font-bold">{linkifyContent(content, onHashtagClick, options)}</span>;
+  }
+  return (
+    <>
+      <span className="font-bold">
+        {linkifyContent(content.slice(0, newlineIndex), onHashtagClick, options)}
+      </span>
+      {linkifyContent(content.slice(newlineIndex), onHashtagClick, options)}
+    </>
+  );
 }

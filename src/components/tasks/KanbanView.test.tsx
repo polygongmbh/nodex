@@ -349,11 +349,11 @@ describe("KanbanView", () => {
       />
     );
 
-    const findContent = (taskId: string) =>
-      document.querySelector(`[data-task-id="${taskId}"] [class*="first-line:font-bold"]`);
-    expect(findContent("active-project")).not.toBeNull();
-    expect(findContent("done-project")).toBeNull();
-    expect(findContent("leaf-task")).toBeNull();
+    const findBold = (taskId: string) =>
+      document.querySelector(`[data-task-id="${taskId}"] .font-bold`);
+    expect(findBold("active-project")).not.toBeNull();
+    expect(findBold("done-project")).toBeNull();
+    expect(findBold("leaf-task")).toBeNull();
   });
 
   it("renders subtask counts as open/active/done, omitting active when zero", () => {

@@ -19,7 +19,7 @@ import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
+import { getStandaloneEmbeddableUrls, renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
@@ -189,7 +189,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   );
   const linkedContent = useMemo(
     () =>
-      linkifyContent(task.content, (tag) => {
+      renderTaskContentWithProjectHeading(task.content, isProject, (tag) => {
         void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
       }, {
         plainHashtags: isCompletedVisual,
@@ -204,6 +204,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
       hasCollapsibleContent,
       isActiveTask,
       isCompletedVisual,
+      isProject,
       mediaCaptionByUrl,
       onOpenTaskMedia,
       people,
@@ -428,7 +429,6 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                 hasCollapsibleContent && !expandedContent && !isActiveTask
                   ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                   : "whitespace-pre-wrap",
-                isProject && "first-line:font-bold",
                 isCompletedVisual && "line-through text-muted-foreground"
               )}
             >

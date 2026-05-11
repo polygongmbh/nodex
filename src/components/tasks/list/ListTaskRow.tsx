@@ -136,7 +136,7 @@ export function ListTaskRow({
             }}
             className={cn(
               `text-sm cursor-pointer break-words whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
-              isProject && "first-line:font-bold",
+              isProject && "font-bold",
               isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
             )}
             title={(() => {
