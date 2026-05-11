@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-05-11
+Major release for Status-first navigation, unified project semantics, and focused task navigation updates.
+
 ### Added
 - New **Status** view as the default landing page: project cards for active root tasks with subtasks, a tree of tasks owned by you (or by the selected sidebar people), and a simplified timeline of root-level posts only. Available on both desktop and mobile and reachable as the leftmost view.
 - Breadcrumb now includes a Back button (to the left of Up) that returns to the previous location in browser history.
