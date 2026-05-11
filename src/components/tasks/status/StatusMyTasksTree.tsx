@@ -16,10 +16,12 @@ interface StatusMyTasksTreeProps {
 }
 
 /**
- * The left column of the status view: a tree of tasks within the current
- * scope that belong to the people scope (either selected sidebar people, or
- * the signed-in user as fallback). The visible tree is the owned-subgraph —
- * roots are owned tasks whose parent is not also owned.
+ * The left column of the status view: a flat, priority-sorted list of tasks
+ * within the current scope that belong to the people scope (either selected
+ * sidebar people, or the signed-in user as fallback). Tasks are not nested
+ * under their parents — each owned task appears once, regardless of its
+ * position in the hierarchy. Each row uses the tree display so the user can
+ * expand it to reveal comments and subtasks, but everything starts folded.
  */
 export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope }: StatusMyTasksTreeProps) {
   const { t } = useTranslation("tasks");
@@ -36,22 +38,15 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope }: Statu
   );
 
   const ownedTasks = useMemo(
-    () => selectPeopleOwnedTasks({ contextTasks, peopleScope }),
-    [contextTasks, peopleScope]
+    () => sortTasks(selectPeopleOwnedTasks({ contextTasks, peopleScope }), sortContext),
+    [contextTasks, peopleScope, sortContext]
   );
-  const ownedIds = useMemo(() => new Set(ownedTasks.map((task) => task.id)), [ownedTasks]);
 
-  const ownedRoots = useMemo(() => {
-    const roots = ownedTasks.filter((task) => !task.parentId || !ownedIds.has(task.parentId));
-    return sortTasks(roots, sortContext);
-  }, [ownedTasks, ownedIds, sortContext]);
-
-  const getMatchingChildren = useCallback(
-    (parentId: string): Task[] => {
-      const children = (childrenMap.get(parentId) || []).filter((child) => ownedIds.has(child.id));
-      return sortTasks(children, sortContext);
-    },
-    [childrenMap, ownedIds, sortContext]
+  // Children are only consulted when the user expands a row; in that case we
+  // hand TreeTaskItem the real task children so it can render them recursively.
+  const getRevealedChildren = useCallback(
+    (parentId: string): Task[] => sortTasks(childrenMap.get(parentId) || [], sortContext),
+    [childrenMap, sortContext]
   );
 
   if (peopleScope.size === 0) {
@@ -62,21 +57,22 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope }: Statu
     );
   }
 
-  if (ownedRoots.length === 0) return null;
+  if (ownedTasks.length === 0) return null;
 
   return (
     <TaskAuthorProfilesProvider tasks={allTasks}>
       <div className="scrollbar-main-view h-full overflow-y-auto px-2 sm:px-3 py-3 space-y-1">
-        {ownedRoots.map((task) => (
+        {ownedTasks.map((task) => (
           <TreeTaskItem
             key={task.id}
             task={task}
-            matchingChildren={getMatchingChildren(task.id)}
+            // Render each owned task as a leaf by default; expansion reveals
+            // its real children via getMatchingChildrenFn / childrenMap.
+            matchingChildren={[]}
             childrenMap={childrenMap}
             currentUser={currentUser}
-            matchedByFilter
-            getMatchingChildrenFn={getMatchingChildren}
-            hasMatchingFilters
+            getMatchingChildrenFn={getRevealedChildren}
+            initialFoldState="collapsed"
             activeRelays={activeRelays}
             isPendingPublishTask={isPendingPublishTask}
             isInteractionBlocked={isInteractionBlocked}

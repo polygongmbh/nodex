@@ -67,6 +67,7 @@ interface TreeTaskItemProps {
   getMatchingChildrenFn: (parentId: string) => Task[];
   hasMatchingFilters?: boolean;
   parentFoldState?: TreeTaskFoldState; // Propagate parent's fold state for recursive expansion
+  initialFoldState?: TreeTaskFoldState; // Override the default initial fold state (e.g. always collapsed)
   activeRelays?: Relay[]; // For showing relay source when multiple are active
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
   compactView?: boolean;
@@ -87,6 +88,7 @@ export function TreeTaskItem({
   getMatchingChildrenFn,
   hasMatchingFilters = false,
   parentFoldState,
+  initialFoldState,
   activeRelays = [],
   isKeyboardFocused = false,
   compactView = false,
@@ -120,7 +122,7 @@ export function TreeTaskItem({
 
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const [localFoldState, setLocalFoldState] = useState<TreeTaskFoldState>(
-    getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren)
+    initialFoldState ?? getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren)
   );
   const [hasLocalFoldOverride, setHasLocalFoldOverride] = useState(false);
   const foldState: TreeTaskFoldState =
