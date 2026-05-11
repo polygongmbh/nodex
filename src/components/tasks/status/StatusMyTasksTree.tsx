@@ -16,8 +16,8 @@ interface StatusMyTasksTreeProps {
 }
 
 /**
- * The middle column of the status view: a tree of tasks within the current
- * context owned by the resolved people set (either selected sidebar people, or
+ * The left column of the status view: a tree of tasks within the current
+ * scope that belong to the people scope (either selected sidebar people, or
  * the signed-in user as fallback). The visible tree is the owned-subgraph —
  * roots are owned tasks whose parent is not also owned.
  */

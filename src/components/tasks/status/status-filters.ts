@@ -31,9 +31,9 @@ export function isTaskOwnedByAny(task: Task, pubkeys: Set<string>): boolean {
 }
 
 /**
- * Resolve the set of pubkeys whose tasks the status view's people-filtered
- * sections should highlight. Selected sidebar people take precedence;
- * otherwise fall back to the current user when signed in.
+ * Resolve the set of pubkeys that the status view's people-scoped sections
+ * should focus on. Selected sidebar people take precedence; otherwise fall
+ * back to the current user when signed in.
  */
 export function resolveStatusPeopleScope(
   selectedPeoplePubkeys: string[],
@@ -46,19 +46,19 @@ export function resolveStatusPeopleScope(
 }
 
 interface ProjectFilterOptions {
-  /** Tasks already filtered by the user's context (sidebar filters + focused task). */
+  /** Tasks already pre-scoped by sidebar (relay/channel/people/quick filters). */
   contextTasks: Task[];
   /** Map of parentId → children, built once across allTasks for subtask checks. */
   childrenByParentId: Map<string | undefined, Task[]>;
-  /** Focused task id, or null when nothing is focused. */
+  /** Focused task id (a.k.a. context root); null when scope is unfocused. */
   focusedTaskId: string | null;
 }
 
 /**
  * Project cards on the status view: tasks with `active` status type that have
  * at least one task-typed subtask, AND that are "top level" in the current
- * context — root tasks when nothing is focused, or direct children of the
- * focused task otherwise.
+ * context — root tasks of the scope when nothing is focused, or direct
+ * children of the focused task otherwise.
  */
 export function selectStatusProjects({
   contextTasks,
@@ -86,9 +86,9 @@ interface PeopleScopedFilterOptions {
 }
 
 /**
- * "My tasks" feed: tasks within the current context owned by the resolved
- * people set. With no sidebar people selected and a signed-in user, this
- * maps to "tasks assigned to me or that I created and did not assign".
+ * "My tasks" feed: tasks within the current scope that belong to the people
+ * scope. With no sidebar people selected and a signed-in user, this maps to
+ * "tasks assigned to me or that I created and did not assign".
  */
 export function selectPeopleOwnedTasks({
   contextTasks,
@@ -107,8 +107,8 @@ interface TimelineFilterOptions {
 /**
  * Simplified timeline: root posts of the current context, ordered newest
  * first. State-change events are excluded by construction (we only consider
- * tasks/posts, never `state-update` feed entries). When a people set is
- * resolved, posts must be owned by one of those people.
+ * tasks/posts, never `state-update` feed entries). When a people scope is
+ * active, posts must be owned by one of those people.
  */
 export function selectStatusTimelinePosts({
   contextTasks,
