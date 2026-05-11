@@ -40,7 +40,13 @@ The `useNDK()` hook exposes the entire app state: authenticated user, relay list
 - `Relay` — relay connection with status
 
 ### Views & Routing
-Routes are `/:view` and `/:view/:taskId`. Views: `feed`, `tree`, `list`, `kanban`, `calendar`, `table`. `Index.tsx` renders the appropriate view component via `ViewSwitcher`.
+Routes are `/:view` and `/:view/:taskId`. Views (left-to-right in nav): `status`, `feed`, `tree`, `kanban`, `list`, `calendar`. The canonical order is `VIEW_ORDER` in `src/components/tasks/ViewSwitcher.tsx`; both the URL validator and the keyboard cycler derive from it — do not duplicate. `Index.tsx` renders the appropriate view component via `ViewSwitcher`. `/` redirects to `/status`.
+
+### Scope vs. Context
+- **Scope** = the current sidebar filters (active relays, included/excluded channels, selected people, quick filters, search query). It defines the global slice of content the user is looking at.
+- **Context** = scope **plus** the currently focused task. When no task is focused, scope and context are equivalent; when one is, the context narrows to that task and its descendants.
+
+Views and view-level helpers should consume the context, not just the scope. The Status view in particular is "scoped to the current context" — each of its three sections derives its content from the focused-task-aware filter, not from the unfocused sidebar scope.
 
 ### Component Structure
 - `src/components/tasks/` — view components (`TaskTree`, `ListView`, `KanbanView`, `CalendarView`, `FeedView`) and task display (`TaskItem`, `TaskComposer`)
@@ -78,7 +84,8 @@ High-impact areas that require test coverage:
 
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash` and warn if there are multiple unrelated changed files.
 - Use Conventional Commits: `feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`
-- After implementing a change, commit, then concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
+- After each self-contained change, commit — for multi-step tasks, commit incrementally as you go rather than batching everything into a single end-of-task commit
+- After finishing work, concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
 - Amend the immediately previous local commit when the change is a direct fixup of it; use a new commit otherwise.
 
 When the user says `squash`, inspect recent unpushed commits and suggest sensible squashes for fixups or tightly related follow-ups; list candidates with original and target messages before executing anything.
@@ -94,6 +101,14 @@ When the user says `squash`, inspect recent unpushed commits and suggest sensibl
 - Before deleting, archive with: `git add -f <file>` → `git stash push -m "archive <file>" -- <file>` → `git stash drop`
 
 ### Logging and Toasts
-- Use `console.warn`/`console.error` for actionable issues; avoid noisy debug logs in normal production flows
-- New user-facing features must include debug logs enabled by default in dev builds without manual toggling
+- Use `console.warn`/`console.error` for actionable issues
+- New user-facing features must include debug logs enabled by default in dev builds
 - Use toasts for significant user-facing outcomes; avoid duplicate/spammy toasts for the same event
+
+## Code Standards & Refactor Policy
+
+- Max 300 lines per file — split at natural boundaries if exceeded
+- One component per file; index files export only, no logic
+- Before making substantial changes to a file, clean it up appropriately
+- Never replicate patterns from legacy files without flagging them
+- Do NOT touch files outside the current task scope
