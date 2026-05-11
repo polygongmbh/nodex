@@ -277,7 +277,7 @@ describe("KanbanView", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "parent-task" });
   });
 
-  it("does not focus leaf tasks on click", () => {
+  it("focuses leaf tasks and jumps to the feed view on click", () => {
     const leaf = makeTask({ id: "leaf-task", author, status: "open", content: "Leaf task #general" });
 
     render(
@@ -291,7 +291,60 @@ describe("KanbanView", () => {
     );
 
     fireEvent.click(document.querySelector('[data-task-id="leaf-task"]')!);
-    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "leaf-task" });
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "leaf-task", view: "feed" });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(expect.objectContaining({ type: "ui.view.change" }));
+  });
+
+  it("does not switch view when clicking a branch task", () => {
+    const parent = makeTask({ id: "parent-task", author, status: "open", content: "Parent task #general" });
+    const child = makeTask({
+      id: "child-task",
+      author,
+      status: "open",
+      content: "Child task #general",
+      parentId: "parent-task",
+    });
+
+    render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[parent, child]}
+        allTasks={[parent, child]}
+        currentUser={author}
+        depthMode="all"
+      />
+    );
+
+    fireEvent.click(document.querySelector('[data-task-id="parent-task"]')!);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "parent-task", view: undefined });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(expect.objectContaining({ type: "ui.view.change" }));
+  });
+
+  it("renders branch task content in bold", () => {
+    const parent = makeTask({ id: "parent-task", author, status: "open", content: "Parent task #general" });
+    const child = makeTask({
+      id: "child-task",
+      author,
+      status: "open",
+      content: "Child task #general",
+      parentId: "parent-task",
+    });
+    const leaf = makeTask({ id: "leaf-task", author, status: "open", content: "Leaf task #general" });
+
+    render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[parent, child, leaf]}
+        allTasks={[parent, child, leaf]}
+        currentUser={author}
+        depthMode="all"
+      />
+    );
+
+    const parentCard = document.querySelector('[data-task-id="parent-task"]')!;
+    const leafCard = document.querySelector('[data-task-id="leaf-task"]')!;
+    expect(parentCard.querySelector(".font-bold")).not.toBeNull();
+    expect(leafCard.querySelector(".font-bold")).toBeNull();
   });
 
   it("optimistically moves card to destination column on drop", () => {

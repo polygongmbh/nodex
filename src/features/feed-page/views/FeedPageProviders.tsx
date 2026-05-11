@@ -161,7 +161,7 @@ function FeedInteractionBusFromContexts({
         sidebarCommands.deleteSavedFilter(intent.configurationId);
       },
       "task.focus.change": (intent) => {
-        taskCommands.focusTask(intent.taskId);
+        taskCommands.focusTask(intent.taskId, intent.view);
       },
       "task.create": (intent) => {
         return taskCommands.createTask(

@@ -60,7 +60,7 @@ export type FeedInteractionIntent =
   | { type: "sidebar.quickFilter.recentEnabled.change"; enabled: boolean }
   | { type: "sidebar.quickFilter.minPriority.change"; priority: number }
   | { type: "sidebar.quickFilter.priorityEnabled.change"; enabled: boolean }
-  | { type: "task.focus.change"; taskId: string | null }
+  | { type: "task.focus.change"; taskId: string | null; view?: FeedViewType }
   | {
       type: "task.create";
       content: string;
