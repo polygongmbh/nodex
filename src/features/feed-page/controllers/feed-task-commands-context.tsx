@@ -9,9 +9,10 @@ import type {
   Nip99ListingStatus,
   TaskCreateResult,
 } from "@/types";
+import type { FeedViewType } from "@/features/feed-page/interactions/feed-interaction-intent";
 
 export interface FeedTaskCommands {
-  focusTask(taskId: string | null): void;
+  focusTask(taskId: string | null, view?: FeedViewType): void;
   createTask(
     content: string,
     tags: string[],

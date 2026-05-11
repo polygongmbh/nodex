@@ -79,14 +79,15 @@ export function KanbanTaskCard({
     ? t("tasks.focusTaskWithPreview", { type: tooltipTypeLabel, preview: tooltipPreview })
     : t("tasks.focusTaskTitle", { type: tooltipTypeLabel });
 
+  const taskHasChildren = hasChildren(task.id);
+
   return (
     <TaskSurface
       taskId={task.id}
       title={surfaceTitle}
       onClick={() => {
-        if (!hasTextSelection() && hasChildren(task.id)) {
-          focusTask(task.id);
-        }
+        if (hasTextSelection()) return;
+        focusTask(task.id, taskHasChildren ? undefined : "feed");
       }}
       className={cn(
         `relative min-w-0 bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
@@ -141,6 +142,7 @@ export function KanbanTaskCard({
           `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
           // Reserve space for the absolutely-positioned priority chip on the first line(s).
           typeof task.priority === "number" && "pr-14",
+          taskHasChildren && "font-bold",
           isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
         )}
       >

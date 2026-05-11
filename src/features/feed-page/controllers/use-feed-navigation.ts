@@ -75,8 +75,9 @@ export function useFeedNavigation({
   );
 
   const setFocusedTaskId = useCallback(
-    (taskId: string | null) => {
-      const pathname = taskId ? `/${currentView}/${taskId}` : `/${currentView}`;
+    (taskId: string | null, view?: ViewType) => {
+      const targetView = view ?? currentView;
+      const pathname = taskId ? `/${targetView}/${taskId}` : `/${targetView}`;
       navigateToPath(pathname);
     },
     [navigateToPath, currentView]
