@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { MobileNav, MobileViewType } from "./MobileNav";
+import { isPrimaryMobileView, MOBILE_VIEW_ORDER, MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 
@@ -17,15 +17,13 @@ import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-con
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useMobileToastOffset } from "./use-mobile-toast-offset";
 
-// Mobile view order for swipe navigation
-const mobileViews: MobileViewType[] = ["feed", "tree", "list", "calendar"];
-
-const isPrimaryMobileView = (view: ViewType): view is "feed" | "tree" | "list" | "calendar" => {
-  return view === "feed" || view === "tree" || view === "list" || view === "calendar";
-};
+const mobileViews: readonly MobileViewType[] = MOBILE_VIEW_ORDER;
 
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
+);
+const StatusView = lazy(() =>
+  import("@/components/tasks/status/StatusView").then((module) => ({ default: module.StatusView }))
 );
 const CalendarView = lazy(() =>
   import("@/components/tasks/CalendarView").then((module) => ({ default: module.CalendarView }))
@@ -65,7 +63,7 @@ export function MobileLayout() {
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
   const lastHandledProfilePromptSignalRef = useRef(0);
   const lastHandledGuideStepIdRef = useRef<string | null>(null);
-  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "feed";
+  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "status";
 
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");
@@ -220,6 +218,8 @@ export function MobileLayout() {
       );
     }
     switch (activePrimaryView) {
+      case "status":
+        return <StatusView />;
       case "tree":
         return <TaskTree {...effectiveTaskViewModel} isMobile />;
       case "feed":
@@ -278,7 +278,7 @@ export function MobileLayout() {
         </div>
       </main>
 
-      <div hidden={showFilters || activePrimaryView === "calendar"}>
+      <div hidden={showFilters || activePrimaryView === "calendar" || activePrimaryView === "status"}>
         <UnifiedBottomBar
           currentView={activePrimaryView}
           focusedTaskId={focusedTaskId}

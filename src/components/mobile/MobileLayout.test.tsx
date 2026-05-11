@@ -63,30 +63,37 @@ vi.mock("@/features/feed-page/views/FailedPublishQueueBannerContainer", () => ({
   FailedPublishQueueBannerContainer: () => null,
 }));
 
-vi.mock("./MobileNav", () => ({
-  MobileNav: ({
-    onViewChange,
-    onManageOpen,
-  }: {
-    onViewChange: (view: "tree" | "feed" | "list" | "calendar") => void;
-    onManageOpen?: () => void;
-  }) => (
-    <div data-testid="mobile-nav">
-      <button onClick={() => onViewChange("feed")} aria-label="Switch to feed view">
-        Feed
-      </button>
-      <button onClick={() => onViewChange("tree")} aria-label="Switch to tree view">
-        Tree
-      </button>
-      <button onClick={() => onViewChange("calendar")} aria-label="Switch to calendar view">
-        Calendar
-      </button>
-      <button onClick={onManageOpen} aria-label="Switch to Manage view">
-        Manage
-      </button>
-    </div>
-  ),
-}));
+vi.mock("./MobileNav", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./MobileNav")>();
+  return {
+    ...actual,
+    MobileNav: ({
+      onViewChange,
+      onManageOpen,
+    }: {
+      onViewChange: (view: "status" | "tree" | "feed" | "list" | "calendar") => void;
+      onManageOpen?: () => void;
+    }) => (
+      <div data-testid="mobile-nav">
+        <button onClick={() => onViewChange("status")} aria-label="Switch to status view">
+          Status
+        </button>
+        <button onClick={() => onViewChange("feed")} aria-label="Switch to feed view">
+          Feed
+        </button>
+        <button onClick={() => onViewChange("tree")} aria-label="Switch to tree view">
+          Tree
+        </button>
+        <button onClick={() => onViewChange("calendar")} aria-label="Switch to calendar view">
+          Calendar
+        </button>
+        <button onClick={onManageOpen} aria-label="Switch to Manage view">
+          Manage
+        </button>
+      </div>
+    ),
+  };
+});
 
 vi.mock("./SwipeIndicator", () => ({
   SwipeIndicator: () => <div data-testid="swipe-indicator" />,

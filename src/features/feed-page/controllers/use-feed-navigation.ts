@@ -1,12 +1,12 @@
 import { useRef, useMemo, useCallback, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ViewType } from "@/components/tasks/ViewSwitcher";
+import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { isTaskOutsideSelectedRelayScope } from "@/domain/relays/relay-scope";
 import type { Task, Relay } from "@/types";
 
-const VALID_VIEWS: ViewType[] = ["feed", "tree", "kanban", "list", "calendar"];
+const VALID_VIEWS: readonly ViewType[] = VIEW_ORDER;
 const MOBILE_MANAGE_ROUTE = "manage";
 
 interface UseFeedNavigationOptions {
@@ -33,7 +33,7 @@ export function useFeedNavigation({
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const lastContentViewRef = useRef<ViewType>("feed");
+  const lastContentViewRef = useRef<ViewType>("status");
 
   const isManageRouteActive = urlView === MOBILE_MANAGE_ROUTE;
   const resolvedUrlView = VALID_VIEWS.includes(urlView as ViewType)

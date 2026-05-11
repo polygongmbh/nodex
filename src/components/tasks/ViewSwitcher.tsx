@@ -1,9 +1,10 @@
-import { LayoutList, Columns3, GitBranch, Calendar, List } from "lucide-react";
+import { LayoutList, Columns3, GitBranch, Calendar, List, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
-export type ViewType = "tree" | "feed" | "kanban" | "calendar" | "list";
+export const VIEW_ORDER = ["status", "feed", "tree", "kanban", "list", "calendar"] as const;
+export type ViewType = (typeof VIEW_ORDER)[number];
 
 interface ViewSwitcherProps {
   currentView: ViewType;
@@ -12,13 +13,15 @@ interface ViewSwitcherProps {
 export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
   const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const views: { id: ViewType; label: string; icon: React.ReactNode }[] = [
-    { id: "feed", label: t("navigation.views.feed"), icon: <LayoutList className="w-4 h-4 xl:w-5 xl:h-5" /> },
-    { id: "tree", label: t("navigation.views.tree"), icon: <GitBranch className="w-4 h-4 xl:w-5 xl:h-5" /> },
-    { id: "kanban", label: t("navigation.views.kanban"), icon: <Columns3 className="w-4 h-4 xl:w-5 xl:h-5" /> },
-    { id: "list", label: t("navigation.views.list"), icon: <List className="w-4 h-4 xl:w-5 xl:h-5" /> },
-    { id: "calendar", label: t("navigation.views.calendar"), icon: <Calendar className="w-4 h-4 xl:w-5 xl:h-5" /> },
-  ];
+  const viewMeta: Record<ViewType, { labelKey: string; icon: React.ReactNode }> = {
+    status: { labelKey: "navigation.views.status", icon: <LayoutDashboard className="w-4 h-4 xl:w-5 xl:h-5" /> },
+    feed: { labelKey: "navigation.views.feed", icon: <LayoutList className="w-4 h-4 xl:w-5 xl:h-5" /> },
+    tree: { labelKey: "navigation.views.tree", icon: <GitBranch className="w-4 h-4 xl:w-5 xl:h-5" /> },
+    kanban: { labelKey: "navigation.views.kanban", icon: <Columns3 className="w-4 h-4 xl:w-5 xl:h-5" /> },
+    list: { labelKey: "navigation.views.list", icon: <List className="w-4 h-4 xl:w-5 xl:h-5" /> },
+    calendar: { labelKey: "navigation.views.calendar", icon: <Calendar className="w-4 h-4 xl:w-5 xl:h-5" /> },
+  };
+  const views = VIEW_ORDER.map((id) => ({ id, label: t(viewMeta[id].labelKey), icon: viewMeta[id].icon }));
 
   return (
     <div

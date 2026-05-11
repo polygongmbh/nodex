@@ -12,6 +12,9 @@ import { ViewLoadingFallback } from "./ViewLoadingFallback";
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
 );
+const StatusView = lazy(() =>
+  import("@/components/tasks/status/StatusView").then((module) => ({ default: module.StatusView }))
+);
 const KanbanView = lazy(() =>
   import("@/components/tasks/KanbanView").then((module) => ({ default: module.KanbanView }))
 );
@@ -77,13 +80,22 @@ export function DesktopViewsPane() {
   // whenever no task-typed items match the current filters even if other
   // post types do.
   const shouldShowOverlay =
-    currentView === "feed"
-      ? scopedTasks.length === 0
-      : scopedTasks.every((task) => task.taskType !== "task");
+    currentView === "status"
+      ? false
+      : currentView === "feed"
+        ? scopedTasks.length === 0
+        : scopedTasks.every((task) => task.taskType !== "task");
   const viewFallback = <ViewLoadingFallback />;
 
   let viewPane: ReactNode;
   switch (currentView) {
+    case "status":
+      viewPane = (
+        <Suspense fallback={viewFallback}>
+          <StatusView />
+        </Suspense>
+      );
+      break;
     case "tree":
       viewPane = <TaskTree {...viewModel} />;
       break;

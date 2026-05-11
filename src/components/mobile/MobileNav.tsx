@@ -1,10 +1,16 @@
 import { useRef, useCallback, useState, PointerEvent, useEffect, useLayoutEffect } from "react";
-import { Menu, Rss, GitBranch, List, Calendar } from "lucide-react";
+import { Menu, Rss, GitBranch, List, Calendar, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ViewType } from "@/components/tasks/ViewSwitcher";
+import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useTranslation } from "react-i18next";
 
-export type MobileViewType = ViewType;
+/** Mobile shows the same views as desktop except kanban, in the desktop order. */
+export const MOBILE_VIEW_ORDER = VIEW_ORDER.filter((view) => view !== "kanban");
+export type MobileViewType = (typeof MOBILE_VIEW_ORDER)[number];
+
+export function isPrimaryMobileView(view: ViewType): view is MobileViewType {
+  return (MOBILE_VIEW_ORDER as readonly ViewType[]).includes(view);
+}
 
 interface MobileNavProps {
   currentView: MobileViewType;
@@ -13,7 +19,7 @@ interface MobileNavProps {
   isManageActive?: boolean;
 }
 
-const allSegments: MobileViewType[] = ["feed", "tree", "list", "calendar"];
+const allSegments: readonly MobileViewType[] = MOBILE_VIEW_ORDER;
 const DRAG_START_THRESHOLD_PX = 8;
 
 interface HorizontalRect {
@@ -57,6 +63,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   const skipTransition = useRef(false);
 
   const segmentLabels: Partial<Record<MobileViewType, string>> = {
+    status: t("navigation.views.status"),
     feed: t("navigation.views.feed"),
     tree: t("navigation.views.tree"),
     list: t("navigation.views.upcoming"),
@@ -325,6 +332,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               }}
               tabIndex={currentView === seg ? 0 : -1}
             >
+              {seg === "status" && <LayoutDashboard className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] shrink-0" />}
               {seg === "feed" && <Rss className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] shrink-0" />}
               {seg === "tree" && <GitBranch className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] shrink-0" />}
               {seg === "list" && <List className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] shrink-0" />}

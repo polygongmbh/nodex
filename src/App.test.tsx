@@ -91,13 +91,13 @@ describe("App routes", () => {
     await screen.findByTestId("index-page");
   });
 
-  it("preserves filter query params when redirecting from root to /feed", async () => {
+  it("preserves filter query params when redirecting from root to /status", async () => {
     window.history.pushState({}, "", "/?ch=general&p=alice");
 
     render(<App />);
 
     await screen.findByTestId("index-page");
-    expect(window.location.pathname).toBe("/feed");
+    expect(window.location.pathname).toBe("/status");
     expect(window.location.search).toBe("?ch=general&p=alice");
   });
 

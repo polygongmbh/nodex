@@ -23,7 +23,7 @@ function RootFeedRedirect() {
   return (
     <Navigate
       to={{
-        pathname: "/feed",
+        pathname: "/status",
         search: location.search,
         hash: location.hash,
       }}

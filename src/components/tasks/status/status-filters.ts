@@ -1,0 +1,129 @@
+import { getTaskStatusType, type Task } from "@/types";
+
+function normalizePubkey(value: string | undefined | null): string {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function buildPubkeySet(pubkeys: Iterable<string>): Set<string> {
+  const set = new Set<string>();
+  for (const pubkey of pubkeys) {
+    const normalized = normalizePubkey(pubkey);
+    if (normalized) set.add(normalized);
+  }
+  return set;
+}
+
+function getNormalizedAssignees(task: Task): string[] {
+  return (task.assigneePubkeys ?? []).map(normalizePubkey).filter(Boolean);
+}
+
+/**
+ * "Owned" by a person = explicitly assigned, OR authored without any assignees.
+ * Mirrors the implicit-ownership rule used to pick the avatar shown on a task.
+ */
+export function isTaskOwnedByAny(task: Task, pubkeys: Set<string>): boolean {
+  if (pubkeys.size === 0) return false;
+  const assignees = getNormalizedAssignees(task);
+  if (assignees.length > 0) {
+    return assignees.some((pubkey) => pubkeys.has(pubkey));
+  }
+  return pubkeys.has(normalizePubkey(task.author?.pubkey));
+}
+
+/**
+ * Resolve the set of pubkeys that the status view's people-scoped sections
+ * should focus on. Selected sidebar people take precedence; otherwise fall
+ * back to the current user when signed in.
+ */
+export function resolveStatusPeopleScope(
+  selectedPeoplePubkeys: string[],
+  currentUserPubkey: string | undefined
+): Set<string> {
+  const normalizedSelected = buildPubkeySet(selectedPeoplePubkeys);
+  if (normalizedSelected.size > 0) return normalizedSelected;
+  const normalizedSelf = normalizePubkey(currentUserPubkey);
+  return normalizedSelf ? new Set([normalizedSelf]) : new Set();
+}
+
+interface ProjectFilterOptions {
+  /** Tasks already pre-scoped by sidebar (relay/channel/people/quick filters). */
+  scopedTasks: Task[];
+  /** Map of parentId → children, built once across allTasks for subtask checks. */
+  childrenByParentId: Map<string | undefined, Task[]>;
+  /** Focused task id (a.k.a. context root); null when scope is unfocused. */
+  focusedTaskId: string | null;
+}
+
+/**
+ * Project cards on the status view: tasks with `active` status type that have
+ * at least one task-typed subtask, AND that are "top level" in the current
+ * context — root tasks of the scope when nothing is focused, or direct
+ * children of the focused task otherwise.
+ */
+export function selectStatusProjects({
+  scopedTasks,
+  childrenByParentId,
+  focusedTaskId,
+}: ProjectFilterOptions): Task[] {
+  const result: Task[] = [];
+  for (const task of scopedTasks) {
+    if (task.taskType !== "task") continue;
+    if (getTaskStatusType(task.status) !== "active") continue;
+    const isTopLevelInContext = focusedTaskId
+      ? task.parentId === focusedTaskId
+      : !task.parentId;
+    if (!isTopLevelInContext) continue;
+    const children = childrenByParentId.get(task.id) || [];
+    if (!children.some((child) => child.taskType === "task")) continue;
+    result.push(task);
+  }
+  return result;
+}
+
+interface PeopleScopedFilterOptions {
+  scopedTasks: Task[];
+  peopleScope: Set<string>;
+}
+
+/**
+ * "My tasks" feed: tasks within the current scope that belong to the people
+ * scope. With no sidebar people selected and a signed-in user, this maps to
+ * "tasks assigned to me or that I created and did not assign".
+ */
+export function selectPeopleOwnedTasks({
+  scopedTasks,
+  peopleScope,
+}: PeopleScopedFilterOptions): Task[] {
+  if (peopleScope.size === 0) return [];
+  return scopedTasks.filter((task) => isTaskOwnedByAny(task, peopleScope));
+}
+
+interface TimelineFilterOptions {
+  scopedTasks: Task[];
+  focusedTaskId: string | null;
+  peopleScope: Set<string>;
+}
+
+/**
+ * Simplified timeline: root posts of the current context, ordered newest
+ * first. State-change events are excluded by construction (we only consider
+ * tasks/posts, never `state-update` feed entries). When a people scope is
+ * active, posts must be owned by one of those people.
+ */
+export function selectStatusTimelinePosts({
+  scopedTasks,
+  focusedTaskId,
+  peopleScope,
+}: TimelineFilterOptions): Task[] {
+  const matching = scopedTasks.filter((task) => {
+    const isTopLevelInContext = focusedTaskId
+      ? task.parentId === focusedTaskId
+      : !task.parentId;
+    if (!isTopLevelInContext) return false;
+    if (peopleScope.size > 0 && !isTaskOwnedByAny(task, peopleScope)) {
+      return false;
+    }
+    return true;
+  });
+  return [...matching].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+}

@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from "react";
-import { ViewType } from "@/components/tasks/ViewSwitcher";
+import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 
 interface UseKeyboardShortcutsOptions {
   onViewChange: (view: ViewType) => void;
@@ -10,7 +10,7 @@ interface UseKeyboardShortcutsOptions {
   enabled?: boolean;
 }
 
-const viewOrder: ViewType[] = ["feed", "tree", "kanban", "calendar", "list"];
+const viewOrder: readonly ViewType[] = VIEW_ORDER;
 
 export function useKeyboardShortcuts({
   onViewChange,
@@ -41,8 +41,8 @@ export function useKeyboardShortcuts({
 
       const normalizedKey = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
-      // Number keys 1-5 to switch views
-      if (event.key >= "1" && event.key <= "5") {
+      // Number keys 1-6 to switch views
+      if (event.key >= "1" && event.key <= "6") {
         const index = parseInt(event.key) - 1;
         if (index < viewOrder.length) {
           event.preventDefault();

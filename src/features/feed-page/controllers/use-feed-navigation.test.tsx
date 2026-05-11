@@ -63,14 +63,14 @@ describe("useFeedNavigation", () => {
     expect(screen.getByTestId("current-view")).toHaveTextContent("kanban");
   });
 
-  it("defaults currentView to feed for unknown URL views", () => {
+  it("defaults currentView to status for unknown URL views", () => {
     renderAt("/bogus");
-    expect(screen.getByTestId("current-view")).toHaveTextContent("feed");
+    expect(screen.getByTestId("current-view")).toHaveTextContent("status");
   });
 
-  it("defaults currentView to feed at root path", () => {
+  it("defaults currentView to status at root path", () => {
     renderAt("/");
-    expect(screen.getByTestId("current-view")).toHaveTextContent("feed");
+    expect(screen.getByTestId("current-view")).toHaveTextContent("status");
   });
 
   it("derives focusedTaskId from URL", () => {

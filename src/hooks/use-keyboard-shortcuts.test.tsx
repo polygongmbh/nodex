@@ -31,7 +31,7 @@ describe("useKeyboardShortcuts", () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "p" }));
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "c" }));
 
-    expect(onViewChange).toHaveBeenCalledWith("tree");
+    expect(onViewChange).toHaveBeenCalledWith("feed");
     expect(onToggleChannelMatchMode).toHaveBeenCalledTimes(1);
     expect(onToggleRecentFilter).toHaveBeenCalledTimes(1);
     expect(onTogglePriorityFilter).toHaveBeenCalledTimes(1);

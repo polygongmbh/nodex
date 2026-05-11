@@ -1,0 +1,185 @@
+import { describe, expect, it } from "vitest";
+import { makeTask, makePerson } from "@/test/fixtures";
+import {
+  isTaskOwnedByAny,
+  resolveStatusPeopleScope,
+  selectPeopleOwnedTasks,
+  selectStatusProjects,
+  selectStatusTimelinePosts,
+} from "./status-filters";
+import type { Task } from "@/types";
+
+function buildChildrenMap(tasks: Task[]): Map<string | undefined, Task[]> {
+  const map = new Map<string | undefined, Task[]>();
+  for (const task of tasks) {
+    const key = task.parentId;
+    const bucket = map.get(key);
+    if (bucket) bucket.push(task);
+    else map.set(key, [task]);
+  }
+  return map;
+}
+
+describe("resolveStatusPeopleScope", () => {
+  it("prefers sidebar-selected people over the signed-in user", () => {
+    const scope = resolveStatusPeopleScope(["AAA", "bbb"], "ccc");
+    expect(scope).toEqual(new Set(["aaa", "bbb"]));
+  });
+
+  it("falls back to the current user when no people are selected", () => {
+    expect(resolveStatusPeopleScope([], "CCC")).toEqual(new Set(["ccc"]));
+  });
+
+  it("returns an empty set when nothing is selected and no user is signed in", () => {
+    expect(resolveStatusPeopleScope([], undefined)).toEqual(new Set());
+  });
+});
+
+describe("isTaskOwnedByAny", () => {
+  const me = "me-pub";
+  const meSet = new Set([me]);
+
+  it("recognises explicit assignment", () => {
+    const task = makeTask({ assigneePubkeys: [me], author: makePerson({ pubkey: "someone-else" }) });
+    expect(isTaskOwnedByAny(task, meSet)).toBe(true);
+  });
+
+  it("treats authored-without-assignees as ownership", () => {
+    const task = makeTask({ author: makePerson({ pubkey: me }) });
+    expect(isTaskOwnedByAny(task, meSet)).toBe(true);
+  });
+
+  it("does NOT consider authored tasks owned when assigned to someone else", () => {
+    const task = makeTask({
+      author: makePerson({ pubkey: me }),
+      assigneePubkeys: ["someone-else"],
+    });
+    expect(isTaskOwnedByAny(task, meSet)).toBe(false);
+  });
+
+  it("returns false when the scope set is empty", () => {
+    const task = makeTask({ author: makePerson({ pubkey: me }) });
+    expect(isTaskOwnedByAny(task, new Set())).toBe(false);
+  });
+});
+
+describe("selectStatusProjects", () => {
+  const child = makeTask({ id: "c1", parentId: "p1", status: { type: "open" } });
+  const projectActiveWithSubtasks = makeTask({ id: "p1", status: { type: "active" } });
+  const projectActiveNoSubtasks = makeTask({ id: "p2", status: { type: "active" } });
+  const projectOpenWithSubtasks = makeTask({ id: "p3", status: { type: "open" } });
+  const childOfP3 = makeTask({ id: "c3", parentId: "p3" });
+  const nested = makeTask({ id: "n1", parentId: "p1", status: { type: "active" } });
+  const nestedChild = makeTask({ id: "n2", parentId: "n1" });
+  const allTasks = [
+    projectActiveWithSubtasks,
+    projectActiveNoSubtasks,
+    projectOpenWithSubtasks,
+    child,
+    childOfP3,
+    nested,
+    nestedChild,
+  ];
+  const childrenMap = buildChildrenMap(allTasks);
+
+  it("returns only active root tasks that have at least one subtask", () => {
+    const result = selectStatusProjects({
+      scopedTasks: allTasks,
+      childrenByParentId: childrenMap,
+      focusedTaskId: null,
+    });
+    expect(result.map((task) => task.id)).toEqual(["p1"]);
+  });
+
+  it("switches to direct children of the focused task when context is narrowed", () => {
+    const result = selectStatusProjects({
+      scopedTasks: allTasks,
+      childrenByParentId: childrenMap,
+      focusedTaskId: "p1",
+    });
+    // n1 is active and has a child (n2); child c1 is open
+    expect(result.map((task) => task.id)).toEqual(["n1"]);
+  });
+
+  it("ignores non-task entries", () => {
+    const comment = makeTask({ id: "cm1", taskType: "comment", status: { type: "active" } });
+    const commentChild = makeTask({ id: "cm-child", parentId: "cm1" });
+    const map = buildChildrenMap([comment, commentChild]);
+    const result = selectStatusProjects({
+      scopedTasks: [comment, commentChild],
+      childrenByParentId: map,
+      focusedTaskId: null,
+    });
+    expect(result).toEqual([]);
+  });
+});
+
+describe("selectPeopleOwnedTasks", () => {
+  const me = "me-pub";
+  const peer = "peer-pub";
+
+  const assignedToMe = makeTask({ id: "a", assigneePubkeys: [me] });
+  const authoredByMeUnassigned = makeTask({ id: "b", author: makePerson({ pubkey: me }) });
+  const authoredByMeAssignedToPeer = makeTask({
+    id: "c",
+    author: makePerson({ pubkey: me }),
+    assigneePubkeys: [peer],
+  });
+  const unrelated = makeTask({ id: "d", author: makePerson({ pubkey: peer }) });
+
+  it("returns tasks assigned to me OR authored by me without assignees", () => {
+    const result = selectPeopleOwnedTasks({
+      scopedTasks: [assignedToMe, authoredByMeUnassigned, authoredByMeAssignedToPeer, unrelated],
+      peopleScope: new Set([me]),
+    });
+    expect(result.map((task) => task.id).sort()).toEqual(["a", "b"]);
+  });
+
+  it("returns an empty list when the people scope is empty", () => {
+    const result = selectPeopleOwnedTasks({
+      scopedTasks: [assignedToMe, authoredByMeUnassigned],
+      peopleScope: new Set(),
+    });
+    expect(result).toEqual([]);
+  });
+});
+
+describe("selectStatusTimelinePosts", () => {
+  const root1 = makeTask({ id: "r1", timestamp: new Date("2026-02-01") });
+  const root2 = makeTask({ id: "r2", timestamp: new Date("2026-03-01") });
+  const child = makeTask({ id: "c1", parentId: "r1", timestamp: new Date("2026-04-01") });
+  const peerRoot = makeTask({
+    id: "peer",
+    author: makePerson({ pubkey: "peer-pub" }),
+    timestamp: new Date("2026-02-15"),
+  });
+
+  it("returns root posts newest first when no people scope is active", () => {
+    const result = selectStatusTimelinePosts({
+      scopedTasks: [root1, root2, child, peerRoot],
+      focusedTaskId: null,
+      peopleScope: new Set(),
+    });
+    expect(result.map((task) => task.id)).toEqual(["r2", "peer", "r1"]);
+  });
+
+  it("restricts root posts to the people scope when one is set", () => {
+    const result = selectStatusTimelinePosts({
+      scopedTasks: [root1, root2, peerRoot],
+      focusedTaskId: null,
+      peopleScope: new Set(["author-pubkey"]),
+    });
+    expect(result.map((task) => task.id)).toEqual(["r2", "r1"]);
+  });
+
+  it("uses direct children of the focused task as roots when a context is focused", () => {
+    const focused = "r1";
+    const sibling = makeTask({ id: "sibling-of-r1", parentId: "r1", timestamp: new Date("2026-05-01") });
+    const result = selectStatusTimelinePosts({
+      scopedTasks: [root1, root2, child, sibling],
+      focusedTaskId: focused,
+      peopleScope: new Set(),
+    });
+    expect(result.map((task) => task.id)).toEqual(["sibling-of-r1", "c1"]);
+  });
+});

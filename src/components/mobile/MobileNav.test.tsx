@@ -74,7 +74,7 @@ describe("MobileNav", () => {
     fireEvent.pointerDown(segments[0], { button: 0, buttons: 1, pointerId: 1, clientX: 40 });
 
     expect(onViewChange).toHaveBeenCalledTimes(1);
-    expect(onViewChange).toHaveBeenCalledWith("feed");
+    expect(onViewChange).toHaveBeenCalledWith("status");
   });
 
   it("does not capture the pointer for a simple tap start", () => {
@@ -96,8 +96,8 @@ describe("MobileNav", () => {
       { left: 240, right: 320 },
     ];
 
-    expect(resolveSegmentFromClientX(35, containerRect, childRects)).toBe("feed");
-    expect(resolveSegmentFromClientX(120, containerRect, childRects)).toBe("tree");
+    expect(resolveSegmentFromClientX(35, containerRect, childRects)).toBe("status");
+    expect(resolveSegmentFromClientX(120, containerRect, childRects)).toBe("feed");
     expect(resolveSegmentFromClientX(340, containerRect, childRects)).toBeNull();
     expect(resolveSegmentFromClientX(-10, containerRect, childRects)).toBeNull();
   });
@@ -126,7 +126,7 @@ describe("MobileNav", () => {
     fireEvent.pointerUp(segments[0], { pointerId: 1, clientX: 40 });
 
     expect(onViewChange).toHaveBeenCalledTimes(1);
-    expect(onViewChange).toHaveBeenCalledWith("feed");
+    expect(onViewChange).toHaveBeenCalledWith("status");
   });
 
   it("calls onManageOpen when hamburger button is clicked", () => {
@@ -153,6 +153,7 @@ describe("MobileNav", () => {
 
     expect(pill).not.toBeNull();
     expect(pill?.style.width).toBe("80px");
-    expect(pill?.style.getPropertyValue("--pill-x")).toBe("-3px");
+    // Feed is the second segment now that "status" leads the row; pill-x = 80 - 3.
+    expect(pill?.style.getPropertyValue("--pill-x")).toBe("77px");
   });
 });

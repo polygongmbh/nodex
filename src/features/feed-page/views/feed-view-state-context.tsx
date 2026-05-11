@@ -15,7 +15,7 @@ export interface FeedViewState {
 }
 
 const defaultState: FeedViewState = {
-  currentView: "feed",
+  currentView: "status",
   displayDepthMode: "1",
   isSidebarFocused: false,
   isOnboardingOpen: false,
