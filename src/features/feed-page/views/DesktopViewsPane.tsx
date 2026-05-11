@@ -1,5 +1,6 @@
 import { Suspense, lazy, type ReactNode, useMemo } from "react";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
+import { StatusView } from "@/components/tasks/status/StatusView";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
@@ -11,9 +12,6 @@ import { ViewLoadingFallback } from "./ViewLoadingFallback";
 
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
-);
-const StatusView = lazy(() =>
-  import("@/components/tasks/status/StatusView").then((module) => ({ default: module.StatusView }))
 );
 const KanbanView = lazy(() =>
   import("@/components/tasks/KanbanView").then((module) => ({ default: module.KanbanView }))
@@ -90,11 +88,7 @@ export function DesktopViewsPane() {
   let viewPane: ReactNode;
   switch (currentView) {
     case "status":
-      viewPane = (
-        <Suspense fallback={viewFallback}>
-          <StatusView />
-        </Suspense>
-      );
+      viewPane = <StatusView />;
       break;
     case "tree":
       viewPane = <TaskTree {...viewModel} />;

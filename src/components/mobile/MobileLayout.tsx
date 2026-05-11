@@ -3,6 +3,7 @@ import { isPrimaryMobileView, MOBILE_VIEW_ORDER, MobileNav, MobileViewType } fro
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 
+import { StatusView } from "@/components/tasks/status/StatusView";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { FailedPublishQueueBannerContainer } from "@/features/feed-page/views/FailedPublishQueueBannerContainer";
@@ -21,9 +22,6 @@ const mobileViews: readonly MobileViewType[] = MOBILE_VIEW_ORDER;
 
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
-);
-const StatusView = lazy(() =>
-  import("@/components/tasks/status/StatusView").then((module) => ({ default: module.StatusView }))
 );
 const CalendarView = lazy(() =>
   import("@/components/tasks/CalendarView").then((module) => ({ default: module.CalendarView }))
