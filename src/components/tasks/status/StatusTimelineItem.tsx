@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import { TaskAssigneeAvatars } from "@/components/tasks/TaskAssigneeAvatars";
@@ -22,7 +21,6 @@ interface StatusTimelineItemProps {
 }
 
 export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
-  const { t } = useTranslation("tasks");
   const { focusTask } = useTaskViewServices();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { peopleById } = useFeedPersonLookup();
@@ -43,31 +41,30 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
       data-task-id={task.id}
       onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
       className={cn(
-        "border-b border-border px-3 py-2 cursor-pointer",
+        "flex items-start gap-2 border-b border-border px-3 py-1.5 cursor-pointer",
         TASK_INTERACTION_STYLES.cardSurface
       )}
     >
-      <header className="flex items-center gap-2 text-xs text-muted-foreground">
-        <TaskStateIcon status={task.status} size="w-3.5 h-3.5" className="flex-shrink-0" />
-        <InteractivePersonName person={resolvedAuthor}>
-          <span className="text-foreground font-medium truncate">{authorMeta.primary}</span>
-        </InteractivePersonName>
-        <span className="shrink-0">·</span>
-        <span className="ml-auto shrink-0" title={task.timestamp.toLocaleString()}>{timeAgo}</span>
-      </header>
-      <div
-        className={cn(
-          "mt-1 text-sm leading-snug whitespace-pre-line line-clamp-3",
-          isTerminal && "line-through text-muted-foreground"
-        )}
-      >
-        {linkifyContent(task.content, (tag) => {
-          void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
-        }, { plainHashtags: isTerminal, people, disableStandaloneEmbeds: true })}
+      <TaskStateIcon status={task.status} size="w-3.5 h-3.5" className="mt-0.5 flex-shrink-0" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <InteractivePersonName person={resolvedAuthor}>
+            <span className="truncate font-medium text-foreground">{authorMeta.primary}</span>
+          </InteractivePersonName>
+          <span className="ml-auto shrink-0" title={task.timestamp.toLocaleString()}>{timeAgo}</span>
+        </div>
+        <div
+          className={cn(
+            "text-sm leading-snug whitespace-pre-line line-clamp-2",
+            isTerminal && "line-through text-muted-foreground"
+          )}
+        >
+          {linkifyContent(task.content, (tag) => {
+            void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
+          }, { plainHashtags: isTerminal, people, disableStandaloneEmbeds: true })}
+        </div>
       </div>
-      <footer className="mt-1 flex items-center justify-end">
-        <TaskAssigneeAvatars task={task} />
-      </footer>
+      <TaskAssigneeAvatars task={task} className="mt-0.5" />
     </article>
   );
 }

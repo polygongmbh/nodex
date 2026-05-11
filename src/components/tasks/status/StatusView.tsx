@@ -58,10 +58,21 @@ export function StatusView() {
     ]
   );
 
-  const peopleScope = useMemo(() => {
-    const selectedPubkeys = surface.people.filter((p) => p.isSelected).map((p) => p.pubkey);
-    return resolveStatusPeopleScope(selectedPubkeys, viewModel.currentUser?.pubkey);
-  }, [surface.people, viewModel.currentUser?.pubkey]);
+  const selectedPeoplePubkeys = useMemo(
+    () => surface.people.filter((p) => p.isSelected).map((p) => p.pubkey),
+    [surface.people]
+  );
+  // "My tasks" falls back to the signed-in user when nobody is selected — it's
+  // the personal column. The Recent timeline does NOT fall back, so it shows
+  // posts from everybody unless the sidebar explicitly narrows to people.
+  const myTasksPeopleScope = useMemo(
+    () => resolveStatusPeopleScope(selectedPeoplePubkeys, viewModel.currentUser?.pubkey),
+    [selectedPeoplePubkeys, viewModel.currentUser?.pubkey]
+  );
+  const timelinePeopleScope = useMemo(
+    () => resolveStatusPeopleScope(selectedPeoplePubkeys, undefined),
+    [selectedPeoplePubkeys]
+  );
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
@@ -77,7 +88,7 @@ export function StatusView() {
             <StatusMyTasksTree
               contextTasks={contextTasks}
               allTasks={taskSource.allTasks}
-              peopleScope={peopleScope}
+              peopleScope={myTasksPeopleScope}
             />
           </div>
         </div>
@@ -87,7 +98,7 @@ export function StatusView() {
             <StatusTimeline
               contextTasks={contextTasks}
               focusedTaskId={taskSource.focusedTaskId}
-              peopleScope={peopleScope}
+              peopleScope={timelinePeopleScope}
             />
           </div>
         </div>
