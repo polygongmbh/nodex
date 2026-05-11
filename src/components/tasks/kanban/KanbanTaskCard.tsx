@@ -36,6 +36,7 @@ interface KanbanTaskCardProps {
   isInteractionBlocked: boolean;
   isPendingPublish: boolean;
   hasChildren: (taskId: string) => boolean;
+  isProject: boolean;
 }
 
 export function KanbanTaskCard({
@@ -50,6 +51,7 @@ export function KanbanTaskCard({
   isInteractionBlocked,
   isPendingPublish,
   hasChildren,
+  isProject,
 }: KanbanTaskCardProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -142,7 +144,7 @@ export function KanbanTaskCard({
           `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
           // Reserve space for the absolutely-positioned priority chip on the first line(s).
           typeof task.priority === "number" && "pr-14",
-          taskHasChildren && "font-bold",
+          isProject && "first-line:font-bold",
           isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
         )}
       >

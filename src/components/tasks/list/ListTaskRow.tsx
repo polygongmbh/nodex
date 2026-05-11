@@ -28,6 +28,7 @@ interface ListTaskRowProps {
   ancestorChain: { id: string; text: string }[];
   isKeyboardFocused: boolean;
   isInteractionBlocked: boolean;
+  isProject: boolean;
   getStatusToggleHint: (status?: Task["status"]) => string;
   rowClassName: string;
   bodyCellClassName: string;
@@ -45,6 +46,7 @@ export function ListTaskRow({
   ancestorChain,
   isKeyboardFocused,
   isInteractionBlocked,
+  isProject,
   getStatusToggleHint,
   rowClassName,
   bodyCellClassName,
@@ -134,6 +136,7 @@ export function ListTaskRow({
             }}
             className={cn(
               `text-sm cursor-pointer break-words whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
+              isProject && "first-line:font-bold",
               isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
             )}
             title={(() => {

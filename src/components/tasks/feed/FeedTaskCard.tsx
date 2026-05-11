@@ -51,6 +51,7 @@ interface FeedTaskCardProps {
   isInteractionBlocked: boolean;
   isPendingPublish: boolean;
   isNip05Verified: boolean;
+  isProject: boolean;
   expandedContent: boolean;
   timeLabelFormatter: (date: Date) => string;
   onOpenTaskMedia: (taskId: string, url: string) => void;
@@ -74,6 +75,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   isInteractionBlocked,
   isPendingPublish,
   isNip05Verified,
+  isProject,
   expandedContent,
   timeLabelFormatter,
   onOpenTaskMedia,
@@ -426,6 +428,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                 hasCollapsibleContent && !expandedContent && !isActiveTask
                   ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                   : "whitespace-pre-wrap",
+                isProject && "first-line:font-bold",
                 isCompletedVisual && "line-through text-muted-foreground"
               )}
             >

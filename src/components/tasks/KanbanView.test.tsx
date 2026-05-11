@@ -320,31 +320,40 @@ describe("KanbanView", () => {
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(expect.objectContaining({ type: "ui.view.change" }));
   });
 
-  it("renders branch task content in bold", () => {
-    const parent = makeTask({ id: "parent-task", author, status: "open", content: "Parent task #general" });
-    const child = makeTask({
-      id: "child-task",
+  it("bolds the first line of projects with non-terminal subtasks", () => {
+    const activeProject = makeTask({ id: "active-project", author, status: "open", content: "Active project #general" });
+    const activeChild = makeTask({
+      id: "active-child",
       author,
       status: "open",
-      content: "Child task #general",
-      parentId: "parent-task",
+      content: "Active child #general",
+      parentId: "active-project",
+    });
+    const doneProject = makeTask({ id: "done-project", author, status: "open", content: "Done project #general" });
+    const doneChild = makeTask({
+      id: "done-child",
+      author,
+      status: "done",
+      content: "Done child #general",
+      parentId: "done-project",
     });
     const leaf = makeTask({ id: "leaf-task", author, status: "open", content: "Leaf task #general" });
 
     render(
       <KanbanView
         focusedTaskId={null}
-        tasks={[parent, child, leaf]}
-        allTasks={[parent, child, leaf]}
+        tasks={[activeProject, activeChild, doneProject, doneChild, leaf]}
+        allTasks={[activeProject, activeChild, doneProject, doneChild, leaf]}
         currentUser={author}
         depthMode="all"
       />
     );
 
-    const parentCard = document.querySelector('[data-task-id="parent-task"]')!;
-    const leafCard = document.querySelector('[data-task-id="leaf-task"]')!;
-    expect(parentCard.querySelector(".font-bold")).not.toBeNull();
-    expect(leafCard.querySelector(".font-bold")).toBeNull();
+    const findContent = (taskId: string) =>
+      document.querySelector(`[data-task-id="${taskId}"] [class*="first-line:font-bold"]`);
+    expect(findContent("active-project")).not.toBeNull();
+    expect(findContent("done-project")).toBeNull();
+    expect(findContent("leaf-task")).toBeNull();
   });
 
   it("optimistically moves card to destination column on drop", () => {

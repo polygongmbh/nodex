@@ -10,7 +10,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Breadcrumb now includes a Back button (to the left of Up) that returns to the previous location in browser history.
 
 ### Changed
-- Kanban cards now bold the content of tasks that have subtasks, and clicking a leaf card focuses the task and jumps to the timeline view.
+- Projects with non-terminal subtasks now have their first content line bolded in the feed, list, kanban, and calendar views.
+- Clicking a leaf kanban card focuses the task and jumps to the timeline view.
 
 ## [2.17.0] - 2026-05-11
 Minor release for Noas verification requirements, relay/publish recovery, and feed interaction reliability.

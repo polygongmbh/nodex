@@ -28,6 +28,7 @@ import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
+import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -223,6 +224,13 @@ export function KanbanView({
   );
   const hasChildren = useCallback(
     (taskId: string): boolean => allTasks.some((task) => task.taskType === "task" && task.parentId === taskId),
+    [allTasks]
+  );
+  const hasNonTerminalChildren = useCallback(
+    (taskId: string): boolean =>
+      allTasks.some(
+        (task) => task.taskType === "task" && task.parentId === taskId && !isTaskTerminalStatus(task.status)
+      ),
     [allTasks]
   );
   const dispatchStatusChange = useCallback(
@@ -524,6 +532,7 @@ export function KanbanView({
                             isInteractionBlocked={isInteractionBlocked}
                             isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
                             hasChildren={hasChildren}
+                            isProject={hasNonTerminalChildren(task.id)}
                           />
                         </DraggableCardWrapper>
                       );
@@ -553,6 +562,7 @@ export function KanbanView({
                   isInteractionBlocked={isInteractionBlocked}
                   isPendingPublish={Boolean(isPendingPublishTask?.(activeTask.id))}
                   hasChildren={hasChildren}
+                  isProject={hasNonTerminalChildren(activeTask.id)}
                 />
               </div>
             ) : null}

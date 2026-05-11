@@ -144,6 +144,13 @@ export function CalendarView({
     (taskId: string): boolean => allTasks.some((task) => task.taskType === "task" && task.parentId === taskId),
     [allTasks]
   );
+  const hasNonTerminalChildren = useCallback(
+    (taskId: string): boolean =>
+      allTasks.some(
+        (task) => task.taskType === "task" && task.parentId === taskId && !isTaskTerminalStatus(task.status)
+      ),
+    [allTasks]
+  );
 
   const desktopMonthSections = useMemo(() => {
     return desktopMonths
@@ -626,7 +633,8 @@ export function CalendarView({
                                  }}
                                  className={cn(
                                    `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`,
-                                   typeof task.priority === "number" && "pr-14"
+                                   typeof task.priority === "number" && "pr-14",
+                                   hasNonTerminalChildren(task.id) && "first-line:font-bold"
                                  )}
                                  title={(() => {
                                    const typeLabel = t("tasks.task").toLowerCase();
@@ -1102,6 +1110,7 @@ export function CalendarView({
                                 hasCollapsibleContent && !isContentExpanded
                                   ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                                   : "whitespace-pre-wrap",
+                                hasNonTerminalChildren(task.id) && "first-line:font-bold",
                                 isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                               )}
                             >
