@@ -15,6 +15,7 @@ Major release for Status-first navigation, unified project semantics, and focuse
 
 ### Changed
 - A task is now consistently treated as a "project" when it has at least one non-terminal subtask: its content gets a bold first line in feed/list/kanban/calendar, it appears in the status view's projects row regardless of its own status, and clicking it in kanban keeps focus inside kanban. Non-project cards jump to the timeline on click.
+- Event-cache flushes now preserve unchanged task references more aggressively, reducing unnecessary tree row rerenders and accidental fold-state churn after load.
 - Kanban cards replace the "Has subtasks" label with `open/active/done` counts (active number is omitted when zero); status labels appear on hover.
 
 ## [2.17.0] - 2026-05-11
