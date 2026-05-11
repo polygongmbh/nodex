@@ -14,6 +14,7 @@ import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
+import { makeIsProject } from "@/domain/content/task-projects";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import {
@@ -186,11 +187,7 @@ export function ListView({
     return allTasks.some((task) => task.taskType === "task" && task.parentId === taskId);
   }, [allTasks]);
 
-  const hasNonTerminalChildren = useCallback((taskId: string): boolean => {
-    return allTasks.some(
-      (task) => task.taskType === "task" && task.parentId === taskId && !isTaskTerminalStatus(task.status)
-    );
-  }, [allTasks]);
+  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
 
   const getDepth = useCallback((taskId: string): number => {
     const task = taskLookup.get(taskId);
@@ -552,7 +549,7 @@ export function ListView({
                     ancestorChain={ancestorChain}
                     isKeyboardFocused={isKeyboardFocused}
                     isInteractionBlocked={isInteractionBlocked}
-                    isProject={hasNonTerminalChildren(task.id)}
+                    isProject={isProject(task.id)}
                     getStatusToggleHint={getStatusToggleHint}
                     rowClassName={LIST_SUBGRID_ROW_CLASS}
                     bodyCellClassName={LIST_BODY_CELL_CLASS}

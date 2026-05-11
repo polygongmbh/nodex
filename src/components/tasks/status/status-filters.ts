@@ -1,4 +1,5 @@
-import { getTaskStatusType, type Task } from "@/types";
+import { type Task } from "@/types";
+import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 
 function normalizePubkey(value: string | undefined | null): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -55,10 +56,11 @@ interface ProjectFilterOptions {
 }
 
 /**
- * Project cards on the status view: tasks with `active` status type that have
- * at least one task-typed subtask, AND that are "top level" in the current
- * context — root tasks of the scope when nothing is focused, or direct
- * children of the focused task otherwise.
+ * Project cards on the status view: tasks that qualify as projects (have at
+ * least one non-terminal task-typed subtask) AND that are "top level" in the
+ * current context — root tasks of the scope when nothing is focused, or direct
+ * children of the focused task otherwise. This shares the project definition
+ * used by the kanban click affordance and the bold first line treatment.
  */
 export function selectStatusProjects({
   contextTasks,
@@ -68,13 +70,11 @@ export function selectStatusProjects({
   const result: Task[] = [];
   for (const task of contextTasks) {
     if (task.taskType !== "task") continue;
-    if (getTaskStatusType(task.status) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
       : !task.parentId;
     if (!isTopLevelInContext) continue;
-    const children = childrenByParentId.get(task.id) || [];
-    if (!children.some((child) => child.taskType === "task")) continue;
+    if (!isProjectFromChildrenMap(task.id, childrenByParentId)) continue;
     result.push(task);
   }
   return result;

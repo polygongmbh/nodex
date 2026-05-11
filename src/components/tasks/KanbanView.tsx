@@ -28,7 +28,7 @@ import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { makeIsProject } from "@/domain/content/task-projects";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -222,17 +222,7 @@ export function KanbanView({
     (task: Task): TaskStatus => optimisticStatusByTaskId[task.id] || task.status,
     [optimisticStatusByTaskId]
   );
-  const hasChildren = useCallback(
-    (taskId: string): boolean => allTasks.some((task) => task.taskType === "task" && task.parentId === taskId),
-    [allTasks]
-  );
-  const hasNonTerminalChildren = useCallback(
-    (taskId: string): boolean =>
-      allTasks.some(
-        (task) => task.taskType === "task" && task.parentId === taskId && !isTaskTerminalStatus(task.status)
-      ),
-    [allTasks]
-  );
+  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
   const subtaskCountsByParent = useMemo(() => {
     const map = new Map<string, { open: number; active: number; done: number }>();
     for (const task of allTasks) {
@@ -543,8 +533,7 @@ export function KanbanView({
                             isKeyboardFocused={keyboardFocusedTaskId === task.id && activeTaskId === null}
                             isInteractionBlocked={isInteractionBlocked}
                             isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
-                            hasChildren={hasChildren}
-                            isProject={hasNonTerminalChildren(task.id)}
+                            isProject={isProject(task.id)}
                             subtaskCounts={subtaskCountsByParent.get(task.id)}
                           />
                         </DraggableCardWrapper>
@@ -574,8 +563,7 @@ export function KanbanView({
                   isKeyboardFocused={false}
                   isInteractionBlocked={isInteractionBlocked}
                   isPendingPublish={Boolean(isPendingPublishTask?.(activeTask.id))}
-                  hasChildren={hasChildren}
-                  isProject={hasNonTerminalChildren(activeTask.id)}
+                  isProject={isProject(activeTask.id)}
                   subtaskCounts={subtaskCountsByParent.get(activeTask.id)}
                 />
               </div>

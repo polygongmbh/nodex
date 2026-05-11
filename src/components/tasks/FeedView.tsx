@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { useScrollCapture } from "@/features/feed-page/views/scroll-capture-context";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
+import { makeIsProject } from "@/domain/content/task-projects";
 import { formatAuthorMetaParts } from "@/types/person";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
@@ -278,13 +279,7 @@ export function FeedView({
   const mediaController = useTaskViewMedia(mediaPreviewTasks);
   const { openTaskMedia } = mediaController;
 
-  const hasNonTerminalChildren = useCallback(
-    (taskId: string): boolean =>
-      allTasks.some(
-        (task) => task.taskType === "task" && task.parentId === taskId && !isTaskTerminalStatus(task.status)
-      ),
-    [allTasks]
-  );
+  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);
@@ -539,7 +534,7 @@ export function FeedView({
         isInteractionBlocked={isInteractionBlocked}
         isPendingPublish={isPendingPublish}
         isNip05Verified={nip05VerifiedPubkeys.has(resolvedAuthor.pubkey)}
-        isProject={hasNonTerminalChildren(task.id)}
+        isProject={isProject(task.id)}
         expandedContent={isContentExpanded}
         timeLabelFormatter={timeLabelFormatter}
         onOpenTaskMedia={openTaskMedia}

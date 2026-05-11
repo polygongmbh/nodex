@@ -295,6 +295,37 @@ describe("KanbanView", () => {
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(expect.objectContaining({ type: "ui.view.change" }));
   });
 
+  it("jumps to the feed when clicking a parent whose subtasks are all terminal", () => {
+    const parent = makeTask({ id: "parent-done", author, status: "open", content: "Parent done #general" });
+    const doneChild = makeTask({
+      id: "done-child",
+      author,
+      status: "done",
+      content: "Done child #general",
+      parentId: "parent-done",
+    });
+    const closedChild = makeTask({
+      id: "closed-child",
+      author,
+      status: "closed",
+      content: "Closed child #general",
+      parentId: "parent-done",
+    });
+
+    render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[parent, doneChild, closedChild]}
+        allTasks={[parent, doneChild, closedChild]}
+        currentUser={author}
+        depthMode="all"
+      />
+    );
+
+    fireEvent.click(document.querySelector('[data-task-id="parent-done"]')!);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "parent-done", view: "feed" });
+  });
+
   it("does not switch view when clicking a branch task", () => {
     const parent = makeTask({ id: "parent-task", author, status: "open", content: "Parent task #general" });
     const child = makeTask({

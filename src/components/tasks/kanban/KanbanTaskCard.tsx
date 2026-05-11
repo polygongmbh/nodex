@@ -35,7 +35,6 @@ interface KanbanTaskCardProps {
   isKeyboardFocused: boolean;
   isInteractionBlocked: boolean;
   isPendingPublish: boolean;
-  hasChildren: (taskId: string) => boolean;
   isProject: boolean;
   subtaskCounts?: { open: number; active: number; done: number };
 }
@@ -51,7 +50,6 @@ export function KanbanTaskCard({
   isKeyboardFocused,
   isInteractionBlocked,
   isPendingPublish,
-  hasChildren,
   isProject,
   subtaskCounts,
 }: KanbanTaskCardProps) {
@@ -83,15 +81,13 @@ export function KanbanTaskCard({
     ? t("tasks.focusTaskWithPreview", { type: tooltipTypeLabel, preview: tooltipPreview })
     : t("tasks.focusTaskTitle", { type: tooltipTypeLabel });
 
-  const taskHasChildren = hasChildren(task.id);
-
   return (
     <TaskSurface
       taskId={task.id}
       title={surfaceTitle}
       onClick={() => {
         if (hasTextSelection()) return;
-        focusTask(task.id, taskHasChildren ? undefined : "feed");
+        focusTask(task.id, isProject ? undefined : "feed");
       }}
       className={cn(
         `relative min-w-0 bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,

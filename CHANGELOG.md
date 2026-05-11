@@ -11,8 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Breadcrumb now includes a Back button (to the left of Up) that returns to the previous location in browser history.
 
 ### Changed
-- Projects with non-terminal subtasks now have their first content line bolded in the feed, list, kanban, and calendar views.
-- Clicking a leaf kanban card focuses the task and jumps to the timeline view.
+- A task is now consistently treated as a "project" when it has at least one non-terminal subtask: its content gets a bold first line in feed/list/kanban/calendar, it appears in the status view's projects row regardless of its own status, and clicking it in kanban keeps focus inside kanban. Non-project cards jump to the timeline on click.
 - Kanban cards replace the "Has subtasks" label with `open/active/done` counts (active number is omitted when zero); status labels appear on hover.
 
 ## [2.17.0] - 2026-05-11

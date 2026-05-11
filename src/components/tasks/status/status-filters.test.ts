@@ -64,31 +64,46 @@ describe("isTaskOwnedByAny", () => {
 });
 
 describe("selectStatusProjects", () => {
-  const child = makeTask({ id: "c1", parentId: "p1", status: { type: "open" } });
-  const projectActiveWithSubtasks = makeTask({ id: "p1", status: { type: "active" } });
-  const projectActiveNoSubtasks = makeTask({ id: "p2", status: { type: "active" } });
-  const projectOpenWithSubtasks = makeTask({ id: "p3", status: { type: "open" } });
-  const childOfP3 = makeTask({ id: "c3", parentId: "p3" });
+  const openChild = makeTask({ id: "c1", parentId: "p1", status: { type: "open" } });
+  const activeRootWithOpenChild = makeTask({ id: "p1", status: { type: "active" } });
+  const activeRootNoSubtasks = makeTask({ id: "p2", status: { type: "active" } });
+  const openRootWithOpenChild = makeTask({ id: "p3", status: { type: "open" } });
+  const openChildOfP3 = makeTask({ id: "c3", parentId: "p3", status: { type: "open" } });
+  const doneRootWithOnlyDoneChildren = makeTask({ id: "p4", status: { type: "done" } });
+  const doneChildOfP4 = makeTask({ id: "c4", parentId: "p4", status: { type: "done" } });
+  const closedChildOfP4 = makeTask({ id: "c4b", parentId: "p4", status: { type: "closed" } });
   const nested = makeTask({ id: "n1", parentId: "p1", status: { type: "active" } });
-  const nestedChild = makeTask({ id: "n2", parentId: "n1" });
+  const nestedChild = makeTask({ id: "n2", parentId: "n1", status: { type: "open" } });
   const allTasks = [
-    projectActiveWithSubtasks,
-    projectActiveNoSubtasks,
-    projectOpenWithSubtasks,
-    child,
-    childOfP3,
+    activeRootWithOpenChild,
+    activeRootNoSubtasks,
+    openRootWithOpenChild,
+    openChild,
+    openChildOfP3,
+    doneRootWithOnlyDoneChildren,
+    doneChildOfP4,
+    closedChildOfP4,
     nested,
     nestedChild,
   ];
   const childrenMap = buildChildrenMap(allTasks);
 
-  it("returns only active root tasks that have at least one subtask", () => {
+  it("returns root tasks that have at least one non-terminal subtask, regardless of their own status", () => {
     const result = selectStatusProjects({
       contextTasks: allTasks,
       childrenByParentId: childrenMap,
       focusedTaskId: null,
     });
-    expect(result.map((task) => task.id)).toEqual(["p1"]);
+    expect(result.map((task) => task.id).sort()).toEqual(["p1", "p3"]);
+  });
+
+  it("excludes root tasks whose subtasks are all terminal", () => {
+    const result = selectStatusProjects({
+      contextTasks: [doneRootWithOnlyDoneChildren, doneChildOfP4, closedChildOfP4],
+      childrenByParentId: buildChildrenMap([doneRootWithOnlyDoneChildren, doneChildOfP4, closedChildOfP4]),
+      focusedTaskId: null,
+    });
+    expect(result).toEqual([]);
   });
 
   it("switches to direct children of the focused task when context is narrowed", () => {
@@ -97,13 +112,13 @@ describe("selectStatusProjects", () => {
       childrenByParentId: childrenMap,
       focusedTaskId: "p1",
     });
-    // n1 is active and has a child (n2); child c1 is open
+    // n1 is active and has an open child (n2); c1 has no children
     expect(result.map((task) => task.id)).toEqual(["n1"]);
   });
 
   it("ignores non-task entries", () => {
     const comment = makeTask({ id: "cm1", taskType: "comment", status: { type: "active" } });
-    const commentChild = makeTask({ id: "cm-child", parentId: "cm1" });
+    const commentChild = makeTask({ id: "cm-child", parentId: "cm1", status: { type: "open" } });
     const map = buildChildrenMap([comment, commentChild]);
     const result = selectStatusProjects({
       contextTasks: [comment, commentChild],

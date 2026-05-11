@@ -30,6 +30,7 @@ import { TaskPrioritySelect } from "./TaskMetadataEditors";
 import { getAuthorColor } from "@/lib/author-color";
 
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
+import { makeIsProject } from "@/domain/content/task-projects";
 import { TASK_INTERACTION_STYLES, TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
@@ -144,13 +145,7 @@ export function CalendarView({
     (taskId: string): boolean => allTasks.some((task) => task.taskType === "task" && task.parentId === taskId),
     [allTasks]
   );
-  const hasNonTerminalChildren = useCallback(
-    (taskId: string): boolean =>
-      allTasks.some(
-        (task) => task.taskType === "task" && task.parentId === taskId && !isTaskTerminalStatus(task.status)
-      ),
-    [allTasks]
-  );
+  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
 
   const desktopMonthSections = useMemo(() => {
     return desktopMonths
@@ -643,7 +638,7 @@ export function CalendarView({
                                      : t("tasks.focusTaskTitle", { type: typeLabel });
                                  })()}
                                >
-                                 {renderTaskContentWithProjectHeading(task.content, hasNonTerminalChildren(task.id), (tag) => {
+                                 {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
                                    void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                                  }, {
                                    plainHashtags: isTaskTerminalStatus(task.status),
@@ -1112,7 +1107,7 @@ export function CalendarView({
                                 isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                               )}
                             >
-                              {renderTaskContentWithProjectHeading(task.content, hasNonTerminalChildren(task.id), (tag) => {
+                              {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
                                 void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                               }, {
                                 plainHashtags: isTaskTerminalStatus(task.status),
