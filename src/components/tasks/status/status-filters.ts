@@ -82,8 +82,9 @@ interface ProjectFilterOptions extends TopLevelTaskFilterOptions {
 
 /**
  * Whether any in-progress top-level task within the context is also a
- * "project" (has at least one non-terminal task-typed subtask). Used to decide
- * whether the status row renders the task cards or the composer fallback.
+ * "project" (has at least one non-terminal task-typed subtask). Used to gate
+ * the status row: with no project we hide the row entirely (and let the
+ * composer fallback take over), even if there are active leaf tasks.
  */
 export function hasInProgressTopLevelProject({
   contextTasks,

@@ -6,6 +6,7 @@ import { SharedViewComposer } from "@/components/tasks/SharedViewComposer";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { buildChildrenMap } from "@/domain/content/task-sorting";
+import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 import type { Task } from "@/types";
 
 interface StatusProjectsRowProps {
@@ -57,6 +58,7 @@ export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: Sta
             key={task.id}
             task={task}
             people={people}
+            isProject={isProjectFromChildrenMap(task.id, childrenByParentId)}
             subtaskCount={(childrenByParentId.get(task.id) || []).filter((child) => child.taskType === "task").length}
           />
         ))}

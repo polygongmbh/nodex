@@ -18,15 +18,18 @@ import type { Person } from "@/types/person";
 interface StatusProjectCardProps {
   task: Task;
   people: Person[];
+  isProject: boolean;
   subtaskCount: number;
 }
 
 /**
  * "Big" project card shown on the status view. Adapted from the kanban task
  * card with the status pill removed and emphasis on title, hashtags,
- * assignees and dates. Click focuses the project.
+ * assignees and dates. Project cards (with non-terminal subtasks) are bolded
+ * and click focuses; non-project cards click through to the feed/timeline view
+ * — mirrors the kanban card's project-vs-leaf affordance.
  */
-export function StatusProjectCard({ task, people, subtaskCount }: StatusProjectCardProps) {
+export function StatusProjectCard({ task, people, isProject, subtaskCount }: StatusProjectCardProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
@@ -38,14 +41,15 @@ export function StatusProjectCard({ task, people, subtaskCount }: StatusProjectC
     <TaskSurface
       taskId={task.id}
       onClick={() => {
-        if (!hasTextSelection()) focusTask(task.id);
+        if (hasTextSelection()) return;
+        focusTask(task.id, isProject ? undefined : "feed");
       }}
       className={cn(
         "relative flex h-full min-w-[16rem] max-w-[22rem] flex-col gap-2 rounded-lg border border-border bg-card p-4 shadow-sm cursor-pointer",
         TASK_INTERACTION_STYLES.cardSurface
       )}
     >
-      <div className="text-base font-semibold leading-snug truncate">
+      <div className={cn("text-base leading-snug truncate", isProject ? "font-semibold" : "font-normal")}>
         {linkifyContent(task.content.split("\n", 1)[0] ?? "", (tag) => {
           void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
         }, { people, disableStandaloneEmbeds: true })}

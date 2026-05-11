@@ -87,7 +87,6 @@ describe("selectStatusInProgressTopLevelTasks / hasInProgressTopLevelProject", (
     nested,
     nestedChild,
   ];
-  const childrenMap = buildChildrenMap(allTasks);
 
   it("returns root tasks with active status, regardless of whether they have subtasks", () => {
     const result = selectStatusInProgressTopLevelTasks({
@@ -118,7 +117,7 @@ describe("selectStatusInProgressTopLevelTasks / hasInProgressTopLevelProject", (
     expect(
       hasInProgressTopLevelProject({
         contextTasks: allTasks,
-        childrenByParentId: childrenMap,
+        childrenByParentId: buildChildrenMap(allTasks),
         focusedTaskId: null,
       })
     ).toBe(true);

@@ -7,7 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 ### Changed
-- Status view top row now lists in-progress top-level tasks (showing only the first content line on each card) and falls back to the task composer when no in-progress project exists.
+- Status view top row now lists in-progress top-level tasks (showing only the first content line on each card) and falls back to the task composer when no in-progress project exists. Cards with non-terminal subtasks (projects) are bolded; clicking a non-project card jumps to the activity (feed) view, mirroring kanban.
 - Renamed the Status view's "Recent" column to "Activity"; it now includes comments alongside top-level posts. Comments display a comment icon, and task entries expose a clickable status checkbox for quick status changes.
 - "My tasks" on the Status view no longer mixes in comments unless a task is focused.
 
