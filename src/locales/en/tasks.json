@@ -167,7 +167,7 @@
   },
   "kanban": {
     "newTaskIn": "New task in {{column}}",
-    "hasSubtasks": "Has subtasks"
+    "subtaskCounts": "{{open}} open · {{active}} active · {{done}} done"
   },
   "breadcrumbs": {
     "back": "Back",

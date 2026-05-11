@@ -356,6 +356,42 @@ describe("KanbanView", () => {
     expect(findContent("leaf-task")).toBeNull();
   });
 
+  it("renders subtask counts as open/active/done, omitting active when zero", () => {
+    const parent = makeTask({ id: "parent", author, status: "open", content: "Parent #general" });
+    const open1 = makeTask({ id: "o1", author, status: "open", parentId: "parent", content: "o1 #general" });
+    const open2 = makeTask({ id: "o2", author, status: "open", parentId: "parent", content: "o2 #general" });
+    const active1 = makeTask({ id: "a1", author, status: "active", parentId: "parent", content: "a1 #general" });
+    const done1 = makeTask({ id: "d1", author, status: "done", parentId: "parent", content: "d1 #general" });
+    const done2 = makeTask({ id: "d2", author, status: "done", parentId: "parent", content: "d2 #general" });
+    const done3 = makeTask({ id: "d3", author, status: "done", parentId: "parent", content: "d3 #general" });
+
+    const restingParent = makeTask({ id: "resting", author, status: "open", content: "Resting #general" });
+    const restingOpen = makeTask({ id: "ro1", author, status: "open", parentId: "resting", content: "ro1 #general" });
+    const restingDone = makeTask({ id: "rd1", author, status: "done", parentId: "resting", content: "rd1 #general" });
+
+    const leaf = makeTask({ id: "leaf", author, status: "open", content: "Leaf #general" });
+
+    render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[parent, open1, open2, active1, done1, done2, done3, restingParent, restingOpen, restingDone, leaf]}
+        allTasks={[parent, open1, open2, active1, done1, done2, done3, restingParent, restingOpen, restingDone, leaf]}
+        currentUser={author}
+        depthMode="all"
+      />
+    );
+
+    const parentCard = document.querySelector('[data-task-id="parent"]')!;
+    expect(parentCard.textContent).toContain("2/1/3");
+
+    const restingCard = document.querySelector('[data-task-id="resting"]')!;
+    expect(restingCard.textContent).toContain("1/1");
+    expect(restingCard.textContent).not.toContain("1/0/1");
+
+    const leafCard = document.querySelector('[data-task-id="leaf"]')!;
+    expect(leafCard.textContent).not.toMatch(/\d\/\d/);
+  });
+
   it("optimistically moves card to destination column on drop", () => {
     const task = makeTask({ id: "drag-task", author, status: "open", content: "Drag me #general" });
     const { container } = render(

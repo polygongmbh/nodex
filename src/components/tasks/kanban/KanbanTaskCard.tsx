@@ -37,6 +37,7 @@ interface KanbanTaskCardProps {
   isPendingPublish: boolean;
   hasChildren: (taskId: string) => boolean;
   isProject: boolean;
+  subtaskCounts?: { open: number; active: number; done: number };
 }
 
 export function KanbanTaskCard({
@@ -52,6 +53,7 @@ export function KanbanTaskCard({
   isPendingPublish,
   hasChildren,
   isProject,
+  subtaskCounts,
 }: KanbanTaskCardProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -187,10 +189,21 @@ export function KanbanTaskCard({
             testId={`kanban-chip-row-${task.id}`}
           />
         ) : null}
-        {!compactTaskCardsEnabled && hasChildren(task.id) ? (
-          <span className="mr-auto text-xs text-muted-foreground flex items-center gap-1">
+        {!compactTaskCardsEnabled && subtaskCounts && (subtaskCounts.open + subtaskCounts.active + subtaskCounts.done) > 0 ? (
+          <span
+            className="mr-auto text-xs text-muted-foreground flex items-center gap-1"
+            title={t("kanban.subtaskCounts", {
+              open: subtaskCounts.open,
+              active: subtaskCounts.active,
+              done: subtaskCounts.done,
+            })}
+          >
             <Layers className="w-3 h-3" />
-            <span>{t("kanban.hasSubtasks")}</span>
+            <span>
+              {subtaskCounts.open}
+              {subtaskCounts.active > 0 ? `/${subtaskCounts.active}` : ""}
+              /{subtaskCounts.done}
+            </span>
           </span>
         ) : null}
         {isPendingPublish ? (

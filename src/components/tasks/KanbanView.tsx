@@ -233,6 +233,18 @@ export function KanbanView({
       ),
     [allTasks]
   );
+  const subtaskCountsByParent = useMemo(() => {
+    const map = new Map<string, { open: number; active: number; done: number }>();
+    for (const task of allTasks) {
+      if (task.taskType !== "task" || !task.parentId) continue;
+      const type = getTaskStatusType(task.status);
+      if (type !== "open" && type !== "active" && type !== "done") continue;
+      const counts = map.get(task.parentId) ?? { open: 0, active: 0, done: 0 };
+      counts[type] += 1;
+      map.set(task.parentId, counts);
+    }
+    return map;
+  }, [allTasks]);
   const dispatchStatusChange = useCallback(
     (taskId: string, status: TaskStatus) => {
       void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
@@ -533,6 +545,7 @@ export function KanbanView({
                             isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
                             hasChildren={hasChildren}
                             isProject={hasNonTerminalChildren(task.id)}
+                            subtaskCounts={subtaskCountsByParent.get(task.id)}
                           />
                         </DraggableCardWrapper>
                       );
@@ -563,6 +576,7 @@ export function KanbanView({
                   isPendingPublish={Boolean(isPendingPublishTask?.(activeTask.id))}
                   hasChildren={hasChildren}
                   isProject={hasNonTerminalChildren(activeTask.id)}
+                  subtaskCounts={subtaskCountsByParent.get(activeTask.id)}
                 />
               </div>
             ) : null}
