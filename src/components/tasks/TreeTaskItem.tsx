@@ -127,7 +127,7 @@ export function TreeTaskItem({
   const [hasLocalFoldOverride, setHasLocalFoldOverride] = useState(false);
   const foldState: TreeTaskFoldState =
     parentFoldState === "allVisible" && !hasLocalFoldOverride ? "allVisible" : localFoldState;
-  const prevStatusRef = useRef(task.status);
+  const prevStatusTypeRef = useRef(getTaskStatusType(task.status));
   const cheerTimeoutRef = useRef<number | null>(null);
   const prevHasMatchingFiltersRef = useRef(hasMatchingFilters);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -164,32 +164,33 @@ export function TreeTaskItem({
     }
   }, [depth, hasMatchingChildren, hasMatchingFilters]);
 
-  // Auto-expand when marked in-progress, auto-collapse when marked done
+  // Auto-expand when marked in-progress, auto-collapse when marked done.
+  // We compare by status TYPE rather than by reference because normalizeTaskStatus
+  // returns a fresh object every time the task is rebuilt — a reference compare
+  // would re-fire this effect on every render and clobber the user's fold state.
   useEffect(() => {
-    const prevStatus = prevStatusRef.current;
-    const currentStatus = task.status;
-    
-    if (prevStatus !== currentStatus) {
-      if (getTaskStatusType(currentStatus) === "active") {
-        setLocalFoldState(getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren));
-        setHasLocalFoldOverride(false);
-      } else if (isTaskTerminalStatus(currentStatus)) {
-        setLocalFoldState("collapsed");
-        setHasLocalFoldOverride(false);
-        if (isTaskCompletedStatus(currentStatus)) {
-          setIsCheering(true);
-          if (cheerTimeoutRef.current !== null) {
-            window.clearTimeout(cheerTimeoutRef.current);
-          }
-          cheerTimeoutRef.current = window.setTimeout(() => {
-            setIsCheering(false);
-          }, 700);
-        } else {
-          setIsCheering(false);
+    const currentStatusType = getTaskStatusType(task.status);
+    if (prevStatusTypeRef.current === currentStatusType) return;
+
+    if (currentStatusType === "active") {
+      setLocalFoldState(getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren));
+      setHasLocalFoldOverride(false);
+    } else if (isTaskTerminalStatus(task.status)) {
+      setLocalFoldState("collapsed");
+      setHasLocalFoldOverride(false);
+      if (isTaskCompletedStatus(task.status)) {
+        setIsCheering(true);
+        if (cheerTimeoutRef.current !== null) {
+          window.clearTimeout(cheerTimeoutRef.current);
         }
+        cheerTimeoutRef.current = window.setTimeout(() => {
+          setIsCheering(false);
+        }, 700);
+      } else {
+        setIsCheering(false);
       }
-      prevStatusRef.current = currentStatus;
     }
+    prevStatusTypeRef.current = currentStatusType;
   }, [depth, hasMatchingChildren, hasMatchingFilters, task.status]);
 
   useEffect(() => {
