@@ -186,6 +186,12 @@ export function ListView({
     return allTasks.some((task) => task.taskType === "task" && task.parentId === taskId);
   }, [allTasks]);
 
+  const hasNonTerminalChildren = useCallback((taskId: string): boolean => {
+    return allTasks.some(
+      (task) => task.taskType === "task" && task.parentId === taskId && !isTaskTerminalStatus(task.status)
+    );
+  }, [allTasks]);
+
   const getDepth = useCallback((taskId: string): number => {
     const task = taskLookup.get(taskId);
     if (!task?.parentId) return 1;
@@ -546,6 +552,7 @@ export function ListView({
                     ancestorChain={ancestorChain}
                     isKeyboardFocused={isKeyboardFocused}
                     isInteractionBlocked={isInteractionBlocked}
+                    isProject={hasNonTerminalChildren(task.id)}
                     getStatusToggleHint={getStatusToggleHint}
                     rowClassName={LIST_SUBGRID_ROW_CLASS}
                     bodyCellClassName={LIST_BODY_CELL_CLASS}

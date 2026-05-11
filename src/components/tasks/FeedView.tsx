@@ -278,6 +278,14 @@ export function FeedView({
   const mediaController = useTaskViewMedia(mediaPreviewTasks);
   const { openTaskMedia } = mediaController;
 
+  const hasNonTerminalChildren = useCallback(
+    (taskId: string): boolean =>
+      allTasks.some(
+        (task) => task.taskType === "task" && task.parentId === taskId && !isTaskTerminalStatus(task.status)
+      ),
+    [allTasks]
+  );
+
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);
 
@@ -531,6 +539,7 @@ export function FeedView({
         isInteractionBlocked={isInteractionBlocked}
         isPendingPublish={isPendingPublish}
         isNip05Verified={nip05VerifiedPubkeys.has(resolvedAuthor.pubkey)}
+        isProject={hasNonTerminalChildren(task.id)}
         expandedContent={isContentExpanded}
         timeLabelFormatter={timeLabelFormatter}
         onOpenTaskMedia={openTaskMedia}
