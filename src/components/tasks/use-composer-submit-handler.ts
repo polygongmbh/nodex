@@ -7,11 +7,11 @@ import { toast } from "sonner";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import type { TaskComposerFormData } from "./TaskComposer";
-import type { TaskCreateResult, TaskStatusLike } from "@/types";
+import type { TaskCreateResult, TaskStatus } from "@/types";
 
 interface UseComposerSubmitHandlerOptions {
   focusedTaskId: string | null;
-  initialStatus?: TaskStatusLike;
+  initialStatus?: TaskStatus;
   closeOnSuccess?: boolean;
   onCancel: () => void;
 }

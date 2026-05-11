@@ -73,9 +73,15 @@ describe("KanbanView", () => {
   // Column structure
 
   it("renders a closed column to the right of done", () => {
-    const todoTask = makeTask({ id: "todo-task", author, status: "open", content: "Todo task #general" });
-    const doneTask = makeTask({ id: "done-task", author, status: "done", content: "Done task #general" });
-    const closedTask = makeTask({ id: "closed-task", author, status: "closed", content: "Closed task #general" });
+    const todoTask = makeTask({ id: "todo-task", author, status: {
+      type: "open"
+    }, content: "Todo task #general" });
+    const doneTask = makeTask({ id: "done-task", author, status: {
+      type: "done"
+    }, content: "Done task #general" });
+    const closedTask = makeTask({ id: "closed-task", author, status: {
+      type: "closed"
+    }, content: "Closed task #general" });
 
     render(
       <KanbanView
@@ -98,7 +104,9 @@ describe("KanbanView", () => {
     const olderHighPriority = makeTask({
       id: "older-high-priority",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "Older high priority task #general",
       priority: 80,
       timestamp: new Date("2026-02-17T08:00:00.000Z"),
@@ -107,7 +115,9 @@ describe("KanbanView", () => {
     const newerNoPriority = makeTask({
       id: "newer-no-priority",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "Newer no priority task #general",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:00:00.000Z"),
@@ -171,14 +181,18 @@ describe("KanbanView", () => {
     const prioritizedTask = makeTask({
       id: "priority-task",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "Prioritized task #general",
       priority: 80,
     });
     const nonPrioritizedTask = makeTask({
       id: "no-priority-task",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "No priority task #general",
     });
 
@@ -200,7 +214,9 @@ describe("KanbanView", () => {
     const task = makeTask({
       id: "priority-and-tag-task",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "Task with chips #general",
       tags: ["general"],
       priority: 80,
@@ -227,7 +243,9 @@ describe("KanbanView", () => {
     const task = makeTask({
       id: "attachment-task",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "Task with attachment #general",
       attachments: [
         {
@@ -254,11 +272,15 @@ describe("KanbanView", () => {
   // Interaction
 
   it("focuses branch tasks on click", () => {
-    const parent = makeTask({ id: "parent-task", author, status: "open", content: "Parent task #general" });
+    const parent = makeTask({ id: "parent-task", author, status: {
+      type: "open"
+    }, content: "Parent task #general" });
     const child = makeTask({
       id: "child-task",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "Child task #general",
       parentId: "parent-task",
     });
@@ -278,7 +300,9 @@ describe("KanbanView", () => {
   });
 
   it("focuses leaf tasks and jumps to the feed view on click", () => {
-    const leaf = makeTask({ id: "leaf-task", author, status: "open", content: "Leaf task #general" });
+    const leaf = makeTask({ id: "leaf-task", author, status: {
+      type: "open"
+    }, content: "Leaf task #general" });
 
     render(
       <KanbanView
@@ -296,18 +320,24 @@ describe("KanbanView", () => {
   });
 
   it("jumps to the feed when clicking a parent whose subtasks are all terminal", () => {
-    const parent = makeTask({ id: "parent-done", author, status: "open", content: "Parent done #general" });
+    const parent = makeTask({ id: "parent-done", author, status: {
+      type: "open"
+    }, content: "Parent done #general" });
     const doneChild = makeTask({
       id: "done-child",
       author,
-      status: "done",
+      status: {
+        type: "done"
+      },
       content: "Done child #general",
       parentId: "parent-done",
     });
     const closedChild = makeTask({
       id: "closed-child",
       author,
-      status: "closed",
+      status: {
+        type: "closed"
+      },
       content: "Closed child #general",
       parentId: "parent-done",
     });
@@ -327,11 +357,15 @@ describe("KanbanView", () => {
   });
 
   it("does not switch view when clicking a branch task", () => {
-    const parent = makeTask({ id: "parent-task", author, status: "open", content: "Parent task #general" });
+    const parent = makeTask({ id: "parent-task", author, status: {
+      type: "open"
+    }, content: "Parent task #general" });
     const child = makeTask({
       id: "child-task",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "Child task #general",
       parentId: "parent-task",
     });
@@ -352,23 +386,33 @@ describe("KanbanView", () => {
   });
 
   it("bolds the first line of projects with non-terminal subtasks", () => {
-    const activeProject = makeTask({ id: "active-project", author, status: "open", content: "Active project #general" });
+    const activeProject = makeTask({ id: "active-project", author, status: {
+      type: "open"
+    }, content: "Active project #general" });
     const activeChild = makeTask({
       id: "active-child",
       author,
-      status: "open",
+      status: {
+        type: "open"
+      },
       content: "Active child #general",
       parentId: "active-project",
     });
-    const doneProject = makeTask({ id: "done-project", author, status: "open", content: "Done project #general" });
+    const doneProject = makeTask({ id: "done-project", author, status: {
+      type: "open"
+    }, content: "Done project #general" });
     const doneChild = makeTask({
       id: "done-child",
       author,
-      status: "done",
+      status: {
+        type: "done"
+      },
       content: "Done child #general",
       parentId: "done-project",
     });
-    const leaf = makeTask({ id: "leaf-task", author, status: "open", content: "Leaf task #general" });
+    const leaf = makeTask({ id: "leaf-task", author, status: {
+      type: "open"
+    }, content: "Leaf task #general" });
 
     render(
       <KanbanView
@@ -388,19 +432,41 @@ describe("KanbanView", () => {
   });
 
   it("renders subtask counts as open/active/done, omitting active when zero", () => {
-    const parent = makeTask({ id: "parent", author, status: "open", content: "Parent #general" });
-    const open1 = makeTask({ id: "o1", author, status: "open", parentId: "parent", content: "o1 #general" });
-    const open2 = makeTask({ id: "o2", author, status: "open", parentId: "parent", content: "o2 #general" });
-    const active1 = makeTask({ id: "a1", author, status: "active", parentId: "parent", content: "a1 #general" });
-    const done1 = makeTask({ id: "d1", author, status: "done", parentId: "parent", content: "d1 #general" });
-    const done2 = makeTask({ id: "d2", author, status: "done", parentId: "parent", content: "d2 #general" });
-    const done3 = makeTask({ id: "d3", author, status: "done", parentId: "parent", content: "d3 #general" });
+    const parent = makeTask({ id: "parent", author, status: {
+      type: "open"
+    }, content: "Parent #general" });
+    const open1 = makeTask({ id: "o1", author, status: {
+      type: "open"
+    }, parentId: "parent", content: "o1 #general" });
+    const open2 = makeTask({ id: "o2", author, status: {
+      type: "open"
+    }, parentId: "parent", content: "o2 #general" });
+    const active1 = makeTask({ id: "a1", author, status: {
+      type: "active"
+    }, parentId: "parent", content: "a1 #general" });
+    const done1 = makeTask({ id: "d1", author, status: {
+      type: "done"
+    }, parentId: "parent", content: "d1 #general" });
+    const done2 = makeTask({ id: "d2", author, status: {
+      type: "done"
+    }, parentId: "parent", content: "d2 #general" });
+    const done3 = makeTask({ id: "d3", author, status: {
+      type: "done"
+    }, parentId: "parent", content: "d3 #general" });
 
-    const restingParent = makeTask({ id: "resting", author, status: "open", content: "Resting #general" });
-    const restingOpen = makeTask({ id: "ro1", author, status: "open", parentId: "resting", content: "ro1 #general" });
-    const restingDone = makeTask({ id: "rd1", author, status: "done", parentId: "resting", content: "rd1 #general" });
+    const restingParent = makeTask({ id: "resting", author, status: {
+      type: "open"
+    }, content: "Resting #general" });
+    const restingOpen = makeTask({ id: "ro1", author, status: {
+      type: "open"
+    }, parentId: "resting", content: "ro1 #general" });
+    const restingDone = makeTask({ id: "rd1", author, status: {
+      type: "done"
+    }, parentId: "resting", content: "rd1 #general" });
 
-    const leaf = makeTask({ id: "leaf", author, status: "open", content: "Leaf #general" });
+    const leaf = makeTask({ id: "leaf", author, status: {
+      type: "open"
+    }, content: "Leaf #general" });
 
     render(
       <KanbanView
@@ -424,7 +490,9 @@ describe("KanbanView", () => {
   });
 
   it("optimistically moves card to destination column on drop", () => {
-    const task = makeTask({ id: "drag-task", author, status: "open", content: "Drag me #general" });
+    const task = makeTask({ id: "drag-task", author, status: {
+      type: "open"
+    }, content: "Drag me #general" });
     const { container } = render(
       <KanbanView
         focusedTaskId={null}
@@ -463,7 +531,9 @@ describe("KanbanView", () => {
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
 
     try {
-      const task = makeTask({ id: "edge-scroll-task", author, status: "open", content: "Task #general" });
+      const task = makeTask({ id: "edge-scroll-task", author, status: {
+        type: "open"
+      }, content: "Task #general" });
 
       const { container } = render(
         <KanbanView tasks={[task]} allTasks={[task]} currentUser={author} focusedTaskId={null} depthMode="leaves" />

@@ -49,7 +49,9 @@ const baseTask: Task = makeTask({
   author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
   content: "Ship feature #frontend",
   tags: ["frontend"],
-  status: "open",
+  status: {
+    type: "open"
+  },
 });
 
 beforeEach(() => {
@@ -80,8 +82,12 @@ function chooseComboboxOptionByIndex(name: string | RegExp, optionIndex: number)
 
 describe("TreeTaskItem status actions", () => {
   it("cycles between matching, collapsed, and all-visible child states", () => {
-    const doneChild = makeTask({ id: "done-child", parentId: "t1", content: "Done child", status: "done" });
-    const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", status: "open" });
+    const doneChild = makeTask({ id: "done-child", parentId: "t1", content: "Done child", status: {
+      type: "done"
+    } });
+    const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", status: {
+      type: "open"
+    } });
     const childrenMap = new Map<string | undefined, Task[]>([["t1", [openChild, doneChild]]]);
 
     renderTreeTaskItem({
@@ -119,7 +125,9 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when toggling from in progress to done", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: "active" } });
+    renderTreeTaskItem({ task: { ...baseTask, status: {
+      type: "active"
+    } } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
@@ -163,7 +171,9 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when selecting a status from the dropdown", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: "done" } });
+    renderTreeTaskItem({ task: { ...baseTask, status: {
+      type: "done"
+    } } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
     fireEvent.click(screen.getByText("In Progress"));
@@ -201,7 +211,9 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not cycle done tasks on click when status menu is available", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: "done" } });
+    renderTreeTaskItem({ task: { ...baseTask, status: {
+      type: "done"
+    } } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
@@ -209,7 +221,9 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not cycle closed tasks on click when status menu is available", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: "closed" } });
+    renderTreeTaskItem({ task: { ...baseTask, status: {
+      type: "closed"
+    } } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 

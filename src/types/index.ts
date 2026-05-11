@@ -58,27 +58,6 @@ export interface TaskStatus {
   type: TaskStatusType;
   description?: string;
 }
-export type TaskStatusValue = TaskStatus | TaskStatusType;
-export type TaskStatusLike = TaskStatus | TaskStatusType | undefined;
-export type TaskInitialStatus = Exclude<TaskStatusType, "closed">;
-export type OnNewTask = (
-  content: string,
-  tags: string[],
-  relays: string[],
-  taskType: PostType,
-  dueDate?: Date,
-  dueTime?: string,
-  dateType?: TaskDateType,
-  parentId?: string,
-  initialStatus?: TaskInitialStatus,
-  explicitMentionPubkeys?: string[],
-  mentionIdentifiers?: string[],
-  priority?: number,
-  attachments?: PublishedAttachment[],
-  nip99?: Nip99Metadata,
-  locationGeohash?: string
-) => Promise<TaskCreateResult> | TaskCreateResult;
-
 export interface TaskStateUpdate {
   id: string;
   status: TaskStatus;
@@ -161,7 +140,7 @@ export interface Task {
   locationGeohash?: string;
   timestamp: Date;
   lastEditedAt?: Date;
-  status?: TaskStatusValue;
+  status?: TaskStatus;
   stateUpdates?: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;
@@ -175,7 +154,13 @@ export interface Task {
   rawNostrEvent?: RawNostrEvent;
 }
 
-export function normalizeTaskStatus(status: TaskStatusLike): TaskStatus {
+/**
+ * Boundary normalizer: accepts either the canonical object form or a bare
+ * status-type string (event-converter inputs, test shorthands) and returns the
+ * canonical object form. Internal callers reading `Task.status` directly can
+ * skip this — the field is always a `TaskStatus` once stored.
+ */
+export function normalizeTaskStatus(status: TaskStatus | TaskStatusType | undefined): TaskStatus {
   if (!status) return { type: "open" };
   if (typeof status === "string") return { type: status };
   return {
@@ -184,12 +169,12 @@ export function normalizeTaskStatus(status: TaskStatusLike): TaskStatus {
   };
 }
 
-export function getTaskStatusType(status: TaskStatusLike): TaskStatusType {
+export function getTaskStatusType(status: TaskStatus | TaskStatusType | undefined): TaskStatusType {
   return normalizeTaskStatus(status).type;
 }
 
 export function getTaskStatus(task: Pick<Task, "status">): TaskStatus {
-  return normalizeTaskStatus(task.status);
+  return task.status ?? { type: "open" };
 }
 
 export function getLastEditedAt(task: Task): Date {

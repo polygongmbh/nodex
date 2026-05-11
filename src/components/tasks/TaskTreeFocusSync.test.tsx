@@ -36,7 +36,9 @@ const rootTask: Task = {
   likes: 0,
   replies: 0,
   reposts: 0,
-  status: "open",
+  status: {
+    type: "open"
+  },
 };
 
 const childTask: Task = {
@@ -51,7 +53,9 @@ const doneGrandchildTask: Task = {
   id: "done-grandchild",
   content: "Done grandchild",
   parentId: "root",
-  status: "done",
+  status: {
+    type: "done"
+  },
 };
 
 function renderTaskTree(

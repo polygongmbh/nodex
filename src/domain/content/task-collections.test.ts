@@ -19,7 +19,9 @@ function buildTask(id: string, timestampIso: string, overrides: Partial<Task> = 
     relays: ["demo"],
     taskType: "task",
     timestamp: new Date(timestampIso),
-    status: "open",
+    status: {
+      type: "open"
+    },
     ...overrides,
   });
 }

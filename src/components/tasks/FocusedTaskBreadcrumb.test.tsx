@@ -27,7 +27,9 @@ const baseTask: Task = {
   likes: 0,
   replies: 0,
   reposts: 0,
-  status: "open",
+  status: {
+    type: "open"
+  },
 };
 
 beforeEach(() => {

@@ -53,7 +53,9 @@ describe("CalendarView responsiveness", () => {
       likes: 0,
       replies: 0,
       reposts: 0,
-      status: "open",
+      status: {
+        type: "open"
+      },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     };
     const child: Task = {
@@ -138,21 +140,27 @@ describe("CalendarView responsiveness", () => {
       id: "open-calendar-task",
       author: people[0],
       content: "Open calendar task #general",
-      status: "open",
+      status: {
+        type: "open"
+      },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });
     const doneTask = makeTask({
       id: "done-calendar-task",
       author: people[0],
       content: "Done calendar task #general",
-      status: "done",
+      status: {
+        type: "done"
+      },
       dueDate: new Date("2026-02-18T11:00:00.000Z"),
     });
     const closedTask = makeTask({
       id: "closed-calendar-task",
       author: people[0],
       content: "Closed calendar task #general",
-      status: "closed",
+      status: {
+        type: "closed"
+      },
       dueDate: new Date("2026-02-18T12:00:00.000Z"),
     });
 
@@ -176,7 +184,9 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Calendar priority task #general",
       tags: ["general"],
-      status: "open",
+      status: {
+        type: "open"
+      },
       dueDate: new Date("2026-02-18T12:00:00.000Z"),
       priority: 80,
     });
@@ -201,14 +211,18 @@ describe("CalendarView responsiveness", () => {
       id: "calendar-parent",
       author: people[0],
       content: "Calendar parent #general",
-      status: "open",
+      status: {
+        type: "open"
+      },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });
     const child = makeTask({
       id: "calendar-child",
       author: people[0],
       content: "Calendar child #general",
-      status: "open",
+      status: {
+        type: "open"
+      },
       dueDate: new Date("2026-02-18T11:00:00.000Z"),
       parentId: "calendar-parent",
     });
@@ -235,7 +249,9 @@ describe("CalendarView responsiveness", () => {
       id: "calendar-leaf",
       author: people[0],
       content: "Calendar leaf #general",
-      status: "open",
+      status: {
+        type: "open"
+      },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });
 

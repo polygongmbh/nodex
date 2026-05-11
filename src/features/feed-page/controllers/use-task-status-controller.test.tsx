@@ -10,7 +10,9 @@ const author = makePerson({ pubkey: "author-pubkey", name: "author", displayName
 const initialTask = makeTask({
   id: "task-1",
   author,
-  status: "open",
+  status: {
+    type: "open"
+  },
   stateUpdates: [
     {
       id: "relay-state-1",
@@ -110,7 +112,9 @@ describe("useTaskStatusController", () => {
   it("does not cycle terminal tasks through quick toggle", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
     useTaskMutationStore.setState({
-      localTasks: [makeTask({ ...initialTask, status: "done" })],
+      localTasks: [makeTask({ ...initialTask, status: {
+        type: "done"
+      } })],
       postedTags: [],
       suppressedNostrEventIds: new Set(),
     });
@@ -139,7 +143,9 @@ describe("useTaskStatusController", () => {
 
     const publishTaskStateUpdate = vi.fn(async () => undefined);
     useTaskMutationStore.setState({
-      localTasks: [makeTask({ ...initialTask, status: "active" })],
+      localTasks: [makeTask({ ...initialTask, status: {
+        type: "active"
+      } })],
       postedTags: [],
       suppressedNostrEventIds: new Set(),
     });

@@ -1,4 +1,4 @@
-import type { Task, TaskStateUpdate, TaskStatusValue } from "@/types";
+import type { Task, TaskStateUpdate, TaskStatus } from "@/types";
 
 /**
  * Returns `previous` when `fresh` carries the same signal-bearing values, so
@@ -43,14 +43,10 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
   return true;
 }
 
-function areStatusEqual(a: TaskStatusValue | undefined, b: TaskStatusValue | undefined): boolean {
+function areStatusEqual(a: TaskStatus | undefined, b: TaskStatus | undefined): boolean {
   if (a === b) return true;
-  const aType = typeof a === "string" ? a : a?.type;
-  const bType = typeof b === "string" ? b : b?.type;
-  if (aType !== bType) return false;
-  const aDesc = typeof a === "object" ? a?.description : undefined;
-  const bDesc = typeof b === "object" ? b?.description : undefined;
-  return aDesc === bDesc;
+  if (a?.type !== b?.type) return false;
+  return a?.description === b?.description;
 }
 
 function areStateUpdateListsEqual(

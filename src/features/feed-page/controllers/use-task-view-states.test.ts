@@ -146,13 +146,17 @@ describe("sortKanbanColumnTasks", () => {
   it("uses latest edit time for done and closed columns", () => {
     const olderDone = makeTask({
       id: "older-done",
-      status: "done",
+      status: {
+        type: "done"
+      },
       timestamp: new Date("2026-02-17T09:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:00:00.000Z"),
     });
     const newerDone = makeTask({
       id: "newer-done",
-      status: "done",
+      status: {
+        type: "done"
+      },
       timestamp: new Date("2026-02-17T08:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T11:00:00.000Z"),
     });

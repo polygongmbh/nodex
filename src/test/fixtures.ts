@@ -1,4 +1,4 @@
-import { normalizeTaskStatus, type Channel, type Relay, type Task } from "@/types";
+import type { Channel, Relay, Task } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
 const DEFAULT_TIME = new Date("2026-01-01T00:00:00.000Z");
@@ -47,7 +47,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     likes: 0,
     replies: 0,
     reposts: 0,
-    status: normalizeTaskStatus(overrides.status),
+    status: { type: "open" },
     ...overrides,
   };
 }

@@ -1,4 +1,4 @@
-import { getTaskStatusType, normalizeTaskStatus, type TaskStatus, type TaskStatusLike, type TaskStatusType } from "@/types";
+import { normalizeTaskStatus, type TaskStatus, type TaskStatusType } from "@/types";
 
 /** Semantic type for grouping, sorting, and protocol mapping — identical to TaskStatusType. */
 export type TaskStateType = TaskStatusType;
@@ -91,11 +91,11 @@ const DEFAULT_TYPE_DEFINITIONS: Record<TaskStateType, Omit<TaskStateDefinition, 
  * Matches configured states by label first, then falls back to the built-in for the status.
  */
 export function resolveTaskState(
-  status: TaskStatusLike,
+  status: TaskStatusType | undefined,
   label?: string,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
-  const effectiveStatus: TaskStatusType = getTaskStatusType(status);
+  const effectiveStatus: TaskStatusType = status ?? "open";
   if (label) {
     // Match a configured state whose label matches (case-insensitive) and whose type is compatible
     const byLabel = registry.find(
@@ -120,7 +120,7 @@ export function resolveTaskState(
 }
 
 export function resolveTaskStateFromStatus(
-  status: TaskStatusLike,
+  status: TaskStatus | TaskStatusType | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
   const normalizedStatus = normalizeTaskStatus(status);

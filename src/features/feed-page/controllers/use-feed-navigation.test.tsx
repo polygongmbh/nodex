@@ -150,7 +150,9 @@ describe("useFeedNavigation", () => {
     const task: Task = {
       id: "task-scoped",
       content: "test task",
-      status: "open",
+      status: {
+        type: "open"
+      },
       timestamp: new Date(),
       tags: [],
       relays: ["relay-a"],
