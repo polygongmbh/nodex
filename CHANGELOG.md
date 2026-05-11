@@ -6,6 +6,11 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Status view top row now lists in-progress top-level tasks (showing only the first content line on each card) and falls back to the task composer when no in-progress project exists.
+- Renamed the Status view's "Recent" column to "Activity"; it now includes comments alongside top-level posts. Comments display a comment icon, and task entries expose a clickable status checkbox for quick status changes.
+- "My tasks" on the Status view no longer mixes in comments unless a task is focused.
+
 ## [3.0.0] - 2026-05-11
 Major release for Status-first navigation, unified project semantics, and focused task navigation updates.
 

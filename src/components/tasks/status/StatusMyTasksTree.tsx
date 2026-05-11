@@ -13,6 +13,7 @@ interface StatusMyTasksTreeProps {
   contextTasks: Task[];
   allTasks: Task[];
   peopleScope: Set<string>;
+  focusedTaskId: string | null;
 }
 
 /**
@@ -23,7 +24,7 @@ interface StatusMyTasksTreeProps {
  * position in the hierarchy. Each row uses the tree display so the user can
  * expand it to reveal comments and subtasks, but everything starts folded.
  */
-export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope }: StatusMyTasksTreeProps) {
+export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focusedTaskId }: StatusMyTasksTreeProps) {
   const { t } = useTranslation("tasks");
   const { relays } = useFeedSurfaceState();
   const { currentUser, isInteractionBlocked = false, isPendingPublishTask } = useFeedTaskViewModel();
@@ -38,8 +39,8 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope }: Statu
   );
 
   const ownedTasks = useMemo(
-    () => sortTasks(selectPeopleOwnedTasks({ contextTasks, peopleScope }), sortContext),
-    [contextTasks, peopleScope, sortContext]
+    () => sortTasks(selectPeopleOwnedTasks({ contextTasks, peopleScope, focusedTaskId }), sortContext),
+    [contextTasks, focusedTaskId, peopleScope, sortContext]
   );
 
   // Children are only consulted when the user expands a row; in that case we

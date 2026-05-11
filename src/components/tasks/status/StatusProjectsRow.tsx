@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { StatusProjectCard } from "./StatusProjectCard";
-import { selectStatusProjects } from "./status-filters";
+import { hasInProgressTopLevelProject, selectStatusInProgressTopLevelTasks } from "./status-filters";
+import { SharedViewComposer } from "@/components/tasks/SharedViewComposer";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { buildChildrenMap } from "@/domain/content/task-sorting";
 import type { Task } from "@/types";
@@ -15,26 +17,47 @@ interface StatusProjectsRowProps {
 export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: StatusProjectsRowProps) {
   const { t } = useTranslation("tasks");
   const { people } = useFeedSurfaceState();
+  const authPolicy = useAuthActionPolicy();
   const childrenByParentId = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const projects = useMemo(
-    () => selectStatusProjects({ contextTasks, childrenByParentId, focusedTaskId }),
+  const inProgressTopLevel = useMemo(
+    () => selectStatusInProgressTopLevelTasks({ contextTasks, focusedTaskId }),
+    [contextTasks, focusedTaskId]
+  );
+  const hasProject = useMemo(
+    () => hasInProgressTopLevelProject({ contextTasks, childrenByParentId, focusedTaskId }),
     [contextTasks, childrenByParentId, focusedTaskId]
   );
 
-  if (projects.length === 0) return null;
+  if (!hasProject) {
+    if (!authPolicy.canOpenCompose) return null;
+    return (
+      <section
+        aria-label={t("status.projects.composeLabel", { defaultValue: "Create task" })}
+        className="border-b border-border"
+      >
+        <SharedViewComposer
+          onCancel={() => {}}
+          focusedTaskId={focusedTaskId}
+          className="px-3 py-3"
+        />
+      </section>
+    );
+  }
+
+  if (inProgressTopLevel.length === 0) return null;
 
   return (
     <section
-      aria-label={t("status.projects.label", { defaultValue: "Active projects" })}
+      aria-label={t("status.projects.label", { defaultValue: "In progress" })}
       className="border-b border-border"
     >
       <div className="flex gap-3 overflow-x-auto px-3 py-3 scrollbar-main-view">
-        {projects.map((project) => (
+        {inProgressTopLevel.map((task) => (
           <StatusProjectCard
-            key={project.id}
-            task={project}
+            key={task.id}
+            task={task}
             people={people}
-            subtaskCount={(childrenByParentId.get(project.id) || []).filter((child) => child.taskType === "task").length}
+            subtaskCount={(childrenByParentId.get(task.id) || []).filter((child) => child.taskType === "task").length}
           />
         ))}
       </div>

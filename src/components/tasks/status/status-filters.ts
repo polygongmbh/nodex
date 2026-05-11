@@ -1,4 +1,4 @@
-import { type Task } from "@/types";
+import { getTaskStatusType, type Task } from "@/types";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 
 function normalizePubkey(value: string | undefined | null): string {
@@ -46,43 +46,71 @@ export function resolveStatusPeopleScope(
   return normalizedSelf ? new Set([normalizedSelf]) : new Set();
 }
 
-interface ProjectFilterOptions {
+interface TopLevelTaskFilterOptions {
   /** Tasks already pre-scoped by sidebar (relay/channel/people/quick filters). */
   contextTasks: Task[];
-  /** Map of parentId → children, built once across allTasks for subtask checks. */
-  childrenByParentId: Map<string | undefined, Task[]>;
   /** Focused task id (a.k.a. context root); null when scope is unfocused. */
   focusedTaskId: string | null;
 }
 
 /**
- * Project cards on the status view: tasks that qualify as projects (have at
- * least one non-terminal task-typed subtask) AND that are "top level" in the
- * current context — root tasks of the scope when nothing is focused, or direct
- * children of the focused task otherwise. This shares the project definition
- * used by the kanban click affordance and the bold first line treatment.
+ * In-progress top-level tasks for the status row: task-typed entries with
+ * `active` status that sit at the root of the current context (no parent when
+ * unfocused, or direct children of the focused task otherwise).
  */
-export function selectStatusProjects({
+export function selectStatusInProgressTopLevelTasks({
   contextTasks,
-  childrenByParentId,
   focusedTaskId,
-}: ProjectFilterOptions): Task[] {
+}: TopLevelTaskFilterOptions): Task[] {
   const result: Task[] = [];
   for (const task of contextTasks) {
     if (task.taskType !== "task") continue;
+    if (getTaskStatusType(task.status) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
       : !task.parentId;
     if (!isTopLevelInContext) continue;
-    if (!isProjectFromChildrenMap(task.id, childrenByParentId)) continue;
     result.push(task);
   }
   return result;
 }
 
+interface ProjectFilterOptions extends TopLevelTaskFilterOptions {
+  /** Map of parentId → children, built once across allTasks for subtask checks. */
+  childrenByParentId: Map<string | undefined, Task[]>;
+}
+
+/**
+ * Whether any in-progress top-level task within the context is also a
+ * "project" (has at least one non-terminal task-typed subtask). Used to decide
+ * whether the status row renders the task cards or the composer fallback.
+ */
+export function hasInProgressTopLevelProject({
+  contextTasks,
+  childrenByParentId,
+  focusedTaskId,
+}: ProjectFilterOptions): boolean {
+  for (const task of contextTasks) {
+    if (task.taskType !== "task") continue;
+    if (getTaskStatusType(task.status) !== "active") continue;
+    const isTopLevelInContext = focusedTaskId
+      ? task.parentId === focusedTaskId
+      : !task.parentId;
+    if (!isTopLevelInContext) continue;
+    if (isProjectFromChildrenMap(task.id, childrenByParentId)) return true;
+  }
+  return false;
+}
+
 interface PeopleScopedFilterOptions {
   contextTasks: Task[];
   peopleScope: Set<string>;
+  /**
+   * When null (unfocused scope), comments are excluded — "My tasks" should not
+   * be polluted with reply chatter at the top level. Within a focused task,
+   * comments are kept since the user is intentionally browsing a thread.
+   */
+  focusedTaskId: string | null;
 }
 
 /**
@@ -93,9 +121,13 @@ interface PeopleScopedFilterOptions {
 export function selectPeopleOwnedTasks({
   contextTasks,
   peopleScope,
+  focusedTaskId,
 }: PeopleScopedFilterOptions): Task[] {
   if (peopleScope.size === 0) return [];
-  return contextTasks.filter((task) => isTaskOwnedByAny(task, peopleScope));
+  return contextTasks.filter((task) => {
+    if (!focusedTaskId && task.taskType === "comment") return false;
+    return isTaskOwnedByAny(task, peopleScope);
+  });
 }
 
 interface TimelineFilterOptions {
@@ -105,10 +137,11 @@ interface TimelineFilterOptions {
 }
 
 /**
- * Simplified timeline: root posts of the current context, ordered newest
- * first. State-change events are excluded by construction (we only consider
- * tasks/posts, never `state-update` feed entries). When a people scope is
- * active, posts must be owned by one of those people.
+ * Activity timeline: top-level tasks/posts of the current context PLUS any
+ * comments inside the context, ordered newest first. State-change events are
+ * excluded by construction (we only consider tasks/posts, never `state-update`
+ * feed entries). When a people scope is active, entries must be owned by one
+ * of those people.
  */
 export function selectStatusTimelinePosts({
   contextTasks,
@@ -116,10 +149,12 @@ export function selectStatusTimelinePosts({
   peopleScope,
 }: TimelineFilterOptions): Task[] {
   const matching = contextTasks.filter((task) => {
-    const isTopLevelInContext = focusedTaskId
-      ? task.parentId === focusedTaskId
-      : !task.parentId;
-    if (!isTopLevelInContext) return false;
+    if (task.taskType !== "comment") {
+      const isTopLevelInContext = focusedTaskId
+        ? task.parentId === focusedTaskId
+        : !task.parentId;
+      if (!isTopLevelInContext) return false;
+    }
     if (peopleScope.size > 0 && !isTaskOwnedByAny(task, peopleScope)) {
       return false;
     }

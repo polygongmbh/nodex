@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { makeTask, makePerson } from "@/test/fixtures";
 import {
+  hasInProgressTopLevelProject,
   isTaskOwnedByAny,
   resolveStatusPeopleScope,
   selectPeopleOwnedTasks,
-  selectStatusProjects,
+  selectStatusInProgressTopLevelTasks,
   selectStatusTimelinePosts,
 } from "./status-filters";
 import type { Task } from "@/types";
@@ -63,7 +64,7 @@ describe("isTaskOwnedByAny", () => {
   });
 });
 
-describe("selectStatusProjects", () => {
+describe("selectStatusInProgressTopLevelTasks / hasInProgressTopLevelProject", () => {
   const openChild = makeTask({ id: "c1", parentId: "p1", status: { type: "open" } });
   const activeRootWithOpenChild = makeTask({ id: "p1", status: { type: "active" } });
   const activeRootNoSubtasks = makeTask({ id: "p2", status: { type: "active" } });
@@ -88,44 +89,50 @@ describe("selectStatusProjects", () => {
   ];
   const childrenMap = buildChildrenMap(allTasks);
 
-  it("returns root tasks that have at least one non-terminal subtask, regardless of their own status", () => {
-    const result = selectStatusProjects({
+  it("returns root tasks with active status, regardless of whether they have subtasks", () => {
+    const result = selectStatusInProgressTopLevelTasks({
       contextTasks: allTasks,
-      childrenByParentId: childrenMap,
       focusedTaskId: null,
     });
-    expect(result.map((task) => task.id).sort()).toEqual(["p1", "p3"]);
+    expect(result.map((task) => task.id).sort()).toEqual(["p1", "p2"]);
   });
 
-  it("excludes root tasks whose subtasks are all terminal", () => {
-    const result = selectStatusProjects({
-      contextTasks: [doneRootWithOnlyDoneChildren, doneChildOfP4, closedChildOfP4],
-      childrenByParentId: buildChildrenMap([doneRootWithOnlyDoneChildren, doneChildOfP4, closedChildOfP4]),
-      focusedTaskId: null,
-    });
-    expect(result).toEqual([]);
-  });
-
-  it("switches to direct children of the focused task when context is narrowed", () => {
-    const result = selectStatusProjects({
+  it("switches to direct active children of the focused task when context is narrowed", () => {
+    const result = selectStatusInProgressTopLevelTasks({
       contextTasks: allTasks,
-      childrenByParentId: childrenMap,
       focusedTaskId: "p1",
     });
-    // n1 is active and has an open child (n2); c1 has no children
     expect(result.map((task) => task.id)).toEqual(["n1"]);
   });
 
   it("ignores non-task entries", () => {
     const comment = makeTask({ id: "cm1", taskType: "comment", status: { type: "active" } });
-    const commentChild = makeTask({ id: "cm-child", parentId: "cm1", status: { type: "open" } });
-    const map = buildChildrenMap([comment, commentChild]);
-    const result = selectStatusProjects({
-      contextTasks: [comment, commentChild],
-      childrenByParentId: map,
+    const result = selectStatusInProgressTopLevelTasks({
+      contextTasks: [comment],
       focusedTaskId: null,
     });
     expect(result).toEqual([]);
+  });
+
+  it("flags presence of an in-progress top-level project", () => {
+    expect(
+      hasInProgressTopLevelProject({
+        contextTasks: allTasks,
+        childrenByParentId: childrenMap,
+        focusedTaskId: null,
+      })
+    ).toBe(true);
+  });
+
+  it("returns false when the only in-progress root has no non-terminal subtasks", () => {
+    const onlyLeaf = [activeRootNoSubtasks];
+    expect(
+      hasInProgressTopLevelProject({
+        contextTasks: onlyLeaf,
+        childrenByParentId: buildChildrenMap(onlyLeaf),
+        focusedTaskId: null,
+      })
+    ).toBe(false);
   });
 });
 
@@ -146,6 +153,7 @@ describe("selectPeopleOwnedTasks", () => {
     const result = selectPeopleOwnedTasks({
       contextTasks: [assignedToMe, authoredByMeUnassigned, authoredByMeAssignedToPeer, unrelated],
       peopleScope: new Set([me]),
+      focusedTaskId: null,
     });
     expect(result.map((task) => task.id).sort()).toEqual(["a", "b"]);
   });
@@ -154,8 +162,37 @@ describe("selectPeopleOwnedTasks", () => {
     const result = selectPeopleOwnedTasks({
       contextTasks: [assignedToMe, authoredByMeUnassigned],
       peopleScope: new Set(),
+      focusedTaskId: null,
     });
     expect(result).toEqual([]);
+  });
+
+  it("excludes comments when no task is focused", () => {
+    const myComment = makeTask({
+      id: "cmt",
+      taskType: "comment",
+      author: makePerson({ pubkey: me }),
+    });
+    const result = selectPeopleOwnedTasks({
+      contextTasks: [assignedToMe, myComment],
+      peopleScope: new Set([me]),
+      focusedTaskId: null,
+    });
+    expect(result.map((task) => task.id)).toEqual(["a"]);
+  });
+
+  it("keeps comments when a task is focused", () => {
+    const myComment = makeTask({
+      id: "cmt",
+      taskType: "comment",
+      author: makePerson({ pubkey: me }),
+    });
+    const result = selectPeopleOwnedTasks({
+      contextTasks: [assignedToMe, myComment],
+      peopleScope: new Set([me]),
+      focusedTaskId: "some-task",
+    });
+    expect(result.map((task) => task.id).sort()).toEqual(["a", "cmt"]);
   });
 });
 
@@ -196,5 +233,20 @@ describe("selectStatusTimelinePosts", () => {
       peopleScope: new Set(),
     });
     expect(result.map((task) => task.id)).toEqual(["sibling-of-r1", "c1"]);
+  });
+
+  it("includes comments anywhere in the scope alongside top-level posts", () => {
+    const comment = makeTask({
+      id: "cmt",
+      parentId: "r1",
+      taskType: "comment",
+      timestamp: new Date("2026-06-01"),
+    });
+    const result = selectStatusTimelinePosts({
+      contextTasks: [root1, root2, comment],
+      focusedTaskId: null,
+      peopleScope: new Set(),
+    });
+    expect(result.map((task) => task.id)).toEqual(["cmt", "r2", "r1"]);
   });
 });

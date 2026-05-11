@@ -45,8 +45,8 @@ export function StatusProjectCard({ task, people, subtaskCount }: StatusProjectC
         TASK_INTERACTION_STYLES.cardSurface
       )}
     >
-      <div className="text-base font-semibold leading-snug line-clamp-3">
-        {linkifyContent(task.content, (tag) => {
+      <div className="text-base font-semibold leading-snug truncate">
+        {linkifyContent(task.content.split("\n", 1)[0] ?? "", (tag) => {
           void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
         }, { people, disableStandaloneEmbeds: true })}
       </div>

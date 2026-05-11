@@ -89,11 +89,12 @@ export function StatusView() {
               contextTasks={contextTasks}
               allTasks={taskSource.allTasks}
               peopleScope={myTasksPeopleScope}
+              focusedTaskId={taskSource.focusedTaskId}
             />
           </div>
         </div>
         <div className={isMobile ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-hidden"}>
-          <SectionHeader label={t("status.timeline.label", { defaultValue: "Recent" })} />
+          <SectionHeader label={t("status.timeline.label", { defaultValue: "Activity" })} />
           <div className="h-[calc(100%-2rem)]">
             <StatusTimeline
               contextTasks={contextTasks}
