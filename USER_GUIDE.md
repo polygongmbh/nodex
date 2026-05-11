@@ -9,19 +9,16 @@
 - Optional: set task priority before posting.
 - Optional: switch UI language (`EN`/`DE`/`ES`) from the language dropdown in the desktop top-right controls.
 
-## What's New in 2.5.0
-- Relay reconnect now defaults to a soft reconnect strategy, with retry behavior tuned to preserve live subscriptions more reliably during transient failures.
-- Feed now keeps status-update timeline rows visible for closed-task contexts (including focused closed tasks), so close/state transitions remain inspectable.
-- User-facing identity fallback labels now prefer NIP-19 `npub` identifiers over raw hex pubkeys in feed, mention, and auth-facing surfaces.
-- List and Kanban interaction polish: list view uses full content width again, and cross-column Kanban drops no longer snap back before settling.
-
 ## Core Concepts
 - Tasks and comments are Nostr events.
 - Channels are hashtag-based labels and filters.
-- Views share the same feed/channel/people filter state in the main all-tasks context; channel/people filters suspend while you are focused inside a specific task/thread and restore when you return shortly after.
+- Views share the current context: selected feeds, included/excluded channels, selected people, quick filters, search text, and the focused task when one is active.
 
 ## Navigation
-- Use the top view switcher to move between Tree, Feed, Kanban, Table, and Calendar.
+- Use the top view switcher to move between Status, Tree, Feed, Kanban, Table, and Calendar.
+- Status is the default landing view. It highlights active projects, your relevant tasks, and recent task/comment activity for the current context.
+- The Status projects row lists active top-level work. Project cards stay in the Status workflow, while clicking an active non-project task opens it in the Feed view.
+- Status activity includes task and comment updates. Task activity rows expose a status checkbox for quick state changes.
 - Click a task to focus on that task context.
 - Use breadcrumb navigation (`All Tasks` / `Up` / parent path) to move through hierarchy.
 - Breadcrumb paths stay single-line and left-aligned; page-header breadcrumbs evenly share available width when constrained, while feed-card breadcrumbs use compact capped widths before truncating.
@@ -47,9 +44,7 @@
   - otherwise -> reset all to neutral
 
 ### Content hashtag click behavior
-- Clicking a hashtag inside task/comment content applies an exclusive channel focus:
-  - clicked tag -> `included`
-  - all other channels -> `neutral`
+- Clicking a hashtag inside task/comment content adds that tag to the included channel filters without clearing existing channel selections.
 
 ### Filter logic
 - Included channels respect the Channels match mode toggle (`AND` or `OR`).
