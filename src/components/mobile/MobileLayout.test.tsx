@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "./use-mobile-toast-offset";
@@ -215,7 +216,7 @@ function setMocks(overrides: MobileLayoutOverrides = {}) {
 
 function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
   setMocks(overrides);
-  return render(<MobileLayout />);
+  return render(<MobileLayout />, { wrapper: MemoryRouter });
 }
 
 function setSignedInUser() {

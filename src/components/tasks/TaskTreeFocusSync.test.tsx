@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { TaskTree } from "./TaskTree";
 import { TaskViewStatusRow } from "./TaskViewStatusRow";
@@ -69,7 +70,11 @@ function renderTaskTree(
     ...surfaceOverrides,
   };
 
-  return render(<FeedSurfaceProvider value={surfaceState}>{ui}</FeedSurfaceProvider>);
+  return render(
+    <MemoryRouter>
+      <FeedSurfaceProvider value={surfaceState}>{ui}</FeedSurfaceProvider>
+    </MemoryRouter>
+  );
 }
 
 describe("TaskTree focus sync", () => {
