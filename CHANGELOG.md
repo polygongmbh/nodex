@@ -7,6 +7,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 ### Changed
+- Status view's in-progress projects row is now sorted with the same priority-aware algorithm as other task lists, instead of arrival order.
+- Status view's My Tasks and Activity columns are capped at 20 and 40 entries respectively, with a "view more" link to the tree/feed view when truncated.
 - Status view's Activity column now surfaces items that concern you (as creator or assignee) or any sidebar-selected people, in addition to the top-level posts and comments it already showed.
 - Composer no longer prefills hashtags from the focused task in feed/tree/list views. Submitting a child task without explicit tags still inherits the parent's tags at publish time, so the visible prefill was redundant.
 - Task status dropdown marks the current state with a check icon instead of a flat gray background, so the hover/focus highlight on other options is no longer washed out.

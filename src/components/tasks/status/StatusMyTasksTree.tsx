@@ -4,10 +4,13 @@ import { TreeTaskItem } from "@/components/tasks/TreeTaskItem";
 import { TaskAuthorProfilesProvider } from "@/components/tasks/task-author-profiles-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { selectPeopleOwnedTasks } from "./status-filters";
 import type { Task } from "@/types";
+
+const MY_TASKS_LIMIT = 20;
 
 interface StatusMyTasksTreeProps {
   contextTasks: Task[];
@@ -28,6 +31,7 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
   const { t } = useTranslation("tasks");
   const { relays } = useFeedSurfaceState();
   const { currentUser, isInteractionBlocked = false, isPendingPublishTask } = useFeedTaskViewModel();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const activeRelays = useMemo(() => relays.filter((relay) => relay.isActive), [relays]);
 
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
@@ -60,10 +64,13 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
 
   if (ownedTasks.length === 0) return null;
 
+  const visibleTasks = ownedTasks.slice(0, MY_TASKS_LIMIT);
+  const hiddenCount = ownedTasks.length - visibleTasks.length;
+
   return (
     <TaskAuthorProfilesProvider tasks={allTasks}>
       <div className="scrollbar-main-view h-full overflow-y-auto px-2 sm:px-3 py-3 space-y-1">
-        {ownedTasks.map((task) => (
+        {visibleTasks.map((task) => (
           <TreeTaskItem
             key={task.id}
             task={task}
@@ -80,6 +87,22 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
             sortContext={sortContext}
           />
         ))}
+        {hiddenCount > 0 && (
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                void dispatchFeedInteraction({ type: "ui.view.change", view: "tree" });
+              }}
+              className="w-full rounded-md px-3 py-2 text-center text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              {t("status.myTasks.viewMore", {
+                count: hiddenCount,
+                defaultValue: "View {{count}} more in tree view",
+              })}
+            </button>
+          </div>
+        )}
       </div>
     </TaskAuthorProfilesProvider>
   );
