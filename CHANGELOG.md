@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-05-13
+Patch release for Nostr protocol cleanup, date handling, and status interaction fixes.
+
 ### Changed
 - `VITE_LOCAL_CAPTIONS` now defaults to `false`. In-browser image captioning is opt-in; set the flag to `true` to re-enable it.
 - Presence events no longer carry an expiration tag, so relays retain them and the hover card's "last seen" remains visible for people who have gone offline.
