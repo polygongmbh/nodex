@@ -150,7 +150,6 @@ export interface Task {
   assigneePubkeys?: string[];
   priority?: number;
   attachments?: PublishedAttachment[];
-  pendingPublishToken?: string;
   rawNostrEvent?: RawNostrEvent;
 }
 

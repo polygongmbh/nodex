@@ -3,23 +3,6 @@ import type { Task, TaskStatusType } from "@/types";
 
 const LISTING_EVENT_KIND = 30402;
 
-export function buildPendingPublishDedupKey(task: Task): string {
-  const authorId = task.author.pubkey?.trim().toLowerCase() || "";
-  const normalizedContent = task.content.trim();
-  const normalizedTags = [...task.tags].map((tag) => tag.trim().toLowerCase()).sort().join(",");
-  const feedMessageType = task.feedMessageType || "";
-  const parentId = task.parentId || "";
-  return `${authorId}|${task.taskType}|${feedMessageType}|${parentId}|${normalizedTags}|${normalizedContent}`;
-}
-
-export function filterPendingLocalTasksForMerge(localTasks: Task[], nostrTasks: Task[]): Task[] {
-  const nostrTaskDedupKeys = new Set(nostrTasks.map((task) => buildPendingPublishDedupKey(task)));
-  return localTasks.filter((task) => {
-    if (!task.pendingPublishToken) return true;
-    return !nostrTaskDedupKeys.has(buildPendingPublishDedupKey(task));
-  });
-}
-
 export function dedupeMergedTasks(tasks: Task[]): Task[] {
   const byId = new Map<string, Task>();
   const byListingReplaceableKey = new Map<string, Task>();

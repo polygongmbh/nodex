@@ -1,5 +1,6 @@
 import type NDK from "@nostr-dev-kit/ndk";
 import type { NDKEvent, NDKFilter, NDKSubscription, NDKUser } from "@nostr-dev-kit/ndk";
+import type { PublishResult, SignedNostrEvent } from "./use-publish";
 import type { ReactNode } from "react";
 import type { NoasAuthResult } from "@/lib/nostr/noas-client";
 import type { EditableNostrProfile } from "@/infrastructure/nostr/profile-metadata";
@@ -57,7 +58,17 @@ export interface NDKContextValue {
     tags?: string[][],
     parentId?: string,
     relayUrls?: string[]
-  ) => Promise<{ success: boolean; eventId?: string; rejectionReason?: string; publishedRelayUrls?: string[] }>;
+  ) => Promise<PublishResult>;
+  signEvent: (
+    kind: NostrEventKind,
+    content: string,
+    tags?: string[][],
+    parentId?: string
+  ) => Promise<SignedNostrEvent | null>;
+  broadcastSignedEvent: (
+    event: SignedNostrEvent,
+    relayUrls?: string[]
+  ) => Promise<PublishResult>;
   createHttpAuthHeader: (
     url: string,
     method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPublishFlow } from "./use-task-publish-flow";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay, Task } from "@/types";
 import type { SelectablePerson } from "@/types/person";
@@ -37,6 +38,8 @@ vi.mock("@/lib/user-preferences", () => ({
 
 function Harness({
   publishEvent = vi.fn(async () => ({ success: true, eventId: "b".repeat(64), publishedRelayUrls: ["wss://relay.one"] })),
+  signEvent,
+  broadcastSignedEvent,
   initialTasks = [] as Task[],
   currentUser = makePerson({ pubkey: "a".repeat(64), name: "Alice", displayName: "Alice" }),
   people = [] as SelectablePerson[],
@@ -49,6 +52,8 @@ function Harness({
   queryClient = new QueryClient(),
 }: {
   publishEvent?: ReturnType<typeof vi.fn>;
+  signEvent?: ReturnType<typeof vi.fn>;
+  broadcastSignedEvent?: ReturnType<typeof vi.fn>;
   initialTasks?: Task[];
   currentUser?: SelectablePerson;
   people?: SelectablePerson[];
@@ -88,6 +93,14 @@ function Harness({
           .map((relay) => relay.url)
           .filter((url): url is string => Boolean(url)),
     publishEvent,
+    signEvent: signEvent ?? vi.fn(async () => ({ id: "deadbeef".repeat(8) })),
+    broadcastSignedEvent:
+      broadcastSignedEvent ??
+      vi.fn(async (event: { id: string }) => ({
+        success: true,
+        eventId: event.id,
+        publishedRelayUrls: ["wss://relay.one"],
+      })),
     publishTaskDueUpdate,
     publishTaskPriorityUpdate,
     publishTaskCreateFollowUps: vi.fn(async () => undefined),
@@ -235,6 +248,7 @@ describe("useTaskPublishFlow", () => {
       suppressedNostrEventIds: new Set(),
     });
     useFailedPublishDraftsStore.setState({ failedPublishDrafts: [] });
+    usePreferencesStore.setState({ publishDelayEnabled: false });
   });
 
   it("queues a failed publish draft when submission is rejected", async () => {
@@ -493,6 +507,43 @@ describe("useTaskPublishFlow", () => {
     expect(publishParentId).toBe(parentTask.id);
     expect(relayUrls).toEqual(["wss://relay.one"]);
     expect(screen.getByTestId("first-due-date")).toBeEmptyDOMElement();
+  });
+
+  it("assigns the signed eventId to the optimistic task when publish delay is enabled", async () => {
+    usePreferencesStore.setState({ publishDelayEnabled: true });
+    const signedEventId = "a".repeat(64);
+    const signEvent = vi.fn(async () => ({ id: signedEventId }));
+    const broadcastSignedEvent = vi.fn();
+    const publishEvent = vi.fn();
+
+    renderHarness({ publishEvent, signEvent, broadcastSignedEvent });
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("local-count")).toHaveTextContent("1");
+    });
+
+    expect(signEvent).toHaveBeenCalledTimes(1);
+    expect(publishEvent).not.toHaveBeenCalled();
+    expect(broadcastSignedEvent).not.toHaveBeenCalled();
+    expect(useTaskMutationStore.getState().localTasks[0]?.id).toBe(signedEventId);
+    expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+  });
+
+  it("queues a failed publish draft when signing fails in the delay path", async () => {
+    usePreferencesStore.setState({ publishDelayEnabled: true });
+    const signEvent = vi.fn(async () => null);
+    const broadcastSignedEvent = vi.fn();
+
+    renderHarness({ signEvent, broadcastSignedEvent });
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("draft-count")).toHaveTextContent("1");
+    });
+
+    expect(broadcastSignedEvent).not.toHaveBeenCalled();
+    expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "queued" });
   });
 
   it("drops offer date fields when storing local-only submissions", async () => {

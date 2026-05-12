@@ -56,7 +56,7 @@ function FeedIndexContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { publishEvent, setPresenceRelayUrls, user, defaultNoasHostUrl, isSessionLocked } = useNDK();
+  const { publishEvent, signEvent, broadcastSignedEvent, setPresenceRelayUrls, user, defaultNoasHostUrl, isSessionLocked } = useNDK();
 
   const {
     isAuthModalOpen,
@@ -535,6 +535,8 @@ function FeedIndexContent() {
     hasDisconnectedSelectedRelays,
     resolveRelayUrlsFromIds,
     publishEvent,
+    signEvent,
+    broadcastSignedEvent,
     publishTaskDueUpdate,
     publishTaskPriorityUpdate,
     publishTaskCreateFollowUps,

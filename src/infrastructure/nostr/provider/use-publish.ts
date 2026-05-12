@@ -13,6 +13,15 @@ import { extractRelayErrorMessage, extractRelayRejectionReason } from "./relay-e
 import { shouldMarkRelayReadOnlyAfterPublishReject } from "./relay-verification";
 import type { NDKRelayStatus } from "./contracts";
 
+export type SignedNostrEvent = NDKEvent;
+
+export interface PublishResult {
+  success: boolean;
+  eventId?: string;
+  rejectionReason?: string;
+  publishedRelayUrls?: string[];
+}
+
 interface UsePublishArgs {
   ndk: NDK | null;
   relays: NDKRelayStatus[];
@@ -36,32 +45,25 @@ export function usePublish({
   markRelayVerificationFailure,
   updateRelayCapabilityStatus,
 }: UsePublishArgs) {
-  const publishEvent = useCallback(async (
+  const signEvent = useCallback(async (
     kind: NostrEventKind,
     content: string,
     tags: string[][] = [],
-    parentId?: string,
-    relayUrls?: string[]
-  ): Promise<{ success: boolean; eventId?: string; rejectionReason?: string; publishedRelayUrls?: string[] }> => {
+    parentId?: string
+  ): Promise<SignedNostrEvent | null> => {
     if (!ndk || !ndk.signer) {
       console.error("Not authenticated or NDK not ready");
-      return { success: false };
+      return null;
     }
-
-    let signedEventId: string | undefined;
-    let targetRelayUrls: string[] = [];
     try {
-      beginRelayOperation("write");
       const event = new NDKEvent(ndk);
       event.kind = kind;
       event.content = content;
 
       const eventTags: string[][] = [...tags];
-
       if (parentId) {
         eventTags.push(["e", parentId, "", "reply"]);
       }
-
       if (kind === NostrEventKind.TextNote || kind === NostrEventKind.Task) {
         extractHashtagsFromContent(content).forEach((hashtag) => {
           eventTags.push(["t", hashtag]);
@@ -70,11 +72,26 @@ export function usePublish({
           eventTags.push(tag);
         });
       }
-
       event.tags = eventTags;
 
       await event.sign();
-      signedEventId = event.id;
+      return event;
+    } catch (error) {
+      console.error("Failed to sign event:", error);
+      return null;
+    }
+  }, [ndk]);
+
+  const broadcastSignedEvent = useCallback(async (
+    event: SignedNostrEvent,
+    relayUrls?: string[]
+  ): Promise<PublishResult> => {
+    if (!ndk) {
+      return { success: false, eventId: event.id };
+    }
+    let targetRelayUrls: string[] = [];
+    try {
+      beginRelayOperation("write");
 
       const writableRelayUrls = resolveWritableNdkRelayUrls(relays);
       if (relayUrls && relayUrls.length > 0) {
@@ -85,9 +102,8 @@ export function usePublish({
         targetRelayUrls = dedupeNormalizedRelayUrls(resolvedDefaultRelays);
       }
       nostrDevLog("publish", "Preparing publish relay set", {
-        kind,
-        eventTagCount: eventTags.length,
-        parentId: parentId || null,
+        kind: event.kind,
+        eventTagCount: event.tags.length,
         reason: relayUrls && relayUrls.length > 0 ? "explicit relay override" : "active relays fallback",
         targetRelayUrls,
       });
@@ -151,7 +167,7 @@ export function usePublish({
       });
       nostrDevLog("publish", "Event published", {
         eventId: event.id,
-        kind,
+        kind: event.kind,
         targetRelayUrls,
         publishedRelayUrls,
       });
@@ -177,11 +193,31 @@ export function usePublish({
           rejectionReason,
         });
       }
-      return { success: false, eventId: signedEventId, rejectionReason };
+      return { success: false, eventId: event.id, rejectionReason };
     } finally {
       endRelayOperation("write");
     }
-  }, [beginRelayOperation, endRelayOperation, markRelayVerificationFailure, ndk, relays, resolvedDefaultRelays, updateRelayCapabilityStatus]);
+  }, [
+    beginRelayOperation,
+    endRelayOperation,
+    markRelayVerificationFailure,
+    ndk,
+    relays,
+    resolvedDefaultRelays,
+    updateRelayCapabilityStatus,
+  ]);
 
-  return { publishEvent };
+  const publishEvent = useCallback(async (
+    kind: NostrEventKind,
+    content: string,
+    tags: string[][] = [],
+    parentId?: string,
+    relayUrls?: string[]
+  ): Promise<PublishResult> => {
+    const event = await signEvent(kind, content, tags, parentId);
+    if (!event) return { success: false };
+    return broadcastSignedEvent(event, relayUrls);
+  }, [signEvent, broadcastSignedEvent]);
+
+  return { publishEvent, signEvent, broadcastSignedEvent };
 }

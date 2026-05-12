@@ -24,6 +24,7 @@ import {   buildImetaTag, extractEmbeddableAttachmentsFromContent, normalizePubl
 import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
+import type { SignedNostrEvent } from "@/infrastructure/nostr/provider/use-publish";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { canUserUpdateTask } from "@/domain/content/task-permissions";
 import {
@@ -98,6 +99,16 @@ interface UseTaskPublishFlowOptions {
     parentId?: string,
     relayUrls?: string[]
   ) => Promise<PublishResult>;
+  signEvent: (
+    kind: number,
+    content: string,
+    tags?: string[][],
+    parentId?: string
+  ) => Promise<SignedNostrEvent | null>;
+  broadcastSignedEvent: (
+    event: SignedNostrEvent,
+    relayUrls?: string[]
+  ) => Promise<PublishResult>;
   publishTaskDueUpdate: (
     taskId: string,
     taskContent: string,
@@ -136,6 +147,8 @@ export function useTaskPublishFlow({
   hasDisconnectedSelectedRelays,
   resolveRelayUrlsFromIds,
   publishEvent,
+  signEvent,
+  broadcastSignedEvent,
   publishTaskDueUpdate,
   publishTaskPriorityUpdate,
   publishTaskCreateFollowUps,
@@ -568,29 +581,51 @@ export function useTaskPublishFlow({
     };
 
     if (usePreferencesStore.getState().publishDelayEnabled) {
-      const pendingTaskId = `pending-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const signedEvent = await signEvent(publishKind, content, publishTags, publishParentId);
+      if (!signedEvent) {
+        const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
+        setFailedPublishDrafts((prev) => [failedDraft, ...prev]);
+        notifyPublishSavedForRetry({
+          relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
+        });
+        return { ok: true, mode: "queued" };
+      }
+      const eventId = signedEvent.id;
       setLocalTasks((prev) => [
-        {
-          ...baseTask,
-          id: pendingTaskId,
-          pendingPublishToken: pendingTaskId,
-        },
+        { ...baseTask, id: eventId },
         ...prev,
       ]);
       setPendingPublishTaskIds((prev) => {
         const next = new Set(prev);
-        next.add(pendingTaskId);
+        next.add(eventId);
         return next;
       });
 
       const timeoutId = window.setTimeout(async () => {
-        clearPendingPublishTask(pendingTaskId, { dismissToast: true });
-        const publishResult = await publishWithMetadata();
+        clearPendingPublishTask(eventId, { dismissToast: true });
+        nostrDevLog("publish", "Broadcasting pre-signed event", {
+          kind: publishKind,
+          eventId,
+          relayUrls: selectedRelayUrls,
+        });
+        let publishResult: PublishResult;
+        try {
+          publishResult = await broadcastSignedEvent(signedEvent, selectedRelayUrls);
+        } catch (error) {
+          console.error("Task broadcast failed unexpectedly", error);
+          nostrDevLog("publish", "Broadcast threw an exception", {
+            kind: publishKind,
+            eventId,
+            relayUrls: selectedRelayUrls,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          publishResult = { success: false, eventId };
+        }
         if (!publishResult.success) {
           suppressFailedPublishEvent(publishResult.eventId);
           const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
           setFailedPublishDrafts((prev) => [failedDraft, ...prev]);
-          setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
+          setLocalTasks((prev) => prev.filter((task) => task.id !== eventId));
           notifyPublishSavedForRetry({
             relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
             reason: publishResult.rejectionReason,
@@ -612,13 +647,8 @@ export function useTaskPublishFlow({
 
         setLocalTasks((prev) =>
           prev.map((task) =>
-            task.id === pendingTaskId
-              ? {
-                  ...task,
-                  id: publishResult.eventId || task.id,
-                  relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
-                  pendingPublishToken: undefined,
-                }
+            task.id === eventId
+              ? { ...task, relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls) }
               : task
           )
         );
@@ -628,11 +658,11 @@ export function useTaskPublishFlow({
         });
       }, PUBLISH_UNDO_DELAY_MS);
 
-      const toastId = notifyPendingPublish(PUBLISH_UNDO_DELAY_MS, () => handleUndoPendingPublish(pendingTaskId));
+      const toastId = notifyPendingPublish(PUBLISH_UNDO_DELAY_MS, () => handleUndoPendingPublish(eventId));
 
-      pendingPublishStateRef.current.set(pendingTaskId, { timeoutId, toastId, composeState: composeRestoreState });
+      pendingPublishStateRef.current.set(eventId, { timeoutId, toastId, composeState: composeRestoreState });
       nostrDevLog("publish", "Queued publish with undo delay", {
-        pendingTaskId,
+        eventId,
         delayMs: PUBLISH_UNDO_DELAY_MS,
         relayUrls: selectedRelayUrls,
       });
@@ -688,6 +718,8 @@ export function useTaskPublishFlow({
     hasDisconnectedSelectedRelays,
     people,
     publishEvent,
+    signEvent,
+    broadcastSignedEvent,
     publishTaskCreateFollowUps,
     relays,
     resolveMentionPubkeys,

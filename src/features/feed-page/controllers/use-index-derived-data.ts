@@ -11,7 +11,6 @@ import { findSpamKeyword } from "@/lib/nostr/spam-filter";
 import {
   applyTaskSortOverlays,
   dedupeMergedTasks,
-  filterPendingLocalTasksForMerge,
 } from "@/domain/content/task-collections";
 import { mergeTasks } from "@/domain/content/task-merge";
 import { preserveTaskListIdentity } from "@/domain/content/task-identity";
@@ -159,8 +158,7 @@ export function useIndexDerivedData({
 
   const allTasks = useMemo(() => {
     const fixtureAndNostrTasks = dedupeMergedTasks(mergeTasks(demoTasks, nostrTasks));
-    const localTasksForMerge = filterPendingLocalTasksForMerge(localTasks, fixtureAndNostrTasks);
-    return dedupeMergedTasks(mergeTasks(localTasksForMerge, fixtureAndNostrTasks));
+    return dedupeMergedTasks(mergeTasks(localTasks, fixtureAndNostrTasks));
   }, [demoTasks, localTasks, nostrTasks]);
 
   const personalizedChannelScores = useMemo(

@@ -2,9 +2,7 @@ import { describe, expect, it } from "vitest";
 import { makePerson, makeTask } from "@/test/fixtures";
 import {
   applyTaskSortOverlays,
-  buildPendingPublishDedupKey,
   dedupeMergedTasks,
-  filterPendingLocalTasksForMerge,
 } from "./task-collections";
 import type { Task } from "@/types";
 
@@ -25,42 +23,6 @@ function buildTask(id: string, timestampIso: string, overrides: Partial<Task> = 
     ...overrides,
   });
 }
-
-describe("buildPendingPublishDedupKey", () => {
-  it("normalizes tags and author identity for pending publish dedupe", () => {
-    const first = buildTask("1", "2026-03-16T10:00:00.000Z", {
-      content: " Same content ",
-      tags: ["B", "a"],
-      author: makePerson({ pubkey: "ABC123", name: "a", displayName: "A" }),
-    });
-    const second = buildTask("2", "2026-03-16T11:00:00.000Z", {
-      content: "Same content",
-      tags: ["a", "b"],
-      author: makePerson({ pubkey: "abc123", name: "a", displayName: "A" }),
-    });
-
-    expect(buildPendingPublishDedupKey(first)).toBe(buildPendingPublishDedupKey(second));
-  });
-});
-
-describe("filterPendingLocalTasksForMerge", () => {
-  it("drops pending local tasks once the matching nostr task arrives", () => {
-    const localPending = buildTask("local", "2026-03-16T10:00:00.000Z", {
-      pendingPublishToken: "pending-1",
-      content: "Hello world",
-      tags: ["general"],
-      author: makePerson({ pubkey: "abc123", name: "a", displayName: "A" }),
-    });
-    const persisted = buildTask("persisted", "2026-03-16T09:00:00.000Z");
-    const incoming = buildTask("remote", "2026-03-16T10:00:00.000Z", {
-      content: "Hello world",
-      tags: ["general"],
-      author: makePerson({ pubkey: "abc123", name: "a", displayName: "A" }),
-    });
-
-    expect(filterPendingLocalTasksForMerge([localPending, persisted], [incoming])).toEqual([persisted]);
-  });
-});
 
 describe("dedupeMergedTasks", () => {
   it("keeps one task per id while merging relay ids", () => {

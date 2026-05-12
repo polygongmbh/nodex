@@ -620,7 +620,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus, updateRelayEntry]);
 
-  const { publishEvent } = usePublish({
+  const { publishEvent, signEvent, broadcastSignedEvent } = usePublish({
     ndk,
     relays,
     resolvedDefaultRelays,
@@ -714,6 +714,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     reconnectRelay,
     setPresenceRelayUrls,
     publishEvent,
+    signEvent,
+    broadcastSignedEvent,
     createHttpAuthHeader,
     updateUserProfile,
     needsProfileSetup,
@@ -746,6 +748,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     reconnectRelay,
     setPresenceRelayUrls,
     publishEvent,
+    signEvent,
+    broadcastSignedEvent,
     createHttpAuthHeader,
     updateUserProfile,
     needsProfileSetup,
