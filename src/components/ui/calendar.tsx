@@ -57,7 +57,7 @@ function CompactMonthCaption({ calendarMonth }: MonthCaptionProps) {
 function Calendar({
   className,
   classNames,
-  showOutsideDays = false,
+  showOutsideDays = true,
   locale,
   ...props
 }: CalendarProps) {
