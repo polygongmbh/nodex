@@ -42,6 +42,15 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
       <button type="button" onClick={() => controller.handleStatusChange("task-1", { type: "active" })}>
         SetInProgress
       </button>
+      <button
+        type="button"
+        onClick={() => controller.handleStatusChange("task-1", { type: "active", description: "Review" })}
+      >
+        SetReview
+      </button>
+      <button type="button" onClick={() => controller.handleStatusChange("task-1", { type: "open" })}>
+        SetOpen
+      </button>
       <button type="button" onClick={() => controller.handleToggleComplete("task-1")}>
         ToggleComplete
       </button>
@@ -126,6 +135,34 @@ describe("useTaskStatusController", () => {
     expect(screen.getByTestId("status")).toHaveTextContent("done");
     expect(publishTaskStateUpdate).not.toHaveBeenCalled();
     expect(screen.getByTestId("sort-hold")).toBeEmptyDOMElement();
+  });
+
+  it("skips publishing when the chosen status exactly matches the current one", () => {
+    const publishTaskStateUpdate = vi.fn(async () => undefined);
+    render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "SetOpen" }));
+
+    expect(publishTaskStateUpdate).not.toHaveBeenCalled();
+    expect(screen.getByTestId("sort-hold")).toBeEmptyDOMElement();
+  });
+
+  it("publishes when the description differs even if the type is the same", () => {
+    const publishTaskStateUpdate = vi.fn(async () => undefined);
+    useTaskMutationStore.setState({
+      localTasks: [makeTask({ ...initialTask, status: { type: "active", description: "In Progress" } })],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
+
+    render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "SetReview" }));
+
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", {
+      type: "active",
+      description: "Review",
+    });
   });
 
   it("publishes the registry's default done state with description for custom done labels", () => {

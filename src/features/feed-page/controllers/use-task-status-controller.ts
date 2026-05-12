@@ -171,6 +171,13 @@ export function useTaskStatusController({
       }
 
       const normalizedStatus = normalizeTaskStatus(status);
+      const currentStatus = normalizeTaskStatus(existingTask.status);
+      if (
+        normalizedStatus.type === currentStatus.type &&
+        normalizedStatus.description === currentStatus.description
+      ) {
+        return;
+      }
       const resolvedType = normalizedStatus.type as TaskStatusType;
 
       scheduleTaskStatusReorderUpdate(taskId, normalizedStatus);
