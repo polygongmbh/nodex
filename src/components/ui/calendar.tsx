@@ -21,35 +21,40 @@ function resolveLocale(lang: string | undefined): Locale {
 function CompactMonthCaption({ calendarMonth }: MonthCaptionProps) {
   const { goToMonth, nextMonth, previousMonth, dayPickerProps } = useDayPicker();
   const locale = dayPickerProps.locale ?? enUS;
+  const hideNav = (dayPickerProps as { hideNavigation?: boolean }).hideNavigation;
   return (
     <div className="flex items-center justify-center gap-1 h-7">
-      <button
-        type="button"
-        aria-label="Previous month"
-        disabled={!previousMonth}
-        onClick={() => previousMonth && goToMonth(previousMonth)}
-        className={cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-6 w-6 p-0 opacity-60 hover:opacity-100 disabled:opacity-30",
-        )}
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
+      {!hideNav && (
+        <button
+          type="button"
+          aria-label="Previous month"
+          disabled={!previousMonth}
+          onClick={() => previousMonth && goToMonth(previousMonth)}
+          className={cn(
+            buttonVariants({ variant: "ghost" }),
+            "h-6 w-6 p-0 opacity-60 hover:opacity-100 disabled:opacity-30",
+          )}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
       <span className="text-sm font-medium min-w-[8rem] text-center">
         {format(calendarMonth.date, "LLLL yyyy", { locale: locale as Locale })}
       </span>
-      <button
-        type="button"
-        aria-label="Next month"
-        disabled={!nextMonth}
-        onClick={() => nextMonth && goToMonth(nextMonth)}
-        className={cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-6 w-6 p-0 opacity-60 hover:opacity-100 disabled:opacity-30",
-        )}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
+      {!hideNav && (
+        <button
+          type="button"
+          aria-label="Next month"
+          disabled={!nextMonth}
+          onClick={() => nextMonth && goToMonth(nextMonth)}
+          className={cn(
+            buttonVariants({ variant: "ghost" }),
+            "h-6 w-6 p-0 opacity-60 hover:opacity-100 disabled:opacity-30",
+          )}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
