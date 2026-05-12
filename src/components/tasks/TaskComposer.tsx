@@ -280,7 +280,7 @@ export function TaskComposer({
   const prevFilterMentionPubkeysRef = useRef<string[]>([]);
   const autoManagedFilterTagNamesRef = useRef<Set<string>>(new Set());
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
-  const lastForceExpandSignalRef = useRef<number | undefined>(forceExpandSignal);
+  const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const lastAppliedMentionRequestIdRef = useRef<number | null>(null);
   const dragDepthRef = useRef(0);
@@ -423,7 +423,11 @@ export function TaskComposer({
 
   useEffect(() => {
     if (!adaptiveSize) return;
-    if (forceExpandSignal === undefined) return;
+    // Onboarding seeds the signal at 0 ("no trigger yet") and increments per
+    // activation. We track the high-water mark so a composer that mounts AFTER
+    // the bump (e.g. signed-out users where the auth gate hid the composer
+    // until forceShowComposer flipped) still expands on first render.
+    if (!forceExpandSignal) return;
     if (lastForceExpandSignalRef.current === forceExpandSignal) return;
     lastForceExpandSignalRef.current = forceExpandSignal;
     setIsExpanded(true);
