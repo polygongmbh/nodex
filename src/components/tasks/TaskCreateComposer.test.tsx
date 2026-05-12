@@ -10,6 +10,7 @@ import type { Channel, Relay } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { getComposerPrimaryAction, getTaskComposerInput } from "@/test/ui";
 import { TaskCreateComposer } from "./TaskCreateComposer";
+import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
@@ -119,16 +120,40 @@ describe("TaskCreateComposer", () => {
     localStorage.clear();
   });
 
-  it("dispatches task.create with compose config and closes on success", async () => {
+  it("dispatches task.create with caller-supplied onSubmit and closes on success", async () => {
     const onCancel = vi.fn();
 
-    renderCreateComposer({
-      onCancel,
-      focusedTaskId: "parent-task",
-      initialStatus: "active",
-      closeOnSuccess: true,
-      allowComment: false,
-    });
+    function Wrapper() {
+      const submit = useComposerSubmitHandler({
+        focusedTaskId: "parent-task",
+        initialStatus: "active",
+        closeOnSuccess: true,
+        onCancel,
+      });
+      return (
+        <FeedSurfaceProvider
+          value={{
+            relays,
+            channels,
+            people,
+            searchQuery: "",
+            quickFilters: makeQuickFilterState(),
+            channelMatchMode: "and",
+          }}
+        >
+          <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: "parent-task" }}>
+            <TaskCreateComposer
+              onCancel={onCancel}
+              onSubmit={submit}
+              focusedTaskId="parent-task"
+              allowComment={false}
+            />
+          </FeedTaskViewModelProvider>
+        </FeedSurfaceProvider>
+      );
+    }
+
+    render(<Wrapper />);
 
     fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship #backend" },

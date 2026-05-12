@@ -6,10 +6,9 @@ import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { ComposeRestoreRequest, TaskStatus } from "@/types";
+import type { ComposeRestoreRequest } from "@/types";
 
 interface SharedViewComposerProps {
-  initialStatus?: TaskStatus;
   onExpandedChange?: (expanded: boolean) => void;
   mentionRequest?: {
     mention: string;
@@ -25,7 +24,6 @@ interface SharedViewComposerProps {
 }
 
 export function SharedViewComposer({
-  initialStatus,
   onExpandedChange,
   mentionRequest = null,
   onMentionRequestConsumed,
@@ -65,7 +63,6 @@ export function SharedViewComposer({
         onCancel={() => {}}
         compact
         focusedTaskId={focusedTaskId}
-        initialStatus={initialStatus}
         adaptiveSize
         onExpandedChange={onExpandedChange}
         mentionRequest={mentionRequest}

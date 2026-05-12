@@ -24,6 +24,7 @@ import {
 import { getTaskStatusType, normalizeTaskStatus, type Task, type TaskStatus, type ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
+import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
@@ -438,6 +439,19 @@ export function KanbanView({
 
   const activeTask = activeTaskId ? kanbanTasks.find(t => t.id === activeTaskId) : null;
 
+  const composingColumn = composingColumnId
+    ? columns.find((column) => column.id === composingColumnId)
+    : undefined;
+  const closeComposer = useCallback(() => setComposingColumnId(null), []);
+  const handleComposerSubmit = useComposerSubmitHandler({
+    focusedTaskId,
+    initialStatus: composingColumn
+      ? toTaskStatusFromStateDefinition(composingColumn.state)
+      : undefined,
+    closeOnSuccess: true,
+    onCancel: closeComposer,
+  });
+
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Kanban Columns */}
@@ -484,26 +498,20 @@ export function KanbanView({
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-muted-foreground">{t("kanban.newTaskIn", { column: column.label })}</span>
                       <button
-                        onClick={() => setComposingColumnId(null)}
+                        onClick={closeComposer}
                         className="p-0.5 rounded hover:bg-muted"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </div>
-                      <TaskCreateComposer
-                        key={column.id}
-                        onCancel={() => setComposingColumnId(null)}
-                        compact
-                        focusedTaskId={focusedTaskId}
-                        initialStatus={toTaskStatusFromStateDefinition(
-                          column.state.type === "closed"
-                            ? { ...column.state, id: "open", type: "open", label: "Open" }
-                            : column.state
-                        )}
-                        closeOnSuccess
-                        allowComment={false}
-                        composeRestoreRequest={composeRestoreRequest}
-                      />
+                    <TaskCreateComposer
+                      onCancel={closeComposer}
+                      onSubmit={handleComposerSubmit}
+                      compact
+                      focusedTaskId={focusedTaskId}
+                      allowComment={false}
+                      composeRestoreRequest={composeRestoreRequest}
+                    />
                   </div>
                 )}
 

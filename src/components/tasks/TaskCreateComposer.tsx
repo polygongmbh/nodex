@@ -1,12 +1,12 @@
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
-import { TaskComposer } from "./TaskComposer";
+import { TaskComposer, type TaskComposerFormData } from "./TaskComposer";
 import { TaskComposerRuntimeProvider, useResolvedTaskComposerEnvironment } from "./task-composer-runtime";
 import { useComposerRelayBlock } from "./use-composer-relay-block";
 import { useComposerFilterSync } from "./use-composer-filter-sync";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
-import type { ComposeRestoreRequest, TaskStatus } from "@/types";
+import type { ComposeRestoreRequest } from "@/types";
 
 interface TaskCreateComposerProps {
   onCancel: () => void;
@@ -14,7 +14,6 @@ interface TaskCreateComposerProps {
   defaultDueDate?: Date;
   defaultContent?: string;
   focusedTaskId: string | null;
-  initialStatus?: TaskStatus;
   adaptiveSize?: boolean;
   focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
@@ -24,10 +23,10 @@ interface TaskCreateComposerProps {
   } | null;
   onMentionRequestConsumed?: (requestId: number) => void;
   collapseOnSuccess?: boolean;
-  closeOnSuccess?: boolean;
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  onSubmit?: (data: TaskComposerFormData) => void;
 }
 
 export function TaskCreateComposer({
@@ -36,17 +35,16 @@ export function TaskCreateComposer({
   defaultDueDate,
   defaultContent = "",
   focusedTaskId,
-  initialStatus,
   adaptiveSize = false,
   focusOnMount = true,
   onExpandedChange,
   mentionRequest = null,
   onMentionRequestConsumed,
   collapseOnSuccess = false,
-  closeOnSuccess = false,
   allowComment = true,
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
+  onSubmit,
 }: TaskCreateComposerProps) {
   const { createHttpAuthHeader } = useNDK();
   const { allTasks, composeGuideActivationSignal } = useFeedTaskViewModel();
@@ -62,12 +60,11 @@ export function TaskCreateComposer({
   const contextTaskTitle = focusedTaskId
     ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
     : "";
-  const handleSubmit = useComposerSubmitHandler({
+  const defaultSubmit = useComposerSubmitHandler({
     focusedTaskId,
-    initialStatus,
-    closeOnSuccess,
     onCancel,
   });
+  const handleSubmit = onSubmit ?? defaultSubmit;
 
   if (shouldHideComposer) return null;
 

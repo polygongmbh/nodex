@@ -57,6 +57,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { TaskCreateComposer } from "./TaskCreateComposer";
+import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useTaskViewServices } from "./use-task-view-services";
 
 interface CalendarViewProps {
@@ -109,6 +110,12 @@ export function CalendarView({
   });
   const [selectedDateInternal, setSelectedDateInternal] = useState<Date | null>(new Date());
   const [isComposingEvent, setIsComposingEvent] = useState(false);
+  const closeEventComposer = useCallback(() => setIsComposingEvent(false), []);
+  const handleEventComposerSubmit = useComposerSubmitHandler({
+    focusedTaskId,
+    closeOnSuccess: true,
+    onCancel: closeEventComposer,
+  });
   const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
@@ -902,10 +909,10 @@ export function CalendarView({
                     </button>
                   </div>
                   <TaskCreateComposer
-                    onCancel={() => setIsComposingEvent(false)}
+                    onCancel={closeEventComposer}
+                    onSubmit={handleEventComposerSubmit}
                     compact
                     focusedTaskId={focusedTaskId}
-                    closeOnSuccess
                     allowComment={false}
                     defaultDueDate={selectedDate}
                     composeRestoreRequest={composeRestoreRequest}
