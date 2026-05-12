@@ -48,6 +48,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import { TaskDateTypeSelect } from "@/components/tasks/TaskDateTypeSelect";
+import { TaskTimeInput } from "@/components/tasks/TaskTimeInput";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
