@@ -73,7 +73,6 @@ export function useListingStatusPublish({
 
     const publishTags = buildNip99PublishTags({
       metadata: { ...existing.nip99, status },
-      feedMessageType: existing.feedMessageType,
       hashtags: existing.tags,
       mentionPubkeys: (existing.mentions || []).filter((mention) => /^[a-f0-9]{64}$/i.test(mention)),
       attachmentTags: (existing.attachments || [])

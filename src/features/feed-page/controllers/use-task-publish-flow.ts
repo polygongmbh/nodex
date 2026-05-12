@@ -430,7 +430,6 @@ export function useTaskPublishFlow({
             : feedMessageType
               ? buildNip99PublishTags({
                   metadata: nip99,
-                  feedMessageType,
                   hashtags: resolvedSubmissionTags,
                   mentionPubkeys,
                   attachmentTags: normalizedAttachments

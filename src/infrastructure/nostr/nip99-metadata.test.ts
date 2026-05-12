@@ -1,17 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { buildNip99PublishTags, parseNip99MetadataFromTags } from "./nip99-metadata";
 
-describe("nip99 metadata normalization", () => {
-  it("parses common alias tags and normalizes values", () => {
+describe("nip99 metadata", () => {
+  it("parses canonical NIP-99 tags", () => {
     const parsed = parseNip99MetadataFromTags([
       ["d", "listing-1"],
       ["title", "Bike"],
-      ["description", "Great commuter bike"],
+      ["summary", "Great commuter bike"],
       ["published_at", "1700000000"],
-      ["availability", "closed"],
-      ["amount", "150"],
-      ["currency", "eur"],
-      ["frequency", "MONTH"],
+      ["status", "sold"],
+      ["price", "150", "EUR", "month"],
     ]);
 
     expect(parsed).toEqual({
@@ -29,7 +27,6 @@ describe("nip99 metadata normalization", () => {
 
   it("publishes canonical NIP-99 tags", () => {
     const tags = buildNip99PublishTags({
-      feedMessageType: "offer",
       hashtags: ["bikes"],
       mentionPubkeys: [],
       metadata: {
@@ -37,22 +34,21 @@ describe("nip99 metadata normalization", () => {
         title: "Road bike",
         summary: "Lightweight aluminum frame",
         price: "500",
-        currency: "usd",
-        frequency: "Month",
+        currency: "USD",
+        frequency: "month",
         publishedAt: "1700000123",
       },
     });
 
     expect(tags).toContainEqual(["published_at", "1700000123"]);
-    expect(tags).not.toContainEqual(["publishedAt", "1700000123"]);
     expect(tags).toContainEqual(["price", "500", "USD", "month"]);
-    expect(tags).toContainEqual(["currency", "USD"]);
-    expect(tags).toContainEqual(["frequency", "month"]);
+    expect(tags.some((tag) => tag[0] === "type")).toBe(false);
+    expect(tags.some((tag) => tag[0] === "currency")).toBe(false);
+    expect(tags.some((tag) => tag[0] === "frequency")).toBe(false);
   });
 
-  it("defaults price currency to EUR when omitted", () => {
+  it("omits currency from price tag when not provided", () => {
     const tags = buildNip99PublishTags({
-      feedMessageType: "offer",
       hashtags: [],
       mentionPubkeys: [],
       metadata: {
@@ -62,12 +58,11 @@ describe("nip99 metadata normalization", () => {
       },
     });
 
-    expect(tags).toContainEqual(["price", "30", "EUR", ""]);
+    expect(tags).toContainEqual(["price", "30"]);
   });
 
   it("adds g tag when location geohash is provided", () => {
     const tags = buildNip99PublishTags({
-      feedMessageType: "offer",
       hashtags: [],
       mentionPubkeys: [],
       metadata: {
