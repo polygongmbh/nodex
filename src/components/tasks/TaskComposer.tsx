@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import { TaskDateTypeSelect } from "@/components/tasks/TaskDateTypeSelect";
+import { TaskTimeInput } from "@/components/tasks/TaskTimeInput";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
@@ -1847,7 +1848,7 @@ export function TaskComposer({
             />
           </div>
 
-          <div className="inline-flex min-w-[20rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
+          <div className="inline-flex w-auto items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <TaskDateTypeSelect
               aria-label={t("composer.labels.dateType")}
@@ -1867,7 +1868,7 @@ export function TaskComposer({
               <PopoverTrigger asChild>
                 <button
                   className={cn(
-                    "h-8 min-w-[6.5rem] rounded-md border border-border/50 px-2 text-left text-sm transition-colors hover:bg-muted/50 hover:text-foreground",
+                    "h-8 rounded-md border border-border/50 px-2 text-left text-sm transition-colors hover:bg-muted/50 hover:text-foreground",
                     dueDate ? "text-foreground" : "text-muted-foreground"
                   )}
                 >
@@ -1891,11 +1892,10 @@ export function TaskComposer({
             {dueDate && (
               <>
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <input
-                  type="time"
+                <TaskTimeInput
+                  aria-label="Hours"
                   value={dueTime}
-                  onChange={(e) => setDueTime(e.target.value)}
-                  className="h-8 w-16 rounded-md border border-border/50 bg-transparent px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                  onChange={setDueTime}
                 />
                 <button
                   aria-label={t("composer.hints.clearDueDate")}
