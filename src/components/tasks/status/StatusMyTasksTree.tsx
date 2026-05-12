@@ -100,11 +100,9 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
               ? t("status.myTasks.viewMore", {
                   count: hiddenCount,
                   view: tShell("navigation.views.tree"),
-                  defaultValue: "View {{count}} more in {{view}}",
                 })
-              : t("status.myTasks.openView", {
+              : t("status.myTasks.showView", {
                   view: tShell("navigation.views.tree"),
-                  defaultValue: "Open {{view}} view",
                 })}
           </button>
         </div>

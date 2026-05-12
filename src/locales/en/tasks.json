@@ -248,5 +248,15 @@
       "pipelineUnavailable": "Caption pipeline unavailable",
       "modelUnavailable": "Caption model unavailable"
     }
+  },
+  "status": {
+    "myTasks": {
+      "viewMore": "View {{count}} more in {{view}}",
+      "showView": "Show {{view}}"
+    },
+    "timeline": {
+      "viewMore": "View {{count}} more in {{view}}",
+      "showView": "Show {{view}}"
+    }
   }
 }

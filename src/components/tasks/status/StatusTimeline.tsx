@@ -51,11 +51,9 @@ export function StatusTimeline({ contextTasks, focusedTaskId, concernsScope }: S
             ? t("status.timeline.viewMore", {
                 count: hiddenCount,
                 view: tShell("navigation.views.feed"),
-                defaultValue: "View {{count}} more in {{view}}",
               })
-            : t("status.timeline.openView", {
+            : t("status.timeline.showView", {
                 view: tShell("navigation.views.feed"),
-                defaultValue: "Open {{view}} view",
               })}
         </button>
       </div>

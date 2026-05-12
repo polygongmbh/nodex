@@ -248,5 +248,15 @@
       "pipelineUnavailable": "La canalización de descripciones no está disponible",
       "modelUnavailable": "El modelo de descripciones no está disponible"
     }
+  },
+  "status": {
+    "myTasks": {
+      "viewMore": "Ver {{count}} más en {{view}}",
+      "showView": "Mostrar {{view}}"
+    },
+    "timeline": {
+      "viewMore": "Ver {{count}} más en {{view}}",
+      "showView": "Mostrar {{view}}"
+    }
   }
 }

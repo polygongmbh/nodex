@@ -248,5 +248,15 @@
       "pipelineUnavailable": "Beschriftungs-Pipeline nicht verfügbar",
       "modelUnavailable": "Beschriftungsmodell nicht verfügbar"
     }
+  },
+  "status": {
+    "myTasks": {
+      "viewMore": "{{count}} weitere in {{view}} anzeigen",
+      "showView": "{{view}} anzeigen"
+    },
+    "timeline": {
+      "viewMore": "{{count}} weitere in {{view}} anzeigen",
+      "showView": "{{view}} anzeigen"
+    }
   }
 }
