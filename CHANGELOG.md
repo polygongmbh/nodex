@@ -15,6 +15,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Status view's Activity column now surfaces items that concern you (as creator or assignee) or any sidebar-selected people, in addition to the top-level posts and comments it already showed.
 - Composer no longer prefills hashtags from the focused task in feed/tree/list views. Submitting a child task without explicit tags still inherits the parent's tags at publish time, so the visible prefill was redundant.
 - Task status dropdown marks the current state with a check icon instead of a flat gray background, so the hover/focus highlight on other options is no longer washed out.
+- Horizontal swipe and trackpad gestures no longer switch between views on either desktop or mobile.
 
 ### Fixed
 - Feed timeline state-change rows now use the configured state labels ("Open", "In Progress", …) instead of the hardcoded "ToDo"/"Doing" i18n aliases, so they respect `VITE_TASK_STATE_CONFIG`.

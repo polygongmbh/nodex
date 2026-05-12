@@ -1,4 +1,4 @@
-import { createContext, useContext, type HTMLAttributes, type PropsWithChildren } from "react";
+import { createContext, useContext, type PropsWithChildren } from "react";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 export interface FeedViewState {
@@ -11,7 +11,6 @@ export interface FeedViewState {
   isManageRouteActive: boolean;
   canCreateContent: boolean;
   profileCompletionPromptSignal: number;
-  desktopSwipeHandlers: HTMLAttributes<HTMLDivElement>;
 }
 
 const defaultState: FeedViewState = {
@@ -23,7 +22,6 @@ const defaultState: FeedViewState = {
   isManageRouteActive: false,
   canCreateContent: false,
   profileCompletionPromptSignal: 0,
-  desktopSwipeHandlers: {},
 };
 
 const FeedViewStateContext = createContext<FeedViewState>(defaultState);

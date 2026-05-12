@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { isPrimaryMobileView, MOBILE_VIEW_ORDER, MobileNav, MobileViewType } from "./MobileNav";
+import { isPrimaryMobileView, MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 
@@ -8,8 +8,6 @@ import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { FailedPublishQueueBannerContainer } from "@/features/feed-page/views/FailedPublishQueueBannerContainer";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
-import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
-import { cn } from "@/lib/utils";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
@@ -17,8 +15,6 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useMobileToastOffset } from "./use-mobile-toast-offset";
-
-const mobileViews: readonly MobileViewType[] = MOBILE_VIEW_ORDER;
 
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
@@ -88,58 +84,6 @@ export function MobileLayout() {
     }
     void dispatchFeedInteraction({ type: "ui.view.change", view });
   }, [closeManageView, dispatchFeedInteraction, showFilters]);
-
-  // Swipe navigation handlers
-  const handleSwipeLeft = useCallback(() => {
-    if (showFilters) {
-      closeManageView();
-      return;
-    }
-    const currentIndex = mobileViews.indexOf(activePrimaryView);
-    if (currentIndex < mobileViews.length - 1) {
-      const nextView = mobileViews[currentIndex + 1];
-      handleMobileViewChange(nextView);
-    }
-  }, [activePrimaryView, showFilters, handleMobileViewChange, closeManageView]);
-
-  const handleSwipeRight = useCallback(() => {
-    const currentIndex = mobileViews.indexOf(activePrimaryView);
-    if (currentIndex > 0) {
-      const prevView = mobileViews[currentIndex - 1];
-      handleMobileViewChange(prevView);
-    } else if (currentIndex === 0) {
-      openManageView();
-    }
-  }, [activePrimaryView, handleMobileViewChange, openManageView]);
-
-  // Gesture-following swipe state
-  const viewContainerRef = useRef<HTMLDivElement>(null);
-  const swipeDeltaRef = useRef(0);
-  const [swipeTransition, setSwipeTransition] = useState<"left" | "right" | null>(null);
-
-  const animatedSwipeLeft = useCallback(() => {
-    setSwipeTransition("left");
-    requestAnimationFrame(() => {
-      handleSwipeLeft();
-      // Let the CSS transition play, then clear
-      setTimeout(() => setSwipeTransition(null), 200);
-    });
-  }, [handleSwipeLeft]);
-
-  const animatedSwipeRight = useCallback(() => {
-    setSwipeTransition("right");
-    requestAnimationFrame(() => {
-      handleSwipeRight();
-      setTimeout(() => setSwipeTransition(null), 200);
-    });
-  }, [handleSwipeRight]);
-
-  const swipeHandlers = useSwipeNavigation({
-    onSwipeLeft: animatedSwipeLeft,
-    onSwipeRight: animatedSwipeRight,
-    threshold: 50,
-    enableHaptics: true,
-  });
 
   const mobileCurrentView: MobileViewType = activePrimaryView;
   const viewFallback = <ViewLoadingFallback />;
@@ -238,10 +182,7 @@ export function MobileLayout() {
       </div>
       <FailedPublishQueueBannerContainer isMobile />
 
-      <main
-        className="flex-1 overflow-hidden relative"
-        {...swipeHandlers}
-      >
+      <main className="flex-1 overflow-hidden relative">
         <div className="h-full flex flex-col">
           <div>
             <TaskViewStatusRow
@@ -261,14 +202,7 @@ export function MobileLayout() {
               {mobileFallbackMessage}
             </div>
           )}
-          <div
-            ref={viewContainerRef}
-            className={cn(
-              "flex-1 min-h-0 w-full transition-all duration-200 ease-out",
-              swipeTransition === "left" && "animate-slide-in-from-right",
-              swipeTransition === "right" && "animate-slide-in-from-left"
-            )}
-          >
+          <div className="flex-1 min-h-0 w-full">
             <Suspense fallback={viewFallback}>
               {renderView()}
             </Suspense>

@@ -63,7 +63,6 @@ function renderDialog(profileCompletionPromptSignal: number) {
         isManageRouteActive: false,
         canCreateContent: true,
         profileCompletionPromptSignal,
-        desktopSwipeHandlers: {},
       }}
     >
       <ProfileCompletionDialog />
@@ -108,7 +107,6 @@ describe("ProfileCompletionDialog", () => {
           isManageRouteActive: false,
           canCreateContent: true,
           profileCompletionPromptSignal: 1,
-          desktopSwipeHandlers: {},
         }}
       >
         <ProfileCompletionDialog />

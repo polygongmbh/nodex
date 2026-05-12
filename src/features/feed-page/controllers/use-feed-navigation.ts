@@ -1,7 +1,6 @@
 import { useRef, useMemo, useCallback, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
-import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { isTaskOutsideSelectedRelayScope } from "@/domain/relays/relay-scope";
 import type { Task, Relay } from "@/types";
@@ -95,28 +94,6 @@ export function useFeedNavigation({
     [currentView, focusedTaskId, navigateToPath]
   );
 
-  const handleDesktopSwipeLeft = useCallback(() => {
-    const currentIndex = VALID_VIEWS.indexOf(currentView);
-    if (currentIndex < VALID_VIEWS.length - 1) {
-      setCurrentView(VALID_VIEWS[currentIndex + 1]);
-    }
-  }, [currentView, setCurrentView]);
-
-  const handleDesktopSwipeRight = useCallback(() => {
-    const currentIndex = VALID_VIEWS.indexOf(currentView);
-    if (currentIndex > 0) {
-      setCurrentView(VALID_VIEWS[currentIndex - 1]);
-    }
-  }, [currentView, setCurrentView]);
-
-  const desktopSwipeHandlers = useSwipeNavigation({
-    onSwipeLeft: handleDesktopSwipeLeft,
-    onSwipeRight: handleDesktopSwipeRight,
-    threshold: 55,
-    enableHaptics: false,
-    enableWheelSwipe: !isMobile,
-  });
-
   useKeyboardShortcuts({
     onViewChange: setCurrentView,
     onToggleChannelMatchMode,
@@ -149,7 +126,6 @@ export function useFeedNavigation({
     setCurrentView,
     setFocusedTaskId,
     setManageRouteActive,
-    desktopSwipeHandlers,
     openedWithFocusedTaskRef,
   };
 }

@@ -176,7 +176,6 @@ const baseFeedViewState: FeedViewState = {
   isManageRouteActive: false,
   canCreateContent: true,
   profileCompletionPromptSignal: 0,
-  desktopSwipeHandlers: {},
 };
 
 const baseTaskViewModel: FeedTaskViewModel = {

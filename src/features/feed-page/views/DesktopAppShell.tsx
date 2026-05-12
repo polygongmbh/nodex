@@ -22,10 +22,7 @@ export function DesktopAppShell({
   authModalProps,
 }: DesktopAppShellProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const {
-    currentView,
-    desktopSwipeHandlers,
-  } = useFeedViewState();
+  const { currentView } = useFeedViewState();
 
   return (
     <div className="grid app-shell-height overflow-hidden bg-background grid-cols-[auto,1fr] grid-rows-[var(--topbar-height),1fr] [--topbar-height:3.5rem] xl:[--topbar-height:4rem]">
@@ -45,7 +42,7 @@ export function DesktopAppShell({
         </div>
       </div>
       <FeedPageSidebar />
-      <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
+      <div className="min-w-0 overflow-hidden flex flex-col">
         <FailedPublishQueueBannerContainer />
         <div className="min-h-0 flex-1 overflow-hidden">
           <DesktopViewsPane />

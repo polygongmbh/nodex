@@ -317,7 +317,6 @@ function FeedIndexContent() {
     setCurrentView,
     setFocusedTaskId,
     setManageRouteActive,
-    desktopSwipeHandlers,
     openedWithFocusedTaskRef,
   } = useFeedNavigation({
     allTasks,
@@ -739,13 +738,11 @@ function FeedIndexContent() {
       isManageRouteActive,
       canCreateContent: authPolicy.canCreateContent,
       profileCompletionPromptSignal,
-      desktopSwipeHandlers,
     }),
     [
       activeOnboardingStepId,
       authPolicy.canCreateContent,
       currentView,
-      desktopSwipeHandlers,
       isAuthModalOpen,
       isManageRouteActive,
       isOnboardingOpen,
