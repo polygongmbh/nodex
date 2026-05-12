@@ -90,12 +90,21 @@ export function TaskDueDateEditorForm({
           onChange={setLocalDateType}
           className="h-7 border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:ring-0"
         />
+        <div className="ml-auto flex items-center gap-1">
+          <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="h-7 px-2 text-xs">
+            Clear
+          </Button>
+          <Button type="button" size="sm" onClick={handleConfirm} className="h-7 px-3 text-xs">
+            Confirm
+          </Button>
+        </div>
       </div>
       <CalendarComponent
         mode="single"
         selected={localDueDate}
         onSelect={setLocalDueDate}
         initialFocus
+        showOutsideDays
         className="p-0 pointer-events-auto"
       />
       <div className="flex items-center gap-2">
@@ -106,14 +115,6 @@ export function TaskDueDateEditorForm({
           onChange={setLocalDueTime}
           disabled={!localDueDate}
         />
-      </div>
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="h-7 px-2 text-xs">
-          Clear
-        </Button>
-        <Button type="button" size="sm" onClick={handleConfirm} className="h-7 px-3 text-xs">
-          Confirm
-        </Button>
       </div>
     </div>
   );
