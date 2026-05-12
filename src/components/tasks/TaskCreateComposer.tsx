@@ -18,8 +18,6 @@ interface TaskCreateComposerProps {
   adaptiveSize?: boolean;
   focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
-  forceExpanded?: boolean;
-  forceExpandSignal?: number;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -42,8 +40,6 @@ export function TaskCreateComposer({
   adaptiveSize = false,
   focusOnMount = true,
   onExpandedChange,
-  forceExpanded = false,
-  forceExpandSignal,
   mentionRequest = null,
   onMentionRequestConsumed,
   collapseOnSuccess = false,
@@ -53,7 +49,7 @@ export function TaskCreateComposer({
   composeRestoreRequest = null,
 }: TaskCreateComposerProps) {
   const { createHttpAuthHeader } = useNDK();
-  const { allTasks } = useFeedTaskViewModel();
+  const { allTasks, composeGuideActivationSignal } = useFeedTaskViewModel();
   const environment = useResolvedTaskComposerEnvironment({});
   const {
     shouldHideComposer,
@@ -93,8 +89,7 @@ export function TaskCreateComposer({
         adaptiveSize={adaptiveSize}
         focusOnMount={focusOnMount}
         onExpandedChange={onExpandedChange}
-        forceExpanded={forceExpanded}
-        forceExpandSignal={forceExpandSignal}
+        forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}
         onMentionRequestConsumed={onMentionRequestConsumed}
         collapseOnSuccess={collapseOnSuccess}

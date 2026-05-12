@@ -57,9 +57,7 @@ describe("SharedViewComposer", () => {
         }}
       >
         <FeedTaskViewModelProvider value={{ tasks: [parentTask], allTasks: [parentTask], focusedTaskId: "parent-task" }}>
-          <SharedViewComposer
-            focusedTaskId="parent-task"
-          />
+          <SharedViewComposer />
         </FeedTaskViewModelProvider>
       </FeedSurfaceProvider>
     );
@@ -94,9 +92,7 @@ describe("SharedViewComposer", () => {
         }}
       >
         <FeedTaskViewModelProvider value={{ tasks: [parentTask], allTasks: [parentTask], focusedTaskId: "parent-task" }}>
-          <SharedViewComposer
-            focusedTaskId="parent-task"
-          />
+          <SharedViewComposer />
         </FeedTaskViewModelProvider>
       </FeedSurfaceProvider>
     );
@@ -130,9 +126,7 @@ describe("SharedViewComposer", () => {
         }}
       >
         <FeedTaskViewModelProvider value={{ tasks: [parentTask], allTasks: [parentTask], focusedTaskId: "parent-task" }}>
-          <SharedViewComposer
-            focusedTaskId="parent-task"
-          />
+          <SharedViewComposer />
         </FeedTaskViewModelProvider>
       </FeedSurfaceProvider>
     );

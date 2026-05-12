@@ -75,7 +75,6 @@ interface TaskComposerProps {
   adaptiveSize?: boolean;
   focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
-  forceExpanded?: boolean;
   forceExpandSignal?: number;
   mentionRequest?: {
     mention: string;
@@ -187,7 +186,6 @@ export function TaskComposer({
   adaptiveSize = false,
   focusOnMount = true,
   onExpandedChange,
-  forceExpanded = false,
   forceExpandSignal,
   mentionRequest = null,
   onMentionRequestConsumed,
@@ -422,15 +420,6 @@ export function TaskComposer({
     content,
     isExpanded,
   ]);
-
-  useEffect(() => {
-    if (adaptiveSize && forceExpanded) {
-      setIsExpanded(true);
-      requestAnimationFrame(() => {
-        textareaRef.current?.focus();
-      });
-    }
-  }, [adaptiveSize, forceExpanded]);
 
   useEffect(() => {
     if (!adaptiveSize) return;

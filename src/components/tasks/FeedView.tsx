@@ -59,8 +59,6 @@ interface FeedViewProps {
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isMobile?: boolean;
-  forceShowComposer?: boolean;
-  composeGuideActivationSignal?: number;
   isPendingPublishTask?: (taskId: string) => boolean;
   onMentionRequestConsumed?: (requestId: number) => void;
   mentionRequest?: {
@@ -161,8 +159,6 @@ export function FeedView({
   focusedTaskId = null,
   searchQueryOverride,
   isMobile = false,
-  forceShowComposer,
-  composeGuideActivationSignal,
   isPendingPublishTask,
   composeRestoreRequest = null,
   onMentionRequestConsumed,
@@ -176,8 +172,7 @@ export function FeedView({
   const { relays, channels, people, quickFilters, channelMatchMode = "and" } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
   const nip05VerifiedPubkeys = useNip05VerifiedPubkeys(people);
-  const interactionModel = useFeedViewInteractionModel();
-  const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
+  const { forceShowComposer } = useFeedViewInteractionModel();
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     const statusType = getTaskStatusType(status);
@@ -531,11 +526,8 @@ export function FeedView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer) && (
+      {!isMobile && (authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
-          focusedTaskId={focusedTaskId}
-          forceExpanded={effectiveForceShowComposer}
-          forceExpandSignal={composeGuideActivationSignal}
           mentionRequest={mentionRequest}
           onMentionRequestConsumed={onMentionRequestConsumed}
           composeRestoreRequest={composeRestoreRequest}

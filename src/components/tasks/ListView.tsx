@@ -50,8 +50,6 @@ interface ListViewProps {
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode?: DisplayDepthMode;
-  forceShowComposer?: boolean;
-  composeGuideActivationSignal?: number;
   isInteractionBlocked?: boolean;
   isHydrating?: boolean;
 }
@@ -116,8 +114,6 @@ export function ListView({
   searchQueryOverride,
   depthMode = "leaves",
   focusedTaskId,
-  forceShowComposer,
-  composeGuideActivationSignal,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
   isHydrating = false,
@@ -126,8 +122,7 @@ export function ListView({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { channels, people } = useFeedSurfaceState();
-  const interactionModel = useFeedViewInteractionModel();
-  const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
+  const { forceShowComposer } = useFeedViewInteractionModel();
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   
@@ -451,11 +446,8 @@ export function ListView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {(authPolicy.canOpenCompose || effectiveForceShowComposer) && (
+      {(authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
-          focusedTaskId={focusedTaskId}
-          forceExpanded={effectiveForceShowComposer}
-          forceExpandSignal={composeGuideActivationSignal}
           composeRestoreRequest={composeRestoreRequest}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
           allowComment={false}

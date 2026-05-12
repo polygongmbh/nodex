@@ -23,8 +23,6 @@ interface TaskTreeProps {
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isMobile?: boolean;
-  forceShowComposer?: boolean;
-  composeGuideActivationSignal?: number;
   isPendingPublishTask?: (taskId: string) => boolean;
   onMentionRequestConsumed?: (requestId: number) => void;
   mentionRequest?: {
@@ -42,8 +40,6 @@ export function TaskTree({
   searchQueryOverride,
   focusedTaskId,
   isMobile = false,
-  forceShowComposer,
-  composeGuideActivationSignal,
   isPendingPublishTask,
   onMentionRequestConsumed,
   composeRestoreRequest = null,
@@ -52,9 +48,8 @@ export function TaskTree({
   isHydrating = false,
 }: TaskTreeProps) {
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
-  const interactionModel = useFeedViewInteractionModel();
+  const { forceShowComposer } = useFeedViewInteractionModel();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
-  const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const taskSource = useTaskViewSource({
     tasks,
@@ -66,7 +61,6 @@ export function TaskTree({
   const {
     activeRelays,
     childrenMap,
-    focusedTaskId: normalizedFocusedTaskId,
     searchQuery,
     sortContext,
   } = taskSource;
@@ -230,18 +224,15 @@ export function TaskTree({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer) && (
+      {!isMobile && (authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
-          focusedTaskId={normalizedFocusedTaskId}
-          forceExpanded={effectiveForceShowComposer}
-          forceExpandSignal={composeGuideActivationSignal}
           onExpandedChange={setIsComposerExpanded}
           mentionRequest={mentionRequest}
           onMentionRequestConsumed={onMentionRequestConsumed}
           composeRestoreRequest={composeRestoreRequest}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
           collapseOnSuccess
-          allowComment={Boolean(normalizedFocusedTaskId)}
+          allowComment={Boolean(focusedTaskId)}
         />
       )}
 

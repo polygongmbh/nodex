@@ -9,10 +9,7 @@ import { toast } from "sonner";
 import type { ComposeRestoreRequest, TaskStatus } from "@/types";
 
 interface SharedViewComposerProps {
-  focusedTaskId: string | null;
   initialStatus?: TaskStatus;
-  forceExpanded?: boolean;
-  forceExpandSignal?: number;
   onExpandedChange?: (expanded: boolean) => void;
   mentionRequest?: {
     mention: string;
@@ -28,10 +25,7 @@ interface SharedViewComposerProps {
 }
 
 export function SharedViewComposer({
-  focusedTaskId,
   initialStatus,
-  forceExpanded = false,
-  forceExpandSignal,
   onExpandedChange,
   mentionRequest = null,
   onMentionRequestConsumed,
@@ -45,7 +39,7 @@ export function SharedViewComposer({
   const { t } = useTranslation("composer");
   const authPolicy = useAuthActionPolicy();
   const { relays } = useFeedSurfaceState();
-  const { allTasks } = useFeedTaskViewModel();
+  const { allTasks, focusedTaskId } = useFeedTaskViewModel();
   const hasWarnedHiddenComposerRef = useRef(false);
   const parentTask = focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) : undefined;
   const shouldHideComposer =
@@ -73,8 +67,6 @@ export function SharedViewComposer({
         focusedTaskId={focusedTaskId}
         initialStatus={initialStatus}
         adaptiveSize
-        forceExpanded={forceExpanded}
-        forceExpandSignal={forceExpandSignal}
         onExpandedChange={onExpandedChange}
         mentionRequest={mentionRequest}
         onMentionRequestConsumed={onMentionRequestConsumed}
