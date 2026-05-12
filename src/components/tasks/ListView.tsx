@@ -1,7 +1,7 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateBadgeClasses } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStatusFromStateDefinition } from "@/domain/task-states/task-state-config";
+import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefinition } from "@/domain/task-states/task-state-config";
 import { getTaskStatus, type Task, type ComposeRestoreRequest, type TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -28,7 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { isTaskTerminalStatus } from "@/domain/content/task-state";
+import { isTaskTerminal } from "@/domain/content/task-state";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
@@ -284,7 +284,7 @@ export function ListView({
   const dispatchStatusChange = (taskId: string, stateId: string) => {
     const state = getTaskStateRegistry().find((entry) => entry.id === stateId);
     if (!state) return;
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state: toTaskStatusFromStateDefinition(state) });
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state: toTaskStateFromDefinition(state) });
   };
 
   // Task IDs for keyboard navigation
@@ -547,7 +547,7 @@ export function ListView({
                         taskId={task.id}
                         taskContent={task.content}
                         priority={task.priority}
-                        editable={editable && !isTaskTerminalStatus(task.state)}
+                        editable={editable && !isTaskTerminal(task.state)}
                       />
                     )}
                     renderTagsCell={(task) => <TagsCell task={task} />}

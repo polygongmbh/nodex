@@ -26,7 +26,7 @@ import {
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
-import { isTaskTerminalStatus } from "@/domain/content/task-state";
+import { isTaskTerminal } from "@/domain/content/task-state";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { hasTextSelection } from "@/lib/click-intent";
@@ -402,7 +402,7 @@ export function FeedView({
   const renderPriorityChip = useCallback((task: Task) => (
     <FeedPriorityChip
       task={task}
-      editable={canCompleteTask(task) && !isTaskTerminalStatus(task.state)}
+      editable={canCompleteTask(task) && !isTaskTerminal(task.state)}
     />
   ), [canCompleteTask]);
   const renderDueDateChip = useCallback((task: Task) => (

@@ -5,7 +5,7 @@ import { TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task
 import {
   getTaskStateRegistry,
   resolveTaskStateFromStatus,
-  toTaskStatusFromStateDefinition,
+  toTaskStateFromDefinition,
   type TaskStateDefinition,
 } from "@/domain/task-states/task-state-config";
 import {
@@ -318,7 +318,7 @@ export function KanbanView({
     const targetColumn = columns.find((column) => column.id === destColumnId);
     const task = kanbanTasks.find((item) => item.id === taskId);
     if (!task || !targetColumn || !canUserChangeTaskStatus(task, currentUser)) return;
-    const nextStatus = toTaskStatusFromStateDefinition(targetColumn.state);
+    const nextStatus = toTaskStateFromDefinition(targetColumn.state);
     const currentStateId = resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id;
     if (targetColumn.id === currentStateId) return;
 
@@ -366,7 +366,7 @@ export function KanbanView({
       (column) => column.id === resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id
     );
     if (currentColumnIndex <= 0) return;
-    const newStatus = toTaskStatusFromStateDefinition(columns[currentColumnIndex - 1].state);
+    const newStatus = toTaskStateFromDefinition(columns[currentColumnIndex - 1].state);
 
     pendingRefocusRef.current = focusedId;
     dispatchStatusChange(focusedId, newStatus);
@@ -391,7 +391,7 @@ export function KanbanView({
       (column) => column.id === resolveTaskStateFromStatus(getTaskEffectiveStatus(task)).id
     );
     if (currentColumnIndex < 0 || currentColumnIndex >= columns.length - 1) return;
-    const newStatus = toTaskStatusFromStateDefinition(columns[currentColumnIndex + 1].state);
+    const newStatus = toTaskStateFromDefinition(columns[currentColumnIndex + 1].state);
 
     pendingRefocusRef.current = focusedId;
     dispatchStatusChange(focusedId, newStatus);
@@ -446,7 +446,7 @@ export function KanbanView({
   const handleComposerSubmit = useComposerSubmitHandler({
     focusedTaskId,
     initialState: composingColumn
-      ? toTaskStatusFromStateDefinition(composingColumn.state)
+      ? toTaskStateFromDefinition(composingColumn.state)
       : undefined,
     closeOnSuccess: true,
     onCancel: closeComposer,

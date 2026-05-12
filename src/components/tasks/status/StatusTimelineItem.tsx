@@ -10,7 +10,7 @@ import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
-import { isTaskTerminalStatus } from "@/domain/content/task-state";
+import { isTaskTerminal } from "@/domain/content/task-state";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { formatAuthorMetaParts } from "@/types/person";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -37,7 +37,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
     [resolvedAuthor]
   );
   const isComment = task.taskType === "comment";
-  const isTerminal = isTaskTerminalStatus(task.state);
+  const isTerminal = isTaskTerminal(task.state);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   // Collapse paragraph breaks so the preview renders as one inline block —
   // `line-clamp-2` on a container with multiple <p> children produces an

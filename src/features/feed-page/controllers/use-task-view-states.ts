@@ -12,7 +12,7 @@ import {
 } from "@/domain/content/task-view-filtering";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
-import { isTaskTerminalStatus } from "@/domain/content/task-state";
+import { isTaskTerminal } from "@/domain/content/task-state";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
@@ -160,7 +160,7 @@ export interface MobileFallbackNoticeState {
 }
 
 export function sortKanbanColumnTasks(tasks: Task[], status: TaskStatus, sortContext: SortContext): Task[] {
-  return isTaskTerminalStatus(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
+  return isTaskTerminal(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
 }
 
 function clearSelectedPeople(people: SelectablePerson[]): SelectablePerson[] {
@@ -327,7 +327,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
     getUpcomingTasks() {
       if (upcomingTasksCache) return upcomingTasksCache;
       upcomingTasksCache = sortTasks(
-        getTasksWithDueDates().filter((task) => !isTaskTerminalStatus(task.state)),
+        getTasksWithDueDates().filter((task) => !isTaskTerminal(task.state)),
         source.sortContext
       );
       return upcomingTasksCache;
@@ -768,7 +768,7 @@ export function useMobileFallbackNoticeState({
     if (currentView !== "list" && currentView !== "calendar") {
       return undefined;
     }
-    return (task: Task) => task.taskType === "task" && Boolean(task.dueDate) && !isTaskTerminalStatus(task.state);
+    return (task: Task) => task.taskType === "task" && Boolean(task.dueDate) && !isTaskTerminal(task.state);
   }, [currentView]);
   const includeFocusedTaskForActiveView = currentView === "feed";
   const hideClosedForActiveView = currentView === "feed";

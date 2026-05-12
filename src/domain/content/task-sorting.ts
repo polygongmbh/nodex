@@ -1,6 +1,6 @@
 import { Task, TaskState, TaskStatus, getLastEditedAt, getTaskStatus } from "@/types";
-import { isTaskTerminalStatus } from "./task-state";
-import { getTaskStateUiType } from "@/domain/task-states/task-state-config";
+import { isTaskTerminal } from "./task-state";
+import { getTaskStatusForStateId } from "@/domain/task-states/task-state-config";
 import { isToday, isPast, startOfDay, differenceInDays } from "date-fns";
 import { evaluateTaskPriorities, type PriorityScore } from "./task-priority-evaluation";
 
@@ -39,7 +39,7 @@ function getTaskById(taskId: string, context: SortContext): Task | undefined {
 // Check if a task or any of its descendants is in-progress
 export function hasActiveInTree(taskId: string, context: SortContext): boolean {
   const task = getTaskById(taskId, context);
-  if (getTaskStateUiType(getStatusForSort(task)) === "active") return true;
+  if (getTaskStatusForStateId(getStatusForSort(task)) === "active") return true;
   
   const children = context.childrenMap.get(taskId) || [];
   return children.some(child => hasActiveInTree(child.id, context));
@@ -109,8 +109,8 @@ export function sortTasks(tasks: Task[], context: SortContext): Task[] {
   };
 
   return [...tasks].sort((a, b) => {
-    const aTerminal = isTaskTerminalStatus(getStatusForSort(a) || "open");
-    const bTerminal = isTaskTerminalStatus(getStatusForSort(b) || "open");
+    const aTerminal = isTaskTerminal(getStatusForSort(a) || "open");
+    const bTerminal = isTaskTerminal(getStatusForSort(b) || "open");
     if (aTerminal !== bTerminal) return aTerminal ? 1 : -1;
 
     const aScore = priorityScores.get(a.id);
@@ -150,7 +150,7 @@ export function buildChildrenMap(allTasks: Task[]): Map<string | undefined, Task
 
 // Get due date color class based on urgency
 export function getDueDateColorClass(dueDate: Date | undefined, status?: TaskState | TaskStatus): string {
-  if (!dueDate || isTaskTerminalStatus(status)) return "text-muted-foreground";
+  if (!dueDate || isTaskTerminal(status)) return "text-muted-foreground";
   
   const today = startOfDay(new Date());
   const dueDay = startOfDay(dueDate);

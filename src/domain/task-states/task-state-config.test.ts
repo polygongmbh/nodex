@@ -4,11 +4,10 @@ import {
   parseTaskStateConfig,
   resolveTaskState,
   resolveTaskStateDefinition,
-  getTaskStateUiType,
+  getTaskStatusForStateId,
   isTaskCompletedState,
   isTaskTerminalState,
   getNextStateInSequence,
-  getStateSortStatus,
   getVisibleByDefaultStates,
   getProtocolStatusForState,
 } from "./task-state-config";
@@ -60,6 +59,7 @@ describe("parseTaskStateConfig", () => {
     ]);
     expect(parseTaskStateConfig(config)).toBeNull();
   });
+
 });
 
 describe("resolveTaskState", () => {
@@ -132,11 +132,11 @@ describe("resolveTaskStateDefinition", () => {
 });
 
 describe("type helpers", () => {
-  it("getTaskStateUiType returns correct types", () => {
-    expect(getTaskStateUiType("open", DEFAULT_TASK_STATES)).toBe("open");
-    expect(getTaskStateUiType("active", DEFAULT_TASK_STATES)).toBe("active");
-    expect(getTaskStateUiType("done", DEFAULT_TASK_STATES)).toBe("done");
-    expect(getTaskStateUiType("closed", DEFAULT_TASK_STATES)).toBe("closed");
+  it("getTaskStatusForStateId returns correct types", () => {
+    expect(getTaskStatusForStateId("open", DEFAULT_TASK_STATES)).toBe("open");
+    expect(getTaskStatusForStateId("active", DEFAULT_TASK_STATES)).toBe("active");
+    expect(getTaskStatusForStateId("done", DEFAULT_TASK_STATES)).toBe("done");
+    expect(getTaskStatusForStateId("closed", DEFAULT_TASK_STATES)).toBe("closed");
   });
 
   it("isTaskCompletedState only true for done type", () => {
@@ -152,10 +152,6 @@ describe("type helpers", () => {
     expect(isTaskTerminalState("active", DEFAULT_TASK_STATES)).toBe(false);
   });
 
-  it("getStateSortStatus matches ui type", () => {
-    expect(getStateSortStatus("active", DEFAULT_TASK_STATES)).toBe("active");
-    expect(getStateSortStatus("done", DEFAULT_TASK_STATES)).toBe("done");
-  });
 });
 
 

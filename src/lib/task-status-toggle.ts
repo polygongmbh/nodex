@@ -1,6 +1,6 @@
 import type { MouseEvent } from "react";
 import type { TaskState } from "@/types";
-import { isTaskTerminalStatus } from "@/domain/content/task-state";
+import { isTaskTerminal } from "@/domain/content/task-state";
 
 interface HandleTaskStatusToggleClickOptions {
   status?: TaskState;
@@ -26,7 +26,7 @@ export function shouldOpenStatusMenuForDirectSelection({
   altKey,
   hasStatusChangeHandler,
 }: StatusMenuIntentOptions): boolean {
-  return hasStatusChangeHandler && (isTaskTerminalStatus(status) || altKey);
+  return hasStatusChangeHandler && (isTaskTerminal(status) || altKey);
 }
 
 export function handleTaskStatusToggleClick(

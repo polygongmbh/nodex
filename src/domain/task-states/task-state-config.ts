@@ -124,15 +124,15 @@ export function resolveTaskStateFromStatus(
   return resolveTaskState(normalized.status, normalized.description, registry);
 }
 
-export function toTaskStatusFromStateDefinition(state: TaskStateDefinition): TaskState {
+export function toTaskStateFromDefinition(state: TaskStateDefinition): TaskState {
   return state.id === state.status ? { status: state.status } : { status: state.status, description: state.label };
 }
 
-export function toTaskStatusFromStateId(
+export function toTaskStateFromStateId(
   stateId: string,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskState {
-  return toTaskStatusFromStateDefinition(resolveTaskStateDefinition(stateId, registry));
+  return toTaskStateFromDefinition(resolveTaskStateDefinition(stateId, registry));
 }
 
 export function resolveTaskStateDefinition(
@@ -154,7 +154,7 @@ function deriveStatusFromUnknownStateId(stateId: string): TaskStatus {
   return "active";
 }
 
-export function getTaskStateUiType(
+export function getTaskStatusForStateId(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStatus {
@@ -165,14 +165,14 @@ export function isTaskCompletedState(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): boolean {
-  return getTaskStateUiType(stateId, registry) === "done";
+  return getTaskStatusForStateId(stateId, registry) === "done";
 }
 
 export function isTaskTerminalState(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): boolean {
-  const status = getTaskStateUiType(stateId, registry);
+  const status = getTaskStatusForStateId(stateId, registry);
   return status === "done" || status === "closed";
 }
 
@@ -200,13 +200,6 @@ export function getNextStateInSequence(
   return registry[(index + 1) % registry.length].id;
 }
 
-export function getStateSortStatus(
-  stateId: string | undefined,
-  registry: TaskStateDefinition[] = getTaskStateRegistry()
-): TaskStatus {
-  return getTaskStateUiType(stateId, registry);
-}
-
 export function getVisibleByDefaultStates(
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition[] {
@@ -218,7 +211,7 @@ export function getProtocolStatusForState(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): "open" | "done" | "closed" {
-  const uiStatus = getTaskStateUiType(stateId, registry);
+  const uiStatus = getTaskStatusForStateId(stateId, registry);
   if (uiStatus === "done") return "done";
   if (uiStatus === "closed") return "closed";
   return "open";

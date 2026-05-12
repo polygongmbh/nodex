@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect, typ
 import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStatusFromStateDefinition } from "@/domain/task-states/task-state-config";
+import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefinition } from "@/domain/task-states/task-state-config";
 import { getTaskState, getTaskStatus, type Task, type ComposeRestoreRequest, type TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -43,7 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isTaskTerminalStatus } from "@/domain/content/task-state";
+import { isTaskTerminal } from "@/domain/content/task-state";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
@@ -380,7 +380,7 @@ export function CalendarView({
   const dispatchStatusChange = (taskId: string, stateId: string) => {
     const state = getTaskStateRegistry().find((entry) => entry.id === stateId);
     if (!state) return;
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state: toTaskStatusFromStateDefinition(state) });
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state: toTaskStateFromDefinition(state) });
   };
   const dispatchToggleComplete = (taskId: string) => {
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
@@ -491,7 +491,7 @@ export function CalendarView({
                        {group.tasks.map((task) => {
                          const authorColor = getAuthorColor(task.author);
                          const canChangeStatus = canCompleteTask(task);
-                         const canEditPriority = canChangeStatus && !isTaskTerminalStatus(task.state);
+                         const canEditPriority = canChangeStatus && !isTaskTerminal(task.state);
                          return (
                            <div
                              key={task.id}
@@ -648,7 +648,7 @@ export function CalendarView({
                                  {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
                                    void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                                  }, {
-                                   plainHashtags: isTaskTerminalStatus(task.state),
+                                   plainHashtags: isTaskTerminal(task.state),
                                    people,
                                    disableStandaloneEmbeds: true,
                                  })}
@@ -810,7 +810,7 @@ export function CalendarView({
                                         key={task.id}
                                         className={cn(
                                           "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
-                                          isTaskTerminalStatus(task.state)
+                                          isTaskTerminal(task.state)
                                             ? "bg-muted text-muted-foreground line-through"
                                             : getTaskStatus(task.state) === "active"
                                               ? "bg-warning/15 text-warning"
@@ -964,7 +964,7 @@ export function CalendarView({
                         })()}
                         className={cn(
                           `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-                          isTaskTerminalStatus(task.state) && "opacity-60",
+                          isTaskTerminal(task.state) && "opacity-60",
                           isLockedUntilStart && "opacity-50 grayscale"
                         )}
                         style={{ borderLeftColor: authorColor.accent }}
@@ -1111,13 +1111,13 @@ export function CalendarView({
                                 hasCollapsibleContent && !isContentExpanded
                                   ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                                   : "whitespace-pre-wrap",
-                                isTaskTerminalStatus(task.state) && "line-through text-muted-foreground"
+                                isTaskTerminal(task.state) && "line-through text-muted-foreground"
                               )}
                             >
                               {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
                                 void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                               }, {
-                                plainHashtags: isTaskTerminalStatus(task.state),
+                                plainHashtags: isTaskTerminal(task.state),
                                 people,
                                 disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),

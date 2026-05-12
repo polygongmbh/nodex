@@ -4,12 +4,12 @@ import {
   isTaskTerminalState as registryIsTerminal,
 } from "@/domain/task-states/task-state-config";
 
-export function isTaskCompletedStatus(status: TaskState | TaskStatus | undefined): boolean {
-  return isTaskCompletedState(getTaskStatus(status));
+export function isTaskCompleted(state: TaskState | TaskStatus | undefined): boolean {
+  return isTaskCompletedState(getTaskStatus(state));
 }
 
-export function isTaskTerminalStatus(status: TaskState | TaskStatus | undefined): boolean {
-  return registryIsTerminal(getTaskStatus(status));
+export function isTaskTerminal(state: TaskState | TaskStatus | undefined): boolean {
+  return registryIsTerminal(getTaskStatus(state));
 }
 
 export function applyTaskStateUpdate(

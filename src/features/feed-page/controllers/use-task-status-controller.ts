@@ -2,11 +2,11 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task, TaskState, TaskStatus } from "@/types";
 import { getLastEditedAt, getTaskStatus, normalizeTaskState } from "@/types";
 import type { Person } from "@/types/person";
-import { applyTaskStateUpdate, isTaskTerminalStatus } from "@/domain/content/task-state";
+import { applyTaskStateUpdate, isTaskTerminal } from "@/domain/content/task-state";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import {
   getDefaultStateForStatus,
-  toTaskStatusFromStateDefinition,
+  toTaskStateFromDefinition,
 } from "@/domain/task-states/task-state-config";
 import { notifyStatusRestricted } from "@/lib/notifications";
 import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";
@@ -193,7 +193,7 @@ export function useTaskStatusController({
       // publish as { status: "done", description: "Review" } rather than a synthetic id.
       const nextStateDef = getDefaultStateForStatus(nextType);
       const nextStatus: TaskState = nextStateDef
-        ? toTaskStatusFromStateDefinition(nextStateDef)
+        ? toTaskStateFromDefinition(nextStateDef)
         : { status: nextType };
       commitTaskStatus(taskId, nextStatus);
     },
