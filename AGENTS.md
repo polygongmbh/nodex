@@ -30,6 +30,9 @@ commands:
   lint:
     cmd: npm run lint
     purpose: run eslint checks
+  typecheck:
+    cmd: npm run typecheck
+    purpose: run TypeScript compiler checks
   preview:
     cmd: npm run preview
     purpose: preview production build locally
@@ -122,8 +125,9 @@ Use this table and the matching YAML block below as the canonical verification p
 | --- | --- | --- |
 | Docs/process-only updates (for example `AGENTS.md`, non-runtime docs) | Targeted sanity check | None |
 | Minor localized logic or UI changes | Focused tests for changed area | `npm run build` |
-| Major feature, cross-view UI change, release prep, or broad refactor | `npm run lint`, `npx vitest run`, `npm run build` | None |
-| Protocol/event mapping/publishing changes | `npx vitest run`, `npm run build` | `npm run lint` |
+| Major feature, cross-view UI change, or broad refactor | `npm run lint`, `npx vitest run`, `npm run build` | `npm run typecheck` |
+| Protocol/event mapping/publishing changes | `npx vitest run`, `npm run build` | `npm run lint`, `npm run typecheck` |
+| Release prep | `npm run lint`, `npm run typecheck`, `npx vitest run`, `npm run build` | None |
 
 ### Machine-Readable Policy Rules
 ```yaml
@@ -182,13 +186,22 @@ policies:
         - npm run lint
         - npx vitest run
         - npm run build
-      recommended: []
+      recommended:
+        - npm run typecheck
     protocol_or_event_mapping_changes:
       required:
         - npx vitest run
         - npm run build
       recommended:
         - npm run lint
+        - npm run typecheck
+    release_prep:
+      required:
+        - npm run lint
+        - npm run typecheck
+        - npx vitest run
+        - npm run build
+      recommended: []
   localization:
     supported_languages:
       - en
