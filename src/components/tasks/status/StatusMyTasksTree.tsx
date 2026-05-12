@@ -97,11 +97,11 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
             className="w-full rounded-md px-3 py-2 text-center text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             {hiddenCount > 0
-              ? t("status.myTasks.viewMore", {
+              ? t("status.viewMore", {
                   count: hiddenCount,
                   view: tShell("navigation.views.tree"),
                 })
-              : t("status.myTasks.showView", {
+              : t("status.showView", {
                   view: tShell("navigation.views.tree"),
                 })}
           </button>

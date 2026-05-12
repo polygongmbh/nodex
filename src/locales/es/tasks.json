@@ -250,13 +250,7 @@
     }
   },
   "status": {
-    "myTasks": {
-      "viewMore": "Ver {{count}} más en {{view}}",
-      "showView": "Mostrar {{view}}"
-    },
-    "timeline": {
-      "viewMore": "Ver {{count}} más en {{view}}",
-      "showView": "Mostrar {{view}}"
-    }
+    "viewMore": "Ver {{count}} más en {{view}}",
+    "showView": "Mostrar {{view}}"
   }
 }

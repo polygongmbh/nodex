@@ -48,11 +48,11 @@ export function StatusTimeline({ contextTasks, focusedTaskId, concernsScope }: S
           className="w-full rounded-md px-3 py-2 text-center text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           {hiddenCount > 0
-            ? t("status.timeline.viewMore", {
+            ? t("status.viewMore", {
                 count: hiddenCount,
                 view: tShell("navigation.views.feed"),
               })
-            : t("status.timeline.showView", {
+            : t("status.showView", {
                 view: tShell("navigation.views.feed"),
               })}
         </button>
