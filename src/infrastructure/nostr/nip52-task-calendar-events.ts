@@ -14,7 +14,10 @@ const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const HH_MM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 function toDateTagValue(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function toUnixSeconds(date: Date): string {
@@ -92,7 +95,8 @@ export function parseLinkedTaskDueFromCalendarEvent(
 
   let dueDate: Date | undefined;
   if (kind === NostrEventKind.CalendarDateBased && DATE_ONLY_RE.test(dateTag[1])) {
-    const parsed = new Date(`${dateTag[1]}T00:00:00.000Z`);
+    const [y, m, d] = dateTag[1].split("-").map(Number);
+    const parsed = new Date(y, m - 1, d);
     if (!Number.isNaN(parsed.getTime())) {
       dueDate = parsed;
     }

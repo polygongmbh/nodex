@@ -7,7 +7,7 @@ import { NostrEventKind } from "@/lib/nostr/types";
 
 describe("task calendar event helpers", () => {
   it("builds a date-based NIP-52 event when no due time is set", () => {
-    const dueDate = new Date("2026-03-22T00:00:00.000Z");
+    const dueDate = new Date(2026, 2, 22);
     const event = buildLinkedTaskCalendarEvent({
       taskEventId: "task123",
       taskContent: "Plan launch",
@@ -22,8 +22,24 @@ describe("task calendar event helpers", () => {
     expect(event.tags).toContainEqual(["e", "task123", "", "task"]);
   });
 
+  it("preserves the calendar day regardless of timezone offset", () => {
+    const dueDate = new Date(2026, 2, 22);
+    const event = buildLinkedTaskCalendarEvent({
+      taskEventId: "task-tz",
+      taskContent: "TZ check",
+      dueDate,
+    });
+    const startTag = event.tags.find((t) => t[0] === "start");
+    expect(startTag?.[1]).toBe("2026-03-22");
+
+    const parsed = parseLinkedTaskDueFromCalendarEvent(NostrEventKind.CalendarDateBased, event.tags);
+    expect(parsed.dueDate?.getFullYear()).toBe(2026);
+    expect(parsed.dueDate?.getMonth()).toBe(2);
+    expect(parsed.dueDate?.getDate()).toBe(22);
+  });
+
   it("builds a time-based NIP-52 event when due time is set", () => {
-    const dueDate = new Date("2026-03-22T00:00:00.000Z");
+    const dueDate = new Date(2026, 2, 22);
     const event = buildLinkedTaskCalendarEvent({
       taskEventId: "task456",
       taskContent: "Ship update",
@@ -50,7 +66,9 @@ describe("task calendar event helpers", () => {
     ]);
 
     expect(parsed.taskId).toBe("task-1");
-    expect(parsed.dueDate?.toISOString()).toBe("2026-03-23T00:00:00.000Z");
+    expect(parsed.dueDate?.getFullYear()).toBe(2026);
+    expect(parsed.dueDate?.getMonth()).toBe(2);
+    expect(parsed.dueDate?.getDate()).toBe(23);
     expect(parsed.dateType).toBe("due");
   });
 });
