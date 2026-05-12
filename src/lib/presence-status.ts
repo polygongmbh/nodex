@@ -1,4 +1,5 @@
 export const NIP38_PRESENCE_TAG = "nodex-presence";
+export const NODEX_PRESENCE_VIEW_TAG = "nodex-view";
 
 // Thresholds for displaying presence indicators in the sidebar.
 // ONLINE (green) = recently seen within a short window.
@@ -8,12 +9,6 @@ export const PRESENCE_RECENT_WINDOW_MS = 30 * 60 * 1000;
 
 type PresenceState = "active" | "offline";
 
-export interface PresenceContent {
-  state: PresenceState;
-  view?: string;
-  taskId?: string | null;
-}
-
 export interface LatestPresenceSnapshot {
   reportedAtMs: number;
   state: PresenceState;
@@ -21,48 +16,43 @@ export interface LatestPresenceSnapshot {
   taskId?: string | null;
 }
 
-export function buildPresenceTags(): string[][] {
+export function buildActivePresenceTags(view: string, taskId: string | null): string[][] {
+  const tags: string[][] = [
+    ["d", NIP38_PRESENCE_TAG],
+    [NODEX_PRESENCE_VIEW_TAG, view],
+  ];
+  if (taskId) tags.push(["e", taskId]);
+  return tags;
+}
+
+export function buildOfflinePresenceTags(): string[][] {
   return [["d", NIP38_PRESENCE_TAG]];
-}
-
-export function buildActivePresenceContent(view: string, taskId: string | null): string {
-  return JSON.stringify({
-    state: "active",
-    view,
-    taskId,
-  } satisfies PresenceContent);
-}
-
-export function buildOfflinePresenceContent(): string {
-  return JSON.stringify({
-    state: "offline",
-  } satisfies PresenceContent);
 }
 
 export function isNodexPresenceEvent(tags: string[][]): boolean {
   return tags.some((tag) => tag[0] === "d" && tag[1] === NIP38_PRESENCE_TAG);
 }
 
-export function parsePresenceContent(content: string): PresenceContent | null {
-  if (!content) return null;
-  try {
-    const parsed = JSON.parse(content) as Partial<PresenceContent>;
-    if (parsed.state !== "active" && parsed.state !== "offline") return null;
-    return {
-      state: parsed.state,
-      view: typeof parsed.view === "string" ? parsed.view : undefined,
-      taskId: typeof parsed.taskId === "string" || parsed.taskId === null ? parsed.taskId : undefined,
-    };
-  } catch {
-    return null;
-  }
+interface ParsedPresence {
+  state: PresenceState;
+  view?: string;
+  taskId?: string | null;
+}
+
+export function parsePresenceTags(tags: string[][]): ParsedPresence | null {
+  if (!isNodexPresenceEvent(tags)) return null;
+  const viewTag = tags.find((tag) => tag[0] === NODEX_PRESENCE_VIEW_TAG);
+  const view = typeof viewTag?.[1] === "string" && viewTag[1].length > 0 ? viewTag[1] : undefined;
+  if (!view) return { state: "offline" };
+  const eTag = tags.find((tag) => tag[0] === "e");
+  const taskId = typeof eTag?.[1] === "string" && eTag[1].length > 0 ? eTag[1] : null;
+  return { state: "active", view, taskId };
 }
 
 interface PresenceLikeEvent {
   pubkey?: string;
   created_at?: number;
   tags: string[][];
-  content?: string;
 }
 
 export function deriveLatestPresenceByAuthor(
@@ -72,9 +62,9 @@ export function deriveLatestPresenceByAuthor(
 
   for (const event of events) {
     const authorId = event.pubkey?.trim().toLowerCase();
-    if (!authorId || !isNodexPresenceEvent(event.tags)) continue;
+    if (!authorId) continue;
 
-    const presence = parsePresenceContent(event.content || "");
+    const presence = parsePresenceTags(event.tags);
     if (!presence) continue;
 
     const createdAtMs = (event.created_at || 0) * 1000;

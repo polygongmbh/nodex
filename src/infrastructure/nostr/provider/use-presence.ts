@@ -1,10 +1,7 @@
 import { useCallback, useRef } from "react";
 import NDK, { NDKEvent, NDKRelaySet } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
-import {
-  buildOfflinePresenceContent,
-  buildPresenceTags,
-} from "@/lib/presence-status";
+import { buildOfflinePresenceTags } from "@/lib/presence-status";
 import { dedupeNormalizedRelayUrls, normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import {
   filterRelayUrlsToWritableSet,
@@ -48,8 +45,8 @@ export function usePresence({ ndk, relays, markRelayVerificationFailure }: UsePr
     try {
       const event = new NDKEvent(ndk);
       event.kind = NostrEventKind.UserStatus;
-      event.content = buildOfflinePresenceContent();
-      event.tags = buildPresenceTags();
+      event.content = "";
+      event.tags = buildOfflinePresenceTags();
       await event.sign();
 
       const relayUrls = resolveOfflinePresenceRelayUrls({

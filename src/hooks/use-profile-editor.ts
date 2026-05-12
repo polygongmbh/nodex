@@ -2,10 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TFunction } from "i18next";
 import { NostrEventKind } from "@/lib/nostr/types";
-import {
-  buildOfflinePresenceContent,
-  buildPresenceTags,
-} from "@/lib/presence-status";
+import { buildOfflinePresenceTags } from "@/lib/presence-status";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { preloadLocalImageCaptionModel } from "@/lib/local-image-caption";
 import { EditableNostrProfile, isNip05CompatibleName } from "@/infrastructure/nostr/profile-metadata";
@@ -182,8 +179,8 @@ export function useProfileEditor({
     if (!enabled && userPubkey) {
       void publishEvent(
         NostrEventKind.UserStatus,
-        buildOfflinePresenceContent(),
-        buildPresenceTags()
+        "",
+        buildOfflinePresenceTags()
       );
     }
   };

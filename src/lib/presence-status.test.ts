@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { deriveLatestActivePresenceByAuthor, deriveLatestPresenceByAuthor } from "./presence-status";
+import {
+  buildActivePresenceTags,
+  buildOfflinePresenceTags,
+  deriveLatestActivePresenceByAuthor,
+  deriveLatestPresenceByAuthor,
+} from "./presence-status";
 import { NostrEventKind } from "./nostr/types";
 
 const authorA = "a".repeat(64);
+const taskId = "t".repeat(64);
 
 describe("deriveLatestActivePresenceByAuthor", () => {
   it("drops active presence when a newer offline state exists", () => {
@@ -11,15 +17,13 @@ describe("deriveLatestActivePresenceByAuthor", () => {
         kind: NostrEventKind.UserStatus,
         pubkey: authorA,
         created_at: 1_699_999_900,
-        tags: [["d", "nodex-presence"]],
-        content: JSON.stringify({ state: "active", view: "feed", taskId: null }),
+        tags: buildActivePresenceTags("feed", null),
       },
       {
         kind: NostrEventKind.UserStatus,
         pubkey: authorA,
         created_at: 1_699_999_950,
-        tags: [["d", "nodex-presence"]],
-        content: JSON.stringify({ state: "offline" }),
+        tags: buildOfflinePresenceTags(),
       },
     ];
 
@@ -33,15 +37,13 @@ describe("deriveLatestActivePresenceByAuthor", () => {
         kind: NostrEventKind.UserStatus,
         pubkey: authorA,
         created_at: 1_699_999_950,
-        tags: [["d", "nodex-presence"]],
-        content: JSON.stringify({ state: "offline" }),
+        tags: buildOfflinePresenceTags(),
       },
       {
         kind: NostrEventKind.UserStatus,
         pubkey: authorA,
         created_at: 1_699_999_980,
-        tags: [["d", "nodex-presence"]],
-        content: JSON.stringify({ state: "active", view: "feed", taskId: null }),
+        tags: buildActivePresenceTags("feed", null),
       },
     ];
 
@@ -51,14 +53,13 @@ describe("deriveLatestActivePresenceByAuthor", () => {
 });
 
 describe("deriveLatestPresenceByAuthor", () => {
-  it("retains the latest active presence details", () => {
+  it("retains the latest active presence details from tags", () => {
     const events = [
       {
         kind: NostrEventKind.UserStatus,
         pubkey: authorA,
         created_at: 1_699_999_980,
-        tags: [["d", "nodex-presence"]],
-        content: JSON.stringify({ state: "active", view: "feed", taskId: "task-123" }),
+        tags: buildActivePresenceTags("feed", taskId),
       },
     ];
 
@@ -68,7 +69,7 @@ describe("deriveLatestPresenceByAuthor", () => {
       reportedAtMs: 1_699_999_980 * 1000,
       state: "active",
       view: "feed",
-      taskId: "task-123",
+      taskId,
     });
   });
 
@@ -78,15 +79,13 @@ describe("deriveLatestPresenceByAuthor", () => {
         kind: NostrEventKind.UserStatus,
         pubkey: authorA,
         created_at: 1_699_999_900,
-        tags: [["d", "nodex-presence"]],
-        content: JSON.stringify({ state: "active", view: "feed", taskId: "task-123" }),
+        tags: buildActivePresenceTags("feed", taskId),
       },
       {
         kind: NostrEventKind.UserStatus,
         pubkey: authorA,
         created_at: 1_699_999_950,
-        tags: [["d", "nodex-presence"]],
-        content: JSON.stringify({ state: "offline" }),
+        tags: buildOfflinePresenceTags(),
       },
     ];
 
@@ -98,5 +97,22 @@ describe("deriveLatestPresenceByAuthor", () => {
       view: undefined,
       taskId: undefined,
     });
+  });
+});
+
+describe("buildActivePresenceTags", () => {
+  it("omits the e tag when there is no focused task", () => {
+    expect(buildActivePresenceTags("feed", null)).toEqual([
+      ["d", "nodex-presence"],
+      ["nodex-view", "feed"],
+    ]);
+  });
+
+  it("references the focused task via an e tag", () => {
+    expect(buildActivePresenceTags("feed", taskId)).toEqual([
+      ["d", "nodex-presence"],
+      ["nodex-view", "feed"],
+      ["e", taskId],
+    ]);
   });
 });

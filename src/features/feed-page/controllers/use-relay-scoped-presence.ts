@@ -8,9 +8,8 @@ import {
   resolveReachableAppRelayUrls,
 } from "@/lib/nostr/relay-write-targets";
 import {
-  buildActivePresenceContent,
-  buildOfflinePresenceContent,
-  buildPresenceTags,
+  buildActivePresenceTags,
+  buildOfflinePresenceTags,
 } from "@/lib/presence-status";
 import type { Relay, Task } from "@/types";
 
@@ -24,7 +23,7 @@ interface PublishResult {
 
 interface PresencePublishTarget {
   relayUrls: string[];
-  content: string;
+  tags: string[][];
   fingerprint: string;
   taskId: string | null;
 }
@@ -67,7 +66,7 @@ function buildTargetGroup(
 
   return {
     relayUrls: normalizedRelayUrls,
-    content: buildActivePresenceContent(currentView, taskId),
+    tags: buildActivePresenceTags(currentView, taskId),
     fingerprint: buildActivePresenceFingerprint(currentView, taskId),
     taskId,
   };
@@ -79,7 +78,7 @@ function buildOfflinePresenceTarget(relayUrls: string[]): PresencePublishTarget[
 
   return [{
     relayUrls: normalizedRelayUrls,
-    content: buildOfflinePresenceContent(),
+    tags: buildOfflinePresenceTags(),
     fingerprint: OFFLINE_PRESENCE_FINGERPRINT,
     taskId: null,
   }];
@@ -175,8 +174,8 @@ async function publishPresenceTargets(
 
     const result = await publishEvent(
       NostrEventKind.UserStatus,
-      target.content,
-      buildPresenceTags(),
+      "",
+      target.tags,
       undefined,
       attemptedRelayUrls
     );

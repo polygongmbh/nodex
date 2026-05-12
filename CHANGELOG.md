@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - `VITE_LOCAL_CAPTIONS` now defaults to `false`. In-browser image captioning is opt-in; set the flag to `true` to re-enable it.
 - Presence events no longer carry an expiration tag, so relays retain them and the hover card's "last seen" remains visible for people who have gone offline.
+- NIP-38 presence events now keep `content` empty and encode the focused view and task as tags (`nodex-view`, `e`), so other NIP-38 clients no longer see raw JSON in users' statuses.
 - Status view's Activity column status icons now open the status chooser on alt/option-click, long-press, and from the keyboard, matching the feed/list/tree behaviour instead of only firing a quick toggle.
 
 ### Fixed

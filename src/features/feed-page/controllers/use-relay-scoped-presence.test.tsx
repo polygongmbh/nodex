@@ -127,15 +127,22 @@ describe("useRelayScopedPresence", () => {
     expect(publishEvent.mock.calls).toEqual([
       [
         30315,
-        expect.stringContaining(`"taskId":"${"a".repeat(64)}"`),
-        expect.any(Array),
+        "",
+        expect.arrayContaining([
+          ["d", "nodex-presence"],
+          ["nodex-view", "feed"],
+          ["e", "a".repeat(64)],
+        ]),
         undefined,
         ["wss://relay.a"],
       ],
       [
         30315,
-        expect.stringContaining(`"taskId":null`),
-        expect.any(Array),
+        "",
+        [
+          ["d", "nodex-presence"],
+          ["nodex-view", "feed"],
+        ],
         undefined,
         ["wss://relay.b"],
       ],
@@ -149,8 +156,8 @@ describe("useRelayScopedPresence", () => {
     expect(publishEvent).toHaveBeenCalledTimes(2);
     await flushPresenceDebounce();
     expect(publishEvent).toHaveBeenCalledTimes(4);
-    expect(publishEvent.mock.calls[2]?.[1]).toContain(`"view":"list"`);
-    expect(publishEvent.mock.calls[3]?.[1]).toContain(`"view":"list"`);
+    expect(publishEvent.mock.calls[2]?.[2]).toContainEqual(["nodex-view", "list"]);
+    expect(publishEvent.mock.calls[3]?.[2]).toContainEqual(["nodex-view", "list"]);
   });
 
   it("only publishes the latest active presence after rapid view changes", async () => {
@@ -190,7 +197,7 @@ describe("useRelayScopedPresence", () => {
     await flushPresenceDebounce();
 
     expect(publishEvent).toHaveBeenCalledTimes(1);
-    expect(publishEvent.mock.calls[0]?.[1]).toContain(`"view":"calendar"`);
+    expect(publishEvent.mock.calls[0]?.[2]).toContainEqual(["nodex-view", "calendar"]);
   });
 
   it("switches relays without implicit offline and only publishes offline on demand", async () => {
@@ -228,14 +235,18 @@ describe("useRelayScopedPresence", () => {
 
     expect(publishEvent).toHaveBeenCalledTimes(2);
     expect(publishEvent.mock.calls[1]?.[4]).toEqual(["wss://relay.b"]);
-    expect(publishEvent.mock.calls.every((call) => !String(call[1]).includes('"state":"offline"'))).toBe(true);
+    expect(
+      publishEvent.mock.calls.every((call) =>
+        (call[2] as string[][]).some((tag) => tag[0] === "nodex-view")
+      )
+    ).toBe(true);
 
     await act(async () => {
       await result.current.publishOfflinePresenceNow();
     });
 
     expect(publishEvent).toHaveBeenCalledTimes(3);
-    expect(publishEvent.mock.calls[2]?.[1]).toContain(`"state":"offline"`);
+    expect(publishEvent.mock.calls[2]?.[2]).toEqual([["d", "nodex-presence"]]);
     expect(publishEvent.mock.calls[2]?.[4]).toEqual(["wss://relay.b", "wss://relay.a"]);
   });
 });
