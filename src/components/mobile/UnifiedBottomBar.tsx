@@ -1312,7 +1312,7 @@ export function UnifiedBottomBar({
               ref={dateScrollerRef}
               className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
-              <div className="w-max min-w-full flex gap-3">
+              <div className="w-max min-w-full flex gap-0">
                 {inlineDateMonths.map((month) => {
                   const monthKey = getMonthKey(month);
                   return (
@@ -1329,6 +1329,7 @@ export function UnifiedBottomBar({
                         onSelect={setDueDate}
                         month={month}
                         fixedWeeks
+                        hideNavigation
                         className="pointer-events-auto !p-0 [&_tbody_tr:nth-child(n+6)]:hidden"
                         classNames={{
                           nav: "hidden",
