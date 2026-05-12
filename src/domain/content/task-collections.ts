@@ -1,5 +1,5 @@
 import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
-import type { Task, TaskStatusType } from "@/types";
+import type { Task, TaskStatus } from "@/types";
 
 const LISTING_EVENT_KIND = 30402;
 
@@ -40,7 +40,7 @@ export function dedupeMergedTasks(tasks: Task[]): Task[] {
 
 export function applyTaskSortOverlays(
   tasks: Task[],
-  sortStatusHoldByTaskId: Record<string, TaskStatusType>,
+  sortStatusHoldByTaskId: Record<string, TaskStatus>,
   sortModifiedAtHoldByTaskId: Record<string, string>
 ): Task[] {
   return tasks

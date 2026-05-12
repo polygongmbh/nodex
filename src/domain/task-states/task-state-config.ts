@@ -1,11 +1,8 @@
-import { normalizeTaskState, type TaskState, type TaskStatusType } from "@/types";
-
-/** Semantic type for grouping, sorting, and protocol mapping — identical to TaskStatusType. */
-export type TaskStateType = TaskStatusType;
+import { normalizeTaskState, type TaskState, type TaskStatus } from "@/types";
 
 export interface TaskStateDefinition {
   id: string;
-  type: TaskStateType;
+  status: TaskStatus;
   label: string;
   icon: string;
   tone?: string;
@@ -13,13 +10,13 @@ export interface TaskStateDefinition {
 }
 
 export const DEFAULT_TASK_STATES: TaskStateDefinition[] = [
-  { id: "open", type: "open", label: "Open", icon: "circle", visibleByDefault: true },
-  { id: "active", type: "active", label: "In Progress", icon: "circle-dot", visibleByDefault: true },
-  { id: "done", type: "done", label: "Done", icon: "circle-check-big", visibleByDefault: true },
-  { id: "closed", type: "closed", label: "Closed", icon: "x", visibleByDefault: true },
+  { id: "open", status: "open", label: "Open", icon: "circle", visibleByDefault: true },
+  { id: "active", status: "active", label: "In Progress", icon: "circle-dot", visibleByDefault: true },
+  { id: "done", status: "done", label: "Done", icon: "circle-check-big", visibleByDefault: true },
+  { id: "closed", status: "closed", label: "Closed", icon: "x", visibleByDefault: true },
 ];
 
-function isValidStateType(value: unknown): value is TaskStateType {
+function isValidStatus(value: unknown): value is TaskStatus {
   return value === "open" || value === "active" || value === "done" || value === "closed";
 }
 
@@ -29,7 +26,7 @@ function isValidDefinition(entry: unknown): entry is TaskStateDefinition {
   return (
     typeof obj.id === "string" &&
     obj.id.length > 0 &&
-    isValidStateType(obj.type) &&
+    isValidStatus(obj.status) &&
     typeof obj.label === "string" &&
     obj.label.length > 0 &&
     typeof obj.icon === "string" &&
@@ -79,11 +76,11 @@ export function resetTaskStateRegistry(): void {
   cachedRegistry = undefined;
 }
 
-const DEFAULT_TYPE_DEFINITIONS: Record<TaskStateType, Omit<TaskStateDefinition, "id" | "visibleByDefault">> = {
-  open: { type: "open", label: "Open", icon: "circle" },
-  active: { type: "active", label: "Active", icon: "circle-dot" },
-  done: { type: "done", label: "Done", icon: "circle-check-big" },
-  closed: { type: "closed", label: "Closed", icon: "x" },
+const DEFAULT_STATUS_DEFINITIONS: Record<TaskStatus, Omit<TaskStateDefinition, "id" | "visibleByDefault">> = {
+  open: { status: "open", label: "Open", icon: "circle" },
+  active: { status: "active", label: "Active", icon: "circle-dot" },
+  done: { status: "done", label: "Done", icon: "circle-check-big" },
+  closed: { status: "closed", label: "Closed", icon: "x" },
 };
 
 /**
@@ -91,15 +88,15 @@ const DEFAULT_TYPE_DEFINITIONS: Record<TaskStateType, Omit<TaskStateDefinition, 
  * Matches configured states by label first, then falls back to the built-in for the status.
  */
 export function resolveTaskState(
-  status: TaskStatusType | undefined,
+  status: TaskStatus | undefined,
   label?: string,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
-  const effectiveStatus: TaskStatusType = status ?? "open";
+  const effectiveStatus: TaskStatus = status ?? "open";
   if (label) {
-    // Match a configured state whose label matches (case-insensitive) and whose type is compatible
+    // Match a configured state whose label matches (case-insensitive) and whose status is compatible
     const byLabel = registry.find(
-      (def) => def.type === effectiveStatus && def.label.toLowerCase() === label.toLowerCase()
+      (def) => def.status === effectiveStatus && def.label.toLowerCase() === label.toLowerCase()
     );
     if (byLabel) return byLabel;
     // Also match by id
@@ -108,27 +105,27 @@ export function resolveTaskState(
     );
     if (byId) return byId;
     // Derive an ad-hoc definition for the unknown label
-    const typeDefaults = DEFAULT_TYPE_DEFINITIONS[effectiveStatus];
-    return { id: `${effectiveStatus}:${label.toLowerCase()}`, ...typeDefaults, label, visibleByDefault: false };
+    const statusDefaults = DEFAULT_STATUS_DEFINITIONS[effectiveStatus];
+    return { id: `${effectiveStatus}:${label.toLowerCase()}`, ...statusDefaults, label, visibleByDefault: false };
   }
-  // No label — return the default state for this status type
-  const byType = registry.find((def) => def.type === effectiveStatus && def.id === effectiveStatus);
-  if (byType) return byType;
-  const firstOfType = registry.find((def) => def.type === effectiveStatus);
-  if (firstOfType) return firstOfType;
-  return { id: effectiveStatus, ...DEFAULT_TYPE_DEFINITIONS[effectiveStatus], visibleByDefault: false };
+  // No label — return the default state for this status
+  const byStatus = registry.find((def) => def.status === effectiveStatus && def.id === effectiveStatus);
+  if (byStatus) return byStatus;
+  const firstOfStatus = registry.find((def) => def.status === effectiveStatus);
+  if (firstOfStatus) return firstOfStatus;
+  return { id: effectiveStatus, ...DEFAULT_STATUS_DEFINITIONS[effectiveStatus], visibleByDefault: false };
 }
 
 export function resolveTaskStateFromStatus(
-  status: TaskState | TaskStatusType | undefined,
+  state: TaskState | TaskStatus | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
-  const normalizedStatus = normalizeTaskState(status);
-  return resolveTaskState(normalizedStatus.type, normalizedStatus.description, registry);
+  const normalized = normalizeTaskState(state);
+  return resolveTaskState(normalized.status, normalized.description, registry);
 }
 
 export function toTaskStatusFromStateDefinition(state: TaskStateDefinition): TaskState {
-  return state.id === state.type ? { type: state.type } : { type: state.type, description: state.label };
+  return state.id === state.status ? { status: state.status } : { status: state.status, description: state.label };
 }
 
 export function toTaskStatusFromStateId(
@@ -145,12 +142,12 @@ export function resolveTaskStateDefinition(
   if (!stateId) return registry[0] ?? DEFAULT_TASK_STATES[0];
   const found = registry.find((def) => def.id === stateId);
   if (found) return found;
-  const fallbackType = deriveTypeFromUnknownStateId(stateId);
-  const typeDefaults = DEFAULT_TYPE_DEFINITIONS[fallbackType];
-  return { id: stateId, ...typeDefaults, label: stateId, visibleByDefault: false };
+  const fallbackStatus = deriveStatusFromUnknownStateId(stateId);
+  const statusDefaults = DEFAULT_STATUS_DEFINITIONS[fallbackStatus];
+  return { id: stateId, ...statusDefaults, label: stateId, visibleByDefault: false };
 }
 
-function deriveTypeFromUnknownStateId(stateId: string): TaskStateType {
+function deriveStatusFromUnknownStateId(stateId: string): TaskStatus {
   if (stateId === "done" || stateId === "completed") return "done";
   if (stateId === "closed") return "closed";
   if (stateId === "open" || stateId === "todo") return "open";
@@ -160,8 +157,8 @@ function deriveTypeFromUnknownStateId(stateId: string): TaskStateType {
 export function getTaskStateUiType(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
-): TaskStateType {
-  return resolveTaskStateDefinition(stateId, registry).type;
+): TaskStatus {
+  return resolveTaskStateDefinition(stateId, registry).status;
 }
 
 export function isTaskCompletedState(
@@ -175,19 +172,19 @@ export function isTaskTerminalState(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): boolean {
-  const type = getTaskStateUiType(stateId, registry);
-  return type === "done" || type === "closed";
+  const status = getTaskStateUiType(stateId, registry);
+  return status === "done" || status === "closed";
 }
 
 /**
- * Find the default (first) state definition of a given semantic type within the registry.
- * Returns undefined if no state of that type is configured.
+ * Find the default (first) state definition of a given status within the registry.
+ * Returns undefined if no state of that status is configured.
  */
-export function getDefaultStateForType(
-  type: TaskStateType,
+export function getDefaultStateForStatus(
+  status: TaskStatus,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition | undefined {
-  return registry.find((def) => def.type === type);
+  return registry.find((def) => def.status === status);
 }
 
 /**
@@ -203,10 +200,10 @@ export function getNextStateInSequence(
   return registry[(index + 1) % registry.length].id;
 }
 
-export function getStateSortType(
+export function getStateSortStatus(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
-): TaskStateType {
+): TaskStatus {
   return getTaskStateUiType(stateId, registry);
 }
 
@@ -216,13 +213,13 @@ export function getVisibleByDefaultStates(
   return registry.filter((def) => def.visibleByDefault);
 }
 
-/** Map a state to Nostr protocol type: active folds into open for publishing. */
-export function getProtocolTypeForState(
+/** Map a state to Nostr protocol status: active folds into open for publishing. */
+export function getProtocolStatusForState(
   stateId: string | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): "open" | "done" | "closed" {
-  const uiType = getTaskStateUiType(stateId, registry);
-  if (uiType === "done") return "done";
-  if (uiType === "closed") return "closed";
+  const uiStatus = getTaskStateUiType(stateId, registry);
+  if (uiStatus === "done") return "done";
+  if (uiStatus === "closed") return "closed";
   return "open";
 }

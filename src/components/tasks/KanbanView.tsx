@@ -21,7 +21,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { getTaskStatusType, normalizeTaskState, type Task, type TaskState, type ComposeRestoreRequest } from "@/types";
+import { getTaskStatus, normalizeTaskState, type Task, type TaskState, type ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
@@ -70,7 +70,7 @@ function getColumns(tasks: Task[]): KanbanColumn[] {
       id: state.id,
       label: state.label,
       state,
-      color: getTaskStateToneClass(state.type),
+      color: getTaskStateToneClass(state.status),
     });
   }
 
@@ -82,7 +82,7 @@ function getColumns(tasks: Task[]): KanbanColumn[] {
       id: resolvedState.id,
       label: resolvedState.label,
       state: resolvedState,
-      color: getTaskStateToneClass(resolvedState.type),
+      color: getTaskStateToneClass(resolvedState.status),
     });
   }
 
@@ -186,7 +186,7 @@ export function KanbanView({
     }
 
     for (const column of columns) {
-      grouped[column.id] = sortKanbanColumnTasks(grouped[column.id] || [], column.state.type, sortContext);
+      grouped[column.id] = sortKanbanColumnTasks(grouped[column.id] || [], column.state.status, sortContext);
     }
 
     return grouped;
@@ -228,7 +228,7 @@ export function KanbanView({
     const map = new Map<string, { open: number; active: number; done: number }>();
     for (const task of allTasks) {
       if (task.taskType !== "task" || !task.parentId) continue;
-      const type = getTaskStatusType(task.state);
+      const type = getTaskStatus(task.state);
       if (type !== "open" && type !== "active" && type !== "done") continue;
       const counts = map.get(task.parentId) ?? { open: 0, active: 0, done: 0 };
       counts[type] += 1;
@@ -481,7 +481,7 @@ export function KanbanView({
                       {(tasksByColumnId[column.id] || []).length}
                     </span>
                   </div>
-                  {authPolicy.canOpenCompose && !isInteractionBlocked && column.state.type !== "closed" && (
+                  {authPolicy.canOpenCompose && !isInteractionBlocked && column.state.status !== "closed" && (
                     <button
                       onClick={() => setComposingColumnId(column.id)}
                       className="p-1 rounded hover:bg-muted transition-colors"

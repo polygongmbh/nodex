@@ -22,7 +22,7 @@ import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import type { EmptyScopeModel } from "@/lib/empty-scope";
-import { getTaskStatusType, type Channel, type ChannelMatchMode, type Relay, type Task, type TaskStateUpdate, type TaskStatusType } from "@/types";
+import { getTaskStatus, type Channel, type ChannelMatchMode, type Relay, type Task, type TaskStateUpdate, type TaskStatus } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
 
@@ -75,7 +75,7 @@ export interface ListViewState {
 export interface KanbanViewState {
   kanbanTasks: Task[];
   orderedKanbanTasks: Task[];
-  tasksByStatus: Record<TaskStatusType, Task[]>;
+  tasksByStatus: Record<TaskStatus, Task[]>;
   getAncestorChain: (taskId: string) => { id: string; text: string }[];
   showContext: boolean;
 }
@@ -159,7 +159,7 @@ export interface MobileFallbackNoticeState {
   mobileShellFocusedTaskId: string | null;
 }
 
-export function sortKanbanColumnTasks(tasks: Task[], status: TaskStatusType, sortContext: SortContext): Task[] {
+export function sortKanbanColumnTasks(tasks: Task[], status: TaskStatus, sortContext: SortContext): Task[] {
   return isTaskTerminalStatus(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
 }
 
@@ -170,7 +170,7 @@ function clearSelectedPeople(people: SelectablePerson[]): SelectablePerson[] {
 function buildFeedEntries(tasks: Task[], focusedTaskId: string | null): FeedEntry[] {
   const entries: FeedEntry[] = [];
   for (const task of [...tasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
-    if (getTaskStatusType(task.state) !== "closed" || task.id === focusedTaskId) {
+    if (getTaskStatus(task.state) !== "closed" || task.id === focusedTaskId) {
       entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
     }
     for (const update of task.stateUpdates || []) {
@@ -725,10 +725,10 @@ export function useKanbanViewState({
     () => filterTasksByDepthMode({ tasks: filteredTaskCandidates, depthMode, focusedTaskId, getDepth, hasChildren }),
     [depthMode, filteredTaskCandidates, focusedTaskId, getDepth, hasChildren]
   );
-  const tasksByStatus = useMemo<Record<TaskStatusType, Task[]>>(() => {
-    const grouped: Record<TaskStatusType, Task[]> = { open: [], active: [], done: [], closed: [] };
+  const tasksByStatus = useMemo<Record<TaskStatus, Task[]>>(() => {
+    const grouped: Record<TaskStatus, Task[]> = { open: [], active: [], done: [], closed: [] };
     kanbanTasks.forEach((task) => {
-      grouped[getTaskStatusType(task.state)].push(task);
+      grouped[getTaskStatus(task.state)].push(task);
     });
     grouped.open = sortKanbanColumnTasks(grouped.open, "open", sortContext);
     grouped.active = sortKanbanColumnTasks(grouped.active, "active", sortContext);

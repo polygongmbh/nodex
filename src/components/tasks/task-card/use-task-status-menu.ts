@@ -93,7 +93,7 @@ export function useTaskStatusMenu({
       void dispatchFeedInteraction({
         type: "task.changeStatus",
         taskId: task.id,
-        state: state.id === state.type ? { type: state.type } : { type: state.type, description: state.label },
+        state: state.id === state.status ? { status: state.status } : { status: state.status, description: state.label },
       });
     },
     [dispatchFeedInteraction, task.id]

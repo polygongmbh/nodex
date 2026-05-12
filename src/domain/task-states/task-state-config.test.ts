@@ -8,21 +8,21 @@ import {
   isTaskCompletedState,
   isTaskTerminalState,
   getNextStateInSequence,
-  getStateSortType,
+  getStateSortStatus,
   getVisibleByDefaultStates,
-  getProtocolTypeForState,
+  getProtocolStatusForState,
 } from "./task-state-config";
 
 describe("parseTaskStateConfig", () => {
   it("parses valid JSON config", () => {
     const config = JSON.stringify([
-      { id: "open", type: "open", label: "Open", icon: "circle", visibleByDefault: true },
-      { id: "wip", type: "active", label: "WIP", icon: "circle-dot", visibleByDefault: true },
+      { id: "open", status: "open", label: "Open", icon: "circle", visibleByDefault: true },
+      { id: "wip", status: "active", label: "WIP", icon: "circle-dot", visibleByDefault: true },
     ]);
     const result = parseTaskStateConfig(config);
     expect(result).toHaveLength(2);
     expect(result![0].id).toBe("open");
-    expect(result![1].type).toBe("active");
+    expect(result![1].status).toBe("active");
   });
 
   it("returns null for invalid JSON", () => {
@@ -35,8 +35,8 @@ describe("parseTaskStateConfig", () => {
 
   it("filters out invalid entries", () => {
     const config = JSON.stringify([
-      { id: "ok", type: "open", label: "OK", icon: "circle", visibleByDefault: true },
-      { id: "", type: "open", label: "Bad", icon: "circle", visibleByDefault: true },
+      { id: "ok", status: "open", label: "OK", icon: "circle", visibleByDefault: true },
+      { id: "", status: "open", label: "Bad", icon: "circle", visibleByDefault: true },
       { missing: "fields" },
     ]);
     const result = parseTaskStateConfig(config);
@@ -46,8 +46,8 @@ describe("parseTaskStateConfig", () => {
 
   it("deduplicates by id", () => {
     const config = JSON.stringify([
-      { id: "open", type: "open", label: "First", icon: "circle", visibleByDefault: true },
-      { id: "open", type: "open", label: "Duplicate", icon: "circle", visibleByDefault: false },
+      { id: "open", status: "open", label: "First", icon: "circle", visibleByDefault: true },
+      { id: "open", status: "open", label: "Duplicate", icon: "circle", visibleByDefault: false },
     ]);
     const result = parseTaskStateConfig(config);
     expect(result).toHaveLength(1);
@@ -77,7 +77,7 @@ describe("resolveTaskState", () => {
   it("matches configured state by label", () => {
     const registry = [
       ...DEFAULT_TASK_STATES,
-      { id: "blocked", type: "active" as const, label: "Blocked", icon: "pause", visibleByDefault: false },
+      { id: "blocked", status: "active" as const, label: "Blocked", icon: "pause", visibleByDefault: false },
     ];
     const def = resolveTaskState("active", "Blocked", registry);
     expect(def.id).toBe("blocked");
@@ -86,7 +86,7 @@ describe("resolveTaskState", () => {
   it("matches configured state by id when label matches id", () => {
     const registry = [
       ...DEFAULT_TASK_STATES,
-      { id: "review", type: "active" as const, label: "In Review", icon: "eye", visibleByDefault: false },
+      { id: "review", status: "active" as const, label: "In Review", icon: "eye", visibleByDefault: false },
     ];
     const def = resolveTaskState("active", "review", registry);
     expect(def.id).toBe("review");
@@ -96,7 +96,7 @@ describe("resolveTaskState", () => {
     const def = resolveTaskState("active", "Custom Work", DEFAULT_TASK_STATES);
     expect(def.id).toBe("active:custom work");
     expect(def.label).toBe("Custom Work");
-    expect(def.type).toBe("active");
+    expect(def.status).toBe("active");
     expect(def.visibleByDefault).toBe(false);
   });
 });
@@ -105,7 +105,7 @@ describe("resolveTaskStateDefinition", () => {
   it("resolves known states from registry", () => {
     const def = resolveTaskStateDefinition("active", DEFAULT_TASK_STATES);
     expect(def.id).toBe("active");
-    expect(def.type).toBe("active");
+    expect(def.status).toBe("active");
     expect(def.label).toBe("In Progress");
   });
 
@@ -117,17 +117,17 @@ describe("resolveTaskStateDefinition", () => {
   it("derives a fallback for unknown state ids", () => {
     const def = resolveTaskStateDefinition("blocked", DEFAULT_TASK_STATES);
     expect(def.id).toBe("blocked");
-    expect(def.type).toBe("active");
+    expect(def.status).toBe("active");
     expect(def.label).toBe("blocked");
     expect(def.visibleByDefault).toBe(false);
   });
 
   it("derives done type for 'completed' id", () => {
-    expect(resolveTaskStateDefinition("completed", DEFAULT_TASK_STATES).type).toBe("done");
+    expect(resolveTaskStateDefinition("completed", DEFAULT_TASK_STATES).status).toBe("done");
   });
 
   it("derives open type for 'todo' id", () => {
-    expect(resolveTaskStateDefinition("todo", DEFAULT_TASK_STATES).type).toBe("open");
+    expect(resolveTaskStateDefinition("todo", DEFAULT_TASK_STATES).status).toBe("open");
   });
 });
 
@@ -152,9 +152,9 @@ describe("type helpers", () => {
     expect(isTaskTerminalState("active", DEFAULT_TASK_STATES)).toBe(false);
   });
 
-  it("getStateSortType matches ui type", () => {
-    expect(getStateSortType("active", DEFAULT_TASK_STATES)).toBe("active");
-    expect(getStateSortType("done", DEFAULT_TASK_STATES)).toBe("done");
+  it("getStateSortStatus matches ui type", () => {
+    expect(getStateSortStatus("active", DEFAULT_TASK_STATES)).toBe("active");
+    expect(getStateSortStatus("done", DEFAULT_TASK_STATES)).toBe("done");
   });
 });
 
@@ -180,23 +180,23 @@ describe("getVisibleByDefaultStates", () => {
   it("filters by visibleByDefault flag", () => {
     const registry = [
       ...DEFAULT_TASK_STATES,
-      { id: "blocked", type: "active" as const, label: "Blocked", icon: "pause", visibleByDefault: false },
+      { id: "blocked", status: "active" as const, label: "Blocked", icon: "pause", visibleByDefault: false },
     ];
     expect(getVisibleByDefaultStates(registry)).toHaveLength(4);
   });
 });
 
-describe("getProtocolTypeForState", () => {
+describe("getProtocolStatusForState", () => {
   it("maps open/active to open", () => {
-    expect(getProtocolTypeForState("open", DEFAULT_TASK_STATES)).toBe("open");
-    expect(getProtocolTypeForState("active", DEFAULT_TASK_STATES)).toBe("open");
+    expect(getProtocolStatusForState("open", DEFAULT_TASK_STATES)).toBe("open");
+    expect(getProtocolStatusForState("active", DEFAULT_TASK_STATES)).toBe("open");
   });
 
   it("maps done to done", () => {
-    expect(getProtocolTypeForState("done", DEFAULT_TASK_STATES)).toBe("done");
+    expect(getProtocolStatusForState("done", DEFAULT_TASK_STATES)).toBe("done");
   });
 
   it("maps closed to closed", () => {
-    expect(getProtocolTypeForState("closed", DEFAULT_TASK_STATES)).toBe("closed");
+    expect(getProtocolStatusForState("closed", DEFAULT_TASK_STATES)).toBe("closed");
   });
 });

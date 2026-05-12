@@ -198,7 +198,7 @@ describe("task view filtering", () => {
         content: "Todo task #alpha",
         tags: ["alpha"],
         state: {
-          type: "open"
+          status: "open"
         },
       }),
       makeTask({
@@ -206,7 +206,7 @@ describe("task view filtering", () => {
         content: "Done task #alpha",
         tags: ["alpha"],
         state: {
-          type: "done"
+          status: "done"
         },
       }),
       makeTask({
@@ -214,7 +214,7 @@ describe("task view filtering", () => {
         content: "Closed task #alpha",
         tags: ["alpha"],
         state: {
-          type: "closed"
+          status: "closed"
         },
       }),
     ];
@@ -251,7 +251,7 @@ describe("task view filtering", () => {
         content: "Closed root #alpha",
         tags: ["alpha"],
         state: {
-          type: "closed"
+          status: "closed"
         },
       }),
       makeTask({
@@ -260,7 +260,7 @@ describe("task view filtering", () => {
         content: "Open child #alpha",
         tags: ["alpha"],
         state: {
-          type: "open"
+          status: "open"
         },
       }),
       makeTask({
@@ -269,7 +269,7 @@ describe("task view filtering", () => {
         content: "Closed descendant #alpha",
         tags: ["alpha"],
         state: {
-          type: "closed"
+          status: "closed"
         },
       }),
     ];

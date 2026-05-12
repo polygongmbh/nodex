@@ -54,7 +54,7 @@ describe("CalendarView responsiveness", () => {
       replies: 0,
       reposts: 0,
       state: {
-        type: "open"
+        status: "open"
       },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     };
@@ -141,7 +141,7 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Open calendar task #general",
       state: {
-        type: "open"
+        status: "open"
       },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });
@@ -150,7 +150,7 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Done calendar task #general",
       state: {
-        type: "done"
+        status: "done"
       },
       dueDate: new Date("2026-02-18T11:00:00.000Z"),
     });
@@ -159,7 +159,7 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Closed calendar task #general",
       state: {
-        type: "closed"
+        status: "closed"
       },
       dueDate: new Date("2026-02-18T12:00:00.000Z"),
     });
@@ -185,7 +185,7 @@ describe("CalendarView responsiveness", () => {
       content: "Calendar priority task #general",
       tags: ["general"],
       state: {
-        type: "open"
+        status: "open"
       },
       dueDate: new Date("2026-02-18T12:00:00.000Z"),
       priority: 80,
@@ -212,7 +212,7 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Calendar parent #general",
       state: {
-        type: "open"
+        status: "open"
       },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });
@@ -221,7 +221,7 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Calendar child #general",
       state: {
-        type: "open"
+        status: "open"
       },
       dueDate: new Date("2026-02-18T11:00:00.000Z"),
       parentId: "calendar-parent",
@@ -250,7 +250,7 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Calendar leaf #general",
       state: {
-        type: "open"
+        status: "open"
       },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     });

@@ -44,7 +44,7 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
 
 function areStatusEqual(a: TaskState | undefined, b: TaskState | undefined): boolean {
   if (a === b) return true;
-  if (a?.type !== b?.type) return false;
+  if (a?.status !== b?.status) return false;
   return a?.description === b?.description;
 }
 

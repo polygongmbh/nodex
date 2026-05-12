@@ -18,7 +18,7 @@ function buildTask(id: string, timestampIso: string, overrides: Partial<Task> = 
     taskType: "task",
     timestamp: new Date(timestampIso),
     state: {
-      type: "open"
+      status: "open"
     },
     ...overrides,
   });

@@ -1,22 +1,22 @@
-import { Task, TaskState, TaskStatusType, getTaskStatusType, normalizeTaskState } from "@/types";
+import { Task, TaskState, TaskStatus, getTaskStatus, normalizeTaskState } from "@/types";
 import {
   isTaskCompletedState,
   isTaskTerminalState as registryIsTerminal,
 } from "@/domain/task-states/task-state-config";
 
-export function isTaskCompletedStatus(status: TaskState | TaskStatusType | undefined): boolean {
-  return isTaskCompletedState(getTaskStatusType(status));
+export function isTaskCompletedStatus(status: TaskState | TaskStatus | undefined): boolean {
+  return isTaskCompletedState(getTaskStatus(status));
 }
 
-export function isTaskTerminalStatus(status: TaskState | TaskStatusType | undefined): boolean {
-  return registryIsTerminal(getTaskStatusType(status));
+export function isTaskTerminalStatus(status: TaskState | TaskStatus | undefined): boolean {
+  return registryIsTerminal(getTaskStatus(status));
 }
 
 export function applyTaskStateUpdate(
   localTasks: Task[],
   allTasks: Task[],
   taskId: string,
-  newStatus: TaskState | TaskStatusType,
+  newStatus: TaskState | TaskStatus,
   _authorPubkey?: string
 ): Task[] {
   const now = new Date();

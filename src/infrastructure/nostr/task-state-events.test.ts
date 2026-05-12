@@ -9,19 +9,19 @@ import {
 
 describe("task-state-events", () => {
   it("maps active to Open kind with description", () => {
-    const mapped = mapTaskStatusToStateEvent({ type: "active" });
+    const mapped = mapTaskStatusToStateEvent({ status: "active" });
     expect(mapped.kind).toBe(NostrEventKind.GitStatusOpen);
     expect(mapped.content).toBe("In Progress");
   });
 
   it("maps done to Applied kind", () => {
-    const mapped = mapTaskStatusToStateEvent({ type: "done" });
+    const mapped = mapTaskStatusToStateEvent({ status: "done" });
     expect(mapped.kind).toBe(NostrEventKind.GitStatusApplied);
     expect(mapped.content).toBe("");
   });
 
   it("maps closed to Closed kind", () => {
-    const mapped = mapTaskStatusToStateEvent({ type: "closed" });
+    const mapped = mapTaskStatusToStateEvent({ status: "closed" });
     expect(mapped.kind).toBe(NostrEventKind.GitStatusClosed);
     expect(mapped.content).toBe("");
   });
@@ -39,7 +39,7 @@ describe("task-state-events", () => {
       NostrEventKind.GitStatusOpen,
       ""
     );
-    expect(mapped.type).toBe("open");
+    expect(mapped.status).toBe("open");
     expect(mapped.description).toBeUndefined();
   });
 
@@ -48,7 +48,7 @@ describe("task-state-events", () => {
       NostrEventKind.GitStatusOpen,
       "Working on this now"
     );
-    expect(mapped.type).toBe("active");
+    expect(mapped.status).toBe("active");
     expect(mapped.description).toBe("Working on this now");
   });
 
@@ -57,7 +57,7 @@ describe("task-state-events", () => {
       NostrEventKind.GitStatusClosed,
       ""
     );
-    expect(mapped.type).toBe("closed");
+    expect(mapped.status).toBe("closed");
     expect(mapped.description).toBeUndefined();
   });
 

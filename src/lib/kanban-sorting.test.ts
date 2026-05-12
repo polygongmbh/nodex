@@ -16,7 +16,7 @@ const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
   replies: 0,
   reposts: 0,
   state: {
-    type: "open"
+    status: "open"
   },
 });
 

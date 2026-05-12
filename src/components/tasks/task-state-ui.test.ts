@@ -37,7 +37,7 @@ describe("preloadTaskStateIcons", () => {
 
   it("silently skips unknown icon IDs", async () => {
     const custom: TaskStateDefinition[] = [
-      { id: "custom", type: "open", label: "Custom", icon: "no-such-icon", visibleByDefault: true },
+      { id: "custom", status: "open", label: "Custom", icon: "no-such-icon", visibleByDefault: true },
     ];
     await expect(preloadTaskStateIcons(custom)).resolves.toBeUndefined();
     // Falls back to the type's default

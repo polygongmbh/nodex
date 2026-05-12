@@ -151,7 +151,7 @@ describe("useFeedNavigation", () => {
       id: "task-scoped",
       content: "test task",
       status: {
-        type: "open"
+        status: "open"
       },
       timestamp: new Date(),
       tags: [],

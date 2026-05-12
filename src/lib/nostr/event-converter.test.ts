@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { nip19 } from "nostr-tools";
-import { Task, getLastEditedAt, getTaskStatusType } from "@/types";
+import { Task, getLastEditedAt, getTaskStatus } from "@/types";
 import { basicNostrEvents } from "@/data/basic-nostr-events";
 import { mergeTasks } from "@/domain/content/task-merge";
 import {
@@ -59,7 +59,7 @@ describe("nostrEventToTask", () => {
     const task = nostrEventToTask(taskEvent);
     
     expect(task.taskType).toBe("task");
-    expect(getTaskStatusType(task.state)).toBe("open");
+    expect(getTaskStatus(task.state)).toBe("open");
   });
 
   it("converts NIP-99 classified listings to feed offer messages by default", () => {
@@ -179,7 +179,7 @@ describe("nostrEventToTask", () => {
     
     const task = nostrEventToTask(event);
     
-    expect(getTaskStatusType(task.state)).toBe("done");
+    expect(getTaskStatus(task.state)).toBe("done");
   });
 
   it("handles in-progress status", () => {
@@ -191,7 +191,7 @@ describe("nostrEventToTask", () => {
     
     const task = nostrEventToTask(event);
     
-    expect(getTaskStatusType(task.state)).toBe("active");
+    expect(getTaskStatus(task.state)).toBe("active");
   });
 
   it("does not force a placeholder avatar url", () => {
@@ -440,16 +440,16 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(getTaskStatusType(tasks[0].state)).toBe("active");
+    expect(getTaskStatus(tasks[0].state)).toBe("active");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000002 * 1000);
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-new",
-        state: { type: "active", description: "In Progress" },
+        state: { status: "active", description: "In Progress" },
       }),
       expect.objectContaining({
         id: "state-old",
-        state: { type: "done" },
+        state: { status: "done" },
       }),
     ]);
   });
@@ -476,11 +476,11 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(getTaskStatusType(tasks[0].state)).toBe("closed");
+    expect(getTaskStatus(tasks[0].state)).toBe("closed");
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-closed",
-        state: { type: "closed" },
+        state: { status: "closed" },
       }),
     ]);
   });
@@ -509,7 +509,7 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(getTaskStatusType(tasks[0].state)).toBe("open");
+    expect(getTaskStatus(tasks[0].state)).toBe("open");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000000 * 1000);
     expect(tasks[0].stateUpdates).toBeUndefined();
   });
@@ -538,12 +538,12 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(getTaskStatusType(tasks[0].state)).toBe("done");
+    expect(getTaskStatus(tasks[0].state)).toBe("done");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000015 * 1000);
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-assignee",
-        state: { type: "done" },
+        state: { status: "done" },
         authorPubkey: "assignee-pubkey",
       }),
     ]);
@@ -682,7 +682,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].id).toBe("task-priority-state");
     expect(tasks[0].priority).toBe(70);
-    expect(getTaskStatusType(tasks[0].state)).toBe("active");
+    expect(getTaskStatus(tasks[0].state)).toBe("active");
   });
 
   it("keeps only latest parameterized replaceable listing revision", () => {

@@ -15,7 +15,7 @@ import {
 } from "@/domain/task-states/task-state-config";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { cn } from "@/lib/utils";
-import { getTaskState, getTaskStatusType, type Task } from "@/types";
+import { getTaskState, getTaskStatus, type Task } from "@/types";
 import type { Person } from "@/types/person";
 
 interface TaskStatusToggleProps {
@@ -39,7 +39,7 @@ export function TaskStatusToggle({
   const { isInteractionBlocked = false, onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const getStatusToggleHint = (status?: Task["state"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    const statusType = getTaskStatusType(status);
+    const statusType = getTaskStatus(status);
     if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
     if (statusType === "done") return t("hints.statusToggle.done");
     if (statusType === "closed") return t("hints.statusToggle.closed");

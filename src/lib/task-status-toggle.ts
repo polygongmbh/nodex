@@ -75,7 +75,7 @@ export function handleTaskStatusToggleClick(
     typeof window.matchMedia === "function" &&
     window.matchMedia("(max-width: 767px)").matches;
   if (focusOnQuickToggle && !event.altKey && !isMobileViewport) {
-    if ((status?.type ?? "open") === "open") {
+    if ((status?.status ?? "open") === "open") {
       focusTask?.();
     }
   }

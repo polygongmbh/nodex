@@ -15,7 +15,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     relays: ["relay-a"],
     taskType: "task",
     timestamp: new Date("2026-02-17T10:00:00.000Z"),
-    state: { type: "open" },
+    state: { status: "open" },
     ...overrides,
   } as Task;
 }
@@ -28,14 +28,14 @@ describe("areTaskFieldsEqual", () => {
   });
 
   it("treats fresh status objects with the same type+description as equal", () => {
-    const a = makeTask({ state: { type: "active", description: "in progress" } });
-    const b = makeTask({ state: { type: "active", description: "in progress" } });
+    const a = makeTask({ state: { status: "active", description: "in progress" } });
+    const b = makeTask({ state: { status: "active", description: "in progress" } });
     expect(areTaskFieldsEqual(a, b)).toBe(true);
   });
 
   it("detects a real status change", () => {
-    const a = makeTask({ state: { type: "open" } });
-    const b = makeTask({ state: { type: "active" } });
+    const a = makeTask({ state: { status: "open" } });
+    const b = makeTask({ state: { status: "active" } });
     expect(areTaskFieldsEqual(a, b)).toBe(false);
   });
 
@@ -50,7 +50,7 @@ describe("areTaskFieldsEqual", () => {
       stateUpdates: [
         {
           id: "s1",
-          state: { type: "active" },
+          state: { status: "active" },
           timestamp: new Date("2026-02-17T10:01:00.000Z"),
           authorPubkey: "alice",
         },
@@ -60,13 +60,13 @@ describe("areTaskFieldsEqual", () => {
       stateUpdates: [
         {
           id: "s1",
-          state: { type: "active" },
+          state: { status: "active" },
           timestamp: new Date("2026-02-17T10:01:00.000Z"),
           authorPubkey: "alice",
         },
         {
           id: "s2",
-          state: { type: "done" },
+          state: { status: "done" },
           timestamp: new Date("2026-02-17T10:02:00.000Z"),
           authorPubkey: "alice",
         },
@@ -90,8 +90,8 @@ describe("preserveTaskIdentity", () => {
   });
 
   it("returns the fresh task when its status changed", () => {
-    const previous = makeTask({ state: { type: "open" } });
-    const fresh = makeTask({ state: { type: "done" } });
+    const previous = makeTask({ state: { status: "open" } });
+    const fresh = makeTask({ state: { status: "done" } });
     expect(preserveTaskIdentity(previous, fresh)).toBe(fresh);
   });
 
@@ -121,12 +121,12 @@ describe("preserveTaskListIdentity", () => {
 
   it("only swaps in the fresh reference for tasks that actually changed", () => {
     const previous = [
-      makeTask({ id: "a", state: { type: "open" } }),
-      makeTask({ id: "b", state: { type: "open" } }),
+      makeTask({ id: "a", state: { status: "open" } }),
+      makeTask({ id: "b", state: { status: "open" } }),
     ];
     const fresh = [
-      makeTask({ id: "a", state: { type: "open" } }),
-      makeTask({ id: "b", state: { type: "done" } }),
+      makeTask({ id: "a", state: { status: "open" } }),
+      makeTask({ id: "b", state: { status: "done" } }),
     ];
     const preserved = preserveTaskListIdentity(previous, fresh);
     expect(preserved[0]).toBe(previous[0]);

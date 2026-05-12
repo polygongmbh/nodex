@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getTaskStatusType, type Task } from "@/types";
+import { getTaskStatus, type Task } from "@/types";
 import { mergeTasks } from "./task-merge";
 
 describe("mergeTasks", () => {
@@ -49,7 +49,7 @@ describe("mergeTasks", () => {
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-a"],
-      state: { type: "open" },
+      state: { status: "open" },
     } as unknown as Task;
     const incoming = {
       id: "task-1",
@@ -59,7 +59,7 @@ describe("mergeTasks", () => {
       taskType: "task",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-a"],
-      state: { type: "open" },
+      state: { status: "open" },
     } as unknown as Task;
 
     const merged = mergeTasks([existing], [incoming]);
@@ -74,11 +74,11 @@ describe("mergeTasks", () => {
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:01:00.000Z"),
       relays: ["relay-a"],
-      state: { type: "open" },
+      state: { status: "open" },
       stateUpdates: [
         {
           id: "local-state-1",
-          state: { type: "active" },
+          state: { status: "active" },
           timestamp: new Date("2026-02-17T10:01:00.000Z"),
           authorPubkey: "local-author",
         },
@@ -88,11 +88,11 @@ describe("mergeTasks", () => {
       id: "task-1",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-b"],
-      state: { type: "done" },
+      state: { status: "done" },
       stateUpdates: [
         {
           id: "relay-state-1",
-          state: { type: "done" },
+          state: { status: "done" },
           timestamp: new Date("2026-02-17T10:02:00.000Z"),
           authorPubkey: "relay-author",
         },
@@ -103,7 +103,7 @@ describe("mergeTasks", () => {
     const merged = mergeTasks([existing], [incoming]);
 
     expect(merged).toHaveLength(1);
-    expect(getTaskStatusType(merged[0]?.state)).toBe("done");
+    expect(getTaskStatus(merged[0]?.state)).toBe("done");
     expect(merged[0]?.stateUpdates?.map((update) => update.id)).toEqual([
       "relay-state-1",
       "local-state-1",

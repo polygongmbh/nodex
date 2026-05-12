@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState, type UIEvent, useDeferredValue } from "react";
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
-import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatusType } from "@/types";
+import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatus } from "@/types";
 import { resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";

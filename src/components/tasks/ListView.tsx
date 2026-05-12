@@ -2,7 +2,7 @@ import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateBadgeClasses } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStatusFromStateDefinition } from "@/domain/task-states/task-state-config";
-import { getTaskStatusType, type Task, type ComposeRestoreRequest, type TaskStatusType } from "@/types";
+import { getTaskStatus, type Task, type ComposeRestoreRequest, type TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { TaskMentionTagChipRow } from "./TaskTagChipRow";
@@ -220,14 +220,14 @@ export function ListView({
           comparison = a.content.localeCompare(b.content);
           break;
         case "status": {
-          const statusOrder: Record<TaskStatusType, number> = {
+          const statusOrder: Record<TaskStatus, number> = {
             "active": 0,
             "open": 1,
             "done": 2,
             "closed": 3,
           };
           comparison =
-            (statusOrder[getTaskStatusType(a.state)] ?? 1) - (statusOrder[getTaskStatusType(b.state)] ?? 1);
+            (statusOrder[getTaskStatus(a.state)] ?? 1) - (statusOrder[getTaskStatus(b.state)] ?? 1);
           break;
         }
         case "dueDate":
@@ -331,7 +331,7 @@ export function ListView({
     const editable = canCompleteTask(task);
     const statusClassName = cn(
       "text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap",
-      getTaskStateBadgeClasses(getTaskStatusType(status))
+      getTaskStateBadgeClasses(getTaskStatus(status))
     );
 
     const stateDef = resolveTaskStateFromStatus(status);

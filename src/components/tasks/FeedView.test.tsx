@@ -34,7 +34,7 @@ const author: SelectablePerson = makePerson({
 });
 
 const tasks: Task[] = [makeTask({ id: "task-1", author, state: {
-  type: "open"
+  status: "open"
 } })];
 const channels: Channel[] = [makeChannel()];
 const relays: Relay[] = [makeRelay()];
@@ -84,7 +84,7 @@ function makeFeedTasks(
       content: `Task ${index + 1} #general`,
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       timestamp: new Date(2026, 0, 1, 0, length - index),
       ...build?.(index),
@@ -104,7 +104,7 @@ describe("FeedView", () => {
 
   it("focuses breadcrumb target without bubbling card focus", () => {
     const root = makeTask({ id: "root", content: "Root task #general", author, state: {
-      type: "open"
+      status: "open"
     } });
     const child = makeTask({
       id: "child",
@@ -112,7 +112,7 @@ describe("FeedView", () => {
       content: "Child task #general",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
     });
     render(
@@ -133,7 +133,7 @@ describe("FeedView", () => {
       id: "task-raw",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       rawNostrEvent: {
         id: "event-raw-1",
@@ -169,7 +169,7 @@ describe("FeedView", () => {
       content: "First task #general https://example.com/alpha",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
     });
     const secondTask = makeTask({
@@ -177,7 +177,7 @@ describe("FeedView", () => {
       content: "Second task #general",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
     });
     const linkifySpy = vi.spyOn(linkify, "renderTaskContentWithProjectHeading");
@@ -307,7 +307,7 @@ describe("FeedView", () => {
         content: `Task ${index + 1} #general`,
         author,
         state: {
-          type: "open"
+          status: "open"
         },
         timestamp: new Date(2026, 0, 1, 0, 40 - index),
       })
@@ -505,7 +505,7 @@ describe("FeedView", () => {
 
   it("renders breadcrumb focus buttons for long labels", () => {
     const root = makeTask({ id: "root", content: "Root breadcrumb label that should not wrap", author, state: {
-      type: "open"
+      status: "open"
     } });
     const child = makeTask({
       id: "child",
@@ -513,7 +513,7 @@ describe("FeedView", () => {
       content: "Child task #general",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
@@ -531,7 +531,7 @@ describe("FeedView", () => {
 
   it("renders ancestor breadcrumb levels for multi-level task cards", () => {
     const root = makeTask({ id: "root", content: "Root breadcrumb", author, state: {
-      type: "open"
+      status: "open"
     } });
     const middle = makeTask({
       id: "middle",
@@ -539,7 +539,7 @@ describe("FeedView", () => {
       content: "Middle breadcrumb",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
     });
     const leaf = makeTask({
@@ -548,7 +548,7 @@ describe("FeedView", () => {
       content: "Leaf task",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
@@ -568,7 +568,7 @@ describe("FeedView", () => {
 
   it("omits the active focused item from task-card breadcrumbs", () => {
     const root = makeTask({ id: "root", content: "Root breadcrumb", author, state: {
-      type: "open"
+      status: "open"
     } });
     const middle = makeTask({
       id: "middle",
@@ -576,7 +576,7 @@ describe("FeedView", () => {
       content: "Middle breadcrumb",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
     });
     const leaf = makeTask({
@@ -585,7 +585,7 @@ describe("FeedView", () => {
       content: "Leaf task",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
@@ -609,7 +609,7 @@ describe("FeedView", () => {
       isSelected: false,
     };
     const pubkeyTask = makeTask({ id: "task-pubkey", author: pubkeyOnlyAuthor, state: {
-      type: "open"
+      status: "open"
     } });
     const matchMediaSpy = vi
       .spyOn(window, "matchMedia")
@@ -650,7 +650,7 @@ describe("FeedView", () => {
       isSelected: false,
     };
     const pubkeyTask = makeTask({ id: "task-pubkey-2xl", author: pubkeyOnlyAuthor, state: {
-      type: "open"
+      status: "open"
     } });
     const matchMediaSpy = vi
       .spyOn(window, "matchMedia")
@@ -768,7 +768,7 @@ describe("FeedView", () => {
       id: "task-1",
       author: makePerson({ pubkey: taskAuthorPubkey, name: "me", displayName: "You" }),
       state: {
-        type: "open"
+        status: "open"
       },
     });
     renderFeedView(
@@ -789,12 +789,12 @@ describe("FeedView", () => {
       author,
       content: "Reconnect relays after resume #infra",
       state: {
-        type: "open"
+        status: "open"
       },
       stateUpdates: [
         {
           id: "state-timestamp-yesterday",
-          state: { type: "active", description: "Working on relay reconnect" },
+          state: { status: "active", description: "Working on relay reconnect" },
           timestamp: new Date(2026, 3, 2, 20, 45, 0),
           authorPubkey: author.pubkey,
         },
@@ -893,7 +893,7 @@ describe("FeedView", () => {
       author,
       content: `Please review @${mentionedPubkey} #frontend`,
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
@@ -924,7 +924,7 @@ describe("FeedView", () => {
       author,
       content: `Please review @${unresolvedPubkey} #frontend`,
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
@@ -955,7 +955,7 @@ describe("FeedView", () => {
       author,
       content: "Please review #frontend",
       state: {
-        type: "open"
+        status: "open"
       },
       assigneePubkeys: [author.pubkey],
       mentions: [author.pubkey],
@@ -975,11 +975,11 @@ describe("FeedView", () => {
       id: "task-active-no-desc",
       author,
       content: "Backend deploy #infra",
-      state: { type: "open" },
+      state: { status: "open" },
       stateUpdates: [
         {
           id: "state-active-no-desc",
-          state: { type: "active" },
+          state: { status: "active" },
           timestamp: new Date(Date.now() - 60_000),
           authorPubkey: author.pubkey,
         },
@@ -1005,18 +1005,18 @@ describe("FeedView", () => {
       author,
       content: "Reconnect relays after resume #infra",
       state: {
-        type: "open"
+        status: "open"
       },
       stateUpdates: [
         {
           id: "state-2",
-          state: { type: "active", description: "Working on relay reconnect" },
+          state: { status: "active", description: "Working on relay reconnect" },
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
           authorPubkey: author.pubkey,
         },
         {
           id: "state-1",
-          state: { type: "open", description: "Unblocked" },
+          state: { status: "open", description: "Unblocked" },
           timestamp: new Date(Date.now() - 20 * 60 * 1000),
           authorPubkey: author.pubkey,
         },
@@ -1052,12 +1052,12 @@ describe("FeedView", () => {
       author,
       content: "Reconnect relays after resume infra and verify mobile queue drain #general\nSecond line should stay out of the tooltip",
       state: {
-        type: "open"
+        status: "open"
       },
       stateUpdates: [
         {
           id: "state-title-tooltip",
-          state: { type: "active", description: "Working on relay reconnect" },
+          state: { status: "active", description: "Working on relay reconnect" },
           timestamp: new Date(Date.now() - 5 * 60 * 1000),
           authorPubkey: author.pubkey,
         },
@@ -1094,7 +1094,7 @@ describe("FeedView", () => {
       author,
       content: "Open feed task #general",
       state: {
-        type: "open"
+        status: "open"
       },
     });
     const doneTask = makeTask({
@@ -1102,7 +1102,7 @@ describe("FeedView", () => {
       author,
       content: "Done feed task #general",
       state: {
-        type: "done"
+        status: "done"
       },
     });
     const closedTask = makeTask({
@@ -1110,7 +1110,7 @@ describe("FeedView", () => {
       author,
       content: "Closed feed task #general",
       state: {
-        type: "closed"
+        status: "closed"
       },
     });
 
@@ -1133,7 +1133,7 @@ describe("FeedView", () => {
       author,
       content: "Closed focused task #general",
       state: {
-        type: "closed"
+        status: "closed"
       },
     });
 
@@ -1154,7 +1154,7 @@ describe("FeedView", () => {
       author,
       content: "Open feed task #general",
       state: {
-        type: "open"
+        status: "open"
       },
     });
     const closedTask = makeTask({
@@ -1162,12 +1162,12 @@ describe("FeedView", () => {
       author,
       content: "Closed feed task #general",
       state: {
-        type: "closed"
+        status: "closed"
       },
       stateUpdates: [
         {
           id: "close-update-1",
-          state: { type: "closed" },
+          state: { status: "closed" },
           timestamp: new Date(Date.now() - 30_000),
           authorPubkey: author.pubkey,
         },
@@ -1268,7 +1268,7 @@ describe("FeedView", () => {
       tags: ["general"],
       author: otherAuthor,
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
@@ -1295,7 +1295,7 @@ describe("FeedView", () => {
       id: "task-priority",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       priority: 40,
     });

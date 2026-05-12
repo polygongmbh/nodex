@@ -3,7 +3,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStatusFromStateDefinition } from "@/domain/task-states/task-state-config";
-import { getTaskState, getTaskStatusType, type Task, type ComposeRestoreRequest, type TaskStatusType } from "@/types";
+import { getTaskState, getTaskStatus, type Task, type ComposeRestoreRequest, type TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import {
   format,
@@ -96,7 +96,7 @@ export function CalendarView({
   const activeRelays = relays.filter((relay) => relay.isActive);
   const getStatusToggleHint = (status?: Task["state"]): string => {
     const alternateKey = getAlternateModifierLabel();
-    const statusType = getTaskStatusType(status);
+    const statusType = getTaskStatus(status);
     if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
     if (statusType === "done") return t("hints.statusToggle.done");
     if (statusType === "closed") return t("hints.statusToggle.closed");
@@ -812,7 +812,7 @@ export function CalendarView({
                                           "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
                                           isTaskTerminalStatus(task.state)
                                             ? "bg-muted text-muted-foreground line-through"
-                                            : getTaskStatusType(task.state) === "active"
+                                            : getTaskStatus(task.state) === "active"
                                               ? "bg-warning/15 text-warning"
                                               : "bg-primary/10"
                                         )}

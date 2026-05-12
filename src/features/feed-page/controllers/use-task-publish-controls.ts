@@ -132,7 +132,7 @@ export function useTaskPublishControls({
     const mapped = mapTaskStatusToStateEvent(status);
     nostrDevLog("publish-state", "Publishing task state update", {
       taskId,
-      status: status.type,
+      status: status.status,
       statusDescription: status.description,
       kind: mapped.kind,
       relayUrls,
@@ -247,8 +247,8 @@ export function useTaskPublishControls({
         : fallbackRelayUrls
     ).slice(0, 1);
 
-    const effectiveInitialState: TaskState = initialState ?? { type: "open" };
-    if (effectiveInitialState.type !== "open" || effectiveInitialState.description) {
+    const effectiveInitialState: TaskState = initialState ?? { status: "open" };
+    if (effectiveInitialState.status !== "open" || effectiveInitialState.description) {
       await publishTaskStateUpdate(publishedEventId, effectiveInitialState, followUpRelayUrls);
     }
     if (dueDate) {

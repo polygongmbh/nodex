@@ -1,4 +1,4 @@
-import { type FeedMessageType, type TaskStateUpdate, type TaskState, type TaskStatusType, Task, getLastEditedAt } from "@/types";
+import { type FeedMessageType, type TaskStateUpdate, type TaskState, type TaskStatus, Task, getLastEditedAt } from "@/types";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
@@ -103,16 +103,16 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const nip99 = feedMessageType ? parseNip99MetadataFromTags(event.tags) : undefined;
   const locationGeohash = parseFirstGeohashTag(event.tags);
 
-  let state: TaskState = { type: "open" };
+  let state: TaskState = { status: "open" };
   const statusTag = event.tags.find((tag) => tag[0] === "status");
   if (statusTag) {
     const statusValue = statusTag[1].toLowerCase();
     if (statusValue === "done" || statusValue === "completed") {
-      state = { type: "done" };
+      state = { status: "done" };
     } else if (statusValue === "closed") {
-      state = { type: "closed" };
+      state = { status: "closed" };
     } else if (statusValue === "in-progress" || statusValue === "active") {
-      state = { type: "active" };
+      state = { status: "active" };
     }
   }
 

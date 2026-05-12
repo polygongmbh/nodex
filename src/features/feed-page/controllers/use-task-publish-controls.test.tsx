@@ -40,13 +40,13 @@ function Harness({
   return (
     <>
       <button onClick={() => controls.guardInteraction("modify")}>GuardModify</button>
-      <button onClick={() => controls.publishTaskStateUpdate("a".repeat(64), { type: "done" })}>PublishState</button>
+      <button onClick={() => controls.publishTaskStateUpdate("a".repeat(64), { status: "done" })}>PublishState</button>
       <button
         onClick={() =>
           controls.publishTaskCreateFollowUps({
             publishedEventId: "a".repeat(64),
             taskType: "task",
-            initialState: { type: "open" },
+            initialState: { status: "open" },
             content: "Task content",
             fallbackRelayUrls: ["wss://relay.one"],
           })

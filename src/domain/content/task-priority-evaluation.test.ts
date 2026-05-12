@@ -49,23 +49,23 @@ describe("calculateLocalUrgency", () => {
 
 describe("calculateProgress", () => {
   it("treats a leaf with terminal status as fully done", () => {
-    const leaf = makeTask({ id: "a", state: { type: "done" } });
+    const leaf = makeTask({ id: "a", state: { status: "done" } });
     const map = buildChildrenMap([leaf]);
     expect(calculateProgress(leaf, map)).toBe(1);
   });
 
   it("returns 0 for an open leaf", () => {
-    const leaf = makeTask({ id: "a", state: { type: "open" } });
+    const leaf = makeTask({ id: "a", state: { status: "open" } });
     const map = buildChildrenMap([leaf]);
     expect(calculateProgress(leaf, map)).toBe(0);
   });
 
   it("averages over subtask completion, ignoring comments and closed tasks", () => {
     const parent = makeTask({ id: "p" });
-    const doneChild = makeTask({ id: "c1", parentId: "p", state: { type: "done" } });
-    const openChild = makeTask({ id: "c2", parentId: "p", state: { type: "open" } });
+    const doneChild = makeTask({ id: "c1", parentId: "p", state: { status: "done" } });
+    const openChild = makeTask({ id: "c2", parentId: "p", state: { status: "open" } });
     const comment = makeTask({ id: "c3", parentId: "p", taskType: "comment" });
-    const closedChild = makeTask({ id: "c4", parentId: "p", state: { type: "closed" } });
+    const closedChild = makeTask({ id: "c4", parentId: "p", state: { status: "closed" } });
     const map = buildChildrenMap([parent, doneChild, openChild, comment, closedChild]);
     expect(calculateProgress(parent, map)).toBe(0.5);
   });
@@ -73,8 +73,8 @@ describe("calculateProgress", () => {
   it("recurses into nested subtasks", () => {
     const root = makeTask({ id: "root" });
     const mid = makeTask({ id: "mid", parentId: "root" });
-    const leaf1 = makeTask({ id: "l1", parentId: "mid", state: { type: "done" } });
-    const leaf2 = makeTask({ id: "l2", parentId: "mid", state: { type: "open" } });
+    const leaf1 = makeTask({ id: "l1", parentId: "mid", state: { status: "done" } });
+    const leaf2 = makeTask({ id: "l2", parentId: "mid", state: { status: "open" } });
     const map = buildChildrenMap([root, mid, leaf1, leaf2]);
     expect(calculateProgress(root, map)).toBe(0.5);
   });
@@ -105,7 +105,7 @@ describe("calculateFrecency", () => {
       stateUpdates: [
         {
           id: "u1",
-          state: { type: "active" },
+          state: { status: "active" },
           timestamp: new Date(NOW - 5 * 60 * 1000),
           authorPubkey: "x",
         },
@@ -119,7 +119,7 @@ describe("calculateFrecency", () => {
     const recentTask = makeTask({
       id: "r",
       stateUpdates: [
-        { id: "u", state: { type: "active" }, timestamp: new Date(NOW - 60 * 1000), authorPubkey: "x" },
+        { id: "u", state: { status: "active" }, timestamp: new Date(NOW - 60 * 1000), authorPubkey: "x" },
       ],
     });
     const oldTask = makeTask({
@@ -127,7 +127,7 @@ describe("calculateFrecency", () => {
       stateUpdates: [
         {
           id: "u",
-          state: { type: "active" },
+          state: { status: "active" },
           timestamp: new Date(NOW - 30 * ONE_DAY),
           authorPubkey: "x",
         },
@@ -164,8 +164,8 @@ describe("selfSum", () => {
 describe("evaluateTaskPriorities", () => {
   it("excludes terminal and comment tasks from the result", () => {
     const open = makeTask({ id: "open" });
-    const done = makeTask({ id: "done", state: { type: "done" } });
-    const closed = makeTask({ id: "closed", state: { type: "closed" } });
+    const done = makeTask({ id: "done", state: { status: "done" } });
+    const closed = makeTask({ id: "closed", state: { status: "closed" } });
     const comment = makeTask({ id: "comment", parentId: "open", taskType: "comment" });
     const result = evaluateTaskPriorities([open, done, closed, comment], NOW);
     expect(result.has("open")).toBe(true);
@@ -205,7 +205,7 @@ describe("evaluateTaskPriorities", () => {
       id: "active",
       stateUpdates: Array.from({ length: 5 }, (_, i) => ({
         id: `u${i}`,
-        state: { type: "active" as const },
+        state: { status: "active" as const },
         timestamp: new Date(NOW - (i + 1) * 60 * 1000),
         authorPubkey: "x",
       })),

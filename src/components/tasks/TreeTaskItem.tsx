@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { cn } from "@/lib/utils";
-import { Task, Relay, getTaskStatusType } from "@/types";
+import { Task, Relay, getTaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -97,7 +97,7 @@ export function TreeTaskItem({
   const [hasLocalFoldOverride, setHasLocalFoldOverride] = useState(false);
   const foldState: TreeTaskFoldState =
     parentFoldState === "allVisible" && !hasLocalFoldOverride ? "allVisible" : localFoldState;
-  const prevStatusTypeRef = useRef(getTaskStatusType(task.state));
+  const prevStatusTypeRef = useRef(getTaskStatus(task.state));
   const cheerTimeoutRef = useRef<number | null>(null);
   const prevHasMatchingFiltersRef = useRef(hasMatchingFilters);
   const [isCheering, setIsCheering] = useState(false);
@@ -136,7 +136,7 @@ export function TreeTaskItem({
   // status TYPE transition — otherwise filter toggles would clobber the
   // user's fold state with the default for the new match context.
   useEffect(() => {
-    const currentStatusType = getTaskStatusType(task.state);
+    const currentStatusType = getTaskStatus(task.state);
     if (prevStatusTypeRef.current === currentStatusType) return;
 
     if (currentStatusType === "active") {

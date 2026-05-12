@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getTaskStatusType, type Task } from "@/types";
+import { getTaskStatus, type Task } from "@/types";
 import { applyTaskStateUpdate } from "./task-state";
 import { makePerson } from "@/test/fixtures";
 
@@ -14,7 +14,7 @@ const baseTask: Task = {
   likes: 0,
   replies: 0,
   reposts: 0,
-  state: { type: "open" },
+  state: { status: "open" },
 };
 
 describe("applyTaskStateUpdate", () => {
@@ -25,7 +25,7 @@ describe("applyTaskStateUpdate", () => {
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "done", "me");
 
     const task = updated.find((t) => t.id === "n1");
-    expect(getTaskStatusType(task?.state)).toBe("done");
+    expect(getTaskStatus(task?.state)).toBe("done");
     expect(task?.stateUpdates).toBeUndefined();
   });
 
@@ -42,12 +42,12 @@ describe("applyTaskStateUpdate", () => {
   });
 
   it("updates done tasks to closed without storing completion attribution", () => {
-    const localTasks: Task[] = [{ ...baseTask, state: { type: "done" } }];
+    const localTasks: Task[] = [{ ...baseTask, state: { status: "done" } }];
     const allTasks: Task[] = localTasks;
 
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "closed");
 
-    expect(getTaskStatusType(updated.find((t) => t.id === "n1")?.state)).toBe("closed");
+    expect(getTaskStatus(updated.find((t) => t.id === "n1")?.state)).toBe("closed");
   });
 
   it("does not synthesize a local state update when updating an existing local task", () => {
@@ -56,7 +56,7 @@ describe("applyTaskStateUpdate", () => {
       stateUpdates: [
         {
           id: "relay-state-1",
-          state: { type: "open" },
+          state: { status: "open" },
           timestamp: new Date("2026-01-01T00:00:00.000Z"),
           authorPubkey: "relay-author",
         },

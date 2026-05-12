@@ -1,4 +1,4 @@
-import { getTaskStatusType, type Task, type TaskStatusType } from "@/types";
+import { getTaskStatus, type Task, type TaskStatus } from "@/types";
 
 const EPSILON = 0.001;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -43,13 +43,13 @@ export interface PriorityScore {
   priority: number;
 }
 
-function isTerminal(status: TaskStatusType): boolean {
+function isTerminal(status: TaskStatus): boolean {
   return status === "done" || status === "closed";
 }
 
 function isEvaluable(task: Task): boolean {
   if (task.taskType === "comment") return false;
-  return !isTerminal(getTaskStatusType(task.state));
+  return !isTerminal(getTaskStatus(task.state));
 }
 
 function daysUntil(target: Date, now: number): number {
@@ -96,7 +96,7 @@ export function buildChildrenMap(tasks: readonly Task[]): Map<string, Task[]> {
 
 function getSubtasks(taskId: string, childrenMap: Map<string, Task[]>): Task[] {
   const all = childrenMap.get(taskId) ?? [];
-  return all.filter((child) => child.taskType !== "comment" && getTaskStatusType(child.state) !== "closed");
+  return all.filter((child) => child.taskType !== "comment" && getTaskStatus(child.state) !== "closed");
 }
 
 export function calculateProgress(
@@ -109,7 +109,7 @@ export function calculateProgress(
 
   const subtasks = getSubtasks(task.id, childrenMap);
   if (subtasks.length === 0) {
-    const value = isTerminal(getTaskStatusType(task.state)) ? 1 : 0;
+    const value = isTerminal(getTaskStatus(task.state)) ? 1 : 0;
     cache.set(task.id, value);
     return value;
   }

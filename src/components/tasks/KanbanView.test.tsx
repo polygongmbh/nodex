@@ -74,13 +74,13 @@ describe("KanbanView", () => {
 
   it("renders a closed column to the right of done", () => {
     const todoTask = makeTask({ id: "todo-task", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Todo task #general" });
     const doneTask = makeTask({ id: "done-task", author, state: {
-      type: "done"
+      status: "done"
     }, content: "Done task #general" });
     const closedTask = makeTask({ id: "closed-task", author, state: {
-      type: "closed"
+      status: "closed"
     }, content: "Closed task #general" });
 
     render(
@@ -105,7 +105,7 @@ describe("KanbanView", () => {
       id: "older-high-priority",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "Older high priority task #general",
       priority: 80,
@@ -116,7 +116,7 @@ describe("KanbanView", () => {
       id: "newer-no-priority",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "Newer no priority task #general",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
@@ -143,7 +143,7 @@ describe("KanbanView", () => {
     const blockedTask = makeTask({
       id: "blocked-task",
       author,
-      state: { type: "active", description: "Blocked" },
+      state: { status: "active", description: "Blocked" },
       content: "Blocked task #general",
     });
 
@@ -182,7 +182,7 @@ describe("KanbanView", () => {
       id: "priority-task",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "Prioritized task #general",
       priority: 80,
@@ -191,7 +191,7 @@ describe("KanbanView", () => {
       id: "no-priority-task",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "No priority task #general",
     });
@@ -215,7 +215,7 @@ describe("KanbanView", () => {
       id: "priority-and-tag-task",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "Task with chips #general",
       tags: ["general"],
@@ -244,7 +244,7 @@ describe("KanbanView", () => {
       id: "attachment-task",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "Task with attachment #general",
       attachments: [
@@ -273,13 +273,13 @@ describe("KanbanView", () => {
 
   it("focuses branch tasks on click", () => {
     const parent = makeTask({ id: "parent-task", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Parent task #general" });
     const child = makeTask({
       id: "child-task",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "Child task #general",
       parentId: "parent-task",
@@ -301,7 +301,7 @@ describe("KanbanView", () => {
 
   it("focuses leaf tasks and jumps to the feed view on click", () => {
     const leaf = makeTask({ id: "leaf-task", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Leaf task #general" });
 
     render(
@@ -321,13 +321,13 @@ describe("KanbanView", () => {
 
   it("jumps to the feed when clicking a parent whose subtasks are all terminal", () => {
     const parent = makeTask({ id: "parent-done", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Parent done #general" });
     const doneChild = makeTask({
       id: "done-child",
       author,
       state: {
-        type: "done"
+        status: "done"
       },
       content: "Done child #general",
       parentId: "parent-done",
@@ -336,7 +336,7 @@ describe("KanbanView", () => {
       id: "closed-child",
       author,
       state: {
-        type: "closed"
+        status: "closed"
       },
       content: "Closed child #general",
       parentId: "parent-done",
@@ -358,13 +358,13 @@ describe("KanbanView", () => {
 
   it("does not switch view when clicking a branch task", () => {
     const parent = makeTask({ id: "parent-task", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Parent task #general" });
     const child = makeTask({
       id: "child-task",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "Child task #general",
       parentId: "parent-task",
@@ -387,31 +387,31 @@ describe("KanbanView", () => {
 
   it("bolds the first line of projects with non-terminal subtasks", () => {
     const activeProject = makeTask({ id: "active-project", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Active project #general" });
     const activeChild = makeTask({
       id: "active-child",
       author,
       state: {
-        type: "open"
+        status: "open"
       },
       content: "Active child #general",
       parentId: "active-project",
     });
     const doneProject = makeTask({ id: "done-project", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Done project #general" });
     const doneChild = makeTask({
       id: "done-child",
       author,
       state: {
-        type: "done"
+        status: "done"
       },
       content: "Done child #general",
       parentId: "done-project",
     });
     const leaf = makeTask({ id: "leaf-task", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Leaf task #general" });
 
     render(
@@ -433,39 +433,39 @@ describe("KanbanView", () => {
 
   it("renders subtask counts as open/active/done, omitting active when zero", () => {
     const parent = makeTask({ id: "parent", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Parent #general" });
     const open1 = makeTask({ id: "o1", author, state: {
-      type: "open"
+      status: "open"
     }, parentId: "parent", content: "o1 #general" });
     const open2 = makeTask({ id: "o2", author, state: {
-      type: "open"
+      status: "open"
     }, parentId: "parent", content: "o2 #general" });
     const active1 = makeTask({ id: "a1", author, state: {
-      type: "active"
+      status: "active"
     }, parentId: "parent", content: "a1 #general" });
     const done1 = makeTask({ id: "d1", author, state: {
-      type: "done"
+      status: "done"
     }, parentId: "parent", content: "d1 #general" });
     const done2 = makeTask({ id: "d2", author, state: {
-      type: "done"
+      status: "done"
     }, parentId: "parent", content: "d2 #general" });
     const done3 = makeTask({ id: "d3", author, state: {
-      type: "done"
+      status: "done"
     }, parentId: "parent", content: "d3 #general" });
 
     const restingParent = makeTask({ id: "resting", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Resting #general" });
     const restingOpen = makeTask({ id: "ro1", author, state: {
-      type: "open"
+      status: "open"
     }, parentId: "resting", content: "ro1 #general" });
     const restingDone = makeTask({ id: "rd1", author, state: {
-      type: "done"
+      status: "done"
     }, parentId: "resting", content: "rd1 #general" });
 
     const leaf = makeTask({ id: "leaf", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Leaf #general" });
 
     render(
@@ -491,7 +491,7 @@ describe("KanbanView", () => {
 
   it("optimistically moves card to destination column on drop", () => {
     const task = makeTask({ id: "drag-task", author, state: {
-      type: "open"
+      status: "open"
     }, content: "Drag me #general" });
     const { container } = render(
       <KanbanView
@@ -515,7 +515,7 @@ describe("KanbanView", () => {
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.changeStatus",      taskId: "drag-task",
-      state: { type: "done" },
+      state: { status: "done" },
     });
     expect(container.querySelector('[data-droppable-id="done"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
     expect(container.querySelector('[data-droppable-id="open"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();
@@ -531,7 +531,7 @@ describe("KanbanView", () => {
 
     try {
       const task = makeTask({ id: "edge-scroll-task", author, state: {
-        type: "open"
+        status: "open"
       }, content: "Task #general" });
 
       const { container } = render(

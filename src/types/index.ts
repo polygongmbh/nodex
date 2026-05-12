@@ -53,9 +53,9 @@ export type TaskCreateFailureReason =
 export type TaskCreateResult =
   | { ok: true; mode: "published" | "local" | "queued" }
   | { ok: false; reason: TaskCreateFailureReason };
-export type TaskStatusType = "open" | "active" | "done" | "closed";
+export type TaskStatus = "open" | "active" | "done" | "closed";
 export interface TaskState {
-  type: TaskStatusType;
+  status: TaskStatus;
   description?: string;
 }
 export interface TaskStateUpdate {
@@ -159,21 +159,21 @@ export interface Task {
  * canonical object form. Internal callers reading `Task.state` directly can
  * skip this — the field is always a `TaskState` once stored.
  */
-export function normalizeTaskState(state: TaskState | TaskStatusType | undefined): TaskState {
-  if (!state) return { type: "open" };
-  if (typeof state === "string") return { type: state };
+export function normalizeTaskState(state: TaskState | TaskStatus | undefined): TaskState {
+  if (!state) return { status: "open" };
+  if (typeof state === "string") return { status: state };
   return {
-    type: state.type,
+    status: state.status,
     ...(state.description ? { description: state.description } : {}),
   };
 }
 
-export function getTaskStatusType(state: TaskState | TaskStatusType | undefined): TaskStatusType {
-  return normalizeTaskState(state).type;
+export function getTaskStatus(state: TaskState | TaskStatus | undefined): TaskStatus {
+  return normalizeTaskState(state).status;
 }
 
 export function getTaskState(task: Pick<Task, "state">): TaskState {
-  return task.state ?? { type: "open" };
+  return task.state ?? { status: "open" };
 }
 
 export function getLastEditedAt(task: Task): Date {

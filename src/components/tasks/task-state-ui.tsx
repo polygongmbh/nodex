@@ -2,18 +2,17 @@ import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { Circle, CircleDot, CircleCheckBig, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { TaskState, TaskStatusType } from "@/types";
+import type { TaskState, TaskStatus } from "@/types";
 import {
   getTaskStateRegistry,
   resolveTaskStateFromStatus,
   type TaskStateDefinition,
-  type TaskStateType,
 } from "@/domain/task-states/task-state-config";
 
 // Synchronous cache populated by preloadTaskStateIcons().
 const iconCache = new Map<string, LucideIcon>();
 
-const FALLBACK_ICONS: Record<TaskStateType, LucideIcon> = {
+const FALLBACK_ICONS: Record<TaskStatus, LucideIcon> = {
   open: Circle,
   active: CircleDot,
   done: CircleCheckBig,
@@ -44,31 +43,31 @@ export async function preloadTaskStateIcons(
 preloadTaskStateIcons();
 
 /** Resolve a registry icon string to a Lucide component. */
-export function getTaskStateIconComponent(iconId: string, fallbackType?: TaskStateType): LucideIcon {
+export function getTaskStateIconComponent(iconId: string, fallbackType?: TaskStatus): LucideIcon {
   return iconCache.get(iconId) ?? FALLBACK_ICONS[fallbackType ?? "open"] ?? Circle;
 }
 
 /** CSS color class for a task state type. */
-const TONE_CLASS_BY_TYPE: Record<TaskStateType, string> = {
+const TONE_CLASS_BY_TYPE: Record<TaskStatus, string> = {
   open: "text-muted-foreground",
   active: "text-warning",
   done: "text-primary",
   closed: "text-muted-foreground",
 };
 
-export function getTaskStateToneClass(status: TaskStatusType): string {
+export function getTaskStateToneClass(status: TaskStatus): string {
   return TONE_CLASS_BY_TYPE[status] ?? "text-muted-foreground";
 }
 
 /** Badge classes (pill styling) for a task state type. */
-const BADGE_CLASS_BY_TYPE: Record<TaskStateType, string> = {
+const BADGE_CLASS_BY_TYPE: Record<TaskStatus, string> = {
   open: "bg-muted text-muted-foreground",
   active: "bg-warning/15 text-warning",
   done: "bg-primary/10 text-primary",
   closed: "bg-muted/80 text-muted-foreground",
 };
 
-export function getTaskStateBadgeClasses(status: TaskStatusType): string {
+export function getTaskStateBadgeClasses(status: TaskStatus): string {
   return BADGE_CLASS_BY_TYPE[status] ?? BADGE_CLASS_BY_TYPE.open;
 }
 
@@ -85,7 +84,7 @@ export function TaskStateIcon({
   size?: string;
 }) {
   const resolvedState = resolveTaskStateFromStatus(status);
-  const Icon = getTaskStateIconComponent(resolvedState.icon, resolvedState.type);
+  const Icon = getTaskStateIconComponent(resolvedState.icon, resolvedState.status);
   const tone = getToneClassForDef(resolvedState);
   return <Icon className={cn(size, tone, className)} />;
 }
@@ -100,7 +99,7 @@ export function TaskStateDefIcon({
   className?: string;
   size?: string;
 }) {
-  const Icon = getTaskStateIconComponent(state.icon, state.type);
+  const Icon = getTaskStateIconComponent(state.icon, state.status);
   const tone = getToneClassForDef(state);
   return <Icon className={cn(size, tone, className)} />;
 }
@@ -119,5 +118,5 @@ export function getToneClassForDef(state: TaskStateDefinition): string {
     // Allow raw Tailwind class pass-through if not a named alias
     return state.tone;
   }
-  return TONE_CLASS_BY_TYPE[state.type] ?? "text-muted-foreground";
+  return TONE_CLASS_BY_TYPE[state.status] ?? "text-muted-foreground";
 }

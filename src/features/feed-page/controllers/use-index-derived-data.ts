@@ -1,6 +1,6 @@
 import { useMemo, useRef } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
-import type { Task, Channel, Relay, TaskStatusType, PostedTag } from "@/types";
+import type { Task, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";

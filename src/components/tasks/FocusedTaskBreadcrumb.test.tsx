@@ -28,7 +28,7 @@ const baseTask: Task = {
   replies: 0,
   reposts: 0,
   state: {
-    type: "open"
+    status: "open"
   },
 };
 

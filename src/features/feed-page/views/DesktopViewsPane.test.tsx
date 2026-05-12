@@ -101,7 +101,7 @@ describe("DesktopViewsPane overlay", () => {
       author,
       content: "Pane task #general",
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
@@ -121,7 +121,7 @@ describe("DesktopViewsPane overlay", () => {
       author,
       content: "Focused leaf #general",
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
@@ -141,7 +141,7 @@ describe("DesktopViewsPane overlay", () => {
       author,
       content: "Focused feed leaf #general",
       state: {
-        type: "open"
+        status: "open"
       },
     });
 
