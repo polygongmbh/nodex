@@ -75,7 +75,6 @@ export function TaskTree({
   const displayedTasks = treeSelectors.getDisplayedTasks({ useMobileFallback: isMobile });
   const getMatchingChildren = treeSelectors.getMatchingChildren;
   const isTaskDirectMatch = treeSelectors.isDirectMatch;
-  const composerDefaultContent = treeSelectors.getComposerDefaultContent();
   const { shouldShowScopeFooterHint } =
     treeSelectors.getEmptyStateFlags({ isMobile });
   const hasMatchingFilters = treeSelectors.hasMatchingFilters();
@@ -242,7 +241,6 @@ export function TaskTree({
           onMentionRequestConsumed={onMentionRequestConsumed}
           composeRestoreRequest={composeRestoreRequest}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
-          defaultContent={composerDefaultContent}
           collapseOnSuccess
           allowComment={Boolean(normalizedFocusedTaskId)}
         />

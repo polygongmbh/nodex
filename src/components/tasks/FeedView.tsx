@@ -202,7 +202,6 @@ export function FeedView({
     mediaPreviewTasks,
     shouldShowMobileScopeFallback,
     shouldShowScopeFooterHint,
-    composerDefaultContent,
   } = useFeedViewState({
     tasks,
     allTasks,
@@ -558,7 +557,6 @@ export function FeedView({
           onMentionRequestConsumed={onMentionRequestConsumed}
           composeRestoreRequest={composeRestoreRequest}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
-          defaultContent={composerDefaultContent}
           allowFeedMessageTypes
         />
       )}

@@ -12,7 +12,6 @@ import {
 } from "@/domain/content/task-view-filtering";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
-import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
@@ -60,7 +59,6 @@ export interface FeedViewState {
   shouldShowInlineEmptyHint: boolean;
   shouldShowScopeFooterHint: boolean;
   shouldShowScreenEmptyState: boolean;
-  composerDefaultContent: string;
 }
 
 export interface ListViewState {
@@ -71,7 +69,6 @@ export interface ListViewState {
   baseListTaskCandidates: Task[];
   hasActiveFilters: boolean;
   hasSelectedScope: boolean;
-  composerDefaultContent: string;
 }
 
 export interface KanbanViewState {
@@ -133,7 +130,6 @@ export interface TreeSelectors {
   getDisplayedTasks(options?: { useMobileFallback?: boolean }): Task[];
   getMatchingChildren(parentId: string): Task[];
   isDirectMatch(taskId: string): boolean;
-  getComposerDefaultContent(): string;
   getEmptyStateFlags(options?: { isMobile?: boolean }): {
     shouldShowMobileScopeFallback: boolean;
     shouldShowInlineEmptyHint: boolean;
@@ -439,12 +435,6 @@ export function createTreeSelectors(source: TreeSelectorSource): TreeSelectors {
       if (!visibility.hasMatchingFilters) return true;
       return visibility.state.directlyMatchingIds.has(taskId);
     },
-    getComposerDefaultContent() {
-      return buildComposePrefillFromFiltersAndContext(
-        source.channels,
-        source.focusedTaskId ? source.taskById.get(source.focusedTaskId)?.tags : undefined
-      );
-    },
     getEmptyStateFlags(options = {}) {
       const visibility = getVisibility();
       const shouldShowMobileScopeFallback =
@@ -624,7 +614,6 @@ export function useFeedViewState({
     shouldShowInlineEmptyHint,
     shouldShowScopeFooterHint: !isMobile && scopeModel.hasSelectedScope && feedEntries.length > 0,
     shouldShowScreenEmptyState,
-    composerDefaultContent: buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags),
   };
 }
 
@@ -681,7 +670,6 @@ export function useListViewState({
     baseListTaskCandidates,
     hasActiveFilters: scopeModel.hasActiveFilters,
     hasSelectedScope: scopeModel.hasSelectedScope,
-    composerDefaultContent: buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags),
   };
 }
 
