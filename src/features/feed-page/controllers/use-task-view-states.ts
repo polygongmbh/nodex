@@ -24,6 +24,7 @@ import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-in
 import type { EmptyScopeModel } from "@/lib/empty-scope";
 import { getTaskStatusType, type Channel, type ChannelMatchMode, type Relay, type Task, type TaskStateUpdate, type TaskStatusType } from "@/types";
 import type { SelectablePerson } from "@/types/person";
+import type { MobileViewType } from "@/components/mobile/MobileNav";
 
 interface BaseViewStateInput {
   tasks: Task[];
@@ -33,7 +34,7 @@ interface BaseViewStateInput {
 }
 
 interface MobileScopedViewStateInput extends BaseViewStateInput {
-  currentView: "status" | "feed" | "tree" | "list" | "calendar";
+  currentView: MobileViewType;
   showFilters: boolean;
   isHydrating?: boolean;
 }

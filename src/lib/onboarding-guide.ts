@@ -1,10 +1,11 @@
 import { isComposeGuideStep, shouldPreopenComposeOnDesktop } from "@/lib/onboarding-step-rules";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 interface ComposeForceParams {
   isOnboardingOpen: boolean;
   activeOnboardingStepId: string | null;
   isMobile: boolean;
-  currentView?: "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
+  currentView?: ViewType;
 }
 
 export function shouldForceComposeForGuide({

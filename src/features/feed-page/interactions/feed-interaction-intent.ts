@@ -8,8 +8,8 @@ import type {
   TaskDateType,
 } from "@/types";
 import type { Person } from "@/types/person";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
-export type FeedViewType = "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
 export type DisplayDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
 export type FeedInteractionIntent =
@@ -19,7 +19,7 @@ export type FeedInteractionIntent =
   | { type: "ui.focusSidebar" }
   | { type: "ui.focusTasks" }
   | { type: "ui.interaction.guardModify" }
-  | { type: "ui.view.change"; view: FeedViewType }
+  | { type: "ui.view.change"; view: ViewType }
   | { type: "ui.search.change"; query: string }
   | { type: "ui.displayDepth.change"; mode: DisplayDepthMode }
   | { type: "ui.manageRoute.change"; isActive: boolean }
@@ -59,7 +59,7 @@ export type FeedInteractionIntent =
   | { type: "sidebar.quickFilter.recentEnabled.change"; enabled: boolean }
   | { type: "sidebar.quickFilter.minPriority.change"; priority: number }
   | { type: "sidebar.quickFilter.priorityEnabled.change"; enabled: boolean }
-  | { type: "task.focus.change"; taskId: string | null; view?: FeedViewType }
+  | { type: "task.focus.change"; taskId: string | null; view?: ViewType }
   | {
       type: "task.create";
       content: string;

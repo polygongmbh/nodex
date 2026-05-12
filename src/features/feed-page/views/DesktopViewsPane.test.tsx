@@ -5,6 +5,7 @@ import { FeedSurfaceProvider } from "./feed-surface-context";
 import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
 import { FeedViewStateProvider } from "./feed-view-state-context";
 import { DesktopViewsPane } from "./DesktopViewsPane";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 vi.mock("@/components/tasks/TaskTree", () => ({
   TaskTree: () => <div data-testid="tree-view" />,
@@ -30,7 +31,7 @@ vi.mock("@/components/tasks/ListView", () => ({
   ListView: () => <div data-testid="list-view" />,
 }));
 
-function renderPane(currentView: "feed" | "tree" | "kanban" | "calendar" | "list", value: FeedTaskViewModel) {
+function renderPane(currentView: ViewType, value: FeedTaskViewModel) {
   return render(
     <FeedSurfaceProvider
       value={{

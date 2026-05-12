@@ -1,13 +1,13 @@
 import type { TFunction } from "i18next";
 import { OnboardingSectionId, OnboardingStep } from "./onboarding-types";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 type StepMap = Record<OnboardingSectionId, OnboardingStep[]>;
-type GuideView = "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
 
 export function getOnboardingStepsBySection(
   isMobile: boolean,
-  view: GuideView = "tree",
+  view: ViewType = "tree",
   t: TFunction
 ): StepMap {
   const alternateModifier = getAlternateModifierLabel();

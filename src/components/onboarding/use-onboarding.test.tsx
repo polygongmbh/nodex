@@ -7,6 +7,7 @@ import type { SelectablePerson } from "@/types/person";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 const peopleSeed: SelectablePerson[] = [
   makePerson({ pubkey: "alice", name: "alice", displayName: "Alice", isSelected: true }),
@@ -21,7 +22,7 @@ function Harness({
   initialUser?: { pubkey?: string } | null;
 }) {
   const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
-  const [currentView, setCurrentView] = useState<"status" | "feed" | "tree" | "kanban" | "calendar" | "list">("tree");
+  const [currentView, setCurrentView] = useState<ViewType>("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
   const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
 

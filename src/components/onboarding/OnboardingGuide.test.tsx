@@ -4,6 +4,7 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { OnboardingGuide } from "./OnboardingGuide";
 import type { OnboardingInitialSection, OnboardingSection, OnboardingSectionId, OnboardingStep } from "./onboarding-types";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 const sections: OnboardingSection[] = [
   { id: "navigation", title: "Navigation", description: "Navigation help" },
@@ -46,7 +47,7 @@ function renderGuide({
     isOpen: boolean;
     isMobile: boolean;
     manualStart: boolean;
-    currentView: "tree" | "feed" | "kanban" | "calendar" | "list";
+    currentView: ViewType;
     uiContextKey: string;
     initialSection: OnboardingInitialSection;
     sections: OnboardingSection[];

@@ -1,9 +1,8 @@
 import type { TFunction } from "i18next";
 import { OnboardingSection } from "./onboarding-types";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
-type GuideView = "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
-
-export function getOnboardingSections(isMobile: boolean, view: GuideView, t: TFunction): OnboardingSection[] {
+export function getOnboardingSections(isMobile: boolean, view: ViewType, t: TFunction): OnboardingSection[] {
   const baseOnboardingSections: OnboardingSection[] = [
     {
       id: "navigation",

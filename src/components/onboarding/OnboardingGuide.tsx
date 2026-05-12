@@ -15,12 +15,13 @@ import {
   isNavigationFocusStep,
 } from "@/lib/onboarding-step-rules";
 import { useTranslation } from "react-i18next";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 interface OnboardingGuideProps {
   isOpen: boolean;
   isMobile?: boolean;
   manualStart?: boolean;
-  currentView?: "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
+  currentView?: ViewType;
   uiContextKey?: string;
   initialSection: OnboardingInitialSection;
   sections: OnboardingSection[];

@@ -11,6 +11,7 @@ import { makeQuickFilterState } from "@/test/quick-filter-state";
 import type { FeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import type { FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import type { FeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import type { MobileViewType } from "@/components/mobile/MobileNav";
 
 const ndkMock = {
   user: null as null | {
@@ -72,7 +73,7 @@ vi.mock("./MobileNav", async (importOriginal) => {
       onViewChange,
       onManageOpen,
     }: {
-      onViewChange: (view: "status" | "tree" | "feed" | "list" | "calendar") => void;
+      onViewChange: (view: MobileViewType) => void;
       onManageOpen?: () => void;
     }) => (
       <div data-testid="mobile-nav">

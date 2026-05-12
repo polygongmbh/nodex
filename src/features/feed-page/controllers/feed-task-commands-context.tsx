@@ -8,10 +8,10 @@ import type {
   Nip99ListingStatus,
   TaskCreateResult,
 } from "@/types";
-import type { FeedViewType } from "@/features/feed-page/interactions/feed-interaction-intent";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 export interface FeedTaskCommands {
-  focusTask(taskId: string | null, view?: FeedViewType): void;
+  focusTask(taskId: string | null, view?: ViewType): void;
   createTask(
     content: string,
     tags: string[],
