@@ -20,7 +20,6 @@ export enum NostrEventKind {
   TextNote = 1,
   RecommendRelay = 2,
   Contacts = 3,
-  EncryptedDirectMessage = 4,
   EventDeletion = 5,
   Repost = 6,
   Reaction = 7,
