@@ -107,6 +107,16 @@ export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
       "h-8 w-9 bg-transparent text-center font-mono text-xs text-foreground tabular-nums " +
       "placeholder:text-muted-foreground/40 focus:outline-none";
 
+    // Prevent the click that follows focus from collapsing the selection.
+    const handleMouseDown = (event: React.MouseEvent<HTMLInputElement>) => {
+      const input = event.currentTarget;
+      if (document.activeElement !== input) {
+        event.preventDefault();
+        input.focus();
+        input.select();
+      }
+    };
+
     return (
       <div
         className={cn(
@@ -129,6 +139,7 @@ export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
           onChange={(event) => handleHhChange(event.target.value)}
           onBlur={handleHhBlur}
           onFocus={(event) => event.currentTarget.select()}
+          onMouseDown={handleMouseDown}
           className={baseField}
         />
         <span className="text-muted-foreground/60 select-none" aria-hidden>
@@ -146,6 +157,7 @@ export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
           onChange={(event) => handleMmChange(event.target.value)}
           onBlur={handleMmBlur}
           onFocus={(event) => event.currentTarget.select()}
+          onMouseDown={handleMouseDown}
           className={baseField}
         />
       </div>
