@@ -151,16 +151,39 @@ export function useTaskStatusController({
     [allTasks, currentUser, publishTaskStateUpdate, scheduleTaskStatusReorderUpdate]
   );
 
-  const handleToggleComplete = useCallback(
-    (taskId: string) => {
-      if (guardInteraction("modify")) return;
-
+  const resolveAuthorizedTask = useCallback(
+    (taskId: string): Task | undefined => {
+      if (guardInteraction("modify")) return undefined;
       const existingTask = allTasks.find((task) => task.id === taskId);
-      if (!existingTask) return;
+      if (!existingTask) return undefined;
       if (!canUserChangeTaskStatus(existingTask, currentUser)) {
         notifyStatusRestricted();
-        return;
+        return undefined;
       }
+      return existingTask;
+    },
+    [allTasks, currentUser, guardInteraction]
+  );
+
+  const commitTaskStatus = useCallback(
+    (taskId: string, status: TaskStatus) => {
+      scheduleTaskStatusReorderUpdate(taskId, status);
+      triggerCompletionFeedback(taskId, status.type as TaskStatusType);
+      void publishTaskStateUpdate(taskId, status);
+      cascadeActiveToOpenAncestors(taskId, status);
+    },
+    [
+      cascadeActiveToOpenAncestors,
+      publishTaskStateUpdate,
+      scheduleTaskStatusReorderUpdate,
+      triggerCompletionFeedback,
+    ]
+  );
+
+  const handleToggleComplete = useCallback(
+    (taskId: string) => {
+      const existingTask = resolveAuthorizedTask(taskId);
+      if (!existingTask) return;
       const currentType =
         pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask.status) ?? "open";
       if (currentType === "done" || currentType === "closed") return;
@@ -172,33 +195,15 @@ export function useTaskStatusController({
       const nextStatus: TaskStatus = nextStateDef
         ? toTaskStatusFromStateDefinition(nextStateDef)
         : { type: nextType };
-      scheduleTaskStatusReorderUpdate(taskId, nextStatus);
-      triggerCompletionFeedback(taskId, nextType);
-      void publishTaskStateUpdate(taskId, nextStatus);
-      cascadeActiveToOpenAncestors(taskId, nextStatus);
+      commitTaskStatus(taskId, nextStatus);
     },
-    [
-      allTasks,
-      cascadeActiveToOpenAncestors,
-      currentUser,
-      guardInteraction,
-      isMobile,
-      publishTaskStateUpdate,
-      scheduleTaskStatusReorderUpdate,
-      triggerCompletionFeedback,
-    ]
+    [commitTaskStatus, isMobile, resolveAuthorizedTask]
   );
 
   const handleStatusChange = useCallback(
     (taskId: string, status: TaskStatus) => {
-      if (guardInteraction("modify")) return;
-
-      const existingTask = allTasks.find((task) => task.id === taskId);
+      const existingTask = resolveAuthorizedTask(taskId);
       if (!existingTask) return;
-      if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-        notifyStatusRestricted();
-        return;
-      }
 
       const normalizedStatus = normalizeTaskStatus(status);
       const currentStatus = normalizeTaskStatus(existingTask.status);
@@ -208,22 +213,10 @@ export function useTaskStatusController({
       ) {
         return;
       }
-      const resolvedType = normalizedStatus.type as TaskStatusType;
 
-      scheduleTaskStatusReorderUpdate(taskId, normalizedStatus);
-      triggerCompletionFeedback(taskId, resolvedType);
-      void publishTaskStateUpdate(taskId, normalizedStatus);
-      cascadeActiveToOpenAncestors(taskId, normalizedStatus);
+      commitTaskStatus(taskId, normalizedStatus);
     },
-    [
-      allTasks,
-      cascadeActiveToOpenAncestors,
-      currentUser,
-      guardInteraction,
-      publishTaskStateUpdate,
-      scheduleTaskStatusReorderUpdate,
-      triggerCompletionFeedback,
-    ]
+    [commitTaskStatus, resolveAuthorizedTask]
   );
 
   return {
