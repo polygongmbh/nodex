@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import { TaskDateType } from "@/types";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { TaskDateTypeSelect } from "./TaskDateTypeSelect";
+import { TaskTimeInput } from "./TaskTimeInput";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
@@ -37,21 +39,13 @@ export function TaskDueDateEditorForm({
 }: TaskDueDateEditorFormProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const [localDueDate, setLocalDueDate] = useState<Date | undefined>(dueDate);
   const [localDueTime, setLocalDueTime] = useState(dueTime || "");
   const [localDateType, setLocalDateType] = useState<TaskDateType>(dateType || "due");
-  const dispatchDueDateUpdate = (
-    nextDueDate: Date | undefined,
-    nextDueTime: string | undefined,
-    nextDateType: TaskDateType
-  ) => {
-    void dispatchFeedInteraction({
-      type: "task.updateDueDate",
-      taskId,
-      dueDate: nextDueDate,
-      dueTime: nextDueTime,
-      dateType: nextDateType,
-    });
-  };
+
+  useEffect(() => {
+    setLocalDueDate(dueDate);
+  }, [dueDate, taskId]);
 
   useEffect(() => {
     setLocalDueTime(dueTime || "");
@@ -61,8 +55,30 @@ export function TaskDueDateEditorForm({
     setLocalDateType(dateType || "due");
   }, [dateType, taskId]);
 
+  const handleConfirm = () => {
+    void dispatchFeedInteraction({
+      type: "task.updateDueDate",
+      taskId,
+      dueDate: localDueDate,
+      dueTime: localDueTime || undefined,
+      dateType: localDateType,
+    });
+  };
+
+  const handleClear = () => {
+    setLocalDueDate(undefined);
+    setLocalDueTime("");
+    void dispatchFeedInteraction({
+      type: "task.updateDueDate",
+      taskId,
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: localDateType,
+    });
+  };
+
   return (
-    <div className="space-y-2 p-3">
+    <div className="space-y-3 p-3">
       <div className="flex items-center gap-2">
         <label className="text-xs text-muted-foreground" htmlFor={`${idPrefix}-date-type-${taskId}`}>
           {t("listView.dates.type")}
@@ -71,37 +87,33 @@ export function TaskDueDateEditorForm({
           id={`${idPrefix}-date-type-${taskId}`}
           aria-label={t("listView.dates.type")}
           value={localDateType}
-          onChange={(nextType) => {
-            setLocalDateType(nextType);
-            if (dueDate) {
-              dispatchDueDateUpdate(dueDate, localDueTime || undefined, nextType);
-            }
-          }}
+          onChange={setLocalDateType}
           className="h-7 border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:ring-0"
         />
       </div>
       <CalendarComponent
         mode="single"
-        selected={dueDate}
-        onSelect={(date) => {
-          dispatchDueDateUpdate(date, localDueTime || undefined, localDateType);
-        }}
+        selected={localDueDate}
+        onSelect={setLocalDueDate}
         initialFocus
+        className="p-0 pointer-events-auto"
       />
       <div className="flex items-center gap-2">
         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-        <input
-          type="time"
+        <TaskTimeInput
+          aria-label="Hours"
           value={localDueTime}
-          onChange={(event) => {
-            const value = event.target.value;
-            setLocalDueTime(value);
-            if (dueDate) {
-              dispatchDueDateUpdate(dueDate, value || undefined, localDateType);
-            }
-          }}
-          className="rounded border border-border bg-background px-2 py-1 text-xs"
+          onChange={setLocalDueTime}
+          disabled={!localDueDate}
         />
+      </div>
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="h-7 px-2 text-xs">
+          Clear
+        </Button>
+        <Button type="button" size="sm" onClick={handleConfirm} className="h-7 px-3 text-xs">
+          Confirm
+        </Button>
       </div>
     </div>
   );
