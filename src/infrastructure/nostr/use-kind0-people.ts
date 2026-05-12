@@ -118,10 +118,8 @@ export function useKind0People(
   }, [cacheRevision, selectedRelayScopeKey]);
 
   const latestPresenceByAuthor = useMemo(() => {
-    const nowUnix = Math.floor(Date.now() / 1000);
     return deriveLatestPresenceByAuthor(
       nostrEvents.filter((event) => event.kind === NostrEventKind.UserStatus),
-      nowUnix
     );
   }, [nostrEvents]);
 

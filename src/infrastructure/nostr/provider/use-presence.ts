@@ -2,7 +2,6 @@ import { useCallback, useRef } from "react";
 import NDK, { NDKEvent, NDKRelaySet } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
-  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
@@ -50,9 +49,7 @@ export function usePresence({ ndk, relays, markRelayVerificationFailure }: UsePr
       const event = new NDKEvent(ndk);
       event.kind = NostrEventKind.UserStatus;
       event.content = buildOfflinePresenceContent();
-      event.tags = buildPresenceTags(
-        Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
-      );
+      event.tags = buildPresenceTags();
       await event.sign();
 
       const relayUrls = resolveOfflinePresenceRelayUrls({

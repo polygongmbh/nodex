@@ -1,12 +1,10 @@
 export const NIP38_PRESENCE_TAG = "nodex-presence";
-export const NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS = 30 * 60;
-export const NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS = 60;
 
 // Thresholds for displaying presence indicators in the sidebar.
 // ONLINE (green) = recently seen within a short window.
-// RECENT (yellow) = seen within the active presence expiry window.
+// RECENT (yellow) = seen within the broader recency window.
 export const PRESENCE_ONLINE_WINDOW_MS = 3 * 60 * 1000;
-export const PRESENCE_RECENT_WINDOW_MS = NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS * 1000;
+export const PRESENCE_RECENT_WINDOW_MS = 30 * 60 * 1000;
 
 type PresenceState = "active" | "offline";
 
@@ -23,11 +21,8 @@ export interface LatestPresenceSnapshot {
   taskId?: string | null;
 }
 
-export function buildPresenceTags(expirationUnix: number): string[][] {
-  return [
-    ["d", NIP38_PRESENCE_TAG],
-    ["expiration", String(expirationUnix)],
-  ];
+export function buildPresenceTags(): string[][] {
+  return [["d", NIP38_PRESENCE_TAG]];
 }
 
 export function buildActivePresenceContent(view: string, taskId: string | null): string {
@@ -42,13 +37,6 @@ export function buildOfflinePresenceContent(): string {
   return JSON.stringify({
     state: "offline",
   } satisfies PresenceContent);
-}
-
-export function getPresenceExpirationUnix(tags: string[][]): number | null {
-  const raw = tags.find((tag) => tag[0] === "expiration")?.[1];
-  if (!raw) return null;
-  const value = Number.parseInt(raw, 10);
-  return Number.isFinite(value) ? value : null;
 }
 
 export function isNodexPresenceEvent(tags: string[][]): boolean {
@@ -79,16 +67,12 @@ interface PresenceLikeEvent {
 
 export function deriveLatestPresenceByAuthor(
   events: PresenceLikeEvent[],
-  nowUnix: number
 ): Map<string, LatestPresenceSnapshot> {
   const latestPresenceByAuthor = new Map<string, LatestPresenceSnapshot>();
 
   for (const event of events) {
     const authorId = event.pubkey?.trim().toLowerCase();
     if (!authorId || !isNodexPresenceEvent(event.tags)) continue;
-
-    const expirationUnix = getPresenceExpirationUnix(event.tags);
-    if (expirationUnix !== null && expirationUnix < nowUnix) continue;
 
     const presence = parsePresenceContent(event.content || "");
     if (!presence) continue;
@@ -110,9 +94,8 @@ export function deriveLatestPresenceByAuthor(
 
 export function deriveLatestActivePresenceByAuthor(
   events: PresenceLikeEvent[],
-  nowUnix: number
 ): Map<string, number> {
-  const latestPresenceByAuthor = deriveLatestPresenceByAuthor(events, nowUnix);
+  const latestPresenceByAuthor = deriveLatestPresenceByAuthor(events);
   const latestActivePresenceByAuthor = new Map<string, number>();
   for (const [authorId, snapshot] of latestPresenceByAuthor.entries()) {
     if (snapshot.state === "active") {

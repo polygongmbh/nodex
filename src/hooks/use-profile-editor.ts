@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { TFunction } from "i18next";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
-  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
@@ -181,11 +180,10 @@ export function useProfileEditor({
   const handlePresencePublishingChange = (enabled: boolean) => {
     setPresencePublishingEnabled(enabled);
     if (!enabled && userPubkey) {
-      const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS;
       void publishEvent(
         NostrEventKind.UserStatus,
         buildOfflinePresenceContent(),
-        buildPresenceTags(expirationUnix)
+        buildPresenceTags()
       );
     }
   };

@@ -6,11 +6,6 @@ import NDK, {
 import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-discovery";
 import type { EditableNostrProfile } from "@/infrastructure/nostr/profile-metadata";
-import {
-  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
-  buildOfflinePresenceContent,
-  buildPresenceTags,
-} from "@/lib/presence-status";
 import { getConfiguredDefaultRelays } from "@/infrastructure/nostr/default-relays";
 import { dedupeNormalizedRelayUrls, isRelayUrl, normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";

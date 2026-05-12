@@ -8,8 +8,6 @@ import {
   resolveReachableAppRelayUrls,
 } from "@/lib/nostr/relay-write-targets";
 import {
-  NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
-  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildActivePresenceContent,
   buildOfflinePresenceContent,
   buildPresenceTags,
@@ -130,8 +128,8 @@ export function buildRelayScopedPresenceTargets({
 }
 
 // Returns targets (and relay subsets within them) that haven't been published
-// with the current fingerprint yet. No time-based refresh — presence expires
-// naturally via the NIP-38 expiration tag.
+// with the current fingerprint yet. No time-based refresh — kind 30315 is a
+// parameterized-replaceable event, so each new publish supersedes the prior one.
 function filterTargetsNeedingPublish(
   targets: PresencePublishTarget[],
   relayStateByRelayUrl: Map<string, RelayPresenceState>
@@ -169,12 +167,6 @@ async function publishPresenceTargets(
     const attemptedRelayUrls = dedupeNormalizedRelayUrls(target.relayUrls);
     if (attemptedRelayUrls.length === 0) continue;
 
-    const attemptedAt = Date.now();
-    const expirationUnix = Math.floor(attemptedAt / 1000) + (
-      target.fingerprint === OFFLINE_PRESENCE_FINGERPRINT
-        ? NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
-        : NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS
-    );
     nostrDevLog("presence", "Publishing relay-scoped presence", {
       relayUrls: attemptedRelayUrls,
       fingerprint: target.fingerprint,
@@ -184,7 +176,7 @@ async function publishPresenceTargets(
     const result = await publishEvent(
       NostrEventKind.UserStatus,
       target.content,
-      buildPresenceTags(expirationUnix),
+      buildPresenceTags(),
       undefined,
       attemptedRelayUrls
     );
@@ -275,9 +267,9 @@ export function useRelayScopedPresence({
     refreshRegisteredRelayUrls();
   }, [refreshRegisteredRelayUrls]);
 
-  // Publish when scope or fingerprint settles. No periodic refresh — presence
-  // expires naturally via the NIP-38 expiration tag, and active updates are
-  // intentionally delayed because they are only a best-effort status signal.
+  // Publish when scope or fingerprint settles. No periodic refresh — kind 30315
+  // is parameterized-replaceable, and active updates are intentionally delayed
+  // because they are only a best-effort status signal.
   useEffect(() => {
     let cancelled = false;
 

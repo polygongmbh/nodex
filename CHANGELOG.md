@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Presence events no longer carry an expiration tag, so relays retain them and the hover card's "last seen" remains visible for people who have gone offline.
+
 ## [3.1.0] - 2026-05-12
 Minor release for Status view rollups, composer guidance, mobile scheduling, and release verification.
 
