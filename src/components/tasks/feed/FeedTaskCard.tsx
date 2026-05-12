@@ -110,6 +110,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
     triggerProps,
     handleOpenChange,
     dispatchStatusChange,
+    currentItemRef,
   } = useTaskStatusMenu({
     task,
     currentUser,
@@ -280,11 +281,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                     return (
                       <DropdownMenuItem
                         key={state.id}
-                        ref={isCurrent ? (node) => {
-                          if (node && statusMenuOpen) {
-                            requestAnimationFrame(() => node.focus());
-                          }
-                        } : undefined}
+                        ref={isCurrent ? currentItemRef : undefined}
                         className={cn(isCurrent && "font-medium")}
                         onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id); }}
                       >

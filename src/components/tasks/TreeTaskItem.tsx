@@ -255,6 +255,7 @@ export function TreeTaskItem({
     triggerProps,
     handleOpenChange,
     dispatchStatusChange,
+    currentItemRef,
   } = useTaskStatusMenu({
     task,
     currentUser,
@@ -373,11 +374,7 @@ export function TreeTaskItem({
                     <DropdownMenuItem
                       key={state.id}
                       data-current-status={isCurrent || undefined}
-                      ref={isCurrent ? (node) => {
-                        if (node && statusMenuOpen) {
-                          requestAnimationFrame(() => node.focus());
-                        }
-                      } : undefined}
+                      ref={isCurrent ? currentItemRef : undefined}
                       onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id); }}
                       className={cn(isCurrent && "font-medium")}
                     >

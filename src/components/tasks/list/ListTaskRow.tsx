@@ -67,6 +67,7 @@ export function ListTaskRow({
     triggerProps,
     handleOpenChange,
     dispatchStatusChange,
+    currentItemRef,
     focusTask,
   } = useTaskStatusMenu({
     task,
@@ -116,6 +117,7 @@ export function ListTaskRow({
                 return (
                   <DropdownMenuItem
                     key={state.id}
+                    ref={isCurrent ? currentItemRef : undefined}
                     onClick={(event) => {
                       event.stopPropagation();
                       dispatchStatusChange(state.id);

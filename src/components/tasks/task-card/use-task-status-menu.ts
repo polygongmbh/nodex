@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
 import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
@@ -42,6 +42,17 @@ export function useTaskStatusMenu({
   const statusMenuOpenedOnPointerDownRef = useRef(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
+  const currentItemRef = useRef<HTMLDivElement | null>(null);
+  // Focus the current state on open so keyboard users land on a sensible
+  // default. A stable ref (not an inline callback) is required — passing a
+  // fresh arrow function each render makes React re-invoke the ref after
+  // every parent render, which would steal focus back from any option the
+  // user has navigated to with arrows or pointer.
+  useEffect(() => {
+    if (!statusMenuOpen) return;
+    const handle = requestAnimationFrame(() => currentItemRef.current?.focus());
+    return () => cancelAnimationFrame(handle);
+  }, [statusMenuOpen]);
   const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   const blockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
   const statusButtonTitle = canCompleteTask
@@ -244,6 +255,7 @@ export function useTaskStatusMenu({
     triggerProps,
     handleOpenChange,
     dispatchStatusChange,
+    currentItemRef,
     focusTask,
   };
 }
