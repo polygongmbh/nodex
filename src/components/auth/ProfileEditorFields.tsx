@@ -134,7 +134,7 @@ export function ProfileEditorFields({
                   aria-label={t("auth.profile.uploadPicture")}
                   disabled={isUploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 hover:opacity-100 focus-visible:opacity-100 transition-opacity disabled:cursor-not-allowed"
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity disabled:cursor-not-allowed"
                 >
                   {isUploading ? (
                     <Loader2 className="h-3 w-3 text-white animate-spin" />
