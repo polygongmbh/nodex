@@ -119,9 +119,6 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const parentTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "parent");
   const replyTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "reply");
   const parentId = parentTag?.[1] || replyTag?.[1];
-  const dueTag = event.tags.find((tag) => tag[0] === "due" && tag[1]);
-  const dueTimeTag = event.tags.find((tag) => tag[0] === "due_time" && tag[1]);
-  const dateTypeTag = event.tags.find((tag) => tag[0] === "date_type" && tag[1]);
   const mentionedPubkeys = event.tags
     .filter((tag) => tag[0]?.toLowerCase() === "p" && tag[1])
     .map((tag) => tag[1].toLowerCase());
@@ -164,34 +161,6 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     ...contentAttachments,
   ]);
 
-  let dueDate: Date | undefined;
-  if (dueTag?.[1]) {
-    if (/^\d+$/.test(dueTag[1])) {
-      const parsed = new Date(Number(dueTag[1]) * 1000);
-      if (!Number.isNaN(parsed.getTime())) {
-        dueDate = parsed;
-      }
-    } else {
-      const parsed = new Date(dueTag[1]);
-      if (!Number.isNaN(parsed.getTime())) {
-        dueDate = parsed;
-      }
-    }
-  }
-  const dateType = (() => {
-    const normalized = (dateTypeTag?.[1] || "").toLowerCase();
-    if (
-      normalized === "scheduled" ||
-      normalized === "start" ||
-      normalized === "end" ||
-      normalized === "milestone" ||
-      normalized === "due"
-    ) {
-      return normalized;
-    }
-    return dueTag ? "due" : undefined;
-  })();
-
   return {
     id: event.id,
     author,
@@ -205,9 +174,6 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     timestamp: new Date(event.created_at * 1000),
     status,
     parentId,
-    dueDate,
-    dueTime: dueTimeTag?.[1],
-    dateType,
     mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles, ...referencedProfilePubkeys])),
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
     priority,

@@ -35,7 +35,7 @@ describe("task calendar event helpers", () => {
 
     expect(event.kind).toBe(NostrEventKind.CalendarTimeBased);
     expect(event.tags).toContainEqual(["e", "task456", "wss://relay.example", "task"]);
-    expect(event.tags).toContainEqual(["due_time", "14:30"]);
+    expect(event.tags.some((tag) => tag[0] === "due_time")).toBe(false);
     expect(event.tags).toContainEqual(["date_type", "end"]);
     expect(event.tags).toContainEqual(["d", "task-date-task456-end"]);
     expect(event.tags.some((tag) => tag[0] === "end" && /^\d+$/.test(tag[1]))).toBe(true);

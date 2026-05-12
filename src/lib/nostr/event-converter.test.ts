@@ -251,23 +251,6 @@ describe("nostrEventToTask", () => {
     expect(task.relays).toEqual(["relay-a", "relay-b"]);
   });
 
-  it("extracts due date and due time from tags", () => {
-    const dueSeconds = 1773964800; // 2026-03-20T00:00:00.000Z
-    const event: NostrEventWithRelay = {
-      ...baseEvent,
-      kind: NostrEventKind.Task,
-      tags: [
-        ["due", String(dueSeconds)],
-        ["due_time", "09:45"],
-      ],
-    };
-
-    const task = nostrEventToTask(event);
-
-    expect(task.dueDate?.toISOString()).toBe("2026-03-20T00:00:00.000Z");
-    expect(task.dueTime).toBe("09:45");
-  });
-
   it("extracts numeric priority from tags", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,
@@ -567,6 +550,9 @@ describe("nostrEventsToTasks", () => {
   });
 
   it("hydrates task due date/time from linked calendar events", () => {
+    const timeBasedStart = 1774276200; // 2026-03-23T14:30:00Z
+    const expectedDate = new Date(timeBasedStart * 1000);
+    const expectedDueTime = `${String(expectedDate.getHours()).padStart(2, "0")}:${String(expectedDate.getMinutes()).padStart(2, "0")}`;
     const events: NostrEventWithRelay[] = [
       makeRelayEvent({ id: "task-2", pubkey: "pub1", kind: NostrEventKind.Task, content: "Release", sig: "sig1" }),
       makeRelayEvent({
@@ -583,7 +569,7 @@ describe("nostrEventsToTasks", () => {
         pubkey: "pub1",
         created_at: 1700000004,
         kind: NostrEventKind.CalendarTimeBased,
-        tags: [["d", "deadline-2"], ["title", "Release"], ["start", "1774276200"], ["due_time", "14:30"], ["e", "task-2", "", "task"]],
+        tags: [["d", "deadline-2"], ["title", "Release"], ["start", String(timeBasedStart)], ["e", "task-2", "", "task"]],
         content: "Release",
         sig: "sig3",
       }),
@@ -591,8 +577,8 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].dueDate?.toISOString()).toBe("2026-03-23T14:30:00.000Z");
-    expect(tasks[0].dueTime).toBe("14:30");
+    expect(tasks[0].dueDate?.getTime()).toBe(expectedDate.getTime());
+    expect(tasks[0].dueTime).toBe(expectedDueTime);
   });
 
   it("ignores unauthorized due-date and priority updates on assigned tasks", () => {

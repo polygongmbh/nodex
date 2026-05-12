@@ -63,15 +63,15 @@ export function buildLinkedTaskCalendarEvent({
     ["e", taskEventId, relayUrl || "", "task"],
   ];
 
-  if (normalizedTime) {
-    tags.push(["due_time", normalizedTime]);
-  }
-
   return {
     kind,
     content: taskContent,
     tags,
   };
+}
+
+function formatHhMm(date: Date): string {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
 export function parseLinkedTaskDueFromCalendarEvent(
@@ -84,7 +84,6 @@ export function parseLinkedTaskDueFromCalendarEvent(
   const startTag = tags.find((tag) => tag[0] === "start" && tag[1]);
   const endTag = tags.find((tag) => tag[0] === "end" && tag[1]);
   const dateTag = startTag || endTag;
-  const dueTimeTag = tags.find((tag) => tag[0] === "due_time" && tag[1]);
   const dateTypeTag = tags.find((tag) => tag[0] === "date_type" && tag[1]);
 
   if (!taskRefTag?.[1] || !dateTag?.[1]) {
@@ -104,7 +103,8 @@ export function parseLinkedTaskDueFromCalendarEvent(
     }
   }
 
-  const parsedDueTime = dueTimeTag?.[1];
+  const parsedDueTime =
+    kind === NostrEventKind.CalendarTimeBased && dueDate ? formatHhMm(dueDate) : undefined;
 
   const parsedDateType = (() => {
     const normalized = (dateTypeTag?.[1] || "").toLowerCase();
