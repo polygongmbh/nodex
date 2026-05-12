@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 ### Changed
+- `VITE_LOCAL_CAPTIONS` now defaults to `false`. In-browser image captioning is opt-in; set the flag to `true` to re-enable it.
 - Presence events no longer carry an expiration tag, so relays retain them and the hover card's "last seen" remains visible for people who have gone offline.
 - Status view's Activity column status icons now open the status chooser on alt/option-click, long-press, and from the keyboard, matching the feed/list/tree behaviour instead of only firing a quick toggle.
 
@@ -24,7 +25,6 @@ Minor release for Status view rollups, composer guidance, mobile scheduling, and
 - Status view's My Tasks and Activity columns are capped at 20 and 40 entries respectively, with a footer link to open the full Tree/Timeline view (showing a count of additional entries when truncated).
 - Status view's Activity column now surfaces items that concern you (as creator or assignee) or any sidebar-selected people, in addition to the top-level posts and comments it already showed.
 - Composer no longer prefills hashtags from the focused task in feed/tree/list views. Submitting a child task without explicit tags still inherits the parent's tags at publish time, so the visible prefill was redundant.
-- Task status dropdown marks the current state with a check icon instead of a flat gray background, so the hover/focus highlight on other options is no longer washed out.
 - Horizontal swipe and trackpad gestures no longer switch between views on either desktop or mobile.
 
 ### Fixed

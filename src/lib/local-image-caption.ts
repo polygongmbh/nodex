@@ -23,7 +23,7 @@ let cachedInitializationFailure: { status: LocalImageCaptionStatus; error: strin
 const notifiedFailureKeys = new Set<string>();
 let isCaptionModelReady = false;
 
-const DEFAULT_CAPTIONS_ENABLED = true;
+const DEFAULT_CAPTIONS_ENABLED = false;
 
 export type LocalImageCaptionStatus =
   | "unsupported"
