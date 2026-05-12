@@ -7,7 +7,7 @@ describe("nip99 metadata normalization", () => {
       ["d", "listing-1"],
       ["title", "Bike"],
       ["description", "Great commuter bike"],
-      ["publishedAt", "1700000000"],
+      ["published_at", "1700000000"],
       ["availability", "closed"],
       ["amount", "150"],
       ["currency", "eur"],
@@ -27,7 +27,7 @@ describe("nip99 metadata normalization", () => {
     });
   });
 
-  it("publishes canonical tags with compatibility aliases", () => {
+  it("publishes canonical NIP-99 tags", () => {
     const tags = buildNip99PublishTags({
       feedMessageType: "offer",
       hashtags: ["bikes"],
@@ -44,7 +44,7 @@ describe("nip99 metadata normalization", () => {
     });
 
     expect(tags).toContainEqual(["published_at", "1700000123"]);
-    expect(tags).toContainEqual(["publishedAt", "1700000123"]);
+    expect(tags).not.toContainEqual(["publishedAt", "1700000123"]);
     expect(tags).toContainEqual(["price", "500", "USD", "month"]);
     expect(tags).toContainEqual(["currency", "USD"]);
     expect(tags).toContainEqual(["frequency", "month"]);
