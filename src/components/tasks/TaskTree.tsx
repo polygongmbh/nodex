@@ -232,7 +232,6 @@ export function TaskTree({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer) && (
         <SharedViewComposer
-          onCancel={() => setIsComposerExpanded(false)}
           focusedTaskId={normalizedFocusedTaskId}
           forceExpanded={effectiveForceShowComposer}
           forceExpandSignal={composeGuideActivationSignal}

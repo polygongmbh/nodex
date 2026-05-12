@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import type { ComposeRestoreRequest, TaskStatus } from "@/types";
 
 interface SharedViewComposerProps {
-  onCancel?: () => void;
   focusedTaskId: string | null;
   initialStatus?: TaskStatus;
   forceExpanded?: boolean;
@@ -29,7 +28,6 @@ interface SharedViewComposerProps {
 }
 
 export function SharedViewComposer({
-  onCancel,
   focusedTaskId,
   initialStatus,
   forceExpanded = false,
@@ -70,7 +68,7 @@ export function SharedViewComposer({
   return (
     <div className={className} data-onboarding="focused-compose">
       <TaskCreateComposer
-        onCancel={onCancel ?? (() => {})}
+        onCancel={() => {}}
         compact
         focusedTaskId={focusedTaskId}
         initialStatus={initialStatus}

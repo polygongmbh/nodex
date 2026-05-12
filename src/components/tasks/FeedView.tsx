@@ -533,7 +533,6 @@ export function FeedView({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer) && (
         <SharedViewComposer
-          onCancel={() => {}}
           focusedTaskId={focusedTaskId}
           forceExpanded={effectiveForceShowComposer}
           forceExpandSignal={composeGuideActivationSignal}

@@ -39,16 +39,9 @@ export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: Sta
   if (!hasProject) {
     if (!authPolicy.canOpenCompose) return null;
     return (
-      <section
-        aria-label={t("status.projects.composeLabel", { defaultValue: "Create task" })}
-        className="border-b border-border"
-      >
-        <SharedViewComposer
-          onCancel={() => {}}
-          focusedTaskId={focusedTaskId}
-          className="px-3 py-3"
-        />
-      </section>
+      <SharedViewComposer
+        focusedTaskId={focusedTaskId}
+      />
     );
   }
 
