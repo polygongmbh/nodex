@@ -86,8 +86,7 @@
       },
       "composeKind": {
         "title": "Task or Comment",
-        "description": "The kind selector decides the post type, optionally revealing type-specific properties to set.",
-        "action": "Open the kind selector to continue."
+        "description": "Select the post type before posting to set additional optional properties."
       },
       "composeInput": {
         "title": "Write with #Tags and @Mentions",

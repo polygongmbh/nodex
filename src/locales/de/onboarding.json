@@ -86,8 +86,7 @@
       },
       "composeKind": {
         "title": "Aufgabe oder Kommentar",
-        "description": "Die Typ-Auswahl legt den Beitragstyp fest und zeigt ggf. typspezifische Felder an.",
-        "action": "Öffne die Typ-Auswahl, um fortzufahren."
+        "description": "Wähle vor dem Posten den Beitragstyp aus, um zusätzliche optionale Eigenschaften festzulegen."
       },
       "composeInput": {
         "title": "Mit #Tags und @Mentions Schreiben",

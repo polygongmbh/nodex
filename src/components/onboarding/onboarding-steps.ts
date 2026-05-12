@@ -82,7 +82,6 @@ export function getOnboardingStepsBySection(
         description: t("onboarding.steps.composeKind.description"),
         target: '[data-onboarding="compose-kind"]',
         requiredAction: "focus-target",
-        actionPrompt: t("onboarding.steps.composeKind.action"),
       },
       {
         id: "compose-input",

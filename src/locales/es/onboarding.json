@@ -86,8 +86,7 @@
       },
       "composeKind": {
         "title": "Tarea o Comentario",
-        "description": "El selector de tipo decide el tipo de publicación, mostrando opcionalmente propiedades específicas del tipo.",
-        "action": "Abre el selector de tipo para continuar."
+        "description": "Selecciona el tipo de publicación antes de publicar para configurar propiedades opcionales adicionales."
       },
       "composeInput": {
         "title": "Escribe con #Tags y @Menciones",
