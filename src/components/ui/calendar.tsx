@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, useDayPicker, useNavigation } from "react-day-picker";
-import { format } from "date-fns";
+import { DayPicker, useDayPicker, type MonthCaptionProps } from "react-day-picker";
+import { format, type Locale } from "date-fns";
 import { de, es, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 
@@ -18,11 +18,11 @@ function resolveLocale(lang: string | undefined): Locale {
   return LOCALE_MAP[base] ?? enUS;
 }
 
-function CompactMonthCaption() {
-  const { goToMonth, nextMonth, previousMonth } = useNavigation();
-  const { currentMonth, locale } = useDayPicker();
+function CompactMonthCaption({ calendarMonth }: MonthCaptionProps) {
+  const { goToMonth, nextMonth, previousMonth, dayPickerProps } = useDayPicker();
+  const locale = dayPickerProps.locale ?? enUS;
   return (
-    <div className="flex items-center justify-center gap-1 pt-1 h-7">
+    <div className="flex items-center justify-center gap-1 h-7">
       <button
         type="button"
         aria-label="Previous month"
@@ -36,7 +36,7 @@ function CompactMonthCaption() {
         <ChevronLeft className="h-4 w-4" />
       </button>
       <span className="text-sm font-medium min-w-[8rem] text-center">
-        {format(currentMonth, "LLLL yyyy", { locale })}
+        {format(calendarMonth.date, "LLLL yyyy", { locale: locale as Locale })}
       </span>
       <button
         type="button"
@@ -71,28 +71,30 @@ function Calendar({
       classNames={{
         months: "flex flex-col sm:flex-row gap-4",
         month: "flex flex-col gap-2",
-        caption: "flex justify-center relative items-center",
+        month_caption: "flex justify-center pt-1 items-center",
         caption_label: "hidden",
         nav: "hidden",
-        table: "w-full border-collapse",
-        head_row: "flex",
-        head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.7rem]",
-        row: "flex w-full mt-1",
-        cell: "h-8 w-8 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-        day: cn(
+        month_grid: "w-full border-collapse",
+        weekdays: "flex",
+        weekday: "text-muted-foreground rounded-md w-8 font-normal text-[0.7rem]",
+        week: "flex w-full mt-1",
+        day: "h-8 w-8 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+        day_button: cn(
           buttonVariants({ variant: "ghost" }),
           "h-8 w-8 p-0 font-normal aria-selected:opacity-100",
         ),
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
-        day_outside: "text-muted-foreground opacity-50",
-        day_disabled: "text-muted-foreground opacity-50",
-        day_hidden: "invisible",
+        selected:
+          "[&>button]:bg-primary [&>button]:text-primary-foreground [&>button:hover]:bg-primary [&>button:focus]:bg-primary",
+        today: "[&>button]:bg-accent [&>button]:text-accent-foreground",
+        outside: "text-muted-foreground opacity-50",
+        disabled: "text-muted-foreground opacity-50",
+        hidden: "invisible",
         ...classNames,
       }}
       components={{
-        Caption: CompactMonthCaption,
+        MonthCaption: CompactMonthCaption,
+        Chevron: ({ orientation }) =>
+          orientation === "left" ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />,
       }}
       {...props}
     />
