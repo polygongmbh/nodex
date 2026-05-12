@@ -3,6 +3,7 @@ import { beforeEach, describe, it, expect, vi } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
 import type { Task } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import { makePerson, makeTask } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
@@ -301,6 +302,7 @@ describe("TreeTaskItem status actions", () => {
       ...baseTask,
       id: "c1",
       taskType: "comment",
+      kind: NostrEventKind.TextNote,
       content: "Looks good",
       author: makePerson({
         pubkey: "alice-pubkey",
@@ -324,6 +326,7 @@ describe("TreeTaskItem status actions", () => {
       ...baseTask,
       id: "c-plain-author",
       taskType: "comment",
+      kind: NostrEventKind.TextNote,
       content: "Looks good",
       author: makePerson({
         pubkey: "plain-author",
@@ -347,6 +350,7 @@ describe("TreeTaskItem status actions", () => {
       ...baseTask,
       id: "c-right-avatar-only",
       taskType: "comment",
+      kind: NostrEventKind.TextNote,
       content: "Looks good",
       assigneePubkeys: ["ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318"],
       author: makePerson({

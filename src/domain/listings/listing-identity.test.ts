@@ -7,7 +7,7 @@ describe("getListingReplaceableKey", () => {
     const key = getListingReplaceableKey(
       {
         id: "event-id-1",
-        feedMessageType: "offer",
+        kind: NostrEventKind.ClassifiedListing,
         author: { pubkey: "A".repeat(64) },
         nip99: { identifier: "listing-123" },
       },
@@ -20,7 +20,7 @@ describe("getListingReplaceableKey", () => {
     const key = getListingReplaceableKey(
       {
         id: "legacy-event-id",
-        feedMessageType: "request",
+        kind: NostrEventKind.ClassifiedListing,
         author: { pubkey: "b".repeat(64) },
         nip99: {},
       },
@@ -33,7 +33,7 @@ describe("getListingReplaceableKey", () => {
     const key = getListingReplaceableKey(
       {
         id: "event-id-2",
-        feedMessageType: undefined,
+        kind: NostrEventKind.Task,
         author: { pubkey: "c".repeat(64) },
         nip99: { identifier: "listing-456" },
       },

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminal } from "@/domain/content/task-state";
+import { isTaskKind } from "@/domain/content/task-kind";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { formatAuthorMetaParts } from "@/types/person";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -36,7 +37,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
     }),
     [resolvedAuthor]
   );
-  const isComment = task.taskType === "comment";
+  const isComment = !isTaskKind(task.kind);
   const isTerminal = isTaskTerminal(task.state);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   // Collapse paragraph breaks so the preview renders as one inline block —

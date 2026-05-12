@@ -2,6 +2,7 @@ import type { Task } from "@/types";
 import { extractMentionIdentifiersFromContent, formatMentionIdentifierForDisplay } from "@/lib/mentions";
 import { hexPubkeyToNpub, npubToHexPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { formatAuthorMetaLabel, type Person } from "@/types/person";
+import { isTaskKind } from "./task-kind";
 import { resolveTaskEditMode } from "./task-permissions-policy";
 
 function getTaskAssignees(task: Task): string[] {
@@ -92,7 +93,7 @@ function areAssignedTaskEditsOpenToEveryone(): boolean {
 }
 
 export function canUserUpdateTask(task: Task, currentUser?: Person): boolean {
-  if (task.taskType !== "task") return false;
+  if (!isTaskKind(task.kind)) return false;
   if (!currentUser) return false;
   if (areAssignedTaskEditsOpenToEveryone()) return true;
 
@@ -105,7 +106,7 @@ export function canUserUpdateTask(task: Task, currentUser?: Person): boolean {
 }
 
 export function canPubkeyUpdateTask(task: Task, updaterPubkey?: string): boolean {
-  if (task.taskType !== "task") return false;
+  if (!isTaskKind(task.kind)) return false;
   const normalizedPubkey = normalizeIdentity(updaterPubkey);
   if (areAssignedTaskEditsOpenToEveryone()) return Boolean(normalizedPubkey);
 
@@ -137,7 +138,7 @@ export function getTaskStatusChangeBlockedReason(
   if (isInteractionBlocked) {
     return "Editing is currently unavailable.";
   }
-  if (task.taskType !== "task") {
+  if (!isTaskKind(task.kind)) {
     return "Only tasks can be edited.";
   }
   if (!currentUser) {

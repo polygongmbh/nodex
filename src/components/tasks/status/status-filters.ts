@@ -1,4 +1,5 @@
 import { getTaskStatus, type Task } from "@/types";
+import { isTaskKind } from "@/domain/content/task-kind";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 
 function normalizePubkey(value: string | undefined | null): string {
@@ -93,7 +94,7 @@ export function selectStatusInProgressTopLevelTasks({
 }: TopLevelTaskFilterOptions): Task[] {
   const result: Task[] = [];
   for (const task of contextTasks) {
-    if (task.taskType !== "task") continue;
+    if (!isTaskKind(task.kind)) continue;
     if (getTaskStatus(task.state) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
@@ -121,7 +122,7 @@ export function hasInProgressTopLevelProject({
   focusedTaskId,
 }: ProjectFilterOptions): boolean {
   for (const task of contextTasks) {
-    if (task.taskType !== "task") continue;
+    if (!isTaskKind(task.kind)) continue;
     if (getTaskStatus(task.state) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
@@ -155,7 +156,7 @@ export function selectPeopleOwnedTasks({
 }: PeopleScopedFilterOptions): Task[] {
   if (peopleScope.size === 0) return [];
   return contextTasks.filter((task) => {
-    if (!focusedTaskId && task.taskType === "comment") return false;
+    if (!focusedTaskId && !isTaskKind(task.kind)) return false;
     return isTaskOwnedByAny(task, peopleScope);
   });
 }
@@ -184,7 +185,7 @@ export function selectStatusTimelinePosts({
   concernsScope,
 }: TimelineFilterOptions): Task[] {
   const matching = contextTasks.filter((task) => {
-    if (task.taskType === "comment") return true;
+    if (!isTaskKind(task.kind)) return true;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
       : !task.parentId;

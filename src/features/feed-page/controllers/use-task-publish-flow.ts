@@ -16,6 +16,7 @@ import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { normalizeComposerMessageType } from "@/domain/content/task-type";
+import { isTaskKind } from "@/domain/content/task-kind";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import {   resolveRelaySelectionForSubmission, } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -854,7 +855,7 @@ export function useTaskPublishFlow({
   ) => {
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || existingTask.taskType !== "task" || !dueDate) return;
+    if (!existingTask || !isTaskKind(existingTask.kind) || !dueDate) return;
     if (!canUserUpdateTask(existingTask, currentUser)) {
       notifyStatusRestricted();
       return;
@@ -872,7 +873,7 @@ export function useTaskPublishFlow({
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || existingTask.taskType !== "task") return;
+    if (!existingTask || !isTaskKind(existingTask.kind)) return;
     if (!canUserUpdateTask(existingTask, currentUser)) {
       notifyStatusRestricted();
       return;

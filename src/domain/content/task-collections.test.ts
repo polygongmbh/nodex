@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { NostrEventKind } from "@/lib/nostr/types";
 import { makePerson, makeTask } from "@/test/fixtures";
 import {
   applyTaskSortOverlays,
@@ -38,14 +39,14 @@ describe("dedupeMergedTasks", () => {
 
   it("keeps the latest version of a replaceable listing", () => {
     const listingA = buildTask("listing-a", "2026-03-16T09:00:00.000Z", {
+      kind: NostrEventKind.ClassifiedListing,
       taskType: "comment",
-      feedMessageType: "offer",
       author: makePerson({ pubkey: "a".repeat(64), name: "a", displayName: "A" }),
       nip99: { identifier: "listing-1", title: "Listing 1", status: "active" },
     });
     const listingB = buildTask("listing-b", "2026-03-16T10:00:00.000Z", {
+      kind: NostrEventKind.ClassifiedListing,
       taskType: "comment",
-      feedMessageType: "offer",
       author: makePerson({ pubkey: "a".repeat(64), name: "a", displayName: "A" }),
       nip99: { identifier: "listing-1", title: "Listing 1", status: "sold" },
     });

@@ -8,6 +8,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
+import { isTaskKind } from "@/domain/content/task-kind";
 import type { Task } from "@/types";
 
 interface StatusProjectsRowProps {
@@ -55,7 +56,7 @@ export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: Sta
             task={task}
             people={people}
             isProject={isProjectFromChildrenMap(task.id, childrenByParentId)}
-            subtaskCount={(childrenByParentId.get(task.id) || []).filter((child) => child.taskType === "task").length}
+            subtaskCount={(childrenByParentId.get(task.id) || []).filter((child) => isTaskKind(child.kind)).length}
           />
         ))}
       </div>

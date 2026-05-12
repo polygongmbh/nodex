@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useListingStatusPublish } from "./use-listing-status-publish";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
+import { NostrEventKind } from "@/lib/nostr/types";
 import { makePerson, makeTask } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
@@ -13,9 +14,9 @@ vi.mock("sonner", () => ({
 const currentUser = makePerson({ pubkey: "a".repeat(64), name: "Alice", displayName: "Alice" });
 const listingTask = makeTask({
   id: "b".repeat(64),
+  kind: NostrEventKind.ClassifiedListing,
   author: currentUser,
   taskType: "comment",
-  feedMessageType: "offer",
   content: "Listing body",
   tags: ["market"],
   relays: ["relay-one"],

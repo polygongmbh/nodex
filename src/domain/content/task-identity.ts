@@ -25,13 +25,12 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
   if (a.timestamp.getTime() !== b.timestamp.getTime()) return false;
   if ((a.lastEditedAt?.getTime() ?? 0) !== (b.lastEditedAt?.getTime() ?? 0)) return false;
   if (a.content !== b.content) return false;
-  if (a.taskType !== b.taskType) return false;
+  if (a.kind !== b.kind) return false;
   if (a.parentId !== b.parentId) return false;
   if (a.priority !== b.priority) return false;
   if (a.dueTime !== b.dueTime) return false;
   if ((a.dueDate?.getTime() ?? 0) !== (b.dueDate?.getTime() ?? 0)) return false;
   if (a.dateType !== b.dateType) return false;
-  if (a.feedMessageType !== b.feedMessageType) return false;
   if (a.author.pubkey !== b.author.pubkey) return false;
   if (!areStatusEqual(a.state, b.state)) return false;
   if (!areStateUpdateListsEqual(a.stateUpdates, b.stateUpdates)) return false;

@@ -22,6 +22,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { getTaskStatus, normalizeTaskState, type Task, type TaskState, type ComposeRestoreRequest } from "@/types";
+import { isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
@@ -227,7 +228,7 @@ export function KanbanView({
   const subtaskCountsByParent = useMemo(() => {
     const map = new Map<string, { open: number; active: number; done: number }>();
     for (const task of allTasks) {
-      if (task.taskType !== "task" || !task.parentId) continue;
+      if (!isTaskKind(task.kind) || !task.parentId) continue;
       const type = getTaskStatus(task.state);
       if (type !== "open" && type !== "active" && type !== "done") continue;
       const counts = map.get(task.parentId) ?? { open: 0, active: 0, done: 0 };

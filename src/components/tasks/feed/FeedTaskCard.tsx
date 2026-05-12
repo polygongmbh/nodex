@@ -1,5 +1,6 @@
 import { memo, useMemo, type ReactNode } from "react";
-import { BadgeCheck, HandHelping, MessageSquare, Package } from "lucide-react";
+import { BadgeCheck, MessageSquare, Package } from "lucide-react";
+import { isCommentKind, isListingKind } from "@/domain/content/task-kind";
 import { getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
@@ -83,22 +84,14 @@ export const FeedTaskCard = memo(function FeedTaskCard({
     if (showFull || value.length <= 11) return value;
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
   };
-  const isComment = task.taskType === "comment";
-  const isListing = Boolean(task.feedMessageType);
+  const isListing = isListingKind(task.kind);
+  const isComment = isCommentKind(task.kind);
   const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
   const isSoldListing = isListing && listingStatus === "sold";
   const isCompletedVisual = isTaskTerminal(task.state) || isSoldListing;
   const isLockedUntilStart = isTaskLockedUntilStart(task);
-  const feedMessageLabel =
-    task.feedMessageType === "offer"
-      ? t("tasks.offer")
-      : task.feedMessageType === "request"
-        ? t("tasks.request")
-        : t("tasks.comment");
-  const listingSoldLabel =
-    task.feedMessageType === "request"
-      ? t("tasks.listing.fulfilled")
-      : t("tasks.listing.sold");
+  const feedMessageLabel = isListing ? t("tasks.listing.label") : t("tasks.comment");
+  const listingSoldLabel = t("tasks.listing.sold");
   const authorMeta = formatAuthorMetaParts({
     pubkey: resolvedAuthor.pubkey,
     displayName: resolvedAuthor.displayName,
@@ -252,11 +245,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                 canUpdateListingStatus ? "hover:bg-muted cursor-pointer" : "cursor-default"
               )}
             >
-              {task.feedMessageType === "offer" ? (
-                <Package className={cn("text-muted-foreground", "w-5 h-5")} />
-              ) : (
-                <HandHelping className={cn("text-muted-foreground", "w-5 h-5")} />
-              )}
+              <Package className={cn("text-muted-foreground", "w-5 h-5")} />
             </button>
           ) : (
             <span

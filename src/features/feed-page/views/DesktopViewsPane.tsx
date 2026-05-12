@@ -4,6 +4,7 @@ import { StatusView } from "@/components/tasks/status/StatusView";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
+import { isTaskKind } from "@/domain/content/task-kind";
 import { filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedTaskViewModel } from "./feed-task-view-model-context";
@@ -82,7 +83,7 @@ export function DesktopViewsPane() {
       ? false
       : currentView === "feed"
         ? scopedTasks.length === 0
-        : scopedTasks.every((task) => task.taskType !== "task");
+        : scopedTasks.every((task) => !isTaskKind(task.kind));
   let viewPane: ReactNode;
   switch (currentView) {
     case "status":

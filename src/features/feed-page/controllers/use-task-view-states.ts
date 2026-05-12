@@ -13,6 +13,7 @@ import {
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { isTaskTerminal } from "@/domain/content/task-state";
+import { isTaskKind } from "@/domain/content/task-kind";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
@@ -286,7 +287,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       scope: {
         focusedTaskId: source.focusedTaskId,
         hideClosedTasks: true,
-        taskPredicate: (task) => Boolean(task.dueDate) && task.taskType === "task",
+        taskPredicate: (task) => Boolean(task.dueDate) && isTaskKind(task.kind),
       },
       criteria: {
         searchQuery: source.searchQuery,
@@ -487,7 +488,7 @@ export function buildTreeVisibilityState({
   if (focusedTaskId) {
     rootTasks = childrenMap.get(focusedTaskId) || [];
   } else {
-    rootTasks = (childrenMap.get(undefined) || []).filter((task) => task.taskType !== "comment");
+    rootTasks = (childrenMap.get(undefined) || []).filter((task) => isTaskKind(task.kind));
   }
   rootTasks = rootTasks.filter((task) => prefilteredTaskIds.has(task.id));
   const baseVisibleTasks = sortTasks(rootTasks, sortContext);
@@ -639,7 +640,7 @@ export function useListViewState({
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
-    taskPredicate: (task) => task.taskType === "task",
+    taskPredicate: (task) => isTaskKind(task.kind),
   });
   const baseListTaskCandidates = useTaskViewFiltering({
     allTasks,
@@ -650,7 +651,7 @@ export function useListViewState({
     quickFilters,
     channels: deferredChannels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
     channelMatchMode: deferredChannelMatchMode,
-    taskPredicate: (task) => task.taskType === "task",
+    taskPredicate: (task) => isTaskKind(task.kind),
   });
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
@@ -693,7 +694,7 @@ export function useKanbanViewState({
     [allTasks, childrenMap, priorityScores, taskById]
   );
   const hasChildren = useCallback(
-    (taskId: string): boolean => (childrenMap.get(taskId) || []).some((candidate) => candidate.taskType === "task"),
+    (taskId: string): boolean => (childrenMap.get(taskId) || []).some((candidate) => isTaskKind(candidate.kind)),
     [childrenMap]
   );
   const getDepth = useCallback(
@@ -719,7 +720,7 @@ export function useKanbanViewState({
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
-    taskPredicate: (task) => task.taskType === "task",
+    taskPredicate: (task) => isTaskKind(task.kind),
   });
   const kanbanTasks = useMemo(
     () => filterTasksByDepthMode({ tasks: filteredTaskCandidates, depthMode, focusedTaskId, getDepth, hasChildren }),
@@ -768,7 +769,7 @@ export function useMobileFallbackNoticeState({
     if (currentView !== "list" && currentView !== "calendar") {
       return undefined;
     }
-    return (task: Task) => task.taskType === "task" && Boolean(task.dueDate) && !isTaskTerminal(task.state);
+    return (task: Task) => isTaskKind(task.kind) && Boolean(task.dueDate) && !isTaskTerminal(task.state);
   }, [currentView]);
   const includeFocusedTaskForActiveView = currentView === "feed";
   const hideClosedForActiveView = currentView === "feed";

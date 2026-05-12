@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { Task, ComposeRestoreRequest } from "@/types";
+import { isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -84,7 +85,7 @@ export function TaskTree({
   const flattenedTaskIds = useMemo(() => {
     const ids: string[] = [];
     visibleTasks.forEach(task => {
-      if (task.taskType !== "comment") {
+      if (isTaskKind(task.kind)) {
         ids.push(task.id);
       }
     });

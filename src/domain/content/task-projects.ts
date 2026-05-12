@@ -1,4 +1,5 @@
 import { isTaskTerminal } from "@/domain/content/task-state";
+import { isTaskKind } from "@/domain/content/task-kind";
 import type { Task } from "@/types";
 
 // A task is a "project" when at least one of its task-typed subtasks is not in
@@ -15,7 +16,7 @@ export function isProjectFromChildrenMap(
 ): boolean {
   const children = childrenByParentId.get(taskId) || [];
   return children.some(
-    (child) => child.taskType === "task" && !isTaskTerminal(child.state)
+    (child) => isTaskKind(child.kind) && !isTaskTerminal(child.state)
   );
 }
 
@@ -23,7 +24,7 @@ export function makeIsProject(allTasks: Task[]): (taskId: string) => boolean {
   return (taskId) =>
     allTasks.some(
       (task) =>
-        task.taskType === "task" &&
+        isTaskKind(task.kind) &&
         task.parentId === taskId &&
         !isTaskTerminal(task.state)
     );

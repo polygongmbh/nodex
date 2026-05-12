@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { notifyPublishListingStatusFailed } from "@/lib/notifications";
 import { buildImetaTag } from "@/lib/attachments";
 import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
+import { isListingKind } from "@/domain/content/task-kind";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -42,7 +43,7 @@ export function useListingStatusPublish({
     if (guardInteraction("modify")) return;
 
     const existing = allTasks.find((task) => task.id === taskId);
-    if (!existing?.feedMessageType || !existing.nip99) return;
+    if (!existing || !isListingKind(existing.kind) || !existing.nip99) return;
     if (!currentUser?.pubkey || currentUser.pubkey.toLowerCase() !== existing.author.pubkey.toLowerCase()) return;
 
     const previousStatus = existing.nip99.status;

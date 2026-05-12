@@ -37,19 +37,21 @@ export function makeChannel(overrides: Partial<Channel> = {}): Channel {
 export function makeTask(overrides: Partial<Task> = {}): Task {
   const author = overrides.author ?? makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
   const timestamp = overrides.timestamp ?? DEFAULT_TIME;
+  const taskType = overrides.taskType ?? "task";
+  const kind = overrides.kind ?? (taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote);
   return {
     id: "task-1",
-    kind: NostrEventKind.Task,
     author,
     content: "Task content #general",
     tags: ["general"],
     relays: ["demo"],
-    taskType: "task",
     timestamp,
     likes: 0,
     replies: 0,
     reposts: 0,
     state: { status: "open" },
     ...overrides,
+    kind,
+    taskType,
   };
 }
