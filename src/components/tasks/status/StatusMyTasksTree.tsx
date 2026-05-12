@@ -29,6 +29,7 @@ interface StatusMyTasksTreeProps {
  */
 export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focusedTaskId }: StatusMyTasksTreeProps) {
   const { t } = useTranslation("tasks");
+  const { t: tShell } = useTranslation("shell");
   const { relays } = useFeedSurfaceState();
   const { currentUser, isInteractionBlocked = false, isPendingPublishTask } = useFeedTaskViewModel();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -87,22 +88,26 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
             sortContext={sortContext}
           />
         ))}
-        {hiddenCount > 0 && (
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                void dispatchFeedInteraction({ type: "ui.view.change", view: "tree" });
-              }}
-              className="w-full rounded-md px-3 py-2 text-center text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              {t("status.myTasks.viewMore", {
-                count: hiddenCount,
-                defaultValue: "View {{count}} more in tree view",
-              })}
-            </button>
-          </div>
-        )}
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              void dispatchFeedInteraction({ type: "ui.view.change", view: "tree" });
+            }}
+            className="w-full rounded-md px-3 py-2 text-center text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            {hiddenCount > 0
+              ? t("status.myTasks.viewMore", {
+                  count: hiddenCount,
+                  view: tShell("navigation.views.tree"),
+                  defaultValue: "View {{count}} more in {{view}}",
+                })
+              : t("status.myTasks.openView", {
+                  view: tShell("navigation.views.tree"),
+                  defaultValue: "Open {{view}} view",
+                })}
+          </button>
+        </div>
       </div>
     </TaskAuthorProfilesProvider>
   );

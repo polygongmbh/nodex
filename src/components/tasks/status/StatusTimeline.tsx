@@ -21,6 +21,7 @@ interface StatusTimelineProps {
  */
 export function StatusTimeline({ contextTasks, focusedTaskId, concernsScope }: StatusTimelineProps) {
   const { t } = useTranslation("tasks");
+  const { t: tShell } = useTranslation("shell");
   const { people } = useFeedSurfaceState();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const posts = useMemo(
@@ -38,22 +39,26 @@ export function StatusTimeline({ contextTasks, focusedTaskId, concernsScope }: S
       {visiblePosts.map((task) => (
         <StatusTimelineItem key={task.id} task={task} people={people} />
       ))}
-      {hiddenCount > 0 && (
-        <div className="px-3 py-3">
-          <button
-            type="button"
-            onClick={() => {
-              void dispatchFeedInteraction({ type: "ui.view.change", view: "feed" });
-            }}
-            className="w-full rounded-md px-3 py-2 text-center text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            {t("status.timeline.viewMore", {
-              count: hiddenCount,
-              defaultValue: "View {{count}} more in feed",
-            })}
-          </button>
-        </div>
-      )}
+      <div className="px-3 py-3">
+        <button
+          type="button"
+          onClick={() => {
+            void dispatchFeedInteraction({ type: "ui.view.change", view: "feed" });
+          }}
+          className="w-full rounded-md px-3 py-2 text-center text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          {hiddenCount > 0
+            ? t("status.timeline.viewMore", {
+                count: hiddenCount,
+                view: tShell("navigation.views.feed"),
+                defaultValue: "View {{count}} more in {{view}}",
+              })
+            : t("status.timeline.openView", {
+                view: tShell("navigation.views.feed"),
+                defaultValue: "Open {{view}} view",
+              })}
+        </button>
+      </div>
     </div>
   );
 }
