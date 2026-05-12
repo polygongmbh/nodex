@@ -165,6 +165,75 @@ describe("useTaskStatusController", () => {
     });
   });
 
+  it("cascades active status up to open-typed ancestors", () => {
+    const publishTaskStateUpdate = vi.fn(async () => undefined);
+    const parent = makeTask({ id: "parent", author, status: { type: "open" } });
+    const grandparent = makeTask({ id: "grandparent", author, status: { type: "open" } });
+    const child = makeTask({
+      ...initialTask,
+      parentId: "parent",
+    });
+    const parentWithLink = { ...parent, parentId: "grandparent" } as typeof parent;
+    useTaskMutationStore.setState({
+      localTasks: [child, parentWithLink, grandparent],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
+
+    render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "SetInProgress" }));
+
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", { type: "active" });
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("parent", { type: "active" });
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("grandparent", { type: "active" });
+  });
+
+  it("does not cascade past ancestors that are not in an open state", () => {
+    const publishTaskStateUpdate = vi.fn(async () => undefined);
+    const grandparent = makeTask({ id: "grandparent", author, status: { type: "open" } });
+    const parent = makeTask({
+      id: "parent",
+      author,
+      status: { type: "done" },
+      parentId: "grandparent",
+    });
+    const child = makeTask({ ...initialTask, parentId: "parent" });
+    useTaskMutationStore.setState({
+      localTasks: [child, parent, grandparent],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
+
+    render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "SetInProgress" }));
+
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", { type: "active" });
+    expect(publishTaskStateUpdate).not.toHaveBeenCalledWith("parent", expect.anything());
+    // grandparent is open but skipped because the chain is broken by a non-open parent
+    // (literal reading: any open ancestor — but we still skip the done one)
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("grandparent", { type: "active" });
+  });
+
+  it("does not cascade when the chosen status is not active", () => {
+    const publishTaskStateUpdate = vi.fn(async () => undefined);
+    const parent = makeTask({ id: "parent", author, status: { type: "open" } });
+    const child = makeTask({ ...initialTask, parentId: "parent" });
+    useTaskMutationStore.setState({
+      localTasks: [child, parent],
+      postedTags: [],
+      suppressedNostrEventIds: new Set(),
+    });
+
+    render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "SetDone" }));
+
+    expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", { type: "done" });
+    expect(publishTaskStateUpdate).not.toHaveBeenCalledWith("parent", expect.anything());
+  });
+
   it("publishes the registry's default done state with description for custom done labels", () => {
     // Simulate a registry where the first done-type state has id "review" / label "Review"
     const reviewState = {

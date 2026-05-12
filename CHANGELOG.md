@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Marking a subtask as active now also promotes its open-typed ancestor tasks to the same active state, so parent projects reflect that work has started.
+
 ### Changed
 - Status view's in-progress projects row is now sorted with the same priority-aware algorithm as other task lists, instead of arrival order.
 - Status view's My Tasks and Activity columns are capped at 20 and 40 entries respectively, with a "view more" link to the tree/feed view when truncated.

@@ -123,6 +123,34 @@ export function useTaskStatusController({
     [completionSoundEnabled, triggerCompletionCheer]
   );
 
+  const cascadeActiveToOpenAncestors = useCallback(
+    (childTaskId: string, status: TaskStatus) => {
+      if (status.type !== "active") return;
+      const visited = new Set<string>([childTaskId]);
+      let cursorId: string | undefined = childTaskId;
+      while (cursorId) {
+        const cursor = allTasks.find((task) => task.id === cursorId);
+        const parentId = cursor?.parentId;
+        if (!parentId || visited.has(parentId)) break;
+        visited.add(parentId);
+        cursorId = parentId;
+
+        const parentTask = allTasks.find((task) => task.id === parentId);
+        if (!parentTask) continue;
+        const parentCurrentType =
+          pendingTaskStatusesRef.current.get(parentId) ??
+          getTaskStatusType(parentTask.status) ??
+          "open";
+        if (parentCurrentType !== "open") continue;
+        if (!canUserChangeTaskStatus(parentTask, currentUser)) continue;
+
+        scheduleTaskStatusReorderUpdate(parentId, status);
+        void publishTaskStateUpdate(parentId, status);
+      }
+    },
+    [allTasks, currentUser, publishTaskStateUpdate, scheduleTaskStatusReorderUpdate]
+  );
+
   const handleToggleComplete = useCallback(
     (taskId: string) => {
       if (guardInteraction("modify")) return;
@@ -147,9 +175,11 @@ export function useTaskStatusController({
       scheduleTaskStatusReorderUpdate(taskId, nextStatus);
       triggerCompletionFeedback(taskId, nextType);
       void publishTaskStateUpdate(taskId, nextStatus);
+      cascadeActiveToOpenAncestors(taskId, nextStatus);
     },
     [
       allTasks,
+      cascadeActiveToOpenAncestors,
       currentUser,
       guardInteraction,
       isMobile,
@@ -183,9 +213,11 @@ export function useTaskStatusController({
       scheduleTaskStatusReorderUpdate(taskId, normalizedStatus);
       triggerCompletionFeedback(taskId, resolvedType);
       void publishTaskStateUpdate(taskId, normalizedStatus);
+      cascadeActiveToOpenAncestors(taskId, normalizedStatus);
     },
     [
       allTasks,
+      cascadeActiveToOpenAncestors,
       currentUser,
       guardInteraction,
       publishTaskStateUpdate,
