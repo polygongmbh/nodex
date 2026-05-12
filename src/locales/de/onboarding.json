@@ -49,7 +49,7 @@
     "steps": {
       "navigationSwitcher": {
         "title": "Ansicht Wechseln",
-        "description": "Timeline, Hierarchisch, Kanban, Tabelle und Kalender zeigen dieselben Aufgaben aus unterschiedlichen Blickwinkeln.",
+        "description": "Verschiedene Ansichten zeigen deine Inhalte in verschiedenen Arrangements.",
         "action": "Wechsle zu einer beliebigen Ansicht, um fortzufahren."
       },
       "navigationFocus": {
@@ -96,7 +96,7 @@
       "mobile": {
         "navigationNav": {
           "title": "Ansichten Wechseln",
-          "description": "Nutze die obere Navigation, um zwischen Timeline, Hierarchisch, Anstehend und Kalender zu wechseln.",
+          "description": "Nutze die Navigationsleiste, um deine Inhalte in verschiedenen Darstellungsformen zu sehen.",
           "action": "Tippe auf eine Ansicht, um fortzufahren."
         },
         "navigationFocus": {

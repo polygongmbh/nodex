@@ -32,7 +32,7 @@
     "views": {
       "manage": "Verwalten",
       "status": "Status",
-      "tree": "Hierarchisch",
+      "tree": "Hierarchie",
       "feed": "Timeline",
       "kanban": "Kanban",
       "calendar": "Kalender",
