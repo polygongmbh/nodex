@@ -286,10 +286,6 @@ export function ListView({
     if (!state) return;
     void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status: toTaskStatusFromStateDefinition(state) });
   };
-  const dispatchToggleComplete = (taskId: string) => {
-    void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
-  };
-  const getStatusToggleHint = () => t("tasks.actions.setStatus");
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => listTasks.map(t => t.id), [listTasks]);
@@ -539,7 +535,6 @@ export function ListView({
                     isKeyboardFocused={isKeyboardFocused}
                     isInteractionBlocked={isInteractionBlocked}
                     isProject={isProject(task.id)}
-                    getStatusToggleHint={getStatusToggleHint}
                     rowClassName={LIST_SUBGRID_ROW_CLASS}
                     bodyCellClassName={LIST_BODY_CELL_CLASS}
                     contentPreview={contentPreview}

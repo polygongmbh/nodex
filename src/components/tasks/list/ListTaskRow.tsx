@@ -1,24 +1,16 @@
-import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
-import { Check } from "lucide-react";
 import type { ReactNode } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
-import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
+import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
+import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
-import { getTaskStatus, type Task } from "@/types";
+import type { Task } from "@/types";
 import { getTaskTooltipPreview } from "@/lib/task-content-preview";
 import type { Person } from "@/types/person";
 
@@ -30,7 +22,6 @@ interface ListTaskRowProps {
   isKeyboardFocused: boolean;
   isInteractionBlocked: boolean;
   isProject: boolean;
-  getStatusToggleHint: (status?: Task["status"]) => string;
   rowClassName: string;
   bodyCellClassName: string;
   contentPreview: string;
@@ -48,7 +39,6 @@ export function ListTaskRow({
   isKeyboardFocused,
   isInteractionBlocked,
   isProject,
-  getStatusToggleHint,
   rowClassName,
   bodyCellClassName,
   contentPreview,
@@ -59,25 +49,8 @@ export function ListTaskRow({
 }: ListTaskRowProps) {
   const { t } = useTranslation("tasks");
   const isLockedUntilStart = isTaskLockedUntilStart(task);
-  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
-  const {
-    canCompleteTask,
-    statusMenuOpen,
-    statusButtonTitle,
-    triggerProps,
-    handleOpenChange,
-    dispatchStatusChange,
-    currentItemRef,
-    focusTask,
-  } = useTaskStatusMenu({
-    task,
-    currentUser,
-    people,
-    isInteractionBlocked,
-    onBlockedInteractionAttempt,
-    getStatusToggleHint,
-    focusOnQuickToggle: false,
-  });
+  const { focusTask } = useTaskViewServices();
+  const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
 
   return (
     <TaskSurface
@@ -92,47 +65,13 @@ export function ListTaskRow({
       )}
     >
       <div role="cell" className="min-w-0 px-2 py-2 2xl:px-3">
-        <DropdownMenu
-          open={statusMenuOpen}
-          onOpenChange={handleOpenChange}
-        >
-          <DropdownMenuTrigger asChild>
-            <button
-              {...triggerProps}
-              disabled={!canCompleteTask}
-              aria-label={t("tasks.actions.setStatus")}
-              title={statusButtonTitle}
-              className={cn(
-                "p-0.5 rounded transition-colors touch-manipulation",
-                canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
-              )}
-            >
-              <TaskStateIcon status={getTaskStatus(task)} />
-            </button>
-          </DropdownMenuTrigger>
-          {canCompleteTask ? (
-            <DropdownMenuContent align="start">
-              {getTaskStateRegistry().map((state) => {
-                const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
-                return (
-                  <DropdownMenuItem
-                    key={state.id}
-                    ref={isCurrent ? currentItemRef : undefined}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      dispatchStatusChange(state.id);
-                    }}
-                    className={cn(isCurrent && "font-medium")}
-                  >
-                    <TaskStateDefIcon state={state} className="mr-2" />
-                    <span>{state.label}</span>
-                    {isCurrent && <Check className="ml-auto h-3.5 w-3.5 opacity-60" aria-hidden />}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          ) : null}
-        </DropdownMenu>
+        <TaskStatusToggle
+          task={task}
+          currentUser={currentUser}
+          people={people}
+          buttonClassName="p-0.5"
+          focusOnQuickToggle={false}
+        />
       </div>
       <div role="cell" className={cn(bodyCellClassName, "min-w-0")}>
         <div className="space-y-1">

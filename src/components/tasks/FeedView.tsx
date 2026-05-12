@@ -173,14 +173,6 @@ export function FeedView({
   const { peopleById } = useFeedPersonLookup();
   const nip05VerifiedPubkeys = useNip05VerifiedPubkeys(people);
   const { forceShowComposer } = useFeedViewInteractionModel();
-  const getStatusToggleHint = (status?: Task["status"]): string => {
-    const alternateKey = getAlternateModifierLabel();
-    const statusType = getTaskStatusType(status);
-    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (statusType === "done") return t("hints.statusToggle.done");
-    if (statusType === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.open", { alternateKey });
-  };
 
   const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1023px)";
   const XL_DESKTOP_QUERY = "(min-width: 1280px)";

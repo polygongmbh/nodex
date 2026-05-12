@@ -1,21 +1,11 @@
 import { memo, useMemo, type ReactNode } from "react";
-import { BadgeCheck, Check, HandHelping, MessageSquare, Package } from "lucide-react";
-import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { BadgeCheck, HandHelping, MessageSquare, Package } from "lucide-react";
+import { getTaskStateToneClass } from "@/components/tasks/task-state-ui";
+import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
 import { TaskTagChipInline, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
-import { getTaskStatusType } from "@/types";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
-import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
@@ -28,11 +18,10 @@ import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { formatAuthorMetaParts } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
-import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { useTranslation } from "react-i18next";
-import { getTaskStatus, type Nip99ListingStatus, type RawNostrEvent, type Task } from "@/types";
+import { type Nip99ListingStatus, type RawNostrEvent, type Task } from "@/types";
 import type { Person } from "@/types/person";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -89,36 +78,11 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
-  const getStatusToggleHint = (status?: Task["status"]): string => {
-    const alternateKey = getAlternateModifierLabel();
-    const statusType = getTaskStatusType(status);
-    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (statusType === "done") return t("hints.statusToggle.done");
-    if (statusType === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.open", { alternateKey });
-  };
   const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
   const formatFeedNpubLabel = (value: string, showFull: boolean): string => {
     if (showFull || value.length <= 11) return value;
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
   };
-  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
-  const {
-    canCompleteTask,
-    statusMenuOpen,
-    statusButtonTitle,
-    triggerProps,
-    handleOpenChange,
-    dispatchStatusChange,
-    currentItemRef,
-  } = useTaskStatusMenu({
-    task,
-    currentUser,
-    people,
-    isInteractionBlocked,
-    onBlockedInteractionAttempt,
-    getStatusToggleHint,
-  });
   const isComment = task.taskType === "comment";
   const isListing = Boolean(task.feedMessageType);
   const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
@@ -252,48 +216,13 @@ export const FeedTaskCard = memo(function FeedTaskCard({
         />
         <div className={cn("flex items-start gap-3", isMobile && "gap-2.5")}>
           {!isComment ? (
-            <DropdownMenu
-              open={statusMenuOpen}
-              onOpenChange={handleOpenChange}
-            >
-              <DropdownMenuTrigger asChild>
-                <button
-                  {...triggerProps}
-                  disabled={!canCompleteTask}
-                  aria-label={t("tasks.actions.setStatus")}
-                  title={statusButtonTitle}
-                  className={cn(
-                    "flex-shrink-0 mt-0.5 rounded transition-colors",
-                    isMobile ? "p-1" : "p-0.5",
-                    canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
-                  )}
-                >
-                  <TaskStateIcon
-                    status={getTaskStatus(task)}
-                    size={isMobile ? "w-5 h-5" : "w-5 h-5"}
-                  />
-                </button>
-              </DropdownMenuTrigger>
-              {canCompleteTask ? (
-                <DropdownMenuContent align="start">
-                  {getTaskStateRegistry().map((state) => {
-                    const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
-                    return (
-                      <DropdownMenuItem
-                        key={state.id}
-                        ref={isCurrent ? currentItemRef : undefined}
-                        className={cn(isCurrent && "font-medium")}
-                        onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id); }}
-                      >
-                        <TaskStateDefIcon state={state} className="mr-2" />
-                        <span>{state.label}</span>
-                        {isCurrent && <Check className="ml-auto h-3.5 w-3.5 opacity-60" aria-hidden />}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              ) : null}
-            </DropdownMenu>
+            <TaskStatusToggle
+              task={task}
+              currentUser={currentUser}
+              people={people}
+              buttonClassName={cn("flex-shrink-0 mt-0.5", isMobile ? "p-1" : "p-0.5")}
+              iconSize="w-5 h-5"
+            />
           ) : isListing ? (
             <button
               type="button"
