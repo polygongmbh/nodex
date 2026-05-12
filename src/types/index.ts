@@ -1,4 +1,5 @@
 import type { Person } from "./person";
+import type { NostrEventKind } from "@/lib/nostr/types";
 
 export interface Relay {
   id: string;
@@ -127,6 +128,7 @@ export interface ComposeRestoreRequest {
 
 export interface Task {
   id: string;
+  kind: NostrEventKind;
   author: Person;
   content: string;
   tags: string[];

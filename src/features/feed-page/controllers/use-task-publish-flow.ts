@@ -497,6 +497,7 @@ export function useTaskPublishFlow({
     };
 
     const baseTask: Omit<Task, "id"> = {
+      kind: publishKind,
       author: taskAuthor,
       content,
       tags: resolvedSubmissionTags,
@@ -773,6 +774,7 @@ export function useTaskPublishFlow({
     const dueDate = parseStoredDate(draft.dueDate);
     const restoredTask: Task = {
       id: result.eventId || Date.now().toString(),
+      kind: draft.publishKind,
       author: draft.author,
       content: draft.content,
       tags: draft.tags,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Task } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import { taskMatchesSelectedPeople } from "./person-filter";
 
@@ -19,6 +20,7 @@ const bob: Person = {
 
 const baseTask: Task = {
   id: "task-1",
+  kind: NostrEventKind.Task,
   author: bob,
   content: "hello",
   tags: ["general"],

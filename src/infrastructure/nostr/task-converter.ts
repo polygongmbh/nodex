@@ -163,6 +163,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
 
   return {
     id: event.id,
+    kind: event.kind,
     author,
     content: normalizedContent,
     tags: allTags,

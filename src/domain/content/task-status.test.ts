@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { getTaskStatus, type Task } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import { applyTaskStateUpdate } from "./task-state";
 import { makePerson } from "@/test/fixtures";
 
 const baseTask: Task = {
   id: "n1",
+  kind: NostrEventKind.Task,
   author: makePerson({ pubkey: "u1", name: "me", displayName: "Me", avatar: "" }),
   content: "Task",
   tags: ["x"],

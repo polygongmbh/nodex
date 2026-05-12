@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Task } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import {
   canPubkeyUpdateTask,
@@ -30,6 +31,7 @@ const user = makeTestPerson({
 
 const baseTask: Task = {
   id: "t1",
+  kind: NostrEventKind.Task,
   author: user,
   content: "Task",
   tags: ["x"],

@@ -6,6 +6,7 @@ import { TaskTree } from "./TaskTree";
 import { TaskViewStatusRow } from "./TaskViewStatusRow";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import type { Channel, Relay, Task } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 import { makePerson } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
@@ -26,6 +27,7 @@ const people: SelectablePerson[] = [];
 
 const rootTask: Task = {
   id: "root",
+  kind: NostrEventKind.Task,
   author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
   content: "Root task",
   tags: ["general"],

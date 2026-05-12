@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Channel, Task } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";
 
@@ -20,6 +21,7 @@ const bob: SelectablePerson = {
 function buildTask(overrides: Partial<Task> = {}): Task {
   return {
     id: "task-1",
+    kind: NostrEventKind.Task,
     author: alice,
     content: "hello #general",
     tags: ["general"],

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Relay, Task } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import {
   RELAY_SELECTION_ERROR_KEY,
   RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY,
@@ -19,6 +20,7 @@ const makeRelay = (id: string, url: string = `wss://${id}.example`): Relay => ({
 
 const makeTask = (overrides: Partial<Task> = {}): Task => ({
   id: "a".repeat(64),
+  kind: NostrEventKind.Task,
   author: makePerson({ pubkey: "b".repeat(64), name: "alice", displayName: "Alice" }),
   content: "Task",
   tags: ["backend"],

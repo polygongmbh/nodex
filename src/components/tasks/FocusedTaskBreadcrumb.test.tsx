@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import type { Task } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import { makePerson } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
@@ -17,6 +18,7 @@ vi.mock("react-router-dom", () => ({
 
 const baseTask: Task = {
   id: "root",
+  kind: NostrEventKind.Task,
   author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
   content: "Root task",
   tags: [],

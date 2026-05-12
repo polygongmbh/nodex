@@ -91,6 +91,7 @@ function createTask(
   const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 14);
   return {
     id: generateMockEventId(),
+    kind: NostrEventKind.Task,
     author,
     content,
     tags,
@@ -123,6 +124,7 @@ function createComment(
   const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7);
   return {
     id: generateMockEventId(),
+    kind: NostrEventKind.TextNote,
     author,
     content,
     tags,
