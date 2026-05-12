@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck, Check } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStatusFromStateDefinition } from "@/domain/task-states/task-state-config";
+import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
+import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
 import { cn } from "@/lib/utils";
-import { Task, TaskStatusType, Relay, getTaskStatus, getTaskStatusType } from "@/types";
+import { Task, Relay, getTaskStatus, getTaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -13,7 +14,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 
-import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
+import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { TASK_CHIP_STYLES, TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
@@ -35,15 +36,10 @@ import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/ta
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
-import {
-  handleTaskStatusToggleClick,
-  shouldOpenStatusMenuForDirectSelection,
-} from "@/lib/task-status-toggle";
 import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
-import { notifyTaskActionBlocked } from "@/lib/notifications";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
 
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
@@ -103,13 +99,6 @@ export function TreeTaskItem({
   const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const people = peopleProp ?? contextPeople;
   const authorProfiles = useTaskAuthorProfiles();
-  const surfaceStatusBlockedFeedback = () => {
-    if (isInteractionBlocked && onBlockedInteractionAttempt) {
-      onBlockedInteractionAttempt();
-      return;
-    }
-    notifyTaskActionBlocked(getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people));
-  };
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     const statusType = getTaskStatusType(status);
@@ -130,12 +119,8 @@ export function TreeTaskItem({
   const prevStatusTypeRef = useRef(getTaskStatusType(task.status));
   const cheerTimeoutRef = useRef<number | null>(null);
   const prevHasMatchingFiltersRef = useRef(hasMatchingFilters);
-  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isCheering, setIsCheering] = useState(false);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
-  const statusTriggerPointerDownRef = useRef(false);
-  const allowStatusMenuOpenRef = useRef(false);
-  const statusMenuOpenedOnPointerDownRef = useRef(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
   const isPubkey = task.author.pubkey.length === 64 && /^[a-f0-9]+$/.test(task.author.pubkey);
@@ -263,14 +248,27 @@ export function TreeTaskItem({
     handleSelect();
   };
 
-  const canCompleteTask = () => {
-    return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
-  };
-  const editableMetadata = !isComment && canCompleteTask();
+  const {
+    canCompleteTask,
+    statusMenuOpen,
+    statusButtonTitle,
+    triggerProps,
+    handleOpenChange,
+    dispatchStatusChange,
+  } = useTaskStatusMenu({
+    task,
+    currentUser,
+    people,
+    isInteractionBlocked,
+    onBlockedInteractionAttempt,
+    getStatusToggleHint,
+    focusOnQuickToggle: hasChildren,
+  });
+  const canEditTaskMetadata = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+  const editableMetadata = !isComment && canEditTaskMetadata;
   // Priority editing is disabled for terminal-state tasks (done/closed) — render a non-interactive
   // chip rather than the full select control to avoid unnecessary overhead.
   const editablePriority = editableMetadata && !isTaskTerminalStatus(task.status);
-  const statusBlockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
   const showCompactPriority = compactView && !isComment && typeof task.priority === "number";
   const showFullMetadataChips =
     !compactView &&
@@ -353,94 +351,21 @@ export function TreeTaskItem({
 
         {/* Status toggle for tasks - quick cycle stays todo -> in-progress -> done */}
         {!isComment && (
-          <DropdownMenu
-            open={statusMenuOpen}
-            onOpenChange={(open) => {
-              if (!open) {
-                setStatusMenuOpen(false);
-                allowStatusMenuOpenRef.current = false;
-                return;
-              }
-              setStatusMenuOpen(allowStatusMenuOpenRef.current);
-              allowStatusMenuOpenRef.current = false;
-            }}
-          >
+          <DropdownMenu open={statusMenuOpen} onOpenChange={handleOpenChange}>
             <DropdownMenuTrigger asChild>
               <button
-                onClick={(e) => {
-                  if (!canCompleteTask()) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    surfaceStatusBlockedFeedback();
-                    return;
-                  }
-                  if (statusMenuOpenedOnPointerDownRef.current) {
-                    statusMenuOpenedOnPointerDownRef.current = false;
-                    e.stopPropagation();
-                    return;
-                  }
-                    handleTaskStatusToggleClick(e, {
-                      status: task.status,
-                      hasStatusChangeHandler: canCompleteTask(),
-                      isMenuOpen: statusMenuOpen,
-                      openMenu: () => setStatusMenuOpen(true),
-                      closeMenu: () => setStatusMenuOpen(false),
-                      allowMenuOpen: () => {
-                        allowStatusMenuOpenRef.current = true;
-                    },
-                      clearMenuOpenIntent: () => {
-                        allowStatusMenuOpenRef.current = false;
-                      },
-                      toggleStatus: () => {
-                        void dispatchFeedInteraction({ type: "task.toggleComplete", taskId: task.id });
-                      },
-                      focusTask: () => void dispatchFeedInteraction({ type: "task.focus.change", taskId: task.id }),
-                      focusOnQuickToggle: hasChildren,
-                    });
-                  }}
-                onFocus={() => {
-                  // Tab focus must not auto-open the status menu.
-                  statusTriggerPointerDownRef.current = false;
-                }}
-                onPointerDown={() => {
-                  statusTriggerPointerDownRef.current = true;
-                  allowStatusMenuOpenRef.current = false;
-                  statusMenuOpenedOnPointerDownRef.current = false;
-                }}
-                onPointerDownCapture={(e) => {
-                  if (!canCompleteTask()) return;
-                  if (
-                    shouldOpenStatusMenuForDirectSelection({
-                      status: task.status,
-                      altKey: e.altKey,
-                      hasStatusChangeHandler: canCompleteTask(),
-                    })
-                  ) {
-                    e.preventDefault();
-                    allowStatusMenuOpenRef.current = true;
-                    statusMenuOpenedOnPointerDownRef.current = true;
-                    setStatusMenuOpen(true);
-                  }
-                }}
-                onBlur={() => {
-                  statusTriggerPointerDownRef.current = false;
-                  allowStatusMenuOpenRef.current = false;
-                  statusMenuOpenedOnPointerDownRef.current = false;
-                }}
-                aria-disabled={!canCompleteTask() || undefined}
+                {...triggerProps}
                 aria-label={t("tasks.actions.setStatus")}
-                title={canCompleteTask() ? getStatusToggleHint(task.status) : (statusBlockedReason || getStatusToggleHint(task.status))}
+                title={statusButtonTitle}
                 className={cn(
                   "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
-                  canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-60"
+                  canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-60"
                 )}
               >
-                <TaskStateIcon
-                  status={getTaskStatus(task)}
-                />
+                <TaskStateIcon status={getTaskStatus(task)} />
               </button>
             </DropdownMenuTrigger>
-            {canCompleteTask() && (
+            {canCompleteTask && (
               <DropdownMenuContent align="start">
                 {getTaskStateRegistry().map((state) => {
                   const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
@@ -453,18 +378,12 @@ export function TreeTaskItem({
                           requestAnimationFrame(() => node.focus());
                         }
                       } : undefined}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void dispatchFeedInteraction({
-                          type: "task.changeStatus",
-                          taskId: task.id,
-                          status: toTaskStatusFromStateDefinition(state),
-                        });
-                      }}
-                      className={cn(isCurrent && "bg-muted")}
+                      onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id); }}
+                      className={cn(isCurrent && "font-medium")}
                     >
                       <TaskStateDefIcon state={state} className="mr-2" />
-                      {state.label}
+                      <span>{state.label}</span>
+                      {isCurrent && <Check className="ml-auto h-3.5 w-3.5 opacity-60" aria-hidden />}
                     </DropdownMenuItem>
                   );
                 })}

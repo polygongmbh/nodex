@@ -7,6 +7,10 @@ import { makePerson, makeTask } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
 
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
+  useNDK: () => ({ user: { id: "me" } }),
+}));
+
 vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
   useNostrProfile: (): { profile: null } => ({ profile: null }),
   useNostrProfiles: (): { getProfile: () => null } => ({
@@ -118,7 +122,7 @@ describe("TreeTaskItem status actions", () => {
   it("cycles status on plain click even when status menu exists", () => {
     renderTreeTaskItem();
 
-    fireEvent.click(screen.getByLabelText("Set status"));
+    fireEvent.click(screen.getByLabelText("Set status"), { detail: 1 });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
@@ -129,7 +133,7 @@ describe("TreeTaskItem status actions", () => {
       type: "active"
     } } });
 
-    fireEvent.click(screen.getByLabelText("Set status"));
+    fireEvent.click(screen.getByLabelText("Set status"), { detail: 1 });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
@@ -259,7 +263,7 @@ describe("TreeTaskItem status actions", () => {
 
     const statusButton = screen.getByLabelText("Set status");
     expect(statusButton).not.toBeDisabled();
-    fireEvent.click(statusButton);
+    fireEvent.click(statusButton, { detail: 1 });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
   });
 

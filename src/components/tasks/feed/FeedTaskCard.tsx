@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from "react";
-import { BadgeCheck, HandHelping, MessageSquare, Package } from "lucide-react";
+import { BadgeCheck, Check, HandHelping, MessageSquare, Package } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 
@@ -285,11 +285,12 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                             requestAnimationFrame(() => node.focus());
                           }
                         } : undefined}
-                        className={cn(isCurrent && "bg-muted")}
+                        className={cn(isCurrent && "font-medium")}
                         onClick={(event) => { event.stopPropagation(); dispatchStatusChange(state.id); }}
                       >
                         <TaskStateDefIcon state={state} className="mr-2" />
-                        {state.label}
+                        <span>{state.label}</span>
+                        {isCurrent && <Check className="ml-auto h-3.5 w-3.5 opacity-60" aria-hidden />}
                       </DropdownMenuItem>
                     );
                   })}

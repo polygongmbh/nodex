@@ -1,5 +1,6 @@
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
+import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import {
   DropdownMenu,
@@ -110,19 +111,23 @@ export function ListTaskRow({
           </DropdownMenuTrigger>
           {canCompleteTask ? (
             <DropdownMenuContent align="start">
-              {getTaskStateRegistry().map((state) => (
-                <DropdownMenuItem
-                  key={state.id}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    dispatchStatusChange(state.id);
-                  }}
-                  className={cn(resolveTaskStateFromStatus(task.status).id === state.id && "bg-muted")}
-                >
-                  <TaskStateDefIcon state={state} className="mr-2" />
-                  {state.label}
-                </DropdownMenuItem>
-              ))}
+              {getTaskStateRegistry().map((state) => {
+                const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
+                return (
+                  <DropdownMenuItem
+                    key={state.id}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      dispatchStatusChange(state.id);
+                    }}
+                    className={cn(isCurrent && "font-medium")}
+                  >
+                    <TaskStateDefIcon state={state} className="mr-2" />
+                    <span>{state.label}</span>
+                    {isCurrent && <Check className="ml-auto h-3.5 w-3.5 opacity-60" aria-hidden />}
+                  </DropdownMenuItem>
+                );
+              })}
             </DropdownMenuContent>
           ) : null}
         </DropdownMenu>

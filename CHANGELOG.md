@@ -9,10 +9,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - Status view's Activity column now surfaces items that concern you (as creator or assignee) or any sidebar-selected people, in addition to the top-level posts and comments it already showed.
 - Composer no longer prefills hashtags from the focused task in feed/tree/list views. Submitting a child task without explicit tags still inherits the parent's tags at publish time, so the visible prefill was redundant.
+- Task status dropdown marks the current state with a check icon instead of a flat gray background, so the hover/focus highlight on other options is no longer washed out.
 
 ### Fixed
 - Activity column previews now clamp by visual line count rather than producing an orphan ellipsis row when content spans multiple paragraphs.
 - Profile editor's avatar upload button is now visible (and tappable) on touch devices, where the previous hover-only reveal made it unreachable.
+- Task status dropdown now opens via Space/Enter/ArrowDown from the tree view when the status icon is keyboard-focused, matching the feed/list behaviour.
 
 ## [3.0.1] - 2026-05-11
 Patch release for Status view active-task routing and activity refinements.
