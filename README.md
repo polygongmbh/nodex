@@ -3,7 +3,7 @@
 ## Project Overview
 Nodex is a Nostr-native task and discussion app. It combines lightweight project/task management with Nostr publishing, so items can be created locally and published to selected relays while remaining filterable by channels (hashtags), relays, and people.
 
-The UI supports multiple task views (tree/feed/calendar/table), nested subtasks, comments, channel-based filtering, and mobile-first compose/search controls.
+The UI supports multiple task views (status, tree, feed, list, kanban, and calendar), nested subtasks, comments, channel-based filtering, and mobile-first compose/search controls.
 
 ## Core Concepts
 - Tasks and comments are represented as Nostr-compatible events.

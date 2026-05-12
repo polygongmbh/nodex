@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-05-12
+Minor release for Status view rollups, composer guidance, mobile scheduling, and release verification.
+
 ### Added
 - Marking a subtask as active now also promotes its open-typed ancestor tasks to the same active state, so parent projects reflect that work has started.
 
