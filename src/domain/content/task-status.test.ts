@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getTaskStatusType, type Task } from "@/types";
-import { applyTaskStatusUpdate } from "./task-status";
+import { applyTaskStateUpdate } from "./task-state";
 import { makePerson } from "@/test/fixtures";
 
 const baseTask: Task = {
@@ -14,18 +14,18 @@ const baseTask: Task = {
   likes: 0,
   replies: 0,
   reposts: 0,
-  status: { type: "open" },
+  state: { type: "open" },
 };
 
-describe("applyTaskStatusUpdate", () => {
+describe("applyTaskStateUpdate", () => {
   it("creates a local override for non-local tasks so status does not revert", () => {
     const localTasks: Task[] = [];
     const allTasks: Task[] = [baseTask];
 
-    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "done", "me");
+    const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "done", "me");
 
     const task = updated.find((t) => t.id === "n1");
-    expect(getTaskStatusType(task?.status)).toBe("done");
+    expect(getTaskStatusType(task?.state)).toBe("done");
     expect(task?.stateUpdates).toBeUndefined();
   });
 
@@ -34,7 +34,7 @@ describe("applyTaskStatusUpdate", () => {
     const allTasks: Task[] = [baseTask];
 
     const before = Date.now();
-    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "active", "me");
+    const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "active", "me");
     const editedAt = updated.find((t) => t.id === "n1")?.lastEditedAt;
 
     expect(editedAt).toBeDefined();
@@ -42,12 +42,12 @@ describe("applyTaskStatusUpdate", () => {
   });
 
   it("updates done tasks to closed without storing completion attribution", () => {
-    const localTasks: Task[] = [{ ...baseTask, status: { type: "done" } }];
+    const localTasks: Task[] = [{ ...baseTask, state: { type: "done" } }];
     const allTasks: Task[] = localTasks;
 
-    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "closed");
+    const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "closed");
 
-    expect(getTaskStatusType(updated.find((t) => t.id === "n1")?.status)).toBe("closed");
+    expect(getTaskStatusType(updated.find((t) => t.id === "n1")?.state)).toBe("closed");
   });
 
   it("does not synthesize a local state update when updating an existing local task", () => {
@@ -56,7 +56,7 @@ describe("applyTaskStatusUpdate", () => {
       stateUpdates: [
         {
           id: "relay-state-1",
-          status: { type: "open" },
+          state: { type: "open" },
           timestamp: new Date("2026-01-01T00:00:00.000Z"),
           authorPubkey: "relay-author",
         },
@@ -65,7 +65,7 @@ describe("applyTaskStatusUpdate", () => {
     const localTasks: Task[] = [existingLocal];
     const allTasks: Task[] = [existingLocal];
 
-    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "active", "me");
+    const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "active", "me");
     const task = updated.find((t) => t.id === "n1");
 
     expect(task?.stateUpdates?.map((update) => update.id)).toEqual(["relay-state-1"]);

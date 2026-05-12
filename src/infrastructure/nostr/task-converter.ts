@@ -1,4 +1,4 @@
-import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, type TaskStatusType, Task, getLastEditedAt } from "@/types";
+import { type FeedMessageType, type TaskStateUpdate, type TaskState, type TaskStatusType, Task, getLastEditedAt } from "@/types";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
@@ -103,16 +103,16 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const nip99 = feedMessageType ? parseNip99MetadataFromTags(event.tags) : undefined;
   const locationGeohash = parseFirstGeohashTag(event.tags);
 
-  let status: TaskStatus = { type: "open" };
+  let state: TaskState = { type: "open" };
   const statusTag = event.tags.find((tag) => tag[0] === "status");
   if (statusTag) {
     const statusValue = statusTag[1].toLowerCase();
     if (statusValue === "done" || statusValue === "completed") {
-      status = { type: "done" };
+      state = { type: "done" };
     } else if (statusValue === "closed") {
-      status = { type: "closed" };
+      state = { type: "closed" };
     } else if (statusValue === "in-progress" || statusValue === "active") {
-      status = { type: "active" };
+      state = { type: "active" };
     }
   }
 
@@ -172,7 +172,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     nip99,
     locationGeohash,
     timestamp: new Date(event.created_at * 1000),
-    status,
+    state,
     parentId,
     mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles, ...referencedProfilePubkeys])),
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
@@ -262,7 +262,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   const latestStateByTaskId = new Map<
     string,
-    { createdAt: number; status: TaskStatus }
+    { createdAt: number; status: TaskState }
   >();
   const stateUpdatesByTaskId = new Map<string, TaskStateUpdate[]>();
 
@@ -285,7 +285,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     const existingUpdates = stateUpdatesByTaskId.get(targetTaskId) || [];
     existingUpdates.push({
       id: stateEvent.id,
-      status: mapped,
+      state: mapped,
       timestamp: new Date(stateEvent.created_at * 1000),
       authorPubkey: stateEvent.pubkey,
     });
@@ -300,7 +300,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     );
     taskMap.set(taskId, {
       ...task,
-      status: state.status,
+      state: state.status,
       stateUpdates,
       lastEditedAt: new Date(state.createdAt * 1000),
     });

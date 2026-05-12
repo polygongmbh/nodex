@@ -3,7 +3,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStatusFromStateDefinition } from "@/domain/task-states/task-state-config";
-import { getTaskStatus, getTaskStatusType, type Task, type ComposeRestoreRequest, type TaskStatusType } from "@/types";
+import { getTaskState, getTaskStatusType, type Task, type ComposeRestoreRequest, type TaskStatusType } from "@/types";
 import type { Person } from "@/types/person";
 import {
   format,
@@ -43,7 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-state";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
@@ -94,7 +94,7 @@ export function CalendarView({
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();
   const activeRelays = relays.filter((relay) => relay.isActive);
-  const getStatusToggleHint = (status?: Task["status"]): string => {
+  const getStatusToggleHint = (status?: Task["state"]): string => {
     const alternateKey = getAlternateModifierLabel();
     const statusType = getTaskStatusType(status);
     if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
@@ -380,14 +380,14 @@ export function CalendarView({
   const dispatchStatusChange = (taskId: string, stateId: string) => {
     const state = getTaskStateRegistry().find((entry) => entry.id === stateId);
     if (!state) return;
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status: toTaskStatusFromStateDefinition(state) });
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state: toTaskStatusFromStateDefinition(state) });
   };
   const dispatchToggleComplete = (taskId: string) => {
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
   };
   const getStatusButtonTitle = (task: Task) => {
-    if (canCompleteTask(task)) return getStatusToggleHint(task.status);
-    return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(task.status);
+    if (canCompleteTask(task)) return getStatusToggleHint(task.state);
+    return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(task.state);
   };
 
   const openStatusMenu = (taskId: string) => {
@@ -491,7 +491,7 @@ export function CalendarView({
                        {group.tasks.map((task) => {
                          const authorColor = getAuthorColor(task.author);
                          const canChangeStatus = canCompleteTask(task);
-                         const canEditPriority = canChangeStatus && !isTaskTerminalStatus(task.status);
+                         const canEditPriority = canChangeStatus && !isTaskTerminalStatus(task.state);
                          return (
                            <div
                              key={task.id}
@@ -547,7 +547,7 @@ export function CalendarView({
                                         return;
                                       }
                                      handleTaskStatusToggleClick(e, {
-                                       status: task.status,
+                                       status: task.state,
                                        hasStatusChangeHandler: canCompleteTask(task),
                                        isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
                                        openMenu: () => openStatusMenu(task.id),
@@ -572,7 +572,7 @@ export function CalendarView({
                                      if (!canCompleteTask(task)) return;
                                      if (
                                        shouldOpenStatusMenuForDirectSelection({
-                                         status: task.status,
+                                         status: task.state,
                                          altKey: e.altKey,
                                          hasStatusChangeHandler: canCompleteTask(task),
                                        })
@@ -597,13 +597,13 @@ export function CalendarView({
                                      canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
                                    )}
                                  >
-                                   <TaskStateIcon status={getTaskStatus(task)} />
+                                   <TaskStateIcon status={getTaskState(task)} />
                                  </button>
                                </DropdownMenuTrigger>
                                {canCompleteTask(task) && (
                                   <DropdownMenuContent align="start">
                                     {getTaskStateRegistry().map((state) => {
-                                      const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
+                                      const isCurrent = resolveTaskStateFromStatus(task.state).id === state.id;
                                       return (
                                         <DropdownMenuItem
                                           key={state.id}
@@ -648,7 +648,7 @@ export function CalendarView({
                                  {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
                                    void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                                  }, {
-                                   plainHashtags: isTaskTerminalStatus(task.status),
+                                   plainHashtags: isTaskTerminalStatus(task.state),
                                    people,
                                    disableStandaloneEmbeds: true,
                                  })}
@@ -810,9 +810,9 @@ export function CalendarView({
                                         key={task.id}
                                         className={cn(
                                           "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
-                                          isTaskTerminalStatus(task.status)
+                                          isTaskTerminalStatus(task.state)
                                             ? "bg-muted text-muted-foreground line-through"
-                                            : getTaskStatusType(task.status) === "active"
+                                            : getTaskStatusType(task.state) === "active"
                                               ? "bg-warning/15 text-warning"
                                               : "bg-primary/10"
                                         )}
@@ -964,7 +964,7 @@ export function CalendarView({
                         })()}
                         className={cn(
                           `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-                          isTaskTerminalStatus(task.status) && "opacity-60",
+                          isTaskTerminalStatus(task.state) && "opacity-60",
                           isLockedUntilStart && "opacity-50 grayscale"
                         )}
                         style={{ borderLeftColor: authorColor.accent }}
@@ -1025,7 +1025,7 @@ export function CalendarView({
                                         return;
                                       }
                                   handleTaskStatusToggleClick(e, {
-                                    status: task.status,
+                                    status: task.state,
                                     hasStatusChangeHandler: canCompleteTask(task),
                                     isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
                                     openMenu: () => openStatusMenu(task.id),
@@ -1050,7 +1050,7 @@ export function CalendarView({
                                   if (!canCompleteTask(task)) return;
                                   if (
                                     shouldOpenStatusMenuForDirectSelection({
-                                      status: task.status,
+                                      status: task.state,
                                       altKey: e.altKey,
                                       hasStatusChangeHandler: canCompleteTask(task),
                                     })
@@ -1075,13 +1075,13 @@ export function CalendarView({
                                   canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                                 )}
                               >
-                                <TaskStateIcon status={getTaskStatus(task)} />
+                                <TaskStateIcon status={getTaskState(task)} />
                               </button>
                             </DropdownMenuTrigger>
                             {canCompleteTask(task) && (
                               <DropdownMenuContent align="start">
                                 {getTaskStateRegistry().map((state) => {
-                                  const isCurrent = resolveTaskStateFromStatus(task.status).id === state.id;
+                                  const isCurrent = resolveTaskStateFromStatus(task.state).id === state.id;
                                   return (
                                     <DropdownMenuItem
                                       key={state.id}
@@ -1111,13 +1111,13 @@ export function CalendarView({
                                 hasCollapsibleContent && !isContentExpanded
                                   ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                                   : "whitespace-pre-wrap",
-                                isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
+                                isTaskTerminalStatus(task.state) && "line-through text-muted-foreground"
                               )}
                             >
                               {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
                                 void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                               }, {
-                                plainHashtags: isTaskTerminalStatus(task.status),
+                                plainHashtags: isTaskTerminalStatus(task.state),
                                 people,
                                 disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),

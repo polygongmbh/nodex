@@ -4,7 +4,7 @@ import type {
   PublishedAttachment,
   Nip99Metadata,
   PostType,
-  TaskStatus,
+  TaskState,
   TaskDateType,
 } from "@/types";
 import type { Person } from "@/types/person";
@@ -70,7 +70,7 @@ export type FeedInteractionIntent =
       dueTime?: string;
       dateType?: TaskDateType;
       focusedTaskId: string | null;
-      initialStatus?: TaskStatus;
+      initialState?: TaskState;
       explicitMentionPubkeys?: string[];
       mentionIdentifiers?: string[];
       priority?: number;
@@ -79,7 +79,7 @@ export type FeedInteractionIntent =
       locationGeohash?: string;
     }
   | { type: "task.toggleComplete"; taskId: string }
-  | { type: "task.changeStatus"; taskId: string; status: TaskStatus }
+  | { type: "task.changeStatus"; taskId: string; state: TaskState }
   | { type: "task.updateDueDate"; taskId: string; dueDate?: Date; dueTime?: string; dateType?: TaskDateType }
   | { type: "task.updatePriority"; taskId: string; priority: number }
   | { type: "task.listingStatus.change"; taskId: string; status: Nip99ListingStatus }

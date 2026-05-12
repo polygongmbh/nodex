@@ -49,7 +49,7 @@ describe("mergeTasks", () => {
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-a"],
-      status: { type: "open" },
+      state: { type: "open" },
     } as unknown as Task;
     const incoming = {
       id: "task-1",
@@ -59,7 +59,7 @@ describe("mergeTasks", () => {
       taskType: "task",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-a"],
-      status: { type: "open" },
+      state: { type: "open" },
     } as unknown as Task;
 
     const merged = mergeTasks([existing], [incoming]);
@@ -74,11 +74,11 @@ describe("mergeTasks", () => {
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:01:00.000Z"),
       relays: ["relay-a"],
-      status: { type: "open" },
+      state: { type: "open" },
       stateUpdates: [
         {
           id: "local-state-1",
-          status: { type: "active" },
+          state: { type: "active" },
           timestamp: new Date("2026-02-17T10:01:00.000Z"),
           authorPubkey: "local-author",
         },
@@ -88,11 +88,11 @@ describe("mergeTasks", () => {
       id: "task-1",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-b"],
-      status: { type: "done" },
+      state: { type: "done" },
       stateUpdates: [
         {
           id: "relay-state-1",
-          status: { type: "done" },
+          state: { type: "done" },
           timestamp: new Date("2026-02-17T10:02:00.000Z"),
           authorPubkey: "relay-author",
         },
@@ -103,7 +103,7 @@ describe("mergeTasks", () => {
     const merged = mergeTasks([existing], [incoming]);
 
     expect(merged).toHaveLength(1);
-    expect(getTaskStatusType(merged[0]?.status)).toBe("done");
+    expect(getTaskStatusType(merged[0]?.state)).toBe("done");
     expect(merged[0]?.stateUpdates?.map((update) => update.id)).toEqual([
       "relay-state-1",
       "local-state-1",

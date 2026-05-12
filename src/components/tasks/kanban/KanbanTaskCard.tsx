@@ -10,7 +10,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-state";
 import { cn } from "@/lib/utils";
 import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
@@ -21,14 +21,14 @@ import { useTranslation } from "react-i18next";
 import { getTaskTooltipPreview } from "@/lib/task-content-preview";
 import { format } from "date-fns";
 import { notifyTaskActionBlocked } from "@/lib/notifications";
-import type { Task, TaskStatus } from "@/types";
+import type { Task, TaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface KanbanTaskCardProps {
   task: Task;
   currentUser?: Person;
   people: Person[];
-  displayStatus: TaskStatus;
+  displayStatus: TaskState;
   ancestorChain: { id: string; text: string }[];
   showContext: boolean;
   compactTaskCardsEnabled: boolean;

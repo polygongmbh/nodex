@@ -10,13 +10,13 @@ const author = makePerson({ pubkey: "author-pubkey", name: "author", displayName
 const initialTask = makeTask({
   id: "task-1",
   author,
-  status: {
+  state: {
     type: "open"
   },
   stateUpdates: [
     {
       id: "relay-state-1",
-      status: { type: "open" },
+      state: { type: "open" },
       timestamp: new Date("2026-01-01T00:00:00.000Z"),
       authorPubkey: author.pubkey,
     },
@@ -54,7 +54,7 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
       <button type="button" onClick={() => controller.handleToggleComplete("task-1")}>
         ToggleComplete
       </button>
-      <output data-testid="status">{getTaskStatusType(allTasks[0]?.status) || ""}</output>
+      <output data-testid="status">{getTaskStatusType(allTasks[0]?.state) || ""}</output>
       <output data-testid="state-update-count">{String(allTasks[0]?.stateUpdates?.length ?? 0)}</output>
       <output data-testid="sort-hold">{controller.sortStatusHoldByTaskId["task-1"] || ""}</output>
     </>
@@ -121,7 +121,7 @@ describe("useTaskStatusController", () => {
   it("does not cycle terminal tasks through quick toggle", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
     useTaskMutationStore.setState({
-      localTasks: [makeTask({ ...initialTask, status: {
+      localTasks: [makeTask({ ...initialTask, state: {
         type: "done"
       } })],
       postedTags: [],
@@ -150,7 +150,7 @@ describe("useTaskStatusController", () => {
   it("publishes when the description differs even if the type is the same", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
     useTaskMutationStore.setState({
-      localTasks: [makeTask({ ...initialTask, status: { type: "active", description: "In Progress" } })],
+      localTasks: [makeTask({ ...initialTask, state: { type: "active", description: "In Progress" } })],
       postedTags: [],
       suppressedNostrEventIds: new Set(),
     });
@@ -167,8 +167,8 @@ describe("useTaskStatusController", () => {
 
   it("cascades active status up to open-typed ancestors", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
-    const parent = makeTask({ id: "parent", author, status: { type: "open" } });
-    const grandparent = makeTask({ id: "grandparent", author, status: { type: "open" } });
+    const parent = makeTask({ id: "parent", author, state: { type: "open" } });
+    const grandparent = makeTask({ id: "grandparent", author, state: { type: "open" } });
     const child = makeTask({
       ...initialTask,
       parentId: "parent",
@@ -191,11 +191,11 @@ describe("useTaskStatusController", () => {
 
   it("does not cascade past ancestors that are not in an open state", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
-    const grandparent = makeTask({ id: "grandparent", author, status: { type: "open" } });
+    const grandparent = makeTask({ id: "grandparent", author, state: { type: "open" } });
     const parent = makeTask({
       id: "parent",
       author,
-      status: { type: "done" },
+      state: { type: "done" },
       parentId: "grandparent",
     });
     const child = makeTask({ ...initialTask, parentId: "parent" });
@@ -218,7 +218,7 @@ describe("useTaskStatusController", () => {
 
   it("does not cascade when the chosen status is not active", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
-    const parent = makeTask({ id: "parent", author, status: { type: "open" } });
+    const parent = makeTask({ id: "parent", author, state: { type: "open" } });
     const child = makeTask({ ...initialTask, parentId: "parent" });
     useTaskMutationStore.setState({
       localTasks: [child, parent],
@@ -249,7 +249,7 @@ describe("useTaskStatusController", () => {
 
     const publishTaskStateUpdate = vi.fn(async () => undefined);
     useTaskMutationStore.setState({
-      localTasks: [makeTask({ ...initialTask, status: {
+      localTasks: [makeTask({ ...initialTask, state: {
         type: "active"
       } })],
       postedTags: [],

@@ -173,7 +173,7 @@ export function getDirectMatchTaskIdsForView({
 
     if (taskPredicate && !taskPredicate(task)) continue;
     if (!prefilteredTaskIds.has(task.id)) continue;
-    if (hideClosedTasks && getTaskStatusType(task.status) === "closed" && !isExplicitlyFocusedTask) continue;
+    if (hideClosedTasks && getTaskStatusType(task.state) === "closed" && !isExplicitlyFocusedTask) continue;
     if (!taskMatchesSelectedPeople(task, selectedPeople)) continue;
     if (!taskMatchesQuickFilters(task, quickFilters)) continue;
 

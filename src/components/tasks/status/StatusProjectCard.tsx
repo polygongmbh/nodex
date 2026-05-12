@@ -34,7 +34,7 @@ export function StatusProjectCard({ task, people, isProject, subtaskCount }: Sta
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
-  const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+  const dueDateColor = getDueDateColorClass(task.dueDate, task.state);
   const showChipRow = hasTaskMetadataChips(task, activeRelayCount);
 
   return (

@@ -9,10 +9,10 @@ import { makeTask } from "@/test/fixtures";
 describe("deriveTreeTaskItemChildren", () => {
   it("separates task children from comment children and counts completed subtasks", () => {
     const parent = makeTask({ id: "parent" });
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: {
+    const openChild = makeTask({ id: "open-child", parentId: "parent", state: {
       type: "open"
     } });
-    const doneChild = makeTask({ id: "done-child", parentId: "parent", status: {
+    const doneChild = makeTask({ id: "done-child", parentId: "parent", state: {
       type: "done"
     } });
     const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
@@ -31,10 +31,10 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("uses non-terminal task children as the default matching set when filters are inactive", () => {
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: {
+    const openChild = makeTask({ id: "open-child", parentId: "parent", state: {
       type: "open"
     } });
-    const closedChild = makeTask({ id: "closed-child", parentId: "parent", status: {
+    const closedChild = makeTask({ id: "closed-child", parentId: "parent", state: {
       type: "closed"
     } });
     const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
@@ -52,10 +52,10 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("uses filtered children as the matching set when filters are active", () => {
-    const visibleTask = makeTask({ id: "visible-task", parentId: "parent", status: {
+    const visibleTask = makeTask({ id: "visible-task", parentId: "parent", state: {
       type: "open"
     } });
-    const hiddenTask = makeTask({ id: "hidden-task", parentId: "parent", status: {
+    const hiddenTask = makeTask({ id: "hidden-task", parentId: "parent", state: {
       type: "open"
     } });
     const visibleComment = makeTask({ id: "visible-comment", parentId: "parent", taskType: "comment" });
@@ -73,10 +73,10 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("falls back to open children for matching-only when tree matching filters are inactive", () => {
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: {
+    const openChild = makeTask({ id: "open-child", parentId: "parent", state: {
       type: "open"
     } });
-    const doneChild = makeTask({ id: "done-child", parentId: "parent", status: {
+    const doneChild = makeTask({ id: "done-child", parentId: "parent", state: {
       type: "done"
     } });
 
@@ -92,13 +92,13 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("hides directly-matching done child tasks under a non-terminal parent (revealed only via 'show all')", () => {
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: {
+    const openChild = makeTask({ id: "open-child", parentId: "parent", state: {
       type: "open"
     } });
-    const doneChild = makeTask({ id: "done-child", parentId: "parent", status: {
+    const doneChild = makeTask({ id: "done-child", parentId: "parent", state: {
       type: "done"
     } });
-    const matchingDoneChild = makeTask({ id: "matching-done-child", parentId: "parent", status: {
+    const matchingDoneChild = makeTask({ id: "matching-done-child", parentId: "parent", state: {
       type: "done"
     } });
 
@@ -116,10 +116,10 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("keeps done child tasks visible when the parent itself is terminal", () => {
-    const openChild = makeTask({ id: "open-child", parentId: "parent", status: {
+    const openChild = makeTask({ id: "open-child", parentId: "parent", state: {
       type: "open"
     } });
-    const doneChild = makeTask({ id: "done-child", parentId: "parent", status: {
+    const doneChild = makeTask({ id: "done-child", parentId: "parent", state: {
       type: "done"
     } });
 

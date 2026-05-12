@@ -1,9 +1,9 @@
 import type { MouseEvent } from "react";
-import type { TaskStatus } from "@/types";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import type { TaskState } from "@/types";
+import { isTaskTerminalStatus } from "@/domain/content/task-state";
 
 interface HandleTaskStatusToggleClickOptions {
-  status?: TaskStatus;
+  status?: TaskState;
   hasStatusChangeHandler: boolean;
   isMenuOpen: boolean;
   openMenu: () => void;
@@ -16,7 +16,7 @@ interface HandleTaskStatusToggleClickOptions {
 }
 
 interface StatusMenuIntentOptions {
-  status?: TaskStatus;
+  status?: TaskState;
   altKey: boolean;
   hasStatusChangeHandler: boolean;
 }

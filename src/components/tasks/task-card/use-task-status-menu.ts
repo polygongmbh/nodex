@@ -20,7 +20,7 @@ interface UseTaskStatusMenuOptions {
    * permission reason via a toast.
    */
   onBlockedInteractionAttempt?: () => void;
-  getStatusToggleHint: (status?: Task["status"]) => string;
+  getStatusToggleHint: (status?: Task["state"]) => string;
   focusOnQuickToggle?: boolean;
 }
 
@@ -56,8 +56,8 @@ export function useTaskStatusMenu({
   const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   const blockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
   const statusButtonTitle = canCompleteTask
-    ? getStatusToggleHint(task.status)
-    : blockedReason || getStatusToggleHint(task.status);
+    ? getStatusToggleHint(task.state)
+    : blockedReason || getStatusToggleHint(task.state);
 
   const surfaceBlockedFeedback = useCallback(() => {
     if (isInteractionBlocked && onBlockedInteractionAttempt) {
@@ -93,7 +93,7 @@ export function useTaskStatusMenu({
       void dispatchFeedInteraction({
         type: "task.changeStatus",
         taskId: task.id,
-        status: state.id === state.type ? { type: state.type } : { type: state.type, description: state.label },
+        state: state.id === state.type ? { type: state.type } : { type: state.type, description: state.label },
       });
     },
     [dispatchFeedInteraction, task.id]
@@ -149,7 +149,7 @@ export function useTaskStatusMenu({
         return;
       }
       handleTaskStatusToggleClick(event, {
-        status: task.status,
+        status: task.state,
         hasStatusChangeHandler: canCompleteTask,
         isMenuOpen: statusMenuOpen,
         openMenu: () => {
@@ -213,7 +213,7 @@ export function useTaskStatusMenu({
       if (!canCompleteTask) return;
       if (
         shouldOpenStatusMenuForDirectSelection({
-          status: task.status,
+          status: task.state,
           altKey: event.altKey,
           hasStatusChangeHandler: canCompleteTask,
         })

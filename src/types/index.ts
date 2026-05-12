@@ -54,13 +54,13 @@ export type TaskCreateResult =
   | { ok: true; mode: "published" | "local" | "queued" }
   | { ok: false; reason: TaskCreateFailureReason };
 export type TaskStatusType = "open" | "active" | "done" | "closed";
-export interface TaskStatus {
+export interface TaskState {
   type: TaskStatusType;
   description?: string;
 }
 export interface TaskStateUpdate {
   id: string;
-  status: TaskStatus;
+  state: TaskState;
   timestamp: Date;
   authorPubkey: string;
 }
@@ -140,7 +140,7 @@ export interface Task {
   locationGeohash?: string;
   timestamp: Date;
   lastEditedAt?: Date;
-  status?: TaskStatus;
+  state?: TaskState;
   stateUpdates?: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;
@@ -156,24 +156,24 @@ export interface Task {
 /**
  * Boundary normalizer: accepts either the canonical object form or a bare
  * status-type string (event-converter inputs, test shorthands) and returns the
- * canonical object form. Internal callers reading `Task.status` directly can
- * skip this — the field is always a `TaskStatus` once stored.
+ * canonical object form. Internal callers reading `Task.state` directly can
+ * skip this — the field is always a `TaskState` once stored.
  */
-export function normalizeTaskStatus(status: TaskStatus | TaskStatusType | undefined): TaskStatus {
-  if (!status) return { type: "open" };
-  if (typeof status === "string") return { type: status };
+export function normalizeTaskState(state: TaskState | TaskStatusType | undefined): TaskState {
+  if (!state) return { type: "open" };
+  if (typeof state === "string") return { type: state };
   return {
-    type: status.type,
-    ...(status.description ? { description: status.description } : {}),
+    type: state.type,
+    ...(state.description ? { description: state.description } : {}),
   };
 }
 
-export function getTaskStatusType(status: TaskStatus | TaskStatusType | undefined): TaskStatusType {
-  return normalizeTaskStatus(status).type;
+export function getTaskStatusType(state: TaskState | TaskStatusType | undefined): TaskStatusType {
+  return normalizeTaskState(state).type;
 }
 
-export function getTaskStatus(task: Pick<Task, "status">): TaskStatus {
-  return task.status ?? { type: "open" };
+export function getTaskState(task: Pick<Task, "state">): TaskState {
+  return task.state ?? { type: "open" };
 }
 
 export function getLastEditedAt(task: Task): Date {

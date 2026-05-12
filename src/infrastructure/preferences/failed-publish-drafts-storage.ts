@@ -1,5 +1,5 @@
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { PublishedAttachment, TaskDateType, TaskStatus, TaskType } from "@/types";
+import type { PublishedAttachment, TaskDateType, TaskState, TaskType } from "@/types";
 import type { Person } from "@/types/person";
 import { z } from "zod";
 
@@ -19,7 +19,7 @@ export interface FailedPublishDraft {
   dueDate?: string;
   dueTime?: string;
   parentId?: string;
-  initialStatus?: TaskStatus;
+  initialState?: TaskState;
   mentionPubkeys: string[];
   assigneePubkeys?: string[];
   priority?: number;
@@ -57,7 +57,7 @@ const failedPublishDraftSchema = z.object({
   dueDate: z.string().optional(),
   dueTime: z.string().optional(),
   parentId: z.string().optional(),
-  initialStatus: taskStatusSchema.optional(),
+  initialState: taskStatusSchema.optional(),
   mentionPubkeys: z.array(z.string()),
   assigneePubkeys: z.array(z.string()).optional(),
   priority: z.number().finite().optional(),

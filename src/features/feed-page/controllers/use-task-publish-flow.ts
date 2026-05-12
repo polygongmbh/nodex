@@ -53,7 +53,7 @@ import type {
   Task,
   TaskCreateResult,
   TaskDateType,
-  TaskStatus,
+  TaskState,
 } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -121,7 +121,7 @@ interface UseTaskPublishFlowOptions {
   publishTaskCreateFollowUps: (params: {
     publishedEventId?: string;
     taskType: Task["taskType"];
-    initialStatus?: TaskStatus;
+    initialState?: TaskState;
     dueDate?: Date;
     content: string;
     dueTime?: string;
@@ -269,7 +269,7 @@ export function useTaskPublishFlow({
     dueTime?: string,
     dateType: TaskDateType = "due",
     focusedTaskId: string | null = null,
-    initialStatus?: TaskStatus,
+    initialState?: TaskState,
     explicitMentionPubkeys: string[] = [],
     mentionIdentifiers?: string[],
     priority?: number,
@@ -469,7 +469,7 @@ export function useTaskPublishFlow({
       dueTime: submissionDueTime,
       dateType: submissionDateType,
       parentId: submissionParentId ?? undefined,
-      initialStatus,
+      initialState,
       mentionPubkeys,
       assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
@@ -505,7 +505,7 @@ export function useTaskPublishFlow({
         : (demoFeedActive ? [demoRelayId] : []),
       taskType: normalizedTaskType,
       timestamp: createdAt,
-      status: (normalizedTaskType === "task" ? (initialStatus ?? { type: "open" }) : undefined) as TaskStatus,
+      state: (normalizedTaskType === "task" ? (initialState ?? { type: "open" }) : undefined) as TaskState,
       dueDate: submissionDueDate,
       dueTime: submissionDueTime,
       dateType: submissionDateType,
@@ -635,7 +635,7 @@ export function useTaskPublishFlow({
         await publishTaskCreateFollowUps({
           publishedEventId: publishResult.eventId,
           taskType: normalizedTaskType,
-          initialStatus,
+          initialState,
           dueDate: submissionDueDate,
           content,
           dueTime: submissionDueTime,
@@ -683,7 +683,7 @@ export function useTaskPublishFlow({
     await publishTaskCreateFollowUps({
       publishedEventId: publishResult.eventId,
       taskType: normalizedTaskType,
-      initialStatus,
+      initialState,
       dueDate: submissionDueDate,
       content,
       dueTime: submissionDueTime,
@@ -781,7 +781,7 @@ export function useTaskPublishFlow({
         : (demoFeedActive ? [demoRelayId] : []),
       taskType: draft.taskType,
       timestamp: parseStoredDate(draft.createdAt) || new Date(),
-      status: (draft.taskType === "task" ? (draft.initialStatus ?? { type: "open" }) : undefined) as TaskStatus,
+      state: (draft.taskType === "task" ? (draft.initialState ?? { type: "open" }) : undefined) as TaskState,
       dueDate,
       dueTime: draft.dueTime,
       dateType: draft.dateType,
@@ -798,7 +798,7 @@ export function useTaskPublishFlow({
     await publishTaskCreateFollowUps({
       publishedEventId: result.eventId,
       taskType: draft.taskType,
-      initialStatus: draft.initialStatus,
+      initialState: draft.initialState,
       dueDate,
       content: draft.content,
       dueTime: draft.dueTime,

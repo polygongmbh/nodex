@@ -53,7 +53,7 @@ const baseTask: Task = makeTask({
   author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
   content: "Ship feature #frontend",
   tags: ["frontend"],
-  status: {
+  state: {
     type: "open"
   },
 });
@@ -86,10 +86,10 @@ function chooseComboboxOptionByIndex(name: string | RegExp, optionIndex: number)
 
 describe("TreeTaskItem status actions", () => {
   it("cycles between matching, collapsed, and all-visible child states", () => {
-    const doneChild = makeTask({ id: "done-child", parentId: "t1", content: "Done child", status: {
+    const doneChild = makeTask({ id: "done-child", parentId: "t1", content: "Done child", state: {
       type: "done"
     } });
-    const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", status: {
+    const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", state: {
       type: "open"
     } });
     const childrenMap = new Map<string | undefined, Task[]>([["t1", [openChild, doneChild]]]);
@@ -129,7 +129,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when toggling from in progress to done", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: {
+    renderTreeTaskItem({ task: { ...baseTask, state: {
       type: "active"
     } } });
 
@@ -175,7 +175,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when selecting a status from the dropdown", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: {
+    renderTreeTaskItem({ task: { ...baseTask, state: {
       type: "done"
     } } });
 
@@ -183,9 +183,8 @@ describe("TreeTaskItem status actions", () => {
     fireEvent.click(screen.getByText("In Progress"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "task.changeStatus",
-      taskId: "t1",
-      status: { type: "active" },
+      type: "task.changeStatus",      taskId: "t1",
+      state: { type: "active" },
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });
@@ -196,9 +195,8 @@ describe("TreeTaskItem status actions", () => {
     fireEvent.click(screen.getByText("Done"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "task.changeStatus",
-      taskId: "t1",
-      status: { type: "done" },
+      type: "task.changeStatus",      taskId: "t1",
+      state: { type: "done" },
     });
   });
 
@@ -208,14 +206,13 @@ describe("TreeTaskItem status actions", () => {
     fireEvent.click(screen.getByText("Closed"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "task.changeStatus",
-      taskId: "t1",
-      status: { type: "closed" },
+      type: "task.changeStatus",      taskId: "t1",
+      state: { type: "closed" },
     });
   });
 
   it("does not cycle done tasks on click when status menu is available", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: {
+    renderTreeTaskItem({ task: { ...baseTask, state: {
       type: "done"
     } } });
 
@@ -225,7 +222,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not cycle closed tasks on click when status menu is available", () => {
-    renderTreeTaskItem({ task: { ...baseTask, status: {
+    renderTreeTaskItem({ task: { ...baseTask, state: {
       type: "closed"
     } } });
 

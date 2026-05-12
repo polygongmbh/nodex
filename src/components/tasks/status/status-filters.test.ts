@@ -67,16 +67,16 @@ describe("isTaskOwnedByAny", () => {
 });
 
 describe("selectStatusInProgressTopLevelTasks / hasInProgressTopLevelProject", () => {
-  const openChild = makeTask({ id: "c1", parentId: "p1", status: { type: "open" } });
-  const activeRootWithOpenChild = makeTask({ id: "p1", status: { type: "active" } });
-  const activeRootNoSubtasks = makeTask({ id: "p2", status: { type: "active" } });
-  const openRootWithOpenChild = makeTask({ id: "p3", status: { type: "open" } });
-  const openChildOfP3 = makeTask({ id: "c3", parentId: "p3", status: { type: "open" } });
-  const doneRootWithOnlyDoneChildren = makeTask({ id: "p4", status: { type: "done" } });
-  const doneChildOfP4 = makeTask({ id: "c4", parentId: "p4", status: { type: "done" } });
-  const closedChildOfP4 = makeTask({ id: "c4b", parentId: "p4", status: { type: "closed" } });
-  const nested = makeTask({ id: "n1", parentId: "p1", status: { type: "active" } });
-  const nestedChild = makeTask({ id: "n2", parentId: "n1", status: { type: "open" } });
+  const openChild = makeTask({ id: "c1", parentId: "p1", state: { type: "open" } });
+  const activeRootWithOpenChild = makeTask({ id: "p1", state: { type: "active" } });
+  const activeRootNoSubtasks = makeTask({ id: "p2", state: { type: "active" } });
+  const openRootWithOpenChild = makeTask({ id: "p3", state: { type: "open" } });
+  const openChildOfP3 = makeTask({ id: "c3", parentId: "p3", state: { type: "open" } });
+  const doneRootWithOnlyDoneChildren = makeTask({ id: "p4", state: { type: "done" } });
+  const doneChildOfP4 = makeTask({ id: "c4", parentId: "p4", state: { type: "done" } });
+  const closedChildOfP4 = makeTask({ id: "c4b", parentId: "p4", state: { type: "closed" } });
+  const nested = makeTask({ id: "n1", parentId: "p1", state: { type: "active" } });
+  const nestedChild = makeTask({ id: "n2", parentId: "n1", state: { type: "open" } });
   const allTasks = [
     activeRootWithOpenChild,
     activeRootNoSubtasks,
@@ -107,7 +107,7 @@ describe("selectStatusInProgressTopLevelTasks / hasInProgressTopLevelProject", (
   });
 
   it("ignores non-task entries", () => {
-    const comment = makeTask({ id: "cm1", taskType: "comment", status: { type: "active" } });
+    const comment = makeTask({ id: "cm1", taskType: "comment", state: { type: "active" } });
     const result = selectStatusInProgressTopLevelTasks({
       contextTasks: [comment],
       focusedTaskId: null,

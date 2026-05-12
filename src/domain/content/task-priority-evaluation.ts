@@ -49,7 +49,7 @@ function isTerminal(status: TaskStatusType): boolean {
 
 function isEvaluable(task: Task): boolean {
   if (task.taskType === "comment") return false;
-  return !isTerminal(getTaskStatusType(task.status));
+  return !isTerminal(getTaskStatusType(task.state));
 }
 
 function daysUntil(target: Date, now: number): number {
@@ -96,7 +96,7 @@ export function buildChildrenMap(tasks: readonly Task[]): Map<string, Task[]> {
 
 function getSubtasks(taskId: string, childrenMap: Map<string, Task[]>): Task[] {
   const all = childrenMap.get(taskId) ?? [];
-  return all.filter((child) => child.taskType !== "comment" && getTaskStatusType(child.status) !== "closed");
+  return all.filter((child) => child.taskType !== "comment" && getTaskStatusType(child.state) !== "closed");
 }
 
 export function calculateProgress(
@@ -109,7 +109,7 @@ export function calculateProgress(
 
   const subtasks = getSubtasks(task.id, childrenMap);
   if (subtasks.length === 0) {
-    const value = isTerminal(getTaskStatusType(task.status)) ? 1 : 0;
+    const value = isTerminal(getTaskStatusType(task.state)) ? 1 : 0;
     cache.set(task.id, value);
     return value;
   }

@@ -94,7 +94,7 @@ export function selectStatusInProgressTopLevelTasks({
   const result: Task[] = [];
   for (const task of contextTasks) {
     if (task.taskType !== "task") continue;
-    if (getTaskStatusType(task.status) !== "active") continue;
+    if (getTaskStatusType(task.state) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
       : !task.parentId;
@@ -122,7 +122,7 @@ export function hasInProgressTopLevelProject({
 }: ProjectFilterOptions): boolean {
   for (const task of contextTasks) {
     if (task.taskType !== "task") continue;
-    if (getTaskStatusType(task.status) !== "active") continue;
+    if (getTaskStatusType(task.state) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
       : !task.parentId;

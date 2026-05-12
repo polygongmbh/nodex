@@ -78,7 +78,7 @@ describe("taskMatchesSelectedPeople", () => {
       stateUpdates: [
         {
           id: "update-1",
-          status: { type: "active" },
+          state: { type: "active" },
           timestamp: new Date(),
           authorPubkey: "alice-pubkey",
         },
@@ -93,7 +93,7 @@ describe("taskMatchesSelectedPeople", () => {
       stateUpdates: [
         {
           id: "update-1",
-          status: { type: "active" },
+          state: { type: "active" },
           timestamp: new Date(),
           authorPubkey: "charlie-pubkey",
         },

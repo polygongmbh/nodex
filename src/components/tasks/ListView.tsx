@@ -28,7 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-state";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
@@ -227,7 +227,7 @@ export function ListView({
             "closed": 3,
           };
           comparison =
-            (statusOrder[getTaskStatusType(a.status)] ?? 1) - (statusOrder[getTaskStatusType(b.status)] ?? 1);
+            (statusOrder[getTaskStatusType(a.state)] ?? 1) - (statusOrder[getTaskStatusType(b.state)] ?? 1);
           break;
         }
         case "dueDate":
@@ -284,7 +284,7 @@ export function ListView({
   const dispatchStatusChange = (taskId: string, stateId: string) => {
     const state = getTaskStateRegistry().find((entry) => entry.id === stateId);
     if (!state) return;
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status: toTaskStatusFromStateDefinition(state) });
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state: toTaskStatusFromStateDefinition(state) });
   };
 
   // Task IDs for keyboard navigation
@@ -327,7 +327,7 @@ export function ListView({
 
   // Editable status cell
   const StatusCell = ({ task }: { task: Task }) => {
-    const status = task.status;
+    const status = task.state;
     const editable = canCompleteTask(task);
     const statusClassName = cn(
       "text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap",
@@ -376,7 +376,7 @@ export function ListView({
   // Editable due date cell
   const DueDateCell = ({ task }: { task: Task }) => {
     const [open, setOpen] = useState(false);
-    const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+    const dueDateColor = getDueDateColorClass(task.dueDate, task.state);
     const editable = canCompleteTask(task);
     const trigger = (
       <button
@@ -547,7 +547,7 @@ export function ListView({
                         taskId={task.id}
                         taskContent={task.content}
                         priority={task.priority}
-                        editable={editable && !isTaskTerminalStatus(task.status)}
+                        editable={editable && !isTaskTerminalStatus(task.state)}
                       />
                     )}
                     renderTagsCell={(task) => <TagsCell task={task} />}

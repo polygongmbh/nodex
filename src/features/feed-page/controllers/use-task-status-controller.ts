@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { Task, TaskStatus, TaskStatusType } from "@/types";
-import { getLastEditedAt, getTaskStatusType, normalizeTaskStatus } from "@/types";
+import type { Task, TaskState, TaskStatusType } from "@/types";
+import { getLastEditedAt, getTaskStatusType, normalizeTaskState } from "@/types";
 import type { Person } from "@/types/person";
-import { applyTaskStatusUpdate, isTaskTerminalStatus } from "@/domain/content/task-status";
+import { applyTaskStateUpdate, isTaskTerminalStatus } from "@/domain/content/task-state";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import {
   getDefaultStateForType,
@@ -21,12 +21,12 @@ export interface UseTaskStatusControllerOptions {
   allTasks: Task[];
   currentUser: Person | undefined;
   guardInteraction: (mode: "post" | "modify") => boolean;
-  publishTaskStateUpdate: (taskId: string, status: TaskStatus, relayUrls?: string[]) => Promise<unknown>;
+  publishTaskStateUpdate: (taskId: string, status: TaskState, relayUrls?: string[]) => Promise<unknown>;
 }
 
 export interface UseTaskStatusControllerResult {
   handleToggleComplete: (taskId: string) => void;
-  handleStatusChange: (taskId: string, status: TaskStatus) => void;
+  handleStatusChange: (taskId: string, status: TaskState) => void;
   sortStatusHoldByTaskId: Record<string, TaskStatusType>;
   sortModifiedAtHoldByTaskId: Record<string, string>;
 }
@@ -73,11 +73,11 @@ export function useTaskStatusController({
   }, []);
 
   const scheduleTaskStatusReorderUpdate = useCallback(
-    (taskId: string, status: TaskStatus) => {
+    (taskId: string, status: TaskState) => {
       clearPendingStatusUpdate(taskId);
       const existingTask = allTasks.find((task) => task.id === taskId);
       const currentStatus =
-        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask?.status) ?? "open";
+        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask?.state) ?? "open";
       pendingTaskStatusesRef.current.set(taskId, status.type);
       setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
       if (existingTask) {
@@ -88,7 +88,7 @@ export function useTaskStatusController({
         }));
       }
 
-      setLocalTasks((previous) => applyTaskStatusUpdate(previous, allTasks, taskId, status));
+      setLocalTasks((previous) => applyTaskStateUpdate(previous, allTasks, taskId, status));
 
       const timeoutId = window.setTimeout(() => {
         pendingTaskStatusesRef.current.delete(taskId);
@@ -124,7 +124,7 @@ export function useTaskStatusController({
   );
 
   const cascadeActiveToOpenAncestors = useCallback(
-    (childTaskId: string, status: TaskStatus) => {
+    (childTaskId: string, status: TaskState) => {
       if (status.type !== "active") return;
       const visited = new Set<string>([childTaskId]);
       let cursorId: string | undefined = childTaskId;
@@ -139,7 +139,7 @@ export function useTaskStatusController({
         if (!parentTask) continue;
         const parentCurrentType =
           pendingTaskStatusesRef.current.get(parentId) ??
-          getTaskStatusType(parentTask.status) ??
+          getTaskStatusType(parentTask.state) ??
           "open";
         if (parentCurrentType !== "open") continue;
         if (!canUserChangeTaskStatus(parentTask, currentUser)) continue;
@@ -166,7 +166,7 @@ export function useTaskStatusController({
   );
 
   const commitTaskStatus = useCallback(
-    (taskId: string, status: TaskStatus) => {
+    (taskId: string, status: TaskState) => {
       scheduleTaskStatusReorderUpdate(taskId, status);
       triggerCompletionFeedback(taskId, status.type as TaskStatusType);
       void publishTaskStateUpdate(taskId, status);
@@ -185,14 +185,14 @@ export function useTaskStatusController({
       const existingTask = resolveAuthorizedTask(taskId);
       if (!existingTask) return;
       const currentType =
-        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask.status) ?? "open";
+        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatusType(existingTask.state) ?? "open";
       if (currentType === "done" || currentType === "closed") return;
       const nextType: TaskStatusType =
         currentType === "open" && !isMobile ? "active" : "done";
       // Resolve to a configured state definition so custom done states (e.g. "Review")
       // publish as { type: "done", description: "Review" } rather than a synthetic id.
       const nextStateDef = getDefaultStateForType(nextType);
-      const nextStatus: TaskStatus = nextStateDef
+      const nextStatus: TaskState = nextStateDef
         ? toTaskStatusFromStateDefinition(nextStateDef)
         : { type: nextType };
       commitTaskStatus(taskId, nextStatus);
@@ -201,12 +201,12 @@ export function useTaskStatusController({
   );
 
   const handleStatusChange = useCallback(
-    (taskId: string, status: TaskStatus) => {
+    (taskId: string, status: TaskState) => {
       const existingTask = resolveAuthorizedTask(taskId);
       if (!existingTask) return;
 
-      const normalizedStatus = normalizeTaskStatus(status);
-      const currentStatus = normalizeTaskStatus(existingTask.status);
+      const normalizedStatus = normalizeTaskState(status);
+      const currentStatus = normalizeTaskState(existingTask.state);
       if (
         normalizedStatus.type === currentStatus.type &&
         normalizedStatus.description === currentStatus.description

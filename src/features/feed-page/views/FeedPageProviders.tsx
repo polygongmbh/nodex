@@ -173,7 +173,7 @@ function FeedInteractionBusFromContexts({
           intent.dueTime,
           intent.dateType,
           intent.focusedTaskId,
-          intent.initialStatus,
+          intent.initialState,
           intent.explicitMentionPubkeys,
           intent.mentionIdentifiers,
           intent.priority,
@@ -186,7 +186,7 @@ function FeedInteractionBusFromContexts({
         taskCommands.toggleComplete(intent.taskId);
       },
       "task.changeStatus": (intent) => {
-        taskCommands.changeStatus(intent.taskId, intent.status);
+        taskCommands.changeStatus(intent.taskId, intent.state);
       },
       "task.updateDueDate": (intent) => {
         taskCommands.updateDueDate(intent.taskId, intent.dueDate, intent.dueTime, intent.dateType);

@@ -1,4 +1,4 @@
-import type { Task, TaskStateUpdate, TaskStatus } from "@/types";
+import type { Task, TaskStateUpdate, TaskState } from "@/types";
 
 /**
  * Returns `previous` when `fresh` carries the same signal-bearing values, so
@@ -33,7 +33,7 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
   if (a.dateType !== b.dateType) return false;
   if (a.feedMessageType !== b.feedMessageType) return false;
   if (a.author.pubkey !== b.author.pubkey) return false;
-  if (!areStatusEqual(a.status, b.status)) return false;
+  if (!areStatusEqual(a.state, b.state)) return false;
   if (!areStateUpdateListsEqual(a.stateUpdates, b.stateUpdates)) return false;
   if (!areStringListsEqual(a.relays, b.relays)) return false;
   if (!areStringListsEqual(a.tags, b.tags)) return false;
@@ -42,7 +42,7 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
   return true;
 }
 
-function areStatusEqual(a: TaskStatus | undefined, b: TaskStatus | undefined): boolean {
+function areStatusEqual(a: TaskState | undefined, b: TaskState | undefined): boolean {
   if (a === b) return true;
   if (a?.type !== b?.type) return false;
   return a?.description === b?.description;
@@ -63,7 +63,7 @@ function areStateUpdateListsEqual(
     if (left.id !== right.id) return false;
     if (left.timestamp.getTime() !== right.timestamp.getTime()) return false;
     if (left.authorPubkey !== right.authorPubkey) return false;
-    if (!areStatusEqual(left.status, right.status)) return false;
+    if (!areStatusEqual(left.state, right.state)) return false;
   }
   return true;
 }

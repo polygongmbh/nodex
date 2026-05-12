@@ -45,7 +45,7 @@ export function mergeTasks(existingTasks: Task[], newTasks: Task[]): Task[] {
       ...winner,
       relays: mergedRelays,
       stateUpdates: mergedStateUpdates,
-      status: latestMergedState?.status ?? winner.status,
+      state: latestMergedState?.state ?? winner.state,
     };
     mergedTask.lastEditedAt = getLatestEditedAt(mergedTask);
     // Reuse the existing reference when the merged values match — prevents

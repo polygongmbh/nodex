@@ -126,7 +126,7 @@ describe("TaskCreateComposer", () => {
     function Wrapper() {
       const submit = useComposerSubmitHandler({
         focusedTaskId: "parent-task",
-        initialStatus: { type: "active" },
+        initialState: { type: "active" },
         closeOnSuccess: true,
         onCancel,
       });
@@ -166,7 +166,7 @@ describe("TaskCreateComposer", () => {
           type: "task.create",
           content: "Ship #backend",
           focusedTaskId: "parent-task",
-          initialStatus: { type: "active" },
+          initialState: { type: "active" },
         })
       );
     });

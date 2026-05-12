@@ -1,4 +1,4 @@
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-state";
 import type { Task } from "@/types";
 
 // A task is a "project" when at least one of its task-typed subtasks is not in
@@ -15,7 +15,7 @@ export function isProjectFromChildrenMap(
 ): boolean {
   const children = childrenByParentId.get(taskId) || [];
   return children.some(
-    (child) => child.taskType === "task" && !isTaskTerminalStatus(child.status)
+    (child) => child.taskType === "task" && !isTaskTerminalStatus(child.state)
   );
 }
 
@@ -25,6 +25,6 @@ export function makeIsProject(allTasks: Task[]): (taskId: string) => boolean {
       (task) =>
         task.taskType === "task" &&
         task.parentId === taskId &&
-        !isTaskTerminalStatus(task.status)
+        !isTaskTerminalStatus(task.state)
     );
 }

@@ -37,7 +37,7 @@ describe("sortTasks", () => {
       }),
       makeTask({
         id: "active",
-        status: {
+        state: {
           type: "active"
         },
         lastEditedAt: new Date("2026-02-18T12:00:00.000Z"),
@@ -68,7 +68,7 @@ describe("sortTasks", () => {
       }),
       makeTask({
         id: "done-task",
-        status: {
+        state: {
           type: "done"
         },
         dueDate: subDays(today, 2),

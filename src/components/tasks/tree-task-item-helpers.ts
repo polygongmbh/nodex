@@ -1,5 +1,5 @@
 import type { Task } from "@/types";
-import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/task-status";
+import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/task-state";
 
 export type TreeTaskFoldState = "collapsed" | "matchingOnly" | "allVisible";
 
@@ -47,12 +47,12 @@ export function deriveTreeTaskItemChildren({
   const matchingTaskChildren = matchingChildren.filter((child) => child.taskType === "task");
   const matchingCommentChildren = matchingChildren.filter((child) => child.taskType === "comment");
   const defaultMatchingTaskChildren = allTaskChildren.filter(
-    (child) => !isTaskTerminalStatus(child.status)
+    (child) => !isTaskTerminalStatus(child.state)
   );
   const defaultMatchingCommentChildren = allCommentChildren;
   const taskChildCount = allTaskChildren.length;
   const commentChildCount = allCommentChildren.length;
-  const completedTaskChildCount = allTaskChildren.filter((child) => isTaskCompletedStatus(child.status)).length;
+  const completedTaskChildCount = allTaskChildren.filter((child) => isTaskCompletedStatus(child.state)).length;
   const shouldUseFilteredMatchingChildren = hasMatchingFilters && !currentTaskIsDirectMatch;
   const noFilterTaskBaseline = parentIsTerminal ? allTaskChildren : defaultMatchingTaskChildren;
   const noFilterCommentBaseline = defaultMatchingCommentChildren;
@@ -73,7 +73,7 @@ export function deriveTreeTaskItemChildren({
   // because the user has explicitly navigated into a done branch.
   const effectiveMatchingTaskChildren = parentIsTerminal
     ? rawEffectiveMatchingTaskChildren
-    : rawEffectiveMatchingTaskChildren.filter((child) => !isTaskTerminalStatus(child.status));
+    : rawEffectiveMatchingTaskChildren.filter((child) => !isTaskTerminalStatus(child.state));
 
   return {
     allChildren,

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-state";
 import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { formatAuthorMetaParts } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
@@ -87,7 +87,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const isListing = Boolean(task.feedMessageType);
   const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
   const isSoldListing = isListing && listingStatus === "sold";
-  const isCompletedVisual = isTaskTerminalStatus(task.status) || isSoldListing;
+  const isCompletedVisual = isTaskTerminalStatus(task.state) || isSoldListing;
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const feedMessageLabel =
     task.feedMessageType === "offer"

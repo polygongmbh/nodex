@@ -1,4 +1,4 @@
-import type { TaskStatus } from "@/types";
+import type { TaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   getTaskStateRegistry,
@@ -25,7 +25,7 @@ export function extractTaskStateTargetId(tags: string[][]): string | undefined {
 }
 
 export function mapTaskStatusToStateEvent(
-  status: TaskStatus
+  status: TaskState
 ): { kind: NostrEventKind; content: string } {
   const description = status.description?.trim();
   if (status.type === "done") {
@@ -59,7 +59,7 @@ export function mapTaskStateEventToTaskStatus(
   kind: number,
   content: string,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
-): TaskStatus {
+): TaskState {
   const description = content.trim() || undefined;
   if (kind === NostrEventKind.GitStatusApplied) {
     return { type: "done", description };

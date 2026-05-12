@@ -7,18 +7,18 @@ import { toast } from "sonner";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import type { TaskComposerFormData } from "./TaskComposer";
-import type { TaskCreateResult, TaskStatus } from "@/types";
+import type { TaskCreateResult, TaskState } from "@/types";
 
 interface UseComposerSubmitHandlerOptions {
   focusedTaskId: string | null;
-  initialStatus?: TaskStatus;
+  initialState?: TaskState;
   closeOnSuccess?: boolean;
   onCancel: () => void;
 }
 
 export function useComposerSubmitHandler({
   focusedTaskId,
-  initialStatus,
+  initialState,
   closeOnSuccess = false,
   onCancel,
 }: UseComposerSubmitHandlerOptions): (data: TaskComposerFormData) => void {
@@ -59,7 +59,7 @@ export function useComposerSubmitHandler({
             dueTime: data.dueTime,
             dateType: data.dateType,
             focusedTaskId,
-            initialStatus,
+            initialState,
             explicitMentionPubkeys: data.explicitMentionPubkeys,
             mentionIdentifiers: data.mentionIdentifiers,
             priority: data.priority,
@@ -83,6 +83,6 @@ export function useComposerSubmitHandler({
         }
       })();
     },
-    [closeOnSuccess, dispatch, focusedTaskId, initialStatus, onCancel, t]
+    [closeOnSuccess, dispatch, focusedTaskId, initialState, onCancel, t]
   );
 }

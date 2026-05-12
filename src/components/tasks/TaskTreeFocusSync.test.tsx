@@ -36,7 +36,7 @@ const rootTask: Task = {
   likes: 0,
   replies: 0,
   reposts: 0,
-  status: {
+  state: {
     type: "open"
   },
 };
@@ -53,7 +53,7 @@ const doneGrandchildTask: Task = {
   id: "done-grandchild",
   content: "Done grandchild",
   parentId: "root",
-  status: {
+  state: {
     type: "done"
   },
 };

@@ -14,7 +14,7 @@ import { mapTaskStatusToStateEvent } from "@/infrastructure/nostr/task-state-eve
 import { buildLinkedTaskCalendarEvent } from "@/infrastructure/nostr/nip52-task-calendar-events";
 import { buildTaskPriorityUpdateEvent } from "@/infrastructure/nostr/task-property-events";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { Task, TaskDateType, TaskStatus, Relay } from "@/types";
+import type { Task, TaskDateType, TaskState, Relay } from "@/types";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
 
@@ -112,7 +112,7 @@ export function useTaskPublishControls({
 
   const publishTaskStateUpdate = useCallback(async (
     taskId: string,
-    status: TaskStatus,
+    status: TaskState,
     relayUrlsOverride?: string[]
   ) => {
     if (!isNostrEventId(taskId)) {
@@ -220,7 +220,7 @@ export function useTaskPublishControls({
   const publishTaskCreateFollowUps = useCallback(async (params: {
     publishedEventId?: string;
     taskType: Task["taskType"];
-    initialStatus?: TaskStatus;
+    initialState?: TaskState;
     dueDate?: Date;
     content: string;
     dueTime?: string;
@@ -231,7 +231,7 @@ export function useTaskPublishControls({
     const {
       publishedEventId,
       taskType,
-      initialStatus,
+      initialState,
       dueDate,
       content,
       dueTime,
@@ -247,9 +247,9 @@ export function useTaskPublishControls({
         : fallbackRelayUrls
     ).slice(0, 1);
 
-    const effectiveInitialStatus: TaskStatus = initialStatus ?? { type: "open" };
-    if (effectiveInitialStatus.type !== "open" || effectiveInitialStatus.description) {
-      await publishTaskStateUpdate(publishedEventId, effectiveInitialStatus, followUpRelayUrls);
+    const effectiveInitialState: TaskState = initialState ?? { type: "open" };
+    if (effectiveInitialState.type !== "open" || effectiveInitialState.description) {
+      await publishTaskStateUpdate(publishedEventId, effectiveInitialState, followUpRelayUrls);
     }
     if (dueDate) {
       await publishTaskDueUpdate(

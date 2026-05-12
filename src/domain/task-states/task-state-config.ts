@@ -1,4 +1,4 @@
-import { normalizeTaskStatus, type TaskStatus, type TaskStatusType } from "@/types";
+import { normalizeTaskState, type TaskState, type TaskStatusType } from "@/types";
 
 /** Semantic type for grouping, sorting, and protocol mapping — identical to TaskStatusType. */
 export type TaskStateType = TaskStatusType;
@@ -120,21 +120,21 @@ export function resolveTaskState(
 }
 
 export function resolveTaskStateFromStatus(
-  status: TaskStatus | TaskStatusType | undefined,
+  status: TaskState | TaskStatusType | undefined,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
 ): TaskStateDefinition {
-  const normalizedStatus = normalizeTaskStatus(status);
+  const normalizedStatus = normalizeTaskState(status);
   return resolveTaskState(normalizedStatus.type, normalizedStatus.description, registry);
 }
 
-export function toTaskStatusFromStateDefinition(state: TaskStateDefinition): TaskStatus {
+export function toTaskStatusFromStateDefinition(state: TaskStateDefinition): TaskState {
   return state.id === state.type ? { type: state.type } : { type: state.type, description: state.label };
 }
 
 export function toTaskStatusFromStateId(
   stateId: string,
   registry: TaskStateDefinition[] = getTaskStateRegistry()
-): TaskStatus {
+): TaskState {
   return toTaskStatusFromStateDefinition(resolveTaskStateDefinition(stateId, registry));
 }
 

@@ -1,4 +1,4 @@
-import { Relay, Channel, Task, TaskStatusType, normalizeTaskStatus } from "@/types";
+import { Relay, Channel, Task, TaskStatusType, normalizeTaskState } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
 import { addDays, subDays } from "date-fns";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -100,7 +100,7 @@ function createTask(
     likes: options.likes || 0,
     replies: options.replies || 0,
     reposts: options.reposts || 0,
-    status: normalizeTaskStatus(options.status),
+    state: normalizeTaskState(options.status),
     dueDate: options.dueDate,
     dueTime: options.dueTime,
     parentId: options.parentId,

@@ -21,7 +21,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { getTaskStatusType, normalizeTaskStatus, type Task, type TaskStatus, type ComposeRestoreRequest } from "@/types";
+import { getTaskStatusType, normalizeTaskState, type Task, type TaskState, type ComposeRestoreRequest } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
@@ -75,7 +75,7 @@ function getColumns(tasks: Task[]): KanbanColumn[] {
   }
 
   for (const task of tasks) {
-    const resolvedState = resolveTaskStateFromStatus(task.status, registry);
+    const resolvedState = resolveTaskStateFromStatus(task.state, registry);
     if (seen.has(resolvedState.id)) continue;
     seen.add(resolvedState.id);
     columns.push({
@@ -153,7 +153,7 @@ export function KanbanView({
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
   const { authPolicy, guardModify, focusSidebar, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();
-  const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatus>>({});
+  const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskState>>({});
   const [composingColumnId, setComposingColumnId] = useState<string | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
@@ -179,7 +179,7 @@ export function KanbanView({
     const grouped: Record<string, Task[]> = Object.fromEntries(columns.map((column) => [column.id, []]));
 
     for (const task of kanbanTasks) {
-      const effectiveStatus = optimisticStatusByTaskId[task.id] || task.status;
+      const effectiveStatus = optimisticStatusByTaskId[task.id] || task.state;
       const columnId = resolveTaskStateFromStatus(effectiveStatus).id;
       grouped[columnId] ||= [];
       grouped[columnId].push(task);
@@ -194,14 +194,14 @@ export function KanbanView({
   const canonicalStateIdByTaskId = useMemo(() => {
     const map = new Map<string, string>();
     for (const task of kanbanTasks) {
-      map.set(task.id, resolveTaskStateFromStatus(task.status).id);
+      map.set(task.id, resolveTaskStateFromStatus(task.state).id);
     }
     return map;
   }, [kanbanTasks]);
 
   useEffect(() => {
     setOptimisticStatusByTaskId((previous) => {
-      const next: Record<string, TaskStatus> = {};
+      const next: Record<string, TaskState> = {};
       let changed = false;
       for (const [taskId, status] of Object.entries(previous)) {
         const canonicalStateId = canonicalStateIdByTaskId.get(taskId);
@@ -220,7 +220,7 @@ export function KanbanView({
     });
   }, [canonicalStateIdByTaskId]);
   const getTaskEffectiveStatus = useCallback(
-    (task: Task): TaskStatus => optimisticStatusByTaskId[task.id] || task.status,
+    (task: Task): TaskState => optimisticStatusByTaskId[task.id] || task.state,
     [optimisticStatusByTaskId]
   );
   const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
@@ -228,7 +228,7 @@ export function KanbanView({
     const map = new Map<string, { open: number; active: number; done: number }>();
     for (const task of allTasks) {
       if (task.taskType !== "task" || !task.parentId) continue;
-      const type = getTaskStatusType(task.status);
+      const type = getTaskStatusType(task.state);
       if (type !== "open" && type !== "active" && type !== "done") continue;
       const counts = map.get(task.parentId) ?? { open: 0, active: 0, done: 0 };
       counts[type] += 1;
@@ -237,8 +237,8 @@ export function KanbanView({
     return map;
   }, [allTasks]);
   const dispatchStatusChange = useCallback(
-    (taskId: string, status: TaskStatus) => {
-      void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
+    (taskId: string, state: TaskState) => {
+      void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state });
     },
     [dispatchFeedInteraction]
   );
@@ -445,7 +445,7 @@ export function KanbanView({
   const closeComposer = useCallback(() => setComposingColumnId(null), []);
   const handleComposerSubmit = useComposerSubmitHandler({
     focusedTaskId,
-    initialStatus: composingColumn
+    initialState: composingColumn
       ? toTaskStatusFromStateDefinition(composingColumn.state)
       : undefined,
     closeOnSuccess: true,

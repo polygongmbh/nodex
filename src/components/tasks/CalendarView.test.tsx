@@ -53,7 +53,7 @@ describe("CalendarView responsiveness", () => {
       likes: 0,
       replies: 0,
       reposts: 0,
-      status: {
+      state: {
         type: "open"
       },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
@@ -140,7 +140,7 @@ describe("CalendarView responsiveness", () => {
       id: "open-calendar-task",
       author: people[0],
       content: "Open calendar task #general",
-      status: {
+      state: {
         type: "open"
       },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
@@ -149,7 +149,7 @@ describe("CalendarView responsiveness", () => {
       id: "done-calendar-task",
       author: people[0],
       content: "Done calendar task #general",
-      status: {
+      state: {
         type: "done"
       },
       dueDate: new Date("2026-02-18T11:00:00.000Z"),
@@ -158,7 +158,7 @@ describe("CalendarView responsiveness", () => {
       id: "closed-calendar-task",
       author: people[0],
       content: "Closed calendar task #general",
-      status: {
+      state: {
         type: "closed"
       },
       dueDate: new Date("2026-02-18T12:00:00.000Z"),
@@ -184,7 +184,7 @@ describe("CalendarView responsiveness", () => {
       author: people[0],
       content: "Calendar priority task #general",
       tags: ["general"],
-      status: {
+      state: {
         type: "open"
       },
       dueDate: new Date("2026-02-18T12:00:00.000Z"),
@@ -211,7 +211,7 @@ describe("CalendarView responsiveness", () => {
       id: "calendar-parent",
       author: people[0],
       content: "Calendar parent #general",
-      status: {
+      state: {
         type: "open"
       },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
@@ -220,7 +220,7 @@ describe("CalendarView responsiveness", () => {
       id: "calendar-child",
       author: people[0],
       content: "Calendar child #general",
-      status: {
+      state: {
         type: "open"
       },
       dueDate: new Date("2026-02-18T11:00:00.000Z"),
@@ -249,7 +249,7 @@ describe("CalendarView responsiveness", () => {
       id: "calendar-leaf",
       author: people[0],
       content: "Calendar leaf #general",
-      status: {
+      state: {
         type: "open"
       },
       dueDate: new Date("2026-02-18T10:00:00.000Z"),

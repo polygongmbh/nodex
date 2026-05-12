@@ -2,7 +2,7 @@ import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { Circle, CircleDot, CircleCheckBig, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { TaskStatus, TaskStatusType } from "@/types";
+import type { TaskState, TaskStatusType } from "@/types";
 import {
   getTaskStateRegistry,
   resolveTaskStateFromStatus,
@@ -73,14 +73,14 @@ export function getTaskStateBadgeClasses(status: TaskStatusType): string {
 }
 
 /**
- * Render the icon for either a full TaskStatus payload or a pre-resolved TaskStateDefinition.
+ * Render the icon for either a full TaskState payload or a pre-resolved TaskStateDefinition.
  */
 export function TaskStateIcon({
   status,
   className,
   size = "w-6 h-6 md:w-5 md:h-5",
 }: {
-  status?: TaskStatus;
+  status?: TaskState;
   className?: string;
   size?: string;
 }) {

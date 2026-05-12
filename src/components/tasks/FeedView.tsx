@@ -26,7 +26,7 @@ import {
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-state";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { hasTextSelection } from "@/lib/click-intent";
@@ -402,14 +402,14 @@ export function FeedView({
   const renderPriorityChip = useCallback((task: Task) => (
     <FeedPriorityChip
       task={task}
-      editable={canCompleteTask(task) && !isTaskTerminalStatus(task.status)}
+      editable={canCompleteTask(task) && !isTaskTerminalStatus(task.state)}
     />
   ), [canCompleteTask]);
   const renderDueDateChip = useCallback((task: Task) => (
     <FeedDueDateChip
       task={task}
       editable={canCompleteTask(task)}
-      dueDateColor={getDueDateColorClass(task.dueDate, task.status)}
+      dueDateColor={getDueDateColorClass(task.dueDate, task.state)}
     />
   ), [canCompleteTask]);
 
@@ -428,7 +428,7 @@ export function FeedView({
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
-      const displayLabel = resolveTaskStateFromStatus(update.status).label;
+      const displayLabel = resolveTaskStateFromStatus(update.state).label;
 
       return (
         <div
@@ -442,7 +442,7 @@ export function FeedView({
           <div className={cn(isMobile ? "px-3" : DESKTOP_FEED_ROW_CONTENT_PADDING)}>
             <div className="flex items-center gap-2 min-w-0">
               <TaskStateIcon
-                status={update.status}
+                status={update.state}
                 size={isMobile ? "w-3 h-3" : "w-3.5 h-3.5"}
                 className="flex-shrink-0"
               />

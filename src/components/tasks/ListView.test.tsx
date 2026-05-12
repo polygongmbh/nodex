@@ -21,10 +21,10 @@ beforeEach(() => {
 describe("ListView priority control", () => {
   it("focuses ancestor from breadcrumb without selecting current row task", () => {
     mockUser = { id: "me" };
-    const root = makeTask({ id: "root", content: "Root task #general", status: {
+    const root = makeTask({ id: "root", content: "Root task #general", state: {
       type: "open"
     } });
-    const child = makeTask({ id: "child", parentId: "root", content: "Child task #general", status: {
+    const child = makeTask({ id: "child", parentId: "root", content: "Child task #general", state: {
       type: "open"
     } });
     const relays = [makeRelay()];
@@ -46,13 +46,13 @@ describe("ListView priority control", () => {
 
   it("omits the active focused item from row breadcrumbs", () => {
     mockUser = { id: "me" };
-    const root = makeTask({ id: "root", content: "Root task #general", status: {
+    const root = makeTask({ id: "root", content: "Root task #general", state: {
       type: "open"
     } });
-    const middle = makeTask({ id: "middle", parentId: "root", content: "Middle task #general", status: {
+    const middle = makeTask({ id: "middle", parentId: "root", content: "Middle task #general", state: {
       type: "open"
     } });
-    const leaf = makeTask({ id: "leaf", parentId: "middle", content: "Leaf task #general", status: {
+    const leaf = makeTask({ id: "leaf", parentId: "middle", content: "Leaf task #general", state: {
       type: "open"
     } });
     const relays = [makeRelay()];
@@ -141,7 +141,7 @@ describe("ListView priority control", () => {
     const task = makeTask({
       id: "task-focus",
       content: "Task content #general",
-      status: {
+      state: {
         type: "open"
       },
     });
@@ -173,7 +173,7 @@ describe("ListView priority control", () => {
     const task = makeTask({
       id: "task-option",
       content: "Task content #general",
-      status: {
+      state: {
         type: "open"
       },
     });
@@ -200,7 +200,7 @@ describe("ListView priority control", () => {
     const task = makeTask({
       id: "task-dropdown",
       content: "Task content #general",
-      status: {
+      state: {
         type: "done"
       },
     });
@@ -220,9 +220,8 @@ describe("ListView priority control", () => {
     fireEvent.click(screen.getByText("In Progress"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "task.changeStatus",
-      taskId: "task-dropdown",
-      status: { type: "active" },
+      type: "task.changeStatus",      taskId: "task-dropdown",
+      state: { type: "active" },
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-dropdown" });
   });
@@ -232,7 +231,7 @@ describe("ListView priority control", () => {
     const task = makeTask({
       id: "task-direct-select",
       content: "Task content #general",
-      status: {
+      state: {
         type: "done"
       },
     });
@@ -259,7 +258,7 @@ describe("ListView priority control", () => {
     const task = makeTask({
       id: "task-first-line",
       content: "Top line #frontend **bold** https://example.com/image.png\nSecond line should be hidden",
-      status: {
+      state: {
         type: "open"
       },
     });
@@ -284,7 +283,7 @@ describe("ListView priority control", () => {
     const task = makeTask({
       id: "task-pubkey-preview",
       content: "nostr:npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq can you try implementing this",
-      status: {
+      state: {
         type: "open"
       },
     });

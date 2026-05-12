@@ -47,7 +47,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     likes: 0,
     replies: 0,
     reposts: 0,
-    status: { type: "open" },
+    state: { type: "open" },
     ...overrides,
   };
 }
