@@ -666,7 +666,7 @@ describe("UnifiedBottomBar auth gating", () => {
     });
   });
 
-  it("shows offer/request options in feed view and submits listing metadata", async () => {
+  it("shows listing option in feed view and submits listing metadata", async () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -682,10 +682,9 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(composeField, { target: { value: "Need help #general" } });
     openMobileComposeOptions();
 
-    expect(screen.getByRole("button", { name: /post offer/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /post request/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /post listing/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /post request/i }));
+    fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
     await waitFor(() => expect(getTaskCreateCalls()).toHaveLength(1));
 
     expectLatestTaskCreateCall({
@@ -693,7 +692,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Need help #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "request",
+      taskType: "listing",
       nip99: {
         title: "Need help",
         status: "active",

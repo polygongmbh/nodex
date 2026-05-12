@@ -9,14 +9,12 @@
     },
     "task": "Aufgabe",
     "comment": "Kommentar",
-    "offer": "Angebot",
-    "request": "Gesuch",
     "listing": {
+      "label": "Inserat",
       "commentBy": "Kommentar von {{author}}",
       "clickToClose": "{{type}} — zum Schließen klicken",
       "clickToReactivate": "Inaktives {{type}} — zum Reaktivieren klicken",
-      "fulfilled": "Anfrage erfüllt",
-      "sold": "Angebot vergeben"
+      "sold": "Inserat vergeben"
     },
     "tags": "Tags",
     "less": "weniger",

@@ -10,13 +10,9 @@
           "withContext": "Add a comment to {{title}}",
           "withoutContext": "Add a comment"
         },
-        "offer": {
-          "withContext": "Post an offer under {{title}}",
-          "withoutContext": "Post an offer"
-        },
-        "request": {
-          "withContext": "Post a request under {{title}}",
-          "withoutContext": "Post a request"
+        "listing": {
+          "withContext": "Post a listing under {{title}}",
+          "withoutContext": "Post a listing"
         }
       },
       "parts": {
@@ -56,8 +52,7 @@
     "actions": {
       "createTask": "Create Task",
       "addComment": "Add Comment",
-      "postOffer": "Post Offer",
-      "postRequest": "Post Request",
+      "postListing": "Post Listing",
       "signin": "Sign in",
       "useCurrentLocation": "Use current location",
       "clearLocation": "Clear location",
@@ -112,8 +107,7 @@
       "kind": "Kind",
       "task": "Task",
       "comment": "Comment",
-      "offer": "Offer",
-      "request": "Request",
+      "listing": "Listing",
       "mentions": "Mentions",
       "date": "Date"
     },

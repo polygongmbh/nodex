@@ -63,25 +63,7 @@ function replaceIndexedPersonMentions(content: string, tags: string[][]): string
 }
 
 function getFeedMessageType(event: NostrEventWithRelay): FeedMessageType | undefined {
-  if (event.kind !== NostrEventKind.ClassifiedListing) return undefined;
-
-  const typeTagValue = event.tags
-    .find((tag) => tag[0]?.toLowerCase() === "type" && tag[1])
-    ?.[1]
-    ?.trim()
-    .toLowerCase();
-  if (typeTagValue === "offer" || typeTagValue === "request") {
-    return typeTagValue;
-  }
-
-  const tTagValues = new Set(
-    event.tags
-      .filter((tag) => tag[0]?.toLowerCase() === "t" && tag[1])
-      .map((tag) => tag[1].trim().toLowerCase())
-  );
-  if (tTagValues.has("request")) return "request";
-
-  return "offer";
+  return event.kind === NostrEventKind.ClassifiedListing ? "listing" : undefined;
 }
 
 export function nostrEventToTask(event: NostrEventWithRelay): Task {

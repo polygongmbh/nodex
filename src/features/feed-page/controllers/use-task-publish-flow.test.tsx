@@ -118,7 +118,7 @@ function Harness({
       </button>
       <button
         onClick={async () => {
-          const result = await hook.handleNewTask("Need support #general", ["general"], [], "offer");
+          const result = await hook.handleNewTask("Need support #general", ["general"], [], "listing");
           window.__TEST_RESULT__ = result;
         }}
       >
@@ -130,7 +130,7 @@ function Harness({
             "Need support #general",
             ["general"],
             ["relay-one", "relay-two"],
-            "offer"
+            "listing"
           );
           window.__TEST_RESULT__ = result;
         }}
@@ -143,7 +143,7 @@ function Harness({
             "Need support",
             [],
             ["relay-one"],
-            "offer",
+            "listing",
             new Date("2026-04-01T10:00:00.000Z"),
             "10:00",
             "start",
@@ -160,7 +160,7 @@ function Harness({
             "Need support #general",
             ["general"],
             ["relay-one"],
-            "offer",
+            "listing",
             new Date("2026-04-01T10:00:00.000Z"),
             "10:00",
             "start"

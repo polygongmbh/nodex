@@ -29,7 +29,7 @@ export type ChannelMatchMode = "and" | "or";
 export type Tag = Channel;
 
 export type TaskEntryType = "task" | "comment";
-export type FeedMessageType = "offer" | "request";
+export type FeedMessageType = "listing";
 export type PostType = TaskEntryType | FeedMessageType;
 // Legacy alias for compatibility with older task/comment-only call sites.
 export type TaskType = TaskEntryType;

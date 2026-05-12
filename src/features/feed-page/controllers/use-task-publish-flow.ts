@@ -285,9 +285,7 @@ export function useTaskPublishFlow({
 
     const normalizedTaskType: Task["taskType"] = normalizedMessageType === "task" ? "task" : "comment";
     const feedMessageType: Task["feedMessageType"] =
-      normalizedMessageType === "offer" || normalizedMessageType === "request"
-        ? normalizedMessageType
-        : undefined;
+      normalizedMessageType === "listing" ? "listing" : undefined;
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
@@ -411,7 +409,7 @@ export function useTaskPublishFlow({
     const publishKind: NostrEventKind =
       normalizedMessageType === "task"
         ? NostrEventKind.Task
-        : normalizedMessageType === "offer" || normalizedMessageType === "request"
+        : normalizedMessageType === "listing"
           ? NostrEventKind.ClassifiedListing
           : NostrEventKind.TextNote;
     const validParentId = submissionParentId && /^[a-f0-9]{64}$/i.test(submissionParentId) ? submissionParentId : undefined;

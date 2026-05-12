@@ -103,7 +103,7 @@ function renderComposer({
   return { onSubmit, ...renderResult };
 }
 
-function getComposerInput(kind: "task" | "comment" | "offer" | "request" = "task") {
+function getComposerInput(kind: "task" | "comment" | "listing" = "task") {
   void kind;
   const input = document.querySelector<HTMLTextAreaElement>('textarea[data-onboarding="compose-input"]');
   if (!input) {
@@ -165,23 +165,23 @@ describe("TaskComposer", () => {
     expect(data.content).toContain("@alice@example.com");
   });
 
-  it("submits request-specific fields from request mode", () => {
+  it("submits listing-specific fields from listing mode", () => {
     const onSubmit = vi.fn();
     renderComposer({ onSubmit, allowFeedMessageTypes: true });
 
-    fireEvent.click(screen.getByRole("button", { name: "Request" }));
-    fireEvent.change(getComposerInput("request"), {
+    fireEvent.click(screen.getByRole("button", { name: "Listing" }));
+    fireEvent.change(getComposerInput("listing"), {
       target: { value: "Need a designer #design" },
     });
     fireEvent.change(screen.getByLabelText("Listing title"), {
       target: { value: "Need designer for mobile UI" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /post request/i }));
+    fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
 
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
       content: "Need a designer #design",
       tags: ["design"],
-      taskType: "request",
+      taskType: "listing",
       nip99: expect.objectContaining({
         title: "Need designer for mobile UI",
         status: "active",
@@ -374,7 +374,7 @@ describe("TaskComposer", () => {
   it("restores listing metadata and attachments from the shared draft key", () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "Need a designer #design",
-      messageType: "request",
+      messageType: "listing",
       savedAt: new Date().toISOString(),
       nip99: {
         title: "Need designer for mobile UI",
@@ -395,7 +395,7 @@ describe("TaskComposer", () => {
 
     renderComposer({ allowFeedMessageTypes: true });
 
-    expect(getComposerInput("request")).toHaveValue("Need a designer #design");
+    expect(getComposerInput("listing")).toHaveValue("Need a designer #design");
     expect(screen.getByLabelText("Listing title")).toHaveValue("Need designer for mobile UI");
     expect(screen.getByDisplayValue("Short summary")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Restored attachment")).toBeInTheDocument();
@@ -462,15 +462,14 @@ describe("TaskComposer", () => {
     }));
   });
 
-  it("shows request and offer actions only when feed message types are enabled", () => {
+  it("shows listing action only when feed message types are enabled", () => {
     const { rerender } = render(
       <TaskComposerRuntimeProvider value={buildRuntimeValue()}>
         <TaskComposer onSubmit={() => {}} onCancel={() => {}} />
       </TaskComposerRuntimeProvider>
     );
 
-    expect(screen.queryByRole("button", { name: "Offer" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Request" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Listing" })).not.toBeInTheDocument();
 
     rerender(
       <TaskComposerRuntimeProvider value={buildRuntimeValue()}>
@@ -478,8 +477,7 @@ describe("TaskComposer", () => {
       </TaskComposerRuntimeProvider>
     );
 
-    expect(screen.getByRole("button", { name: "Offer" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Request" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Listing" })).toBeInTheDocument();
   });
 
   it("shows the sign-in action when the user is not authenticated", () => {

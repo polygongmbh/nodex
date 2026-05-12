@@ -62,7 +62,7 @@ describe("nostrEventToTask", () => {
     expect(getTaskStatus(task.state)).toBe("open");
   });
 
-  it("converts NIP-99 classified listings to feed offer messages by default", () => {
+  it("classifies NIP-99 events as listings via the event kind", () => {
     const listingEvent: NostrEventWithRelay = {
       ...baseEvent,
       kind: NostrEventKind.ClassifiedListing,
@@ -72,22 +72,8 @@ describe("nostrEventToTask", () => {
 
     const task = nostrEventToTask(listingEvent);
 
-    expect(task.taskType).toBe("comment");
-    expect(task.feedMessageType).toBe("offer");
-  });
-
-  it("classifies NIP-99 listings as request messages when tagged as request", () => {
-    const listingEvent: NostrEventWithRelay = {
-      ...baseEvent,
-      kind: NostrEventKind.ClassifiedListing,
-      tags: [["type", "request"]],
-      content: "Looking for a bike mechanic",
-    };
-
-    const task = nostrEventToTask(listingEvent);
-
-    expect(task.taskType).toBe("comment");
-    expect(task.feedMessageType).toBe("request");
+    expect(task.kind).toBe(NostrEventKind.ClassifiedListing);
+    expect(task.feedMessageType).toBe("listing");
   });
 
   it("extracts hashtags from content", () => {
@@ -412,7 +398,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].id).toBe(events[0].id);
     expect(tasks[1].id).toBe(events[1].id);
     expect(tasks[2].id).toBe(events[2].id);
-    expect(tasks[2].feedMessageType).toBe("request");
+    expect(tasks[2].feedMessageType).toBe("listing");
   });
 
   it("applies latest state-event update to task status", () => {

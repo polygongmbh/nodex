@@ -25,13 +25,13 @@ describe("normalizeComposerMessageType", () => {
   it("keeps all supported post types", () => {
     expect(normalizeComposerMessageType("task")).toBe("task");
     expect(normalizeComposerMessageType("comment")).toBe("comment");
-    expect(normalizeComposerMessageType("offer")).toBe("offer");
-    expect(normalizeComposerMessageType("request")).toBe("request");
+    expect(normalizeComposerMessageType("listing")).toBe("listing");
   });
 
   it("falls back to task for malformed values", () => {
     expect(normalizeComposerMessageType(undefined)).toBe("task");
     expect(normalizeComposerMessageType("")).toBe("task");
-    expect(normalizeComposerMessageType("listing")).toBe("task");
+    expect(normalizeComposerMessageType("offer")).toBe("task");
+    expect(normalizeComposerMessageType("request")).toBe("task");
   });
 });

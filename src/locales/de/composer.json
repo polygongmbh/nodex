@@ -10,13 +10,9 @@
           "withContext": "Füge einen Kommentar zu {{title}} hinzu",
           "withoutContext": "Füge einen Kommentar hinzu"
         },
-        "offer": {
-          "withContext": "Veröffentliche ein Angebot unter {{title}}",
-          "withoutContext": "Veröffentliche ein Angebot"
-        },
-        "request": {
-          "withContext": "Veröffentliche ein Gesuch unter {{title}}",
-          "withoutContext": "Veröffentliche ein Gesuch"
+        "listing": {
+          "withContext": "Veröffentliche ein Inserat unter {{title}}",
+          "withoutContext": "Veröffentliche ein Inserat"
         }
       },
       "parts": {
@@ -56,8 +52,7 @@
     "actions": {
       "createTask": "Aufgabe erstellen",
       "addComment": "Kommentar hinzufügen",
-      "postOffer": "Angebot inserieren",
-      "postRequest": "Gesuch inserieren",
+      "postListing": "Inserat veröffentlichen",
       "signin": "Anmelden",
       "useCurrentLocation": "Aktuellen Standort verwenden",
       "clearLocation": "Standort entfernen",
@@ -112,8 +107,7 @@
       "kind": "Typ",
       "task": "Aufgabe",
       "comment": "Kommentar",
-      "offer": "Angebot",
-      "request": "Gesuch",
+      "listing": "Inserat",
       "mentions": "Erwähnungen",
       "date": "Datum"
     },

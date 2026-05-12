@@ -9,14 +9,12 @@
     },
     "task": "Task",
     "comment": "Comment",
-    "offer": "Offer",
-    "request": "Request",
     "listing": {
+      "label": "Listing",
       "commentBy": "Comment by {{author}}",
       "clickToClose": "{{type}} — click to close",
       "clickToReactivate": "Inactive {{type}} — click to reactivate",
-      "fulfilled": "Request fulfilled",
-      "sold": "Offer unavailable"
+      "sold": "Listing unavailable"
     },
     "tags": "Tags",
     "less": "less",

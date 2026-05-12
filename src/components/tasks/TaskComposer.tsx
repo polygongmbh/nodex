@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
-import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, HandHelping, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
+import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
 import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
@@ -781,7 +781,7 @@ export function TaskComposer({
     if (
       value === "task" ||
       value === "comment" ||
-      (allowFeedMessageTypes && (value === "offer" || value === "request"))
+      (allowFeedMessageTypes && value === "listing")
     ) {
       return value;
     }
@@ -834,7 +834,7 @@ export function TaskComposer({
   };
 
   useEffect(() => {
-    if (taskType !== "offer" && taskType !== "request") return;
+    if (taskType !== "listing") return;
     const autoFilled = deriveNip99AutofillFromContent(content);
     setNip99((previous) => {
       let changed = false;
@@ -877,7 +877,7 @@ export function TaskComposer({
       return;
     }
     const listingMetadata =
-      effectiveTaskType === "offer" || effectiveTaskType === "request"
+      effectiveTaskType === "listing"
         ? {
             ...deriveNip99AutofillFromContent(content),
             identifier: nip99.identifier?.trim() || undefined,
@@ -1908,7 +1908,7 @@ export function TaskComposer({
         </div>
       )}
 
-      {showExpandedControls && (taskType === "offer" || taskType === "request") && (
+      {showExpandedControls && taskType === "listing" && (
         <div className={cn("order-6 flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <input
             value={nip99.title || ""}
@@ -2080,8 +2080,7 @@ export function TaskComposer({
                 >
                   <option value="task">{t("composer.labels.task")}</option>
                   <option value="comment">{t("composer.labels.comment")}</option>
-                  {allowFeedMessageTypes && <option value="offer">{t("composer.labels.offer")}</option>}
-                  {allowFeedMessageTypes && <option value="request">{t("composer.labels.request")}</option>}
+                  {allowFeedMessageTypes && <option value="listing">{t("composer.labels.listing")}</option>}
                 </select>
                 <button
                   type="button"
@@ -2114,33 +2113,17 @@ export function TaskComposer({
                 {allowFeedMessageTypes && (
                   <button
                     type="button"
-                    onClick={() => setTaskType("offer")}
-                    aria-label={t("composer.labels.offer")}
+                    onClick={() => setTaskType("listing")}
+                    aria-label={t("composer.labels.listing")}
                     className={cn(
                       "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                      taskType === "offer"
+                      taskType === "listing"
                         ? "bg-background text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     <Package className="w-3.5 h-3.5" />
-                    <span>{t("composer.labels.offer")}</span>
-                  </button>
-                )}
-                {allowFeedMessageTypes && (
-                  <button
-                    type="button"
-                    onClick={() => setTaskType("request")}
-                    aria-label={t("composer.labels.request")}
-                    className={cn(
-                      "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                      taskType === "request"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <HandHelping className="w-3.5 h-3.5" />
-                    <span>{t("composer.labels.request")}</span>
+                    <span>{t("composer.labels.listing")}</span>
                   </button>
                 )}
               </div>
@@ -2149,19 +2132,15 @@ export function TaskComposer({
               const submitActionLabel =
                 taskType === "task"
                   ? t("composer.actions.createTask")
-                  : taskType === "offer"
-                    ? t("composer.actions.postOffer")
-                    : taskType === "request"
-                      ? t("composer.actions.postRequest")
-                      : t("composer.actions.addComment");
+                  : taskType === "listing"
+                    ? t("composer.actions.postListing")
+                    : t("composer.actions.addComment");
               const submitActionIcon =
                 taskType === "task"
                   ? <CheckSquare className="w-4 h-4" />
-                  : taskType === "offer"
+                  : taskType === "listing"
                     ? <Package className="w-4 h-4" />
-                    : taskType === "request"
-                      ? <HandHelping className="w-4 h-4" />
-                      : <MessageSquare className="w-4 h-4" />;
+                    : <MessageSquare className="w-4 h-4" />;
               const submitButtonTitle = submitBlock?.reason || submitActionLabel;
               if (!canCreateContent) {
                 return (

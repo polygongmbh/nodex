@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, HandHelping, MapPin, AlertTriangle, Flag } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, MapPin, AlertTriangle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, TaskCreateResult, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
 import type { SidebarPerson } from "@/types/person";
@@ -579,7 +579,7 @@ export function UnifiedBottomBar({
         name: attachment.name || attachment.fileName,
       }));
     const listingMetadata: Nip99Metadata | undefined =
-      submitType === "offer" || submitType === "request"
+      submitType === "listing"
         ? {
             title: truncateWordSafe(normalizeListingTextFromContent(sharedText), NIP99_TITLE_MAX_LENGTH) || t("composer.nip99.defaultTitle"),
             status: "active",
@@ -1861,32 +1861,18 @@ export function UnifiedBottomBar({
                       <MessageSquare className="w-4 h-4" />
                     </button>
                     {currentView === "feed" && (
-                      <>
-                        <button
-                          onClick={() => {
-                            setShowSendOptions(false);
-                            void handleSubmit("offer");
-                          }}
-                          disabled={!canSendListing}
-                          className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                          aria-label={t("composer.actions.postOffer")}
-                          title={t("composer.actions.postOffer")}
-                        >
-                          <Package className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowSendOptions(false);
-                            void handleSubmit("request");
-                          }}
-                          disabled={!canSendListing}
-                          className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                          aria-label={t("composer.actions.postRequest")}
-                          title={t("composer.actions.postRequest")}
-                        >
-                          <HandHelping className="w-4 h-4" />
-                        </button>
-                      </>
+                      <button
+                        onClick={() => {
+                          setShowSendOptions(false);
+                          void handleSubmit("listing");
+                        }}
+                        disabled={!canSendListing}
+                        className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                        aria-label={t("composer.actions.postListing")}
+                        title={t("composer.actions.postListing")}
+                      >
+                        <Package className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 )}

@@ -243,7 +243,7 @@ function resolveInitialTaskType(
   if (draftMessageType === "task" || draftMessageType === "comment") {
     return draftMessageType;
   }
-  if (allowFeedMessageTypes && (draftMessageType === "offer" || draftMessageType === "request")) {
+  if (allowFeedMessageTypes && draftMessageType === "listing") {
     return draftMessageType;
   }
   return draftState?.taskType === "comment" ? "comment" : "task";
@@ -393,10 +393,7 @@ export function getTaskComposerRestoreMessageType(
   allowFeedMessageTypes: boolean
 ): PostType {
   const requestedMessageType = request?.state.messageType;
-  if (
-    allowFeedMessageTypes &&
-    (requestedMessageType === "offer" || requestedMessageType === "request")
-  ) {
+  if (allowFeedMessageTypes && requestedMessageType === "listing") {
     return requestedMessageType;
   }
   return allowComment && request?.state.taskType === "comment" ? "comment" : "task";
