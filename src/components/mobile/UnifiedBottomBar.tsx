@@ -1427,13 +1427,13 @@ export function UnifiedBottomBar({
                     onChange={setDateType}
                     className="h-8 w-[5.2rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
                   />
-                  <div className="h-8 flex items-center gap-0.5 pl-2 pr-1 rounded-md border border-border bg-muted/30 text-foreground">
+                  <div className="h-8 flex items-center gap-1 pl-2 pr-1 rounded-md border border-border bg-muted/30 text-foreground">
                     <Clock className="w-3.5 h-3.5" />
-                    <input
-                      type="time"
+                    <TaskTimeInput
+                      aria-label={t("composer.labels.time", { defaultValue: "Time" })}
                       value={dueTime}
-                      onChange={(e) => setDueTime(e.target.value)}
-                      className="w-[4.1rem] bg-transparent text-xs text-foreground focus:outline-none"
+                      onChange={setDueTime}
+                      className="border-0 bg-transparent px-0 h-7"
                     />
                     {dueTime && (
                       <button
