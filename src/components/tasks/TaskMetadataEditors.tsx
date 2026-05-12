@@ -78,7 +78,11 @@ export function TaskDueDateEditorForm({
   };
 
   return (
-    <div className="space-y-3 p-3">
+    <div
+      className="space-y-3 p-3"
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
       <div className="flex items-center gap-2">
         <label className="text-xs text-muted-foreground" htmlFor={`${idPrefix}-date-type-${taskId}`}>
           {t("listView.dates.type")}

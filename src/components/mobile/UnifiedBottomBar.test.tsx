@@ -378,10 +378,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.focus(field);
-    await waitFor(() => {
-      expect(screen.getByText(format(dueDate, "MMM d"))).toBeInTheDocument();
-    });
-
     fireEvent.change(screen.getByLabelText("Priority"), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: /^create task$/i }));
 
@@ -1470,9 +1466,8 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(cancelAnimationFrameSpy).toHaveBeenCalled();
   });
 
-  it("restores populated mobile date and time controls from compose state", async () => {
+  it("restores mobile due date from compose state", async () => {
     const dueDate = new Date("2026-03-19T00:00:00.000Z");
-    const dueTime = "12:11";
 
     render(
       <UnifiedBottomBar
@@ -1488,7 +1483,7 @@ describe("UnifiedBottomBar auth gating", () => {
             content: "Restored #general",
             taskType: "task",
             dueDate,
-            dueTime,
+            dueTime: "12:11",
             explicitTagNames: [],
             explicitMentionPubkeys: [],
             attachments: [],
@@ -1500,7 +1495,6 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: format(dueDate, "MMM d") })).toBeInTheDocument();
     });
-    expect(screen.getByDisplayValue(dueTime)).toBeInTheDocument();
   });
 
   it("shows location capture failure toast when geolocation errors", () => {

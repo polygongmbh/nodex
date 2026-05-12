@@ -238,7 +238,8 @@ describe("TaskComposer", () => {
     renderComposer({ onSubmit });
 
     expect(getComposerInput()).toHaveValue("ship restored task");
-    expect(screen.getByDisplayValue("10:00")).toBeInTheDocument();
+    expect(screen.getByLabelText(/hours/i)).toHaveValue("10");
+    expect(screen.getByLabelText(/minutes/i)).toHaveValue("00");
     expect(screen.getByLabelText(/geohash/i)).toHaveValue("u33db");
     expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).not.toBeNull();
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();

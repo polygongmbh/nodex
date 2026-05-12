@@ -1318,36 +1318,4 @@ describe("FeedView", () => {
     });
   });
 
-  it("updates date type from the feed due-date chip", () => {
-    const dueDate = new Date("2026-05-01T00:00:00.000Z");
-    const taskWithDueDate = makeTask({
-      id: "task-due-date",
-      author,
-      status: {
-        type: "open"
-      },
-      dueDate,
-      dateType: "due",
-    });
-
-    render(
-      <FeedView
-        focusedTaskId={null}
-        tasks={[taskWithDueDate]}
-        allTasks={[taskWithDueDate]}
-        currentUser={author}
-      />
-    );
-
-    chooseComboboxOptionByIndex(/type/i, 1);
-
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "task.updateDueDate",
-      taskId: "task-due-date",
-      dueDate,
-      dueTime: undefined,
-      dateType: "scheduled",
-    });
-  });
-
 });

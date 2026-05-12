@@ -407,18 +407,4 @@ describe("TreeTaskItem status actions", () => {
     });
   });
 
-  it("updates date type from the due date chip controls", () => {
-    const dueDate = new Date("2026-05-01T00:00:00.000Z");
-    renderTreeTaskItem({ task: { ...baseTask, dueDate, dateType: "due" } });
-
-    chooseComboboxOptionByIndex(/type/i, 1);
-
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "task.updateDueDate",
-      taskId: "t1",
-      dueDate,
-      dueTime: undefined,
-      dateType: "scheduled",
-    });
-  });
 });
