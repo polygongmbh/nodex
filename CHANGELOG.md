@@ -15,6 +15,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Activity column previews now clamp by visual line count rather than producing an orphan ellipsis row when content spans multiple paragraphs.
 - Profile editor's avatar upload button is now visible (and tappable) on touch devices, where the previous hover-only reveal made it unreachable.
 - Task status dropdown now opens via Space/Enter/ArrowDown from the tree view when the status icon is keyboard-focused, matching the feed/list behaviour.
+- Relays stuck on "disconnected" after the tab/computer woke from sleep now reconnect automatically when the page becomes visible, the network resumes, or a heartbeat detects the wake gap.
 
 ## [3.0.1] - 2026-05-11
 Patch release for Status view active-task routing and activity refinements.

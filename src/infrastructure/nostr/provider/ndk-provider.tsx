@@ -620,6 +620,49 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus, updateRelayEntry]);
 
+  // After tab/computer sleep, the WebSocket gets closed but NDK's disconnect-triggered
+  // retry timer is throttled or paused, so relays stay stuck on "disconnected". Re-poke
+  // any stale relay when the page resumes (visibility, focus, network restore) or when
+  // a setInterval gap reveals a wake-from-sleep that fired no other signal.
+  useEffect(() => {
+    if (!ndk) return;
+    const reconnectStaleRelays = (reason: string) => {
+      let triggered = 0;
+      relaysRef.current.forEach((relay) => {
+        if (removedRelaysRef.current.has(relay.url)) return;
+        if (relay.status === "connected" || relay.status === "read-only") return;
+        reconnectRelay(relay.url);
+        triggered += 1;
+      });
+      if (triggered > 0) {
+        nostrDevLog("relay", "Reconnecting stale relays after resume", { reason, count: triggered });
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      reconnectStaleRelays("visibilitychange");
+    };
+    const onOnline = () => reconnectStaleRelays("online");
+
+    const HEARTBEAT_MS = 10000;
+    const WAKE_GAP_MS = 30000;
+    let lastTick = Date.now();
+    const heartbeatId = window.setInterval(() => {
+      const now = Date.now();
+      const gap = now - lastTick;
+      lastTick = now;
+      if (gap > WAKE_GAP_MS) reconnectStaleRelays(`wake-after-${gap}ms`);
+    }, HEARTBEAT_MS);
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.clearInterval(heartbeatId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [ndk, reconnectRelay, relaysRef, removedRelaysRef]);
+
   const { publishEvent, signEvent, broadcastSignedEvent } = usePublish({
     ndk,
     relays,

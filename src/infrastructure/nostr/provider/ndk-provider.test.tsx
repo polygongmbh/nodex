@@ -1012,6 +1012,62 @@ describe("NDKProvider relay lifecycle", () => {
     vi.useRealTimers();
   });
 
+  it("reconnects relays that went stale while the tab was hidden when visibility resumes", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      firstRelay.disconnect();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:disconnected");
+    });
+
+    const createdBefore = ndk.pool.getCreatedRelays("wss://relay.one").length;
+
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    expect(ndk.pool.getCreatedRelays("wss://relay.one").length).toBeGreaterThan(createdBefore);
+  });
+
+  it("does not re-trigger reconnect on visibility change while relays are healthy", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const createdBefore = ndk.pool.getCreatedRelays("wss://relay.one").length;
+
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(ndk.pool.getCreatedRelays("wss://relay.one").length).toBe(createdBefore);
+  });
+
   it("marks relay read-only when a publish is rejected with auth-required reason", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
