@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { StatusProjectsRow } from "./StatusProjectsRow";
 import { StatusMyTasksTree } from "./StatusMyTasksTree";
 import { StatusTimeline } from "./StatusTimeline";
-import { resolveStatusPeopleScope } from "./status-filters";
+import { resolveStatusConcernsScope, resolveStatusPeopleScope } from "./status-filters";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
@@ -63,15 +63,16 @@ export function StatusView() {
     [surface.people]
   );
   // "My tasks" falls back to the signed-in user when nobody is selected — it's
-  // the personal column. The Recent timeline does NOT fall back, so it shows
-  // posts from everybody unless the sidebar explicitly narrows to people.
+  // the personal column. The timeline's concerns scope is additive: it pulls
+  // in items that involve the current user OR any sidebar-selected people, in
+  // addition to the top-level items everyone sees.
   const myTasksPeopleScope = useMemo(
     () => resolveStatusPeopleScope(selectedPeoplePubkeys, viewModel.currentUser?.pubkey),
     [selectedPeoplePubkeys, viewModel.currentUser?.pubkey]
   );
-  const timelinePeopleScope = useMemo(
-    () => resolveStatusPeopleScope(selectedPeoplePubkeys, undefined),
-    [selectedPeoplePubkeys]
+  const timelineConcernsScope = useMemo(
+    () => resolveStatusConcernsScope(selectedPeoplePubkeys, viewModel.currentUser?.pubkey),
+    [selectedPeoplePubkeys, viewModel.currentUser?.pubkey]
   );
 
   return (
@@ -99,7 +100,7 @@ export function StatusView() {
             <StatusTimeline
               contextTasks={contextTasks}
               focusedTaskId={taskSource.focusedTaskId}
-              peopleScope={timelinePeopleScope}
+              concernsScope={timelineConcernsScope}
             />
           </div>
         </div>

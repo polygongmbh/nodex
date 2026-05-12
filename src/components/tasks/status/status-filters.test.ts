@@ -3,10 +3,12 @@ import { makeTask, makePerson } from "@/test/fixtures";
 import {
   hasInProgressTopLevelProject,
   isTaskOwnedByAny,
+  resolveStatusConcernsScope,
   resolveStatusPeopleScope,
   selectPeopleOwnedTasks,
   selectStatusInProgressTopLevelTasks,
   selectStatusTimelinePosts,
+  taskConcernsAny,
 } from "./status-filters";
 import type { Task } from "@/types";
 
@@ -195,6 +197,54 @@ describe("selectPeopleOwnedTasks", () => {
   });
 });
 
+describe("resolveStatusConcernsScope", () => {
+  it("unions sidebar-selected people with the signed-in user", () => {
+    expect(resolveStatusConcernsScope(["AAA", "bbb"], "ccc")).toEqual(
+      new Set(["aaa", "bbb", "ccc"])
+    );
+  });
+
+  it("returns just the signed-in user when nobody is selected", () => {
+    expect(resolveStatusConcernsScope([], "CCC")).toEqual(new Set(["ccc"]));
+  });
+
+  it("returns just the selected people when nobody is signed in", () => {
+    expect(resolveStatusConcernsScope(["AAA"], undefined)).toEqual(new Set(["aaa"]));
+  });
+
+  it("returns an empty set when nothing is selected and no user is signed in", () => {
+    expect(resolveStatusConcernsScope([], undefined)).toEqual(new Set());
+  });
+});
+
+describe("taskConcernsAny", () => {
+  const me = "me-pub";
+  const meSet = new Set([me]);
+
+  it("matches when the task is assigned to the pubkey", () => {
+    const task = makeTask({ assigneePubkeys: [me], author: makePerson({ pubkey: "other" }) });
+    expect(taskConcernsAny(task, meSet)).toBe(true);
+  });
+
+  it("matches when the task was authored by the pubkey even if assigned elsewhere", () => {
+    const task = makeTask({
+      author: makePerson({ pubkey: me }),
+      assigneePubkeys: ["someone-else"],
+    });
+    expect(taskConcernsAny(task, meSet)).toBe(true);
+  });
+
+  it("returns false when neither author nor assignees include the pubkey", () => {
+    const task = makeTask({ author: makePerson({ pubkey: "other" }), assigneePubkeys: ["nobody"] });
+    expect(taskConcernsAny(task, meSet)).toBe(false);
+  });
+
+  it("returns false when the scope is empty", () => {
+    const task = makeTask({ author: makePerson({ pubkey: me }) });
+    expect(taskConcernsAny(task, new Set())).toBe(false);
+  });
+});
+
 describe("selectStatusTimelinePosts", () => {
   const root1 = makeTask({ id: "r1", timestamp: new Date("2026-02-01") });
   const root2 = makeTask({ id: "r2", timestamp: new Date("2026-03-01") });
@@ -205,22 +255,61 @@ describe("selectStatusTimelinePosts", () => {
     timestamp: new Date("2026-02-15"),
   });
 
-  it("returns root posts newest first when no people scope is active", () => {
+  it("returns root posts newest first when no concerns scope is active", () => {
     const result = selectStatusTimelinePosts({
       contextTasks: [root1, root2, child, peerRoot],
       focusedTaskId: null,
-      peopleScope: new Set(),
+      concernsScope: new Set(),
     });
     expect(result.map((task) => task.id)).toEqual(["r2", "peer", "r1"]);
   });
 
-  it("restricts root posts to the people scope when one is set", () => {
+  it("keeps all top-level posts even when a concerns scope is set", () => {
     const result = selectStatusTimelinePosts({
       contextTasks: [root1, root2, peerRoot],
       focusedTaskId: null,
-      peopleScope: new Set(["author-pubkey"]),
+      concernsScope: new Set(["someone-unrelated"]),
     });
-    expect(result.map((task) => task.id)).toEqual(["r2", "r1"]);
+    expect(result.map((task) => task.id)).toEqual(["r2", "peer", "r1"]);
+  });
+
+  it("adds non-top-level items authored by someone in the concerns scope", () => {
+    const me = "me-pub";
+    const myChild = makeTask({
+      id: "mine",
+      parentId: "r1",
+      author: makePerson({ pubkey: me }),
+      timestamp: new Date("2026-05-01"),
+    });
+    const otherChild = makeTask({
+      id: "other",
+      parentId: "r1",
+      author: makePerson({ pubkey: "other-pub" }),
+      timestamp: new Date("2026-05-02"),
+    });
+    const result = selectStatusTimelinePosts({
+      contextTasks: [root1, root2, myChild, otherChild],
+      focusedTaskId: null,
+      concernsScope: new Set([me]),
+    });
+    expect(result.map((task) => task.id)).toEqual(["mine", "r2", "r1"]);
+  });
+
+  it("adds non-top-level items assigned to someone in the concerns scope", () => {
+    const me = "me-pub";
+    const assignedToMe = makeTask({
+      id: "assigned",
+      parentId: "r1",
+      author: makePerson({ pubkey: "other-pub" }),
+      assigneePubkeys: [me],
+      timestamp: new Date("2026-05-01"),
+    });
+    const result = selectStatusTimelinePosts({
+      contextTasks: [root1, assignedToMe],
+      focusedTaskId: null,
+      concernsScope: new Set([me]),
+    });
+    expect(result.map((task) => task.id)).toEqual(["assigned", "r1"]);
   });
 
   it("uses direct children of the focused task as roots when a context is focused", () => {
@@ -229,7 +318,7 @@ describe("selectStatusTimelinePosts", () => {
     const result = selectStatusTimelinePosts({
       contextTasks: [root1, root2, child, sibling],
       focusedTaskId: focused,
-      peopleScope: new Set(),
+      concernsScope: new Set(),
     });
     expect(result.map((task) => task.id)).toEqual(["sibling-of-r1", "c1"]);
   });
@@ -244,7 +333,7 @@ describe("selectStatusTimelinePosts", () => {
     const result = selectStatusTimelinePosts({
       contextTasks: [root1, root2, comment],
       focusedTaskId: null,
-      peopleScope: new Set(),
+      concernsScope: new Set(),
     });
     expect(result.map((task) => task.id)).toEqual(["cmt", "r2", "r1"]);
   });

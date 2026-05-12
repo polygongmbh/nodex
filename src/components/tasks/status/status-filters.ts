@@ -32,6 +32,18 @@ export function isTaskOwnedByAny(task: Task, pubkeys: Set<string>): boolean {
 }
 
 /**
+ * Whether a task "concerns" any of the given pubkeys — i.e. one of them is the
+ * author OR appears among the assignees. Broader than `isTaskOwnedByAny`:
+ * a task you authored but assigned to someone else still concerns you.
+ */
+export function taskConcernsAny(task: Task, pubkeys: Set<string>): boolean {
+  if (pubkeys.size === 0) return false;
+  const author = normalizePubkey(task.author?.pubkey);
+  if (author && pubkeys.has(author)) return true;
+  return getNormalizedAssignees(task).some((pubkey) => pubkeys.has(pubkey));
+}
+
+/**
  * Resolve the set of pubkeys that the status view's people-scoped sections
  * should focus on. Selected sidebar people take precedence; otherwise fall
  * back to the current user when signed in.
@@ -44,6 +56,23 @@ export function resolveStatusPeopleScope(
   if (normalizedSelected.size > 0) return normalizedSelected;
   const normalizedSelf = normalizePubkey(currentUserPubkey);
   return normalizedSelf ? new Set([normalizedSelf]) : new Set();
+}
+
+/**
+ * Resolve the set of pubkeys whose involvement should *expand* the activity
+ * timeline beyond top-level items. Always includes the current user when
+ * signed in, plus any sidebar-selected people. Differs from
+ * `resolveStatusPeopleScope`: this is additive (it surfaces extra items), not
+ * a fallback restriction.
+ */
+export function resolveStatusConcernsScope(
+  selectedPeoplePubkeys: string[],
+  currentUserPubkey: string | undefined
+): Set<string> {
+  const scope = buildPubkeySet(selectedPeoplePubkeys);
+  const self = normalizePubkey(currentUserPubkey);
+  if (self) scope.add(self);
+  return scope;
 }
 
 interface TopLevelTaskFilterOptions {
@@ -134,32 +163,33 @@ export function selectPeopleOwnedTasks({
 interface TimelineFilterOptions {
   contextTasks: Task[];
   focusedTaskId: string | null;
-  peopleScope: Set<string>;
+  /**
+   * Pubkeys whose author/assignee involvement should pull non-top-level items
+   * into the timeline. Always additive — never used to *restrict* top-level
+   * items or comments.
+   */
+  concernsScope: Set<string>;
 }
 
 /**
- * Activity timeline: top-level tasks/posts of the current context PLUS any
- * comments inside the context, ordered newest first. State-change events are
- * excluded by construction (we only consider tasks/posts, never `state-update`
- * feed entries). When a people scope is active, entries must be owned by one
- * of those people.
+ * Activity timeline: top-level tasks/posts of the current context, plus any
+ * comments inside the context, plus any non-top-level items where someone in
+ * `concernsScope` is author or assignee. Ordered newest first. State-change
+ * entries are excluded by construction (only tasks/posts are considered, never
+ * `state-update` feed entries).
  */
 export function selectStatusTimelinePosts({
   contextTasks,
   focusedTaskId,
-  peopleScope,
+  concernsScope,
 }: TimelineFilterOptions): Task[] {
   const matching = contextTasks.filter((task) => {
-    if (task.taskType !== "comment") {
-      const isTopLevelInContext = focusedTaskId
-        ? task.parentId === focusedTaskId
-        : !task.parentId;
-      if (!isTopLevelInContext) return false;
-    }
-    if (peopleScope.size > 0 && !isTaskOwnedByAny(task, peopleScope)) {
-      return false;
-    }
-    return true;
+    if (task.taskType === "comment") return true;
+    const isTopLevelInContext = focusedTaskId
+      ? task.parentId === focusedTaskId
+      : !task.parentId;
+    if (isTopLevelInContext) return true;
+    return taskConcernsAny(task, concernsScope);
   });
   return [...matching].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }

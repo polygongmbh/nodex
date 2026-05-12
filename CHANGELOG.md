@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Status view's Activity column now surfaces items that concern you (as creator or assignee) or any sidebar-selected people, in addition to the top-level posts and comments it already showed.
+
 ## [3.0.1] - 2026-05-11
 Patch release for Status view active-task routing and activity refinements.
 
