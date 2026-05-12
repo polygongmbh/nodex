@@ -44,6 +44,13 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
   const isComment = task.taskType === "comment";
   const isTerminal = isTaskTerminalStatus(task.status);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
+  // Collapse paragraph breaks so the preview renders as one inline block —
+  // `line-clamp-2` on a container with multiple <p> children produces an
+  // orphan ellipsis line below the clamped text.
+  const previewContent = useMemo(
+    () => task.content.replace(/\s*\n\s*/g, " ").trim(),
+    [task.content]
+  );
   const canChangeStatus =
     !isComment
     && authPolicy.canModifyContent
@@ -88,11 +95,11 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
         </div>
         <div
           className={cn(
-            "text-sm leading-snug whitespace-pre-line line-clamp-2",
+            "text-sm leading-snug line-clamp-2",
             isTerminal && "line-through text-muted-foreground"
           )}
         >
-          {linkifyContent(task.content, (tag) => {
+          {linkifyContent(previewContent, (tag) => {
             void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
           }, { plainHashtags: isTerminal, people, disableStandaloneEmbeds: true })}
         </div>
