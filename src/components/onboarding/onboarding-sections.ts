@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next";
 import { OnboardingSection } from "./onboarding-types";
 
-type GuideView = "tree" | "feed" | "kanban" | "calendar" | "list";
+type GuideView = "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
 
 export function getOnboardingSections(isMobile: boolean, view: GuideView, t: TFunction): OnboardingSection[] {
   const baseOnboardingSections: OnboardingSection[] = [

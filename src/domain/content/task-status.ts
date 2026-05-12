@@ -1,14 +1,14 @@
-import { Task, TaskStatus, getTaskStatusType } from "@/types";
+import { Task, TaskStatus, TaskStatusType, getTaskStatusType, normalizeTaskStatus } from "@/types";
 import {
   isTaskCompletedState,
   isTaskTerminalState as registryIsTerminal,
 } from "@/domain/task-states/task-state-config";
 
-export function isTaskCompletedStatus(status: TaskStatus | undefined): boolean {
+export function isTaskCompletedStatus(status: TaskStatus | TaskStatusType | undefined): boolean {
   return isTaskCompletedState(getTaskStatusType(status));
 }
 
-export function isTaskTerminalStatus(status: TaskStatus | undefined): boolean {
+export function isTaskTerminalStatus(status: TaskStatus | TaskStatusType | undefined): boolean {
   return registryIsTerminal(getTaskStatusType(status));
 }
 
@@ -16,14 +16,15 @@ export function applyTaskStatusUpdate(
   localTasks: Task[],
   allTasks: Task[],
   taskId: string,
-  newStatus: TaskStatus,
+  newStatus: TaskStatus | TaskStatusType,
   _authorPubkey?: string
 ): Task[] {
   const now = new Date();
+  const normalized = normalizeTaskStatus(newStatus);
   const toLocalStatusUpdatedTask = (task: Task): Task => {
     return {
       ...task,
-      status: newStatus,
+      status: normalized,
       lastEditedAt: now,
     };
   };

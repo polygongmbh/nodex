@@ -27,3 +27,4 @@ dist-ssr
 plans/
 mostr-cli/
 noas/
+*.tsbuildinfo

@@ -149,7 +149,7 @@ export function buildChildrenMap(allTasks: Task[]): Map<string | undefined, Task
 }
 
 // Get due date color class based on urgency
-export function getDueDateColorClass(dueDate: Date | undefined, status?: TaskStatus): string {
+export function getDueDateColorClass(dueDate: Date | undefined, status?: TaskStatus | TaskStatusType): string {
   if (!dueDate || isTaskTerminalStatus(status)) return "text-muted-foreground";
   
   const today = startOfDay(new Date());

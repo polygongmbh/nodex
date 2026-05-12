@@ -20,7 +20,7 @@ interface OnboardingGuideProps {
   isOpen: boolean;
   isMobile?: boolean;
   manualStart?: boolean;
-  currentView?: "tree" | "feed" | "kanban" | "calendar" | "list";
+  currentView?: "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
   uiContextKey?: string;
   initialSection: OnboardingInitialSection;
   sections: OnboardingSection[];

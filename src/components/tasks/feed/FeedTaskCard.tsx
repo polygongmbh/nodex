@@ -360,9 +360,10 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                       {isNip05Verified ? (
                         <BadgeCheck
                           className="inline-block align-middle h-3.5 w-3.5 ml-0.5 text-blue-500"
-                          title={resolvedAuthor.nip05}
                           aria-label={t("people.nip05Verified")}
-                        />
+                        >
+                          {resolvedAuthor.nip05 ? <title>{resolvedAuthor.nip05}</title> : null}
+                        </BadgeCheck>
                       ) : null}
                       {secondaryAuthorLabel && !isMobile ? (
                         <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">

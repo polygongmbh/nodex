@@ -219,7 +219,9 @@ export function PersonHoverCard({
               <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
                 <span className="truncate">{person.nip05}</span>
                 {isNip05Verified ? (
-                  <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-blue-500" title={t("people.nip05Verified")} />
+                  <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-blue-500" aria-label={t("people.nip05Verified")}>
+                    <title>{t("people.nip05Verified")}</title>
+                  </BadgeCheck>
                 ) : null}
               </p>
             ) : null}

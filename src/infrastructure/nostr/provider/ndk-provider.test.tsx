@@ -16,7 +16,10 @@ const mockedNdk = vi.hoisted(() => {
     subManager: { subscriptions: Map<string, unknown> };
     connect(): Promise<void>;
     subscribeCalls: Array<{ filters: unknown; options: unknown }>;
-    subscribe(): { on(): void; stop(): void };
+    subscribe(): {
+      on(event: string, callback: (...args: unknown[]) => void): void;
+      stop(): void;
+    };
   }
 
   const ndkInstances: NdkLike[] = [];
@@ -99,7 +102,11 @@ const mockedNdk = vi.hoisted(() => {
         } else if (payload[0] === "CLOSED") {
           const reason = typeof payload[2] === "string" ? payload[2] : "";
           ndkInstances.forEach((ndk) => {
-            ndk.subManager.subscriptions.forEach((sub) => {
+            ndk.subManager.subscriptions.forEach((subEntry) => {
+              const sub = subEntry as {
+                relayFilters?: Map<string, unknown>;
+                emit?: (event: string, ...args: unknown[]) => void;
+              };
               if (sub.relayFilters?.has(this.url)) {
                 sub.emit?.("closed", this, reason);
               }

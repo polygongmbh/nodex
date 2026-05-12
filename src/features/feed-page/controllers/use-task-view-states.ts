@@ -33,7 +33,7 @@ interface BaseViewStateInput {
 }
 
 interface MobileScopedViewStateInput extends BaseViewStateInput {
-  currentView: "feed" | "tree" | "list" | "calendar";
+  currentView: "status" | "feed" | "tree" | "list" | "calendar";
   showFilters: boolean;
   isHydrating?: boolean;
 }

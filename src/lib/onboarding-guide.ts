@@ -4,7 +4,7 @@ interface ComposeForceParams {
   isOnboardingOpen: boolean;
   activeOnboardingStepId: string | null;
   isMobile: boolean;
-  currentView?: "tree" | "feed" | "kanban" | "calendar" | "list";
+  currentView?: "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
 }
 
 export function shouldForceComposeForGuide({

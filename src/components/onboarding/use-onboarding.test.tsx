@@ -21,7 +21,7 @@ function Harness({
   initialUser?: { pubkey?: string } | null;
 }) {
   const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
-  const [currentView, setCurrentView] = useState<"feed" | "tree" | "kanban" | "calendar" | "list">("tree");
+  const [currentView, setCurrentView] = useState<"status" | "feed" | "tree" | "kanban" | "calendar" | "list">("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
   const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
 

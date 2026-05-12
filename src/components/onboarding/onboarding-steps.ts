@@ -3,7 +3,7 @@ import { OnboardingSectionId, OnboardingStep } from "./onboarding-types";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 
 type StepMap = Record<OnboardingSectionId, OnboardingStep[]>;
-type GuideView = "tree" | "feed" | "kanban" | "calendar" | "list";
+type GuideView = "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
 
 export function getOnboardingStepsBySection(
   isMobile: boolean,

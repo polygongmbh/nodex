@@ -9,7 +9,7 @@ import type {
 } from "@/types";
 import type { Person } from "@/types/person";
 
-export type FeedViewType = "tree" | "feed" | "kanban" | "calendar" | "list";
+export type FeedViewType = "status" | "tree" | "feed" | "kanban" | "calendar" | "list";
 export type DisplayDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
 export type FeedInteractionIntent =

@@ -14,12 +14,13 @@ import {
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
 import type { AuthMethod, NDKRelayStatus } from "./contracts";
+import type { RelayOperation } from "./use-relay-verification";
 
 interface UseSubscribeArgs {
   ndk: NDK | null;
   relaysRef: MutableRefObject<NDKRelayStatus[]>;
   authMethodRef: MutableRefObject<AuthMethod>;
-  pendingRelayVerificationRef: MutableRefObject<Map<string, { operation: "read" | "write"; requestedAt: number }>>;
+  pendingRelayVerificationRef: MutableRefObject<Map<string, { operation: RelayOperation; requestedAt: number }>>;
   relayAuthRetryHistoryRef: MutableRefObject<Map<string, number>>;
   markRelayPendingSubscriptionReplay: (normalizedRelayUrl: string) => void;
   beginRelayOperation: (op: "read" | "write") => void;
