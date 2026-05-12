@@ -139,12 +139,6 @@
       "type": "Typ"
     }
   },
-  "status": {
-    "open": "ToDo",
-    "active": "Aktiv",
-    "done": "Erledigt",
-    "closed": "Geschlossen"
-  },
   "feed": {
     "hydrating": "Lade Ereignisse vom Relay…",
     "loadingMoreEvents": "Lade weitere Ereignisse..."

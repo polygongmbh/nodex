@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState, type UIEvent, useDeferredValue } from "react";
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
-import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatusType, normalizeTaskStatus } from "@/types";
+import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatusType } from "@/types";
+import { resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FeedTaskCard } from "./feed/FeedTaskCard";
@@ -389,14 +390,6 @@ export function FeedView({
   const canCompleteTask = useCallback((task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   }, [currentUser, isInteractionBlocked]);
-  const getStateLabel = (status: Task["status"]) => t(`status.${status || "open"}`);
-  const normalizeLabelText = (value?: string) =>
-    (value || "")
-      .toLowerCase()
-      .replace(/[-_]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
   const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {
     return getAncestorChainFromSource({ taskById }, task.id, focusedTaskId);
   };
@@ -445,16 +438,7 @@ export function FeedView({
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
-      const normalizedUpdateStatus = normalizeTaskStatus(update.status);
-      const typeLabel = getStateLabel(normalizedUpdateStatus.type);
-      const statusDescription = normalizedUpdateStatus.description?.trim();
-      const isDefaultInProgressDescription =
-        normalizedUpdateStatus.type === "active" &&
-        normalizeLabelText(statusDescription) === normalizeLabelText("In Progress");
-      // Prefer the specific state description (e.g. "Backlog") over the generic type label
-      // ("Open"). Fall back to the type label when there is no meaningful description.
-      const displayLabel =
-        statusDescription && !isDefaultInProgressDescription ? statusDescription : typeLabel;
+      const displayLabel = resolveTaskStateFromStatus(update.status).label;
 
       return (
         <div

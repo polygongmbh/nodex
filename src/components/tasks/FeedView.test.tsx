@@ -970,6 +970,35 @@ describe("FeedView", () => {
     expect(screen.getByRole("button", { name: "Person actions for alice" })).toBeInTheDocument();
   });
 
+  it("labels generic state updates using the registry's configured state label, not the i18n alias", () => {
+    const task = makeTask({
+      id: "task-active-no-desc",
+      author,
+      content: "Backend deploy #infra",
+      status: { type: "open" },
+      stateUpdates: [
+        {
+          id: "state-active-no-desc",
+          status: { type: "active" },
+          timestamp: new Date(Date.now() - 60_000),
+          authorPubkey: author.pubkey,
+        },
+      ],
+    });
+
+    render(
+      <FeedView
+        focusedTaskId={null}
+        tasks={[task]}
+        allTasks={[task]}
+      />
+    );
+
+    const entry = screen.getByTestId("feed-state-entry-state-active-no-desc");
+    expect(entry).toHaveTextContent("In Progress");
+    expect(entry).not.toHaveTextContent("Doing");
+  });
+
   it("renders task state updates as standalone compact feed items with task breadcrumb context", () => {
     const taskWithStateUpdates = makeTask({
       id: "task-state",

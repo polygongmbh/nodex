@@ -139,12 +139,6 @@
       "type": "Tipo"
     }
   },
-  "status": {
-    "open": "Por hacer",
-    "active": "Haciendo",
-    "done": "Hecho",
-    "closed": "Cerrado"
-  },
   "feed": {
     "hydrating": "Cargando eventos del relay…",
     "loadingMoreEvents": "Cargando más eventos..."

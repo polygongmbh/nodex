@@ -12,6 +12,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Task status dropdown marks the current state with a check icon instead of a flat gray background, so the hover/focus highlight on other options is no longer washed out.
 
 ### Fixed
+- Feed timeline state-change rows now use the configured state labels ("Open", "In Progress", …) instead of the hardcoded "ToDo"/"Doing" i18n aliases, so they respect `VITE_TASK_STATE_CONFIG`.
 - Activity column previews now clamp by visual line count rather than producing an orphan ellipsis row when content spans multiple paragraphs.
 - Profile editor's avatar upload button is now visible (and tappable) on touch devices, where the previous hover-only reveal made it unreachable.
 - Task status dropdown now opens via Space/Enter/ArrowDown from the tree view when the status icon is keyboard-focused, matching the feed/list behaviour.
