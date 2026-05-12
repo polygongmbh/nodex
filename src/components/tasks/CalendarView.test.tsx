@@ -49,7 +49,7 @@ describe("CalendarView responsiveness", () => {
       content: "Root task #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+
       timestamp: new Date("2026-02-17T09:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T09:00:00.000Z"),
       likes: 0,

@@ -5,6 +5,7 @@ import {
   getNextTreeTaskFoldState,
 } from "./tree-task-item-helpers";
 import { makeTask } from "@/test/fixtures";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 describe("deriveTreeTaskItemChildren", () => {
   it("separates task children from comment children and counts completed subtasks", () => {
@@ -15,7 +16,7 @@ describe("deriveTreeTaskItemChildren", () => {
     const doneChild = makeTask({ id: "done-child", parentId: "parent", state: {
       status: "done"
     } });
-    const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
+    const commentChild = makeTask({ id: "comment-child", parentId: "parent", kind: NostrEventKind.TextNote });
 
     const summary = deriveTreeTaskItemChildren({
       allChildren: [openChild, doneChild, commentChild],
@@ -37,7 +38,7 @@ describe("deriveTreeTaskItemChildren", () => {
     const closedChild = makeTask({ id: "closed-child", parentId: "parent", state: {
       status: "closed"
     } });
-    const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
+    const commentChild = makeTask({ id: "comment-child", parentId: "parent", kind: NostrEventKind.TextNote });
 
     const summary = deriveTreeTaskItemChildren({
       allChildren: [openChild, closedChild, commentChild],
@@ -58,7 +59,7 @@ describe("deriveTreeTaskItemChildren", () => {
     const hiddenTask = makeTask({ id: "hidden-task", parentId: "parent", state: {
       status: "open"
     } });
-    const visibleComment = makeTask({ id: "visible-comment", parentId: "parent", taskType: "comment" });
+    const visibleComment = makeTask({ id: "visible-comment", parentId: "parent", kind: NostrEventKind.TextNote });
 
     const summary = deriveTreeTaskItemChildren({
       allChildren: [visibleTask, hiddenTask, visibleComment],

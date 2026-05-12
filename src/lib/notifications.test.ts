@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import i18n from "@/lib/i18n/config";
 import { getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { notifyPartialPublish, notifyPublishSavedForRetry, notifyPublished } from "./notifications";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -79,7 +80,7 @@ describe("notifyPublished", () => {
   });
 
   it("deduplicates and combines provided space names with resolved relay names", () => {
-    notifyPublished("comment", {
+    notifyPublished(NostrEventKind.TextNote, {
       spaceNames: ["relay.one", "relay.two"],
       relayUrls: ["wss://relay.two", "wss://relay.three"],
     });
@@ -97,7 +98,7 @@ describe("notifyPublished", () => {
   });
 
   it("falls back to the generic comment success toast when no spaces are known", () => {
-    notifyPublished("comment");
+    notifyPublished(NostrEventKind.TextNote);
 
     expect(getRelayNameFromUrl).not.toHaveBeenCalled();
     expect(i18n.t).toHaveBeenCalledWith("composer:toasts.success.publishedComment");

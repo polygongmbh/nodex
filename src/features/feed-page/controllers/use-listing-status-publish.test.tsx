@@ -16,7 +16,6 @@ const listingTask = makeTask({
   id: "b".repeat(64),
   kind: NostrEventKind.ClassifiedListing,
   author: currentUser,
-  taskType: "comment",
   content: "Listing body",
   tags: ["market"],
   relays: ["relay-one"],

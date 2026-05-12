@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeTask } from "@/test/fixtures";
+import { NostrEventKind } from "@/lib/nostr/types";
 import {
   buildChildrenMap,
   calculateFrecency,
@@ -64,7 +65,7 @@ describe("calculateProgress", () => {
     const parent = makeTask({ id: "p" });
     const doneChild = makeTask({ id: "c1", parentId: "p", state: { status: "done" } });
     const openChild = makeTask({ id: "c2", parentId: "p", state: { status: "open" } });
-    const comment = makeTask({ id: "c3", parentId: "p", taskType: "comment" });
+    const comment = makeTask({ id: "c3", parentId: "p", kind: NostrEventKind.TextNote });
     const closedChild = makeTask({ id: "c4", parentId: "p", state: { status: "closed" } });
     const map = buildChildrenMap([parent, doneChild, openChild, comment, closedChild]);
     expect(calculateProgress(parent, map)).toBe(0.5);
@@ -91,8 +92,8 @@ describe("calculateFrecency", () => {
     const task = makeTask({ id: "p" });
     const comment = makeTask({
       id: "c",
+      kind: NostrEventKind.TextNote,
       parentId: "p",
-      taskType: "comment",
       timestamp: new Date(NOW - 60 * 1000),
     });
     const map = buildChildrenMap([task, comment]);
@@ -166,7 +167,7 @@ describe("evaluateTaskPriorities", () => {
     const open = makeTask({ id: "open" });
     const done = makeTask({ id: "done", state: { status: "done" } });
     const closed = makeTask({ id: "closed", state: { status: "closed" } });
-    const comment = makeTask({ id: "comment", parentId: "open", taskType: "comment" });
+    const comment = makeTask({ id: "comment", parentId: "open", kind: NostrEventKind.TextNote });
     const result = evaluateTaskPriorities([open, done, closed, comment], NOW);
     expect(result.has("open")).toBe(true);
     expect(result.has("done")).toBe(false);

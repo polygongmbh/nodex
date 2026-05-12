@@ -45,7 +45,7 @@ describe("nostrEventToTask", () => {
     
     expect(task.id).toBe("abc123");
     expect(task.content).toBe("Hello world");
-    expect(task.taskType).toBe("comment");
+    expect(task.kind).toBe(NostrEventKind.TextNote);
     expect(task.author.pubkey).toBe(baseEvent.pubkey);
   });
 
@@ -58,7 +58,7 @@ describe("nostrEventToTask", () => {
     
     const task = nostrEventToTask(taskEvent);
     
-    expect(task.taskType).toBe("task");
+    expect(task.kind).toBe(NostrEventKind.Task);
     expect(getTaskStatus(task.state)).toBe("open");
   });
 
@@ -73,7 +73,6 @@ describe("nostrEventToTask", () => {
     const task = nostrEventToTask(listingEvent);
 
     expect(task.kind).toBe(NostrEventKind.ClassifiedListing);
-    expect(task.feedMessageType).toBe("listing");
   });
 
   it("extracts hashtags from content", () => {
@@ -398,7 +397,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].id).toBe(events[0].id);
     expect(tasks[1].id).toBe(events[1].id);
     expect(tasks[2].id).toBe(events[2].id);
-    expect(tasks[2].feedMessageType).toBe("listing");
+    expect(tasks[2].kind).toBe(NostrEventKind.ClassifiedListing);
   });
 
   it("applies latest state-event update to task status", () => {

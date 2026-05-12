@@ -54,6 +54,7 @@ import type {
   Task,
   TaskCreateResult,
   TaskDateType,
+  TaskEntryType,
   TaskState,
 } from "@/types";
 import type { Person } from "@/types/person";
@@ -121,7 +122,7 @@ interface UseTaskPublishFlowOptions {
   publishTaskPriorityUpdate: (taskId: string, priority: number) => Promise<boolean>;
   publishTaskCreateFollowUps: (params: {
     publishedEventId?: string;
-    taskType: Task["taskType"];
+    kind: NostrEventKind;
     initialState?: TaskState;
     dueDate?: Date;
     content: string;
@@ -283,9 +284,7 @@ export function useTaskPublishFlow({
       console.warn("Unexpected taskType payload; defaulting to task", { taskType });
     }
 
-    const normalizedTaskType: Task["taskType"] = normalizedMessageType === "task" ? "task" : "comment";
-    const feedMessageType: Task["feedMessageType"] =
-      normalizedMessageType === "listing" ? "listing" : undefined;
+    const normalizedTaskType: TaskEntryType = normalizedMessageType === "task" ? "task" : "comment";
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
@@ -426,7 +425,7 @@ export function useTaskPublishFlow({
                 normalizedAttachments,
                 normalizedLocationGeohash
               )
-            : feedMessageType
+            : normalizedMessageType === "listing"
               ? buildNip99PublishTags({
                   metadata: nip99,
                   hashtags: resolvedSubmissionTags,
@@ -503,7 +502,6 @@ export function useTaskPublishFlow({
       relays: effectiveRelayIds.length > 0
         ? effectiveRelayIds
         : (demoFeedActive ? [demoRelayId] : []),
-      taskType: normalizedTaskType,
       timestamp: createdAt,
       state: (normalizedTaskType === "task" ? (initialState ?? { status: "open" }) : undefined) as TaskState,
       dueDate: submissionDueDate,
@@ -516,8 +514,7 @@ export function useTaskPublishFlow({
           ? assigneePubkeys
           : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
-      feedMessageType,
-      nip99: feedMessageType ? nip99 : undefined,
+      nip99: normalizedMessageType === "listing" ? nip99 : undefined,
       locationGeohash: normalizedLocationGeohash,
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
@@ -541,7 +538,7 @@ export function useTaskPublishFlow({
 
     if (!shouldPublish) {
       setLocalTasks((prev) => [{ ...baseTask, id: Date.now().toString() }, ...prev]);
-      notifyLocalSaved(normalizedTaskType);
+      notifyLocalSaved(publishKind);
       return { ok: true, mode: "local" };
     }
 
@@ -634,7 +631,7 @@ export function useTaskPublishFlow({
 
         await publishTaskCreateFollowUps({
           publishedEventId: publishResult.eventId,
-          taskType: normalizedTaskType,
+          kind: publishKind,
           initialState,
           dueDate: submissionDueDate,
           content,
@@ -652,7 +649,7 @@ export function useTaskPublishFlow({
           )
         );
         notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
-        notifyPublished(normalizedTaskType, {
+        notifyPublished(publishKind, {
           relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
         });
       }, PUBLISH_UNDO_DELAY_MS);
@@ -682,7 +679,7 @@ export function useTaskPublishFlow({
 
     await publishTaskCreateFollowUps({
       publishedEventId: publishResult.eventId,
-      taskType: normalizedTaskType,
+      kind: publishKind,
       initialState,
       dueDate: submissionDueDate,
       content,
@@ -701,7 +698,7 @@ export function useTaskPublishFlow({
       ...prev,
     ]);
     notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
-    notifyPublished(normalizedTaskType, {
+    notifyPublished(publishKind, {
       relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
     });
     return { ok: true, mode: "published" };
@@ -780,16 +777,15 @@ export function useTaskPublishFlow({
       relays: effectiveRelayIds.length > 0
         ? effectiveRelayIds
         : (demoFeedActive ? [demoRelayId] : []),
-      taskType: draft.taskType,
       timestamp: parseStoredDate(draft.createdAt) || new Date(),
-      state: (draft.taskType === "task" ? (draft.initialState ?? { status: "open" }) : undefined) as TaskState,
+      state: (isTaskKind(draft.publishKind) ? (draft.initialState ?? { status: "open" }) : undefined) as TaskState,
       dueDate,
       dueTime: draft.dueTime,
       dateType: draft.dateType,
       parentId: draft.parentId,
       mentions: draft.mentionPubkeys,
-      assigneePubkeys: draft.taskType === "task" ? draft.assigneePubkeys : undefined,
-      priority: draft.taskType === "task" ? draft.priority : undefined,
+      assigneePubkeys: isTaskKind(draft.publishKind) ? draft.assigneePubkeys : undefined,
+      priority: isTaskKind(draft.publishKind) ? draft.priority : undefined,
       locationGeohash: draft.locationGeohash,
       attachments: draft.attachments,
     };
@@ -798,7 +794,7 @@ export function useTaskPublishFlow({
 
     await publishTaskCreateFollowUps({
       publishedEventId: result.eventId,
-      taskType: draft.taskType,
+      kind: draft.publishKind,
       initialState: draft.initialState,
       dueDate,
       content: draft.content,
@@ -808,7 +804,7 @@ export function useTaskPublishFlow({
       fallbackRelayUrls: relayUrls,
     });
 
-    notifyPublished(draft.taskType, {
+    notifyPublished(draft.publishKind, {
       relayUrls: result.publishedRelayUrls?.length ? result.publishedRelayUrls : relayUrls,
     });
   }, [

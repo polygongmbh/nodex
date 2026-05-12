@@ -96,7 +96,7 @@ function createTask(
     content,
     tags,
     relays: ["demo"],
-    taskType: "task",
+
     timestamp,
     likes: options.likes || 0,
     replies: options.replies || 0,
@@ -129,7 +129,7 @@ function createComment(
     content,
     tags,
     relays: ["demo"],
-    taskType: "comment",
+
     timestamp,
     likes: options.likes || 0,
     replies: options.replies || 0,

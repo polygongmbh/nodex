@@ -14,6 +14,7 @@ import { mapTaskStatusToStateEvent } from "@/infrastructure/nostr/task-state-eve
 import { buildLinkedTaskCalendarEvent } from "@/infrastructure/nostr/nip52-task-calendar-events";
 import { buildTaskPriorityUpdateEvent } from "@/infrastructure/nostr/task-property-events";
 import { NostrEventKind } from "@/lib/nostr/types";
+import { isTaskKind } from "@/domain/content/task-kind";
 import type { Task, TaskDateType, TaskState, Relay } from "@/types";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
@@ -219,7 +220,7 @@ export function useTaskPublishControls({
 
   const publishTaskCreateFollowUps = useCallback(async (params: {
     publishedEventId?: string;
-    taskType: Task["taskType"];
+    kind: NostrEventKind;
     initialState?: TaskState;
     dueDate?: Date;
     content: string;
@@ -230,7 +231,7 @@ export function useTaskPublishControls({
   }) => {
     const {
       publishedEventId,
-      taskType,
+      kind,
       initialState,
       dueDate,
       content,
@@ -239,7 +240,7 @@ export function useTaskPublishControls({
       publishedRelayUrls,
       fallbackRelayUrls,
     } = params;
-    if (!publishedEventId || taskType !== "task") return;
+    if (!publishedEventId || !isTaskKind(kind)) return;
 
     const followUpRelayUrls = (
       publishedRelayUrls && publishedRelayUrls.length > 0

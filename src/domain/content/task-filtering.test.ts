@@ -26,7 +26,7 @@ function buildTask(overrides: Partial<Task> = {}): Task {
     content: "hello #general",
     tags: ["general"],
     relays: ["r1"],
-    taskType: "task",
+
     timestamp: new Date("2026-01-01T00:00:00.000Z"),
     likes: 0,
     replies: 0,

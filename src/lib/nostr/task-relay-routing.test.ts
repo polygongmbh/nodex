@@ -25,7 +25,6 @@ const makeTask = (overrides: Partial<Task> = {}): Task => ({
   content: "Task",
   tags: ["backend"],
   relays: ["relay-a"],
-  taskType: "task",
   timestamp: new Date(),
   likes: 0,
   replies: 0,

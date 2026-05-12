@@ -1,4 +1,5 @@
-import { type FeedMessageType, type TaskStateUpdate, type TaskState, type TaskStatus, Task, getLastEditedAt } from "@/types";
+import { type TaskStateUpdate, type TaskState, type TaskStatus, Task, getLastEditedAt } from "@/types";
+import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
@@ -62,10 +63,6 @@ function replaceIndexedPersonMentions(content: string, tags: string[][]): string
   });
 }
 
-function getFeedMessageType(event: NostrEventWithRelay): FeedMessageType | undefined {
-  return event.kind === NostrEventKind.ClassifiedListing ? "listing" : undefined;
-}
-
 export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const authorFallbackLabel = formatUserFacingPubkey(event.pubkey);
   const author: Person = {
@@ -80,9 +77,8 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     .filter((tag) => tag[0]?.toLowerCase() === "t")
     .map((tag) => tag[1].toLowerCase());
   const allTags = [...new Set([...eventTags, ...contentTags])];
-  const isTask = event.kind === NostrEventKind.Task;
-  const feedMessageType = getFeedMessageType(event);
-  const nip99 = feedMessageType ? parseNip99MetadataFromTags(event.tags) : undefined;
+  const isTask = isTaskKind(event.kind);
+  const nip99 = isListingKind(event.kind) ? parseNip99MetadataFromTags(event.tags) : undefined;
   const locationGeohash = parseFirstGeohashTag(event.tags);
 
   let state: TaskState = { status: "open" };
@@ -150,8 +146,6 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     content: normalizedContent,
     tags: allTags,
     relays: getRelayIdsFromEvent(event),
-    taskType: isTask ? "task" : "comment",
-    feedMessageType,
     nip99,
     locationGeohash,
     timestamp: new Date(event.created_at * 1000),

@@ -16,7 +16,6 @@ function buildTask(id: string, timestampIso: string, overrides: Partial<Task> = 
     content: `Task ${id}`,
     tags: ["test"],
     relays: ["demo"],
-    taskType: "task",
     timestamp: new Date(timestampIso),
     state: {
       status: "open"
@@ -40,13 +39,11 @@ describe("dedupeMergedTasks", () => {
   it("keeps the latest version of a replaceable listing", () => {
     const listingA = buildTask("listing-a", "2026-03-16T09:00:00.000Z", {
       kind: NostrEventKind.ClassifiedListing,
-      taskType: "comment",
       author: makePerson({ pubkey: "a".repeat(64), name: "a", displayName: "A" }),
       nip99: { identifier: "listing-1", title: "Listing 1", status: "active" },
     });
     const listingB = buildTask("listing-b", "2026-03-16T10:00:00.000Z", {
       kind: NostrEventKind.ClassifiedListing,
-      taskType: "comment",
       author: makePerson({ pubkey: "a".repeat(64), name: "a", displayName: "A" }),
       nip99: { identifier: "listing-1", title: "Listing 1", status: "sold" },
     });

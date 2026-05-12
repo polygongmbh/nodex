@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { useTaskPublishControls } from "./use-task-publish-controls";
 import { makeRelay, makeTask } from "@/test/fixtures";
+import { NostrEventKind } from "@/lib/nostr/types";
 import type { Relay, Task } from "@/types";
 
 vi.mock("@/lib/notifications", () => ({
@@ -45,7 +46,7 @@ function Harness({
         onClick={() =>
           controls.publishTaskCreateFollowUps({
             publishedEventId: "a".repeat(64),
-            taskType: "task",
+            kind: NostrEventKind.Task,
             initialState: { status: "open" },
             content: "Task content",
             fallbackRelayUrls: ["wss://relay.one"],

@@ -27,7 +27,6 @@ function buildTask(overrides: Partial<Task> & Pick<Task, "id" | "relays">): Task
     content: overrides.content ?? "Task",
     tags: overrides.tags ?? [],
     relays: overrides.relays,
-    taskType: overrides.taskType ?? "task",
     timestamp: overrides.timestamp ?? new Date("2026-03-27T00:00:00.000Z"),
     likes: overrides.likes ?? 0,
     replies: overrides.replies ?? 0,

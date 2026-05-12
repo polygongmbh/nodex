@@ -23,7 +23,7 @@ const baseTask: Task = {
   content: "Root task",
   tags: [],
   relays: [],
-  taskType: "task",
+
   timestamp: new Date(),
   lastEditedAt: new Date(),
   likes: 0,

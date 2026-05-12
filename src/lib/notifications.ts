@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import i18n from "@/lib/i18n/config";
-import type { TaskEntryType } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
+import { isTaskKind } from "@/domain/content/task-kind";
 import { getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { isPubkeyDerivedPlaceholder, type Person } from "@/types/person";
 
@@ -219,7 +220,7 @@ export function notifyRetryRejectedByRelay(reason?: string): void {
 }
 
 export function notifyPublished(
-  taskType: TaskEntryType,
+  kind: NostrEventKind,
   options: PublishSuccessToastOptions = {}
 ): void {
   const resolvedSpaceNames = Array.from(
@@ -236,11 +237,11 @@ export function notifyPublished(
     toast.success(i18n.t("composer:toasts.success.publishedToSpaces", { spaceNames: resolvedSpaceNames.join(", ") }));
     return;
   }
-  toast.success(taskType === "comment" ? i18n.t("composer:toasts.success.publishedComment") : i18n.t("composer:toasts.success.publishedTask"));
+  toast.success(isTaskKind(kind) ? i18n.t("composer:toasts.success.publishedTask") : i18n.t("composer:toasts.success.publishedComment"));
 }
 
-export function notifyLocalSaved(taskType: TaskEntryType): void {
-  toast.success(taskType === "comment" ? i18n.t("composer:toasts.success.localComment") : i18n.t("composer:toasts.success.localTask"));
+export function notifyLocalSaved(kind: NostrEventKind): void {
+  toast.success(isTaskKind(kind) ? i18n.t("composer:toasts.success.localTask") : i18n.t("composer:toasts.success.localComment"));
 }
 
 interface PublishRetryToastOptions {

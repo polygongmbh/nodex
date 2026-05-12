@@ -25,7 +25,7 @@ const baseTask: Task = {
   content: "hello",
   tags: ["general"],
   relays: ["demo"],
-  taskType: "task",
+
   timestamp: new Date(),
   likes: 0,
   replies: 0,

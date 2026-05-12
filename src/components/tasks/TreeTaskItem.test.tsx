@@ -301,7 +301,6 @@ describe("TreeTaskItem status actions", () => {
     const commentTask: Task = {
       ...baseTask,
       id: "c1",
-      taskType: "comment",
       kind: NostrEventKind.TextNote,
       content: "Looks good",
       author: makePerson({
@@ -325,7 +324,6 @@ describe("TreeTaskItem status actions", () => {
     const commentTask: Task = {
       ...baseTask,
       id: "c-plain-author",
-      taskType: "comment",
       kind: NostrEventKind.TextNote,
       content: "Looks good",
       author: makePerson({
@@ -349,7 +347,6 @@ describe("TreeTaskItem status actions", () => {
     const commentTask: Task = {
       ...baseTask,
       id: "c-right-avatar-only",
-      taskType: "comment",
       kind: NostrEventKind.TextNote,
       content: "Looks good",
       assigneePubkeys: ["ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318"],

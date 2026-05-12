@@ -11,7 +11,7 @@ const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
   content: id,
   tags: ["x"],
   relays: ["demo"],
-  taskType: "task",
+
   timestamp,
   lastEditedAt,
   likes: 0,

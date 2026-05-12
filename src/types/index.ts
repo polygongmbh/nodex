@@ -133,11 +133,9 @@ export interface Task {
   content: string;
   tags: string[];
   relays: string[];
-  taskType: TaskEntryType;
   likes?: number;
   replies?: number;
   reposts?: number;
-  feedMessageType?: FeedMessageType;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   timestamp: Date;

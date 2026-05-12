@@ -32,7 +32,7 @@ const rootTask: Task = {
   content: "Root task",
   tags: ["general"],
   relays: ["demo"],
-  taskType: "task",
+
   timestamp: new Date(),
   lastEditedAt: new Date(),
   likes: 0,
