@@ -57,6 +57,25 @@ describe("TaskDueDateEditorForm", () => {
     });
   });
 
+  it("invokes onClose after confirm but not after clear", () => {
+    const onClose = vi.fn();
+
+    render(
+      <TaskDueDateEditorForm
+        taskId="task-due-date"
+        dueDate={new Date("2026-05-01T00:00:00.000Z")}
+        dateType="due"
+        onClose={onClose}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("contains pointer and click events inside the editor surface", () => {
     const onPointerDown = vi.fn();
     const onClick = vi.fn();

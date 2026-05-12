@@ -28,6 +28,7 @@ interface TaskDueDateEditorFormProps {
   dueTime?: string;
   dateType?: TaskDateType;
   idPrefix?: string;
+  onClose?: () => void;
 }
 
 export function TaskDueDateEditorForm({
@@ -36,6 +37,7 @@ export function TaskDueDateEditorForm({
   dueTime,
   dateType,
   idPrefix = "task",
+  onClose,
 }: TaskDueDateEditorFormProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -63,6 +65,7 @@ export function TaskDueDateEditorForm({
       dueTime: localDueTime || undefined,
       dateType: localDateType,
     });
+    onClose?.();
   };
 
   const handleClear = () => {

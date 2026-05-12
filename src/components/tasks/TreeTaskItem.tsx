@@ -102,6 +102,7 @@ export function TreeTaskItem({
   const prevHasMatchingFiltersRef = useRef(hasMatchingFilters);
   const [isCheering, setIsCheering] = useState(false);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
   const isPubkey = task.author.pubkey.length === 64 && /^[a-f0-9]+$/.test(task.author.pubkey);
@@ -417,7 +418,7 @@ export function TreeTaskItem({
 
           {/* Due date */}
           {task.dueDate && (
-            <Popover>
+            <Popover open={isDueDatePopoverOpen} onOpenChange={setIsDueDatePopoverOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -453,6 +454,7 @@ export function TreeTaskItem({
                     dueTime={task.dueTime}
                     dateType={task.dateType}
                     idPrefix="task"
+                    onClose={() => setIsDueDatePopoverOpen(false)}
                   />
                 </PopoverContent>
               )}

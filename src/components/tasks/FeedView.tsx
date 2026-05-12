@@ -84,10 +84,12 @@ function FeedDueDateChip({
   editable,
   dueDateColor,
 }: FeedDueDateChipProps) {
+  const [open, setOpen] = useState(false);
+
   if (!task.dueDate) return null;
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -122,6 +124,7 @@ function FeedDueDateChip({
             dueTime={task.dueTime}
             dateType={task.dateType}
             idPrefix="feed"
+            onClose={() => setOpen(false)}
           />
         </PopoverContent>
       )}

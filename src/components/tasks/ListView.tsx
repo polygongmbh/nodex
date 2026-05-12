@@ -375,6 +375,7 @@ export function ListView({
 
   // Editable due date cell
   const DueDateCell = ({ task }: { task: Task }) => {
+    const [open, setOpen] = useState(false);
     const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
     const editable = canCompleteTask(task);
     const trigger = (
@@ -415,7 +416,7 @@ export function ListView({
     }
     
     return (
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <TaskDueDateEditorForm
@@ -424,6 +425,7 @@ export function ListView({
             dueTime={task.dueTime}
             dateType={task.dateType}
             idPrefix="list"
+            onClose={() => setOpen(false)}
           />
         </PopoverContent>
       </Popover>
