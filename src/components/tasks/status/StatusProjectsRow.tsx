@@ -49,7 +49,7 @@ export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: Sta
 
   return (
     <section
-      aria-label={t("status.projects.label", { defaultValue: "In progress" })}
+      aria-label={t("status.projects.label")}
       className="border-b border-border"
     >
       <div className="flex gap-3 overflow-x-auto px-3 py-3 scrollbar-main-view">

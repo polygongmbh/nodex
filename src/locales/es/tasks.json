@@ -251,6 +251,16 @@
   },
   "status": {
     "viewMore": "Ver {{count}} más en {{view}}",
-    "showView": "Mostrar {{view}}"
+    "showView": "Mostrar {{view}}",
+    "myTasks": {
+      "label": "Mis tareas",
+      "signInPrompt": "Inicia sesión para ver las tareas asignadas a ti."
+    },
+    "timeline": {
+      "label": "Actividad"
+    },
+    "projects": {
+      "label": "En curso"
+    }
   }
 }

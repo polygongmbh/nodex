@@ -251,6 +251,16 @@
   },
   "status": {
     "viewMore": "{{count}} weitere in {{view}} anzeigen",
-    "showView": "{{view}} anzeigen"
+    "showView": "{{view}} anzeigen",
+    "myTasks": {
+      "label": "Meine Aufgaben",
+      "signInPrompt": "Melde dich an, um dir zugewiesene Aufgaben zu sehen."
+    },
+    "timeline": {
+      "label": "Aktivität"
+    },
+    "projects": {
+      "label": "In Bearbeitung"
+    }
   }
 }

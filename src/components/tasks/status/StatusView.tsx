@@ -84,7 +84,7 @@ export function StatusView() {
       />
       <div className={isMobile ? "flex flex-1 min-h-0 flex-col divide-y divide-border" : "flex flex-1 min-h-0 divide-x divide-border"}>
         <div className={isMobile ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-hidden"}>
-          <SectionHeader label={t("status.myTasks.label", { defaultValue: "My tasks" })} />
+          <SectionHeader label={t("status.myTasks.label")} />
           <div className="h-[calc(100%-2rem)]">
             <StatusMyTasksTree
               contextTasks={contextTasks}
@@ -95,7 +95,7 @@ export function StatusView() {
           </div>
         </div>
         <div className={isMobile ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-hidden"}>
-          <SectionHeader label={t("status.timeline.label", { defaultValue: "Activity" })} />
+          <SectionHeader label={t("status.timeline.label")} />
           <div className="h-[calc(100%-2rem)]">
             <StatusTimeline
               contextTasks={contextTasks}

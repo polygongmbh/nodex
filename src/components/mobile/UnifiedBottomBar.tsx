@@ -1441,7 +1441,7 @@ export function UnifiedBottomBar({
                         type="button"
                         onClick={() => setDueTime("")}
                         className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label={t("composer.hints.clearTime", { defaultValue: "Clear time" })}
+                        aria-label={t("composer.hints.clearTime")}
                       >
                         <X className="w-3 h-3" />
                       </button>

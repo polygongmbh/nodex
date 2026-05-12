@@ -77,7 +77,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
             void dispatchFeedInteraction({ type: "task.toggleComplete", taskId: task.id });
           }}
           aria-disabled={!canChangeStatus || undefined}
-          aria-label={t("tasks.actions.setStatus", { defaultValue: "Set status" })}
+          aria-label={t("tasks.actions.setStatus")}
           className={cn(
             "flex-shrink-0 mt-0.5 p-0.5 -m-0.5 rounded transition-colors",
             canChangeStatus ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-60"

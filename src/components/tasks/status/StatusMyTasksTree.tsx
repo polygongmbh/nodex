@@ -58,7 +58,7 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
   if (peopleScope.size === 0) {
     return (
       <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-        {t("status.myTasks.signInPrompt", { defaultValue: "Sign in to see tasks assigned to you." })}
+        {t("status.myTasks.signInPrompt")}
       </div>
     );
   }
