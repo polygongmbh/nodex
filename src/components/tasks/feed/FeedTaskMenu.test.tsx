@@ -1,10 +1,16 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 import i18n from "@/lib/i18n/config";
 import { FeedTaskMenu } from "./FeedTaskMenu";
 import { makeTask } from "@/test/fixtures";
+import { NostrEventKind } from "@/lib/nostr/types";
+
+const { dispatchMock } = vi.hoisted(() => ({ dispatchMock: vi.fn() }));
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchMock,
+}));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -57,6 +63,10 @@ function renderMenu(overrides: Partial<Parameters<typeof FeedTaskMenu>[0]> = {})
 }
 
 describe("FeedTaskMenu", () => {
+  beforeEach(() => {
+    dispatchMock.mockReset();
+  });
+
   it("shows recompose and delete for the recent owner-authored post", () => {
     renderMenu();
     expect(screen.getByText("Copy link")).toBeInTheDocument();
@@ -93,6 +103,35 @@ describe("FeedTaskMenu", () => {
     expect(screen.queryByText("Copy link")).not.toBeInTheDocument();
     fireEvent.click(grid.querySelector("button[class*='h-8']")!);
     expect(onReact).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers due-date and priority editors for editable tasks", () => {
+    renderMenu();
+    expect(screen.getByText("Set due date")).toBeInTheDocument();
+    expect(screen.getByText("Set priority")).toBeInTheDocument();
+  });
+
+  it("hides due-date and priority editors when the post is not a task", () => {
+    renderMenu({
+      task: makeTask({
+        kind: NostrEventKind.TextNote,
+        author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", avatar: "" },
+        timestamp: new Date(),
+      }),
+    });
+    expect(screen.queryByText("Set due date")).not.toBeInTheDocument();
+    expect(screen.queryByText("Set priority")).not.toBeInTheDocument();
+  });
+
+  it("dispatches a priority update when a priority option is chosen", () => {
+    const { props } = renderMenu();
+    fireEvent.click(screen.getByText("Set priority"));
+    const view = screen.getByTestId(`feed-task-menu-priority-${props.task.id}`);
+    const p3 = view.querySelector("button:nth-of-type(4)");
+    fireEvent.click(p3!);
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "task.updatePriority", taskId: props.task.id, priority: 60 }),
+    );
   });
 
   it("requires confirmation before invoking onDelete", () => {

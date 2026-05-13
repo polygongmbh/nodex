@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import { ArrowLeft, ChevronDown, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronDown, Flag, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
@@ -20,6 +20,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { canAuthorMutate } from "@/domain/content/task-edit-window";
+import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
+import { isTaskKind } from "@/domain/content/task-kind";
+import { DISPLAY_PRIORITY_OPTIONS, displayPriorityFromStored, storedPriorityFromDisplay } from "@/domain/content/task-priority";
+import { TaskDueDateEditorForm } from "@/components/tasks/TaskMetadataEditors";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import type { Task } from "@/types";
 
 const QUICK_EMOJIS = ["👍", "❤️", "🎉", "😄", "🚀", "👀", "🙏", "🙌", "🛠️", "👎"];
@@ -49,8 +54,10 @@ export function FeedTaskMenu({
   className,
 }: FeedTaskMenuProps) {
   const { t } = useTranslation("tasks");
+  const { t: tApp } = useTranslation("app");
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [view, setView] = useState<"actions" | "react">("actions");
+  const [view, setView] = useState<"actions" | "react" | "due" | "priority">("actions");
   const [confirm, setConfirm] = useState<"delete" | "recompose" | null>(null);
 
   useEffect(() => {
@@ -62,6 +69,8 @@ export function FeedTaskMenu({
     currentUserPubkey,
     hasChildren,
   });
+  const canEditTaskMetadata = isTaskKind(task.kind) && canPubkeyUpdateTask(task, currentUserPubkey);
+  const currentDisplayPriority = displayPriorityFromStored(task.priority);
 
   const stop = (event: MouseEvent) => {
     event.stopPropagation();
@@ -92,15 +101,7 @@ export function FeedTaskMenu({
         <DropdownMenuContent align="end" onClick={stop}>
           {view === "react" ? (
             <div className="flex flex-col gap-1 p-1" data-testid={`feed-task-menu-react-${task.id}`}>
-              <button
-                type="button"
-                onClick={() => setView("actions")}
-                aria-label={t("tasks.actions.cancel")}
-                className="inline-flex items-center gap-1.5 self-start rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                {t("tasks.actions.cancel")}
-              </button>
+              <BackButton onClick={() => setView("actions")} label={t("tasks.actions.cancel")} />
               <div className="grid grid-cols-5 gap-1">
                 {QUICK_EMOJIS.map((emoji) => (
                   <button
@@ -116,6 +117,42 @@ export function FeedTaskMenu({
                   </button>
                 ))}
               </div>
+            </div>
+          ) : view === "due" ? (
+            <div className="w-[280px]" data-testid={`feed-task-menu-due-${task.id}`}>
+              <div className="px-1 pt-1">
+                <BackButton onClick={() => setView("actions")} label={t("tasks.actions.cancel")} />
+              </div>
+              <TaskDueDateEditorForm
+                taskId={task.id}
+                dueDate={task.dueDate}
+                dueTime={task.dueTime}
+                dateType={task.dateType}
+                idPrefix="feed-menu"
+                onClose={() => setMenuOpen(false)}
+              />
+            </div>
+          ) : view === "priority" ? (
+            <div className="flex flex-col gap-1 p-1" data-testid={`feed-task-menu-priority-${task.id}`}>
+              <BackButton onClick={() => setView("actions")} label={t("tasks.actions.cancel")} />
+              {DISPLAY_PRIORITY_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => {
+                    const stored = storedPriorityFromDisplay(option);
+                    if (typeof stored !== "number") return;
+                    void dispatchFeedInteraction({ type: "task.updatePriority", taskId: task.id, priority: stored });
+                    setMenuOpen(false);
+                  }}
+                  className={cn(
+                    "flex items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-muted",
+                    currentDisplayPriority === option && "bg-muted font-medium",
+                  )}
+                >
+                  <span>{tApp(`priorityLevels.${option}`)}</span>
+                </button>
+              ))}
             </div>
           ) : (
             <>
@@ -138,6 +175,33 @@ export function FeedTaskMenu({
                 <Link2 className="mr-2 h-4 w-4" />
                 {t("tasks.actions.copyPermalink")}
               </DropdownMenuItem>
+              {canEditTaskMetadata ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      setView("due");
+                    }}
+                  >
+                    <CalendarClock className="mr-2 h-4 w-4" />
+                    {task.dueDate
+                      ? t("tasks.actions.editDueDate")
+                      : t("tasks.actions.setDueDate")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      setView("priority");
+                    }}
+                  >
+                    <Flag className="mr-2 h-4 w-4" />
+                    {typeof task.priority === "number"
+                      ? t("tasks.actions.editPriority")
+                      : t("tasks.actions.setPriority")}
+                  </DropdownMenuItem>
+                </>
+              ) : null}
               {mutationGate.canRecompose || mutationGate.canDelete ? (
                 <DropdownMenuSeparator />
               ) : null}
@@ -204,5 +268,19 @@ export function FeedTaskMenu({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+function BackButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="inline-flex items-center gap-1.5 self-start rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+    >
+      <ArrowLeft className="h-3 w-3" />
+      {label}
+    </button>
   );
 }
