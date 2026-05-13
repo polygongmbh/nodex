@@ -310,7 +310,7 @@ export function useTaskPublishFlow({
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
-    const submissionParentId = focusedTaskId;
+    const submissionParentId = recomposeOf ? recomposeOf.parentId ?? null : focusedTaskId;
     const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
     const resolvedRelaySelection = resolveRelaySelectionForSubmission({
       taskType: normalizedTaskType,
@@ -981,6 +981,8 @@ export function useTaskPublishFlow({
         eventId: existingTask.id,
         originalKind: existingTask.kind,
         relayIds: existingTask.relays,
+        parentId: existingTask.parentId,
+        contentPreview: existingTask.content.slice(0, 120),
       },
     };
 

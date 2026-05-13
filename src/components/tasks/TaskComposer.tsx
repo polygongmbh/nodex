@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
-import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
+import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, RefreshCcw, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
 import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment } from "@/types";
@@ -283,7 +283,7 @@ export function TaskComposer({
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
-  const activeRecomposeOfRef = useRef<ComposeRecomposeOf | undefined>(undefined);
+  const [activeRecomposeOf, setActiveRecomposeOf] = useState<ComposeRecomposeOf | undefined>(undefined);
   const lastAppliedMentionRequestIdRef = useRef<number | null>(null);
   const dragDepthRef = useRef(0);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
@@ -449,7 +449,7 @@ export function TaskComposer({
     if (lastAppliedRestoreRequestIdRef.current === composeRestoreRequest.id) return;
     lastAppliedRestoreRequestIdRef.current = composeRestoreRequest.id;
     const restoreState = composeRestoreRequest.state;
-    activeRecomposeOfRef.current = restoreState.recomposeOf;
+    setActiveRecomposeOf(restoreState.recomposeOf);
     setContent(restoreState.content || "");
     setTaskType(
       getTaskComposerRestoreMessageType(
@@ -854,6 +854,37 @@ export function TaskComposer({
     });
   }, [content, isNip99SummaryTouched, isNip99TitleTouched, taskType]);
 
+  const resetComposerState = () => {
+    setContent("");
+    const nextFilterTags = filterTagNames ?? [];
+    const nextFilterMentions = filterMentionPubkeys ?? [];
+    prevFilterTagNamesRef.current = [...nextFilterTags];
+    prevFilterMentionPubkeysRef.current = [...nextFilterMentions];
+    autoManagedFilterTagNamesRef.current = new Set(nextFilterTags);
+    autoManagedFilterMentionPubkeysRef.current = new Set(nextFilterMentions);
+    setExplicitTagNames([...nextFilterTags]);
+    setExplicitMentionPubkeys([...nextFilterMentions]);
+    setLocationGeohash(undefined);
+    setShowLocationControls(false);
+    setNip99({});
+    setIsNip99TitleTouched(false);
+    setIsNip99SummaryTouched(false);
+    setAttachments([]);
+    attachmentFileRef.current = {};
+    if (draftStorageKey) {
+      clearTaskComposerDraft(draftStorageKey);
+    }
+  };
+
+  const handleAbortRecomposeKeepDraft = () => {
+    setActiveRecomposeOf(undefined);
+  };
+
+  const handleAbortRecomposeDiscard = () => {
+    setActiveRecomposeOf(undefined);
+    resetComposerState();
+  };
+
   const handleSubmit = (submitType?: unknown) => {
     if (submitBlock && submitBlock.code !== "signin" && !submitBlock.isHardDisabled) {
       handleBlockedSubmitAttempt();
@@ -909,8 +940,8 @@ export function TaskComposer({
 
     const submittedPriority = storedPriorityFromDisplay(priority);
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-    const submittedRecomposeOf = activeRecomposeOfRef.current;
-    activeRecomposeOfRef.current = undefined;
+    const submittedRecomposeOf = activeRecomposeOf;
+    setActiveRecomposeOf(undefined);
     onSubmit({
       content,
       tags: submitTags,
@@ -1475,6 +1506,41 @@ export function TaskComposer({
       )}
       data-onboarding="focused-compose"
     >
+      {activeRecomposeOf ? (
+        <div
+          className="order-0 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-foreground"
+          role="status"
+          data-testid="task-composer-recompose-banner"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <RefreshCcw className="h-3.5 w-3.5 shrink-0 text-warning" />
+            <div className="min-w-0 leading-snug">
+              <span className="font-medium">{t("composer.recompose.bannerTitle")}</span>
+              {activeRecomposeOf.contentPreview ? (
+                <span className="ml-1 truncate text-muted-foreground">
+                  «{activeRecomposeOf.contentPreview}»
+                </span>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleAbortRecomposeKeepDraft}
+              className="rounded-md border border-border bg-background px-2 py-1 text-xs font-medium hover:bg-muted"
+            >
+              {t("composer.recompose.keepDraft")}
+            </button>
+            <button
+              type="button"
+              onClick={handleAbortRecomposeDiscard}
+              className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              {t("composer.recompose.discard")}
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div className="relative order-1">
         <textarea
           data-onboarding="compose-input"

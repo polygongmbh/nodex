@@ -112,6 +112,10 @@ export interface ComposeRecomposeOf {
   originalKind: number;
   /** Relay ids the original post lived on; used to route the deletion. */
   relayIds: string[];
+  /** Parent event id of the original post, if it was a reply. */
+  parentId?: string;
+  /** Short excerpt of the original content, shown on the active-recompose banner. */
+  contentPreview?: string;
 }
 
 export interface ComposeRestoreState {

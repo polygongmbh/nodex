@@ -28,6 +28,11 @@
       "mobileComment": "Suchen oder Kommentar hinzufügen... #tags",
       "geohash": "Geohash eingeben (z. B. u4pruyd)"
     },
+    "recompose": {
+      "bannerTitle": "Du ersetzt deinen früheren Beitrag",
+      "keepDraft": "Als neuen Beitrag behalten",
+      "discard": "Verwerfen"
+    },
     "blocked": {
       "signin": "Anmeldung erforderlich",
       "write": "Schreibe zuerst eine Nachricht",

@@ -222,6 +222,31 @@ function Harness({
       <button
         onClick={async () => {
           const result = await hook.handleNewTask(
+            "Edited",
+            ["general"],
+            ["relay-one"],
+            "comment",
+            undefined,
+            undefined,
+            undefined,
+            null,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId: "b".repeat(64) }
+          );
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        RecomposeWithParentSubmit
+      </button>
+      <button
+        onClick={async () => {
+          const result = await hook.handleNewTask(
             "Edited #general",
             ["general"],
             ["relay-one"],
@@ -247,6 +272,7 @@ function Harness({
       <output data-testid="restore-id">{String(hook.composeRestoreRequest?.id ?? "")}</output>
       <output data-testid="restore-content">{hook.composeRestoreRequest?.state.content ?? ""}</output>
       <output data-testid="restore-recompose">{hook.composeRestoreRequest?.state.recomposeOf?.eventId ?? ""}</output>
+      <output data-testid="restore-recompose-parent">{hook.composeRestoreRequest?.state.recomposeOf?.parentId ?? ""}</output>
       <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
       <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
       <output data-testid="local-count">{String(localTasks.length)}</output>
@@ -437,6 +463,39 @@ describe("useTaskPublishFlow", () => {
         ["wss://relay.one"],
       );
     });
+  });
+
+  it("carries the original post's parent into the recomposed reply", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const parentId = "b".repeat(64);
+    const parentTask = makeTask({
+      id: parentId,
+      content: "Parent task #general",
+      relays: ["relay-one"],
+    });
+    const childTask = makeTask({
+      id: "task-1",
+      content: "Reply body",
+      relays: ["relay-one"],
+      author: currentUser,
+      parentId,
+    });
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt" }));
+
+    renderHarness({ initialTasks: [parentTask, childTask], currentUser, publishEvent });
+    fireEvent.click(screen.getByRole("button", { name: "Recompose" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-recompose-parent")).toHaveTextContent(parentId);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "RecomposeWithParentSubmit" }));
+
+    await waitFor(() => {
+      expect(publishEvent).toHaveBeenCalled();
+    });
+    const replacementCall = publishEvent.mock.calls.find(([kind]) => kind !== 5);
+    expect(replacementCall?.[3]).toBe(parentId);
   });
 
   it("skips deletion when the re-compose replacement publish fails", async () => {

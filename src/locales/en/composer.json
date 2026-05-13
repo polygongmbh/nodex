@@ -28,6 +28,11 @@
       "mobileComment": "Search or add comment... #tags",
       "geohash": "Enter geohash (e.g. u4pruyd)"
     },
+    "recompose": {
+      "bannerTitle": "Replacing your earlier post",
+      "keepDraft": "Keep as new",
+      "discard": "Discard"
+    },
     "blocked": {
       "signin": "Sign in required",
       "write": "Write a message first",
