@@ -18,12 +18,6 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenuSeparator: () => <div />,
 }));
 
-vi.mock("@/components/ui/popover", () => ({
-  Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  PopoverTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock("@/components/ui/alert-dialog", () => ({
   AlertDialog: ({ children, open }: { children: ReactNode; open: boolean }) => (open ? <div role="alertdialog">{children}</div> : null),
   AlertDialogAction: ({ children, onClick, className }: { children: ReactNode; onClick?: () => void; className?: string }) => (
@@ -88,6 +82,17 @@ describe("FeedTaskMenu", () => {
     renderMenu({ onCopyPermalink });
     fireEvent.click(screen.getByText("Copy link"));
     expect(onCopyPermalink).toHaveBeenCalledTimes(1);
+  });
+
+  it("swaps the menu for the emoji grid when React is selected", () => {
+    const onReact = vi.fn();
+    const { props } = renderMenu({ onReact });
+    fireEvent.click(screen.getByText("Add reaction"));
+    const grid = screen.getByTestId(`feed-task-menu-react-${props.task.id}`);
+    expect(grid).toBeInTheDocument();
+    expect(screen.queryByText("Copy link")).not.toBeInTheDocument();
+    fireEvent.click(grid.querySelector("button[class*='h-8']")!);
+    expect(onReact).toHaveBeenCalledTimes(1);
   });
 
   it("requires confirmation before invoking onDelete", () => {

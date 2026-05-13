@@ -1,7 +1,6 @@
-import { useState, type MouseEvent } from "react";
-import { ChevronDown, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
+import { useEffect, useState, type MouseEvent } from "react";
+import { ArrowLeft, ChevronDown, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,8 +50,12 @@ export function FeedTaskMenu({
 }: FeedTaskMenuProps) {
   const { t } = useTranslation("tasks");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [reactionOpen, setReactionOpen] = useState(false);
+  const [view, setView] = useState<"actions" | "react">("actions");
   const [confirm, setConfirm] = useState<"delete" | "recompose" | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) setView("actions");
+  }, [menuOpen]);
 
   const mutationGate = canAuthorMutate({
     task,
@@ -87,32 +90,24 @@ export function FeedTaskMenu({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onClick={stop}>
-          <Popover open={reactionOpen} onOpenChange={setReactionOpen}>
-            <PopoverTrigger asChild>
-              <DropdownMenuItem
-                onSelect={(event) => {
-                  event.preventDefault();
-                  setReactionOpen(true);
-                }}
+          {view === "react" ? (
+            <div className="flex flex-col gap-1 p-1" data-testid={`feed-task-menu-react-${task.id}`}>
+              <button
+                type="button"
+                onClick={() => setView("actions")}
+                aria-label={t("tasks.actions.cancel")}
+                className="inline-flex items-center gap-1.5 self-start rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                <SmilePlus className="mr-2 h-4 w-4" />
-                {t("tasks.actions.react")}
-              </DropdownMenuItem>
-            </PopoverTrigger>
-            <PopoverContent
-              side="left"
-              align="start"
-              className="w-auto p-2"
-              onClick={stop}
-            >
-              <div className="flex flex-wrap gap-1">
+                <ArrowLeft className="h-3 w-3" />
+                {t("tasks.actions.cancel")}
+              </button>
+              <div className="grid grid-cols-5 gap-1">
                 {QUICK_EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
                     onClick={() => {
                       onReact(emoji);
-                      setReactionOpen(false);
                       setMenuOpen(false);
                     }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded text-base leading-none hover:bg-muted"
@@ -121,46 +116,58 @@ export function FeedTaskMenu({
                   </button>
                 ))}
               </div>
-            </PopoverContent>
-          </Popover>
-          <DropdownMenuItem
-            onSelect={(event) => {
-              event.preventDefault();
-              setMenuOpen(false);
-              onCopyPermalink();
-            }}
-          >
-            <Link2 className="mr-2 h-4 w-4" />
-            {t("tasks.actions.copyPermalink")}
-          </DropdownMenuItem>
-          {mutationGate.canRecompose || mutationGate.canDelete ? (
-            <DropdownMenuSeparator />
-          ) : null}
-          {mutationGate.canRecompose ? (
-            <DropdownMenuItem
-              onSelect={(event) => {
-                event.preventDefault();
-                setMenuOpen(false);
-                setConfirm("recompose");
-              }}
-            >
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              {t("tasks.actions.recompose")}
-            </DropdownMenuItem>
-          ) : null}
-          {mutationGate.canDelete ? (
-            <DropdownMenuItem
-              onSelect={(event) => {
-                event.preventDefault();
-                setMenuOpen(false);
-                setConfirm("delete");
-              }}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t("tasks.actions.delete")}
-            </DropdownMenuItem>
-          ) : null}
+            </div>
+          ) : (
+            <>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setView("react");
+                }}
+              >
+                <SmilePlus className="mr-2 h-4 w-4" />
+                {t("tasks.actions.react")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setMenuOpen(false);
+                  onCopyPermalink();
+                }}
+              >
+                <Link2 className="mr-2 h-4 w-4" />
+                {t("tasks.actions.copyPermalink")}
+              </DropdownMenuItem>
+              {mutationGate.canRecompose || mutationGate.canDelete ? (
+                <DropdownMenuSeparator />
+              ) : null}
+              {mutationGate.canRecompose ? (
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    setMenuOpen(false);
+                    setConfirm("recompose");
+                  }}
+                >
+                  <RefreshCcw className="mr-2 h-4 w-4" />
+                  {t("tasks.actions.recompose")}
+                </DropdownMenuItem>
+              ) : null}
+              {mutationGate.canDelete ? (
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    setMenuOpen(false);
+                    setConfirm("delete");
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t("tasks.actions.delete")}
+                </DropdownMenuItem>
+              ) : null}
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
