@@ -126,6 +126,13 @@ export interface ComposeRestoreRequest {
   state: ComposeRestoreState;
 }
 
+export interface TaskReactions {
+  /** Count of distinct reactor pubkeys per emoji. */
+  totals: Record<string, number>;
+  /** Emojis the current user has reacted with on this task. */
+  mine: string[];
+}
+
 export interface Task {
   id: string;
   kind: NostrEventKind;
@@ -136,6 +143,7 @@ export interface Task {
   likes?: number;
   replies?: number;
   reposts?: number;
+  reactions?: TaskReactions;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   timestamp: Date;

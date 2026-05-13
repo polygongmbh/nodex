@@ -1,4 +1,4 @@
-import { type TaskStateUpdate, type TaskState, type TaskStatus, Task, getLastEditedAt } from "@/types";
+import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskReactions, Task, getLastEditedAt } from "@/types";
 import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
@@ -7,6 +7,11 @@ import {
   isTaskStateEventKind,
   mapTaskStateEventToTaskStatus,
 } from "@/infrastructure/nostr/task-state-events";
+import {
+  extractReactionTargetId,
+  isReactionEvent,
+  normalizeReactionContent,
+} from "@/infrastructure/nostr/reaction-events";
 import {
   extractPriorityTargetTaskId,
   isPriorityPropertyEvent,
@@ -188,7 +193,48 @@ export function extractAllTags(events: NostrEvent[]): string[] {
   return Array.from(allTags).sort();
 }
 
-export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
+export interface NostrEventsToTasksOptions {
+  /** Pubkey of the current viewer, used to mark which reactions are mine. */
+  viewerPubkey?: string;
+}
+
+function summarizeReactionsByTarget(
+  events: NostrEventWithRelay[],
+  viewerPubkey?: string,
+): Map<string, TaskReactions> {
+  // (targetId, pubkey) -> Set<emoji>. Dedup by (target, pubkey, emoji).
+  const byTarget = new Map<string, Map<string, Set<string>>>();
+  for (const event of events) {
+    if (!isReactionEvent(event.kind)) continue;
+    const targetId = extractReactionTargetId(event.tags);
+    if (!targetId) continue;
+    const emoji = normalizeReactionContent(event.content);
+    if (!emoji) continue;
+    const byPubkey = byTarget.get(targetId) ?? new Map<string, Set<string>>();
+    const set = byPubkey.get(event.pubkey) ?? new Set<string>();
+    set.add(emoji);
+    byPubkey.set(event.pubkey, set);
+    byTarget.set(targetId, byPubkey);
+  }
+  const result = new Map<string, TaskReactions>();
+  for (const [targetId, byPubkey] of byTarget) {
+    const totals: Record<string, number> = {};
+    const mine: string[] = [];
+    for (const [pubkey, emojis] of byPubkey) {
+      for (const emoji of emojis) {
+        totals[emoji] = (totals[emoji] ?? 0) + 1;
+        if (viewerPubkey && pubkey === viewerPubkey) mine.push(emoji);
+      }
+    }
+    result.set(targetId, { totals, mine });
+  }
+  return result;
+}
+
+export function nostrEventsToTasks(
+  events: NostrEventWithRelay[],
+  options: NostrEventsToTasksOptions = {},
+): Task[] {
   const isPriorityPropertyNote = (event: NostrEventWithRelay): boolean =>
     isPriorityPropertyEvent(event.kind, event.tags);
 
@@ -346,6 +392,13 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
         lastEditedAt: new Date(update.createdAt * 1000),
       }),
     });
+  }
+
+  const reactionsByTaskId = summarizeReactionsByTarget(events, options.viewerPubkey);
+  for (const [taskId, reactions] of reactionsByTaskId) {
+    const task = taskMap.get(taskId);
+    if (!task) continue;
+    taskMap.set(taskId, { ...task, reactions });
   }
 
   return Array.from(taskMap.values());

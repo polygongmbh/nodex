@@ -886,11 +886,97 @@ describe("extractAllTags", () => {
     const events: NostrEvent[] = [
       { ...baseEvent, tags: [["t", "zebra"], ["t", "alpha"]] },
     ];
-    
+
     const tags = extractAllTags(events);
-    
+
     expect(tags[0]).toBe("alpha");
     expect(tags[1]).toBe("zebra");
+  });
+});
+
+describe("nostrEventsToTasks reaction aggregation", () => {
+  it("attaches per-emoji totals and the viewer's reactions", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({ id: "task-r", kind: NostrEventKind.Task, content: "task", sig: "s" }),
+      makeRelayEvent({
+        id: "r1",
+        pubkey: "viewer-pk",
+        kind: NostrEventKind.Reaction,
+        tags: [["e", "task-r"], ["p", DEFAULT_TEST_PUBKEY], ["k", "1621"]],
+        content: "+",
+      }),
+      makeRelayEvent({
+        id: "r2",
+        pubkey: "other-pk",
+        kind: NostrEventKind.Reaction,
+        tags: [["e", "task-r"], ["p", DEFAULT_TEST_PUBKEY], ["k", "1621"]],
+        content: "👍",
+      }),
+      makeRelayEvent({
+        id: "r3",
+        pubkey: "viewer-pk",
+        kind: NostrEventKind.Reaction,
+        tags: [["e", "task-r"], ["p", DEFAULT_TEST_PUBKEY], ["k", "1621"]],
+        content: "🎉",
+      }),
+    ];
+
+    const tasks = nostrEventsToTasks(events, { viewerPubkey: "viewer-pk" });
+    const task = tasks.find((t) => t.id === "task-r");
+    expect(task?.reactions?.totals).toEqual({ "👍": 2, "🎉": 1 });
+    expect(new Set(task?.reactions?.mine)).toEqual(new Set(["👍", "🎉"]));
+  });
+
+  it("deduplicates the same (target, pubkey, emoji)", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({ id: "task-d", kind: NostrEventKind.Task, content: "t", sig: "s" }),
+      makeRelayEvent({
+        id: "rd1",
+        pubkey: "x",
+        kind: NostrEventKind.Reaction,
+        tags: [["e", "task-d"]],
+        content: "👍",
+      }),
+      makeRelayEvent({
+        id: "rd2",
+        pubkey: "x",
+        kind: NostrEventKind.Reaction,
+        tags: [["e", "task-d"]],
+        content: "👍",
+      }),
+    ];
+    const task = nostrEventsToTasks(events).find((t) => t.id === "task-d");
+    expect(task?.reactions?.totals).toEqual({ "👍": 1 });
+  });
+
+  it("ignores reactions whose content is not a valid emoji or +/-", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({ id: "task-i", kind: NostrEventKind.Task, content: "t", sig: "s" }),
+      makeRelayEvent({
+        id: "ri",
+        pubkey: "z",
+        kind: NostrEventKind.Reaction,
+        tags: [["e", "task-i"]],
+        content: ":heart:",
+      }),
+    ];
+    const task = nostrEventsToTasks(events).find((t) => t.id === "task-i");
+    expect(task?.reactions).toBeUndefined();
+  });
+
+  it("ignores reactions that target unknown event ids", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({ id: "task-u", kind: NostrEventKind.Task, content: "t", sig: "s" }),
+      makeRelayEvent({
+        id: "ru",
+        pubkey: "w",
+        kind: NostrEventKind.Reaction,
+        tags: [["e", "no-such-task"]],
+        content: "👍",
+      }),
+    ];
+    const task = nostrEventsToTasks(events).find((t) => t.id === "task-u");
+    expect(task?.reactions).toBeUndefined();
   });
 });
 

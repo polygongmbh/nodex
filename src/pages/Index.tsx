@@ -17,6 +17,7 @@ import { useChannelFilterController } from "@/features/feed-page/controllers/use
 import { useOnboarding } from "@/components/onboarding/use-onboarding";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
+import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 import { useTaskPublishControls } from "@/features/feed-page/controllers/use-task-publish-controls";
 import { useTaskStatusController } from "@/features/feed-page/controllers/use-task-status-controller";
 import { useKind0People } from "@/infrastructure/nostr/use-kind0-people";
@@ -328,6 +329,13 @@ function FeedIndexContent() {
     onTogglePriorityFilter: handleTogglePriorityFilterShortcut,
     onToggleCompactView: handleToggleCompactTaskCards,
   });
+
+  const { react: publishReaction, ensureReactionsFetched } = useReactions();
+
+  useEffect(() => {
+    if (!focusedTaskId) return;
+    void ensureReactionsFetched(focusedTaskId);
+  }, [focusedTaskId, ensureReactionsFetched]);
 
   const currentFilterSnapshot = useMemo<FilterSnapshot>(
     () =>

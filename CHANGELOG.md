@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- NIP-25 emoji reactions on feed cards: chips show running totals per emoji, a small picker offers a quick palette, and reactions for the focused task are fetched on-demand from the relays.
+
 ## [3.1.1] - 2026-05-13
 Patch release for Nostr protocol cleanup, date handling, and status interaction fixes.
 

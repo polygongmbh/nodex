@@ -149,12 +149,13 @@ export function useIndexDerivedData({
         sig: event.sig || "",
         relayUrl: event.relayUrl,
         relayUrls: event.relayUrls,
-      }))
+      })),
+      { viewerPubkey: user?.pubkey },
     );
     const tasks = preserveTaskListIdentity(lastNostrTasksRef.current, fresh);
     lastNostrTasksRef.current = tasks;
     return tasks;
-  }, [filteredNostrEvents, isHydrating]);
+  }, [filteredNostrEvents, isHydrating, user?.pubkey]);
 
   const allTasks = useMemo(() => {
     const fixtureAndNostrTasks = dedupeMergedTasks(mergeTasks(demoTasks, nostrTasks));

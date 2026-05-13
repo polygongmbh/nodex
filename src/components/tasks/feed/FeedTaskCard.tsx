@@ -26,6 +26,8 @@ import { type Nip99ListingStatus, type RawNostrEvent, type Task } from "@/types"
 import type { Person } from "@/types/person";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
+import { ReactionsRow } from "@/components/tasks/ReactionsRow";
+import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 
 interface FeedTaskCardProps {
   task: Task;
@@ -76,6 +78,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
 }: FeedTaskCardProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { react: publishReaction } = useReactions();
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
@@ -366,6 +369,12 @@ export const FeedTaskCard = memo(function FeedTaskCard({
             <TaskAttachmentList
               attachments={attachmentsWithoutInlineEmbeds}
               onMediaClick={(url) => onOpenTaskMedia(task.id, url)}
+            />
+            <ReactionsRow
+              task={task}
+              onReact={(emoji) => { void publishReaction({ id: task.id, kind: task.kind, pubkey: task.author.pubkey, tags: task.rawNostrEvent?.tags ?? [] }, emoji); }}
+              pickerAlwaysVisible={isActiveTask}
+              className="mt-1"
             />
           </div>
         </div>

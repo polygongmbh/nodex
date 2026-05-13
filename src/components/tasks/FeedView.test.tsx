@@ -13,6 +13,13 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: (): { user: null } => ({ user: null }),
 }));
 
+vi.mock("@/features/feed-page/controllers/use-reactions", () => ({
+  useReactions: () => ({
+    react: vi.fn().mockResolvedValue(false),
+    ensureReactionsFetched: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   PopoverTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
