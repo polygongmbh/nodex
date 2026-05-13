@@ -38,7 +38,19 @@
       "expandMatchingOnly": "Nur gefilterte Unteraufgaben anzeigen",
       "expandOpenSubtasks": "Offene Unteraufgaben anzeigen",
       "showMore": "Mehr anzeigen",
-      "showLess": "Weniger anzeigen"
+      "showLess": "Weniger anzeigen",
+      "openMenu": "Weitere Aktionen",
+      "react": "Reaktion hinzufügen",
+      "copyPermalink": "Link kopieren",
+      "recompose": "Neu verfassen…",
+      "delete": "Löschen",
+      "deleteConfirmTitle": "Diesen Beitrag löschen?",
+      "deleteConfirmBody": "Ein Löschereignis wird veröffentlicht. Relays können trotzdem eine Kopie behalten.",
+      "deleteConfirmAction": "Löschen",
+      "recomposeConfirmTitle": "Beitrag neu verfassen?",
+      "recomposeConfirmBody": "Dein Entwurf erscheint im Editor. Das Original wird erst nach erfolgreichem Senden gelöscht.",
+      "recomposeConfirmAction": "Neu verfassen",
+      "cancel": "Abbrechen"
     },
     "toasts": {
       "actionBlocked": "Diese Aktion ist gerade nicht verfügbar"

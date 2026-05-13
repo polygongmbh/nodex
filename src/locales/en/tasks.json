@@ -38,7 +38,19 @@
       "expandMatchingOnly": "Show matching subtasks",
       "expandOpenSubtasks": "Show open subtasks",
       "showMore": "Show more",
-      "showLess": "Show less"
+      "showLess": "Show less",
+      "openMenu": "More actions",
+      "react": "Add reaction",
+      "copyPermalink": "Copy link",
+      "recompose": "Re-compose…",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete this post?",
+      "deleteConfirmBody": "This publishes a deletion event. Relays may keep a copy.",
+      "deleteConfirmAction": "Delete",
+      "recomposeConfirmTitle": "Re-compose this post?",
+      "recomposeConfirmBody": "Your draft will appear in the composer. The original is deleted only after the replacement is published.",
+      "recomposeConfirmAction": "Re-compose",
+      "cancel": "Cancel"
     },
     "toasts": {
       "actionBlocked": "This action isn't available right now"

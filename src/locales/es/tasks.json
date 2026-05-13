@@ -38,7 +38,19 @@
       "expandMatchingOnly": "Mostrar subtareas coincidentes",
       "expandOpenSubtasks": "Mostrar subtareas abiertas",
       "showMore": "Mostrar más",
-      "showLess": "Mostrar menos"
+      "showLess": "Mostrar menos",
+      "openMenu": "Más acciones",
+      "react": "Añadir reacción",
+      "copyPermalink": "Copiar enlace",
+      "recompose": "Reescribir…",
+      "delete": "Eliminar",
+      "deleteConfirmTitle": "¿Eliminar esta publicación?",
+      "deleteConfirmBody": "Se publica un evento de eliminación. Los relays pueden conservar una copia.",
+      "deleteConfirmAction": "Eliminar",
+      "recomposeConfirmTitle": "¿Reescribir esta publicación?",
+      "recomposeConfirmBody": "Tu borrador aparecerá en el editor. La original solo se elimina tras publicar el reemplazo.",
+      "recomposeConfirmAction": "Reescribir",
+      "cancel": "Cancelar"
     },
     "toasts": {
       "actionBlocked": "Esta acción no está disponible ahora"

@@ -270,6 +270,13 @@ export function FeedView({
   const { openTaskMedia } = mediaController;
 
   const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
+  const parentIdsWithChildren = useMemo(() => {
+    const set = new Set<string>();
+    for (const task of allTasks) {
+      if (task.parentId) set.add(task.parentId);
+    }
+    return set;
+  }, [allTasks]);
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);
@@ -508,6 +515,7 @@ export function FeedView({
         isPendingPublish={isPendingPublish}
         isNip05Verified={nip05VerifiedPubkeys.has(resolvedAuthor.pubkey)}
         isProject={isProject(task.id)}
+        hasChildren={parentIdsWithChildren.has(task.id)}
         expandedContent={isContentExpanded}
         timeLabelFormatter={timeLabelFormatter}
         onOpenTaskMedia={openTaskMedia}

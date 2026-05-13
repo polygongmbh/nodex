@@ -27,8 +27,10 @@ import type { Person } from "@/types/person";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { ReactionsRow } from "@/components/tasks/ReactionsRow";
+import { FeedTaskMenu } from "@/components/tasks/feed/FeedTaskMenu";
 import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 import { useReactionsFor } from "@/features/feed-page/stores/reactions-registry";
+import { useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 
 interface FeedTaskCardProps {
   task: Task;
@@ -45,6 +47,7 @@ interface FeedTaskCardProps {
   isPendingPublish: boolean;
   isNip05Verified: boolean;
   isProject: boolean;
+  hasChildren: boolean;
   expandedContent: boolean;
   timeLabelFormatter: (date: Date) => string;
   onOpenTaskMedia: (taskId: string, url: string) => void;
@@ -69,6 +72,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   isPendingPublish,
   isNip05Verified,
   isProject,
+  hasChildren,
   expandedContent,
   timeLabelFormatter,
   onOpenTaskMedia,
@@ -81,6 +85,11 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { react: publishReaction } = useReactions();
   const reactions = useReactionsFor(task.id);
+  const taskCommands = useFeedTaskCommands();
+  const hasAnyReaction = Object.keys(reactions?.totals ?? {}).length > 0;
+  const handleMenuReact = (emoji: string) => {
+    void publishReaction({ id: task.id, kind: task.kind, pubkey: task.author.pubkey }, emoji);
+  };
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
@@ -197,7 +206,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
         focusTask(task.id);
       }}
       className={cn(
-        `border-b border-border transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
+        `group/feed-card border-b border-border transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
         isMobile ? "py-3" : breadcrumb.length > 0 ? "pb-4 pt-2.5" : "py-4",
         isCompletedVisual && "opacity-60",
         isLockedUntilStart && "opacity-50 grayscale",
@@ -343,6 +352,18 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                 >
                   {t("composer:toasts.actions.undo")}
                 </button>
+              ) : !isMobile ? (
+                <FeedTaskMenu
+                  task={task}
+                  currentUserPubkey={currentUser?.pubkey}
+                  hasChildren={hasChildren}
+                  onReact={handleMenuReact}
+                  onCopyPermalink={() => taskCommands.copyPermalink(task.id)}
+                  onRecompose={() => taskCommands.recomposePost(task.id)}
+                  onDelete={() => { void taskCommands.deletePost(task.id); }}
+                  pinned={isActiveTask}
+                  className="shrink-0"
+                />
               ) : null}
             </div>
             <div
@@ -372,13 +393,14 @@ export const FeedTaskCard = memo(function FeedTaskCard({
               attachments={attachmentsWithoutInlineEmbeds}
               onMediaClick={(url) => onOpenTaskMedia(task.id, url)}
             />
-            <ReactionsRow
-              targetId={task.id}
-              reactions={reactions}
-              onReact={(emoji) => { void publishReaction({ id: task.id, kind: task.kind, pubkey: task.author.pubkey }, emoji); }}
-              pickerAlwaysVisible={isActiveTask}
-              className="mt-1"
-            />
+            {hasAnyReaction ? (
+              <ReactionsRow
+                targetId={task.id}
+                reactions={reactions}
+                onReact={handleMenuReact}
+                className="mt-1"
+              />
+            ) : null}
           </div>
         </div>
       </div>

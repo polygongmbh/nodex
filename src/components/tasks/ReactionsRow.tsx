@@ -10,24 +10,16 @@ interface ReactionsRowProps {
   targetId: string;
   reactions: TaskReactions | undefined;
   onReact: (emoji: string) => void;
-  /** When true, the picker trigger is always visible; otherwise it appears on hover/focus of the parent. */
-  pickerAlwaysVisible?: boolean;
   className?: string;
 }
 
-export function ReactionsRow({ targetId, reactions, onReact, pickerAlwaysVisible, className }: ReactionsRowProps) {
+export function ReactionsRow({ targetId, reactions, onReact, className }: ReactionsRowProps) {
   const [open, setOpen] = useState(false);
   const totals = reactions?.totals ?? {};
   const mine = new Set(reactions?.mine ?? []);
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
-  if (entries.length === 0 && !pickerAlwaysVisible) {
-    return (
-      <div className={cn("flex items-center gap-1", className)}>
-        <ReactionPickerButton open={open} setOpen={setOpen} onPick={onReact} subtle />
-      </div>
-    );
-  }
+  if (entries.length === 0) return null;
 
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)} data-testid={`reactions-row-${targetId}`}>
@@ -65,20 +57,16 @@ interface ReactionPickerButtonProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onPick: (emoji: string) => void;
-  subtle?: boolean;
 }
 
-function ReactionPickerButton({ open, setOpen, onPick, subtle }: ReactionPickerButtonProps) {
+function ReactionPickerButton({ open, setOpen, onPick }: ReactionPickerButtonProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
           onClick={(event) => event.stopPropagation()}
-          className={cn(
-            "inline-flex items-center justify-center rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground",
-            subtle && "opacity-60 hover:opacity-100",
-          )}
+          className="inline-flex items-center justify-center rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Add reaction"
         >
           <SmilePlus className="h-3.5 w-3.5" />
