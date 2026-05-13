@@ -104,6 +104,7 @@ function FeedIndexContent() {
       NostrEventKind.CalendarDateBased,
       NostrEventKind.CalendarTimeBased,
       NostrEventKind.UserStatus,
+      NostrEventKind.Reaction,
     ],
     []
   );
