@@ -13,6 +13,10 @@ import {
   normalizeReactionContent,
 } from "@/infrastructure/nostr/reaction-events";
 import {
+  extractDeletionTargetIds,
+  isDeletionEvent,
+} from "@/infrastructure/nostr/deletion-events";
+import {
   extractPriorityTargetTaskId,
   isPriorityPropertyEvent,
   parsePriorityTag,
@@ -234,6 +238,22 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
   const isPriorityPropertyNote = (event: NostrEventWithRelay): boolean =>
     isPriorityPropertyEvent(event.kind, event.tags);
 
+  const deletedTargetIdsByAuthor = new Map<string, Set<string>>();
+  for (const event of events) {
+    if (!isDeletionEvent(event.kind)) continue;
+    const authorPubkey = event.pubkey;
+    if (!authorPubkey) continue;
+    const set = deletedTargetIdsByAuthor.get(authorPubkey) || new Set<string>();
+    for (const targetId of extractDeletionTargetIds(event.tags)) {
+      set.add(targetId);
+    }
+    deletedTargetIdsByAuthor.set(authorPubkey, set);
+  }
+  const isDeletedByOwnAuthor = (event: NostrEventWithRelay): boolean => {
+    const deletedByAuthor = deletedTargetIdsByAuthor.get(event.pubkey);
+    return Boolean(deletedByAuthor && deletedByAuthor.has(event.id));
+  };
+
   const rawTaskEvents = events.filter(
     (event) =>
       (
@@ -241,7 +261,8 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
         event.kind === NostrEventKind.TextNote ||
         event.kind === NostrEventKind.ClassifiedListing
       ) &&
-      !isPriorityPropertyNote(event)
+      !isPriorityPropertyNote(event) &&
+      !isDeletedByOwnAuthor(event)
   );
   const taskEventsById = new Map<string, NostrEventWithRelay>();
   const replaceableTaskEvents = new Map<string, NostrEventWithRelay>();

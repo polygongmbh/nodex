@@ -197,6 +197,12 @@ function FeedInteractionBusFromContexts({
       "task.listingStatus.change": (intent) => {
         taskCommands.changeListingStatus(intent.taskId, intent.status);
       },
+      "task.delete": (intent) => {
+        void taskCommands.deletePost(intent.taskId);
+      },
+      "task.copyPermalink": (intent) => {
+        void taskCommands.copyPermalink(intent.taskId);
+      },
       "task.undoPendingPublish": (intent) => {
         taskCommands.undoPendingPublish(intent.taskId);
       },

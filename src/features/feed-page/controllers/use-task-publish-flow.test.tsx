@@ -22,6 +22,8 @@ vi.mock("@/lib/notifications", () => ({
   notifyLocalSaved: vi.fn(),
   notifyNeedTag: vi.fn(),
   notifyPartialPublish: vi.fn(),
+  notifyPostDeleted: vi.fn(),
+  notifyPostDeleteFailed: vi.fn(),
   notifyPublished: vi.fn(),
   notifyPublishSavedForRetry: vi.fn(),
   notifyStatusRestricted: vi.fn(),
@@ -208,6 +210,14 @@ function Harness({
         Due
       </button>
       <button onClick={() => hook.handlePriorityChange("task-1", 60)}>Priority</button>
+      <button
+        onClick={async () => {
+          const result = await hook.handlePostDelete("task-1");
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        Delete
+      </button>
       <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
       <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
       <output data-testid="local-count">{String(localTasks.length)}</output>
@@ -327,6 +337,51 @@ describe("useTaskPublishFlow", () => {
       expect(screen.getByTestId("first-priority")).toHaveTextContent("60");
     });
     expect(screen.getByTestId("first-due-date")).toHaveTextContent("2026-04-01T10:00:00.000Z");
+  });
+
+  it("publishes a NIP-09 deletion and removes the local task on success", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({
+      id: "task-1",
+      relays: ["relay-one"],
+      author: currentUser,
+    });
+    const publishEvent = vi.fn(async () => ({
+      success: true,
+      eventId: "del-1",
+      publishedRelayUrls: ["wss://relay.one"],
+    }));
+
+    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => {
+      expect(window.__TEST_RESULT__).toBe(true);
+    });
+    expect(publishEvent).toHaveBeenCalledWith(
+      5,
+      "",
+      [["e", "task-1"], ["k", String(initialTask.kind)]],
+      undefined,
+      ["wss://relay.one"],
+    );
+    expect(screen.getByTestId("local-count")).toHaveTextContent("0");
+    expect(Number(screen.getByTestId("suppressed-count").textContent)).toBeGreaterThan(0);
+  });
+
+  it("refuses to delete a post the user does not own", async () => {
+    const currentUser = makePerson({ pubkey: "viewer-pub", name: "Viewer", displayName: "Viewer" });
+    const author = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author });
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "x" }));
+
+    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => {
+      expect(window.__TEST_RESULT__).toBe(false);
+    });
+    expect(publishEvent).not.toHaveBeenCalled();
   });
 
   it("blocks due date and priority changes for unrelated users on assigned tasks", async () => {

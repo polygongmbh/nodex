@@ -265,3 +265,19 @@ export function notifyPublishSavedForRetry(options: PublishRetryToastOptions = {
   }
   toast.error(i18n.t("composer:toasts.errors.publishSavedForRetry"));
 }
+
+export function notifyPostDeleted(): void {
+  toast.success(i18n.t("composer:toasts.success.postDeleted"));
+}
+
+export function notifyPostDeleteFailed(): void {
+  toast.error(i18n.t("composer:toasts.errors.publishDeleteFailed"));
+}
+
+export function notifyPermalinkCopied(): void {
+  toast.success(i18n.t("composer:toasts.success.permalinkCopied"));
+}
+
+export function notifyPermalinkCopyFailed(): void {
+  toast.error(i18n.t("composer:toasts.errors.permalinkCopyFailed"));
+}

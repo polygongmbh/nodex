@@ -17,6 +17,11 @@ import { useChannelFilterController } from "@/features/feed-page/controllers/use
 import { useOnboarding } from "@/components/onboarding/use-onboarding";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
+import { buildTaskPermalink } from "@/domain/content/task-permalink";
+import {
+  notifyPermalinkCopied,
+  notifyPermalinkCopyFailed,
+} from "@/lib/notifications";
 import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 import { useTaskPublishControls } from "@/features/feed-page/controllers/use-task-publish-controls";
 import { useTaskStatusController } from "@/features/feed-page/controllers/use-task-status-controller";
@@ -105,6 +110,7 @@ function FeedIndexContent() {
       NostrEventKind.CalendarTimeBased,
       NostrEventKind.UserStatus,
       NostrEventKind.Reaction,
+      NostrEventKind.EventDeletion,
     ],
     []
   );
@@ -527,6 +533,7 @@ function FeedIndexContent() {
     handleDismissAllFailedPublish,
     handleDueDateChange,
     handlePriorityChange,
+    handlePostDelete,
   } = useTaskPublishFlow({
     allTasks,
     relays,
@@ -608,6 +615,33 @@ function FeedIndexContent() {
     [setCurrentView, setSearchQuery, setDisplayDepthMode, setManageRouteActive, setIsSidebarFocused]
   );
 
+  const handleCopyPermalink = useCallback(async (taskId: string): Promise<boolean> => {
+    const task = allTasks.find((candidate) => candidate.id === taskId);
+    if (!task) return false;
+    const taskRelayUrls = resolveRelayUrlsFromIds(task.relays);
+    const activeRelayUrls = relays
+      .filter((relay) => relay.isActive)
+      .map((relay) => relay.url)
+      .filter(Boolean);
+    const permalink = buildTaskPermalink({
+      origin: typeof window !== "undefined" ? window.location.origin : "",
+      eventId: taskId,
+      taskRelayUrls,
+      activeRelayUrls,
+    });
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(permalink);
+        notifyPermalinkCopied();
+        return true;
+      }
+    } catch (error) {
+      console.warn("[permalink] clipboard write failed", { taskId, error });
+    }
+    notifyPermalinkCopyFailed();
+    return false;
+  }, [allTasks, relays, resolveRelayUrlsFromIds]);
+
   const taskCommands = useMemo<FeedTaskCommands>(
     () => ({
       focusTask: setFocusedTaskId,
@@ -617,6 +651,8 @@ function FeedIndexContent() {
       updateDueDate: handleDueDateChange,
       updatePriority: handlePriorityChange,
       changeListingStatus: handleListingStatusChange,
+      deletePost: handlePostDelete,
+      copyPermalink: handleCopyPermalink,
       undoPendingPublish: handleUndoPendingPublish,
       retryFailedPublish: handleRetryFailedPublish,
       repostFailedPublish: handleRepostFailedPublish,
@@ -626,6 +662,7 @@ function FeedIndexContent() {
     [
       setFocusedTaskId, handleNewTask, handleToggleComplete, handleStatusChange,
       handleDueDateChange, handlePriorityChange, handleListingStatusChange,
+      handlePostDelete, handleCopyPermalink,
       handleUndoPendingPublish, handleRetryFailedPublish, handleRepostFailedPublish,
       handleDismissFailedPublish, handleDismissAllFailedPublish,
     ]

@@ -83,6 +83,8 @@ export type FeedInteractionIntent =
   | { type: "task.updateDueDate"; taskId: string; dueDate?: Date; dueTime?: string; dateType?: TaskDateType }
   | { type: "task.updatePriority"; taskId: string; priority: number }
   | { type: "task.listingStatus.change"; taskId: string; status: Nip99ListingStatus }
+  | { type: "task.delete"; taskId: string }
+  | { type: "task.copyPermalink"; taskId: string }
   | { type: "task.undoPendingPublish"; taskId: string }
   | { type: "publish.failed.retry"; draftId: string }
   | { type: "publish.failed.repost"; draftId: string }

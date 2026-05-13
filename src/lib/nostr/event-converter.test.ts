@@ -716,6 +716,69 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toEqual([]);
   });
 
+  it("removes task events deleted by their own author via NIP-09", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "post-to-delete",
+        pubkey: "author-pub",
+        kind: NostrEventKind.TextNote,
+        content: "regretted",
+      }),
+      makeRelayEvent({
+        id: "post-survivor",
+        pubkey: "author-pub",
+        kind: NostrEventKind.TextNote,
+        content: "kept",
+      }),
+      makeRelayEvent({
+        id: "delete-evt",
+        pubkey: "author-pub",
+        kind: NostrEventKind.EventDeletion,
+        tags: [["e", "post-to-delete"], ["k", "1"]],
+        content: "",
+      }),
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks.map((task) => task.id)).toEqual(["post-survivor"]);
+  });
+
+  it("ignores deletion events whose author does not match the target", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "post-1",
+        pubkey: "author-pub",
+        kind: NostrEventKind.TextNote,
+        content: "owner content",
+      }),
+      makeRelayEvent({
+        id: "delete-evt",
+        pubkey: "imposter-pub",
+        kind: NostrEventKind.EventDeletion,
+        tags: [["e", "post-1"], ["k", "1"]],
+        content: "",
+      }),
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks.map((task) => task.id)).toEqual(["post-1"]);
+  });
+
+  it("ignores deletion events targeting events not present", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "delete-evt",
+        pubkey: "author-pub",
+        kind: NostrEventKind.EventDeletion,
+        tags: [["e", "missing"]],
+        content: "",
+      }),
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toEqual([]);
+  });
+
   it("breaks replaceable listing timestamp ties with lexical event id", () => {
     const events: NostrEventWithRelay[] = [
       makeRelayEvent({

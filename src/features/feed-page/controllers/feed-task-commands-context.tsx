@@ -34,6 +34,8 @@ export interface FeedTaskCommands {
   updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;
   updatePriority(taskId: string, priority: number): void;
   changeListingStatus(taskId: string, status: Nip99ListingStatus): void;
+  deletePost(taskId: string): Promise<boolean>;
+  copyPermalink(taskId: string): Promise<boolean>;
   undoPendingPublish(taskId: string): void;
   retryFailedPublish(draftId: string): Promise<void>;
   repostFailedPublish(draftId: string): Promise<void>;
@@ -49,6 +51,8 @@ const defaultCommands: FeedTaskCommands = {
   updateDueDate: () => {},
   updatePriority: () => {},
   changeListingStatus: () => {},
+  deletePost: async () => false,
+  copyPermalink: async () => false,
   undoPendingPublish: () => {},
   retryFailedPublish: async () => {},
   repostFailedPublish: async () => {},

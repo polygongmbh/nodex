@@ -28,10 +28,13 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import type { SignedNostrEvent } from "@/infrastructure/nostr/provider/use-publish";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { canUserUpdateTask } from "@/domain/content/task-permissions";
+import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
 import {
   notifyLocalSaved,
   notifyNeedTag,
   notifyPartialPublish,
+  notifyPostDeleted,
+  notifyPostDeleteFailed,
   notifyPublished,
   notifyPublishSavedForRetry,
   notifyStatusRestricted,
@@ -864,6 +867,45 @@ export function useTaskPublishFlow({
     void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
   }, [allTasks, currentUser, guardInteraction, publishTaskDueUpdate, setLocalTasks]);
 
+  const handlePostDelete = useCallback(async (taskId: string): Promise<boolean> => {
+    if (guardInteraction("modify")) return false;
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    if (!existingTask) return false;
+    const ownerPubkey = existingTask.author.pubkey.trim().toLowerCase();
+    const userPubkey = currentUser?.pubkey?.trim().toLowerCase() || "";
+    if (!userPubkey || userPubkey !== ownerPubkey) {
+      notifyStatusRestricted();
+      return false;
+    }
+    const targetRelayUrls = resolveRelayUrlsFromIds(existingTask.relays);
+    const deletionTags = buildDeletionTags({ id: taskId, kind: existingTask.kind });
+    suppressFailedPublishEvent(taskId);
+    setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
+    try {
+      const result = await publishEvent(NostrEventKind.EventDeletion, "", deletionTags, undefined, targetRelayUrls);
+      if (!result.success) {
+        notifyPostDeleteFailed();
+        return false;
+      }
+      notifyIfPartialPublish(targetRelayUrls, result.publishedRelayUrls);
+      notifyPostDeleted();
+      return true;
+    } catch (error) {
+      console.warn("[delete] publish failed", { taskId, error });
+      notifyPostDeleteFailed();
+      return false;
+    }
+  }, [
+    allTasks,
+    currentUser?.pubkey,
+    guardInteraction,
+    notifyIfPartialPublish,
+    publishEvent,
+    resolveRelayUrlsFromIds,
+    setLocalTasks,
+    suppressFailedPublishEvent,
+  ]);
+
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
@@ -893,5 +935,6 @@ export function useTaskPublishFlow({
     handleDismissAllFailedPublish,
     handleDueDateChange,
     handlePriorityChange,
+    handlePostDelete,
   };
 }
