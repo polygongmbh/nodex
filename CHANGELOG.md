@@ -6,6 +6,13 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Per-post actions on feed cards. Desktop: a three-dot menu next to the timestamp with React, Copy link, Re-compose, and Delete. Mobile: an iOS-style swipe-to-reveal action strip with the same set. Delete and Re-compose are limited to the author and to recent posts that have no replies; the time window is configurable via `VITE_EDIT_WINDOW_MINUTES` (set `0` to disable, default one week).
+- Re-compose publishes the corrected post first and only deletes the original after the replacement is confirmed, so the original survives if anything goes wrong.
+
+### Changed
+- Reaction chips no longer appear under feed cards until the post has at least one reaction. The initial reaction now flows through the new actions menu.
+
 ## [3.2.0] - 2026-05-13
 Minor release for NIP-25 feed reactions and task-kind model cleanup.
 

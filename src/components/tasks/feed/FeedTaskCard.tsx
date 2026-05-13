@@ -28,6 +28,7 @@ import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAv
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { ReactionsRow } from "@/components/tasks/ReactionsRow";
 import { FeedTaskMenu } from "@/components/tasks/feed/FeedTaskMenu";
+import { FeedTaskSwipeActions } from "@/components/tasks/feed/FeedTaskSwipeActions";
 import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 import { useReactionsFor } from "@/features/feed-page/stores/reactions-registry";
 import { useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
@@ -191,7 +192,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
     ? t("tasks.focusTaskWithPreview", { type: tooltipTypeLabel, preview: tooltipPreview })
     : t("tasks.focusTaskTitle", { type: tooltipTypeLabel });
 
-  return (
+  const surface = (
     <TaskSurface
       taskId={task.id}
       title={surfaceTitle}
@@ -405,5 +406,20 @@ export const FeedTaskCard = memo(function FeedTaskCard({
         </div>
       </div>
     </TaskSurface>
+  );
+
+  if (!isMobile || isPendingPublish) return surface;
+  return (
+    <FeedTaskSwipeActions
+      task={task}
+      currentUserPubkey={currentUser?.pubkey}
+      hasChildren={hasChildren}
+      onReact={() => handleMenuReact("👍")}
+      onCopyPermalink={() => { void taskCommands.copyPermalink(task.id); }}
+      onRecompose={() => taskCommands.recomposePost(task.id)}
+      onDelete={() => { void taskCommands.deletePost(task.id); }}
+    >
+      {surface}
+    </FeedTaskSwipeActions>
   );
 });
