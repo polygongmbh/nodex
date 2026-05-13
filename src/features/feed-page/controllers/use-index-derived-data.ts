@@ -6,7 +6,7 @@ import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
 import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
-import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
+import { nostrEventsToTasks, summarizeReactionsByTarget } from "@/infrastructure/nostr/task-converter";
 import { findSpamKeyword } from "@/lib/nostr/spam-filter";
 import {
   applyTaskSortOverlays,
@@ -158,10 +158,21 @@ export function useIndexDerivedData({
     return tasks;
   }, [filteredNostrEvents, isHydrating, user?.pubkey]);
 
+  const reactionsByTargetId = useMemo(
+    () => summarizeReactionsByTarget(filteredNostrEvents, user?.pubkey),
+    [filteredNostrEvents, user?.pubkey],
+  );
+
   const allTasks = useMemo(() => {
     const fixtureAndNostrTasks = dedupeMergedTasks(mergeTasks(demoTasks, nostrTasks));
-    return dedupeMergedTasks(mergeTasks(localTasks, fixtureAndNostrTasks));
-  }, [demoTasks, localTasks, nostrTasks]);
+    const merged = dedupeMergedTasks(mergeTasks(localTasks, fixtureAndNostrTasks));
+    return merged.map((task) => {
+      const reactions = reactionsByTargetId.get(task.id);
+      if (!reactions && !task.reactions) return task;
+      if (reactions === task.reactions) return task;
+      return { ...task, reactions };
+    });
+  }, [demoTasks, localTasks, nostrTasks, reactionsByTargetId]);
 
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),

@@ -198,7 +198,7 @@ export interface NostrEventsToTasksOptions {
   viewerPubkey?: string;
 }
 
-function summarizeReactionsByTarget(
+export function summarizeReactionsByTarget(
   events: NostrEventWithRelay[],
   viewerPubkey?: string,
 ): Map<string, TaskReactions> {
