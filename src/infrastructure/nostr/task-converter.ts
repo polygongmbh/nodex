@@ -193,8 +193,12 @@ export function extractAllTags(events: NostrEvent[]): string[] {
   return Array.from(allTags).sort();
 }
 
+type ReactionSummaryEvent = Pick<NostrEvent, "content" | "pubkey" | "tags"> & {
+  kind: number;
+};
+
 export function summarizeReactionsByTarget(
-  events: NostrEventWithRelay[],
+  events: ReactionSummaryEvent[],
   viewerPubkey?: string,
 ): Map<string, TaskReactions> {
   // (targetId, pubkey) -> Set<emoji>. Dedup by (target, pubkey, emoji).

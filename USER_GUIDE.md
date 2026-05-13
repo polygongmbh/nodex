@@ -20,6 +20,7 @@
 - The Status projects row lists active top-level work. Project cards stay in the Status workflow, while clicking an active non-project task opens it in the Feed view.
 - Status activity includes task and comment updates. Task activity rows expose a status checkbox for quick state changes.
 - Click a task to focus on that task context.
+- Feed cards show NIP-25 emoji reaction totals; use the reaction picker on a card to add a quick emoji reaction.
 - Use breadcrumb navigation (`All Tasks` / `Up` / parent path) to move through hierarchy.
 - Breadcrumb paths stay single-line and left-aligned; page-header breadcrumbs evenly share available width when constrained, while feed-card breadcrumbs use compact capped widths before truncating.
 - Kanban uses four status columns: `To Do`, `In Progress`, `Done`, and `Closed`; `Closed` is available from explicit status selection rather than the normal click-cycle toggle.

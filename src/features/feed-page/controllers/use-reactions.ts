@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type { NDKKind } from "@nostr-dev-kit/ndk";
 import { toast } from "sonner";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
@@ -95,7 +96,7 @@ export function useReactions() {
     lastFetchAtByTargetId.current.set(targetEventId, Date.now());
     try {
       const events = await ndk.fetchEvents(
-        { kinds: [REACTION_EVENT_KIND], "#e": [targetEventId], limit: FETCH_LIMIT },
+        { kinds: [REACTION_EVENT_KIND as unknown as NDKKind], "#e": [targetEventId], limit: FETCH_LIMIT },
         { closeOnEose: true, groupable: false },
       );
       for (const ndkEvent of events) {
