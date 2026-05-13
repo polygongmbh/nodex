@@ -437,6 +437,10 @@ describe("nostrEventsToTasks", () => {
         id: "state-old",
         state: { status: "done" },
       }),
+      expect.objectContaining({
+        id: "task-1",
+        state: { status: "open" },
+      }),
     ]);
   });
 
@@ -468,6 +472,10 @@ describe("nostrEventsToTasks", () => {
         id: "state-closed",
         state: { status: "closed" },
       }),
+      expect.objectContaining({
+        id: "task-closed",
+        state: { status: "open" },
+      }),
     ]);
   });
 
@@ -497,7 +505,13 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(getTaskStatus(tasks[0].state)).toBe("open");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000000 * 1000);
-    expect(tasks[0].stateUpdates).toBeUndefined();
+    expect(tasks[0].stateUpdates).toEqual([
+      expect.objectContaining({
+        id: "task-assigned",
+        state: { status: "open" },
+        authorPubkey: "creator-pubkey",
+      }),
+    ]);
   });
 
   it("applies assignee-authored state updates on assigned tasks", () => {
@@ -531,6 +545,11 @@ describe("nostrEventsToTasks", () => {
         id: "state-assignee",
         state: { status: "done" },
         authorPubkey: "assignee-pubkey",
+      }),
+      expect.objectContaining({
+        id: "task-assigned-allowed",
+        state: { status: "open" },
+        authorPubkey: "creator-pubkey",
       }),
     ]);
   });

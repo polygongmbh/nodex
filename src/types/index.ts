@@ -225,8 +225,13 @@ export function getTaskStatus(state: TaskState | TaskStatus | undefined): TaskSt
   return normalizeTaskState(state).status;
 }
 
-export function getTaskState(task: Pick<Task, "state">): TaskState {
-  return task.state ?? { status: "open" };
+/**
+ * Derives current state from a task. Prefers `stateUpdates[0]` (the latest
+ * historical entry, sorted desc) and falls back to the legacy `state` field
+ * for fixtures/mocks that haven't been migrated yet.
+ */
+export function getTaskState(task: Pick<Task, "state" | "stateUpdates">): TaskState {
+  return task.stateUpdates?.[0]?.state ?? task.state ?? { status: "open" };
 }
 
 export function getLastEditedAt(task: Task): Date {

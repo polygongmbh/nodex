@@ -148,6 +148,15 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     ...contentAttachments,
   ]);
 
+  const initialStateUpdate: TaskStateUpdate | undefined = isTask
+    ? {
+        id: event.id,
+        state,
+        timestamp: new Date(event.created_at * 1000),
+        authorPubkey: event.pubkey,
+      }
+    : undefined;
+
   return {
     id: event.id,
     kind: event.kind,
@@ -159,6 +168,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     locationGeohash,
     timestamp: new Date(event.created_at * 1000),
     state,
+    stateUpdates: initialStateUpdate ? [initialStateUpdate] : undefined,
     parentId,
     mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles, ...referencedProfilePubkeys])),
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
@@ -335,7 +345,9 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
   for (const [taskId, state] of latestStateByTaskId.entries()) {
     const task = taskMap.get(taskId);
     if (!task) continue;
-    const stateUpdates = (stateUpdatesByTaskId.get(taskId) || []).sort(
+    const existingInitial = task.stateUpdates ?? [];
+    const newUpdates = stateUpdatesByTaskId.get(taskId) ?? [];
+    const stateUpdates = [...existingInitial, ...newUpdates].sort(
       (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
     );
     taskMap.set(taskId, {
