@@ -56,9 +56,7 @@ let cachedRegistry: TaskStateDefinition[] | undefined;
 
 export function getTaskStateRegistry(): TaskStateDefinition[] {
   if (cachedRegistry) return cachedRegistry;
-  const envValue = typeof import.meta !== "undefined"
-    ? (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_TASK_STATE_CONFIG
-    : undefined;
+  const envValue = import.meta.env?.VITE_TASK_STATE_CONFIG;
   if (envValue) {
     const parsed = parseTaskStateConfig(envValue);
     if (parsed) {

@@ -24,6 +24,7 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { nip19 } from "nostr-tools";
+import { hexToBytes } from "nostr-tools/utils";
 import { useNavigate } from "react-router-dom";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
@@ -825,7 +826,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     const hexKey = getGuestPrivateKey();
     if (hexKey) {
       try {
-        const nsec = nip19.nsecEncode(hexKey as unknown as Uint8Array);
+        const nsec = nip19.nsecEncode(hexToBytes(hexKey));
         navigator.clipboard.writeText(nsec);
       } catch {
         navigator.clipboard.writeText(hexKey);
@@ -838,7 +839,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     const hexKey = getGuestPrivateKey();
     if (!hexKey) return "";
     try {
-      return nip19.nsecEncode(hexKey as unknown as Uint8Array);
+      return nip19.nsecEncode(hexToBytes(hexKey));
     } catch {
       return hexKey;
     }
