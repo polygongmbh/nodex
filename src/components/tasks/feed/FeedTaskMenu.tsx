@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from "react";
-import { Link2, MoreHorizontal, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
+import { ChevronDown, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -74,13 +74,16 @@ export function FeedTaskMenu({
             data-testid={`feed-task-menu-trigger-${task.id}`}
             onClick={stop}
             className={cn(
-              "inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-opacity",
+              "inline-flex h-5 items-center justify-center overflow-hidden rounded-md bg-muted/80 text-muted-foreground",
+              "transition-[max-width,opacity,margin] duration-150 ease-out",
               "hover:bg-muted hover:text-foreground",
-              pinned || menuOpen ? "opacity-100" : "opacity-0 group-hover/feed-card:opacity-100 focus-visible:opacity-100",
+              pinned || menuOpen
+                ? "ml-1 max-w-[20px] opacity-100"
+                : "ml-0 max-w-0 opacity-0 group-hover/feed-card:ml-1 group-hover/feed-card:max-w-[20px] group-hover/feed-card:opacity-100 focus-visible:ml-1 focus-visible:max-w-[20px] focus-visible:opacity-100",
               className,
             )}
           >
-            <MoreHorizontal className="h-4 w-4" />
+            <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" onClick={stop}>
