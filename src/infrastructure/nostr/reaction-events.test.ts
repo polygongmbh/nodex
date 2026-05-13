@@ -18,48 +18,17 @@ describe("reaction-events", () => {
   });
 
   describe("buildReactionTags", () => {
-    it("emits e, p, k tags for a regular event", () => {
+    it("emits e, p, k tags", () => {
       const tags = buildReactionTags({
         id: "abc",
         kind: NostrEventKind.TextNote,
         pubkey: "pk1",
-        tags: [],
       });
       expect(tags).toEqual([
         ["e", "abc", "", "pk1"],
         ["p", "pk1"],
         ["k", "1"],
       ]);
-    });
-
-    it("adds an a tag for parameterized replaceable kinds", () => {
-      const tags = buildReactionTags({
-        id: "xid",
-        kind: NostrEventKind.ClassifiedListing,
-        pubkey: "pk2",
-        tags: [["d", "my-d-tag"]],
-      });
-      expect(tags).toContainEqual(["a", "30402:pk2:my-d-tag"]);
-    });
-
-    it("does not add an a tag for unparameterized replaceable kinds (e.g. metadata)", () => {
-      const tags = buildReactionTags({
-        id: "mid",
-        kind: NostrEventKind.Metadata,
-        pubkey: "pk3",
-        tags: [],
-      });
-      expect(tags.some((t) => t[0] === "a")).toBe(false);
-    });
-
-    it("omits the a tag for parameterized kinds missing a d tag", () => {
-      const tags = buildReactionTags({
-        id: "lid",
-        kind: NostrEventKind.ClassifiedListing,
-        pubkey: "pk4",
-        tags: [],
-      });
-      expect(tags.some((t) => t[0] === "a")).toBe(false);
     });
   });
 

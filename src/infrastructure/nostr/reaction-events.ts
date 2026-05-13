@@ -1,8 +1,4 @@
 import { NostrEventKind, type NostrEvent } from "@/lib/nostr/types";
-import {
-  getReplaceableEventKey,
-  isParameterizedReplaceableKind,
-} from "@/infrastructure/nostr/replaceable-events";
 
 export const REACTION_EVENT_KIND = NostrEventKind.Reaction;
 export const DEFAULT_REACTION = "👍";
@@ -25,17 +21,12 @@ export function isReactionEvent(kind: number): boolean {
   return kind === REACTION_EVENT_KIND;
 }
 
-export function buildReactionTags(target: Pick<NostrEvent, "id" | "kind" | "pubkey" | "tags">): string[][] {
-  const tags: string[][] = [
+export function buildReactionTags(target: Pick<NostrEvent, "id" | "kind" | "pubkey">): string[][] {
+  return [
     ["e", target.id, "", target.pubkey],
     ["p", target.pubkey],
     ["k", String(target.kind)],
   ];
-  if (isParameterizedReplaceableKind(target.kind)) {
-    const key = getReplaceableEventKey({ kind: target.kind, pubkey: target.pubkey, tags: target.tags });
-    if (key) tags.push(["a", key]);
-  }
-  return tags;
 }
 
 export function extractReactionTargetId(tags: string[][]): string | undefined {

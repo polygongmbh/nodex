@@ -18,7 +18,6 @@ interface ReactionTarget {
   id: string;
   kind: number;
   pubkey: string;
-  tags: string[][];
 }
 
 function appendReactionToCache(

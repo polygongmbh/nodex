@@ -375,7 +375,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
             <ReactionsRow
               targetId={task.id}
               reactions={reactions}
-              onReact={(emoji) => { void publishReaction({ id: task.id, kind: task.kind, pubkey: task.author.pubkey, tags: task.rawNostrEvent?.tags ?? [] }, emoji); }}
+              onReact={(emoji) => { void publishReaction({ id: task.id, kind: task.kind, pubkey: task.author.pubkey }, emoji); }}
               pickerAlwaysVisible={isActiveTask}
               className="mt-1"
             />
