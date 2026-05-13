@@ -37,6 +37,7 @@ import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
 import { ProfileEditorFields } from "./ProfileEditorFields";
 import type { NoasAuthErrorCode } from "@/lib/nostr/noas-client";
+import { diagnoseNip05 } from "@/lib/nostr/nip05-diagnose";
 import { resolveNoasHostDisplayValue } from "./noas-form-helpers";
 import { buildAuthRoute } from "@/lib/auth-routes";
 
@@ -789,9 +790,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       const result = await ndkUser.validateNip05(nip05Id);
       if (result === true) return { status: "verified" };
       if (result === false) return { status: "invalid" };
-      return { status: "error", message: "No NIP-05 record found at that address" };
-    } catch (error) {
-      return { status: "error", message: error instanceof Error ? error.message : String(error) };
+      return { status: "error", message: await diagnoseNip05(nip05Id, user.pubkey) };
+    } catch {
+      return { status: "error", message: await diagnoseNip05(nip05Id, user.pubkey) };
     }
   }, [ndk, user?.pubkey]);
   const {

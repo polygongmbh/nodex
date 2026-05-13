@@ -341,13 +341,25 @@ export function useNoas(args: UseNoasArgs) {
 
       if (!result.success) {
         console.warn("Failed to update Noas profile picture:", result.error);
-        return { error: result.error || "Server rejected the upload" };
+        const detail = result.error || "Server rejected the upload";
+        if (result.httpStatus) {
+          return { error: `HTTP ${result.httpStatus}: ${detail}` };
+        }
+        if (result.networkError) {
+          let host = noasSession.apiBaseUrl;
+          try { host = new URL(noasSession.apiBaseUrl).host; } catch { /* keep raw */ }
+          return { error: `Could not reach ${host} (${detail})` };
+        }
+        return { error: detail };
       }
 
       return { url: `${noasSession.apiBaseUrl}/picture/${user.pubkey}?t=${Date.now()}` };
     } catch (error) {
       console.error("Error uploading profile picture:", error);
-      return { error: error instanceof Error ? error.message : "Network error uploading profile picture" };
+      const message = error instanceof Error ? error.message : "Network error uploading profile picture";
+      let host = noasSession.apiBaseUrl;
+      try { host = new URL(noasSession.apiBaseUrl).host; } catch { /* keep raw */ }
+      return { error: `Could not reach ${host} (${message})` };
     }
   }, [authMethod, sessionPasswordHashRef, user]);
 

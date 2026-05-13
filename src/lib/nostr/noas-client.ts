@@ -359,7 +359,7 @@ export class NoasClient {
     passwordHash: string,
     base64Data: string,
     contentType: string
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<{ success: boolean; error?: string; httpStatus?: number; networkError?: boolean }> {
     try {
       const response = await fetch(this.buildApiUrl("/auth/update"), {
         method: 'POST',
@@ -380,13 +380,18 @@ export class NoasClient {
         return {
           success: false,
           error: typeof errorData.error === "string" ? errorData.error : 'Failed to update profile picture',
+          httpStatus: response.status,
         };
       }
 
       return { success: true };
     } catch (error) {
       console.error('Profile picture update error:', error);
-      return { success: false, error: 'Network error updating profile picture' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error updating profile picture',
+        networkError: true,
+      };
     }
   }
 
