@@ -1,4 +1,4 @@
-import type { Task, TaskStateUpdate, TaskState, TaskReactions } from "@/types";
+import type { Task, TaskStateUpdate, TaskState } from "@/types";
 
 /**
  * Returns `previous` when `fresh` carries the same signal-bearing values, so
@@ -38,24 +38,6 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
   if (!areStringListsEqual(a.tags, b.tags)) return false;
   if (!areOptionalStringListsEqual(a.assigneePubkeys, b.assigneePubkeys)) return false;
   if (!areOptionalStringListsEqual(a.mentions, b.mentions)) return false;
-  if (!areReactionsEqual(a.reactions, b.reactions)) return false;
-  return true;
-}
-
-function areReactionsEqual(a: TaskReactions | undefined, b: TaskReactions | undefined): boolean {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  const aKeys = Object.keys(a.totals);
-  const bKeys = Object.keys(b.totals);
-  if (aKeys.length !== bKeys.length) return false;
-  for (const key of aKeys) {
-    if (a.totals[key] !== b.totals[key]) return false;
-  }
-  if (a.mine.length !== b.mine.length) return false;
-  const aMine = new Set(a.mine);
-  for (const emoji of b.mine) {
-    if (!aMine.has(emoji)) return false;
-  }
   return true;
 }
 

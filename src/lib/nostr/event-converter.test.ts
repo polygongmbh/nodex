@@ -8,6 +8,7 @@ import {
   extractAllTags,
   nostrEventToTask,
   nostrEventsToTasks,
+  summarizeReactionsByTarget,
 } from "@/infrastructure/nostr/task-converter";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "./types";
 
@@ -894,10 +895,9 @@ describe("extractAllTags", () => {
   });
 });
 
-describe("nostrEventsToTasks reaction aggregation", () => {
-  it("attaches per-emoji totals and the viewer's reactions", () => {
+describe("summarizeReactionsByTarget", () => {
+  it("aggregates per-emoji totals and marks the viewer's emojis", () => {
     const events: NostrEventWithRelay[] = [
-      makeRelayEvent({ id: "task-r", kind: NostrEventKind.Task, content: "task", sig: "s" }),
       makeRelayEvent({
         id: "r1",
         pubkey: "viewer-pk",
@@ -920,16 +920,13 @@ describe("nostrEventsToTasks reaction aggregation", () => {
         content: "🎉",
       }),
     ];
-
-    const tasks = nostrEventsToTasks(events, { viewerPubkey: "viewer-pk" });
-    const task = tasks.find((t) => t.id === "task-r");
-    expect(task?.reactions?.totals).toEqual({ "👍": 2, "🎉": 1 });
-    expect(new Set(task?.reactions?.mine)).toEqual(new Set(["👍", "🎉"]));
+    const summary = summarizeReactionsByTarget(events, "viewer-pk").get("task-r");
+    expect(summary?.totals).toEqual({ "👍": 2, "🎉": 1 });
+    expect(new Set(summary?.mine)).toEqual(new Set(["👍", "🎉"]));
   });
 
   it("deduplicates the same (target, pubkey, emoji)", () => {
     const events: NostrEventWithRelay[] = [
-      makeRelayEvent({ id: "task-d", kind: NostrEventKind.Task, content: "t", sig: "s" }),
       makeRelayEvent({
         id: "rd1",
         pubkey: "x",
@@ -945,13 +942,11 @@ describe("nostrEventsToTasks reaction aggregation", () => {
         content: "👍",
       }),
     ];
-    const task = nostrEventsToTasks(events).find((t) => t.id === "task-d");
-    expect(task?.reactions?.totals).toEqual({ "👍": 1 });
+    expect(summarizeReactionsByTarget(events).get("task-d")?.totals).toEqual({ "👍": 1 });
   });
 
   it("ignores reactions whose content is not a valid emoji or +/-", () => {
     const events: NostrEventWithRelay[] = [
-      makeRelayEvent({ id: "task-i", kind: NostrEventKind.Task, content: "t", sig: "s" }),
       makeRelayEvent({
         id: "ri",
         pubkey: "z",
@@ -960,23 +955,7 @@ describe("nostrEventsToTasks reaction aggregation", () => {
         content: ":heart:",
       }),
     ];
-    const task = nostrEventsToTasks(events).find((t) => t.id === "task-i");
-    expect(task?.reactions).toBeUndefined();
-  });
-
-  it("ignores reactions that target unknown event ids", () => {
-    const events: NostrEventWithRelay[] = [
-      makeRelayEvent({ id: "task-u", kind: NostrEventKind.Task, content: "t", sig: "s" }),
-      makeRelayEvent({
-        id: "ru",
-        pubkey: "w",
-        kind: NostrEventKind.Reaction,
-        tags: [["e", "no-such-task"]],
-        content: "👍",
-      }),
-    ];
-    const task = nostrEventsToTasks(events).find((t) => t.id === "task-u");
-    expect(task?.reactions).toBeUndefined();
+    expect(summarizeReactionsByTarget(events).get("task-i")).toBeUndefined();
   });
 });
 

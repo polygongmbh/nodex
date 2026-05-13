@@ -1,5 +1,6 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
+import { setReactionsByTargetId } from "@/features/feed-page/stores/reactions-registry";
 import type { Task, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
@@ -151,28 +152,20 @@ export function useIndexDerivedData({
         relayUrl: event.relayUrl,
         relayUrls: event.relayUrls,
       })),
-      { viewerPubkey: user?.pubkey },
     );
     const tasks = preserveTaskListIdentity(lastNostrTasksRef.current, fresh);
     lastNostrTasksRef.current = tasks;
     return tasks;
-  }, [filteredNostrEvents, isHydrating, user?.pubkey]);
+  }, [filteredNostrEvents, isHydrating]);
 
-  const reactionsByTargetId = useMemo(
-    () => summarizeReactionsByTarget(filteredNostrEvents, user?.pubkey),
-    [filteredNostrEvents, user?.pubkey],
-  );
+  useEffect(() => {
+    setReactionsByTargetId(summarizeReactionsByTarget(filteredNostrEvents, user?.pubkey));
+  }, [filteredNostrEvents, user?.pubkey]);
 
   const allTasks = useMemo(() => {
     const fixtureAndNostrTasks = dedupeMergedTasks(mergeTasks(demoTasks, nostrTasks));
-    const merged = dedupeMergedTasks(mergeTasks(localTasks, fixtureAndNostrTasks));
-    return merged.map((task) => {
-      const reactions = reactionsByTargetId.get(task.id);
-      if (!reactions && !task.reactions) return task;
-      if (reactions === task.reactions) return task;
-      return { ...task, reactions };
-    });
-  }, [demoTasks, localTasks, nostrTasks, reactionsByTargetId]);
+    return dedupeMergedTasks(mergeTasks(localTasks, fixtureAndNostrTasks));
+  }, [demoTasks, localTasks, nostrTasks]);
 
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),

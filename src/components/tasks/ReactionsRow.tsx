@@ -2,26 +2,26 @@ import { useState, type MouseEvent } from "react";
 import { SmilePlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import type { Task } from "@/types";
+import type { TaskReactions } from "@/types";
 
 const QUICK_EMOJIS = ["👍", "❤️", "🎉", "😄", "🚀", "👀", "🙏", "👎"];
 
 interface ReactionsRowProps {
-  task: Task;
+  targetId: string;
+  reactions: TaskReactions | undefined;
   onReact: (emoji: string) => void;
   /** When true, the picker trigger is always visible; otherwise it appears on hover/focus of the parent. */
   pickerAlwaysVisible?: boolean;
   className?: string;
 }
 
-export function ReactionsRow({ task, onReact, pickerAlwaysVisible, className }: ReactionsRowProps) {
+export function ReactionsRow({ targetId, reactions, onReact, pickerAlwaysVisible, className }: ReactionsRowProps) {
   const [open, setOpen] = useState(false);
-  const totals = task.reactions?.totals ?? {};
-  const mine = new Set(task.reactions?.mine ?? []);
+  const totals = reactions?.totals ?? {};
+  const mine = new Set(reactions?.mine ?? []);
   const entries = Object.entries(totals).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
   if (entries.length === 0 && !pickerAlwaysVisible) {
-    // Show only the picker trigger; chips render when reactions exist.
     return (
       <div className={cn("flex items-center gap-1", className)}>
         <ReactionPickerButton open={open} setOpen={setOpen} onPick={onReact} subtle />
@@ -30,7 +30,7 @@ export function ReactionsRow({ task, onReact, pickerAlwaysVisible, className }: 
   }
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1", className)} data-testid={`reactions-row-${task.id}`}>
+    <div className={cn("flex flex-wrap items-center gap-1", className)} data-testid={`reactions-row-${targetId}`}>
       {entries.map(([emoji, count]) => {
         const isMine = mine.has(emoji);
         return (
@@ -49,7 +49,7 @@ export function ReactionsRow({ task, onReact, pickerAlwaysVisible, className }: 
               isMine && "border-primary/40 bg-primary/10 text-foreground cursor-default",
             )}
             title={isMine ? `You reacted with ${emoji}` : `React with ${emoji}`}
-            data-testid={`reaction-chip-${task.id}-${emoji}`}
+            data-testid={`reaction-chip-${targetId}-${emoji}`}
           >
             <span aria-hidden>{emoji}</span>
             <span>{count}</span>

@@ -28,6 +28,7 @@ import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAv
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { ReactionsRow } from "@/components/tasks/ReactionsRow";
 import { useReactions } from "@/features/feed-page/controllers/use-reactions";
+import { useReactionsFor } from "@/features/feed-page/stores/reactions-registry";
 
 interface FeedTaskCardProps {
   task: Task;
@@ -79,6 +80,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { react: publishReaction } = useReactions();
+  const reactions = useReactionsFor(task.id);
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
@@ -371,7 +373,8 @@ export const FeedTaskCard = memo(function FeedTaskCard({
               onMediaClick={(url) => onOpenTaskMedia(task.id, url)}
             />
             <ReactionsRow
-              task={task}
+              targetId={task.id}
+              reactions={reactions}
               onReact={(emoji) => { void publishReaction({ id: task.id, kind: task.kind, pubkey: task.author.pubkey, tags: task.rawNostrEvent?.tags ?? [] }, emoji); }}
               pickerAlwaysVisible={isActiveTask}
               className="mt-1"

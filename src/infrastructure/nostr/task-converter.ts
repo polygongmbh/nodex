@@ -193,11 +193,6 @@ export function extractAllTags(events: NostrEvent[]): string[] {
   return Array.from(allTags).sort();
 }
 
-export interface NostrEventsToTasksOptions {
-  /** Pubkey of the current viewer, used to mark which reactions are mine. */
-  viewerPubkey?: string;
-}
-
 export function summarizeReactionsByTarget(
   events: NostrEventWithRelay[],
   viewerPubkey?: string,
@@ -231,10 +226,7 @@ export function summarizeReactionsByTarget(
   return result;
 }
 
-export function nostrEventsToTasks(
-  events: NostrEventWithRelay[],
-  options: NostrEventsToTasksOptions = {},
-): Task[] {
+export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
   const isPriorityPropertyNote = (event: NostrEventWithRelay): boolean =>
     isPriorityPropertyEvent(event.kind, event.tags);
 
@@ -392,13 +384,6 @@ export function nostrEventsToTasks(
         lastEditedAt: new Date(update.createdAt * 1000),
       }),
     });
-  }
-
-  const reactionsByTaskId = summarizeReactionsByTarget(events, options.viewerPubkey);
-  for (const [taskId, reactions] of reactionsByTaskId) {
-    const task = taskMap.get(taskId);
-    if (!task) continue;
-    taskMap.set(taskId, { ...task, reactions });
   }
 
   return Array.from(taskMap.values());

@@ -81,23 +81,6 @@ describe("areTaskFieldsEqual", () => {
     expect(areTaskFieldsEqual(a, b)).toBe(false);
   });
 
-  it("detects reactions arriving on a previously reaction-less task", () => {
-    const a = makeTask();
-    const b = makeTask({ reactions: { totals: { "👍": 1 }, mine: ["👍"] } });
-    expect(areTaskFieldsEqual(a, b)).toBe(false);
-  });
-
-  it("detects reaction count changes", () => {
-    const a = makeTask({ reactions: { totals: { "👍": 1 }, mine: [] } });
-    const b = makeTask({ reactions: { totals: { "👍": 2 }, mine: [] } });
-    expect(areTaskFieldsEqual(a, b)).toBe(false);
-  });
-
-  it("treats reaction-equivalent tasks as equal", () => {
-    const a = makeTask({ reactions: { totals: { "👍": 2, "❤️": 1 }, mine: ["👍"] } });
-    const b = makeTask({ reactions: { totals: { "❤️": 1, "👍": 2 }, mine: ["👍"] } });
-    expect(areTaskFieldsEqual(a, b)).toBe(true);
-  });
 });
 
 describe("preserveTaskIdentity", () => {

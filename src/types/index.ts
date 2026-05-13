@@ -143,7 +143,6 @@ export interface Task {
   likes?: number;
   replies?: number;
   reposts?: number;
-  reactions?: TaskReactions;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   timestamp: Date;
