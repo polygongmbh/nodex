@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useProfileEditor } from "./use-profile-editor";
+import { useProfileEditor, type Nip05ValidationResult } from "./use-profile-editor";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -73,5 +73,46 @@ describe("useProfileEditor", () => {
     fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Alice Example Two" } });
 
     expect(screen.getByLabelText("Username")).toHaveValue("alice-example-two");
+  });
+
+  it("exposes the validateNip05 error message when verification errors out", async () => {
+    vi.useFakeTimers();
+    try {
+      const validateNip05 = vi.fn(
+        async (): Promise<Nip05ValidationResult> => ({ status: "error", message: "DNS lookup failed" }),
+      );
+
+      function VerifyHarness() {
+        const {
+          fieldActions: { setNip05 },
+          validation: { nip05VerifyStatus, nip05VerifyErrorDetail },
+        } = useProfileEditor({
+          t: ((key: string) => key) as never,
+          updateUserProfile: vi.fn(async () => true),
+          publishEvent: vi.fn(async () => ({ success: true })),
+          validateNip05,
+        });
+        return (
+          <div>
+            <input aria-label="Nip05" onChange={(e) => setNip05(e.target.value)} />
+            <span data-testid="status">{nip05VerifyStatus}</span>
+            <span data-testid="detail">{nip05VerifyErrorDetail ?? ""}</span>
+          </div>
+        );
+      }
+
+      render(<VerifyHarness />);
+      fireEvent.change(screen.getByLabelText("Nip05"), { target: { value: "alice@example.com" } });
+
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      expect(validateNip05).toHaveBeenCalledWith("alice@example.com");
+      expect(screen.getByTestId("status").textContent).toBe("error");
+      expect(screen.getByTestId("detail").textContent).toBe("DNS lookup failed");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

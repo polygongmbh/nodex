@@ -6,6 +6,8 @@ import NDK, {
   NDKUser,
 } from "@nostr-dev-kit/ndk";
 import { NoasClient, hashNoasPassword, type NoasAuthResult } from "@/lib/nostr/noas-client";
+
+export type NoasPictureUploadResult = { url: string } | { error: string };
 import { isValidNoasBaseUrl, normalizeNoasBaseUrl, resolveNoasApiBaseUrl } from "@/lib/nostr/noas-discovery";
 import { privateKeyHexToNsec } from "@/lib/nostr/nip49-utils";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
@@ -305,12 +307,16 @@ export function useNoas(args: UseNoasArgs) {
     }
   }, [applyAuthenticatedState, clearTransientAuthState, configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, ndk, persistNoasSession, relays, retryNip42RelaysAfterSignIn, setIsAuthenticating]);
 
-  const updateNoasProfilePicture = useCallback(async (file: File): Promise<string | null> => {
-    if (authMethod !== "noas" || !user) return null;
+  const updateNoasProfilePicture = useCallback(async (file: File): Promise<NoasPictureUploadResult> => {
+    if (authMethod !== "noas" || !user) {
+      return { error: "Not signed in with Noas" };
+    }
 
     const noasSession = loadSessionNoasState();
     const passwordHash = sessionPasswordHashRef.current || noasSession?.passwordHash;
-    if (!passwordHash || !noasSession) return null;
+    if (!passwordHash || !noasSession) {
+      return { error: "Session is locked. Sign in again to upload a picture." };
+    }
 
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -335,13 +341,13 @@ export function useNoas(args: UseNoasArgs) {
 
       if (!result.success) {
         console.warn("Failed to update Noas profile picture:", result.error);
-        return null;
+        return { error: result.error || "Server rejected the upload" };
       }
 
-      return `${noasSession.apiBaseUrl}/picture/${user.pubkey}?t=${Date.now()}`;
+      return { url: `${noasSession.apiBaseUrl}/picture/${user.pubkey}?t=${Date.now()}` };
     } catch (error) {
       console.error("Error uploading profile picture:", error);
-      return null;
+      return { error: error instanceof Error ? error.message : "Network error uploading profile picture" };
     }
   }, [authMethod, sessionPasswordHashRef, user]);
 

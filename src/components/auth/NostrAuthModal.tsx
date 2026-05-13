@@ -30,7 +30,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
-import { useProfileEditor } from "@/hooks/use-profile-editor";
+import { useProfileEditor, type Nip05ValidationResult } from "@/hooks/use-profile-editor";
 import { DropdownTriggerContent } from "@/components/ui/dropdown-trigger-content";
 import { GuestPrivateKeyRow } from "./GuestPrivateKeyRow";
 import { NoasAuthForm } from "./NoasAuthForm";
@@ -782,13 +782,16 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [hasForcedProfileSetupOpen, setHasForcedProfileSetupOpen] = useState(false);
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
-  const validateNip05 = useCallback(async (nip05Id: string): Promise<boolean | null> => {
-    if (!ndk || !user?.pubkey) return null;
+  const validateNip05 = useCallback(async (nip05Id: string): Promise<Nip05ValidationResult> => {
+    if (!ndk || !user?.pubkey) return { status: "error", message: "Not connected" };
     try {
       const ndkUser = ndk.getUser({ pubkey: user.pubkey });
-      return await ndkUser.validateNip05(nip05Id);
-    } catch {
-      return null;
+      const result = await ndkUser.validateNip05(nip05Id);
+      if (result === true) return { status: "verified" };
+      if (result === false) return { status: "invalid" };
+      return { status: "error", message: "No NIP-05 record found at that address" };
+    } catch (error) {
+      return { status: "error", message: error instanceof Error ? error.message : String(error) };
     }
   }, [ndk, user?.pubkey]);
   const {

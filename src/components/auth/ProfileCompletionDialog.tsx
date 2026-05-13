@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ProfileEditorFields } from "@/components/auth/ProfileEditorFields";
-import { useProfileEditor } from "@/hooks/use-profile-editor";
+import { useProfileEditor, type Nip05ValidationResult } from "@/hooks/use-profile-editor";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { markProfileCompletionPromptShown } from "@/lib/profile-completion-prompt-state";
@@ -36,13 +36,16 @@ export function ProfileCompletionDialog() {
   const lastHandledSignalRef = useRef(0);
 
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
-  const validateNip05 = useCallback(async (nip05Id: string): Promise<boolean | null> => {
-    if (!ndk || !user?.pubkey) return null;
+  const validateNip05 = useCallback(async (nip05Id: string): Promise<Nip05ValidationResult> => {
+    if (!ndk || !user?.pubkey) return { status: "error", message: "Not connected" };
     try {
       const ndkUser = ndk.getUser({ pubkey: user.pubkey });
-      return await ndkUser.validateNip05(nip05Id);
-    } catch {
-      return null;
+      const result = await ndkUser.validateNip05(nip05Id);
+      if (result === true) return { status: "verified" };
+      if (result === false) return { status: "invalid" };
+      return { status: "error", message: "No NIP-05 record found at that address" };
+    } catch (error) {
+      return { status: "error", message: error instanceof Error ? error.message : String(error) };
     }
   }, [ndk, user?.pubkey]);
   const {

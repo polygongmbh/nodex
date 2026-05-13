@@ -23,7 +23,7 @@ import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeTog
 import { GuestPrivateKeyRow } from "@/components/auth/GuestPrivateKeyRow";
 import { ProfileEditorFields } from "@/components/auth/ProfileEditorFields";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
-import { useProfileEditor } from "@/hooks/use-profile-editor";
+import { useProfileEditor, type Nip05ValidationResult } from "@/hooks/use-profile-editor";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
@@ -66,13 +66,16 @@ export function MobileFilters({
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
-  const validateNip05 = useCallback(async (nip05Id: string): Promise<boolean | null> => {
-    if (!ndk || !user?.pubkey) return null;
+  const validateNip05 = useCallback(async (nip05Id: string): Promise<Nip05ValidationResult> => {
+    if (!ndk || !user?.pubkey) return { status: "error", message: "Not connected" };
     try {
       const ndkUser = ndk.getUser({ pubkey: user.pubkey });
-      return await ndkUser.validateNip05(nip05Id);
-    } catch {
-      return null;
+      const result = await ndkUser.validateNip05(nip05Id);
+      if (result === true) return { status: "verified" };
+      if (result === false) return { status: "invalid" };
+      return { status: "error", message: "No NIP-05 record found at that address" };
+    } catch (error) {
+      return { status: "error", message: error instanceof Error ? error.message : String(error) };
     }
   }, [ndk, user?.pubkey]);
   const {

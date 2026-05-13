@@ -82,7 +82,7 @@ export interface NDKContextValue {
     options?: { closeOnEose?: boolean }
   ) => NDKSubscription | null;
   getGuestPrivateKey: () => string | null;
-  updateNoasProfilePicture: (file: File) => Promise<string | null>;
+  updateNoasProfilePicture: (file: File) => Promise<{ url: string } | { error: string }>;
   isSessionLocked: boolean;
   lockedNoasUsername: string | null;
   unlockNoasSession: (password: string) => Promise<boolean>;

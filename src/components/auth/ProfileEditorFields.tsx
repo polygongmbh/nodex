@@ -15,10 +15,10 @@ interface ProfileEditorFieldsProps {
     nip05: string;
     about: string;
   };
-  validation: Pick<ProfileEditorValidation, "usernameHint" | "isUsernameHintError" | "nip05VerifyStatus">;
+  validation: Pick<ProfileEditorValidation, "usernameHint" | "isUsernameHintError" | "nip05VerifyStatus" | "nip05VerifyErrorDetail">;
   fieldActions: ProfileEditorFieldActions;
   t: (key: string) => string;
-  onNoasPictureUpload?: (file: File) => Promise<string | null>;
+  onNoasPictureUpload?: (file: File) => Promise<{ url: string } | { error: string }>;
 }
 
 export function ProfileEditorFields({
@@ -35,7 +35,7 @@ export function ProfileEditorFields({
     nip05,
     about,
   } = fields;
-  const { usernameHint, isUsernameHintError, nip05VerifyStatus } = validation;
+  const { usernameHint, isUsernameHintError, nip05VerifyStatus, nip05VerifyErrorDetail } = validation;
   const {
     setUsername,
     setDisplayName,
@@ -60,12 +60,12 @@ export function ProfileEditorFields({
 
     setIsUploading(true);
     try {
-      const newUrl = await onNoasPictureUpload(file);
-      if (newUrl) {
-        setPicture(newUrl);
+      const result = await onNoasPictureUpload(file);
+      if ("url" in result) {
+        setPicture(result.url);
         toast.success(t("auth.profile.pictureUploaded"));
       } else {
-        toast.error(t("auth.profile.pictureUploadFailed"));
+        toast.error(t("auth.profile.pictureUploadFailed"), { description: result.error });
       }
     } finally {
       setIsUploading(false);
@@ -169,7 +169,7 @@ export function ProfileEditorFields({
           />
           <Nip05StatusIcon status={nip05VerifyStatus} />
         </div>
-        <Nip05StatusHint status={nip05VerifyStatus} t={t} />
+        <Nip05StatusHint status={nip05VerifyStatus} errorDetail={nip05VerifyErrorDetail} t={t} />
       </div>
 
       <div>
@@ -196,10 +196,17 @@ function Nip05StatusIcon({ status }: { status: Nip05VerifyStatus }) {
   return <CircleAlert className="h-4 w-4 shrink-0 text-destructive" />;
 }
 
-function Nip05StatusHint({ status, t }: { status: Nip05VerifyStatus; t: (key: string) => string }) {
+function Nip05StatusHint({ status, errorDetail, t }: { status: Nip05VerifyStatus; errorDetail?: string; t: (key: string) => string }) {
   if (status === "verifying") return <p className="text-xs text-muted-foreground">{t("auth.profile.nip05Verifying")}</p>;
   if (status === "verified") return <p className="text-xs text-green-600">{t("auth.profile.nip05Verified")}</p>;
   if (status === "invalid") return <p className="text-xs text-destructive">{t("auth.profile.nip05VerifyFailed")}</p>;
-  if (status === "error") return <p className="text-xs text-destructive">{t("auth.profile.nip05VerifyError")}</p>;
+  if (status === "error") {
+    return (
+      <p className="text-xs text-destructive">
+        {t("auth.profile.nip05VerifyError")}
+        {errorDetail ? <span className="block opacity-80">{errorDetail}</span> : null}
+      </p>
+    );
+  }
   return null;
 }

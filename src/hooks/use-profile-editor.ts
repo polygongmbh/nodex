@@ -24,13 +24,18 @@ function normalizeSnapshotValue(value?: string) {
 
 export type Nip05VerifyStatus = "idle" | "verifying" | "verified" | "invalid" | "error";
 
+export type Nip05ValidationResult =
+  | { status: "verified" }
+  | { status: "invalid" }
+  | { status: "error"; message?: string };
+
 interface UseProfileEditorOptions {
   userPubkey?: string;
   knownProfileNames?: string[];
   t: TFunction;
   updateUserProfile: (profile: EditableNostrProfile) => Promise<boolean>;
   publishEvent: (kind: NostrEventKind, content: string, tags?: string[][]) => Promise<{ success: boolean; eventId?: string }>;
-  validateNip05?: (nip05: string) => Promise<boolean | null>;
+  validateNip05?: (nip05: string) => Promise<Nip05ValidationResult>;
   onSaved?: () => void;
 }
 
@@ -39,6 +44,7 @@ export interface ProfileEditorValidation {
   isUsernameHintError: boolean;
   isUsernameValid: boolean;
   nip05VerifyStatus: Nip05VerifyStatus;
+  nip05VerifyErrorDetail?: string;
 }
 
 export interface ProfileEditorFieldActions {
@@ -68,6 +74,7 @@ export function useProfileEditor({
   const [about, setAbout] = useState("");
   const [isUsernameAutoFilled, setIsUsernameAutoFilled] = useState(false);
   const [nip05VerifyStatus, setNip05VerifyStatus] = useState<Nip05VerifyStatus>("idle");
+  const [nip05VerifyErrorDetail, setNip05VerifyErrorDetail] = useState<string | undefined>(undefined);
   const nip05VerifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nip05VerifySeqRef = useRef(0);
   const [initialProfileSnapshot, setInitialProfileSnapshot] = useState<Required<ProfileEditorSnapshot>>({
@@ -111,19 +118,21 @@ export function useProfileEditor({
     const trimmed = nip05.trim();
     if (!trimmed || !validateNip05) {
       setNip05VerifyStatus("idle");
+      setNip05VerifyErrorDetail(undefined);
       return;
     }
     setNip05VerifyStatus("verifying");
+    setNip05VerifyErrorDetail(undefined);
     const seq = ++nip05VerifySeqRef.current;
     nip05VerifyTimerRef.current = setTimeout(() => {
       validateNip05(trimmed).then((result) => {
         if (seq !== nip05VerifySeqRef.current) return;
-        if (result === true) setNip05VerifyStatus("verified");
-        else if (result === false) setNip05VerifyStatus("invalid");
-        else setNip05VerifyStatus("error");
-      }).catch(() => {
+        setNip05VerifyStatus(result.status);
+        setNip05VerifyErrorDetail(result.status === "error" ? result.message : undefined);
+      }).catch((error) => {
         if (seq !== nip05VerifySeqRef.current) return;
         setNip05VerifyStatus("error");
+        setNip05VerifyErrorDetail(error instanceof Error ? error.message : undefined);
       });
     }, NIP05_VERIFY_DEBOUNCE_MS);
     return () => {
@@ -147,6 +156,7 @@ export function useProfileEditor({
     setAbout(nextSnapshot.about);
     setIsUsernameAutoFilled(false);
     setNip05VerifyStatus("idle");
+    setNip05VerifyErrorDetail(undefined);
   }, []);
 
   const handleUsernameChange = useCallback((value: string) => {
@@ -282,12 +292,14 @@ export function useProfileEditor({
       isUsernameHintError,
       isUsernameValid,
       nip05VerifyStatus,
+      nip05VerifyErrorDetail,
     }),
     [
       isUsernameHintError,
       isUsernameValid,
       usernameHint,
       nip05VerifyStatus,
+      nip05VerifyErrorDetail,
     ]
   );
 

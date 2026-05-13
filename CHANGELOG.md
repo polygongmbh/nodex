@@ -12,6 +12,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Changed
 - Reaction chips no longer appear under feed cards until the post has at least one reaction. The initial reaction now flows through the new actions menu.
+- Profile editor failures now surface the underlying reason: picture upload errors show the server's message in the toast description, and a failed NIP-05 identity verification shows the network/DNS detail underneath the field.
 
 ## [3.2.0] - 2026-05-13
 Minor release for NIP-25 feed reactions and task-kind model cleanup.
