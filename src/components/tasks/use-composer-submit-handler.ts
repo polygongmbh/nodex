@@ -66,6 +66,7 @@ export function useComposerSubmitHandler({
             attachments: data.attachments,
             nip99: data.nip99,
             locationGeohash: data.locationGeohash,
+            recomposeOf: data.recomposeOf,
           });
           result = (event.outcome.result as TaskCreateResult | undefined) ?? {
             ok: false,

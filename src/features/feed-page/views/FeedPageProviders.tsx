@@ -179,7 +179,8 @@ function FeedInteractionBusFromContexts({
           intent.priority,
           intent.attachments,
           intent.nip99,
-          intent.locationGeohash
+          intent.locationGeohash,
+          intent.recomposeOf,
         );
       },
       "task.toggleComplete": (intent) => {
@@ -199,6 +200,9 @@ function FeedInteractionBusFromContexts({
       },
       "task.delete": (intent) => {
         void taskCommands.deletePost(intent.taskId);
+      },
+      "task.recompose": (intent) => {
+        taskCommands.recomposePost(intent.taskId);
       },
       "task.copyPermalink": (intent) => {
         void taskCommands.copyPermalink(intent.taskId);

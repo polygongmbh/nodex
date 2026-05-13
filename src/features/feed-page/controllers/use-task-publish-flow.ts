@@ -16,7 +16,7 @@ import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { normalizeComposerMessageType } from "@/domain/content/task-type";
-import { isTaskKind } from "@/domain/content/task-kind";
+import { isCommentKind, isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import {   resolveRelaySelectionForSubmission, } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -46,6 +46,7 @@ import {
 } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
+  ComposeRecomposeOf,
   ComposeRestoreRequest,
   ComposeRestoreState,
   Nip99Metadata,
@@ -265,6 +266,23 @@ export function useTaskPublishFlow({
     }
   }, []);
 
+  const publishRecomposeDeletion = useCallback(async (target: ComposeRecomposeOf): Promise<void> => {
+    const targetRelayUrls = resolveRelayUrlsFromIds(target.relayIds);
+    const deletionTags = buildDeletionTags({ id: target.eventId, kind: target.originalKind });
+    suppressFailedPublishEvent(target.eventId);
+    try {
+      const result = await publishEvent(NostrEventKind.EventDeletion, "", deletionTags, undefined, targetRelayUrls);
+      if (!result.success) {
+        notifyPostDeleteFailed();
+        return;
+      }
+      notifyIfPartialPublish(targetRelayUrls, result.publishedRelayUrls);
+    } catch (error) {
+      console.warn("[recompose] deletion publish failed", { eventId: target.eventId, error });
+      notifyPostDeleteFailed();
+    }
+  }, [notifyIfPartialPublish, publishEvent, resolveRelayUrlsFromIds, suppressFailedPublishEvent]);
+
   const handleNewTask = useCallback(async (
     content: string,
     extractedTags: string[],
@@ -280,7 +298,8 @@ export function useTaskPublishFlow({
     priority?: number,
     attachments: PublishedAttachment[] = [],
     nip99?: Nip99Metadata,
-    locationGeohash?: string
+    locationGeohash?: string,
+    recomposeOf?: ComposeRecomposeOf,
   ): Promise<TaskCreateResult> => {
     const normalizedMessageType = normalizeComposerMessageType(taskType);
     if (normalizedMessageType !== taskType) {
@@ -655,6 +674,9 @@ export function useTaskPublishFlow({
         notifyPublished(publishKind, {
           relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
         });
+        if (recomposeOf) {
+          await publishRecomposeDeletion(recomposeOf);
+        }
       }, PUBLISH_UNDO_DELAY_MS);
 
       const toastId = notifyPendingPublish(PUBLISH_UNDO_DELAY_MS, () => handleUndoPendingPublish(eventId));
@@ -704,6 +726,9 @@ export function useTaskPublishFlow({
     notifyPublished(publishKind, {
       relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
     });
+    if (recomposeOf) {
+      await publishRecomposeDeletion(recomposeOf);
+    }
     return { ok: true, mode: "published" };
   }, [
     allTasks,
@@ -729,6 +754,7 @@ export function useTaskPublishFlow({
     user,
     clearPendingPublishTask,
     notifyIfPartialPublish,
+    publishRecomposeDeletion,
     suppressFailedPublishEvent,
   ]);
 
@@ -906,6 +932,61 @@ export function useTaskPublishFlow({
     suppressFailedPublishEvent,
   ]);
 
+  const handleRecomposeTask = useCallback((taskId: string): void => {
+    if (guardInteraction("modify")) return;
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    if (!existingTask) return;
+    const ownerPubkey = existingTask.author.pubkey.trim().toLowerCase();
+    const userPubkey = currentUser?.pubkey?.trim().toLowerCase() || "";
+    if (!userPubkey || userPubkey !== ownerPubkey) {
+      notifyStatusRestricted();
+      return;
+    }
+
+    const messageType: PostType = isListingKind(existingTask.kind)
+      ? "listing"
+      : isCommentKind(existingTask.kind)
+        ? "comment"
+        : "task";
+    const taskTypeForComposer: TaskEntryType = messageType === "listing" ? "task" : (messageType as TaskEntryType);
+
+    const inlineHashtags = new Set(extractHashtagsFromContent(existingTask.content).map((tag) => tag.toLowerCase()));
+    const explicitTagNames = (existingTask.tags || [])
+      .map((tag) => tag.trim().toLowerCase())
+      .filter((tag) => tag && !inlineHashtags.has(tag));
+
+    const explicitMentionPubkeys = Array.from(
+      new Set(
+        [...(existingTask.assigneePubkeys || []), ...(existingTask.mentions || [])]
+          .map((value) => value.trim().toLowerCase())
+          .filter((value) => /^[a-f0-9]{64}$/i.test(value))
+      )
+    );
+
+    const restoreState: ComposeRestoreState = {
+      content: existingTask.content,
+      taskType: taskTypeForComposer,
+      messageType,
+      dueDate: existingTask.dueDate,
+      dueTime: existingTask.dueTime,
+      dateType: existingTask.dateType,
+      explicitTagNames,
+      explicitMentionPubkeys,
+      selectedRelays: existingTask.relays,
+      priority: existingTask.priority,
+      attachments: existingTask.attachments,
+      nip99: existingTask.nip99,
+      locationGeohash: existingTask.locationGeohash,
+      recomposeOf: {
+        eventId: existingTask.id,
+        originalKind: existingTask.kind,
+        relayIds: existingTask.relays,
+      },
+    };
+
+    setComposeRestoreRequest({ id: Date.now(), state: restoreState });
+  }, [allTasks, currentUser?.pubkey, guardInteraction]);
+
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
@@ -936,5 +1017,6 @@ export function useTaskPublishFlow({
     handleDueDateChange,
     handlePriorityChange,
     handlePostDelete,
+    handleRecomposeTask,
   };
 }

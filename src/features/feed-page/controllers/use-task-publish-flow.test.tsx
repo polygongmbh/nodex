@@ -218,6 +218,35 @@ function Harness({
       >
         Delete
       </button>
+      <button onClick={() => hook.handleRecomposeTask("task-1")}>Recompose</button>
+      <button
+        onClick={async () => {
+          const result = await hook.handleNewTask(
+            "Edited #general",
+            ["general"],
+            ["relay-one"],
+            "task",
+            undefined,
+            undefined,
+            undefined,
+            null,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            { eventId: "task-1", originalKind: 1621, relayIds: ["relay-one"] }
+          );
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        RecomposeSubmit
+      </button>
+      <output data-testid="restore-id">{String(hook.composeRestoreRequest?.id ?? "")}</output>
+      <output data-testid="restore-content">{hook.composeRestoreRequest?.state.content ?? ""}</output>
+      <output data-testid="restore-recompose">{hook.composeRestoreRequest?.state.recomposeOf?.eventId ?? ""}</output>
       <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
       <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
       <output data-testid="local-count">{String(localTasks.length)}</output>
@@ -367,6 +396,62 @@ describe("useTaskPublishFlow", () => {
     );
     expect(screen.getByTestId("local-count")).toHaveTextContent("0");
     expect(Number(screen.getByTestId("suppressed-count").textContent)).toBeGreaterThan(0);
+  });
+
+  it("primes the composer with the original content when re-composing", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({
+      id: "task-1",
+      content: "Original body #general",
+      relays: ["relay-one"],
+      author: currentUser,
+    });
+
+    renderHarness({ initialTasks: [initialTask], currentUser });
+    fireEvent.click(screen.getByRole("button", { name: "Recompose" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-content")).toHaveTextContent("Original body #general");
+    });
+    expect(screen.getByTestId("restore-recompose")).toHaveTextContent("task-1");
+  });
+
+  it("fires a deletion event after a re-compose submit succeeds", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
+    const publishEvent = vi.fn(async () => ({
+      success: true,
+      eventId: "new-evt",
+      publishedRelayUrls: ["wss://relay.one"],
+    }));
+
+    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    fireEvent.click(screen.getByRole("button", { name: "RecomposeSubmit" }));
+
+    await waitFor(() => {
+      expect(publishEvent).toHaveBeenCalledWith(
+        5,
+        "",
+        [["e", "task-1"], ["k", "1621"]],
+        undefined,
+        ["wss://relay.one"],
+      );
+    });
+  });
+
+  it("skips deletion when the re-compose replacement publish fails", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
+    const publishEvent = vi.fn(async () => ({ success: false, eventId: "new-evt" }));
+
+    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    fireEvent.click(screen.getByRole("button", { name: "RecomposeSubmit" }));
+
+    await waitFor(() => {
+      expect(publishEvent).toHaveBeenCalledTimes(1);
+    });
+    const deletionCall = publishEvent.mock.calls.find(([kind]) => kind === 5);
+    expect(deletionCall).toBeUndefined();
   });
 
   it("refuses to delete a post the user does not own", async () => {

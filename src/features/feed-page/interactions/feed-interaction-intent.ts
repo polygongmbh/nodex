@@ -1,5 +1,6 @@
 import type {
   ChannelMatchMode,
+  ComposeRecomposeOf,
   Nip99ListingStatus,
   PublishedAttachment,
   Nip99Metadata,
@@ -77,6 +78,7 @@ export type FeedInteractionIntent =
       attachments?: PublishedAttachment[];
       nip99?: Nip99Metadata;
       locationGeohash?: string;
+      recomposeOf?: ComposeRecomposeOf;
     }
   | { type: "task.toggleComplete"; taskId: string }
   | { type: "task.changeStatus"; taskId: string; state: TaskState }
@@ -84,6 +86,7 @@ export type FeedInteractionIntent =
   | { type: "task.updatePriority"; taskId: string; priority: number }
   | { type: "task.listingStatus.change"; taskId: string; status: Nip99ListingStatus }
   | { type: "task.delete"; taskId: string }
+  | { type: "task.recompose"; taskId: string }
   | { type: "task.copyPermalink"; taskId: string }
   | { type: "task.undoPendingPublish"; taskId: string }
   | { type: "publish.failed.retry"; draftId: string }

@@ -534,6 +534,7 @@ function FeedIndexContent() {
     handleDueDateChange,
     handlePriorityChange,
     handlePostDelete,
+    handleRecomposeTask,
   } = useTaskPublishFlow({
     allTasks,
     relays,
@@ -652,6 +653,7 @@ function FeedIndexContent() {
       updatePriority: handlePriorityChange,
       changeListingStatus: handleListingStatusChange,
       deletePost: handlePostDelete,
+      recomposePost: handleRecomposeTask,
       copyPermalink: handleCopyPermalink,
       undoPendingPublish: handleUndoPendingPublish,
       retryFailedPublish: handleRetryFailedPublish,
@@ -662,7 +664,7 @@ function FeedIndexContent() {
     [
       setFocusedTaskId, handleNewTask, handleToggleComplete, handleStatusChange,
       handleDueDateChange, handlePriorityChange, handleListingStatusChange,
-      handlePostDelete, handleCopyPermalink,
+      handlePostDelete, handleRecomposeTask, handleCopyPermalink,
       handleUndoPendingPublish, handleRetryFailedPublish, handleRepostFailedPublish,
       handleDismissFailedPublish, handleDismissAllFailedPublish,
     ]

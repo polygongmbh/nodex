@@ -105,6 +105,15 @@ export interface ComposeAttachment extends PublishedAttachment {
   source: "upload" | "url";
 }
 
+export interface ComposeRecomposeOf {
+  /** Event id of the original post being re-composed. */
+  eventId: string;
+  /** Original event kind, used when publishing the replacing deletion event. */
+  originalKind: number;
+  /** Relay ids the original post lived on; used to route the deletion. */
+  relayIds: string[];
+}
+
 export interface ComposeRestoreState {
   content: string;
   taskType: TaskEntryType;
@@ -119,6 +128,8 @@ export interface ComposeRestoreState {
   selectedRelays?: string[];
   priority?: number;
   attachments?: PublishedAttachment[];
+  /** When set, a successful submission must publish a deletion for the named event. */
+  recomposeOf?: ComposeRecomposeOf;
 }
 
 export interface ComposeRestoreRequest {

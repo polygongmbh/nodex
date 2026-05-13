@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
-import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
+import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment } from "@/types";
 import type { ComposerFilterSync } from "./use-composer-filter-sync";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -103,6 +103,7 @@ export interface TaskComposerFormData {
   attachments: PublishedAttachment[];
   nip99?: Nip99Metadata;
   locationGeohash?: string;
+  recomposeOf?: ComposeRecomposeOf;
 }
 
 const NIP99_TITLE_MAX_LENGTH = 80;
@@ -282,6 +283,7 @@ export function TaskComposer({
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
+  const activeRecomposeOfRef = useRef<ComposeRecomposeOf | undefined>(undefined);
   const lastAppliedMentionRequestIdRef = useRef<number | null>(null);
   const dragDepthRef = useRef(0);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
@@ -447,6 +449,7 @@ export function TaskComposer({
     if (lastAppliedRestoreRequestIdRef.current === composeRestoreRequest.id) return;
     lastAppliedRestoreRequestIdRef.current = composeRestoreRequest.id;
     const restoreState = composeRestoreRequest.state;
+    activeRecomposeOfRef.current = restoreState.recomposeOf;
     setContent(restoreState.content || "");
     setTaskType(
       getTaskComposerRestoreMessageType(
@@ -906,6 +909,8 @@ export function TaskComposer({
 
     const submittedPriority = storedPriorityFromDisplay(priority);
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
+    const submittedRecomposeOf = activeRecomposeOfRef.current;
+    activeRecomposeOfRef.current = undefined;
     onSubmit({
       content,
       tags: submitTags,
@@ -919,6 +924,7 @@ export function TaskComposer({
       attachments: uploadedAttachments,
       nip99: listingMetadata,
       ...(normalizedLocationGeohash ? { locationGeohash: normalizedLocationGeohash } : {}),
+      ...(submittedRecomposeOf ? { recomposeOf: submittedRecomposeOf } : {}),
     });
 
     setIsSendLaunching(true);

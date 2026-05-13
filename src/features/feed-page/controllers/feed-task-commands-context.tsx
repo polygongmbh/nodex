@@ -1,5 +1,6 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
 import type {
+  ComposeRecomposeOf,
   PostType,
   TaskDateType,
   TaskState,
@@ -27,7 +28,8 @@ export interface FeedTaskCommands {
     priority?: number,
     attachments?: PublishedAttachment[],
     nip99?: Nip99Metadata,
-    locationGeohash?: string
+    locationGeohash?: string,
+    recomposeOf?: ComposeRecomposeOf,
   ): Promise<TaskCreateResult>;
   toggleComplete(taskId: string): void;
   changeStatus(taskId: string, status: TaskState): void;
@@ -35,6 +37,7 @@ export interface FeedTaskCommands {
   updatePriority(taskId: string, priority: number): void;
   changeListingStatus(taskId: string, status: Nip99ListingStatus): void;
   deletePost(taskId: string): Promise<boolean>;
+  recomposePost(taskId: string): void;
   copyPermalink(taskId: string): Promise<boolean>;
   undoPendingPublish(taskId: string): void;
   retryFailedPublish(draftId: string): Promise<void>;
@@ -52,6 +55,7 @@ const defaultCommands: FeedTaskCommands = {
   updatePriority: () => {},
   changeListingStatus: () => {},
   deletePost: async () => false,
+  recomposePost: () => {},
   copyPermalink: async () => false,
   undoPendingPublish: () => {},
   retryFailedPublish: async () => {},
