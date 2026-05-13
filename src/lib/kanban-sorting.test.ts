@@ -14,9 +14,6 @@ const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
 
   timestamp,
   lastEditedAt,
-  likes: 0,
-  replies: 0,
-  reposts: 0,
   state: {
     status: "open"
   },

@@ -38,9 +38,6 @@ const baseTask: Task = {
   relays: ["demo"],
 
   timestamp: new Date(),
-  likes: 0,
-  replies: 0,
-  reposts: 0,
 };
 
 describe("canUserUpdateTask", () => {

@@ -26,9 +26,6 @@ const baseTask: Task = {
 
   timestamp: new Date(),
   lastEditedAt: new Date(),
-  likes: 0,
-  replies: 0,
-  reposts: 0,
   state: {
     status: "open"
   },

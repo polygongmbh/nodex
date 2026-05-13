@@ -52,9 +52,6 @@ describe("CalendarView responsiveness", () => {
 
       timestamp: new Date("2026-02-17T09:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T09:00:00.000Z"),
-      likes: 0,
-      replies: 0,
-      reposts: 0,
       state: {
         status: "open"
       },

@@ -83,9 +83,6 @@ function createTask(
     dueDate?: Date;
     dueTime?: string;
     timestamp?: Date;
-    likes?: number;
-    replies?: number;
-    reposts?: number;
   } = {}
 ): Task {
   const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 14);
@@ -98,9 +95,6 @@ function createTask(
     relays: ["demo"],
 
     timestamp,
-    likes: options.likes || 0,
-    replies: options.replies || 0,
-    reposts: options.reposts || 0,
     state: normalizeTaskState(options.status),
     dueDate: options.dueDate,
     dueTime: options.dueTime,
@@ -116,9 +110,6 @@ function createComment(
   options: {
     parentId?: string;
     timestamp?: Date;
-    likes?: number;
-    replies?: number;
-    reposts?: number;
   } = {}
 ): Task {
   const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7);
@@ -131,9 +122,6 @@ function createComment(
     relays: ["demo"],
 
     timestamp,
-    likes: options.likes || 0,
-    replies: options.replies || 0,
-    reposts: options.reposts || 0,
     parentId: options.parentId,
   };
 }
@@ -142,17 +130,12 @@ function createComment(
 // Root task: Website Redesign
 const task1 = createTask(mockPeople[1], "Website Redesign Project - Complete overhaul of the company website #design #frontend", ["design", "frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-  likes: 12,
-  replies: 5,
-  reposts: 2,
   dueDate: addDays(today, 1),
 });
 
 // Subtasks of Website Redesign (using parentId as nostr "e" tag reference per NIP-01)
 const task1a = createTask(mockPeople[2], "Create wireframes for homepage and landing pages #design", ["design"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6),
-  likes: 5,
-  replies: 2,
   parentId: task1.id,
   status: "done",
   dueDate: subDays(today, 2),
@@ -160,8 +143,6 @@ const task1a = createTask(mockPeople[2], "Create wireframes for homepage and lan
 
 const task1b = createTask(mockPeople[3], "Implement responsive navigation component #frontend", ["frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
-  likes: 3,
-  replies: 1,
   parentId: task1.id,
   status: "active",
   dueDate: today,
@@ -170,14 +151,12 @@ const task1b = createTask(mockPeople[3], "Implement responsive navigation compon
 
 const task1b1 = createTask(mockPeople[4], "Add mobile hamburger menu #frontend", ["frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
-  likes: 1,
   parentId: task1b.id,
   dueDate: today,
 });
 
 const task1b2 = createTask(mockPeople[1], "Add keyboard navigation support #frontend", ["frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-  likes: 2,
   parentId: task1b.id,
   status: "done",
 });
@@ -185,16 +164,11 @@ const task1b2 = createTask(mockPeople[1], "Add keyboard navigation support #fron
 // Comment on navigation task (kind 1 text note with "e" tag reply per NIP-01)
 const comment1bc1 = createComment(mockPeople[2], "Should we use CSS Grid or Flexbox for the layout? #frontend", ["frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
-  likes: 2,
-  replies: 1,
   parentId: task1b.id,
 });
 
 const task1c = createTask(mockPeople[1], "Set up design system with color tokens #design #docs", ["design", "docs"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
-  likes: 8,
-  replies: 3,
-  reposts: 1,
   parentId: task1.id,
   dueDate: addDays(today, 3),
 });
@@ -202,16 +176,11 @@ const task1c = createTask(mockPeople[1], "Set up design system with color tokens
 // Root task: API Development
 const task2 = createTask(mockPeople[3], "API Development - Build REST API for mobile app #backend #feature", ["backend", "feature"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
-  likes: 15,
-  replies: 8,
-  reposts: 3,
   dueDate: subDays(today, 1),
 });
 
 const task2a = createTask(mockPeople[4], "Design database schema #backend #planning", ["backend", "planning"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9),
-  likes: 6,
-  replies: 2,
   parentId: task2.id,
   status: "done",
   dueDate: subDays(today, 5),
@@ -219,8 +188,6 @@ const task2a = createTask(mockPeople[4], "Design database schema #backend #plann
 
 const task2b = createTask(mockPeople[1], "Implement authentication endpoints #backend #urgent", ["backend", "urgent"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8),
-  likes: 4,
-  replies: 1,
   parentId: task2.id,
   dueDate: today,
   dueTime: "17:00",
@@ -228,7 +195,6 @@ const task2b = createTask(mockPeople[1], "Implement authentication endpoints #ba
 
 const task2b1 = createTask(mockPeople[2], "Add JWT token refresh logic #backend", ["backend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-  likes: 2,
   parentId: task2b.id,
   dueDate: addDays(today, 1),
 });
@@ -236,13 +202,11 @@ const task2b1 = createTask(mockPeople[2], "Add JWT token refresh logic #backend"
 // Comment on auth (NIP-01 kind 1 with "e" tag)
 const comment2bc1 = createComment(mockPeople[3], "We should consider using refresh tokens with short-lived access tokens for better security. #backend", ["backend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-  likes: 5,
   parentId: task2b.id,
 });
 
 const task2c = createTask(mockPeople[3], "Write API documentation #docs", ["docs"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6),
-  likes: 3,
   parentId: task2.id,
   dueDate: addDays(today, 5),
 });
@@ -250,17 +214,12 @@ const task2c = createTask(mockPeople[3], "Write API documentation #docs", ["docs
 // Root task: Bug Fixes
 const task3 = createTask(mockPeople[2], "Bug Fixes - Address critical issues before release #bug #urgent", ["bug", "urgent"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-  likes: 7,
-  replies: 4,
-  reposts: 1,
   dueDate: today,
   dueTime: "18:00",
 });
 
 const task3a = createTask(mockPeople[4], "Fix login redirect loop on mobile Safari #bug #frontend", ["bug", "frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-  likes: 3,
-  replies: 2,
   parentId: task3.id,
   status: "active",
   dueDate: today,
@@ -268,8 +227,6 @@ const task3a = createTask(mockPeople[4], "Fix login redirect loop on mobile Safa
 
 const task3b = createTask(mockPeople[1], "Resolve memory leak in dashboard component #bug #frontend", ["bug", "frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
-  likes: 5,
-  replies: 1,
   parentId: task3.id,
   status: "done",
   dueDate: subDays(today, 1),
@@ -278,7 +235,6 @@ const task3b = createTask(mockPeople[1], "Resolve memory leak in dashboard compo
 // Personal tasks
 const task4 = createTask(mockPeople[0], "Home Renovation Planning #planning", ["planning"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14),
-  replies: 2,
 });
 
 const task4a = createTask(mockPeople[0], "Get quotes from contractors #planning", ["planning"], {
@@ -296,7 +252,6 @@ const task4b = createTask(mockPeople[0], "Research kitchen cabinet styles #desig
 // Personal productivity
 const task5 = createTask(mockPeople[0], "Weekly Review Tasks #review", ["review"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-  replies: 3,
   dueDate: addDays(today, 2),
 });
 
@@ -315,8 +270,6 @@ const task5b = createTask(mockPeople[0], "Plan priorities for next week #plannin
 // Additional tasks
 const task6 = createTask(mockPeople[2], "Q1 Planning Meeting Prep #planning", ["planning"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  likes: 2,
-  replies: 1,
   dueDate: addDays(today, 4),
 });
 
@@ -335,14 +288,11 @@ const task6b = createTask(mockPeople[2], "Create presentation slides #docs", ["d
 // Top-level tasks without subtasks
 const task7 = createTask(mockPeople[1], "Schedule team offsite meeting #planning", ["planning"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-  likes: 3,
   dueDate: addDays(today, 6),
 });
 
 const task8 = createTask(mockPeople[3], "Update project dependencies to latest versions #backend #frontend", ["backend", "frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-  likes: 2,
-  replies: 1,
   status: "active",
 });
 
@@ -353,47 +303,33 @@ const task9 = createTask(mockPeople[0], "Buy groceries for the week #planning", 
 
 const task10 = createTask(mockPeople[4], "Prepare monthly expense report #docs #review", ["docs", "review"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  likes: 1,
   dueDate: addDays(today, 1),
   status: "done",
 });
 
 const task11 = createTask(mockPeople[2], "Clean up old branches in repository #backend", ["backend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-  likes: 4,
-  replies: 2,
 });
 
 // Top-level comments (general discussions - kind 1 text notes per NIP-01)
 const commentC1 = createComment(mockPeople[1], "Has anyone looked into the new React 19 features? Wondering if we should plan an upgrade. #frontend", ["frontend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-  likes: 8,
-  replies: 4,
-  reposts: 1,
 });
 
 const commentC2 = createComment(mockPeople[3], "Reminder: Please update your timesheets before end of day Friday! #review", ["review"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-  likes: 2,
 });
 
 const commentC3 = createComment(mockPeople[0], "Great progress on the website redesign this week, team! 🎉 #design", ["design"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 30),
-  likes: 15,
-  replies: 3,
-  reposts: 2,
 });
 
 const commentC4 = createComment(mockPeople[4], "Anyone interested in a lunch run today? Meeting at the lobby at noon. #planning", ["planning"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  likes: 5,
-  replies: 2,
 });
 
 const commentC5 = createComment(mockPeople[2], "FYI: The staging server will be down for maintenance tonight from 10pm-12am. #backend", ["backend"], {
   timestamp: new Date(Date.now() - 1000 * 60 * 45),
-  likes: 7,
-  replies: 1,
 });
 
 export const mockTasks: Task[] = [

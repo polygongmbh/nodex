@@ -28,9 +28,6 @@ function buildTask(overrides: Partial<Task> = {}): Task {
     relays: ["r1"],
 
     timestamp: new Date("2026-01-01T00:00:00.000Z"),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     ...overrides,
   };
 }

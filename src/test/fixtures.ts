@@ -45,9 +45,6 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     tags: ["general"],
     relays: ["demo"],
     timestamp,
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     state: { status: "open" },
     ...overrides,
   };

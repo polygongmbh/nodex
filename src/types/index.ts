@@ -155,9 +155,6 @@ export interface Task {
   content: string;
   tags: string[];
   relays: string[];
-  likes?: number;
-  replies?: number;
-  reposts?: number;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   timestamp: Date;
