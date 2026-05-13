@@ -1,4 +1,4 @@
-import { Task, TaskState, TaskStatus, getTaskStatus, normalizeTaskState } from "@/types";
+import { Task, TaskState, TaskStatus, TaskStateUpdate, getTaskStatus, normalizeTaskState } from "@/types";
 import {
   isTaskCompletedState,
   isTaskTerminalState as registryIsTerminal,
@@ -17,14 +17,20 @@ export function applyTaskStateUpdate(
   allTasks: Task[],
   taskId: string,
   newStatus: TaskState | TaskStatus,
-  _authorPubkey?: string
+  authorPubkey?: string
 ): Task[] {
   const now = new Date();
   const normalized = normalizeTaskState(newStatus);
   const toLocalStatusUpdatedTask = (task: Task): Task => {
+    const optimisticUpdate: TaskStateUpdate = {
+      id: `local-${task.id}-${now.getTime()}`,
+      state: normalized,
+      timestamp: now,
+      authorPubkey: authorPubkey ?? task.author.pubkey,
+    };
     return {
       ...task,
-      state: normalized,
+      stateUpdates: [optimisticUpdate, ...(task.stateUpdates ?? [])],
       lastEditedAt: now,
     };
   };

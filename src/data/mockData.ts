@@ -86,8 +86,10 @@ function createTask(
   } = {}
 ): Task {
   const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 14);
+  const id = generateMockEventId();
+  const initialState = normalizeTaskState(options.status);
   return {
-    id: generateMockEventId(),
+    id,
     kind: NostrEventKind.Task,
     author,
     content,
@@ -95,7 +97,10 @@ function createTask(
     relays: ["demo"],
 
     timestamp,
-    state: normalizeTaskState(options.status),
+    stateUpdates:
+      initialState.status !== "open"
+        ? [{ id, state: initialState, timestamp, authorPubkey: author.pubkey }]
+        : undefined,
     dueDate: options.dueDate,
     dueTime: options.dueTime,
     parentId: options.parentId,

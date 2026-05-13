@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { nip19 } from "nostr-tools";
-import { Task, getLastEditedAt, getTaskStatus } from "@/types";
+import { Task, getLastEditedAt, getTaskStatus, getTaskState, getTaskStatusFromTask } from "@/types";
 import { basicNostrEvents } from "@/data/basic-nostr-events";
 import { mergeTasks } from "@/domain/content/task-merge";
 import {
@@ -60,7 +60,7 @@ describe("nostrEventToTask", () => {
     const task = nostrEventToTask(taskEvent);
     
     expect(task.kind).toBe(NostrEventKind.Task);
-    expect(getTaskStatus(task.state)).toBe("open");
+    expect(getTaskStatus(getTaskState(task))).toBe("open");
   });
 
   it("classifies NIP-99 events as listings via the event kind", () => {
@@ -154,30 +154,6 @@ describe("nostrEventToTask", () => {
     
     // Should only contain one "bug" tag
     expect(task.tags.filter((t) => t === "bug").length).toBe(1);
-  });
-
-  it("extracts status from status tag", () => {
-    const event: NostrEventWithRelay = {
-      ...baseEvent,
-      kind: NostrEventKind.Task,
-      tags: [["status", "done"]],
-    };
-    
-    const task = nostrEventToTask(event);
-    
-    expect(getTaskStatus(task.state)).toBe("done");
-  });
-
-  it("handles in-progress status", () => {
-    const event: NostrEventWithRelay = {
-      ...baseEvent,
-      kind: NostrEventKind.Task,
-      tags: [["status", "active"]],
-    };
-    
-    const task = nostrEventToTask(event);
-    
-    expect(getTaskStatus(task.state)).toBe("active");
   });
 
   it("does not force a placeholder avatar url", () => {
@@ -426,7 +402,7 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(getTaskStatus(tasks[0].state)).toBe("active");
+    expect(getTaskStatusFromTask(tasks[0])).toBe("active");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000002 * 1000);
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
@@ -436,10 +412,6 @@ describe("nostrEventsToTasks", () => {
       expect.objectContaining({
         id: "state-old",
         state: { status: "done" },
-      }),
-      expect.objectContaining({
-        id: "task-1",
-        state: { status: "open" },
       }),
     ]);
   });
@@ -466,15 +438,11 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(getTaskStatus(tasks[0].state)).toBe("closed");
+    expect(getTaskStatusFromTask(tasks[0])).toBe("closed");
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-closed",
         state: { status: "closed" },
-      }),
-      expect.objectContaining({
-        id: "task-closed",
-        state: { status: "open" },
       }),
     ]);
   });
@@ -503,15 +471,9 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(getTaskStatus(tasks[0].state)).toBe("open");
+    expect(getTaskStatus(getTaskState(tasks[0]))).toBe("open");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000000 * 1000);
-    expect(tasks[0].stateUpdates).toEqual([
-      expect.objectContaining({
-        id: "task-assigned",
-        state: { status: "open" },
-        authorPubkey: "creator-pubkey",
-      }),
-    ]);
+    expect(tasks[0].stateUpdates).toBeUndefined();
   });
 
   it("applies assignee-authored state updates on assigned tasks", () => {
@@ -538,18 +500,13 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(getTaskStatus(tasks[0].state)).toBe("done");
+    expect(getTaskStatusFromTask(tasks[0])).toBe("done");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000015 * 1000);
     expect(tasks[0].stateUpdates).toEqual([
       expect.objectContaining({
         id: "state-assignee",
         state: { status: "done" },
         authorPubkey: "assignee-pubkey",
-      }),
-      expect.objectContaining({
-        id: "task-assigned-allowed",
-        state: { status: "open" },
-        authorPubkey: "creator-pubkey",
       }),
     ]);
   });
@@ -687,7 +644,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].id).toBe("task-priority-state");
     expect(tasks[0].priority).toBe(70);
-    expect(getTaskStatus(tasks[0].state)).toBe("active");
+    expect(getTaskStatusFromTask(tasks[0])).toBe("active");
   });
 
   it("keeps only latest parameterized replaceable listing revision", () => {

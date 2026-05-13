@@ -23,7 +23,16 @@ import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import type { EmptyScopeModel } from "@/lib/empty-scope";
-import { getTaskStatus, type Channel, type ChannelMatchMode, type Relay, type Task, type TaskStateUpdate, type TaskStatus } from "@/types";
+import {
+  getTaskStatus,
+  type Channel,
+  type ChannelMatchMode,
+  type Relay,
+  type Task,
+  type TaskStateUpdate,
+  type TaskStatus,
+  getTaskState,
+} from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
 
@@ -171,7 +180,7 @@ function clearSelectedPeople(people: SelectablePerson[]): SelectablePerson[] {
 function buildFeedEntries(tasks: Task[], focusedTaskId: string | null): FeedEntry[] {
   const entries: FeedEntry[] = [];
   for (const task of [...tasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
-    if (getTaskStatus(task.state) !== "closed" || task.id === focusedTaskId) {
+    if (getTaskStatus(getTaskState(task)) !== "closed" || task.id === focusedTaskId) {
       entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
     }
     for (const update of task.stateUpdates || []) {
@@ -328,7 +337,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
     getUpcomingTasks() {
       if (upcomingTasksCache) return upcomingTasksCache;
       upcomingTasksCache = sortTasks(
-        getTasksWithDueDates().filter((task) => !isTaskTerminal(task.state)),
+        getTasksWithDueDates().filter((task) => !isTaskTerminal(getTaskState(task))),
         source.sortContext
       );
       return upcomingTasksCache;
@@ -729,7 +738,7 @@ export function useKanbanViewState({
   const tasksByStatus = useMemo<Record<TaskStatus, Task[]>>(() => {
     const grouped: Record<TaskStatus, Task[]> = { open: [], active: [], done: [], closed: [] };
     kanbanTasks.forEach((task) => {
-      grouped[getTaskStatus(task.state)].push(task);
+      grouped[getTaskStatus(getTaskState(task))].push(task);
     });
     grouped.open = sortKanbanColumnTasks(grouped.open, "open", sortContext);
     grouped.active = sortKanbanColumnTasks(grouped.active, "active", sortContext);
@@ -769,7 +778,7 @@ export function useMobileFallbackNoticeState({
     if (currentView !== "list" && currentView !== "calendar") {
       return undefined;
     }
-    return (task: Task) => isTaskKind(task.kind) && Boolean(task.dueDate) && !isTaskTerminal(task.state);
+    return (task: Task) => isTaskKind(task.kind) && Boolean(task.dueDate) && !isTaskTerminal(getTaskState(task));
   }, [currentView]);
   const includeFocusedTaskForActiveView = currentView === "feed";
   const hideClosedForActiveView = currentView === "feed";

@@ -1,4 +1,5 @@
 import type { Task } from "@/types";
+import { getTaskState } from "@/types";
 import { isTaskCompleted, isTaskTerminal } from "@/domain/content/task-state";
 import { isTaskKind } from "@/domain/content/task-kind";
 
@@ -48,12 +49,12 @@ export function deriveTreeTaskItemChildren({
   const matchingTaskChildren = matchingChildren.filter((child) => isTaskKind(child.kind));
   const matchingCommentChildren = matchingChildren.filter((child) => !isTaskKind(child.kind));
   const defaultMatchingTaskChildren = allTaskChildren.filter(
-    (child) => !isTaskTerminal(child.state)
+    (child) => !isTaskTerminal(getTaskState(child))
   );
   const defaultMatchingCommentChildren = allCommentChildren;
   const taskChildCount = allTaskChildren.length;
   const commentChildCount = allCommentChildren.length;
-  const completedTaskChildCount = allTaskChildren.filter((child) => isTaskCompleted(child.state)).length;
+  const completedTaskChildCount = allTaskChildren.filter((child) => isTaskCompleted(getTaskState(child))).length;
   const shouldUseFilteredMatchingChildren = hasMatchingFilters && !currentTaskIsDirectMatch;
   const noFilterTaskBaseline = parentIsTerminal ? allTaskChildren : defaultMatchingTaskChildren;
   const noFilterCommentBaseline = defaultMatchingCommentChildren;
@@ -74,7 +75,7 @@ export function deriveTreeTaskItemChildren({
   // because the user has explicitly navigated into a done branch.
   const effectiveMatchingTaskChildren = parentIsTerminal
     ? rawEffectiveMatchingTaskChildren
-    : rawEffectiveMatchingTaskChildren.filter((child) => !isTaskTerminal(child.state));
+    : rawEffectiveMatchingTaskChildren.filter((child) => !isTaskTerminal(getTaskState(child)));
 
   return {
     allChildren,

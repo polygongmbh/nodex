@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task, TaskState, TaskStatus } from "@/types";
+import { getTaskState } from "@/types";
 import { getLastEditedAt, getTaskStatus, normalizeTaskState } from "@/types";
 import type { Person } from "@/types/person";
 import { applyTaskStateUpdate, isTaskTerminal } from "@/domain/content/task-state";
@@ -77,7 +78,7 @@ export function useTaskStatusController({
       clearPendingStatusUpdate(taskId);
       const existingTask = allTasks.find((task) => task.id === taskId);
       const currentStatus =
-        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatus(existingTask?.state) ?? "open";
+        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatus(getTaskState(existingTask)) ?? "open";
       pendingTaskStatusesRef.current.set(taskId, status.status);
       setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
       if (existingTask) {
@@ -139,7 +140,7 @@ export function useTaskStatusController({
         if (!parentTask) continue;
         const parentCurrentType =
           pendingTaskStatusesRef.current.get(parentId) ??
-          getTaskStatus(parentTask.state) ??
+          getTaskStatus(getTaskState(parentTask)) ??
           "open";
         if (parentCurrentType !== "open") continue;
         if (!canUserChangeTaskStatus(parentTask, currentUser)) continue;
@@ -185,7 +186,7 @@ export function useTaskStatusController({
       const existingTask = resolveAuthorizedTask(taskId);
       if (!existingTask) return;
       const currentType =
-        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatus(existingTask.state) ?? "open";
+        pendingTaskStatusesRef.current.get(taskId) ?? getTaskStatus(getTaskState(existingTask)) ?? "open";
       if (currentType === "done" || currentType === "closed") return;
       const nextType: TaskStatus =
         currentType === "open" && !isMobile ? "active" : "done";
@@ -206,7 +207,7 @@ export function useTaskStatusController({
       if (!existingTask) return;
 
       const normalizedStatus = normalizeTaskState(status);
-      const currentStatus = normalizeTaskState(existingTask.state);
+      const currentStatus = normalizeTaskState(getTaskState(existingTask));
       if (
         normalizedStatus.status === currentStatus.status &&
         normalizedStatus.description === currentStatus.description

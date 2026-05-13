@@ -26,9 +26,7 @@ const baseTask: Task = {
 
   timestamp: new Date(),
   lastEditedAt: new Date(),
-  state: {
-    status: "open"
-  },
+  stateUpdates: [],
 };
 
 beforeEach(() => {

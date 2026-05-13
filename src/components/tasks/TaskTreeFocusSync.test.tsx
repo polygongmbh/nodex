@@ -35,9 +35,7 @@ const rootTask: Task = {
 
   timestamp: new Date(),
   lastEditedAt: new Date(),
-  state: {
-    status: "open"
-  },
+  stateUpdates: [],
 };
 
 const childTask: Task = {
@@ -52,9 +50,14 @@ const doneGrandchildTask: Task = {
   id: "done-grandchild",
   content: "Done grandchild",
   parentId: "root",
-  state: {
-    status: "done"
-  },
+  stateUpdates: [
+    {
+      id: "done-grandchild-init",
+      state: { status: "done" },
+      timestamp: rootTask.timestamp,
+      authorPubkey: rootTask.author.pubkey,
+    },
+  ],
 };
 
 function renderTaskTree(

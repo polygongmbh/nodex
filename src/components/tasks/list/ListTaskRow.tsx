@@ -11,6 +11,7 @@ import { isTaskTerminal } from "@/domain/content/task-state";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import type { Task } from "@/types";
+import { getTaskState } from "@/types";
 import { getTaskTooltipPreview } from "@/lib/task-content-preview";
 import type { Person } from "@/types/person";
 
@@ -59,7 +60,7 @@ export function ListTaskRow({
       className={cn(
         rowClassName,
         "items-start border-b border-border hover:bg-muted/30 transition-colors",
-        isTaskTerminal(task.state) && "opacity-60",
+        isTaskTerminal(getTaskState(task)) && "opacity-60",
         isLockedUntilStart && "opacity-50 grayscale",
         isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
       )}
@@ -83,7 +84,7 @@ export function ListTaskRow({
             className={cn(
               `text-sm cursor-pointer break-words whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
               isProject && "font-bold",
-              isTaskTerminal(task.state) && "line-through text-muted-foreground"
+              isTaskTerminal(getTaskState(task)) && "line-through text-muted-foreground"
             )}
             title={(() => {
               const typeLabel = t("tasks.task").toLowerCase();

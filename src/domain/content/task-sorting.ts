@@ -1,4 +1,4 @@
-import { Task, TaskState, TaskStatus, getLastEditedAt, getTaskStatus } from "@/types";
+import { Task, TaskState, TaskStatus, getLastEditedAt, getTaskStatus, getTaskState } from "@/types";
 import { isTaskTerminal } from "./task-state";
 import { getTaskStatusForStateId } from "@/domain/task-states/task-state-config";
 import { isToday, isPast, startOfDay, differenceInDays } from "date-fns";
@@ -28,7 +28,7 @@ type SortAwareTask = Task & { sortStatus?: TaskStatus; sortLastEditedAt?: Date }
 
 function getStatusForSort(task: Task | undefined): TaskStatus | undefined {
   if (!task) return undefined;
-  return (task as SortAwareTask).sortStatus ?? getTaskStatus(task.state);
+  return (task as SortAwareTask).sortStatus ?? getTaskStatus(getTaskState(task));
 }
 
 function getTaskById(taskId: string, context: SortContext): Task | undefined {

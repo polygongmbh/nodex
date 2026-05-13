@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskStatusController } from "./use-task-status-controller";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { makePerson, makeTask } from "@/test/fixtures";
-import { getTaskStatus } from "@/types";
+import { getTaskStatus, getTaskStatusFromTask } from "@/types";
 import * as taskStateConfig from "@/domain/task-states/task-state-config";
 
 const author = makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
@@ -54,7 +54,7 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
       <button type="button" onClick={() => controller.handleToggleComplete("task-1")}>
         ToggleComplete
       </button>
-      <output data-testid="status">{getTaskStatus(allTasks[0]?.state) || ""}</output>
+      <output data-testid="status">{getTaskStatusFromTask(allTasks[0]) || ""}</output>
       <output data-testid="state-update-count">{String(allTasks[0]?.stateUpdates?.length ?? 0)}</output>
       <output data-testid="sort-hold">{controller.sortStatusHoldByTaskId["task-1"] || ""}</output>
     </>
@@ -75,7 +75,7 @@ describe("useTaskStatusController", () => {
     vi.useRealTimers();
   });
 
-  it("applies local status optimistically without creating a synthetic state update entry", () => {
+  it("applies local status optimistically by prepending a synthetic state update entry", () => {
     const publishTaskStateUpdate = vi.fn(async () => undefined);
     render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
 
@@ -85,7 +85,7 @@ describe("useTaskStatusController", () => {
     fireEvent.click(screen.getByRole("button", { name: "SetDone" }));
 
     expect(screen.getByTestId("status")).toHaveTextContent("done");
-    expect(screen.getByTestId("state-update-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("state-update-count")).toHaveTextContent("2");
     expect(screen.getByTestId("sort-hold")).toHaveTextContent("open");
     expect(publishTaskStateUpdate).toHaveBeenCalledWith("task-1", { status: "done" });
 
@@ -94,7 +94,7 @@ describe("useTaskStatusController", () => {
     });
 
     expect(screen.getByTestId("status")).toHaveTextContent("done");
-    expect(screen.getByTestId("state-update-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("state-update-count")).toHaveTextContent("2");
     expect(screen.getByTestId("sort-hold")).toBeEmptyDOMElement();
   });
 

@@ -40,12 +40,10 @@ export function mergeTasks(existingTasks: Task[], newTasks: Task[]): Task[] {
     );
     const mergedStateUpdates = mergeStateUpdates(existing.stateUpdates, incoming.stateUpdates);
     const winner = existing.timestamp.getTime() >= incoming.timestamp.getTime() ? existing : incoming;
-    const latestMergedState = mergedStateUpdates?.[0];
     const mergedTask: Task = {
       ...winner,
       relays: mergedRelays,
       stateUpdates: mergedStateUpdates,
-      state: latestMergedState?.state ?? winner.state,
     };
     mergedTask.lastEditedAt = getLatestEditedAt(mergedTask);
     // Reuse the existing reference when the merged values match — prevents

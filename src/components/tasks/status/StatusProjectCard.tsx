@@ -13,6 +13,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Task } from "@/types";
+import { getTaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface StatusProjectCardProps {
@@ -34,7 +35,7 @@ export function StatusProjectCard({ task, people, isProject, subtaskCount }: Sta
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
-  const dueDateColor = getDueDateColorClass(task.dueDate, task.state);
+  const dueDateColor = getDueDateColorClass(task.dueDate, getTaskState(task));
   const showChipRow = hasTaskMetadataChips(task, activeRelayCount);
 
   return (

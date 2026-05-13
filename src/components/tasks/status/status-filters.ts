@@ -1,4 +1,4 @@
-import { getTaskStatus, type Task } from "@/types";
+import { getTaskStatus, type Task, getTaskState } from "@/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 
@@ -95,7 +95,7 @@ export function selectStatusInProgressTopLevelTasks({
   const result: Task[] = [];
   for (const task of contextTasks) {
     if (!isTaskKind(task.kind)) continue;
-    if (getTaskStatus(task.state) !== "active") continue;
+    if (getTaskStatus(getTaskState(task)) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
       : !task.parentId;
@@ -123,7 +123,7 @@ export function hasInProgressTopLevelProject({
 }: ProjectFilterOptions): boolean {
   for (const task of contextTasks) {
     if (!isTaskKind(task.kind)) continue;
-    if (getTaskStatus(task.state) !== "active") continue;
+    if (getTaskStatus(getTaskState(task)) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
       : !task.parentId;

@@ -5,7 +5,8 @@ import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-conf
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { notifyTaskActionBlocked } from "@/lib/notifications";
-import type { Task } from "@/types";
+import type { Task, TaskState } from "@/types";
+import { getTaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface UseTaskStatusMenuOptions {
@@ -20,7 +21,7 @@ interface UseTaskStatusMenuOptions {
    * permission reason via a toast.
    */
   onBlockedInteractionAttempt?: () => void;
-  getStatusToggleHint: (status?: Task["state"]) => string;
+  getStatusToggleHint: (status?: TaskState) => string;
   focusOnQuickToggle?: boolean;
 }
 
@@ -56,8 +57,8 @@ export function useTaskStatusMenu({
   const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   const blockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
   const statusButtonTitle = canCompleteTask
-    ? getStatusToggleHint(task.state)
-    : blockedReason || getStatusToggleHint(task.state);
+    ? getStatusToggleHint(getTaskState(task))
+    : blockedReason || getStatusToggleHint(getTaskState(task));
 
   const surfaceBlockedFeedback = useCallback(() => {
     if (isInteractionBlocked && onBlockedInteractionAttempt) {
@@ -149,7 +150,7 @@ export function useTaskStatusMenu({
         return;
       }
       handleTaskStatusToggleClick(event, {
-        status: task.state,
+        status: getTaskState(task),
         hasStatusChangeHandler: canCompleteTask,
         isMenuOpen: statusMenuOpen,
         openMenu: () => {
@@ -213,7 +214,7 @@ export function useTaskStatusMenu({
       if (!canCompleteTask) return;
       if (
         shouldOpenStatusMenuForDirectSelection({
-          status: task.state,
+          status: getTaskState(task),
           altKey: event.altKey,
           hasStatusChangeHandler: canCompleteTask,
         })

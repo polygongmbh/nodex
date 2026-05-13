@@ -16,6 +16,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { formatAuthorMetaParts } from "@/types/person";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import type { Task } from "@/types";
+import { getTaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface StatusTimelineItemProps {
@@ -38,7 +39,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
     [resolvedAuthor]
   );
   const isComment = !isTaskKind(task.kind);
-  const isTerminal = isTaskTerminal(task.state);
+  const isTerminal = isTaskTerminal(getTaskState(task));
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   // Collapse paragraph breaks so the preview renders as one inline block —
   // `line-clamp-2` on a container with multiple <p> children produces an

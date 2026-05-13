@@ -22,7 +22,7 @@ import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { useTranslation } from "react-i18next";
-import { type Nip99ListingStatus, type RawNostrEvent, type Task } from "@/types";
+import { type Nip99ListingStatus, type RawNostrEvent, type Task, getTaskState } from "@/types";
 import type { Person } from "@/types/person";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -103,7 +103,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const isComment = isCommentKind(task.kind);
   const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
   const isSoldListing = isListing && listingStatus === "sold";
-  const isCompletedVisual = isTaskTerminal(task.state) || isSoldListing;
+  const isCompletedVisual = isTaskTerminal(getTaskState(task)) || isSoldListing;
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const feedMessageLabel = isListing ? t("tasks.listing.label") : t("tasks.comment");
   const listingSoldLabel = t("tasks.listing.sold");

@@ -21,7 +21,14 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { getTaskStatus, normalizeTaskState, type Task, type TaskState, type ComposeRestoreRequest } from "@/types";
+import {
+  getTaskStatus,
+  normalizeTaskState,
+  type Task,
+  type TaskState,
+  type ComposeRestoreRequest,
+  getTaskState,
+} from "@/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
@@ -76,7 +83,7 @@ function getColumns(tasks: Task[]): KanbanColumn[] {
   }
 
   for (const task of tasks) {
-    const resolvedState = resolveTaskStateFromStatus(task.state, registry);
+    const resolvedState = resolveTaskStateFromStatus(getTaskState(task), registry);
     if (seen.has(resolvedState.id)) continue;
     seen.add(resolvedState.id);
     columns.push({
@@ -180,7 +187,7 @@ export function KanbanView({
     const grouped: Record<string, Task[]> = Object.fromEntries(columns.map((column) => [column.id, []]));
 
     for (const task of kanbanTasks) {
-      const effectiveStatus = optimisticStatusByTaskId[task.id] || task.state;
+      const effectiveStatus = optimisticStatusByTaskId[task.id] || getTaskState(task);
       const columnId = resolveTaskStateFromStatus(effectiveStatus).id;
       grouped[columnId] ||= [];
       grouped[columnId].push(task);
@@ -195,7 +202,7 @@ export function KanbanView({
   const canonicalStateIdByTaskId = useMemo(() => {
     const map = new Map<string, string>();
     for (const task of kanbanTasks) {
-      map.set(task.id, resolveTaskStateFromStatus(task.state).id);
+      map.set(task.id, resolveTaskStateFromStatus(getTaskState(task)).id);
     }
     return map;
   }, [kanbanTasks]);
@@ -221,7 +228,7 @@ export function KanbanView({
     });
   }, [canonicalStateIdByTaskId]);
   const getTaskEffectiveStatus = useCallback(
-    (task: Task): TaskState => optimisticStatusByTaskId[task.id] || task.state,
+    (task: Task): TaskState => optimisticStatusByTaskId[task.id] || getTaskState(task),
     [optimisticStatusByTaskId]
   );
   const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
@@ -229,7 +236,7 @@ export function KanbanView({
     const map = new Map<string, { open: number; active: number; done: number }>();
     for (const task of allTasks) {
       if (!isTaskKind(task.kind) || !task.parentId) continue;
-      const type = getTaskStatus(task.state);
+      const type = getTaskStatus(getTaskState(task));
       if (type !== "open" && type !== "active" && type !== "done") continue;
       const counts = map.get(task.parentId) ?? { open: 0, active: 0, done: 0 };
       counts[type] += 1;

@@ -1,6 +1,7 @@
 import { isTaskTerminal } from "@/domain/content/task-state";
 import { isTaskKind } from "@/domain/content/task-kind";
 import type { Task } from "@/types";
+import { getTaskState } from "@/types";
 
 // A task is a "project" when at least one of its task-typed subtasks is not in
 // a terminal state. This drives bolding, the kanban click affordance (project
@@ -16,7 +17,7 @@ export function isProjectFromChildrenMap(
 ): boolean {
   const children = childrenByParentId.get(taskId) || [];
   return children.some(
-    (child) => isTaskKind(child.kind) && !isTaskTerminal(child.state)
+    (child) => isTaskKind(child.kind) && !isTaskTerminal(getTaskState(child))
   );
 }
 
@@ -26,6 +27,6 @@ export function makeIsProject(allTasks: Task[]): (taskId: string) => boolean {
       (task) =>
         isTaskKind(task.kind) &&
         task.parentId === taskId &&
-        !isTaskTerminal(task.state)
+        !isTaskTerminal(getTaskState(task))
     );
 }

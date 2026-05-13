@@ -3,7 +3,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefinition } from "@/domain/task-states/task-state-config";
-import { getTaskState, getTaskStatus, type Task, type ComposeRestoreRequest, type TaskStatus } from "@/types";
+import { getTaskState, getTaskStatus, type Task, type TaskState, type ComposeRestoreRequest, type TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import {
   format,
@@ -95,7 +95,7 @@ export function CalendarView({
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();
   const activeRelays = relays.filter((relay) => relay.isActive);
-  const getStatusToggleHint = (status?: Task["state"]): string => {
+  const getStatusToggleHint = (status?: TaskState): string => {
     const alternateKey = getAlternateModifierLabel();
     const statusType = getTaskStatus(status);
     if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
@@ -387,8 +387,8 @@ export function CalendarView({
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
   };
   const getStatusButtonTitle = (task: Task) => {
-    if (canCompleteTask(task)) return getStatusToggleHint(task.state);
-    return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(task.state);
+    if (canCompleteTask(task)) return getStatusToggleHint(getTaskState(task));
+    return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(getTaskState(task));
   };
 
   const openStatusMenu = (taskId: string) => {
@@ -492,7 +492,7 @@ export function CalendarView({
                        {group.tasks.map((task) => {
                          const authorColor = getAuthorColor(task.author);
                          const canChangeStatus = canCompleteTask(task);
-                         const canEditPriority = canChangeStatus && !isTaskTerminal(task.state);
+                         const canEditPriority = canChangeStatus && !isTaskTerminal(getTaskState(task));
                          return (
                            <div
                              key={task.id}
@@ -548,7 +548,7 @@ export function CalendarView({
                                         return;
                                       }
                                      handleTaskStatusToggleClick(e, {
-                                       status: task.state,
+                                       status: getTaskState(task),
                                        hasStatusChangeHandler: canCompleteTask(task),
                                        isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
                                        openMenu: () => openStatusMenu(task.id),
@@ -573,7 +573,7 @@ export function CalendarView({
                                      if (!canCompleteTask(task)) return;
                                      if (
                                        shouldOpenStatusMenuForDirectSelection({
-                                         status: task.state,
+                                         status: getTaskState(task),
                                          altKey: e.altKey,
                                          hasStatusChangeHandler: canCompleteTask(task),
                                        })
@@ -604,7 +604,7 @@ export function CalendarView({
                                {canCompleteTask(task) && (
                                   <DropdownMenuContent align="start">
                                     {getTaskStateRegistry().map((state) => {
-                                      const isCurrent = resolveTaskStateFromStatus(task.state).id === state.id;
+                                      const isCurrent = resolveTaskStateFromStatus(getTaskState(task)).id === state.id;
                                       return (
                                         <DropdownMenuItem
                                           key={state.id}
@@ -649,7 +649,7 @@ export function CalendarView({
                                  {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
                                    void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                                  }, {
-                                   plainHashtags: isTaskTerminal(task.state),
+                                   plainHashtags: isTaskTerminal(getTaskState(task)),
                                    people,
                                    disableStandaloneEmbeds: true,
                                  })}
@@ -722,122 +722,122 @@ export function CalendarView({
                   {section.weeks.map((week) => {
                     const weekContainsToday = week.some((day) => isToday(day));
                     return (
-                    <div
-                      key={week[0]?.toISOString() ?? section.key}
-                      ref={(node: HTMLDivElement | null) => {
-                        if (weekContainsToday) {
-                          desktopCurrentWeekRef.current = node;
-                        }
-                      }}
-                      data-current-week={weekContainsToday ? "true" : undefined}
-                      className={cn(
-                        "grid gap-px bg-border/35",
-                        isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
-                      )}
-                    >
                       <div
+                        key={week[0]?.toISOString() ?? section.key}
+                        ref={(node: HTMLDivElement | null) => {
+                          if (weekContainsToday) {
+                            desktopCurrentWeekRef.current = node;
+                          }
+                        }}
+                        data-current-week={weekContainsToday ? "true" : undefined}
                         className={cn(
-                          "flex items-center justify-center text-xs font-medium",
-                          weekContainsToday
-                            ? "bg-primary/15 text-primary font-semibold"
-                            : "bg-muted/55 text-muted-foreground"
+                          "grid gap-px bg-border/35",
+                          isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
                         )}
                       >
-                        {getISOWeek(week[3] ?? week[0])}
-                      </div>
-                      {week.map((day) => {
-                        const dayTasks = getTasksForDay(day);
-                        const isSelected = selectedDate && isSameDay(day, selectedDate);
-                        const isInDisplayedMonth = isSameMonth(day, section.month);
-                        const dayIsToday = isToday(day);
+                        <div
+                          className={cn(
+                            "flex items-center justify-center text-xs font-medium",
+                            weekContainsToday
+                              ? "bg-primary/15 text-primary font-semibold"
+                              : "bg-muted/55 text-muted-foreground"
+                          )}
+                        >
+                          {getISOWeek(week[3] ?? week[0])}
+                        </div>
+                        {week.map((day) => {
+                          const dayTasks = getTasksForDay(day);
+                          const isSelected = selectedDate && isSameDay(day, selectedDate);
+                          const isInDisplayedMonth = isSameMonth(day, section.month);
+                          const dayIsToday = isToday(day);
 
-                        return (
-                          <button
-                            key={day.toISOString()}
-                            onClick={() => {
-                              if (controlledSelectedDate === undefined) {
-                                setSelectedDateInternal(day);
-                              }
-                              onSelectedDateChange?.(day);
-                              if (!isInDisplayedMonth) {
-                                setCurrentMonth(startOfMonth(day));
-                                ensureDesktopMonthRendered(day);
-                              }
-                            }}
-                            aria-current={dayIsToday ? "date" : undefined}
-                            className={cn(
-                              "transition-colors duration-150 text-left flex flex-col relative border border-transparent",
-                              isMobile ? "min-h-[4.4rem] p-1" : "min-h-[6.2rem] p-1",
-                              // Subtle row tint when this week contains today, distinct from selected day
-                              weekContainsToday ? "bg-primary/5" : "bg-background",
-                              dayIsToday && "border-primary bg-primary/15 ring-1 ring-primary/40",
-                              isSelected ? "bg-primary/25 border-primary" : !dayIsToday && "hover:bg-muted/40",
-                              !isInDisplayedMonth && "opacity-60"
-                            )}
-                          >
-                            <span
+                          return (
+                            <button
+                              key={day.toISOString()}
+                              onClick={() => {
+                                if (controlledSelectedDate === undefined) {
+                                  setSelectedDateInternal(day);
+                                }
+                                onSelectedDateChange?.(day);
+                                if (!isInDisplayedMonth) {
+                                  setCurrentMonth(startOfMonth(day));
+                                  ensureDesktopMonthRendered(day);
+                                }
+                              }}
+                              aria-current={dayIsToday ? "date" : undefined}
                               className={cn(
-                                isMobile ? "text-xs" : "text-sm",
-                                "font-medium",
-                                dayIsToday &&
-                                  "inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground"
+                                "transition-colors duration-150 text-left flex flex-col relative border border-transparent",
+                                isMobile ? "min-h-[4.4rem] p-1" : "min-h-[6.2rem] p-1",
+                                // Subtle row tint when this week contains today, distinct from selected day
+                                weekContainsToday ? "bg-primary/5" : "bg-background",
+                                dayIsToday && "border-primary bg-primary/15 ring-1 ring-primary/40",
+                                isSelected ? "bg-primary/25 border-primary" : !dayIsToday && "hover:bg-muted/40",
+                                !isInDisplayedMonth && "opacity-60"
                               )}
                             >
-                              {format(day, "d")}
-                            </span>
-                            {dayTasks.length > 0 && (
-                              isMobile ? (
-                                <div className="flex gap-0.5 mt-0.5">
-                                  {dayTasks.slice(0, 3).map((task) => {
-                                    const authorColor = getAuthorColor(task.author);
-                                    return (
-                                      <span
-                                        key={task.id}
-                                        className="w-1 h-1 rounded-full"
-                                        style={{ backgroundColor: authorColor.accent }}
-                                      />
-                                    );
-                                  })}
-                                  {dayTasks.length > 3 && (
-                                    <span className="text-[0.375rem] text-muted-foreground">+</span>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
-                                  {dayTasks.slice(0, 2).map((task) => {
-                                    const authorColor = getAuthorColor(task.author);
-                                    return (
-                                      <div
-                                        key={task.id}
-                                        className={cn(
-                                          "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
-                                          isTaskTerminal(task.state)
-                                            ? "bg-muted text-muted-foreground line-through"
-                                            : getTaskStatus(task.state) === "active"
-                                              ? "bg-warning/15 text-warning"
-                                              : "bg-primary/10"
-                                        )}
-                                      >
+                              <span
+                                className={cn(
+                                  isMobile ? "text-xs" : "text-sm",
+                                  "font-medium",
+                                  dayIsToday &&
+                                    "inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground"
+                                )}
+                              >
+                                {format(day, "d")}
+                              </span>
+                              {dayTasks.length > 0 && (
+                                isMobile ? (
+                                  <div className="flex gap-0.5 mt-0.5">
+                                    {dayTasks.slice(0, 3).map((task) => {
+                                      const authorColor = getAuthorColor(task.author);
+                                      return (
                                         <span
-                                          className="h-1.5 w-1.5 rounded-full"
+                                          key={task.id}
+                                          className="w-1 h-1 rounded-full"
                                           style={{ backgroundColor: authorColor.accent }}
                                         />
-                                        {task.content.slice(0, 15)}...
-                                      </div>
-                                    );
-                                  })}
-                                  {dayTasks.length > 2 && (
-                                    <span className="text-[0.625rem] text-muted-foreground">
-                                      {t("calendar.moreTasks", { count: dayTasks.length - 2 })}
-                                    </span>
-                                  )}
-                                </div>
-                              )
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+                                      );
+                                    })}
+                                    {dayTasks.length > 3 && (
+                                      <span className="text-[0.375rem] text-muted-foreground">+</span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
+                                    {dayTasks.slice(0, 2).map((task) => {
+                                      const authorColor = getAuthorColor(task.author);
+                                      return (
+                                        <div
+                                          key={task.id}
+                                          className={cn(
+                                            "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
+                                            isTaskTerminal(getTaskState(task))
+                                              ? "bg-muted text-muted-foreground line-through"
+                                              : getTaskStatus(getTaskState(task)) === "active"
+                                                ? "bg-warning/15 text-warning"
+                                                : "bg-primary/10"
+                                          )}
+                                        >
+                                          <span
+                                            className="h-1.5 w-1.5 rounded-full"
+                                            style={{ backgroundColor: authorColor.accent }}
+                                          />
+                                          {task.content.slice(0, 15)}...
+                                                                                </div>
+                                      );
+                                    })}
+                                    {dayTasks.length > 2 && (
+                                      <span className="text-[0.625rem] text-muted-foreground">
+                                        {t("calendar.moreTasks", { count: dayTasks.length - 2 })}
+                                      </span>
+                                    )}
+                                  </div>
+                                )
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     );
                   })}
                 </div>
@@ -948,28 +948,28 @@ export function CalendarView({
                     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
                    
                     return (
-                        <div
-                        key={task.id}
-                        data-task-id={task.id}
-                        onClick={() => {
-                          if (!hasTextSelection() && hasChildren(task.id)) {
-                            focusTask(task.id);
-                          }
-                        }}
-                        title={(() => {
-                          const typeLabel = t("tasks.task").toLowerCase();
-                          const preview = getTaskTooltipPreview(task.content);
-                          return preview
-                            ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-                            : t("tasks.focusTaskTitle", { type: typeLabel });
-                        })()}
-                        className={cn(
-                          `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-                          isTaskTerminal(task.state) && "opacity-60",
-                          isLockedUntilStart && "opacity-50 grayscale"
-                        )}
-                        style={{ borderLeftColor: authorColor.accent }}
-                      >
+                      <div
+                      key={task.id}
+                      data-task-id={task.id}
+                      onClick={() => {
+                        if (!hasTextSelection() && hasChildren(task.id)) {
+                          focusTask(task.id);
+                        }
+                      }}
+                      title={(() => {
+                        const typeLabel = t("tasks.task").toLowerCase();
+                        const preview = getTaskTooltipPreview(task.content);
+                        return preview
+                          ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
+                          : t("tasks.focusTaskTitle", { type: typeLabel });
+                      })()}
+                      className={cn(
+                        `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
+                        isTaskTerminal(getTaskState(task)) && "opacity-60",
+                        isLockedUntilStart && "opacity-50 grayscale"
+                      )}
+                      style={{ borderLeftColor: authorColor.accent }}
+                    >
                         {/* Parent context */}
                         {ancestorChain.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-2">
@@ -991,7 +991,6 @@ export function CalendarView({
                             ))}
                           </div>
                         )}
-                        
                         <div className="flex items-start gap-2">
                           <DropdownMenu
                             open={Boolean(statusMenuOpenByTaskId[task.id])}
@@ -1026,7 +1025,7 @@ export function CalendarView({
                                         return;
                                       }
                                   handleTaskStatusToggleClick(e, {
-                                    status: task.state,
+                                    status: getTaskState(task),
                                     hasStatusChangeHandler: canCompleteTask(task),
                                     isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
                                     openMenu: () => openStatusMenu(task.id),
@@ -1051,7 +1050,7 @@ export function CalendarView({
                                   if (!canCompleteTask(task)) return;
                                   if (
                                     shouldOpenStatusMenuForDirectSelection({
-                                      status: task.state,
+                                      status: getTaskState(task),
                                       altKey: e.altKey,
                                       hasStatusChangeHandler: canCompleteTask(task),
                                     })
@@ -1082,7 +1081,7 @@ export function CalendarView({
                             {canCompleteTask(task) && (
                               <DropdownMenuContent align="start">
                                 {getTaskStateRegistry().map((state) => {
-                                  const isCurrent = resolveTaskStateFromStatus(task.state).id === state.id;
+                                  const isCurrent = resolveTaskStateFromStatus(getTaskState(task)).id === state.id;
                                   return (
                                     <DropdownMenuItem
                                       key={state.id}
@@ -1112,13 +1111,13 @@ export function CalendarView({
                                 hasCollapsibleContent && !isContentExpanded
                                   ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                                   : "whitespace-pre-wrap",
-                                isTaskTerminal(task.state) && "line-through text-muted-foreground"
+                                isTaskTerminal(getTaskState(task)) && "line-through text-muted-foreground"
                               )}
                             >
                               {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
                                 void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
                               }, {
-                                plainHashtags: isTaskTerminal(task.state),
+                                plainHashtags: isTaskTerminal(getTaskState(task)),
                                 people,
                                 disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
@@ -1188,11 +1187,9 @@ export function CalendarView({
         </div>
         )}
       </div>
-
       {mediaController.activeMediaIndex !== null && (
         <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
       )}
-
     </main>
   );
 }

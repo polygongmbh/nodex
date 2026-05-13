@@ -5,7 +5,13 @@ import {
   normalizeTaskSearchValue,
   searchableTextMatchesQuery,
 } from "@/domain/content/task-search-document";
-import { getTaskStatus, type ChannelMatchMode, type QuickFilterState, type Task } from "@/types";
+import {
+  getTaskStatus,
+  type ChannelMatchMode,
+  type QuickFilterState,
+  type Task,
+  getTaskState,
+} from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
 
 function normalize(value: string): string {
@@ -173,7 +179,7 @@ export function getDirectMatchTaskIdsForView({
 
     if (taskPredicate && !taskPredicate(task)) continue;
     if (!prefilteredTaskIds.has(task.id)) continue;
-    if (hideClosedTasks && getTaskStatus(task.state) === "closed" && !isExplicitlyFocusedTask) continue;
+    if (hideClosedTasks && getTaskStatus(getTaskState(task)) === "closed" && !isExplicitlyFocusedTask) continue;
     if (!taskMatchesSelectedPeople(task, selectedPeople)) continue;
     if (!taskMatchesQuickFilters(task, quickFilters)) continue;
 

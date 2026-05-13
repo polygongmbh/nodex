@@ -169,8 +169,8 @@ export interface BasePost {
 
 export interface TaskPost extends BasePost {
   kind: NostrEventKind.Task;
-  state?: TaskState;
-  stateUpdates?: TaskStateUpdate[];
+  /** State-change events sorted desc; read current state via getTaskState(). */
+  stateUpdates: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
@@ -194,10 +194,14 @@ export type Post = TaskPost | CommentPost | ListingPost;
  * fields are optional. Existing call sites accept this without narrowing.
  * New code should prefer `Post` (discriminated) plus the variant types.
  */
+/**
+ * Kitchen-sink superset of all variants — accepts any kind with every
+ * variant's fields optional. Retained as a transition aid; new code should
+ * prefer the discriminated `Post` union plus narrowing via type predicates.
+ */
 export interface Task extends BasePost {
   kind: NostrEventKind;
   nip99?: Nip99Metadata;
-  state?: TaskState;
   stateUpdates?: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;
@@ -225,13 +229,12 @@ export function getTaskStatus(state: TaskState | TaskStatus | undefined): TaskSt
   return normalizeTaskState(state).status;
 }
 
-/**
- * Derives current state from a task. Prefers `stateUpdates[0]` (the latest
- * historical entry, sorted desc) and falls back to the legacy `state` field
- * for fixtures/mocks that haven't been migrated yet.
- */
-export function getTaskState(task: Pick<Task, "state" | "stateUpdates">): TaskState {
-  return task.stateUpdates?.[0]?.state ?? task.state ?? { status: "open" };
+export function getTaskState(task: Pick<Task, "stateUpdates"> | undefined): TaskState {
+  return task?.stateUpdates?.[0]?.state ?? { status: "open" };
+}
+
+export function getTaskStatusFromTask(task: Pick<Task, "stateUpdates"> | undefined): TaskStatus {
+  return getTaskState(task).status;
 }
 
 export function getLastEditedAt(task: Task): Date {

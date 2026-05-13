@@ -1,22 +1,32 @@
 import { describe, expect, it } from "vitest";
-import type { Task } from "@/types";
+import type { Task, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
+import { normalizeTaskState } from "@/types";
 import {
   areTaskFieldsEqual,
   preserveTaskIdentity,
   preserveTaskListIdentity,
 } from "./task-identity";
 
-function makeTask(overrides: Partial<Task> = {}): Task {
+type MakeTaskOverrides = Partial<Task> & { state?: TaskState | TaskStatus };
+
+function makeTask(overrides: MakeTaskOverrides = {}): Task {
+  const { state, stateUpdates, ...rest } = overrides;
+  const id = rest.id ?? "task-1";
+  const timestamp = rest.timestamp ?? new Date("2026-02-17T10:00:00.000Z");
+  const author = rest.author ?? { pubkey: "alice", name: "Alice" };
+  const resolvedStateUpdates: TaskStateUpdate[] =
+    state !== undefined
+      ? [{ id, state: normalizeTaskState(state), timestamp, authorPubkey: author.pubkey }]
+      : stateUpdates ?? [];
   return {
-    id: "task-1",
-    author: { pubkey: "alice", name: "Alice" },
+    id,
+    author,
     content: "Hello",
     tags: ["work"],
     relays: ["relay-a"],
-    taskType: "task",
-    timestamp: new Date("2026-02-17T10:00:00.000Z"),
-    state: { status: "open" },
-    ...overrides,
+    timestamp,
+    stateUpdates: resolvedStateUpdates,
+    ...rest,
   } as Task;
 }
 

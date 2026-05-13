@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState, type UIEvent, useDeferredValue } from "react";
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
-import {   Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatus } from "@/types";
+import { Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatus, getTaskState } from "@/types";
 import { resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -409,14 +409,14 @@ export function FeedView({
   const renderPriorityChip = useCallback((task: Task) => (
     <FeedPriorityChip
       task={task}
-      editable={canCompleteTask(task) && !isTaskTerminal(task.state)}
+      editable={canCompleteTask(task) && !isTaskTerminal(getTaskState(task))}
     />
   ), [canCompleteTask]);
   const renderDueDateChip = useCallback((task: Task) => (
     <FeedDueDateChip
       task={task}
       editable={canCompleteTask(task)}
-      dueDateColor={getDueDateColorClass(task.dueDate, task.state)}
+      dueDateColor={getDueDateColorClass(task.dueDate, getTaskState(task))}
     />
   ), [canCompleteTask]);
 

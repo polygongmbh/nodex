@@ -15,7 +15,7 @@ import {
 } from "@/domain/task-states/task-state-config";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { cn } from "@/lib/utils";
-import { getTaskState, getTaskStatus, type Task } from "@/types";
+import { getTaskState, getTaskStatus, type Task, type TaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface TaskStatusToggleProps {
@@ -37,7 +37,7 @@ export function TaskStatusToggle({
 }: TaskStatusToggleProps) {
   const { t } = useTranslation("tasks");
   const { isInteractionBlocked = false, onBlockedInteractionAttempt } = useFeedTaskViewModel();
-  const getStatusToggleHint = (status?: Task["state"]): string => {
+  const getStatusToggleHint = (status?: TaskState): string => {
     const alternateKey = getAlternateModifierLabel();
     const statusType = getTaskStatus(status);
     if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
@@ -82,7 +82,7 @@ export function TaskStatusToggle({
       {canCompleteTask ? (
         <DropdownMenuContent align="start">
           {getTaskStateRegistry().map((state) => {
-            const isCurrent = resolveTaskStateFromStatus(task.state).id === state.id;
+            const isCurrent = resolveTaskStateFromStatus(getTaskState(task)).id === state.id;
             return (
               <DropdownMenuItem
                 key={state.id}

@@ -1168,9 +1168,6 @@ describe("FeedView", () => {
       id: "task-closed-with-updates",
       author,
       content: "Closed feed task #general",
-      state: {
-        status: "closed"
-      },
       stateUpdates: [
         {
           id: "close-update-1",

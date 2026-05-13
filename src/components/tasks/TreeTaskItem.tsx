@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { cn } from "@/lib/utils";
-import { Task, Relay, getTaskStatus } from "@/types";
+import { Task, Relay, getTaskStatus, getTaskState } from "@/types";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -98,7 +98,7 @@ export function TreeTaskItem({
   const [hasLocalFoldOverride, setHasLocalFoldOverride] = useState(false);
   const foldState: TreeTaskFoldState =
     parentFoldState === "allVisible" && !hasLocalFoldOverride ? "allVisible" : localFoldState;
-  const prevStatusTypeRef = useRef(getTaskStatus(task.state));
+  const prevStatusTypeRef = useRef(getTaskStatus(getTaskState(task)));
   const cheerTimeoutRef = useRef<number | null>(null);
   const prevHasMatchingFiltersRef = useRef(hasMatchingFilters);
   const [isCheering, setIsCheering] = useState(false);
@@ -137,16 +137,16 @@ export function TreeTaskItem({
   // status TYPE transition — otherwise filter toggles would clobber the
   // user's fold state with the default for the new match context.
   useEffect(() => {
-    const currentStatusType = getTaskStatus(task.state);
+    const currentStatusType = getTaskStatus(getTaskState(task));
     if (prevStatusTypeRef.current === currentStatusType) return;
 
     if (currentStatusType === "active") {
       setLocalFoldState(getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren));
       setHasLocalFoldOverride(false);
-    } else if (isTaskTerminal(task.state)) {
+    } else if (isTaskTerminal(getTaskState(task))) {
       setLocalFoldState("collapsed");
       setHasLocalFoldOverride(false);
-      if (isTaskCompleted(task.state)) {
+      if (isTaskCompleted(getTaskState(task))) {
         setIsCheering(true);
         if (cheerTimeoutRef.current !== null) {
           window.clearTimeout(cheerTimeoutRef.current);
@@ -159,7 +159,7 @@ export function TreeTaskItem({
       }
     }
     prevStatusTypeRef.current = currentStatusType;
-  }, [depth, hasMatchingChildren, hasMatchingFilters, task.state]);
+  }, [depth, hasMatchingChildren, hasMatchingFilters, getTaskState(task)]);
 
   useEffect(() => {
     return () => {
@@ -189,13 +189,13 @@ export function TreeTaskItem({
         matchingChildren,
         hasMatchingFilters,
         currentTaskIsDirectMatch,
-        parentIsTerminal: isTaskTerminal(task.state),
+        parentIsTerminal: isTaskTerminal(getTaskState(task)),
       }),
-    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, task.state]
+    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, getTaskState(task)]
   );
   const isComment = !isTaskKind(task.kind);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
-  const dueDateColor = getDueDateColorClass(task.dueDate, task.state);
+  const dueDateColor = getDueDateColorClass(task.dueDate, getTaskState(task));
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
 
@@ -235,7 +235,7 @@ export function TreeTaskItem({
   const editableMetadata = !isComment && canEditTaskMetadata;
   // Priority editing is disabled for terminal-state tasks (done/closed) — render a non-interactive
   // chip rather than the full select control to avoid unnecessary overhead.
-  const editablePriority = editableMetadata && !isTaskTerminal(task.state);
+  const editablePriority = editableMetadata && !isTaskTerminal(getTaskState(task));
   const showCompactPriority = compactView && !isComment && typeof task.priority === "number";
   const showFullMetadataChips =
     !compactView &&
@@ -263,7 +263,7 @@ export function TreeTaskItem({
           isComment 
             ? "bg-muted/30"
             : "",
-          isTaskTerminal(task.state) && "opacity-60",
+          isTaskTerminal(getTaskState(task)) && "opacity-60",
           isLockedUntilStart && "opacity-50 grayscale",
           depth > 0 && "border-l-2 border-muted ml-1.5 pl-4",
           isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background bg-primary/5"
@@ -396,10 +396,10 @@ export function TreeTaskItem({
               : hasCollapsibleContent && !isContentExpanded
                 ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                 : "whitespace-pre-wrap",
-            isTaskTerminal(task.state) && "line-through text-muted-foreground"
+            isTaskTerminal(getTaskState(task)) && "line-through text-muted-foreground"
           )}>
             {linkifyContent(task.content, dispatchHashtagInclude, {
-              plainHashtags: isTaskTerminal(task.state),
+              plainHashtags: isTaskTerminal(getTaskState(task)),
               people,
               disableStandaloneEmbeds: true,
             })}
@@ -526,7 +526,6 @@ export function TreeTaskItem({
           <TaskAssigneeAvatars task={task} />
         </div>
       </div>
-
       {/* Children - three states: collapsed, matchingOnly, allVisible */}
       {hasChildren && foldState !== "collapsed" && (
         <div className="space-y-1">
@@ -557,7 +556,7 @@ export function TreeTaskItem({
                   const childMatchingChildren = getMatchingChildrenFn(child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible" 
-                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasMatchingFilters ? true : !isTaskTerminal(child.state)))
+                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasMatchingFilters ? true : !isTaskTerminal(getTaskState(child))))
                     : true;
                   return (
                     <TreeTaskItem
@@ -585,7 +584,7 @@ export function TreeTaskItem({
                   const childMatchingChildren = getMatchingChildrenFn(child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible"
-                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasMatchingFilters ? true : !isTaskTerminal(child.state)))
+                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasMatchingFilters ? true : !isTaskTerminal(getTaskState(child))))
                     : true;
                   return (
                     <TreeTaskItem

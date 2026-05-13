@@ -1,4 +1,4 @@
-import { getTaskStatus, type Task, type TaskStatus } from "@/types";
+import { getTaskStatus, type Task, type TaskStatus, getTaskState } from "@/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 
 const EPSILON = 0.001;
@@ -50,7 +50,7 @@ function isTerminal(status: TaskStatus): boolean {
 
 function isEvaluable(task: Task): boolean {
   if (!isTaskKind(task.kind)) return false;
-  return !isTerminal(getTaskStatus(task.state));
+  return !isTerminal(getTaskStatus(getTaskState(task)));
 }
 
 function daysUntil(target: Date, now: number): number {
@@ -97,7 +97,7 @@ export function buildChildrenMap(tasks: readonly Task[]): Map<string, Task[]> {
 
 function getSubtasks(taskId: string, childrenMap: Map<string, Task[]>): Task[] {
   const all = childrenMap.get(taskId) ?? [];
-  return all.filter((child) => isTaskKind(child.kind) && getTaskStatus(child.state) !== "closed");
+  return all.filter((child) => isTaskKind(child.kind) && getTaskStatus(getTaskState(child)) !== "closed");
 }
 
 export function calculateProgress(
@@ -110,7 +110,7 @@ export function calculateProgress(
 
   const subtasks = getSubtasks(task.id, childrenMap);
   if (subtasks.length === 0) {
-    const value = isTerminal(getTaskStatus(task.state)) ? 1 : 0;
+    const value = isTerminal(getTaskStatus(getTaskState(task))) ? 1 : 0;
     cache.set(task.id, value);
     return value;
   }

@@ -52,9 +52,7 @@ describe("CalendarView responsiveness", () => {
 
       timestamp: new Date("2026-02-17T09:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T09:00:00.000Z"),
-      state: {
-        status: "open"
-      },
+      stateUpdates: [],
       dueDate: new Date("2026-02-18T10:00:00.000Z"),
     };
     const child: Task = {

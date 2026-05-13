@@ -32,7 +32,6 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
   if ((a.dueDate?.getTime() ?? 0) !== (b.dueDate?.getTime() ?? 0)) return false;
   if (a.dateType !== b.dateType) return false;
   if (a.author.pubkey !== b.author.pubkey) return false;
-  if (!areStatusEqual(a.state, b.state)) return false;
   if (!areStateUpdateListsEqual(a.stateUpdates, b.stateUpdates)) return false;
   if (!areStringListsEqual(a.relays, b.relays)) return false;
   if (!areStringListsEqual(a.tags, b.tags)) return false;

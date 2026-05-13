@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getTaskStatus, type Task } from "@/types";
+import { getTaskStatusFromTask, type Task } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { applyTaskStateUpdate } from "./task-state";
 import { makePerson } from "@/test/fixtures";
@@ -13,7 +13,7 @@ const baseTask: Task = {
   relays: ["demo"],
 
   timestamp: new Date(),
-  state: { status: "open" },
+  stateUpdates: [],
 };
 
 describe("applyTaskStateUpdate", () => {
@@ -24,8 +24,8 @@ describe("applyTaskStateUpdate", () => {
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "done", "me");
 
     const task = updated.find((t) => t.id === "n1");
-    expect(getTaskStatus(task?.state)).toBe("done");
-    expect(task?.stateUpdates).toBeUndefined();
+    expect(getTaskStatusFromTask(task)).toBe("done");
+    expect(task?.stateUpdates?.[0]?.state).toEqual({ status: "done" });
   });
 
   it("updates lastEditedAt when status changes", () => {
@@ -40,16 +40,28 @@ describe("applyTaskStateUpdate", () => {
     expect(editedAt!.getTime()).toBeGreaterThanOrEqual(before);
   });
 
-  it("updates done tasks to closed without storing completion attribution", () => {
-    const localTasks: Task[] = [{ ...baseTask, state: { status: "done" } }];
+  it("updates done tasks to closed", () => {
+    const localTasks: Task[] = [
+      {
+        ...baseTask,
+        stateUpdates: [
+          {
+            id: "init-done",
+            state: { status: "done" },
+            timestamp: baseTask.timestamp,
+            authorPubkey: baseTask.author.pubkey,
+          },
+        ],
+      },
+    ];
     const allTasks: Task[] = localTasks;
 
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "closed");
 
-    expect(getTaskStatus(updated.find((t) => t.id === "n1")?.state)).toBe("closed");
+    expect(getTaskStatusFromTask(updated.find((t) => t.id === "n1"))).toBe("closed");
   });
 
-  it("does not synthesize a local state update when updating an existing local task", () => {
+  it("prepends a local optimistic update onto an existing local task's history", () => {
     const existingLocal: Task = {
       ...baseTask,
       stateUpdates: [
@@ -67,6 +79,8 @@ describe("applyTaskStateUpdate", () => {
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "active", "me");
     const task = updated.find((t) => t.id === "n1");
 
-    expect(task?.stateUpdates?.map((update) => update.id)).toEqual(["relay-state-1"]);
+    expect(task?.stateUpdates).toHaveLength(2);
+    expect(task?.stateUpdates?.[0]?.state).toEqual({ status: "active" });
+    expect(task?.stateUpdates?.[1]?.id).toBe("relay-state-1");
   });
 });

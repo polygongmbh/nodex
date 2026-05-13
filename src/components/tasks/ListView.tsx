@@ -2,7 +2,14 @@ import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon, getTaskStateBadgeClasses } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefinition } from "@/domain/task-states/task-state-config";
-import { getTaskStatus, type Task, type ComposeRestoreRequest, type TaskStatus } from "@/types";
+import {
+  getTaskStatus,
+  getTaskStatusFromTask,
+  type Task,
+  type ComposeRestoreRequest,
+  type TaskStatus,
+  getTaskState,
+} from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { TaskMentionTagChipRow } from "./TaskTagChipRow";
@@ -228,7 +235,7 @@ export function ListView({
             "closed": 3,
           };
           comparison =
-            (statusOrder[getTaskStatus(a.state)] ?? 1) - (statusOrder[getTaskStatus(b.state)] ?? 1);
+            (statusOrder[getTaskStatusFromTask(a)] ?? 1) - (statusOrder[getTaskStatusFromTask(b)] ?? 1);
           break;
         }
         case "dueDate":
@@ -328,7 +335,7 @@ export function ListView({
 
   // Editable status cell
   const StatusCell = ({ task }: { task: Task }) => {
-    const status = task.state;
+    const status = getTaskState(task);
     const editable = canCompleteTask(task);
     const statusClassName = cn(
       "text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap",
@@ -377,7 +384,7 @@ export function ListView({
   // Editable due date cell
   const DueDateCell = ({ task }: { task: Task }) => {
     const [open, setOpen] = useState(false);
-    const dueDateColor = getDueDateColorClass(task.dueDate, task.state);
+    const dueDateColor = getDueDateColorClass(task.dueDate, getTaskState(task));
     const editable = canCompleteTask(task);
     const trigger = (
       <button
@@ -452,7 +459,6 @@ export function ListView({
           allowComment={false}
         />
       )}
-
       {/* Table */}
       <div ref={tableContainerRef} className="scrollbar-main-view flex-1 overflow-x-auto">
         <div
@@ -548,7 +554,7 @@ export function ListView({
                         taskId={task.id}
                         taskContent={task.content}
                         priority={task.priority}
-                        editable={editable && !isTaskTerminal(task.state)}
+                        editable={editable && !isTaskTerminal(getTaskState(task))}
                       />
                     )}
                     renderTagsCell={(task) => <TagsCell task={task} />}
@@ -565,7 +571,6 @@ export function ListView({
         </div>
       </div>
       <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
-
     </main>
   );
 }

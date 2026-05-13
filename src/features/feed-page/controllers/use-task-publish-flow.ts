@@ -525,7 +525,17 @@ export function useTaskPublishFlow({
         ? effectiveRelayIds
         : (demoFeedActive ? [demoRelayId] : []),
       timestamp: createdAt,
-      state: (normalizedTaskType === "task" ? (initialState ?? { status: "open" }) : undefined) as TaskState,
+      stateUpdates:
+        normalizedTaskType === "task" && initialState && initialState.status !== "open"
+          ? [
+              {
+                id: `local-init-${createdAt.getTime()}`,
+                state: initialState,
+                timestamp: createdAt,
+                authorPubkey: taskAuthor.pubkey,
+              },
+            ]
+          : undefined,
       dueDate: submissionDueDate,
       dueTime: submissionDueTime,
       dateType: submissionDateType,
@@ -797,6 +807,7 @@ export function useTaskPublishFlow({
       : relayUrls
     ).map((url) => getRelayIdFromUrl(url));
     const dueDate = parseStoredDate(draft.dueDate);
+    const restoredTimestamp = parseStoredDate(draft.createdAt) || new Date();
     const restoredTask: Task = {
       id: result.eventId || Date.now().toString(),
       kind: draft.publishKind,
@@ -806,8 +817,18 @@ export function useTaskPublishFlow({
       relays: effectiveRelayIds.length > 0
         ? effectiveRelayIds
         : (demoFeedActive ? [demoRelayId] : []),
-      timestamp: parseStoredDate(draft.createdAt) || new Date(),
-      state: (isTaskKind(draft.publishKind) ? (draft.initialState ?? { status: "open" }) : undefined) as TaskState,
+      timestamp: restoredTimestamp,
+      stateUpdates:
+        isTaskKind(draft.publishKind) && draft.initialState && draft.initialState.status !== "open"
+          ? [
+              {
+                id: `local-init-${restoredTimestamp.getTime()}`,
+                state: draft.initialState,
+                timestamp: restoredTimestamp,
+                authorPubkey: draft.author.pubkey,
+              },
+            ]
+          : undefined,
       dueDate,
       dueTime: draft.dueTime,
       dateType: draft.dateType,

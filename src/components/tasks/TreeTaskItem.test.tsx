@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
 import type { Task } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { makePerson, makeTask } from "@/test/fixtures";
+import { makePerson, makeTask, withTaskState } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
 
@@ -130,9 +130,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when toggling from in progress to done", () => {
-    renderTreeTaskItem({ task: { ...baseTask, state: {
-      status: "active"
-    } } });
+    renderTreeTaskItem({ task: withTaskState(baseTask, "active") });
 
     fireEvent.click(screen.getByLabelText("Set status"), { detail: 1 });
 
@@ -176,9 +174,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when selecting a status from the dropdown", () => {
-    renderTreeTaskItem({ task: { ...baseTask, state: {
-      status: "done"
-    } } });
+    renderTreeTaskItem({ task: withTaskState(baseTask, "done") });
 
     fireEvent.click(screen.getByLabelText("Set status"));
     fireEvent.click(screen.getByText("In Progress"));
@@ -213,9 +209,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not cycle done tasks on click when status menu is available", () => {
-    renderTreeTaskItem({ task: { ...baseTask, state: {
-      status: "done"
-    } } });
+    renderTreeTaskItem({ task: withTaskState(baseTask, "done") });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
@@ -223,9 +217,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not cycle closed tasks on click when status menu is available", () => {
-    renderTreeTaskItem({ task: { ...baseTask, state: {
-      status: "closed"
-    } } });
+    renderTreeTaskItem({ task: withTaskState(baseTask, "closed") });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 

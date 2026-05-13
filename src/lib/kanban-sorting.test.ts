@@ -14,9 +14,7 @@ const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
 
   timestamp,
   lastEditedAt,
-  state: {
-    status: "open"
-  },
+  stateUpdates: [],
 });
 
 describe("sortByLatestModified", () => {
