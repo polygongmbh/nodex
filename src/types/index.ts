@@ -148,28 +148,62 @@ export interface TaskReactions {
   mine: string[];
 }
 
-export interface Task {
+/**
+ * Fields shared by every Post variant — what you can read without narrowing.
+ * Anything kind-specific lives on the variant.
+ */
+export interface BasePost {
   id: string;
-  kind: NostrEventKind;
   author: Person;
   content: string;
   tags: string[];
   relays: string[];
-  nip99?: Nip99Metadata;
-  locationGeohash?: string;
   timestamp: Date;
   lastEditedAt?: Date;
+  parentId?: string;
+  mentions?: string[];
+  attachments?: PublishedAttachment[];
+  locationGeohash?: string;
+  rawNostrEvent?: RawNostrEvent;
+}
+
+export interface TaskPost extends BasePost {
+  kind: NostrEventKind.Task;
   state?: TaskState;
   stateUpdates?: TaskStateUpdate[];
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
-  parentId?: string;
-  mentions?: string[];
   assigneePubkeys?: string[];
   priority?: number;
-  attachments?: PublishedAttachment[];
-  rawNostrEvent?: RawNostrEvent;
+}
+
+export interface CommentPost extends BasePost {
+  kind: NostrEventKind.TextNote;
+}
+
+export interface ListingPost extends BasePost {
+  kind: NostrEventKind.ClassifiedListing;
+  nip99?: Nip99Metadata;
+}
+
+export type Post = TaskPost | CommentPost | ListingPost;
+
+/**
+ * Legacy kitchen-sink shape: `kind` is the wide union and every variant's
+ * fields are optional. Existing call sites accept this without narrowing.
+ * New code should prefer `Post` (discriminated) plus the variant types.
+ */
+export interface Task extends BasePost {
+  kind: NostrEventKind;
+  nip99?: Nip99Metadata;
+  state?: TaskState;
+  stateUpdates?: TaskStateUpdate[];
+  dueDate?: Date;
+  dueTime?: string;
+  dateType?: TaskDateType;
+  assigneePubkeys?: string[];
+  priority?: number;
 }
 
 /**
@@ -250,5 +284,3 @@ export interface SavedFilterController {
 
 // Legacy aliases for compatibility
 export type { FilterState as TagFilterState };
-
-export type Post = Task;
