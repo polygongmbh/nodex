@@ -44,6 +44,8 @@ Key env values:
 - `VITE_DEFAULT_RELAYS`: comma-separated relay WebSocket URLs (e.g. `ws://localhost:7447` for a local relay).
 - `VITE_NIP96_UPLOAD_URL`: NIP-96 upload endpoint used by attachment buttons.
 - `VITE_NODEX_MOTD`: optional message-of-the-day text shown as a dismissible top banner.
+- `VITE_CORE_CHANNELS`: optional comma-separated channels that every root post must include;
+  core channels stay pinned and bolded in channel surfaces.
 
 ## Attachment Upload Setup
 Nodex attachment uploads use a NIP-96-compatible HTTP endpoint.

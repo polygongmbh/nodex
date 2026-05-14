@@ -38,6 +38,8 @@
 - Click a channel name to show only that channel (`included`) and reset other channels to `neutral`.
 - Click the same channel name again while it is the only included channel to clear that exclusive channel filter.
 - Visible sidebar channels are selected from feed-scoped activity and personal usage signals, then displayed alphabetically for stable ordering.
+- Instance-configured core channels stay visible in the folded sidebar and are bolded in channel lists
+  and task tag chips.
 - Use the `AND/OR` toggle in the Channels header to control how included channels match:
   - `AND`: items must contain every included channel.
   - `OR`: items must contain at least one included channel.
@@ -121,6 +123,8 @@
 
 ## Compose Rules
 - At least one hashtag is required to post.
+- If the instance has core channels configured,
+  new root posts must include at least one of those core channel tags.
 - Profile username (`Name`) follows NIP-05 local-part rules: lowercase `a-z`, digits `0-9`, `.`, `_`, `-`.
 - Compose text must include meaningful message content; hashtags/mentions alone are not sufficient.
 - Task/comment kind changes event behavior.
