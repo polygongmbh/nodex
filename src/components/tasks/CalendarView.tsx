@@ -665,18 +665,24 @@ export function CalendarView({
                                  })}
                                </p>
                                <div className="mt-1 flex items-end justify-between gap-2">
-                                 <span className="text-xs flex items-center gap-2 min-w-0">
-                                   <span
-                                     className="h-1.5 w-1.5 rounded-full flex-shrink-0"
-                                     style={{ backgroundColor: authorColor.accent }}
-                                   />
-                                   <Clock className="w-3 h-3 flex-shrink-0" />
-                                   <span className="uppercase tracking-wide">{getTaskDateTypeLabel(getTaskPrimaryDate(task)?.type)}</span>
-                                   <span className="truncate">
-                                     {format(getTaskPrimaryDate(task)?.date!, "MMM d")}
-                                     {getTaskPrimaryDate(task)?.time && ` ${getTaskPrimaryDate(task)?.time}`}
-                                   </span>
-                                 </span>
+                                 {(() => {
+                                   const primaryDate = getTaskPrimaryDate(task);
+                                   if (!primaryDate) return null;
+                                   return (
+                                     <span className="text-xs flex items-center gap-2 min-w-0">
+                                       <span
+                                         className="h-1.5 w-1.5 rounded-full flex-shrink-0"
+                                         style={{ backgroundColor: authorColor.accent }}
+                                       />
+                                       <Clock className="w-3 h-3 flex-shrink-0" />
+                                       <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
+                                       <span className="truncate">
+                                         {format(primaryDate.date, "MMM d")}
+                                         {primaryDate.time && ` ${primaryDate.time}`}
+                                       </span>
+                                     </span>
+                                   );
+                                 })()}
                                  <TaskAssigneeAvatars task={task} />
                                </div>
                              </div>
