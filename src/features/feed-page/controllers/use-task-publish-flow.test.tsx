@@ -10,6 +10,14 @@ import type { Relay, Post } from "@/types";
 import { getTaskAssigneePubkeys, getTaskPriority, getTaskPrimaryDate } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
+type PublishEventCall = [
+  kind: number,
+  content: string,
+  tags: string[][],
+  parentId: string | undefined,
+  relayUrls: string[] | undefined,
+];
+
 vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(() => "toast-id"), {
     dismiss: vi.fn(),
@@ -495,7 +503,8 @@ describe("useTaskPublishFlow", () => {
     await waitFor(() => {
       expect(publishEvent).toHaveBeenCalled();
     });
-    const replacementCall = publishEvent.mock.calls.find(([kind]) => kind !== 5);
+    const publishCalls = publishEvent.mock.calls as unknown as PublishEventCall[];
+    const replacementCall = publishCalls.find(([kind]) => kind !== 5);
     expect(replacementCall?.[3]).toBe(parentId);
   });
 
@@ -510,7 +519,8 @@ describe("useTaskPublishFlow", () => {
     await waitFor(() => {
       expect(publishEvent).toHaveBeenCalledTimes(1);
     });
-    const deletionCall = publishEvent.mock.calls.find(([kind]) => kind === 5);
+    const publishCalls = publishEvent.mock.calls as unknown as PublishEventCall[];
+    const deletionCall = publishCalls.find(([kind]) => kind === 5);
     expect(deletionCall).toBeUndefined();
   });
 

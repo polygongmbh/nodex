@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-05-14
+Minor release for feed post actions, calendar scheduling, and profile/auth reliability.
+
 ### Added
 - Per-post actions on feed cards. Desktop: a three-dot menu next to the timestamp with React, Copy link, Re-compose, and Delete. Mobile: an iOS-style swipe-to-reveal action strip with the same set. Delete and Re-compose are limited to the author and to recent posts that have no replies; the time window is configurable via `VITE_EDIT_WINDOW_MINUTES` (set `0` to disable, default one week).
 - Re-compose publishes the corrected post first and only deletes the original after the replacement is confirmed, so the original survives if anything goes wrong.
@@ -25,6 +28,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile feed swipe gesture follows the finger smoothly instead of stalling after a few pixels. The handler now locks the horizontal axis up front so vertical scrolls aren't hijacked, drives the transform directly on the GPU rather than through React state, supports flick-to-open / flick-to-close by velocity, snaps the previously-open row closed the moment a new horizontal drag begins, closes the open row when you tap elsewhere, and applies elastic resistance when dragging past the action strip.
 - Mobile composer toolbar: priority dropdown now renders above the bar instead of behind it; priority and attachment buttons highlight blue while open, matching the date button; attachment button is normalised to the same height and padding as the others; opening one picker now closes any other (date panel closes when priority/attachment opens, and vice versa).
 - Inline video players no longer hijack clicks to open the media lightbox — clicking play, scrubbing the timeline, or toggling fullscreen now plays inline as expected.
+- URL/file attachment chips now wrap inline after media previews instead of stacking as full-width rows.
 
 ## [3.2.0] - 2026-05-13
 Minor release for NIP-25 feed reactions and task-kind model cleanup.

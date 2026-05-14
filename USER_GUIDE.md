@@ -20,7 +20,8 @@
 - The Status projects row lists active top-level work. Project cards stay in the Status workflow, while clicking an active non-project task opens it in the Feed view.
 - Status activity includes task and comment updates. Task activity rows expose a status checkbox for quick state changes.
 - Click a task to focus on that task context.
-- Feed cards show NIP-25 emoji reaction totals; use the reaction picker on a card to add a quick emoji reaction.
+- Feed cards show NIP-25 emoji reaction totals; use the reaction picker on a card to add a quick emoji reaction, or tap your own reaction chip to remove it.
+- Feed cards expose post actions: on desktop, use the three-dot menu next to the timestamp; on mobile, swipe a card left to reveal Copy link, React, and Delete when available.
 - Use breadcrumb navigation (`All Tasks` / `Up` / parent path) to move through hierarchy.
 - Breadcrumb paths stay single-line and left-aligned; page-header breadcrumbs evenly share available width when constrained, while feed-card breadcrumbs use compact capped widths before truncating.
 - Kanban uses four status columns: `To Do`, `In Progress`, `Done`, and `Closed`; `Closed` is available from explicit status selection rather than the normal click-cycle toggle.
@@ -139,7 +140,7 @@
 - On mobile, tapping the location button captures and attaches current device location directly (when location permission is granted) instead of opening a separate location menu.
 - Task location chips now show an approximate coordinate region; tapping a location chip opens the location in your map app/browser.
 - When a task status control is disabled, hovering it explains why edits are blocked (for example assigned owner, task owner, sign-in required, or temporary interaction lock).
-- Date-typed tasks appear in Calendar view.
+- Date-typed tasks appear in Calendar view. Tasks with multiple dates appear on each date, and Start/End ranges span every day in the range.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, use the task/comment send actions in the combined bottom bar to create.
 

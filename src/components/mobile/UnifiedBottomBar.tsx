@@ -1922,7 +1922,6 @@ export function UnifiedBottomBar({
               queueSelectedFiles(event.target.files);
               event.currentTarget.value = "";
             }}
-            onCancel={() => setAttachmentPickerOpen(false)}
           />
         </>
       )}
