@@ -24,10 +24,16 @@ export function useAuthModalRoute() {
   const handleCloseAuthModal = useCallback(() => {
     setAuthModalInitialStep(undefined);
     setIsAuthModalOpen(false);
-    if (resolveAuthRouteStep(location.pathname)) {
-      navigate({ pathname: "/feed", search: location.search, hash: location.hash }, { replace: true });
+    if (!resolveAuthRouteStep(location.pathname)) return;
+    // `/signin` and `/signup` would auto-reopen the modal via the effect below,
+    // so we must navigate away. Prefer popping back to the prior page; fall back
+    // to root for direct entries (refresh, deep link) where there's no history.
+    if (location.key === "default") {
+      navigate({ pathname: "/", search: location.search, hash: location.hash }, { replace: true });
+    } else {
+      navigate(-1);
     }
-  }, [location.pathname, location.search, location.hash, navigate, setIsAuthModalOpen]);
+  }, [location.pathname, location.search, location.hash, location.key, navigate, setIsAuthModalOpen]);
 
   useEffect(() => {
     const authRouteStep = resolveAuthRouteStep(location.pathname);

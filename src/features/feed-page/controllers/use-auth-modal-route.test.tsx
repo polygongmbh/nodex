@@ -31,6 +31,7 @@ function renderAt(path: string) {
       <Routes>
         <Route path="/" element={<Harness />} />
         <Route path="/feed" element={<Harness />} />
+        <Route path="/status" element={<Harness />} />
         <Route path="/signin" element={<Harness />} />
         <Route path="/signup" element={<Harness />} />
       </Routes>
@@ -75,12 +76,25 @@ describe("useAuthModalRoute", () => {
     expect(screen.getByTestId("step")).toHaveTextContent("undefined");
   });
 
-  it("returns auth-route closes to /feed", () => {
-    renderAt("/signup");
+  it("returns auth-route closes back to the prior page", () => {
+    renderAt("/feed");
+
+    act(() => screen.getByRole("button", { name: "open-signup" }).click());
+    expect(screen.getByTestId("pathname")).toHaveTextContent("/signup");
 
     act(() => screen.getByRole("button", { name: "close" }).click());
 
     expect(screen.getByTestId("pathname")).toHaveTextContent("/feed");
+    expect(screen.getByTestId("is-open")).toHaveTextContent("false");
+    expect(screen.getByTestId("step")).toHaveTextContent("undefined");
+  });
+
+  it("falls back to root when /signin was entered directly with no history", () => {
+    renderAt("/signin");
+
+    act(() => screen.getByRole("button", { name: "close" }).click());
+
+    expect(screen.getByTestId("pathname")).toHaveTextContent("/");
     expect(screen.getByTestId("is-open")).toHaveTextContent("false");
     expect(screen.getByTestId("step")).toHaveTextContent("undefined");
   });
