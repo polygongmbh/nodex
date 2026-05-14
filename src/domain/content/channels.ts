@@ -11,6 +11,7 @@ interface DeriveChannelsOptions {
   personalizeScores?: Map<string, number>;
   maxCount?: number;
   sortVisibleAlphabetically?: boolean;
+  coreChannels?: Set<string>;
 }
 
 function resolveDeriveOptions(
@@ -22,6 +23,7 @@ function resolveDeriveOptions(
       personalizeScores: new Map(),
       maxCount: Number.POSITIVE_INFINITY,
       sortVisibleAlphabetically: false,
+      coreChannels: new Set(),
     };
   }
   return {
@@ -29,6 +31,7 @@ function resolveDeriveOptions(
     personalizeScores: minCountOrOptions.personalizeScores ?? new Map(),
     maxCount: minCountOrOptions.maxCount ?? Number.POSITIVE_INFINITY,
     sortVisibleAlphabetically: minCountOrOptions.sortVisibleAlphabetically ?? false,
+    coreChannels: minCountOrOptions.coreChannels ?? new Set(),
   };
 }
 
@@ -62,7 +65,10 @@ export function deriveChannels(
     }
   });
 
-  const forceInclude = new Set(userPostedTags.map((tag) => tag.name.toLowerCase()));
+  const forceInclude = new Set<string>([
+    ...userPostedTags.map((tag) => tag.name.toLowerCase()),
+    ...Array.from(options.coreChannels).map((tag) => tag.toLowerCase()),
+  ]);
   forceInclude.forEach((tag) => {
     if (!tagCounts.has(tag)) {
       tagCounts.set(tag, 0);

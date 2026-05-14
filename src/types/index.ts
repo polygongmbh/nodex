@@ -61,6 +61,7 @@ export interface TaskDate {
 export type TaskCreateFailureReason =
   | "not-authenticated"
   | "missing-tag"
+  | "missing-core-tag"
   | "relay-selection"
   | "unexpected-error";
 export type TaskCreateResult =

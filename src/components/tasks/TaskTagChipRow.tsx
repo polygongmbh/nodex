@@ -10,6 +10,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { formatPriorityLabel } from "@/domain/content/task-priority";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
+import { useCoreChannels } from "@/lib/use-core-channels";
 
 interface BaseTaskTagChipProps {
   task: Post;
@@ -60,6 +61,7 @@ function TaskTagChipContent({
 }) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { isCore } = useCoreChannels();
   const { relays, people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;
   const activeRelays = relays.filter((relay) => relay.isActive);
@@ -114,6 +116,7 @@ function TaskTagChipContent({
           className={cn(
             TASK_CHIP_STYLES.base,
             TASK_INTERACTION_STYLES.hashtagChip,
+            isCore(tag) && "font-bold",
             tagClassName
           )}
           data-onboarding="content-hashtag"

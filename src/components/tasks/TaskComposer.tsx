@@ -19,7 +19,8 @@ import {
   normalizeMentionIdentifier,
 } from "@/lib/mentions";
 import { hasComposerSubstance, hasMeaningfulComposerText } from "@/lib/composer-content";
-import { notifyNeedTag, notifySpamRejected } from "@/lib/notifications";
+import { notifyNeedCoreTag, notifyNeedTag, notifySpamRejected } from "@/lib/notifications";
+import { useCoreChannels } from "@/lib/use-core-channels";
 import { findSpamKeyword } from "@/lib/nostr/spam-filter";
 import {
   isAlternateSubmitKey,
@@ -197,6 +198,7 @@ export function TaskComposer({
   contextTaskTitle = "",
 }: TaskComposerProps) {
   const canCreateContent = canCreateContentProp;
+  const { coreChannels, isCore } = useCoreChannels();
   const { t, i18n } = useTranslation("composer");
   const {
     channelOptions,
@@ -902,6 +904,10 @@ export function TaskComposer({
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
     if (submitTags.length === 0 && !allowEmptyTags) {
       notifyNeedTag();
+      return;
+    }
+    if (!allowEmptyTags && coreChannels.size > 0 && !submitTags.some(isCore)) {
+      notifyNeedCoreTag(Array.from(coreChannels));
       return;
     }
     const spamKeyword = findSpamKeyword(content);

@@ -71,6 +71,23 @@ describe("deriveChannels", () => {
     expect(channels.find((channel) => channel.name === "zeta")?.usageCount).toBe(2);
   });
 
+  it("force-includes core channels with zero usage", () => {
+    const channels = deriveChannels(
+      [{ tags: ["random"] }],
+      [],
+      [],
+      {
+        minCount: 6,
+        coreChannels: new Set(["work", "ops"]),
+      }
+    );
+
+    const names = channels.map((channel) => channel.name);
+    expect(names).toContain("work");
+    expect(names).toContain("ops");
+    expect(channels.find((channel) => channel.name === "work")?.usageCount).toBe(0);
+  });
+
   it("does not parse hashtags embedded inside words", () => {
     const channels = deriveChannels(
       [],

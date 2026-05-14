@@ -135,6 +135,7 @@
   "toasts": {
     "errors": {
       "needTag": "Añade al menos un #canal antes de publicar",
+      "needCoreTag": "Añade al menos un canal principal antes de publicar: {{tags}}",
       "spamRejected": "Publicación bloqueada: coincide con el filtro de spam",
       "needSigninPost": "Se requiere iniciar sesión para publicar",
       "needSigninModify": "Se requiere iniciar sesión para modificar tareas",

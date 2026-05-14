@@ -135,6 +135,7 @@
   "toasts": {
     "errors": {
       "needTag": "Add at least one #channel before posting",
+      "needCoreTag": "Add at least one core channel before posting: {{tags}}",
       "spamRejected": "Post blocked: matched the spam filter",
       "needSigninPost": "Sign in required to post",
       "needSigninModify": "Sign in required to modify tasks",

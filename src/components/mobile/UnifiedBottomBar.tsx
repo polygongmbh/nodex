@@ -16,7 +16,8 @@ import {
 } from "@/lib/mentions";
 import { hasMeaningfulComposerText } from "@/lib/composer-content";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { notifyNeedTag, notifySpamRejected, notifyTaskCreationFailed } from "@/lib/notifications";
+import { notifyNeedCoreTag, notifyNeedTag, notifySpamRejected, notifyTaskCreationFailed } from "@/lib/notifications";
+import { useCoreChannels } from "@/lib/use-core-channels";
 import { findSpamKeyword } from "@/lib/nostr/spam-filter";
 import {
   isAlternateSubmitKey,
@@ -119,6 +120,7 @@ export function UnifiedBottomBar({
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
   const { t, i18n } = useTranslation("composer");
+  const { coreChannels, isCore } = useCoreChannels();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const { allTasks } = useFeedTaskViewModel();
@@ -560,6 +562,10 @@ export function UnifiedBottomBar({
     const submitChannels = Array.from(new Set([...extractedChannels, ...explicitTagNames]));
     if (submitChannels.length === 0 && !focusedTaskId) {
       notifyNeedTag();
+      return;
+    }
+    if (!focusedTaskId && coreChannels.size > 0 && !submitChannels.some(isCore)) {
+      notifyNeedCoreTag(Array.from(coreChannels));
       return;
     }
     const spamKeyword = findSpamKeyword(sharedText);

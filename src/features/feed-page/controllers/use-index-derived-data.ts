@@ -16,6 +16,7 @@ import {
 import { mergeTasks } from "@/domain/content/task-merge";
 import { preserveTaskListIdentity } from "@/domain/content/task-identity";
 import { deriveChannels } from "@/domain/content/channels";
+import { useCoreChannels } from "@/lib/use-core-channels";
 import {
   getChannelFrecencyScores,
   type ChannelFrecencyState,
@@ -108,6 +109,7 @@ export function useIndexDerivedData({
   const localTasks = useTaskMutationStore((s) => s.localTasks);
   const postedTags = useTaskMutationStore((s) => s.postedTags);
   const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
+  const { coreChannels } = useCoreChannels();
   const filteredNostrEvents = useMemo(() => {
     return nostrEvents.filter((event) => {
       if (suppressedNostrEventIds.has(event.id)) return false;
@@ -223,6 +225,7 @@ export function useIndexDerivedData({
         personalizeScores: personalizedChannelScores,
         maxCount: INITIAL_CHANNEL_SEED_LIMIT,
         sortVisibleAlphabetically: true,
+        coreChannels,
       }
     );
   }, [
@@ -232,6 +235,7 @@ export function useIndexDerivedData({
     effectiveActiveRelayIds,
     personalizedChannelScores,
     relays,
+    coreChannels,
   ]);
 
   const composeChannels: Channel[] = useMemo(() => {
@@ -240,8 +244,11 @@ export function useIndexDerivedData({
       effectiveActiveRelayIds,
       relays.map((relay) => relay.id)
     );
-    return deriveChannels(scopedSeedTasksForChannels, scopedNostrEventsForChannels, scopedPostedTags, 1);
-  }, [postedTags, scopedSeedTasksForChannels, scopedNostrEventsForChannels, effectiveActiveRelayIds, relays]);
+    return deriveChannels(scopedSeedTasksForChannels, scopedNostrEventsForChannels, scopedPostedTags, {
+      minCount: 1,
+      coreChannels,
+    });
+  }, [postedTags, scopedSeedTasksForChannels, scopedNostrEventsForChannels, effectiveActiveRelayIds, relays, coreChannels]);
 
   const mentionAutocompletePeople = useMemo(() => {
     const visiblePubkeys = Array.from(

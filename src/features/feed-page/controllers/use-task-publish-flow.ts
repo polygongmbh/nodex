@@ -14,6 +14,7 @@ import {
   resolveMentionIdentifiersToPubkeysAsync,
 } from "@/lib/mentions";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
+import { useCoreChannels } from "@/lib/use-core-channels";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { normalizeComposerMessageType } from "@/domain/content/task-type";
@@ -32,6 +33,7 @@ import { canUserUpdateTask } from "@/domain/content/task-permissions";
 import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
 import {
   notifyLocalSaved,
+  notifyNeedCoreTag,
   notifyNeedTag,
   notifyPartialPublish,
   notifyPostDeleted,
@@ -163,6 +165,7 @@ export function useTaskPublishFlow({
   publishTaskPriorityUpdate,
   publishTaskCreateFollowUps,
 }: UseTaskPublishFlowOptions) {
+  const { coreChannels, isCore } = useCoreChannels();
   const setLocalTasks = useTaskMutationStore((s) => s.setLocalTasks);
   const setPostedTags = useTaskMutationStore((s) => s.setPostedTags);
   const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
@@ -347,6 +350,10 @@ export function useTaskPublishFlow({
     if (resolvedSubmissionTags.length === 0) {
       notifyNeedTag();
       return { ok: false, reason: "missing-tag" };
+    }
+    if (!parentTask && coreChannels.size > 0 && !resolvedSubmissionTags.some(isCore)) {
+      notifyNeedCoreTag(Array.from(coreChannels));
+      return { ok: false, reason: "missing-core-tag" };
     }
     if (resolvedRelaySelection.errorKey) {
       notifyRelaySelectionError(resolvedRelaySelection.errorKey);
@@ -761,8 +768,10 @@ export function useTaskPublishFlow({
   }, [
     allTasks,
     canCreateContent,
+    coreChannels,
     dispatchFrecencyIntent,
     currentUser,
+    isCore,
     demoFeedActive,
     demoRelayId,
     guardInteraction,

@@ -170,6 +170,11 @@ export function notifyNeedTag(): void {
   toast.error(i18n.t("composer:toasts.errors.needTag"));
 }
 
+export function notifyNeedCoreTag(allowedTags: string[]): void {
+  const list = allowedTags.map((tag) => `#${tag}`).join(", ");
+  toast.error(i18n.t("composer:toasts.errors.needCoreTag", { tags: list }));
+}
+
 export function notifySpamRejected(): void {
   toast.error(i18n.t("composer:toasts.errors.spamRejected"), { id: "spam-rejected" });
 }

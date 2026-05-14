@@ -5,6 +5,7 @@ import { SidebarFilterRow } from "./SidebarFilterRow";
 import { SidebarPinButton } from "./SidebarPinButton";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useCoreChannels } from "@/lib/use-core-channels";
 
 interface ChannelItemProps {
   channel: Channel;
@@ -21,6 +22,8 @@ export function ChannelItem({
 }: ChannelItemProps) {
   const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { isCore } = useCoreChannels();
+  const isCoreChannel = isCore(channel.name);
   const nextFilterStateLabel =
     channel.filterState === "neutral"
       ? t("sidebar.filterStates.include")
@@ -87,6 +90,7 @@ export function ChannelItem({
         <span
           className={cn(
             "block max-w-full truncate text-sm transition-colors hover:text-primary",
+            isCoreChannel && "font-bold",
             channel.filterState === "included" && "text-channel-included font-medium",
             channel.filterState === "excluded" && "text-channel-excluded line-through opacity-60",
             channel.filterState === "neutral" && "text-sidebar-foreground"

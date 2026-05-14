@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Core channels: instance operators can set `VITE_CORE_CHANNELS` (comma-separated) to mandate that every root post carry at least one tag from the list. Core channels are pinned to the sidebar even when unused and rendered in bold both in the sidebar and on post tag chips. When the variable is unset, behaviour is unchanged.
+
 ## [3.3.0] - 2026-05-14
 Minor release for feed post actions, calendar scheduling, and profile/auth reliability.
 
