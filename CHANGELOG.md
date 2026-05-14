@@ -17,6 +17,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Tap your own reaction chip on a feed card to remove it (NIP-09 deletion of the reaction event).
 
 ### Fixed
+- Calendar view now renders a task on every date it carries — multiple milestones each show on their day, and tasks with a start/end pair fill the whole range instead of only landing on the primary date.
 - Copy link in feed actions no longer fails on non-secure-context mobile browsers — falls back to a hidden-textarea copy when the async clipboard API is unavailable.
 - Closing the sign-in/sign-up modal now returns you to the page you came from instead of dumping you on the feed; direct entries to `/signin` or `/signup` fall back to the root redirect.
 - Mobile feed swipe actions are now hidden behind the row at rest instead of permanently showing alongside every post — the row covers the action strip until you swipe left to reveal it.

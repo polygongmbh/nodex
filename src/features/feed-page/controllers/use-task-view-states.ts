@@ -1,5 +1,5 @@
 import { useCallback, useDeferredValue, useMemo } from "react";
-import { format, startOfDay } from "date-fns";
+import { addDays, format, startOfDay } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
@@ -319,22 +319,36 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
 
   const getTasksByDay = () => {
     if (tasksByDayCache) return tasksByDayCache;
-    const byDay = new Map<string, TaskPost[]>();
-    for (const task of getTasksWithDueDates()) {
-      const due = getTaskPrimaryDate(task)?.date;
-      if (!due) continue;
-      const dayKey = format(startOfDay(due), "yyyy-MM-dd");
+    const byDay = new Map<string, Set<TaskPost>>();
+    const addToDay = (day: Date, task: TaskPost) => {
+      const dayKey = format(startOfDay(day), "yyyy-MM-dd");
       const bucket = byDay.get(dayKey);
       if (bucket) {
-        bucket.push(task);
+        bucket.add(task);
       } else {
-        byDay.set(dayKey, [task]);
+        byDay.set(dayKey, new Set([task]));
+      }
+    };
+    for (const task of getTasksWithDueDates()) {
+      const start = task.dates.find((d) => d.type === "start")?.date;
+      const end = task.dates.find((d) => d.type === "end")?.date;
+      const rangeStart = start && end ? startOfDay(start <= end ? start : end) : null;
+      const rangeEnd = start && end ? startOfDay(start <= end ? end : start) : null;
+      if (rangeStart && rangeEnd) {
+        for (let cursor = rangeStart; cursor.getTime() <= rangeEnd.getTime(); cursor = addDays(cursor, 1)) {
+          addToDay(cursor, task);
+        }
+      }
+      for (const entry of task.dates) {
+        if (rangeStart && (entry.type === "start" || entry.type === "end")) continue;
+        addToDay(entry.date, task);
       }
     }
+    const result = new Map<string, TaskPost[]>();
     for (const [dayKey, dayTasks] of byDay.entries()) {
-      byDay.set(dayKey, sortTasks(dayTasks, source.sortContext));
+      result.set(dayKey, sortTasks(Array.from(dayTasks), source.sortContext));
     }
-    tasksByDayCache = byDay;
+    tasksByDayCache = result;
     return tasksByDayCache;
   };
 

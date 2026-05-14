@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   buildTreeVisibilityState,
+  createCalendarSelectors,
   createTreeSelectors,
   getAncestorChainFromSource,
   sortKanbanColumnTasks,
+  type TaskViewSource,
 } from "./use-task-view-states";
 import { buildTaskViewFilterIndex } from "@/domain/content/task-view-filtering";
 import { buildChildrenMap } from "@/domain/content/task-sorting";
 import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
+import type { Post, TaskPost } from "@/types";
 
 describe("getAncestorChainFromSource", () => {
   it("returns the full ancestor chain when no active item is set", () => {
@@ -139,6 +142,93 @@ describe("createTreeSelectors", () => {
     expect(selectors.hasMatchingFilters()).toBe(true);
     expect(selectors.getVisibleTasks().map((task) => task.id)).toEqual(["alice-task"]);
     expect(selectors.getDisplayedTasks({ useMobileFallback: true }).map((task) => task.id)).toEqual(["alice-task"]);
+  });
+});
+
+function makeCalendarSource(tasks: Post[]): TaskViewSource {
+  const taskById = new Map(tasks.map((task) => [task.id, task] as const));
+  const childrenMap = buildChildrenMap(tasks);
+  const people = [makePerson()];
+  return {
+    allTasks: tasks,
+    focusedTaskId: null,
+    searchQuery: "",
+    deferredSearchQuery: "",
+    relays: [],
+    activeRelays: [],
+    channels: [],
+    neutralChannels: [],
+    people,
+    quickFilters: makeQuickFilterState(),
+    channelMatchMode: "and",
+    taskById,
+    childrenMap,
+    prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+    filterIndex: buildTaskViewFilterIndex(tasks, people),
+    sortContext: { allTasks: tasks, childrenMap, taskById },
+    scopeModel: {
+      hasActiveFilters: false,
+      hasSelectedScope: false,
+      scopeDescription: null,
+      filteredSentence: null,
+      scopeFooterSentence: null,
+      mobileFallbackHint: null,
+      loadingSentence: null,
+      errorSentence: null,
+      errorSubtitle: "",
+      screenState: "default",
+    },
+  };
+}
+
+describe("createCalendarSelectors", () => {
+  it("places a task on each of its dates", () => {
+    const task = makeTask({
+      id: "milestones",
+      content: "Multi-date #general",
+      dates: [
+        { date: new Date("2026-06-01T00:00:00.000Z"), type: "milestone" },
+        { date: new Date("2026-06-15T00:00:00.000Z"), type: "milestone" },
+      ],
+    });
+    const selectors = createCalendarSelectors(makeCalendarSource([task]));
+    expect(selectors.getTasksForDay(new Date("2026-06-01T12:00:00.000Z")).map((t: TaskPost) => t.id)).toEqual(["milestones"]);
+    expect(selectors.getTasksForDay(new Date("2026-06-15T12:00:00.000Z")).map((t: TaskPost) => t.id)).toEqual(["milestones"]);
+    expect(selectors.getTasksForDay(new Date("2026-06-08T12:00:00.000Z"))).toEqual([]);
+  });
+
+  it("spans a start/end pair across every day in the range", () => {
+    const task = makeTask({
+      id: "ranged",
+      content: "Range #general",
+      dates: [
+        { date: new Date("2026-06-01T09:00:00.000Z"), time: "09:00", type: "start" },
+        { date: new Date("2026-06-03T17:00:00.000Z"), time: "17:00", type: "end" },
+      ],
+    });
+    const selectors = createCalendarSelectors(makeCalendarSource([task]));
+    for (const day of ["2026-06-01", "2026-06-02", "2026-06-03"]) {
+      expect(
+        selectors.getTasksForDay(new Date(`${day}T12:00:00.000Z`)).map((t: TaskPost) => t.id)
+      ).toEqual(["ranged"]);
+    }
+    expect(selectors.getTasksForDay(new Date("2026-06-04T12:00:00.000Z"))).toEqual([]);
+  });
+
+  it("dedupes a task that overlaps the range with another listed date", () => {
+    const task = makeTask({
+      id: "overlap",
+      content: "Overlap #general",
+      dates: [
+        { date: new Date("2026-06-01T00:00:00.000Z"), type: "start" },
+        { date: new Date("2026-06-03T00:00:00.000Z"), type: "end" },
+        { date: new Date("2026-06-02T00:00:00.000Z"), type: "milestone" },
+      ],
+    });
+    const selectors = createCalendarSelectors(makeCalendarSource([task]));
+    expect(selectors.getTasksForDay(new Date("2026-06-02T12:00:00.000Z")).map((t: TaskPost) => t.id)).toEqual([
+      "overlap",
+    ]);
   });
 });
 
