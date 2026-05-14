@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Link2, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,8 @@ export function FeedTaskSwipeActions({
   const isOpen = openId === task.id;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const reactTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const [pickerAnchor, setPickerAnchor] = useState<{ top: number; right: number } | null>(null);
 
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef(0);
@@ -126,6 +129,10 @@ export function FeedTaskSwipeActions({
       if (!container) return;
       const target = event.target as Node | null;
       if (target && container.contains(target)) return;
+      // Picker is portaled outside the container; treat taps inside it as
+      // taps inside the row so it doesn't collapse mid-pick.
+      const picker = pickerRef.current;
+      if (target && picker && picker.contains(target)) return;
       setGlobalOpenId(null);
     };
     document.addEventListener("pointerdown", handler, true);
@@ -289,49 +296,30 @@ export function FeedTaskSwipeActions({
           <Link2 className="h-4 w-4" />
           <span className="px-1 text-center leading-tight">{t("tasks.actions.copyPermalink")}</span>
         </button>
-        <div className="relative">
-          <button
-            type="button"
-            tabIndex={isOpen ? 0 : -1}
-            onClick={(event) => {
-              event.stopPropagation();
-              setPickerOpen((prev) => !prev);
-            }}
-            className="flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium bg-muted"
-            style={{ width: `${ACTION_WIDTH_PX}px` }}
-            data-testid={`feed-task-swipe-react-${task.id}`}
-            aria-expanded={pickerOpen}
-          >
-            <SmilePlus className="h-4 w-4" />
-            <span className="px-1 text-center leading-tight">{t("tasks.actions.react")}</span>
-          </button>
-          {pickerOpen ? (
-            <div
-              ref={pickerRef}
-              role="dialog"
-              onClick={(event) => event.stopPropagation()}
-              className="absolute right-0 top-full z-30 mt-1 rounded-md border bg-popover p-2 shadow-md"
-              data-testid={`feed-task-swipe-picker-${task.id}`}
-            >
-              <div className="flex flex-wrap gap-1 max-w-[15rem]">
-                {QUICK_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleEmojiPick(emoji);
-                    }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-muted text-base leading-none"
-                    data-testid={`feed-task-swipe-pick-${task.id}-${emoji}`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
+        <button
+          ref={reactTriggerRef}
+          type="button"
+          tabIndex={isOpen ? 0 : -1}
+          onClick={(event) => {
+            event.stopPropagation();
+            const trigger = reactTriggerRef.current;
+            if (trigger) {
+              const rect = trigger.getBoundingClientRect();
+              setPickerAnchor({
+                top: rect.bottom + 4,
+                right: Math.max(8, window.innerWidth - rect.right),
+              });
+            }
+            setPickerOpen((prev) => !prev);
+          }}
+          className="flex flex-col items-center justify-center gap-1 text-[11px] font-medium bg-muted"
+          style={{ width: `${ACTION_WIDTH_PX}px` }}
+          data-testid={`feed-task-swipe-react-${task.id}`}
+          aria-expanded={pickerOpen}
+        >
+          <SmilePlus className="h-4 w-4" />
+          <span className="px-1 text-center leading-tight">{t("tasks.actions.react")}</span>
+        </button>
         {gate.canDelete ? (
           <button
             type="button"
@@ -361,6 +349,36 @@ export function FeedTaskSwipeActions({
       >
         {children}
       </div>
+      {pickerOpen && pickerAnchor && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={pickerRef}
+              role="dialog"
+              onClick={(event) => event.stopPropagation()}
+              className="fixed z-50 rounded-md border bg-popover p-2 shadow-md"
+              style={{ top: `${pickerAnchor.top}px`, right: `${pickerAnchor.right}px` }}
+              data-testid={`feed-task-swipe-picker-${task.id}`}
+            >
+              <div className="flex flex-wrap gap-1 max-w-[15rem]">
+                {QUICK_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleEmojiPick(emoji);
+                    }}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-muted text-base leading-none"
+                    data-testid={`feed-task-swipe-pick-${task.id}-${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
