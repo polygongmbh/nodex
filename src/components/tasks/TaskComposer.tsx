@@ -1154,10 +1154,13 @@ export function TaskComposer({
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
+  const hasAtLeastOneCoreTag = parsedHashtags.some(isCore) || explicitTagNames.some(isCore);
   const submitBlock = resolveComposeSubmitBlock({
     isSignedIn: canCreateContent,
     hasMeaningfulContent,
     hasAtLeastOneTag,
+    hasAtLeastOneCoreTag,
+    coreChannels: Array.from(coreChannels),
     canInheritParentTags: allowEmptyTags,
     hasInvalidRootTaskRelaySelection: taskType === "task" && hasInvalidRootTaskRelaySelection,
     hasInvalidRootCommentRelaySelection: taskType !== "task" && hasInvalidRootCommentRelaySelection,

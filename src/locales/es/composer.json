@@ -37,6 +37,7 @@
       "signin": "Se requiere iniciar sesión",
       "write": "Escribe primero un mensaje",
       "tag": "Añade o selecciona al menos un #canal",
+      "coreTag": "Elige uno de estos canales para publicar: {{tags}}",
       "rootPostPostingContext": "Selecciona un space o una publicación para responder.",
       "rootTaskExclusivePostingContext": "Selecciona un solo space o una publicación para responder.",
       "selectedSpacesNotWritable": "No se puede publicar en los spaces seleccionados.",
@@ -48,6 +49,7 @@
       "cta": {
         "write": "Escribir mensaje",
         "tag": "Añadir #canal",
+        "coreTag": "Elegir canal",
         "rootPostPostingContext": "Seleccionar space",
         "rootTaskExclusivePostingContext": "Seleccionar space",
         "uploading": "Esperar subidas",
@@ -135,7 +137,7 @@
   "toasts": {
     "errors": {
       "needTag": "Añade al menos un #canal antes de publicar",
-      "needCoreTag": "Añade al menos un canal principal antes de publicar: {{tags}}",
+      "needCoreTag": "Elige uno de estos canales antes de publicar: {{tags}}",
       "spamRejected": "Publicación bloqueada: coincide con el filtro de spam",
       "needSigninPost": "Se requiere iniciar sesión para publicar",
       "needSigninModify": "Se requiere iniciar sesión para modificar tareas",

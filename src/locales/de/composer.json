@@ -37,6 +37,7 @@
       "signin": "Anmeldung erforderlich",
       "write": "Schreibe zuerst eine Nachricht",
       "tag": "Mindestens einen #channel hinzufügen oder auswählen",
+      "coreTag": "Wähle einen dieser Kanäle zum Veröffentlichen aus: {{tags}}",
       "rootPostPostingContext": "Wähle einen Space oder einen Beitrag zum Antworten aus.",
       "rootTaskExclusivePostingContext": "Wähle einen einzelnen Space oder einen Beitrag zum Antworten aus.",
       "selectedSpacesNotWritable": "In den ausgewählten Spaces kann nicht gepostet werden.",
@@ -48,6 +49,7 @@
       "cta": {
         "write": "Nachricht schreiben",
         "tag": "#channel hinzufügen",
+        "coreTag": "Kanal auswählen",
         "rootPostPostingContext": "Space wählen",
         "rootTaskExclusivePostingContext": "Space auswählen",
         "uploading": "Auf Uploads warten",
@@ -135,7 +137,7 @@
   "toasts": {
     "errors": {
       "needTag": "Mindestens einen #channel vor dem Veröffentlichen hinzufügen",
-      "needCoreTag": "Mindestens einen Kernkanal vor dem Veröffentlichen hinzufügen: {{tags}}",
+      "needCoreTag": "Wähle vor dem Veröffentlichen einen dieser Kanäle aus: {{tags}}",
       "spamRejected": "Beitrag blockiert: vom Spam-Filter erkannt",
       "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
       "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",

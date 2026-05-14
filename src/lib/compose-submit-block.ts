@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 export type ComposeSubmitBlockCode =
   | "signin"
   | "write"
+  | "coreTag"
   | "tag"
   | "commentRelay"
   | "relay"
@@ -34,6 +35,8 @@ interface ResolveComposeSubmitBlockOptions {
   isSignedIn: boolean;
   hasMeaningfulContent: boolean;
   hasAtLeastOneTag: boolean;
+  hasAtLeastOneCoreTag: boolean;
+  coreChannels: string[];
   canInheritParentTags: boolean;
   hasInvalidRootCommentRelaySelection: boolean;
   hasInvalidRootTaskRelaySelection: boolean;
@@ -47,6 +50,8 @@ export function resolveComposeSubmitBlock({
   isSignedIn,
   hasMeaningfulContent,
   hasAtLeastOneTag,
+  hasAtLeastOneCoreTag,
+  coreChannels,
   canInheritParentTags,
   hasInvalidRootCommentRelaySelection,
   hasInvalidRootTaskRelaySelection,
@@ -81,6 +86,17 @@ export function resolveComposeSubmitBlock({
       reason: t("composer.blocked.write"),
       ctaLabel: t("composer.blockedDetail.cta.write"),
       action: "focus-input",
+      isHardDisabled: false,
+    };
+  }
+
+  if (!canInheritParentTags && coreChannels.length > 0 && !hasAtLeastOneCoreTag) {
+    const tagList = coreChannels.map((tag) => `#${tag}`).join(", ");
+    return {
+      code: "coreTag",
+      reason: t("composer.blocked.coreTag", { tags: tagList }),
+      ctaLabel: t("composer.blockedDetail.cta.coreTag"),
+      action: "open-channel-selector",
       isHardDisabled: false,
     };
   }

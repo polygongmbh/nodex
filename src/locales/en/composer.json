@@ -37,6 +37,7 @@
       "signin": "Sign in required",
       "write": "Write a message first",
       "tag": "Add or select at least one #channel",
+      "coreTag": "Pick one of these channels to post in: {{tags}}",
       "rootPostPostingContext": "Select a space or a post to reply to.",
       "rootTaskExclusivePostingContext": "Select a single space or a post to reply to.",
       "selectedSpacesNotWritable": "Posting is not available in the selected spaces.",
@@ -48,6 +49,7 @@
       "cta": {
         "write": "Write message",
         "tag": "Add #channel",
+        "coreTag": "Pick a channel",
         "rootPostPostingContext": "Select space",
         "rootTaskExclusivePostingContext": "Select space",
         "uploading": "Wait for uploads",
@@ -135,7 +137,7 @@
   "toasts": {
     "errors": {
       "needTag": "Add at least one #channel before posting",
-      "needCoreTag": "Add at least one core channel before posting: {{tags}}",
+      "needCoreTag": "Pick one of these channels before posting: {{tags}}",
       "spamRejected": "Post blocked: matched the spam filter",
       "needSigninPost": "Sign in required to post",
       "needSigninModify": "Sign in required to modify tasks",

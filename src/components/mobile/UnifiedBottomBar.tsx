@@ -828,10 +828,14 @@ export function UnifiedBottomBar({
   const canInheritParentTags = Boolean(focusedTaskId);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
+  const hasAtLeastOneCoreTag =
+    extractHashtagsFromContent(sharedText).some(isCore) || explicitTagNames.some(isCore);
   const taskSubmitBlock = resolveComposeSubmitBlock({
     isSignedIn: canCreateContent,
     hasMeaningfulContent: hasMeaningfulComposeText,
     hasAtLeastOneTag,
+    hasAtLeastOneCoreTag,
+    coreChannels: Array.from(coreChannels),
     canInheritParentTags,
     hasInvalidRootTaskRelaySelection,
     hasInvalidRootCommentRelaySelection: false,

@@ -10,6 +10,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Core channels: instance operators can set `VITE_CORE_CHANNELS` (comma-separated) to mandate that every root post carry at least one tag from the list. Core channels are pinned to the sidebar even when unused and rendered in bold both in the sidebar and on post tag chips. When the variable is unset, behaviour is unchanged.
 
 ### Changed
+- Composer now shows an inline warning before submission when core channels are configured but none of them are tagged, listing the available options. Takes precedence over the generic "add a channel" warning so the user is steered straight to the right pick.
 - Desktop composer now surfaces the focused parent task's tags and assignees as removable chips under the input, instead of silently inheriting them only when no tags were specified. Inherited chips combine with anything the user types and only disappear when explicitly removed via the X. Mobile keeps the prior silent fallback.
 - Sidebar shows at least 4 channels in its folded state (up from 3) and adds one row for every ~100px of additional window height (linear, no buckets). Core channels stay visible in the folded sidebar regardless of usage, pinning, or filter state.
 
