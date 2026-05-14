@@ -1,11 +1,14 @@
-import type { Task } from "@/types";
-import { getLastEditedAt } from "@/types";
+import type { Post, Task, TaskStateUpdate } from "@/types";
+import { getLastEditedAt, getTaskStateUpdates, isTaskPost } from "@/types";
 import { areTaskFieldsEqual } from "./task-identity";
 
-function mergeStateUpdates(existing: Task["stateUpdates"], incoming: Task["stateUpdates"]): Task["stateUpdates"] {
-  const combined = [...(existing || []), ...(incoming || [])];
-  if (combined.length === 0) return undefined;
-  const byId = new Map<string, NonNullable<Task["stateUpdates"]>[number]>();
+function mergeStateUpdates(
+  existing: TaskStateUpdate[],
+  incoming: TaskStateUpdate[]
+): TaskStateUpdate[] {
+  const combined = [...existing, ...incoming];
+  if (combined.length === 0) return [];
+  const byId = new Map<string, TaskStateUpdate>();
   for (const update of combined) {
     const previous = byId.get(update.id);
     if (!previous || update.timestamp.getTime() >= previous.timestamp.getTime()) {
@@ -16,7 +19,7 @@ function mergeStateUpdates(existing: Task["stateUpdates"], incoming: Task["state
 }
 
 function getLatestEditedAt(task: Task): Date {
-  const latestStateTimestamp = task.stateUpdates?.[0]?.timestamp;
+  const latestStateTimestamp = getTaskStateUpdates(task)[0]?.timestamp;
   const editedAt = getLastEditedAt(task);
   if (!latestStateTimestamp) return editedAt;
   return latestStateTimestamp.getTime() >= editedAt.getTime()
@@ -38,13 +41,17 @@ export function mergeTasks(existingTasks: Task[], newTasks: Task[]): Task[] {
     const mergedRelays = Array.from(
       new Set([...(existing.relays || []), ...(incoming.relays || [])])
     );
-    const mergedStateUpdates = mergeStateUpdates(existing.stateUpdates, incoming.stateUpdates);
-    const winner = existing.timestamp.getTime() >= incoming.timestamp.getTime() ? existing : incoming;
-    const mergedTask: Task = {
-      ...winner,
-      relays: mergedRelays,
-      stateUpdates: mergedStateUpdates,
-    };
+    const winner: Post = existing.timestamp.getTime() >= incoming.timestamp.getTime() ? existing : incoming;
+    const mergedTask: Task = isTaskPost(winner)
+      ? {
+          ...winner,
+          relays: mergedRelays,
+          stateUpdates: mergeStateUpdates(
+            getTaskStateUpdates(existing),
+            getTaskStateUpdates(incoming)
+          ),
+        }
+      : { ...winner, relays: mergedRelays };
     mergedTask.lastEditedAt = getLatestEditedAt(mergedTask);
     // Reuse the existing reference when the merged values match — prevents
     // identity churn for tasks present in both lists across repeated calls.

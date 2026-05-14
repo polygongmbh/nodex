@@ -1,3 +1,4 @@
+import { getTaskAssigneePubkeys as getTaskAssigneePubkeysField } from "@/types";
 import type { Task } from "@/types";
 import { extractMentionIdentifiersFromContent, formatMentionIdentifierForDisplay } from "@/lib/mentions";
 import { hexPubkeyToNpub, npubToHexPubkey } from "@/lib/nostr/user-facing-pubkey";
@@ -6,10 +7,9 @@ import { isTaskKind } from "./task-kind";
 import { resolveTaskEditMode } from "./task-permissions-policy";
 
 function getTaskAssignees(task: Task): string[] {
-  const explicitAssigneePubkeys =
-    task.assigneePubkeys
-      ?.map((value) => value.trim().toLowerCase())
-      .filter((value): value is string => Boolean(value)) || [];
+  const explicitAssigneePubkeys = getTaskAssigneePubkeysField(task)
+    .map((value) => value.trim().toLowerCase())
+    .filter((value): value is string => Boolean(value));
   if (explicitAssigneePubkeys.length > 0) return explicitAssigneePubkeys;
 
   const explicitMentions =
@@ -21,10 +21,9 @@ function getTaskAssignees(task: Task): string[] {
 }
 
 function getTaskAssigneePubkeys(task: Task): string[] {
-  const explicitAssigneePubkeys =
-    task.assigneePubkeys
-      ?.map((value) => value.trim().toLowerCase())
-      .filter((value): value is string => Boolean(value)) || [];
+  const explicitAssigneePubkeys = getTaskAssigneePubkeysField(task)
+    .map((value) => value.trim().toLowerCase())
+    .filter((value): value is string => Boolean(value));
   if (explicitAssigneePubkeys.length > 0) return explicitAssigneePubkeys;
 
   const explicitMentionPubkeys =

@@ -7,6 +7,7 @@ import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay, Task } from "@/types";
+import { getTaskAssigneePubkeys, getTaskPriority, getTaskPrimaryDate } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
 vi.mock("sonner", () => ({
@@ -276,9 +277,9 @@ function Harness({
       <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
       <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
       <output data-testid="local-count">{String(localTasks.length)}</output>
-      <output data-testid="first-priority">{String(localTasks[0]?.priority ?? "")}</output>
-      <output data-testid="first-due-date">{localTasks[0]?.dates?.[0]?.date.toISOString() || ""}</output>
-      <output data-testid="first-assignees">{(localTasks[0]?.assigneePubkeys || []).join(",")}</output>
+      <output data-testid="first-priority">{String(getTaskPriority(localTasks[0]) ?? "")}</output>
+      <output data-testid="first-due-date">{getTaskPrimaryDate(localTasks[0])?.date.toISOString() || ""}</output>
+      <output data-testid="first-assignees">{getTaskAssigneePubkeys(localTasks[0]).join(",")}</output>
       <output data-testid="first-mentions">{(localTasks[0]?.mentions || []).join(",")}</output>
       <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
     </>

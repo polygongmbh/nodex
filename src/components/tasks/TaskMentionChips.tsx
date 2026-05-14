@@ -1,3 +1,4 @@
+import { getTaskAssigneePubkeys } from "@/types";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
 import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
@@ -24,7 +25,7 @@ function buildFallbackPersonFromPubkey(pubkey: string): Person {
 
 function collectMentionPubkeys(task: Task): string[] {
   const values = [
-    ...(task.assigneePubkeys || []),
+    ...(getTaskAssigneePubkeys(task) || []),
     ...((task.mentions || []).filter((mention) => PUBKEY_PATTERN.test(mention))),
   ];
 

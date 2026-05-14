@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import type { Task } from "@/types";
+import type { Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { makePerson } from "@/test/fixtures";
 
@@ -16,7 +16,7 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => navigate,
 }));
 
-const baseTask: Task = {
+const baseTask: TaskPost = {
   id: "root",
   kind: NostrEventKind.Task,
   author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
@@ -27,6 +27,8 @@ const baseTask: Task = {
   timestamp: new Date(),
   lastEditedAt: new Date(),
   stateUpdates: [],
+  dates: [],
+  assigneePubkeys: [],
 };
 
 beforeEach(() => {

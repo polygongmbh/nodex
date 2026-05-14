@@ -2,7 +2,14 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { cn } from "@/lib/utils";
-import { Task, Relay, getTaskStatus, getTaskState, getTaskPrimaryDate } from "@/types";
+import {
+  Task,
+  Relay,
+  getTaskStatus,
+  getTaskState,
+  getTaskPrimaryDate,
+  getTaskPriority,
+} from "@/types";
 import { getRawEvent } from "@/stores/raw-events";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
@@ -238,10 +245,10 @@ export function TreeTaskItem({
   // Priority editing is disabled for terminal-state tasks (done/closed) — render a non-interactive
   // chip rather than the full select control to avoid unnecessary overhead.
   const editablePriority = editableMetadata && !isTaskTerminal(getTaskState(task));
-  const showCompactPriority = compactView && !isComment && typeof task.priority === "number";
+  const showCompactPriority = compactView && !isComment && typeof getTaskPriority(task) === "number";
   const showFullMetadataChips =
     !compactView &&
-    (hasTaskMetadataChips(task, activeRelays.length) || (typeof task.priority === "number" && !isComment));
+    (hasTaskMetadataChips(task, activeRelays.length) || (typeof getTaskPriority(task) === "number" && !isComment));
   const matchingChildrenLabel =
     hasMatchingFilters && !currentTaskIsDirectMatch
       ? t("tasks.actions.expandMatchingOnly")
@@ -473,9 +480,9 @@ export function TreeTaskItem({
               <TaskPrioritySelect
                 id={`task-priority-${task.id}`}
                 taskId={editablePriority ? task.id : undefined}
-                priority={task.priority}
+                priority={getTaskPriority(task)}
                 stopPropagation
-                title={`Priority ${task.priority}`}
+                title={`Priority ${getTaskPriority(task)}`}
                 className={cn(
                   TASK_CHIP_STYLES.priority,
                   "focus:outline-none",
@@ -488,13 +495,13 @@ export function TreeTaskItem({
 
           {showFullMetadataChips && (
             <div className={cn("flex flex-wrap gap-1", getTaskPrimaryDate(task)?.date ? "mt-1.5" : "mt-1.5")}>
-              {typeof task.priority === "number" && !isComment && (
+              {typeof getTaskPriority(task) === "number" && !isComment && (
                 <TaskPrioritySelect
                   id={`task-priority-${task.id}`}
                   taskId={editablePriority ? task.id : undefined}
-                  priority={task.priority}
+                  priority={getTaskPriority(task)}
                   stopPropagation
-                  title={`Priority ${task.priority}`}
+                  title={`Priority ${getTaskPriority(task)}`}
                   className={cn(
                     TASK_CHIP_STYLES.priority,
                     "focus:outline-none",

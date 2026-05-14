@@ -1,4 +1,4 @@
-import type { Channel, Nip99Metadata, Relay, Task, TaskDate, TaskDateType, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
+import type { Channel, CommentPost, ListingPost, Nip99Metadata, Post, Relay, Task, TaskDate, TaskDateType, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
 import { normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
@@ -41,22 +41,27 @@ export function makeChannel(overrides: Partial<Channel> = {}): Channel {
  * synthesizes the canonical stateUpdates and dates entries from them.
  * Production code builds tasks via the converter, which writes those fields
  * directly.
+ *
+ * `kind` defaults to Task. Pass a different kind to produce a CommentPost
+ * or ListingPost — the result type widens to Post in those cases.
  */
-type MakeTaskOverrides = Partial<Task> & {
+type BaseOverrides = Partial<Pick<TaskPost,
+  | "id" | "author" | "content" | "tags" | "relays" | "timestamp"
+  | "lastEditedAt" | "parentId" | "mentions" | "attachments" | "locationGeohash"
+>>;
+
+type MakeTaskOverrides = BaseOverrides & Partial<Pick<TaskPost,
+  | "stateUpdates" | "dates" | "assigneePubkeys" | "priority"
+>> & {
+  kind?: NostrEventKind;
   state?: TaskState | TaskStatus;
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
-  /** Listing-only metadata; preserved on the resulting task for tests. */
   nip99?: Nip99Metadata;
 };
 
-/**
- * Test convenience: returns a copy of `task` whose latest stateUpdate is the
- * given state. Useful for `{ ...baseTask, state: { status: ... } }`-style
- * overrides that historically wrote to a now-removed `state` field.
- */
-export function withTaskState(task: Task, state: TaskState | TaskStatus): Task {
+export function withTaskState(task: TaskPost, state: TaskState | TaskStatus): TaskPost {
   return {
     ...task,
     stateUpdates: [
@@ -70,41 +75,69 @@ export function withTaskState(task: Task, state: TaskState | TaskStatus): Task {
   };
 }
 
-export function makeTask(overrides: MakeTaskOverrides = {}): Task {
-  const { state, stateUpdates, dueDate, dueTime, dateType, dates, nip99, ...rest } = overrides;
-  const author = rest.author ?? makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
-  const timestamp = rest.timestamp ?? DEFAULT_TIME;
-  const id = rest.id ?? "task-1";
+function buildBase(overrides: BaseOverrides) {
+  const author = overrides.author ?? makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
+  return {
+    id: overrides.id ?? "task-1",
+    author,
+    content: overrides.content ?? "Task content #general",
+    tags: overrides.tags ?? ["general"],
+    relays: overrides.relays ?? ["demo"],
+    timestamp: overrides.timestamp ?? DEFAULT_TIME,
+    lastEditedAt: overrides.lastEditedAt,
+    parentId: overrides.parentId,
+    mentions: overrides.mentions,
+    attachments: overrides.attachments,
+    locationGeohash: overrides.locationGeohash,
+  };
+}
+
+export function makeTask(overrides: MakeTaskOverrides = {}): TaskPost {
+  const {
+    state, stateUpdates, dueDate, dueTime, dateType, dates,
+    nip99: _nip99, assigneePubkeys, priority, kind: _kind,
+    ...rest
+  } = overrides;
+  const base = buildBase(rest);
+
   const normalizedShorthand = state !== undefined ? normalizeTaskState(state) : undefined;
-  // Precedence: explicit `state` shorthand wins (it's how tests express "the
-  // current status is X" succinctly). Otherwise use explicit `stateUpdates`,
-  // or default to an empty history.
   const resolvedStateUpdates: TaskStateUpdate[] =
     normalizedShorthand && normalizedShorthand.status !== "open"
       ? [
           {
-            id,
+            id: base.id,
             state: normalizedShorthand,
-            timestamp,
-            authorPubkey: author.pubkey,
+            timestamp: base.timestamp,
+            authorPubkey: base.author.pubkey,
           },
         ]
       : stateUpdates ?? [];
-  // Same precedence for dates: explicit dueDate shorthand wins.
   const resolvedDates: TaskDate[] = dueDate
     ? [{ date: dueDate, time: dueTime, type: dateType ?? "due" }]
     : dates ?? [];
+
   return {
-    id,
+    ...base,
     kind: NostrEventKind.Task,
-    author,
-    content: "Task content #general",
-    tags: ["general"],
-    relays: ["demo"],
-    timestamp,
     stateUpdates: resolvedStateUpdates,
     dates: resolvedDates,
-    ...(nip99 ? { nip99 } : {}),
-    ...rest,
-  } as Task;
+    assigneePubkeys: assigneePubkeys ?? [],
+    priority,
+  };
+}
+
+export function makeComment(overrides: BaseOverrides = {}): CommentPost {
+  return { ...buildBase(overrides), kind: NostrEventKind.TextNote };
+}
+
+export function makeListing(
+  overrides: BaseOverrides & { nip99?: Nip99Metadata } = {}
+): ListingPost {
+  const { nip99, ...rest } = overrides;
+  const base = buildBase(rest);
+  return {
+    ...base,
+    kind: NostrEventKind.ClassifiedListing,
+    nip99: nip99 ?? { identifier: base.id, title: base.content, status: "active" },
+  };
 }

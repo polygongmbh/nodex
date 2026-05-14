@@ -1,6 +1,17 @@
 import { describe, it, expect } from "vitest";
 import { nip19 } from "nostr-tools";
-import { Task, getLastEditedAt, getTaskStatus, getTaskState, getTaskStatusFromTask, isListingPost } from "@/types";
+import {
+  Task,
+  getLastEditedAt,
+  getTaskStatus,
+  getTaskState,
+  getTaskStatusFromTask,
+  getTaskStateUpdates,
+  isListingPost,
+  isTaskPost,
+  getTaskPriority,
+  getTaskAssigneePubkeys,
+} from "@/types";
 import { basicNostrEvents } from "@/data/basic-nostr-events";
 import { mergeTasks } from "@/domain/content/task-merge";
 import {
@@ -222,7 +233,7 @@ describe("nostrEventToTask", () => {
 
     const task = nostrEventToTask(event);
 
-    expect(task.priority).toBe(80);
+    expect(getTaskPriority(task)).toBe(80);
   });
 
   it("extracts mentions from person tags and @text mentions", () => {
@@ -245,7 +256,7 @@ describe("nostrEventToTask", () => {
     expect(task.mentions).toContain(
       "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
     );
-    expect(task.assigneePubkeys).toEqual([
+    expect(getTaskAssigneePubkeys(task)).toEqual([
       "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
       "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
     ]);
@@ -404,7 +415,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(getTaskStatusFromTask(tasks[0])).toBe("active");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000002 * 1000);
-    expect(tasks[0].stateUpdates).toEqual([
+    expect(getTaskStateUpdates(tasks[0])).toEqual([
       expect.objectContaining({
         id: "state-new",
         state: { status: "active", description: "In Progress" },
@@ -439,7 +450,7 @@ describe("nostrEventsToTasks", () => {
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
     expect(getTaskStatusFromTask(tasks[0])).toBe("closed");
-    expect(tasks[0].stateUpdates).toEqual([
+    expect(getTaskStateUpdates(tasks[0])).toEqual([
       expect.objectContaining({
         id: "state-closed",
         state: { status: "closed" },
@@ -473,7 +484,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(getTaskStatus(getTaskState(tasks[0]))).toBe("open");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000000 * 1000);
-    expect(tasks[0].stateUpdates).toBeUndefined();
+    expect(getTaskStateUpdates(tasks[0])).toEqual([]);
   });
 
   it("applies assignee-authored state updates on assigned tasks", () => {
@@ -502,7 +513,7 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(getTaskStatusFromTask(tasks[0])).toBe("done");
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000015 * 1000);
-    expect(tasks[0].stateUpdates).toEqual([
+    expect(getTaskStateUpdates(tasks[0])).toEqual([
       expect.objectContaining({
         id: "state-assignee",
         state: { status: "done" },
@@ -539,8 +550,8 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].dates?.[0]?.date.getTime()).toBe(expectedDate.getTime());
-    expect(tasks[0].dates?.[0]?.time).toBe(expectedDueTime);
+    expect((isTaskPost(tasks[0]) ? tasks[0].dates : [])?.[0]?.date.getTime()).toBe(expectedDate.getTime());
+    expect((isTaskPost(tasks[0]) ? tasks[0].dates : [])?.[0]?.time).toBe(expectedDueTime);
   });
 
   it("ignores unauthorized due-date and priority updates on assigned tasks", () => {
@@ -576,8 +587,8 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].dates ?? []).toEqual([]);
-    expect(tasks[0].priority).toBe(20);
+    expect((isTaskPost(tasks[0]) ? tasks[0].dates : []) ?? []).toEqual([]);
+    expect(getTaskPriority(tasks[0])).toBe(20);
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000020 * 1000);
   });
 
@@ -614,7 +625,7 @@ describe("nostrEventsToTasks", () => {
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
     expect(tasks[0].id).toBe("task-priority");
-    expect(tasks[0].priority).toBe(90);
+    expect(getTaskPriority(tasks[0])).toBe(90);
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000020 * 1000);
   });
 
@@ -643,7 +654,7 @@ describe("nostrEventsToTasks", () => {
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
     expect(tasks[0].id).toBe("task-priority-state");
-    expect(tasks[0].priority).toBe(70);
+    expect(getTaskPriority(tasks[0])).toBe(70);
     expect(getTaskStatusFromTask(tasks[0])).toBe("active");
   });
 

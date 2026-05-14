@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskStatusController } from "./use-task-status-controller";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { makePerson, makeTask } from "@/test/fixtures";
-import { getTaskStatus, getTaskStatusFromTask } from "@/types";
+import { getTaskStatus, getTaskStateUpdates, getTaskStatusFromTask } from "@/types";
 import * as taskStateConfig from "@/domain/task-states/task-state-config";
 
 const author = makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
@@ -55,7 +55,7 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
         ToggleComplete
       </button>
       <output data-testid="status">{getTaskStatusFromTask(allTasks[0]) || ""}</output>
-      <output data-testid="state-update-count">{String(allTasks[0]?.stateUpdates?.length ?? 0)}</output>
+      <output data-testid="state-update-count">{String(getTaskStateUpdates(allTasks[0]).length)}</output>
       <output data-testid="sort-hold">{controller.sortStatusHoldByTaskId["task-1"] || ""}</output>
     </>
   );

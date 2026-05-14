@@ -100,10 +100,11 @@ function createTask(
     stateUpdates:
       initialState.status !== "open"
         ? [{ id, state: initialState, timestamp, authorPubkey: author.pubkey }]
-        : undefined,
+        : [],
     dates: options.dueDate
       ? [{ date: options.dueDate, time: options.dueTime, type: "due" }]
-      : undefined,
+      : [],
+    assigneePubkeys: [],
     parentId: options.parentId,
   };
 }

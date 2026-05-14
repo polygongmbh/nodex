@@ -205,17 +205,12 @@ export type Post = TaskPost | CommentPost | ListingPost;
  * New code should prefer `Post` (discriminated) plus the variant types.
  */
 /**
- * Kitchen-sink superset of all variants — accepts any kind with every
- * variant's fields optional. Retained as a transition aid; new code should
- * prefer the discriminated `Post` union plus narrowing via type predicates.
+ * `Task` is now an alias for the discriminated `Post` union. The legacy
+ * kitchen-sink interface is gone; consumers that touched kind-specific
+ * fields must narrow via `isTaskPost` / `isListingPost` / etc., or declare
+ * a narrower variant type (e.g. `TaskPost[]`) up front.
  */
-export interface Task extends BasePost {
-  kind: NostrEventKind;
-  stateUpdates?: TaskStateUpdate[];
-  dates?: TaskDate[];
-  assigneePubkeys?: string[];
-  priority?: number;
-}
+export type Task = Post;
 
 /**
  * Boundary normalizer: accepts either the canonical object form or a bare
@@ -236,19 +231,36 @@ export function getTaskStatus(state: TaskState | TaskStatus | undefined): TaskSt
   return normalizeTaskState(state).status;
 }
 
-export function getTaskState(task: Pick<Task, "stateUpdates"> | undefined): TaskState {
-  return task?.stateUpdates?.[0]?.state ?? { status: "open" };
+/**
+ * Accepts any Post; returns "open" for non-task variants so callers can
+ * stay uniform without narrowing.
+ */
+export function getTaskState(post: Post | undefined): TaskState {
+  if (!post || !isTaskPost(post)) return { status: "open" };
+  return post.stateUpdates[0]?.state ?? { status: "open" };
 }
 
-export function getTaskStatusFromTask(task: Pick<Task, "stateUpdates"> | undefined): TaskStatus {
-  return getTaskState(task).status;
+export function getTaskStatusFromTask(post: Post | undefined): TaskStatus {
+  return getTaskState(post).status;
 }
 
 /**
- * Type guard that narrows any post-shaped value to also carry the
- * ListingPost-only fields (currently `nip99`). Lets call sites pass a `Task`
- * (kitchen-sink) and gain access to listing-specific fields after the check.
+ * Type guards that narrow any post-shaped value to a specific variant. Each
+ * preserves the input type's extra fields (intersection with the variant)
+ * so callers don't lose unrelated narrowings.
  */
+export function isTaskPost<T extends { kind: NostrEventKind }>(
+  post: T | undefined
+): post is T & TaskPost {
+  return post?.kind === NostrEventKind.Task;
+}
+
+export function isCommentPost<T extends { kind: NostrEventKind }>(
+  post: T | undefined
+): post is T & CommentPost {
+  return post?.kind === NostrEventKind.TextNote;
+}
+
 export function isListingPost<T extends { kind: NostrEventKind }>(
   post: T | undefined
 ): post is T & ListingPost {
@@ -256,18 +268,30 @@ export function isListingPost<T extends { kind: NostrEventKind }>(
 }
 
 /**
- * Returns the highest-priority date attached to a task, or undefined when
- * the task has no calendar dates.
+ * Returns the highest-priority date attached to a post, or undefined for
+ * variants that don't carry dates.
  */
-export function getTaskPrimaryDate(task: Pick<Task, "dates"> | undefined): TaskDate | undefined {
-  return task?.dates?.[0];
+export function getTaskPrimaryDate(post: Post | undefined): TaskDate | undefined {
+  return post && isTaskPost(post) ? post.dates[0] : undefined;
 }
 
 export function findTaskDate(
-  task: Pick<Task, "dates"> | undefined,
+  post: Post | undefined,
   type: TaskDateType
 ): TaskDate | undefined {
-  return task?.dates?.find((entry) => entry.type === type);
+  return post && isTaskPost(post) ? post.dates.find((entry) => entry.type === type) : undefined;
+}
+
+export function getTaskPriority(post: Post | undefined): number | undefined {
+  return post && isTaskPost(post) ? post.priority : undefined;
+}
+
+export function getTaskAssigneePubkeys(post: Post | undefined): string[] {
+  return post && isTaskPost(post) ? post.assigneePubkeys : [];
+}
+
+export function getTaskStateUpdates(post: Post | undefined): TaskStateUpdate[] {
+  return post && isTaskPost(post) ? post.stateUpdates : [];
 }
 
 export function getLastEditedAt(task: Task): Date {

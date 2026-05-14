@@ -1,4 +1,4 @@
-import { getTaskPrimaryDate } from "@/types";
+import { getTaskPrimaryDate, getTaskPriority } from "@/types";
 import { useEffect, useState, type MouseEvent } from "react";
 import { ArrowLeft, CalendarClock, ChevronDown, Flag, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -71,7 +71,7 @@ export function FeedTaskMenu({
     hasChildren,
   });
   const canEditTaskMetadata = isTaskKind(task.kind) && canPubkeyUpdateTask(task, currentUserPubkey);
-  const currentDisplayPriority = displayPriorityFromStored(task.priority);
+  const currentDisplayPriority = displayPriorityFromStored(getTaskPriority(task));
 
   const stop = (event: MouseEvent) => {
     event.stopPropagation();
@@ -197,7 +197,7 @@ export function FeedTaskMenu({
                     }}
                   >
                     <Flag className="mr-2 h-4 w-4" />
-                    {typeof task.priority === "number"
+                    {typeof getTaskPriority(task) === "number"
                       ? t("tasks.actions.editPriority")
                       : t("tasks.actions.setPriority")}
                   </DropdownMenuItem>

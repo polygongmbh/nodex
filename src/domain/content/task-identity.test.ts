@@ -1,33 +1,37 @@
 import { describe, expect, it } from "vitest";
-import type { Task, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
+import type { Task, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
 import { normalizeTaskState } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import {
   areTaskFieldsEqual,
   preserveTaskIdentity,
   preserveTaskListIdentity,
 } from "./task-identity";
 
-type MakeTaskOverrides = Partial<Task> & { state?: TaskState | TaskStatus };
+type MakeTaskOverrides = Partial<TaskPost> & { state?: TaskState | TaskStatus };
 
-function makeTask(overrides: MakeTaskOverrides = {}): Task {
+function makeTask(overrides: MakeTaskOverrides = {}): TaskPost {
   const { state, stateUpdates, ...rest } = overrides;
   const id = rest.id ?? "task-1";
   const timestamp = rest.timestamp ?? new Date("2026-02-17T10:00:00.000Z");
-  const author = rest.author ?? { pubkey: "alice", name: "Alice" };
+  const author = rest.author ?? { pubkey: "alice", name: "Alice", displayName: "Alice" };
   const resolvedStateUpdates: TaskStateUpdate[] =
     state !== undefined
       ? [{ id, state: normalizeTaskState(state), timestamp, authorPubkey: author.pubkey }]
       : stateUpdates ?? [];
   return {
     id,
+    kind: NostrEventKind.Task,
     author,
     content: "Hello",
     tags: ["work"],
     relays: ["relay-a"],
     timestamp,
     stateUpdates: resolvedStateUpdates,
+    dates: [],
+    assigneePubkeys: [],
     ...rest,
-  } as Task;
+  };
 }
 
 describe("areTaskFieldsEqual", () => {

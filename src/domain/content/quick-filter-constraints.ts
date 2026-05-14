@@ -1,5 +1,5 @@
 import type { QuickFilterState, Task } from "@/types";
-import { getLastEditedAt } from "@/types";
+import { getLastEditedAt, getTaskPriority } from "@/types";
 
 export const DEFAULT_RECENT_DAYS = 7;
 export const DEFAULT_MIN_PRIORITY = 50;
@@ -44,8 +44,9 @@ export function taskMatchesQuickFilters(
   }
 
   if (quickFilters.priorityEnabled) {
-    if (typeof task.priority !== "number") return false;
-    if (task.priority < quickFilters.minPriority) return false;
+    const priority = getTaskPriority(task);
+    if (typeof priority !== "number") return false;
+    if (priority < quickFilters.minPriority) return false;
   }
 
   return true;

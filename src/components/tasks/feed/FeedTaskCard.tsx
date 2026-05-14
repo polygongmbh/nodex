@@ -29,6 +29,7 @@ import {
   getTaskState,
   getTaskPrimaryDate,
   isListingPost,
+  getTaskPriority,
 } from "@/types";
 import { getRawEvent } from "@/stores/raw-events";
 import type { Person } from "@/types/person";
@@ -317,7 +318,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}
-                {!isComment && typeof task.priority === "number" ? (
+                {!isComment && typeof getTaskPriority(task) === "number" ? (
                   <>
                     {renderPriorityChip(task)}
                     <span className="shrink-0">·</span>

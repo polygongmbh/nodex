@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Channel, Task } from "@/types";
+import type { Channel, Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";
@@ -18,7 +18,7 @@ const bob: SelectablePerson = {
   isSelected: false,
 };
 
-function buildTask(overrides: Partial<Task> = {}): Task {
+function buildTask(overrides: Partial<TaskPost> = {}): TaskPost {
   return {
     id: "task-1",
     kind: NostrEventKind.Task,
@@ -28,6 +28,9 @@ function buildTask(overrides: Partial<Task> = {}): Task {
     relays: ["r1"],
 
     timestamp: new Date("2026-01-01T00:00:00.000Z"),
+    stateUpdates: [],
+    dates: [],
+    assigneePubkeys: [],
     ...overrides,
   };
 }

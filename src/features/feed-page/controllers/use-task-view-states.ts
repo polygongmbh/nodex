@@ -33,6 +33,7 @@ import {
   type TaskStatus,
   getTaskState,
   getTaskPrimaryDate,
+  getTaskStateUpdates,
 } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
@@ -184,7 +185,7 @@ function buildFeedEntries(tasks: Task[], focusedTaskId: string | null): FeedEntr
     if (getTaskStatus(getTaskState(task)) !== "closed" || task.id === focusedTaskId) {
       entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
     }
-    for (const update of task.stateUpdates || []) {
+    for (const update of getTaskStateUpdates(task) || []) {
       entries.push({
         type: "state-update",
         id: `${task.id}-state-${update.id}`,

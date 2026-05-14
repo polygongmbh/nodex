@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { getTaskStatusFromTask, type Task } from "@/types";
+import { getTaskStatusFromTask, type Task, type TaskPost, getTaskStateUpdates } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { applyTaskStateUpdate } from "./task-state";
 import { makePerson } from "@/test/fixtures";
 
-const baseTask: Task = {
+const baseTask: TaskPost = {
   id: "n1",
   kind: NostrEventKind.Task,
   author: makePerson({ pubkey: "u1", name: "me", displayName: "Me", avatar: "" }),
@@ -14,6 +14,8 @@ const baseTask: Task = {
 
   timestamp: new Date(),
   stateUpdates: [],
+  dates: [],
+  assigneePubkeys: [],
 };
 
 describe("applyTaskStateUpdate", () => {
@@ -25,7 +27,7 @@ describe("applyTaskStateUpdate", () => {
 
     const task = updated.find((t) => t.id === "n1");
     expect(getTaskStatusFromTask(task)).toBe("done");
-    expect(task?.stateUpdates?.[0]?.state).toEqual({ status: "done" });
+    expect(getTaskStateUpdates(task)?.[0]?.state).toEqual({ status: "done" });
   });
 
   it("updates lastEditedAt when status changes", () => {
@@ -52,7 +54,7 @@ describe("applyTaskStateUpdate", () => {
             authorPubkey: baseTask.author.pubkey,
           },
         ],
-      },
+      } satisfies TaskPost,
     ];
     const allTasks: Task[] = localTasks;
 
@@ -62,7 +64,7 @@ describe("applyTaskStateUpdate", () => {
   });
 
   it("prepends a local optimistic update onto an existing local task's history", () => {
-    const existingLocal: Task = {
+    const existingLocal: TaskPost = {
       ...baseTask,
       stateUpdates: [
         {
@@ -79,8 +81,8 @@ describe("applyTaskStateUpdate", () => {
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "active", "me");
     const task = updated.find((t) => t.id === "n1");
 
-    expect(task?.stateUpdates).toHaveLength(2);
-    expect(task?.stateUpdates?.[0]?.state).toEqual({ status: "active" });
-    expect(task?.stateUpdates?.[1]?.id).toBe("relay-state-1");
+    expect(getTaskStateUpdates(task)).toHaveLength(2);
+    expect(getTaskStateUpdates(task)?.[0]?.state).toEqual({ status: "active" });
+    expect(getTaskStateUpdates(task)?.[1]?.id).toBe("relay-state-1");
   });
 });

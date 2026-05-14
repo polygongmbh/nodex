@@ -11,6 +11,7 @@ import {
   type ComposeRestoreRequest,
   type TaskStatus,
   getTaskPrimaryDate,
+  getTaskPriority,
 } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -508,12 +509,12 @@ export function CalendarView({
                              data-task-id={task.id}
                              className="relative flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
                            >
-                             {typeof task.priority === "number" ? (
+                             {typeof getTaskPriority(task) === "number" ? (
                                <div className="absolute right-2 top-2 z-10">
                                  <TaskPrioritySelect
                                    id={`upcoming-priority-${task.id}`}
                                    taskId={canEditPriority ? task.id : undefined}
-                                   priority={task.priority}
+                                   priority={getTaskPriority(task)}
                                    stopPropagation
                                    className={cn(
                                      "px-1.5 py-0.5 text-sm focus:outline-none",
@@ -645,7 +646,7 @@ export function CalendarView({
                                  }}
                                  className={cn(
                                    `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`,
-                                   typeof task.priority === "number" && "pr-14"
+                                   typeof getTaskPriority(task) === "number" && "pr-14"
                                  )}
                                  title={(() => {
                                    const typeLabel = t("tasks.task").toLowerCase();
@@ -1168,10 +1169,10 @@ export function CalendarView({
                                 <span>{getTaskPrimaryDate(task)?.time}</span>
                               </div>
                             )}
-                            {(typeof task.priority === "number" || hasTaskMetadataChips(task, activeRelays.length)) && (
+                            {(typeof getTaskPriority(task) === "number" || hasTaskMetadataChips(task, activeRelays.length)) && (
                               <TaskTagChipRow
                                 task={task}
-                                priority={task.priority}
+                                priority={getTaskPriority(task)}
                                 className="mt-1"
                                 tagClassName="px-1 py-0.5 rounded text-xs"
                                 showEmptyPlaceholder={false}

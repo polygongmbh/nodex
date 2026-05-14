@@ -1,4 +1,4 @@
-import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskReactions, type TaskDate, type TaskDateType, Task, getLastEditedAt } from "@/types";
+import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskReactions, type TaskDate, type TaskDateType, Task, getLastEditedAt, isTaskPost } from "@/types";
 import { setRawEvent } from "@/stores/raw-events";
 import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
@@ -146,21 +146,41 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     sig: event.sig,
   });
 
-  return {
+  const base = {
     id: event.id,
-    kind: event.kind,
     author,
     content: normalizedContent,
     tags: allTags,
     relays: getRelayIdsFromEvent(event),
-    ...(nip99 ? { nip99 } : {}),
     locationGeohash,
     timestamp: new Date(event.created_at * 1000),
     parentId,
     mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles, ...referencedProfilePubkeys])),
-    assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
-    priority,
     attachments: attachments.length > 0 ? attachments : undefined,
+  };
+
+  if (isTask) {
+    return {
+      ...base,
+      kind: NostrEventKind.Task,
+      stateUpdates: [],
+      dates: [],
+      assigneePubkeys: Array.from(new Set(mentionedPubkeys)),
+      priority,
+    };
+  }
+
+  if (isListingKind(event.kind)) {
+    return {
+      ...base,
+      kind: NostrEventKind.ClassifiedListing,
+      nip99: nip99 ?? { identifier: event.id, status: "active" },
+    };
+  }
+
+  return {
+    ...base,
+    kind: NostrEventKind.TextNote,
   };
 }
 
@@ -322,7 +342,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   for (const [taskId, state] of latestStateByTaskId.entries()) {
     const task = taskMap.get(taskId);
-    if (!task) continue;
+    if (!task || !isTaskPost(task)) continue;
     const stateUpdates = (stateUpdatesByTaskId.get(taskId) ?? []).sort(
       (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
     );
@@ -364,7 +384,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   for (const [taskId, perType] of datesByTaskId.entries()) {
     const task = taskMap.get(taskId);
-    if (!task) continue;
+    if (!task || !isTaskPost(task)) continue;
     const dates = TASK_DATE_TYPE_ORDER.flatMap((type) => {
       const slot = perType.get(type);
       return slot ? [slot.entry] : [];
@@ -400,7 +420,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   for (const [taskId, update] of latestPriorityByTaskId.entries()) {
     const task = taskMap.get(taskId);
-    if (!task) continue;
+    if (!task || !isTaskPost(task)) continue;
     taskMap.set(taskId, {
       ...task,
       priority: update.priority,

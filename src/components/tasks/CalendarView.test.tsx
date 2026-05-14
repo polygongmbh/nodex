@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CalendarView } from "./CalendarView";
-import type { Channel, Relay, Task } from "@/types";
+import type { Channel, Relay, Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 import { makePerson, makeTask } from "@/test/fixtures";
@@ -42,7 +42,7 @@ const tasks: Task[] = [];
 describe("CalendarView responsiveness", () => {
   it("focuses ancestor from day-card breadcrumb without selecting current card task", () => {
     dispatchFeedInteraction.mockClear();
-    const root: Task = {
+    const root: TaskPost = {
       id: "root",
       kind: NostrEventKind.Task,
       author: people[0],
@@ -54,8 +54,9 @@ describe("CalendarView responsiveness", () => {
       lastEditedAt: new Date("2026-02-17T09:00:00.000Z"),
       stateUpdates: [],
       dates: [{ date: new Date("2026-02-18T10:00:00.000Z"), type: "due" }],
+      assigneePubkeys: [],
     };
-    const child: Task = {
+    const child: TaskPost = {
       ...root,
       id: "child",
       content: "Child task #general",

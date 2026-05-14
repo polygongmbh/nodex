@@ -1,3 +1,4 @@
+import { getTaskAssigneePubkeys } from "@/types";
 import { useMemo } from "react";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
@@ -42,11 +43,11 @@ export function TaskAssigneeAvatars({
 }: TaskAssigneeAvatarsProps) {
   const isMobile = useIsMobile();
   const pubkeys = useMemo(() => {
-    const list = (task.assigneePubkeys ?? []).filter((p) => PUBKEY_PATTERN.test(p));
+    const list = (getTaskAssigneePubkeys(task) ?? []).filter((p) => PUBKEY_PATTERN.test(p));
     if (list.length > 0) return list;
     if (task.author?.pubkey && PUBKEY_PATTERN.test(task.author.pubkey)) return [task.author.pubkey];
     return [];
-  }, [task.assigneePubkeys, task.author?.pubkey]);
+  }, [getTaskAssigneePubkeys(task), task.author?.pubkey]);
 
   const { getProfile } = useNostrProfiles(pubkeys);
   const { getPersonById } = useFeedPersonLookup();

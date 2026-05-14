@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Task } from "@/types";
+import type { Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import {
@@ -29,7 +29,7 @@ const user = makeTestPerson({
   nip05: "alice@example.com",
 });
 
-const baseTask: Task = {
+const baseTask: TaskPost = {
   id: "t1",
   kind: NostrEventKind.Task,
   author: user,
@@ -38,6 +38,9 @@ const baseTask: Task = {
   relays: ["demo"],
 
   timestamp: new Date(),
+  stateUpdates: [],
+  dates: [],
+  assigneePubkeys: [],
 };
 
 describe("canUserUpdateTask", () => {

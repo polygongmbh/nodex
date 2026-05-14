@@ -10,6 +10,7 @@ import {
   type TaskStatus,
   getTaskState,
   getTaskPrimaryDate,
+  getTaskPriority,
 } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -561,7 +562,7 @@ export function ListView({
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}
-                        priority={task.priority}
+                        priority={getTaskPriority(task)}
                         editable={editable && !isTaskTerminal(getTaskState(task))}
                       />
                     )}

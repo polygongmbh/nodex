@@ -1,3 +1,4 @@
+import { getTaskAssigneePubkeys } from "@/types";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
@@ -53,7 +54,7 @@ export function buildTaskSearchableText(
   const peopleById = resolvePeopleLookup(people);
   const tags = (task.tags ?? []).map(normalizeTaskSearchValue).filter(Boolean);
   const mentions = task.mentions ?? [];
-  const assignees = task.assigneePubkeys ?? [];
+  const assignees = getTaskAssigneePubkeys(task) ?? [];
   const resolvedMentionPeople = collectResolvedMentionPeople(mentions, peopleById);
   const resolvedAssigneePeople = collectResolvedMentionPeople(assignees, peopleById);
   const authorId = task.author?.pubkey ? normalizeTaskSearchValue(task.author.pubkey) : "";

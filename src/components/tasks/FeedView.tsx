@@ -8,6 +8,7 @@ import {
   getTaskStatus,
   getTaskState,
   getTaskPrimaryDate,
+  getTaskPriority,
 } from "@/types";
 import { resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 import type { Person } from "@/types/person";
@@ -146,13 +147,13 @@ interface FeedPriorityChipProps {
 }
 
 function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
-  if (typeof task.priority !== "number") return null;
+  if (typeof getTaskPriority(task) !== "number") return null;
 
   return (
     <TaskPrioritySelect
       id={`feed-priority-${task.id}`}
       taskId={editable ? task.id : undefined}
-      priority={task.priority}
+      priority={getTaskPriority(task)}
       stopPropagation
       className={cn(
         "rounded bg-warning/15 px-1.5 py-0.5 text-xs text-warning transition-colors focus:outline-none",

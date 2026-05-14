@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeTask, makePerson } from "@/test/fixtures";
+import { makeTask, makePerson, makeComment } from "@/test/fixtures";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   hasInProgressTopLevelProject,
@@ -108,7 +108,7 @@ describe("selectStatusInProgressTopLevelTasks / hasInProgressTopLevelProject", (
   });
 
   it("ignores non-task entries", () => {
-    const comment = makeTask({ id: "cm1", kind: NostrEventKind.TextNote, state: { status: "active" } });
+    const comment = makeComment({ id: "cm1" });
     const result = selectStatusInProgressTopLevelTasks({
       contextTasks: [comment],
       focusedTaskId: null,
@@ -170,9 +170,8 @@ describe("selectPeopleOwnedTasks", () => {
   });
 
   it("excludes comments when no task is focused", () => {
-    const myComment = makeTask({
+    const myComment = makeComment({
       id: "cmt",
-      kind: NostrEventKind.TextNote,
       author: makePerson({ pubkey: me }),
     });
     const result = selectPeopleOwnedTasks({
@@ -184,9 +183,8 @@ describe("selectPeopleOwnedTasks", () => {
   });
 
   it("keeps comments when a task is focused", () => {
-    const myComment = makeTask({
+    const myComment = makeComment({
       id: "cmt",
-      kind: NostrEventKind.TextNote,
       author: makePerson({ pubkey: me }),
     });
     const result = selectPeopleOwnedTasks({
@@ -325,10 +323,9 @@ describe("selectStatusTimelinePosts", () => {
   });
 
   it("includes comments anywhere in the scope alongside top-level posts", () => {
-    const comment = makeTask({
+    const comment = makeComment({
       id: "cmt",
       parentId: "r1",
-      kind: NostrEventKind.TextNote,
       timestamp: new Date("2026-06-01"),
     });
     const result = selectStatusTimelinePosts({

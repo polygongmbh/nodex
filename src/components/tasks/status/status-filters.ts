@@ -1,4 +1,4 @@
-import { getTaskStatus, type Task, getTaskState } from "@/types";
+import { getTaskStatus, type Task, getTaskState, getTaskAssigneePubkeys } from "@/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 
@@ -16,7 +16,7 @@ function buildPubkeySet(pubkeys: Iterable<string>): Set<string> {
 }
 
 function getNormalizedAssignees(task: Task): string[] {
-  return (task.assigneePubkeys ?? []).map(normalizePubkey).filter(Boolean);
+  return (getTaskAssigneePubkeys(task) ?? []).map(normalizePubkey).filter(Boolean);
 }
 
 /**

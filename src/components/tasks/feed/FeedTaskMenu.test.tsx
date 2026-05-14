@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 import i18n from "@/lib/i18n/config";
 import { FeedTaskMenu } from "./FeedTaskMenu";
-import { makeTask } from "@/test/fixtures";
+import { makeComment, makeTask } from "@/test/fixtures";
 import { NostrEventKind } from "@/lib/nostr/types";
 
 const { dispatchMock } = vi.hoisted(() => ({ dispatchMock: vi.fn() }));
@@ -113,8 +113,7 @@ describe("FeedTaskMenu", () => {
 
   it("hides due-date and priority editors when the post is not a task", () => {
     renderMenu({
-      task: makeTask({
-        kind: NostrEventKind.TextNote,
+      task: makeComment({
         author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", avatar: "" },
         timestamp: new Date(),
       }),

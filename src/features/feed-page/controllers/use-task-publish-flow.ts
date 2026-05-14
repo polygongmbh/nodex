@@ -1,4 +1,4 @@
-import { getTaskPrimaryDate, isListingPost } from "@/types";
+import { getTaskPrimaryDate, isListingPost, isTaskPost, getTaskAssigneePubkeys, getTaskPriority } from "@/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
@@ -52,11 +52,15 @@ import type {
   ComposeRestoreState,
   Nip99Metadata,
   Nip99ListingStatus,
+  Post,
   PostType,
   PublishedAttachment,
   PostedTag,
   Relay,
   Task,
+  TaskPost,
+  CommentPost,
+  ListingPost,
   TaskCreateResult,
   TaskDateType,
   TaskEntryType,
@@ -517,8 +521,7 @@ export function useTaskPublishFlow({
         : (demoFeedActive ? [demoRelayId] : []);
     };
 
-    const baseTask: Omit<Task, "id"> = {
-      kind: publishKind,
+    const baseFields = {
       author: taskAuthor,
       content,
       tags: resolvedSubmissionTags,
@@ -526,30 +529,48 @@ export function useTaskPublishFlow({
         ? effectiveRelayIds
         : (demoFeedActive ? [demoRelayId] : []),
       timestamp: createdAt,
-      stateUpdates:
-        normalizedTaskType === "task" && initialState && initialState.status !== "open"
-          ? [
-              {
+      parentId: submissionParentId ?? undefined,
+      mentions: Array.from(new Set([...normalizedMentionIdentifiers, ...mentionPubkeys])),
+      locationGeohash: normalizedLocationGeohash,
+      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
+    };
+    const buildPost = (id: string): Post => {
+      if (normalizedTaskType === "task") {
+        const taskPost: TaskPost = {
+          ...baseFields,
+          id,
+          kind: NostrEventKind.Task,
+          stateUpdates: initialState && initialState.status !== "open"
+            ? [{
                 id: `local-init-${createdAt.getTime()}`,
                 state: initialState,
                 timestamp: createdAt,
                 authorPubkey: taskAuthor.pubkey,
-              },
-            ]
-          : undefined,
-      dates: submissionDueDate
-        ? [{ date: submissionDueDate, time: submissionDueTime, type: submissionDateType ?? "due" }]
-        : [],
-      parentId: submissionParentId ?? undefined,
-      mentions: Array.from(new Set([...normalizedMentionIdentifiers, ...mentionPubkeys])),
-      assigneePubkeys:
-        normalizedTaskType === "task" && (assigneePubkeys?.length || 0) > 0
-          ? assigneePubkeys
-          : undefined,
-      priority: normalizedTaskType === "task" ? priority : undefined,
-      ...(normalizedMessageType === "listing" && nip99 ? { nip99 } : {}),
-      locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
+              }]
+            : [],
+          dates: submissionDueDate
+            ? [{ date: submissionDueDate, time: submissionDueTime, type: submissionDateType ?? "due" }]
+            : [],
+          assigneePubkeys: assigneePubkeys ?? [],
+          priority,
+        };
+        return taskPost;
+      }
+      if (normalizedMessageType === "listing") {
+        const listingPost: ListingPost = {
+          ...baseFields,
+          id,
+          kind: NostrEventKind.ClassifiedListing,
+          nip99: nip99 ?? { identifier: id, status: "active" },
+        };
+        return listingPost;
+      }
+      const commentPost: CommentPost = {
+        ...baseFields,
+        id,
+        kind: NostrEventKind.TextNote,
+      };
+      return commentPost;
     };
 
     const parsedHashtagsFromContent = new Set(extractHashtagsFromContent(content));
@@ -570,7 +591,7 @@ export function useTaskPublishFlow({
     };
 
     if (!shouldPublish) {
-      setLocalTasks((prev) => [{ ...baseTask, id: Date.now().toString() }, ...prev]);
+      setLocalTasks((prev) => [buildPost(Date.now().toString()), ...prev]);
       notifyLocalSaved(publishKind);
       return { ok: true, mode: "local" };
     }
@@ -620,10 +641,7 @@ export function useTaskPublishFlow({
         return { ok: true, mode: "queued" };
       }
       const eventId = signedEvent.id;
-      setLocalTasks((prev) => [
-        { ...baseTask, id: eventId },
-        ...prev,
-      ]);
+      setLocalTasks((prev) => [buildPost(eventId), ...prev]);
       setPendingPublishTaskIds((prev) => {
         const next = new Set(prev);
         next.add(eventId);
@@ -725,14 +743,14 @@ export function useTaskPublishFlow({
       fallbackRelayUrls: selectedRelayUrls,
     });
 
-    setLocalTasks((prev) => [
-      {
-        ...baseTask,
-        id: publishResult.eventId || Date.now().toString(),
+    setLocalTasks((prev) => {
+      const post = buildPost(publishResult.eventId || Date.now().toString());
+      const withResolvedRelays: Post = {
+        ...post,
         relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
-      },
-      ...prev,
-    ]);
+      };
+      return [withResolvedRelays, ...prev];
+    });
     notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
     notifyPublished(publishKind, {
       relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
@@ -809,9 +827,9 @@ export function useTaskPublishFlow({
     ).map((url) => getRelayIdFromUrl(url));
     const dueDate = parseStoredDate(draft.dueDate);
     const restoredTimestamp = parseStoredDate(draft.createdAt) || new Date();
-    const restoredTask: Task = {
-      id: result.eventId || Date.now().toString(),
-      kind: draft.publishKind,
+    const restoredId = result.eventId || Date.now().toString();
+    const restoredBase = {
+      id: restoredId,
       author: draft.author,
       content: draft.content,
       tags: draft.tags,
@@ -819,27 +837,39 @@ export function useTaskPublishFlow({
         ? effectiveRelayIds
         : (demoFeedActive ? [demoRelayId] : []),
       timestamp: restoredTimestamp,
-      stateUpdates:
-        isTaskKind(draft.publishKind) && draft.initialState && draft.initialState.status !== "open"
-          ? [
-              {
-                id: `local-init-${restoredTimestamp.getTime()}`,
-                state: draft.initialState,
-                timestamp: restoredTimestamp,
-                authorPubkey: draft.author.pubkey,
-              },
-            ]
-          : undefined,
-      dates: dueDate
-        ? [{ date: dueDate, time: draft.dueTime, type: draft.dateType ?? "due" }]
-        : [],
       parentId: draft.parentId,
       mentions: draft.mentionPubkeys,
-      assigneePubkeys: isTaskKind(draft.publishKind) ? draft.assigneePubkeys : undefined,
-      priority: isTaskKind(draft.publishKind) ? draft.priority : undefined,
       locationGeohash: draft.locationGeohash,
       attachments: draft.attachments,
     };
+    let restoredTask: Task;
+    if (isTaskKind(draft.publishKind)) {
+      restoredTask = {
+        ...restoredBase,
+        kind: NostrEventKind.Task,
+        stateUpdates: draft.initialState && draft.initialState.status !== "open"
+          ? [{
+              id: `local-init-${restoredTimestamp.getTime()}`,
+              state: draft.initialState,
+              timestamp: restoredTimestamp,
+              authorPubkey: draft.author.pubkey,
+            }]
+          : [],
+        dates: dueDate
+          ? [{ date: dueDate, time: draft.dueTime, type: draft.dateType ?? "due" }]
+          : [],
+        assigneePubkeys: draft.assigneePubkeys ?? [],
+        priority: draft.priority,
+      };
+    } else if (isListingKind(draft.publishKind)) {
+      restoredTask = {
+        ...restoredBase,
+        kind: NostrEventKind.ClassifiedListing,
+        nip99: { identifier: restoredId, status: "active" },
+      };
+    } else {
+      restoredTask = { ...restoredBase, kind: NostrEventKind.TextNote };
+    }
     setLocalTasks((prev) => [restoredTask, ...prev]);
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
 
@@ -907,8 +937,8 @@ export function useTaskPublishFlow({
     }
     setLocalTasks((prev) =>
       prev.map((task) => {
-        if (task.id !== taskId) return task;
-        const otherDates = (task.dates ?? []).filter((entry) => entry.type !== dateType);
+        if (task.id !== taskId || !isTaskPost(task)) return task;
+        const otherDates = task.dates.filter((entry) => entry.type !== dateType);
         return {
           ...task,
           dates: [{ date: dueDate, time: dueTime, type: dateType }, ...otherDates],
@@ -983,7 +1013,7 @@ export function useTaskPublishFlow({
 
     const explicitMentionPubkeys = Array.from(
       new Set(
-        [...(existingTask.assigneePubkeys || []), ...(existingTask.mentions || [])]
+        [...(getTaskAssigneePubkeys(existingTask) || []), ...(existingTask.mentions || [])]
           .map((value) => value.trim().toLowerCase())
           .filter((value) => /^[a-f0-9]{64}$/i.test(value))
       )
@@ -999,7 +1029,7 @@ export function useTaskPublishFlow({
       explicitTagNames,
       explicitMentionPubkeys,
       selectedRelays: existingTask.relays,
-      priority: existingTask.priority,
+      priority: getTaskPriority(existingTask),
       attachments: existingTask.attachments,
       nip99: isListingPost(existingTask) ? existingTask.nip99 : undefined,
       locationGeohash: existingTask.locationGeohash,

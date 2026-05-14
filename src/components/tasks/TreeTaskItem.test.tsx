@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
 import type { Task } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { makePerson, makeTask, withTaskState } from "@/test/fixtures";
+import { makeComment, makePerson, makeTask, withTaskState } from "@/test/fixtures";
 import { setRawEvent } from "@/stores/raw-events";
 
 const dispatchFeedInteraction = vi.fn();
@@ -335,18 +335,15 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("keeps the comment avatar stack on the right and removes the left author avatar", () => {
-    const commentTask: Task = {
-      ...baseTask,
+    const commentTask = makeComment({
       id: "c-right-avatar-only",
-      kind: NostrEventKind.TextNote,
       content: "Looks good",
-      assigneePubkeys: ["ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318"],
       author: makePerson({
         pubkey: "f5dc0ba672437167ccb3f58f2467990f9c574bc6522af1e76361404e7868a0f5",
         name: "alice",
         displayName: "Alice",
       }),
-    };
+    });
 
     renderTreeTaskItem({ task: commentTask });
 

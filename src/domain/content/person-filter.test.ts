@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Task } from "@/types";
+import type { Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import { taskMatchesSelectedPeople } from "./person-filter";
@@ -18,7 +18,7 @@ const bob: Person = {
   avatar: "",
 };
 
-const baseTask: Task = {
+const baseTask: TaskPost = {
   id: "task-1",
   kind: NostrEventKind.Task,
   author: bob,
@@ -27,6 +27,9 @@ const baseTask: Task = {
   relays: ["demo"],
 
   timestamp: new Date(),
+  stateUpdates: [],
+  dates: [],
+  assigneePubkeys: [],
 };
 
 describe("taskMatchesSelectedPeople", () => {
@@ -39,22 +42,22 @@ describe("taskMatchesSelectedPeople", () => {
   });
 
   it("passes when task mentions selected person", () => {
-    const task: Task = { ...baseTask, content: "please review @alice" };
+    const task: TaskPost = { ...baseTask, content: "please review @alice" };
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
   });
 
   it("passes when explicit mention id matches selected person id", () => {
-    const task: Task = { ...baseTask, mentions: ["alice-pubkey"] };
+    const task: TaskPost = { ...baseTask, mentions: ["alice-pubkey"] };
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
   });
 
   it("passes when assignee pubkeys match selected person id", () => {
-    const task: Task = { ...baseTask, assigneePubkeys: ["alice-pubkey"] };
+    const task: TaskPost = { ...baseTask, assigneePubkeys: ["alice-pubkey"] };
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
   });
 
   it("passes when mentions match selected person even if assignee pubkeys do not", () => {
-    const task: Task = {
+    const task: TaskPost = {
       ...baseTask,
       assigneePubkeys: ["charlie-pubkey"],
       mentions: ["alice-pubkey"],
@@ -63,7 +66,7 @@ describe("taskMatchesSelectedPeople", () => {
   });
 
   it("passes when content mention matches selected person even if assignee pubkeys do not", () => {
-    const task: Task = {
+    const task: TaskPost = {
       ...baseTask,
       content: "need @alice on this",
       assigneePubkeys: ["charlie-pubkey"],
@@ -72,7 +75,7 @@ describe("taskMatchesSelectedPeople", () => {
   });
 
   it("passes when selected person authored a state update on the task", () => {
-    const task: Task = {
+    const task: TaskPost = {
       ...baseTask,
       stateUpdates: [
         {
@@ -87,7 +90,7 @@ describe("taskMatchesSelectedPeople", () => {
   });
 
   it("fails when state update author does not match selected person", () => {
-    const task: Task = {
+    const task: TaskPost = {
       ...baseTask,
       stateUpdates: [
         {
@@ -102,7 +105,7 @@ describe("taskMatchesSelectedPeople", () => {
   });
 
   it("fails when neither author nor mentions match selected person", () => {
-    const task: Task = { ...baseTask, content: "no mention for selected person" };
+    const task: TaskPost = { ...baseTask, content: "no mention for selected person" };
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(false);
   });
 

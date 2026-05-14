@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TaskMentionChips } from "./TaskMentionChips";
-import type { Task } from "@/types";
+import type { Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -14,7 +14,7 @@ const alice: Person = {
   avatar: "",
 };
 
-const baseTask: Task = {
+const baseTask: TaskPost = {
   id: "task-1",
   kind: NostrEventKind.Task,
   author: alice,
@@ -24,6 +24,9 @@ const baseTask: Task = {
 
   timestamp: new Date(),
   lastEditedAt: new Date(),
+  stateUpdates: [],
+  dates: [],
+  assigneePubkeys: [],
 };
 
 describe("TaskMentionChips", () => {

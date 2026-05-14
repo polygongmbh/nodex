@@ -1,4 +1,5 @@
 import type { Task, TaskDate, TaskStateUpdate, TaskState } from "@/types";
+import { getTaskAssigneePubkeys, getTaskPriority, getTaskStateUpdates, isTaskPost } from "@/types";
 
 /**
  * Returns `previous` when `fresh` carries the same signal-bearing values, so
@@ -27,13 +28,13 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
   if (a.content !== b.content) return false;
   if (a.kind !== b.kind) return false;
   if (a.parentId !== b.parentId) return false;
-  if (a.priority !== b.priority) return false;
-  if (!areTaskDateListsEqual(a.dates, b.dates)) return false;
+  if (getTaskPriority(a) !== getTaskPriority(b)) return false;
+  if (!areTaskDateListsEqual(isTaskPost(a) ? a.dates : undefined, isTaskPost(b) ? b.dates : undefined)) return false;
   if (a.author.pubkey !== b.author.pubkey) return false;
-  if (!areStateUpdateListsEqual(a.stateUpdates, b.stateUpdates)) return false;
+  if (!areStateUpdateListsEqual(getTaskStateUpdates(a), getTaskStateUpdates(b))) return false;
   if (!areStringListsEqual(a.relays, b.relays)) return false;
   if (!areStringListsEqual(a.tags, b.tags)) return false;
-  if (!areOptionalStringListsEqual(a.assigneePubkeys, b.assigneePubkeys)) return false;
+  if (!areOptionalStringListsEqual(getTaskAssigneePubkeys(a), getTaskAssigneePubkeys(b))) return false;
   if (!areOptionalStringListsEqual(a.mentions, b.mentions)) return false;
   return true;
 }

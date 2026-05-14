@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Relay, Task } from "@/types";
+import type { Relay, Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   buildRelayScopedPresenceTargets,
@@ -19,15 +19,18 @@ function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id" | "url">): Rela
   };
 }
 
-function buildTask(overrides: Partial<Task> & Pick<Task, "id" | "relays">): Task {
+function buildTask(overrides: Partial<TaskPost> & Pick<TaskPost, "id" | "relays">): TaskPost {
   return {
     id: overrides.id,
-    kind: overrides.kind ?? NostrEventKind.Task,
+    kind: NostrEventKind.Task,
     author: overrides.author ?? makePerson({ pubkey: "author", name: "Author", displayName: "Author" }),
     content: overrides.content ?? "Task",
     tags: overrides.tags ?? [],
     relays: overrides.relays,
     timestamp: overrides.timestamp ?? new Date("2026-03-27T00:00:00.000Z"),
+    stateUpdates: overrides.stateUpdates ?? [],
+    dates: overrides.dates ?? [],
+    assigneePubkeys: overrides.assigneePubkeys ?? [],
   };
 }
 

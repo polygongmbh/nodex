@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { Task } from "@/types";
+import type { Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { sortByLatestModified } from "./kanban-sorting";
 import { makePerson } from "@/test/fixtures";
 
-const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
+const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): TaskPost => ({
   id,
   kind: NostrEventKind.Task,
   author: makePerson({ pubkey: "u1", name: "me", displayName: "Me", avatar: "" }),
@@ -15,6 +15,8 @@ const makeTask = (id: string, timestamp: Date, lastEditedAt?: Date): Task => ({
   timestamp,
   lastEditedAt,
   stateUpdates: [],
+  dates: [],
+  assigneePubkeys: [],
 });
 
 describe("sortByLatestModified", () => {

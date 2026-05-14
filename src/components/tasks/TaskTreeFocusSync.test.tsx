@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TaskTree } from "./TaskTree";
 import { TaskViewStatusRow } from "./TaskViewStatusRow";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import type { Channel, Relay, Task } from "@/types";
+import type { Channel, Relay, Task, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 import { makePerson } from "@/test/fixtures";
@@ -25,7 +25,7 @@ const relays: Relay[] = [{ id: "demo", name: "Demo", isActive: true, url: "wss:/
 const channels: Channel[] = [{ id: "general", name: "general", filterState: "neutral" }];
 const people: SelectablePerson[] = [];
 
-const rootTask: Task = {
+const rootTask: TaskPost = {
   id: "root",
   kind: NostrEventKind.Task,
   author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
@@ -36,16 +36,18 @@ const rootTask: Task = {
   timestamp: new Date(),
   lastEditedAt: new Date(),
   stateUpdates: [],
+  dates: [],
+  assigneePubkeys: [],
 };
 
-const childTask: Task = {
+const childTask: TaskPost = {
   ...rootTask,
   id: "child",
   content: "Child task",
   parentId: "root",
 };
 
-const doneGrandchildTask: Task = {
+const doneGrandchildTask: TaskPost = {
   ...rootTask,
   id: "done-grandchild",
   content: "Done grandchild",

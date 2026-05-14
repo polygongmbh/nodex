@@ -4,6 +4,8 @@ import {
   type TaskStatus,
   getTaskState,
   getTaskPrimaryDate,
+  getTaskPriority,
+  getTaskStateUpdates,
 } from "@/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 
@@ -68,8 +70,9 @@ function minutesSince(target: Date, now: number): number {
 }
 
 function getImportance(task: Task): number {
-  if (typeof task.priority === "number" && Number.isFinite(task.priority)) {
-    return Math.max(task.priority / IMPORTANCE_BASELINE, EPSILON);
+  const priority = getTaskPriority(task);
+  if (typeof priority === "number" && Number.isFinite(priority)) {
+    return Math.max(priority / IMPORTANCE_BASELINE, EPSILON);
   }
   return 1;
 }
@@ -133,7 +136,7 @@ export function calculateProgress(
 
 function gatherTouches(task: Task, childrenMap: Map<string, Task[]>): Date[] {
   const out: Date[] = [];
-  for (const update of task.stateUpdates ?? []) {
+  for (const update of getTaskStateUpdates(task) ?? []) {
     out.push(update.timestamp);
   }
   for (const child of childrenMap.get(task.id) ?? []) {

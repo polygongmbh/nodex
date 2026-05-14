@@ -4,7 +4,7 @@ import { useListingStatusPublish } from "./use-listing-status-publish";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isListingPost } from "@/types";
-import { makePerson, makeTask } from "@/test/fixtures";
+import { makeListing, makePerson, makeTask } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -13,9 +13,8 @@ vi.mock("sonner", () => ({
 }));
 
 const currentUser = makePerson({ pubkey: "a".repeat(64), name: "Alice", displayName: "Alice" });
-const listingTask = makeTask({
+const listingTask = makeListing({
   id: "b".repeat(64),
-  kind: NostrEventKind.ClassifiedListing,
   author: currentUser,
   content: "Listing body",
   tags: ["market"],

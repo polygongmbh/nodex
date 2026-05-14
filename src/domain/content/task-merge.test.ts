@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getTaskStatusFromTask, type Task } from "@/types";
+import { getTaskStateUpdates, getTaskStatusFromTask, type Task } from "@/types";
 import { mergeTasks } from "./task-merge";
 
 describe("mergeTasks", () => {
@@ -69,9 +69,15 @@ describe("mergeTasks", () => {
   it("preserves relay state update messages when local and relay copies collide", () => {
     const existing = {
       id: "task-1",
+      kind: 1621,
+      author: { pubkey: "alice", name: "alice", displayName: "alice" },
+      content: "",
+      tags: [],
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:01:00.000Z"),
       relays: ["relay-a"],
+      dates: [],
+      assigneePubkeys: [],
       stateUpdates: [
         {
           id: "local-state-1",
@@ -80,11 +86,17 @@ describe("mergeTasks", () => {
           authorPubkey: "local-author",
         },
       ],
-    } as Task;
+    } as unknown as Task;
     const incoming = {
       id: "task-1",
+      kind: 1621,
+      author: { pubkey: "alice", name: "alice", displayName: "alice" },
+      content: "",
+      tags: [],
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-b"],
+      dates: [],
+      assigneePubkeys: [],
       stateUpdates: [
         {
           id: "relay-state-1",
@@ -94,13 +106,13 @@ describe("mergeTasks", () => {
         },
       ],
       lastEditedAt: new Date("2026-02-17T10:02:00.000Z"),
-    } as Task;
+    } as unknown as Task;
 
     const merged = mergeTasks([existing], [incoming]);
 
     expect(merged).toHaveLength(1);
     expect(getTaskStatusFromTask(merged[0])).toBe("done");
-    expect(merged[0]?.stateUpdates?.map((update) => update.id)).toEqual([
+    expect(getTaskStateUpdates(merged[0]).map((update) => update.id)).toEqual([
       "relay-state-1",
       "local-state-1",
     ]);
