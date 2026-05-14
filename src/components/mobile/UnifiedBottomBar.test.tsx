@@ -17,6 +17,7 @@ import {
 } from "@/test/ui";
 import { makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
+import * as coreModule from "@/lib/core-channels";
 import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
@@ -1521,6 +1522,125 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
     expect(toastErrorSpy).toHaveBeenCalledTimes(1);
     toastErrorSpy.mockRestore();
+  });
+});
+
+describe("UnifiedBottomBar channel selector banding", () => {
+  beforeEach(() => {
+    dispatchFeedInteraction.mockReset();
+    dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
+    attachmentUploadEnabledSpy.mockReturnValue(true);
+    window.localStorage.removeItem(COMPOSE_DRAFT_STORAGE_KEY);
+  });
+
+  function renderSelector(value: Parameters<typeof FeedSurfaceProvider>[0]["value"]) {
+    render(
+      <FeedSurfaceProvider value={value}>
+        <UnifiedBottomBar
+          searchQuery=""
+          currentView="feed"
+          canCreateContent={true}
+        />
+      </FeedSurfaceProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Channels" }));
+  }
+
+  const allChannels: Channel[] = [
+    { id: "alpha", name: "alpha", filterState: "neutral" },
+    { id: "beta", name: "beta", filterState: "neutral" },
+    { id: "gamma", name: "gamma", filterState: "neutral" },
+    { id: "delta", name: "delta", filterState: "neutral" },
+  ];
+  const primary: Channel[] = [
+    { id: "alpha", name: "alpha", filterState: "neutral" },
+    { id: "beta", name: "beta", filterState: "neutral" },
+  ];
+
+  it("defaults to primary band channels only", () => {
+    renderSelector({
+      relays,
+      channels: allChannels,
+      visibleChannels: allChannels,
+      primaryChannels: primary,
+      composeChannels: allChannels,
+      people: [],
+      visiblePeople: [],
+      mentionablePeople: [],
+      searchQuery: "",
+      quickFilters: makeQuickFilterState(),
+      channelMatchMode: "and",
+    });
+
+    expect(screen.getByRole("button", { name: "#alpha" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "#beta" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "#gamma" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "#delta" })).not.toBeInTheDocument();
+  });
+
+  it("reveals discovery channels when Show more is tapped", () => {
+    renderSelector({
+      relays,
+      channels: allChannels,
+      visibleChannels: allChannels,
+      primaryChannels: primary,
+      composeChannels: allChannels,
+      people: [],
+      visiblePeople: [],
+      mentionablePeople: [],
+      searchQuery: "",
+      quickFilters: makeQuickFilterState(),
+      channelMatchMode: "and",
+    });
+
+    const showMore = screen.getByRole("button", { name: /Show more/ });
+    expect(showMore).toHaveTextContent("2");
+    fireEvent.click(showMore);
+
+    expect(screen.getByRole("button", { name: "#gamma" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "#delta" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Show less/ })).toBeInTheDocument();
+  });
+
+  it("renders core channels with bold styling", () => {
+    const coreSet = new Set(["alpha"]);
+    const coreSpy = vi.spyOn(coreModule, "resolveCoreChannels").mockReturnValue(coreSet);
+
+    renderSelector({
+      relays,
+      channels: allChannels,
+      visibleChannels: allChannels,
+      primaryChannels: primary,
+      composeChannels: allChannels,
+      people: [],
+      visiblePeople: [],
+      mentionablePeople: [],
+      searchQuery: "",
+      quickFilters: makeQuickFilterState(),
+      channelMatchMode: "and",
+    });
+
+    expect(screen.getByRole("button", { name: "#alpha" })).toHaveClass("font-bold");
+    expect(screen.getByRole("button", { name: "#beta" })).not.toHaveClass("font-bold");
+    coreSpy.mockRestore();
+  });
+
+  it("hides Show more when there are no discovery channels", () => {
+    renderSelector({
+      relays,
+      channels: primary,
+      visibleChannels: primary,
+      primaryChannels: primary,
+      composeChannels: primary,
+      people: [],
+      visiblePeople: [],
+      mentionablePeople: [],
+      searchQuery: "",
+      quickFilters: makeQuickFilterState(),
+      channelMatchMode: "and",
+    });
+
+    expect(screen.queryByRole("button", { name: /Show more/ })).not.toBeInTheDocument();
   });
 });
 

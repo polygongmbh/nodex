@@ -101,10 +101,19 @@ export function deriveChannels(
     selected.sort(([nameA], [nameB]) => nameA.localeCompare(nameB));
   }
 
-  return selected.map(([name, count]) => ({
-    id: name,
-    name,
-    usageCount: count,
-    filterState: "neutral" as const,
-  }));
+  const userPostedSet = new Set(
+    userPostedTags.map((tag) => tag.name.toLowerCase())
+  );
+
+  return selected.map(([name, count]) => {
+    const personalScore = options.personalizeScores.get(name) ?? 0;
+    return {
+      id: name,
+      name,
+      usageCount: count,
+      filterState: "neutral" as const,
+      personalScore: personalScore > 0 ? personalScore : undefined,
+      userPosted: userPostedSet.has(name) ? true : undefined,
+    };
+  });
 }

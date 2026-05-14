@@ -7,6 +7,7 @@ export interface FeedSurfaceState {
   relays: Relay[];
   channels: Channel[];
   visibleChannels?: Channel[];
+  primaryChannels?: Channel[];
   composeChannels?: Channel[];
   people: SelectablePerson[];
   visiblePeople?: SidebarPerson[];
@@ -20,6 +21,7 @@ const defaultFeedSurfaceState: FeedSurfaceState = {
   relays: [],
   channels: [],
   visibleChannels: [],
+  primaryChannels: [],
   composeChannels: [],
   people: [],
   visiblePeople: [],

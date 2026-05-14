@@ -16,6 +16,10 @@ export interface Channel {
   filterState: 'included' | 'excluded' | 'neutral';
   /** Present when pinned; value is the display order (0 = first). */
   pinIndex?: number;
+  /** Personal frecency score; 0 or undefined means no personal interaction. */
+  personalScore?: number;
+  /** True when the user has posted in this channel. */
+  userPosted?: boolean;
 }
 
 export interface PostedTag {

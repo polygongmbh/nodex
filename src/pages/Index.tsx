@@ -43,6 +43,8 @@ import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { DEMO_RELAY_ID } from "@/lib/demo-feed-config";
+import { bandChannelsByActivity } from "@/lib/channel-banding";
+import { useCoreChannels } from "@/lib/use-core-channels";
 import { initializeDemoFeedData } from "@/data/demo-feed";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import {
@@ -427,6 +429,14 @@ function FeedIndexContent() {
     allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
   });
 
+  const { isCore: isCoreChannelName } = useCoreChannels();
+  const bandedChannels = useMemo(
+    () => bandChannelsByActivity(channelsWithState, isCoreChannelName),
+    [channelsWithState, isCoreChannelName]
+  );
+  const expandedBandChannels = bandedChannels.expanded;
+  const primaryBandChannels = bandedChannels.primary;
+
   const relayScopedTasks = useMemo(
     () =>
       filterTasksByRelayAndPeople({
@@ -722,8 +732,9 @@ function FeedIndexContent() {
         connectionStatus: relay.connectionStatus,
         url: relay.url,
       })),
-      channels: channelsWithState,
-      visibleChannels: channelsWithState,
+      channels: expandedBandChannels,
+      visibleChannels: expandedBandChannels,
+      primaryChannels: primaryBandChannels,
       composeChannels: composeChannelsWithState,
       people,
       visiblePeople: peopleWithState,
@@ -734,7 +745,8 @@ function FeedIndexContent() {
     }),
     [
       relaysWithActiveState,
-      channelsWithState,
+      expandedBandChannels,
+      primaryBandChannels,
       composeChannelsWithState,
       people,
       peopleWithState,
@@ -748,8 +760,8 @@ function FeedIndexContent() {
   const desktopSidebarController = useMemo(
     () => ({
       relays: relaysWithActiveState,
-      channels: channelsWithState,
-      collapsedPreviewChannels: focusedTaskCollapsedSidebarPreview.channels,
+      channels: expandedBandChannels,
+      collapsedPreviewChannels: focusedTaskCollapsedSidebarPreview.channels ?? channelsWithState,
       channelMatchMode,
       people: peopleWithState,
       collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people as typeof peopleWithState,
@@ -762,6 +774,7 @@ function FeedIndexContent() {
     [
       channelMatchMode,
       channelsWithState,
+      expandedBandChannels,
       focusedTaskCollapsedSidebarPreview.channels,
       focusedTaskCollapsedSidebarPreview.people,
       isSidebarFocused,

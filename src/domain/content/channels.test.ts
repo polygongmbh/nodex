@@ -88,6 +88,33 @@ describe("deriveChannels", () => {
     expect(channels.find((channel) => channel.name === "work")?.usageCount).toBe(0);
   });
 
+  it("populates personalScore from personalize scores map", () => {
+    const channels = deriveChannels(
+      [{ tags: ["a"] }, { tags: ["b"] }],
+      [],
+      [],
+      {
+        minCount: 1,
+        personalizeScores: new Map([["a", 3]]),
+      }
+    );
+    const byName = new Map(channels.map((c) => [c.name, c]));
+    expect(byName.get("a")?.personalScore).toBe(3);
+    expect(byName.get("b")?.personalScore).toBeUndefined();
+  });
+
+  it("flags userPosted true for channels in userPostedTags", () => {
+    const channels = deriveChannels(
+      [{ tags: ["a"] }, { tags: ["b"] }],
+      [],
+      [{ name: "a", relayIds: [] }],
+      1
+    );
+    const byName = new Map(channels.map((c) => [c.name, c]));
+    expect(byName.get("a")?.userPosted).toBe(true);
+    expect(byName.get("b")?.userPosted).toBeUndefined();
+  });
+
   it("does not parse hashtags embedded inside words", () => {
     const channels = deriveChannels(
       [],

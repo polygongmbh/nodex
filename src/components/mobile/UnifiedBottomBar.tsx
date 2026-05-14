@@ -126,6 +126,9 @@ export function UnifiedBottomBar({
   const { allTasks } = useFeedTaskViewModel();
   const relays = relaysProp ?? surface.relays;
   const channels = channelsProp ?? surface.visibleChannels ?? surface.channels;
+  const primaryChannels = surface.primaryChannels && surface.primaryChannels.length > 0
+    ? surface.primaryChannels
+    : channels;
   const people = peopleProp ?? surface.people;
   const visiblePeople = peopleProp ?? surface.visiblePeople ?? surface.people;
   const searchQuery = searchQueryProp ?? surface.searchQuery;
@@ -166,6 +169,12 @@ export function UnifiedBottomBar({
   const initialComposerState = initialComposerStateRef.current;
   const [sharedText, setSharedText] = useState(initialComposerState.content);
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
+  const [showDiscoveryChannels, setShowDiscoveryChannels] = useState(false);
+  useEffect(() => {
+    if (activeSelector !== "channel" && showDiscoveryChannels) {
+      setShowDiscoveryChannels(false);
+    }
+  }, [activeSelector, showDiscoveryChannels]);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [attachmentPickerOpen, setAttachmentPickerOpen] = useState(false);
   const [isBottomBarFocused, setIsBottomBarFocused] = useState(false);
@@ -1282,29 +1291,52 @@ export function UnifiedBottomBar({
               })}
             </div>
           )}
-          {activeSelector === "channel" && (
-            <div className="flex flex-wrap gap-2">
-              {channels.map((channel) => (
-                <button
-                  key={channel.id}
-                  onClick={() => {
-                    void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
-                    channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
-                    channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive motion-filter-pop-alt",
-                    channel.filterState === "neutral" && "border-border"
-                  )}
-                >
-                  #{channel.name}
-                  {channel.filterState === "included" && <Check className="w-3.5 h-3.5" />}
-                  {channel.filterState === "excluded" && <X className="w-3.5 h-3.5" />}
-                  {channel.filterState === "neutral" && <Minus className="w-3.5 h-3.5 opacity-50" />}
-                </button>
-              ))}
-            </div>
-          )}
+          {activeSelector === "channel" && (() => {
+            const primaryIds = new Set(primaryChannels.map((c) => c.id));
+            const discoveryChannels = channels.filter((c) => !primaryIds.has(c.id));
+            const visibleChannels = showDiscoveryChannels
+              ? [...primaryChannels, ...discoveryChannels]
+              : primaryChannels;
+            return (
+              <div className="flex flex-wrap gap-2">
+                {visibleChannels.map((channel) => (
+                  <button
+                    key={channel.id}
+                    onClick={() => {
+                      void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
+                      isCore(channel.name) && "font-bold",
+                      channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
+                      channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive motion-filter-pop-alt",
+                      channel.filterState === "neutral" && "border-border"
+                    )}
+                  >
+                    #{channel.name}
+                    {channel.filterState === "included" && <Check className="w-3.5 h-3.5" />}
+                    {channel.filterState === "excluded" && <X className="w-3.5 h-3.5" />}
+                    {channel.filterState === "neutral" && <Minus className="w-3.5 h-3.5 opacity-50" />}
+                  </button>
+                ))}
+                {discoveryChannels.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscoveryChannels((prev) => !prev)}
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border border-dashed border-border text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+                    aria-expanded={showDiscoveryChannels}
+                  >
+                    {showDiscoveryChannels
+                      ? t("composer.channelSelector.showLess", { defaultValue: "Show less" })
+                      : t("composer.channelSelector.showMore", {
+                          defaultValue: "Show more (#{{count}})",
+                          count: discoveryChannels.length,
+                        })}
+                  </button>
+                )}
+              </div>
+            );
+          })()}
           {activeSelector === "person" && (
             <div className="flex flex-wrap gap-2">
               {visiblePeople.map((person) => {
@@ -1519,6 +1551,7 @@ export function UnifiedBottomBar({
             </button>
             <button
               onClick={() => toggleSelector("channel")}
+              aria-label={t("filters:filters.channels.title", { defaultValue: "Channels" })}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"

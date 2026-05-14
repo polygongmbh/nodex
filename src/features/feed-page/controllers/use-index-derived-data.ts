@@ -35,8 +35,6 @@ import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
 
-const INITIAL_CHANNEL_SEED_LIMIT = 16;
-
 const spamDropCountsByRelay = new Map<string, number>();
 function logSpamDrop(event: CachedNostrEvent, keyword: string): void {
   const relayKey = event.relayUrl || event.relayUrls?.[0] || "unknown";
@@ -221,9 +219,8 @@ export function useIndexDerivedData({
       scopedNostrEventsForChannels,
       scopedPostedTags,
       {
-        minCount: 6,
+        minCount: 2,
         personalizeScores: personalizedChannelScores,
-        maxCount: INITIAL_CHANNEL_SEED_LIMIT,
         sortVisibleAlphabetically: true,
         coreChannels,
       }
