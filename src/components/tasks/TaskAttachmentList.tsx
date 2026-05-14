@@ -18,10 +18,16 @@ export function TaskAttachmentList({
   const normalized = normalizePublishedAttachments(attachments);
   if (normalized.length === 0) return null;
 
+  const items = normalized.map((attachment) => ({
+    attachment,
+    mediaKind: inferTaskMediaKind(attachment.url, attachment.mimeType),
+  }));
+  const mediaItems = items.filter((item) => item.mediaKind !== null);
+  const linkItems = items.filter((item) => item.mediaKind === null);
+
   return (
     <div className={className}>
-      {normalized.map((attachment) => {
-        const mediaKind = inferTaskMediaKind(attachment.url, attachment.mimeType);
+      {mediaItems.map(({ attachment, mediaKind }) => {
         const caption = attachment.alt || attachment.name || attachment.url;
 
         if (mediaKind === "image") {
@@ -93,20 +99,26 @@ export function TaskAttachmentList({
           );
         }
 
-        return (
-          <a
-            key={attachment.url}
-            href={attachment.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => event.stopPropagation()}
-            className="flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1 text-xs hover:bg-muted/50"
-          >
-            <FileText className="h-3.5 w-3.5 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">{attachment.name || attachment.url}</span>
-          </a>
-        );
+        return null;
       })}
+      {linkItems.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {linkItems.map(({ attachment }) => (
+            <a
+              key={attachment.url}
+              href={attachment.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+              title={attachment.name || attachment.url}
+              className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border/60 bg-muted/30 px-2 py-1 text-xs hover:bg-muted/50"
+            >
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <span className="max-w-[16rem] truncate">{attachment.name || attachment.url}</span>
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
