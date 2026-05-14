@@ -3,6 +3,8 @@ import "@/lib/i18n/config";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 
+vi.stubEnv("VITE_CORE_CHANNELS", "");
+
 function installStorageFallbackIfNeeded(): void {
   const candidate = (window as Window & { localStorage?: unknown }).localStorage as Partial<Storage> | undefined;
   const hasUsableStorage =

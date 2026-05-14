@@ -43,8 +43,50 @@ describe("buildCollapsedPreviewItems", () => {
 
 describe("getCollapsedPreviewMaxItems", () => {
   it("uses coarse height buckets", () => {
-    expect(getCollapsedPreviewMaxItems(720)).toBe(3);
-    expect(getCollapsedPreviewMaxItems(840)).toBe(5);
-    expect(getCollapsedPreviewMaxItems(1080)).toBe(7);
+    expect(getCollapsedPreviewMaxItems(600)).toBe(4);
+    expect(getCollapsedPreviewMaxItems(720)).toBe(6);
+    expect(getCollapsedPreviewMaxItems(840)).toBe(6);
+    expect(getCollapsedPreviewMaxItems(900)).toBe(8);
+    expect(getCollapsedPreviewMaxItems(1080)).toBe(8);
+  });
+});
+
+describe("buildCollapsedPreviewItems with isAlwaysIncluded", () => {
+  it("force-includes items past the maxItems cap, ranked after selected and before pinned", () => {
+    const items = [
+      { id: "selected", selected: true, pinned: false, always: false },
+      { id: "core", selected: false, pinned: false, always: true },
+      { id: "pinned", selected: false, pinned: true, always: false },
+      { id: "other-1", selected: false, pinned: false, always: false },
+      { id: "other-2", selected: false, pinned: false, always: false },
+    ];
+
+    const result = buildCollapsedPreviewItems({
+      items,
+      isSelected: (item) => item.selected,
+      isPinned: (item) => item.pinned,
+      isAlwaysIncluded: (item) => item.always,
+      maxItems: 1,
+    });
+
+    expect(result.map((item) => item.id)).toEqual(["selected", "core"]);
+  });
+
+  it("dedupes items that are both pinned and always-included", () => {
+    const items = [
+      { id: "both", selected: false, pinned: true, always: true },
+      { id: "other", selected: false, pinned: false, always: false },
+    ];
+
+    const result = buildCollapsedPreviewItems({
+      items,
+      isSelected: (item) => item.selected,
+      isPinned: (item) => item.pinned,
+      isAlwaysIncluded: (item) => item.always,
+      alwaysIncludePinned: true,
+      maxItems: 0,
+    });
+
+    expect(result.map((item) => item.id)).toEqual(["both"]);
   });
 });

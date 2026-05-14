@@ -15,6 +15,7 @@ import { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/app-version";
 import { buildCollapsedPreviewItems, getCollapsedPreviewMaxItems } from "@/lib/sidebar-collapsed-preview";
+import { useCoreChannels } from "@/lib/use-core-channels";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -93,6 +94,7 @@ export function Sidebar({
   activeSavedFilterConfigurationId = null,
 }: SidebarProps) {
   const { t } = useTranslation("shell");
+  const { isCore } = useCoreChannels();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [expandedSections, setExpandedSections] = useState(() => sidebarExpandedSectionsSnapshot);
   const [screenHeight, setScreenHeight] = useState(() =>
@@ -150,10 +152,11 @@ export function Sidebar({
             isPinned: (channel) => channel.pinIndex !== undefined,
             maxItems: collapsedPreviewLimit,
             alwaysIncludePinned: true,
+            isAlwaysIncluded: (channel) => isCore(channel.name),
           }
         ).map((channel) => channel.id)
       ),
-    [channels, collapsedPreviewChannels, collapsedPreviewLimit, pinnedChannelIds]
+    [channels, collapsedPreviewChannels, collapsedPreviewLimit, pinnedChannelIds, isCore]
   );
   const collapsedPreviewPersonIds = useMemo(
     () =>
