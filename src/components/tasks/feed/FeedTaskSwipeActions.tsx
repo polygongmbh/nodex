@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
-import { Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
+import { Link2, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { canAuthorMutate } from "@/domain/content/task-edit-window";
@@ -11,6 +11,7 @@ const ACTION_WIDTH_PX = 64;
 const FLICK_VELOCITY_PX_PER_MS = 0.4;
 const SETTLE_TRANSITION = "transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1)";
 const RUBBER_BAND_C = 0.55;
+const QUICK_EMOJIS = ["👍", "❤️", "🎉", "😄", "🚀", "👀", "🙏", "🙌", "🛠️", "👎"];
 
 type OpenSetter = (id: string | null) => void;
 const openSetters = new Set<OpenSetter>();
@@ -32,9 +33,8 @@ interface FeedTaskSwipeActionsProps {
   task: Task;
   currentUserPubkey?: string;
   hasChildren: boolean;
-  onReact: () => void;
+  onReact: (emoji: string) => void;
   onCopyPermalink: () => void;
-  onRecompose: () => void;
   onDelete: () => void;
   children: ReactNode;
 }
@@ -45,12 +45,12 @@ export function FeedTaskSwipeActions({
   hasChildren,
   onReact,
   onCopyPermalink,
-  onRecompose,
   onDelete,
   children,
 }: FeedTaskSwipeActionsProps) {
   const { t } = useTranslation("tasks");
   const [openId, setOpenId] = useState<string | null>(currentOpenId);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const isOpen = openId === task.id;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -76,18 +76,34 @@ export function FeedTaskSwipeActions({
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
   }, []);
 
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+  const wasOpenRef = useRef(isOpen);
+
+  // If the row transitions from open to closed (another row opened, tap-outside,
+  // or settle-closed), dismiss the picker too so it doesn't linger over a
+  // collapsed row.
+  useEffect(() => {
+    if (wasOpenRef.current && !isOpen) setPickerOpen(false);
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  // Tap outside the picker (but still inside the row) closes the picker.
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const handler = (event: Event) => {
+      const picker = pickerRef.current;
+      if (!picker) return;
+      const target = event.target as Node | null;
+      if (target && picker.contains(target)) return;
+      setPickerOpen(false);
+    };
+    document.addEventListener("pointerdown", handler, true);
+    return () => document.removeEventListener("pointerdown", handler, true);
+  }, [pickerOpen]);
+
   const gate = canAuthorMutate({ task, currentUserPubkey, hasChildren });
-  const actions: { key: string; label: string; icon: ReactNode; onClick: () => void; tone?: "destructive" | "warning" }[] = [
-    { key: "copy", label: t("tasks.actions.copyPermalink"), icon: <Link2 className="h-4 w-4" />, onClick: onCopyPermalink },
-    { key: "react", label: t("tasks.actions.react"), icon: <SmilePlus className="h-4 w-4" />, onClick: onReact },
-  ];
-  if (gate.canRecompose) {
-    actions.push({ key: "recompose", label: t("tasks.actions.recompose"), icon: <RefreshCcw className="h-4 w-4" />, onClick: onRecompose, tone: "warning" });
-  }
-  if (gate.canDelete) {
-    actions.push({ key: "delete", label: t("tasks.actions.delete"), icon: <Trash2 className="h-4 w-4" />, onClick: onDelete, tone: "destructive" });
-  }
-  const totalWidth = actions.length * ACTION_WIDTH_PX;
+  const totalActions = 2 + (gate.canDelete ? 1 : 0);
+  const totalWidth = totalActions * ACTION_WIDTH_PX;
 
   // Sync DOM transform to settled state whenever isOpen changes externally.
   // Skipped during an active drag (the gesture handlers own the transform then).
@@ -234,9 +250,14 @@ export function FeedTaskSwipeActions({
     settle(dragOffsetRef.current, velocity);
   };
 
-  const handleAction = (action: () => void) => {
+  const closeRow = () => {
     setGlobalOpenId(null);
-    action();
+  };
+
+  const handleEmojiPick = (emoji: string) => {
+    setPickerOpen(false);
+    closeRow();
+    onReact(emoji);
   };
 
   return (
@@ -253,30 +274,81 @@ export function FeedTaskSwipeActions({
         )}
         style={{ width: `${totalWidth}px` }}
       >
-        {actions.map((action) => (
+        <button
+          type="button"
+          tabIndex={isOpen ? 0 : -1}
+          onClick={(event) => {
+            event.stopPropagation();
+            closeRow();
+            onCopyPermalink();
+          }}
+          className="flex flex-col items-center justify-center gap-1 text-[11px] font-medium bg-primary text-primary-foreground"
+          style={{ width: `${ACTION_WIDTH_PX}px` }}
+          data-testid={`feed-task-swipe-copy-${task.id}`}
+        >
+          <Link2 className="h-4 w-4" />
+          <span className="px-1 text-center leading-tight">{t("tasks.actions.copyPermalink")}</span>
+        </button>
+        <div className="relative">
           <button
-            key={action.key}
             type="button"
             tabIndex={isOpen ? 0 : -1}
             onClick={(event) => {
               event.stopPropagation();
-              handleAction(action.onClick);
+              setPickerOpen((prev) => !prev);
             }}
-            className={cn(
-              "flex flex-col items-center justify-center gap-1 text-[11px] font-medium",
-              "text-foreground/90",
-              action.tone === "destructive" && "bg-destructive text-destructive-foreground",
-              action.tone === "warning" && "bg-warning text-warning-foreground",
-              !action.tone && action.key === "copy" && "bg-primary text-primary-foreground",
-              !action.tone && action.key === "react" && "bg-muted",
-            )}
+            className="flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium bg-muted"
             style={{ width: `${ACTION_WIDTH_PX}px` }}
-            data-testid={`feed-task-swipe-${action.key}-${task.id}`}
+            data-testid={`feed-task-swipe-react-${task.id}`}
+            aria-expanded={pickerOpen}
           >
-            {action.icon}
-            <span className="px-1 text-center leading-tight">{action.label}</span>
+            <SmilePlus className="h-4 w-4" />
+            <span className="px-1 text-center leading-tight">{t("tasks.actions.react")}</span>
           </button>
-        ))}
+          {pickerOpen ? (
+            <div
+              ref={pickerRef}
+              role="dialog"
+              onClick={(event) => event.stopPropagation()}
+              className="absolute right-0 top-full z-30 mt-1 rounded-md border bg-popover p-2 shadow-md"
+              data-testid={`feed-task-swipe-picker-${task.id}`}
+            >
+              <div className="flex flex-wrap gap-1 max-w-[15rem]">
+                {QUICK_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleEmojiPick(emoji);
+                    }}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded hover:bg-muted text-base leading-none"
+                    data-testid={`feed-task-swipe-pick-${task.id}-${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        {gate.canDelete ? (
+          <button
+            type="button"
+            tabIndex={isOpen ? 0 : -1}
+            onClick={(event) => {
+              event.stopPropagation();
+              closeRow();
+              onDelete();
+            }}
+            className="flex flex-col items-center justify-center gap-1 text-[11px] font-medium bg-destructive text-destructive-foreground"
+            style={{ width: `${ACTION_WIDTH_PX}px` }}
+            data-testid={`feed-task-swipe-delete-${task.id}`}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="px-1 text-center leading-tight">{t("tasks.actions.delete")}</span>
+          </button>
+        ) : null}
       </div>
       <div
         ref={contentRef}

@@ -18,6 +18,7 @@ import { useOnboarding } from "@/components/onboarding/use-onboarding";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
 import { buildTaskPermalink } from "@/domain/content/task-permalink";
+import { writeToClipboard } from "@/lib/clipboard";
 import {
   notifyPermalinkCopied,
   notifyPermalinkCopyFailed,
@@ -630,14 +631,10 @@ function FeedIndexContent() {
       taskRelayUrls,
       activeRelayUrls,
     });
-    try {
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(permalink);
-        notifyPermalinkCopied();
-        return true;
-      }
-    } catch (error) {
-      console.warn("[permalink] clipboard write failed", { taskId, error });
+    const ok = await writeToClipboard(permalink);
+    if (ok) {
+      notifyPermalinkCopied();
+      return true;
     }
     notifyPermalinkCopyFailed();
     return false;

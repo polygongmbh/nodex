@@ -15,7 +15,6 @@ function renderSwipe(overrides: Partial<Parameters<typeof FeedTaskSwipeActions>[
     hasChildren: false,
     onReact: vi.fn(),
     onCopyPermalink: vi.fn(),
-    onRecompose: vi.fn(),
     onDelete: vi.fn(),
     children: <div data-testid="card-surface">card</div>,
     ...overrides,
@@ -38,34 +37,49 @@ function swipeLeft(content: HTMLElement, distance: number) {
 }
 
 describe("FeedTaskSwipeActions", () => {
-  it("renders owner actions when the gate allows mutations", () => {
+  it("renders copy, react, and delete for owners (no recompose)", () => {
     const { props } = renderSwipe();
     expect(screen.getByTestId(`feed-task-swipe-copy-${props.task.id}`)).toBeInTheDocument();
     expect(screen.getByTestId(`feed-task-swipe-react-${props.task.id}`)).toBeInTheDocument();
-    expect(screen.getByTestId(`feed-task-swipe-recompose-${props.task.id}`)).toBeInTheDocument();
     expect(screen.getByTestId(`feed-task-swipe-delete-${props.task.id}`)).toBeInTheDocument();
+    expect(screen.queryByTestId(`feed-task-swipe-recompose-${props.task.id}`)).not.toBeInTheDocument();
   });
 
   it("omits destructive actions for non-owners", () => {
     const { props } = renderSwipe({ currentUserPubkey: "viewer" });
     expect(screen.getByTestId(`feed-task-swipe-copy-${props.task.id}`)).toBeInTheDocument();
     expect(screen.queryByTestId(`feed-task-swipe-delete-${props.task.id}`)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(`feed-task-swipe-recompose-${props.task.id}`)).not.toBeInTheDocument();
   });
 
-  it("fires the corresponding callback when an action is tapped", () => {
+  it("fires copy callback when the copy action is tapped", () => {
     const onCopyPermalink = vi.fn();
     const { props } = renderSwipe({ onCopyPermalink });
     fireEvent.click(screen.getByTestId(`feed-task-swipe-copy-${props.task.id}`));
     expect(onCopyPermalink).toHaveBeenCalledTimes(1);
   });
 
+  it("tapping react opens the picker rather than firing onReact directly", () => {
+    const onReact = vi.fn();
+    const { props } = renderSwipe({ onReact });
+    fireEvent.click(screen.getByTestId(`feed-task-swipe-react-${props.task.id}`));
+    expect(onReact).not.toHaveBeenCalled();
+    expect(screen.getByTestId(`feed-task-swipe-picker-${props.task.id}`)).toBeInTheDocument();
+  });
+
+  it("selecting an emoji from the picker invokes onReact with that emoji", () => {
+    const onReact = vi.fn();
+    const { props } = renderSwipe({ onReact });
+    fireEvent.click(screen.getByTestId(`feed-task-swipe-react-${props.task.id}`));
+    fireEvent.click(screen.getByTestId(`feed-task-swipe-pick-${props.task.id}-❤️`));
+    expect(onReact).toHaveBeenCalledWith("❤️");
+  });
+
   it("opens after a horizontal swipe past the threshold", () => {
     const { props } = renderSwipe();
     const content = screen.getByTestId(`feed-task-swipe-content-${props.task.id}`);
-    // 4 actions × 64 px = 256 px total width when open.
+    // 3 actions × 64 px = 192 px total width when open.
     swipeLeft(content, 200);
-    expect(content.style.transform).toBe("translate3d(-256px, 0, 0)");
+    expect(content.style.transform).toBe("translate3d(-192px, 0, 0)");
   });
 
   it("collapses an already-open row when a new horizontal drag activates on another row", () => {
@@ -84,7 +98,6 @@ describe("FeedTaskSwipeActions", () => {
       hasChildren: false,
       onReact: vi.fn(),
       onCopyPermalink: vi.fn(),
-      onRecompose: vi.fn(),
       onDelete: vi.fn(),
     };
     render(
@@ -102,7 +115,7 @@ describe("FeedTaskSwipeActions", () => {
     const contentB = screen.getByTestId(`feed-task-swipe-content-${taskB.id}`);
 
     swipeLeft(contentA, 200);
-    expect(contentA.style.transform).toBe("translate3d(-256px, 0, 0)");
+    expect(contentA.style.transform).toBe("translate3d(-192px, 0, 0)");
 
     // Begin a horizontal drag on B (past activation threshold, but not yet released).
     fireEvent.pointerDown(contentB, { pointerType: "touch", clientX: 300, clientY: 100, pointerId: 2 });

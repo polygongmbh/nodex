@@ -93,12 +93,15 @@ export const FeedTaskCard = memo(function FeedTaskCard({
 }: FeedTaskCardProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { react: publishReaction } = useReactions();
+  const { react: publishReaction, unreact: publishUnreact } = useReactions();
   const reactions = useReactionsFor(task.id);
   const taskCommands = useFeedTaskCommands();
   const hasAnyReaction = Object.keys(reactions?.totals ?? {}).length > 0;
   const handleMenuReact = (emoji: string) => {
     void publishReaction({ id: task.id, kind: task.kind, pubkey: task.author.pubkey }, emoji);
+  };
+  const handleMenuUnreact = (emoji: string) => {
+    void publishUnreact(task.id, emoji);
   };
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
@@ -410,6 +413,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                 targetId={task.id}
                 reactions={reactions}
                 onReact={handleMenuReact}
+                onUnreact={handleMenuUnreact}
                 className="mt-1"
               />
             ) : null}
@@ -425,9 +429,8 @@ export const FeedTaskCard = memo(function FeedTaskCard({
       task={task}
       currentUserPubkey={currentUser?.pubkey}
       hasChildren={hasChildren}
-      onReact={() => handleMenuReact("👍")}
+      onReact={handleMenuReact}
       onCopyPermalink={() => { void taskCommands.copyPermalink(task.id); }}
-      onRecompose={() => taskCommands.recomposePost(task.id)}
       onDelete={() => { void taskCommands.deletePost(task.id); }}
     >
       {surface}
