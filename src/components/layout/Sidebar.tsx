@@ -68,7 +68,6 @@ export interface SidebarProps {
   relays: Relay[];
   channels: Channel[];
   collapsedPreviewChannels?: Channel[];
-  pinnedChannelIds?: string[];
   channelMatchMode?: ChannelMatchMode;
   people: SidebarPerson[];
   collapsedPreviewPeople?: SidebarPerson[];
@@ -83,7 +82,6 @@ export function Sidebar({
   relays,
   channels,
   collapsedPreviewChannels,
-  pinnedChannelIds,
   channelMatchMode = "and",
   people,
   collapsedPreviewPeople,
@@ -134,29 +132,20 @@ export function Sidebar({
   const collapsedPreviewChannelIds = useMemo(
     () =>
       new Set(
-        buildCollapsedPreviewItems(
-          {
-            items: [...(collapsedPreviewChannels ?? channels)].map((channel) => ({
-              ...channel,
-              pinIndex:
-                channel.pinIndex ??
-                (pinnedChannelIds ? pinnedChannelIds.indexOf(channel.id) : -1) >= 0
-                  ? pinnedChannelIds?.indexOf(channel.id)
-                  : undefined,
-            })).sort((a, b) => {
-              const usageDiff = (b.usageCount ?? 0) - (a.usageCount ?? 0);
-              if (usageDiff !== 0) return usageDiff;
-              return a.name.localeCompare(b.name);
-            }),
-            isSelected: (channel) => channel.filterState !== "neutral",
-            isPinned: (channel) => channel.pinIndex !== undefined,
-            maxItems: collapsedPreviewLimit,
-            alwaysIncludePinned: true,
-            isAlwaysIncluded: (channel) => isCore(channel.name),
-          }
-        ).map((channel) => channel.id)
+        buildCollapsedPreviewItems({
+          items: [...(collapsedPreviewChannels ?? channels)].sort((a, b) => {
+            const usageDiff = (b.usageCount ?? 0) - (a.usageCount ?? 0);
+            if (usageDiff !== 0) return usageDiff;
+            return a.name.localeCompare(b.name);
+          }),
+          isSelected: (channel) => channel.filterState !== "neutral",
+          isPinned: (channel) => channel.pinIndex !== undefined,
+          maxItems: collapsedPreviewLimit,
+          alwaysIncludePinned: true,
+          isAlwaysIncluded: (channel) => isCore(channel.name),
+        }).map((channel) => channel.id)
       ),
-    [channels, collapsedPreviewChannels, collapsedPreviewLimit, pinnedChannelIds, isCore]
+    [channels, collapsedPreviewChannels, collapsedPreviewLimit, isCore]
   );
   const collapsedPreviewPersonIds = useMemo(
     () =>

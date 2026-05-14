@@ -13,6 +13,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Desktop composer now surfaces the focused parent task's tags and assignees as removable chips under the input, instead of silently inheriting them only when no tags were specified. Inherited chips combine with anything the user types and only disappear when explicitly removed via the X. Mobile keeps the prior silent fallback.
 - Sidebar shows at least 4 channels in its folded state (up from 3) and adds one row for every ~100px of additional window height (linear, no buckets). Core channels stay visible in the folded sidebar regardless of usage, pinning, or filter state.
 
+### Fixed
+- Folded sidebar now keeps pinned channels visible alongside core channels (previously a precedence bug stripped the pin marker so only core channels survived the fold).
+
 ## [3.3.0] - 2026-05-14
 Minor release for feed post actions, calendar scheduling, and profile/auth reliability.
 

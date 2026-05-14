@@ -82,7 +82,7 @@ describe("Sidebar", () => {
       { id: "general", name: "general", filterState: "neutral", usageCount: 10 },
       { id: "ops", name: "ops", filterState: "neutral", usageCount: 9 },
       { id: "design", name: "design", filterState: "neutral", usageCount: 8 },
-      { id: "release", name: "release", filterState: "neutral", usageCount: 7 },
+      { id: "release", name: "release", filterState: "neutral", usageCount: 7, pinIndex: 0 },
     ];
 
     render(
@@ -91,10 +91,31 @@ describe("Sidebar", () => {
         channels={foldedChannels}
         people={people}
         nostrRelays={nostrRelays}
-        pinnedChannelIds={["release"]}
       />
     );
 
     expect(document.querySelector('[data-sidebar-item="channel-release"]')).toBeVisible();
+  });
+
+  it("keeps pinned channels visible alongside core channels when folded with no selection", () => {
+    const foldedChannels: Channel[] = [
+      { id: "general", name: "general", filterState: "neutral", usageCount: 10 },
+      { id: "ops", name: "ops", filterState: "neutral", usageCount: 9 },
+      { id: "design", name: "design", filterState: "neutral", usageCount: 8 },
+      { id: "release", name: "release", filterState: "neutral", usageCount: 7, pinIndex: 0 },
+      { id: "alpha", name: "alpha", filterState: "neutral", usageCount: 6, pinIndex: 1 },
+    ];
+
+    render(
+      <Sidebar
+        relays={baseRelays}
+        channels={foldedChannels}
+        people={people}
+        nostrRelays={nostrRelays}
+      />
+    );
+
+    expect(document.querySelector('[data-sidebar-item="channel-release"]')).toBeVisible();
+    expect(document.querySelector('[data-sidebar-item="channel-alpha"]')).toBeVisible();
   });
 });
