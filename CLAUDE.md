@@ -92,11 +92,6 @@ When the user says `squash`, inspect recent unpushed commits and suggest sensibl
 - Use `### Added` for new capabilities, `### Changed` for enhancements and changes, `### Fixed` for regressions; omit subheadings when fewer than 4 bullets in a version
 - Do not add entries for minor/internal-only changes
 
-### Plans
-- Write plans to `plans/` at repo root using kebab-case filenames; never commit them
-- After implementing a plan, delete the plan file before handoff
-- Before deleting, archive with: `git add -f <file>` → `git stash push -m "archive <file>" -- <file>` → `git stash drop`
-
 ### Logging and Toasts
 - Use `console.warn`/`console.error` for actionable issues
 - New user-facing features must include debug logs enabled by default in dev builds
