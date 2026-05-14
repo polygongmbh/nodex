@@ -27,14 +27,14 @@ export function buildCollapsedPreviewItems<T>({
   isAlwaysIncluded = () => false,
 }: BuildCollapsedPreviewItemsOptions<T>): T[] {
   const selectedItems = items.filter(isSelected);
-  const alwaysItems = items.filter((item) => !isSelected(item) && isAlwaysIncluded(item));
-  const pinnedItems = items.filter(
-    (item) => !isSelected(item) && !isAlwaysIncluded(item) && isPinned(item)
+  const pinnedItems = items.filter((item) => !isSelected(item) && isPinned(item));
+  const alwaysItems = items.filter(
+    (item) => !isSelected(item) && !isPinned(item) && isAlwaysIncluded(item)
   );
   const otherItems = items.filter(
-    (item) => !isSelected(item) && !isAlwaysIncluded(item) && !isPinned(item)
+    (item) => !isSelected(item) && !isPinned(item) && !isAlwaysIncluded(item)
   );
-  const prioritizedItems = [...selectedItems, ...alwaysItems, ...pinnedItems, ...otherItems];
+  const prioritizedItems = [...selectedItems, ...pinnedItems, ...alwaysItems, ...otherItems];
   const visibleItems = prioritizedItems.slice(0, Math.max(0, maxItems));
 
   const hasAlwaysIncluded = alwaysItems.length > 0;

@@ -58,13 +58,12 @@ describe("getCollapsedPreviewMaxItems", () => {
 });
 
 describe("buildCollapsedPreviewItems with isAlwaysIncluded", () => {
-  it("force-includes items past the maxItems cap, ranked after selected and before pinned", () => {
+  it("ranks selected > pinned > always-included, and force-includes both past the cap", () => {
     const items = [
       { id: "selected", selected: true, pinned: false, always: false },
-      { id: "core", selected: false, pinned: false, always: true },
       { id: "pinned", selected: false, pinned: true, always: false },
-      { id: "other-1", selected: false, pinned: false, always: false },
-      { id: "other-2", selected: false, pinned: false, always: false },
+      { id: "core", selected: false, pinned: false, always: true },
+      { id: "other", selected: false, pinned: false, always: false },
     ];
 
     const result = buildCollapsedPreviewItems({
@@ -72,10 +71,32 @@ describe("buildCollapsedPreviewItems with isAlwaysIncluded", () => {
       isSelected: (item) => item.selected,
       isPinned: (item) => item.pinned,
       isAlwaysIncluded: (item) => item.always,
+      alwaysIncludePinned: true,
       maxItems: 1,
     });
 
-    expect(result.map((item) => item.id)).toEqual(["selected", "core"]);
+    expect(result.map((item) => item.id)).toEqual(["selected", "pinned", "core"]);
+  });
+
+  it("shows all pinned and always-included items when there is no selection", () => {
+    const items = [
+      { id: "pin-a", selected: false, pinned: true, always: false },
+      { id: "pin-b", selected: false, pinned: true, always: false },
+      { id: "core-a", selected: false, pinned: false, always: true },
+      { id: "core-b", selected: false, pinned: false, always: true },
+      { id: "other", selected: false, pinned: false, always: false },
+    ];
+
+    const result = buildCollapsedPreviewItems({
+      items,
+      isSelected: (item) => item.selected,
+      isPinned: (item) => item.pinned,
+      isAlwaysIncluded: (item) => item.always,
+      alwaysIncludePinned: true,
+      maxItems: 1,
+    });
+
+    expect(result.map((item) => item.id)).toEqual(["pin-a", "pin-b", "core-a", "core-b"]);
   });
 
   it("dedupes items that are both pinned and always-included", () => {
