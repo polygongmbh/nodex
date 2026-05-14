@@ -158,6 +158,13 @@ export interface TaskReactions {
   totals: Record<string, number>;
   /** Emojis the current user has reacted with on this task. */
   mine: string[];
+  /**
+   * Event ids of the viewer's own reactions, keyed by emoji. Used to publish
+   * NIP-09 deletions when the viewer taps their own reaction to remove it.
+   * Optimistic reaction entries (not yet acknowledged by a relay) are also
+   * included so removal can roll back an in-flight publish.
+   */
+  mineEventIdsByEmoji: Record<string, string[]>;
 }
 
 /**

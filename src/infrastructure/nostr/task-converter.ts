@@ -205,7 +205,7 @@ export function extractAllTags(events: NostrEvent[]): string[] {
   return Array.from(allTags).sort();
 }
 
-type ReactionSummaryEvent = Pick<NostrEvent, "content" | "pubkey" | "tags"> & {
+type ReactionSummaryEvent = Pick<NostrEvent, "id" | "content" | "pubkey" | "tags"> & {
   kind: number;
 };
 
@@ -213,31 +213,49 @@ export function summarizeReactionsByTarget(
   events: ReactionSummaryEvent[],
   viewerPubkey?: string,
 ): Map<string, TaskReactions> {
-  // (targetId, pubkey) -> Set<emoji>. Dedup by (target, pubkey, emoji).
-  const byTarget = new Map<string, Map<string, Set<string>>>();
+  // A reaction is hidden once its author publishes a NIP-09 deletion for it.
+  const deletedReactionIdsByAuthor = new Map<string, Set<string>>();
+  for (const event of events) {
+    if (!isDeletionEvent(event.kind)) continue;
+    const set = deletedReactionIdsByAuthor.get(event.pubkey) ?? new Set<string>();
+    for (const targetId of extractDeletionTargetIds(event.tags)) {
+      set.add(targetId);
+    }
+    deletedReactionIdsByAuthor.set(event.pubkey, set);
+  }
+  // (targetId, pubkey, emoji) -> reaction event ids. Dedup by (target, pubkey, emoji).
+  const byTarget = new Map<string, Map<string, Map<string, string[]>>>();
   for (const event of events) {
     if (!isReactionEvent(event.kind)) continue;
+    const deletedSet = deletedReactionIdsByAuthor.get(event.pubkey);
+    if (event.id && deletedSet?.has(event.id)) continue;
     const targetId = extractReactionTargetId(event.tags);
     if (!targetId) continue;
     const emoji = normalizeReactionContent(event.content);
     if (!emoji) continue;
-    const byPubkey = byTarget.get(targetId) ?? new Map<string, Set<string>>();
-    const set = byPubkey.get(event.pubkey) ?? new Set<string>();
-    set.add(emoji);
-    byPubkey.set(event.pubkey, set);
+    const byPubkey = byTarget.get(targetId) ?? new Map<string, Map<string, string[]>>();
+    const byEmoji = byPubkey.get(event.pubkey) ?? new Map<string, string[]>();
+    const ids = byEmoji.get(emoji) ?? [];
+    if (event.id) ids.push(event.id);
+    byEmoji.set(emoji, ids);
+    byPubkey.set(event.pubkey, byEmoji);
     byTarget.set(targetId, byPubkey);
   }
   const result = new Map<string, TaskReactions>();
   for (const [targetId, byPubkey] of byTarget) {
     const totals: Record<string, number> = {};
     const mine: string[] = [];
-    for (const [pubkey, emojis] of byPubkey) {
-      for (const emoji of emojis) {
+    const mineEventIdsByEmoji: Record<string, string[]> = {};
+    for (const [pubkey, byEmoji] of byPubkey) {
+      for (const [emoji, ids] of byEmoji) {
         totals[emoji] = (totals[emoji] ?? 0) + 1;
-        if (viewerPubkey && pubkey === viewerPubkey) mine.push(emoji);
+        if (viewerPubkey && pubkey === viewerPubkey) {
+          mine.push(emoji);
+          mineEventIdsByEmoji[emoji] = [...(mineEventIdsByEmoji[emoji] ?? []), ...ids];
+        }
       }
     }
-    result.set(targetId, { totals, mine });
+    result.set(targetId, { totals, mine, mineEventIdsByEmoji });
   }
   return result;
 }

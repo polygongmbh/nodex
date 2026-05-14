@@ -973,6 +973,7 @@ describe("summarizeReactionsByTarget", () => {
     const summary = summarizeReactionsByTarget(events, "viewer-pk").get("task-r");
     expect(summary?.totals).toEqual({ "👍": 2, "🎉": 1 });
     expect(new Set(summary?.mine)).toEqual(new Set(["👍", "🎉"]));
+    expect(summary?.mineEventIdsByEmoji).toEqual({ "👍": ["r1"], "🎉": ["r3"] });
   });
 
   it("deduplicates the same (target, pubkey, emoji)", () => {

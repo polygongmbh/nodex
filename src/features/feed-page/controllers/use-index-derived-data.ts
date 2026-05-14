@@ -116,6 +116,7 @@ export function useIndexDerivedData({
       if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
       if (event.kind === NostrEventKind.ClassifiedListing) return true;
       if (event.kind === NostrEventKind.Reaction) return true;
+      if (event.kind === NostrEventKind.EventDeletion) return true;
       if (
         event.kind === NostrEventKind.CalendarDateBased ||
         event.kind === NostrEventKind.CalendarTimeBased

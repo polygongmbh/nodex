@@ -11,6 +11,7 @@ import {
   buildReactionTags,
   normalizeReactionContent,
 } from "@/infrastructure/nostr/reaction-events";
+import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
 
 const FETCH_TTL_MS = 60_000;
 const FETCH_LIMIT = 200;
@@ -117,5 +118,86 @@ export function useReactions() {
     }
   }, [ndk, queryClient]);
 
-  return { react, ensureReactionsFetched: ensureFetched };
+  const unreact = useCallback(async (
+    targetEventId: string,
+    rawContent: string,
+  ): Promise<boolean> => {
+    if (!user?.pubkey) {
+      toast.error("Sign in to react");
+      return false;
+    }
+    const emoji = normalizeReactionContent(rawContent);
+    if (!emoji) return false;
+
+    // Find the viewer's reaction events for (target, emoji) in the cache.
+    const cached = queryClient.getQueriesData<CachedNostrEvent[]>({ queryKey: NOSTR_EVENTS_QUERY_KEY });
+    const matching: CachedNostrEvent[] = [];
+    const seen = new Set<string>();
+    for (const [, events] of cached) {
+      if (!events) continue;
+      for (const event of events) {
+        if (event.kind !== REACTION_EVENT_KIND) continue;
+        if (event.pubkey !== user.pubkey) continue;
+        if (seen.has(event.id)) continue;
+        const targetId = (() => {
+          for (let i = event.tags.length - 1; i >= 0; i--) {
+            const tag = event.tags[i];
+            if (tag[0]?.toLowerCase() === "e" && tag[1]) return tag[1];
+          }
+          return undefined;
+        })();
+        if (targetId !== targetEventId) continue;
+        if (normalizeReactionContent(event.content) !== emoji) continue;
+        seen.add(event.id);
+        matching.push(event);
+      }
+    }
+    if (matching.length === 0) return false;
+
+    const matchingIds = new Set(matching.map((event) => event.id));
+    const removeFromCache = () => {
+      queryClient.setQueriesData<CachedNostrEvent[]>(
+        { queryKey: NOSTR_EVENTS_QUERY_KEY },
+        (previous = []) => previous.filter((event) => !matchingIds.has(event.id)),
+      );
+    };
+    const restoreCache = () => {
+      queryClient.setQueriesData<CachedNostrEvent[]>(
+        { queryKey: NOSTR_EVENTS_QUERY_KEY },
+        (previous = []) => {
+          const present = new Set(previous.map((event) => event.id));
+          const toRestore = matching.filter((event) => !present.has(event.id));
+          if (toRestore.length === 0) return previous;
+          return [...previous, ...toRestore];
+        },
+      );
+    };
+
+    // Optimistically clear so the UI updates immediately.
+    removeFromCache();
+
+    // Only publish deletions for confirmed reactions (skip optimistic ids
+    // that never made it to a relay — removing them from cache is enough).
+    const confirmed = matching.filter((event) => !event.id.startsWith("reaction-pending-"));
+    if (confirmed.length === 0) return true;
+
+    try {
+      const tags: string[][] = confirmed.flatMap((event) =>
+        buildDeletionTags({ id: event.id, kind: event.kind }),
+      );
+      const result = await publishEvent(NostrEventKind.EventDeletion, "", tags);
+      if (!result.success) {
+        console.warn("[reactions] deletion publish reported no success", { targetEventId, emoji });
+        restoreCache();
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.warn("[reactions] deletion publish failed", { targetEventId, emoji, error });
+      restoreCache();
+      return false;
+    }
+  }, [user?.pubkey, publishEvent, queryClient]);
+
+  return { react, unreact, ensureReactionsFetched: ensureFetched };
 }

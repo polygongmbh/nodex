@@ -10,10 +10,11 @@ interface ReactionsRowProps {
   targetId: string;
   reactions: TaskReactions | undefined;
   onReact: (emoji: string) => void;
+  onUnreact?: (emoji: string) => void;
   className?: string;
 }
 
-export function ReactionsRow({ targetId, reactions, onReact, className }: ReactionsRowProps) {
+export function ReactionsRow({ targetId, reactions, onReact, onUnreact, className }: ReactionsRowProps) {
   const [open, setOpen] = useState(false);
   const totals = reactions?.totals ?? {};
   const mine = new Set(reactions?.mine ?? []);
@@ -31,16 +32,18 @@ export function ReactionsRow({ targetId, reactions, onReact, className }: Reacti
             type="button"
             onClick={(event: MouseEvent) => {
               event.stopPropagation();
-              if (isMine) return;
+              if (isMine) {
+                if (onUnreact) onUnreact(emoji);
+                return;
+              }
               onReact(emoji);
             }}
-            disabled={isMine}
             className={cn(
               "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs leading-none transition-colors",
               "border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted",
-              isMine && "border-primary/40 bg-primary/10 text-foreground cursor-default",
+              isMine && "border-primary/40 bg-primary/10 text-foreground",
             )}
-            title={isMine ? `You reacted with ${emoji}` : `React with ${emoji}`}
+            title={isMine ? `Remove your ${emoji} reaction` : `React with ${emoji}`}
             data-testid={`reaction-chip-${targetId}-${emoji}`}
           >
             <span aria-hidden>{emoji}</span>

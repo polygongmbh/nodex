@@ -20,20 +20,20 @@ describe("reactions-registry", () => {
     const { result } = renderHook(() => useReactionsFor("task-a"));
     act(() => {
       setReactionsByTargetId(new Map([
-        ["task-a", { totals: { "👍": 2 }, mine: ["👍"] }],
+        ["task-a", { totals: { "👍": 2 }, mine: ["👍"], mineEventIdsByEmoji: { "👍": ["e1"] } }],
       ]));
     });
-    expect(result.current).toEqual({ totals: { "👍": 2 }, mine: ["👍"] });
+    expect(result.current).toEqual({ totals: { "👍": 2 }, mine: ["👍"], mineEventIdsByEmoji: { "👍": ["e1"] } });
   });
 
   it("does not notify when the new map is shape-equal to the current state", () => {
     const { result, rerender } = renderHook(() => useReactionsFor("task-a"));
     act(() => {
-      setReactionsByTargetId(new Map([["task-a", { totals: { "👍": 1 }, mine: [] }]]));
+      setReactionsByTargetId(new Map([["task-a", { totals: { "👍": 1 }, mine: [], mineEventIdsByEmoji: {} }]]));
     });
     const first = result.current;
     act(() => {
-      setReactionsByTargetId(new Map([["task-a", { totals: { "👍": 1 }, mine: [] }]]));
+      setReactionsByTargetId(new Map([["task-a", { totals: { "👍": 1 }, mine: [], mineEventIdsByEmoji: {} }]]));
     });
     rerender();
     expect(result.current).toBe(first);
@@ -42,7 +42,7 @@ describe("reactions-registry", () => {
   it("removes entries no longer present in the next map", () => {
     const { result } = renderHook(() => useReactionsFor("task-a"));
     act(() => {
-      setReactionsByTargetId(new Map([["task-a", { totals: { "👍": 1 }, mine: [] }]]));
+      setReactionsByTargetId(new Map([["task-a", { totals: { "👍": 1 }, mine: [], mineEventIdsByEmoji: {} }]]));
     });
     expect(result.current).toBeDefined();
     act(() => {
@@ -56,10 +56,10 @@ describe("reactions-registry", () => {
     const b = renderHook(() => useReactionsFor("task-b"));
     act(() => {
       setReactionsByTargetId(new Map([
-        ["task-a", { totals: { "👍": 1 }, mine: [] }],
+        ["task-a", { totals: { "👍": 1 }, mine: [], mineEventIdsByEmoji: {} }],
       ]));
     });
-    expect(a.result.current).toEqual({ totals: { "👍": 1 }, mine: [] });
+    expect(a.result.current).toEqual({ totals: { "👍": 1 }, mine: [], mineEventIdsByEmoji: {} });
     expect(b.result.current).toBeUndefined();
   });
 });

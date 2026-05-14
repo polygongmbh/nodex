@@ -18,6 +18,18 @@ function areReactionsEqual(a: TaskReactions | undefined, b: TaskReactions | unde
   for (const emoji of b.mine) {
     if (!mine.has(emoji)) return false;
   }
+  const aMineKeys = Object.keys(a.mineEventIdsByEmoji);
+  const bMineKeys = Object.keys(b.mineEventIdsByEmoji);
+  if (aMineKeys.length !== bMineKeys.length) return false;
+  for (const emoji of aMineKeys) {
+    const aIds = a.mineEventIdsByEmoji[emoji] ?? [];
+    const bIds = b.mineEventIdsByEmoji[emoji] ?? [];
+    if (aIds.length !== bIds.length) return false;
+    const set = new Set(aIds);
+    for (const id of bIds) {
+      if (!set.has(id)) return false;
+    }
+  }
   return true;
 }
 
