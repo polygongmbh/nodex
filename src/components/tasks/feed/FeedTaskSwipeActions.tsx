@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode, type TransitionEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link2, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -53,6 +53,10 @@ export function FeedTaskSwipeActions({
   const [openId, setOpenId] = useState<string | null>(currentOpenId);
   const [pickerOpen, setPickerOpen] = useState(false);
   const isOpen = openId === task.id;
+  // Demand-mount the action layer: only render when this row is (or is
+  // animating away from) open. Keeps closed rows free of the extra DOM and
+  // kills the brief compositing flash during mobile scroll.
+  const [actionsMounted, setActionsMounted] = useState(isOpen);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const reactTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -89,6 +93,18 @@ export function FeedTaskSwipeActions({
     if (wasOpenRef.current && !isOpen) setPickerOpen(false);
     wasOpenRef.current = isOpen;
   }, [isOpen]);
+
+  // Mount the action layer as soon as the row opens; defer unmount until the
+  // close transition finishes (handled by handleContentTransitionEnd) so the
+  // action layer stays visible while the content slides back.
+  useEffect(() => {
+    if (isOpen) setActionsMounted(true);
+  }, [isOpen]);
+
+  const handleContentTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+    if (event.propertyName !== "transform") return;
+    if (!isOpen) setActionsMounted(false);
+  };
 
   // Tap outside the picker (but still inside the row) closes the picker.
   useEffect(() => {
@@ -273,6 +289,7 @@ export function FeedTaskSwipeActions({
       className="relative overflow-hidden touch-pan-y"
       data-testid={`feed-task-swipe-container-${task.id}`}
     >
+      {actionsMounted ? (
       <div
         aria-hidden={!isOpen}
         className={cn(
@@ -338,6 +355,7 @@ export function FeedTaskSwipeActions({
           </button>
         ) : null}
       </div>
+      ) : null}
       <div
         ref={contentRef}
         className="relative z-10 bg-background will-change-transform"
@@ -346,6 +364,7 @@ export function FeedTaskSwipeActions({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
+        onTransitionEnd={handleContentTransitionEnd}
       >
         {children}
       </div>
