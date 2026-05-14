@@ -10,13 +10,13 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminal } from "@/domain/content/task-state";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
-import type { Task } from "@/types";
+import type { TaskPost } from "@/types";
 import { getTaskState } from "@/types";
 import { getTaskTooltipPreview } from "@/lib/task-content-preview";
 import type { Person } from "@/types/person";
 
 interface ListTaskRowProps {
-  task: Task;
+  task: TaskPost;
   currentUser?: Person;
   people: Person[];
   ancestorChain: { id: string; text: string }[];
@@ -26,10 +26,10 @@ interface ListTaskRowProps {
   rowClassName: string;
   bodyCellClassName: string;
   contentPreview: string;
-  renderStatusCell: (task: Task) => ReactNode;
-  renderDueDateCell: (task: Task) => ReactNode;
-  renderPriorityCell: (task: Task, editable: boolean) => ReactNode;
-  renderTagsCell: (task: Task) => ReactNode;
+  renderStatusCell: (task: TaskPost) => ReactNode;
+  renderDueDateCell: (task: TaskPost) => ReactNode;
+  renderPriorityCell: (task: TaskPost, editable: boolean) => ReactNode;
+  renderTagsCell: (task: TaskPost) => ReactNode;
 }
 
 export function ListTaskRow({

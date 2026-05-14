@@ -25,10 +25,12 @@ import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-in
 import type { EmptyScopeModel } from "@/lib/empty-scope";
 import {
   getTaskStatus,
+  isTaskPost,
   type Channel,
   type ChannelMatchMode,
   type Relay,
   type Task,
+  type TaskPost,
   type TaskStateUpdate,
   type TaskStatus,
   getTaskState,
@@ -78,16 +80,16 @@ export interface ListViewState {
   searchQuery: string;
   focusedTask: Task | null;
   taskById: Map<string, Task>;
-  filteredTaskCandidates: Task[];
-  baseListTaskCandidates: Task[];
+  filteredTaskCandidates: TaskPost[];
+  baseListTaskCandidates: TaskPost[];
   hasActiveFilters: boolean;
   hasSelectedScope: boolean;
 }
 
 export interface KanbanViewState {
-  kanbanTasks: Task[];
-  orderedKanbanTasks: Task[];
-  tasksByStatus: Record<TaskStatus, Task[]>;
+  kanbanTasks: TaskPost[];
+  orderedKanbanTasks: TaskPost[];
+  tasksByStatus: Record<TaskStatus, TaskPost[]>;
   getAncestorChain: (taskId: string) => { id: string; text: string }[];
   showContext: boolean;
 }
@@ -130,9 +132,9 @@ type TreeSelectorSource = Pick<
 >;
 
 export interface CalendarSelectors {
-  getTasksWithDueDates(): Task[];
-  getUpcomingTasks(): Task[];
-  getTasksForDay(day: Date): Task[];
+  getTasksWithDueDates(): TaskPost[];
+  getUpcomingTasks(): TaskPost[];
+  getTasksForDay(day: Date): TaskPost[];
   getAncestorChain(taskId: string): { id: string; text: string }[];
 }
 
@@ -171,8 +173,8 @@ export interface MobileFallbackNoticeState {
   mobileShellFocusedTaskId: string | null;
 }
 
-export function sortKanbanColumnTasks(tasks: Task[], status: TaskStatus, sortContext: SortContext): Task[] {
-  return isTaskTerminal(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
+export function sortKanbanColumnTasks<T extends Task>(tasks: T[], status: TaskStatus, sortContext: SortContext): T[] {
+  return (isTaskTerminal(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext)) as T[];
 }
 
 function clearSelectedPeople(people: SelectablePerson[]): SelectablePerson[] {
@@ -281,9 +283,9 @@ export function getAncestorChainFromSource(
 }
 
 export function createCalendarSelectors(source: TaskViewSource): CalendarSelectors {
-  let tasksWithDueDatesCache: Task[] | null = null;
-  let tasksByDayCache: Map<string, Task[]> | null = null;
-  let upcomingTasksCache: Task[] | null = null;
+  let tasksWithDueDatesCache: TaskPost[] | null = null;
+  let tasksByDayCache: Map<string, TaskPost[]> | null = null;
+  let upcomingTasksCache: TaskPost[] | null = null;
   const { included, excluded } = getIncludedExcludedChannelNames(source.channels);
 
   const getTasksWithDueDates = () => {
@@ -310,13 +312,15 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
         },
       },
     };
-    tasksWithDueDatesCache = filterTasksForView(request).filter((task) => Boolean(getTaskPrimaryDate(task)?.date));
+    tasksWithDueDatesCache = filterTasksForView(request).filter(
+      (task): task is TaskPost => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)?.date)
+    );
     return tasksWithDueDatesCache;
   };
 
   const getTasksByDay = () => {
     if (tasksByDayCache) return tasksByDayCache;
-    const byDay = new Map<string, Task[]>();
+    const byDay = new Map<string, TaskPost[]>();
     for (const task of getTasksWithDueDates()) {
       const due = getTaskPrimaryDate(task)?.date;
       if (!due) continue;
@@ -643,7 +647,7 @@ export function useListViewState({
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
-  const filteredTaskCandidates = useTaskViewFiltering({
+  const filteredTaskCandidates = useTaskViewFiltering<TaskPost>({
     allTasks,
     tasks,
     focusedTaskId,
@@ -652,9 +656,9 @@ export function useListViewState({
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
-    taskPredicate: (task) => isTaskKind(task.kind),
+    taskPredicate: isTaskPost,
   });
-  const baseListTaskCandidates = useTaskViewFiltering({
+  const baseListTaskCandidates = useTaskViewFiltering<TaskPost>({
     allTasks,
     tasks,
     focusedTaskId,
@@ -663,7 +667,7 @@ export function useListViewState({
     quickFilters,
     channels: deferredChannels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
     channelMatchMode: deferredChannelMatchMode,
-    taskPredicate: (task) => isTaskKind(task.kind),
+    taskPredicate: isTaskPost,
   });
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
@@ -723,7 +727,7 @@ export function useKanbanViewState({
     },
     [focusedTaskId, taskById]
   );
-  const filteredTaskCandidates = useTaskViewFiltering({
+  const filteredTaskCandidates = useTaskViewFiltering<TaskPost>({
     allTasks,
     tasks,
     focusedTaskId,
@@ -732,14 +736,14 @@ export function useKanbanViewState({
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
-    taskPredicate: (task) => isTaskKind(task.kind),
+    taskPredicate: isTaskPost,
   });
-  const kanbanTasks = useMemo(
-    () => filterTasksByDepthMode({ tasks: filteredTaskCandidates, depthMode, focusedTaskId, getDepth, hasChildren }),
+  const kanbanTasks = useMemo<TaskPost[]>(
+    () => filterTasksByDepthMode({ tasks: filteredTaskCandidates, depthMode, focusedTaskId, getDepth, hasChildren }) as TaskPost[],
     [depthMode, filteredTaskCandidates, focusedTaskId, getDepth, hasChildren]
   );
-  const tasksByStatus = useMemo<Record<TaskStatus, Task[]>>(() => {
-    const grouped: Record<TaskStatus, Task[]> = { open: [], active: [], done: [], closed: [] };
+  const tasksByStatus = useMemo<Record<TaskStatus, TaskPost[]>>(() => {
+    const grouped: Record<TaskStatus, TaskPost[]> = { open: [], active: [], done: [], closed: [] };
     kanbanTasks.forEach((task) => {
       grouped[getTaskStatus(getTaskState(task))].push(task);
     });

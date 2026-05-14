@@ -1,4 +1,4 @@
-import { getTaskPrimaryDate, getTaskPriority } from "@/types";
+import { getTaskPrimaryDate } from "@/types";
 import { Calendar, Clock, Layers, Lock } from "lucide-react";
 import { ScrollableTaskTagChipRow, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskPrioritySelect } from "@/components/tasks/TaskMetadataEditors";
@@ -22,11 +22,11 @@ import { useTranslation } from "react-i18next";
 import { getTaskTooltipPreview } from "@/lib/task-content-preview";
 import { format } from "date-fns";
 import { notifyTaskActionBlocked } from "@/lib/notifications";
-import type { Task, TaskState } from "@/types";
+import type { TaskPost, TaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface KanbanTaskCardProps {
-  task: Task;
+  task: TaskPost;
   currentUser?: Person;
   people: Person[];
   displayStatus: TaskState;
@@ -103,7 +103,7 @@ export function KanbanTaskCard({
       )}
     >
       {/* Priority chip pinned to the top-right corner so the content column never has to share width with it. */}
-      {typeof getTaskPriority(task) === "number" ? (
+      {typeof task.priority === "number" ? (
         <div
           className="absolute right-2 top-2 z-10"
           onClickCapture={canEditPriority ? undefined : (e) => {
@@ -116,7 +116,7 @@ export function KanbanTaskCard({
           <TaskPrioritySelect
             id={`kanban-priority-${task.id}`}
             taskId={canEditPriority ? task.id : undefined}
-            priority={getTaskPriority(task)}
+            priority={task.priority}
             stopPropagation
             className={cn(
               "px-1.5 py-0.5 text-sm focus:outline-none",
@@ -135,14 +135,14 @@ export function KanbanTaskCard({
         <TaskBreadcrumbRow
           breadcrumbs={ancestorChain}
           onFocusTask={focusTask}
-          className={cn("mb-2", typeof getTaskPriority(task) === "number" && "pr-12")}
+          className={cn("mb-2", typeof task.priority === "number" && "pr-12")}
         />
       ) : null}
       <div
         className={cn(
           `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
           // Reserve space for the absolutely-positioned priority chip on the first line(s).
-          typeof getTaskPriority(task) === "number" && "pr-14",
+          typeof task.priority === "number" && "pr-14",
           isTaskTerminal(displayStatus) && "line-through text-muted-foreground"
         )}
       >

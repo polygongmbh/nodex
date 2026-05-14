@@ -6,11 +6,11 @@ import {
   getTaskStatus,
   getTaskStatusFromTask,
   type Task,
+  type TaskPost,
   type ComposeRestoreRequest,
   type TaskStatus,
   getTaskState,
   getTaskPrimaryDate,
-  getTaskPriority,
 } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -203,7 +203,7 @@ export function ListView({
     return getAncestorChainFromSource({ taskById: taskLookup }, taskId, focusedTaskId);
   }, [focusedTaskId, taskLookup]);
 
-  const sortListTasks = useCallback((taskCandidates: Task[]) => {
+  const sortListTasks = useCallback((taskCandidates: TaskPost[]): TaskPost[] => {
     let filtered = filterTasksByDepthMode({
       tasks: taskCandidates,
       depthMode,
@@ -562,7 +562,7 @@ export function ListView({
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}
-                        priority={getTaskPriority(task)}
+                        priority={task.priority}
                         editable={editable && !isTaskTerminal(getTaskState(task))}
                       />
                     )}

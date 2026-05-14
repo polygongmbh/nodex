@@ -25,6 +25,7 @@ import {
   getTaskStatus,
   normalizeTaskState,
   type Task,
+  type TaskPost,
   type TaskState,
   type ComposeRestoreRequest,
   getTaskState,
@@ -184,7 +185,7 @@ export function KanbanView({
 
   const columns = useMemo(() => getColumns(kanbanTasks), [kanbanTasks]);
   const tasksByColumnId = useMemo(() => {
-    const grouped: Record<string, Task[]> = Object.fromEntries(columns.map((column) => [column.id, []]));
+    const grouped: Record<string, TaskPost[]> = Object.fromEntries(columns.map((column) => [column.id, []]));
 
     for (const task of kanbanTasks) {
       const effectiveStatus = optimisticStatusByTaskId[task.id] || getTaskState(task);

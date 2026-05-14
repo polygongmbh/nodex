@@ -12,12 +12,12 @@ import { linkifyContent } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import type { Task } from "@/types";
+import type { TaskPost } from "@/types";
 import { getTaskState, getTaskPrimaryDate } from "@/types";
 import type { Person } from "@/types/person";
 
 interface StatusProjectCardProps {
-  task: Task;
+  task: TaskPost;
   people: Person[];
   isProject: boolean;
   subtaskCount: number;

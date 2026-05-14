@@ -96,7 +96,7 @@ export function getTaskLatestModifiedMs(task: Task): number {
   return getLatestModifiedMs(task);
 }
 
-export function sortTasks(tasks: Task[], context: SortContext): Task[] {
+export function sortTasks<T extends Task>(tasks: T[], context: SortContext): T[] {
   const taskById = context.taskById ?? new Map(context.allTasks.map((task) => [task.id, task] as const));
   const latestModifiedInTreeCache = new Map<string, number>();
   const priorityScores =

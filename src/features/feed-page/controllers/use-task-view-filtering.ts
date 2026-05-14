@@ -8,7 +8,7 @@ import {
 import type { Channel, ChannelMatchMode, QuickFilterState, Task } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
-interface UseTaskViewFilteringParams {
+interface UseTaskViewFilteringParams<T extends Task = Task> {
   allTasks: Task[];
   tasks: Task[];
   focusedTaskId: string | null;
@@ -19,10 +19,15 @@ interface UseTaskViewFilteringParams {
   quickFilters?: QuickFilterState;
   channels: Channel[];
   channelMatchMode: ChannelMatchMode;
+  /**
+   * Narrows the candidate list. Pass a type guard and parameterize the hook
+   * (e.g. `useTaskViewFiltering<TaskPost>(...)`) to get a properly narrowed
+   * result without a follow-up refilter.
+   */
   taskPredicate?: (task: Task) => boolean;
 }
 
-export function useTaskViewFiltering({
+export function useTaskViewFiltering<T extends Task = Task>({
   allTasks,
   tasks,
   focusedTaskId,
@@ -34,7 +39,7 @@ export function useTaskViewFiltering({
   channels,
   channelMatchMode,
   taskPredicate,
-}: UseTaskViewFilteringParams): Task[] {
+}: UseTaskViewFilteringParams<T>): T[] {
   const filterIndex = useMemo(
     () => buildTaskViewFilterIndex(allTasks, people),
     [allTasks, people]
@@ -86,7 +91,7 @@ export function useTaskViewFiltering({
   );
 
   return useMemo(
-    () => filterTasksForView(request),
+    () => filterTasksForView(request) as T[],
     [request]
   );
 }
