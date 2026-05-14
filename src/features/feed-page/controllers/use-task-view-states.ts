@@ -13,7 +13,6 @@ import {
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { isTaskTerminal } from "@/domain/content/task-state";
-import { isTaskKind } from "@/domain/content/task-kind";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
@@ -173,8 +172,8 @@ export interface MobileFallbackNoticeState {
   mobileShellFocusedTaskId: string | null;
 }
 
-export function sortKanbanColumnTasks<T extends Task>(tasks: T[], status: TaskStatus, sortContext: SortContext): T[] {
-  return (isTaskTerminal(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext)) as T[];
+export function sortKanbanColumnTasks(tasks: TaskPost[], status: TaskStatus, sortContext: SortContext): TaskPost[] {
+  return isTaskTerminal(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
 }
 
 function clearSelectedPeople(people: SelectablePerson[]): SelectablePerson[] {
@@ -300,7 +299,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       scope: {
         focusedTaskId: source.focusedTaskId,
         hideClosedTasks: true,
-        taskPredicate: (task) => Boolean(getTaskPrimaryDate(task)?.date) && isTaskKind(task.kind),
+        taskPredicate: (task) => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)?.date),
       },
       criteria: {
         searchQuery: source.searchQuery,
@@ -504,7 +503,7 @@ export function buildTreeVisibilityState({
   if (focusedTaskId) {
     rootTasks = childrenMap.get(focusedTaskId) || [];
   } else {
-    rootTasks = (childrenMap.get(undefined) || []).filter((task) => isTaskKind(task.kind));
+    rootTasks = (childrenMap.get(undefined) || []).filter((task) => isTaskPost(task));
   }
   rootTasks = rootTasks.filter((task) => prefilteredTaskIds.has(task.id));
   const baseVisibleTasks = sortTasks(rootTasks, sortContext);
@@ -710,7 +709,7 @@ export function useKanbanViewState({
     [allTasks, childrenMap, priorityScores, taskById]
   );
   const hasChildren = useCallback(
-    (taskId: string): boolean => (childrenMap.get(taskId) || []).some((candidate) => isTaskKind(candidate.kind)),
+    (taskId: string): boolean => (childrenMap.get(taskId) || []).some((candidate) => isTaskPost(candidate)),
     [childrenMap]
   );
   const getDepth = useCallback(
@@ -785,7 +784,7 @@ export function useMobileFallbackNoticeState({
     if (currentView !== "list" && currentView !== "calendar") {
       return undefined;
     }
-    return (task: Task) => isTaskKind(task.kind) && Boolean(getTaskPrimaryDate(task)?.date) && !isTaskTerminal(getTaskState(task));
+    return (task: Task) => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)?.date) && !isTaskTerminal(getTaskState(task));
   }, [currentView]);
   const includeFocusedTaskForActiveView = currentView === "feed";
   const hideClosedForActiveView = currentView === "feed";

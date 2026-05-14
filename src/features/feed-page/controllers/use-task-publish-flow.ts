@@ -930,7 +930,7 @@ export function useTaskPublishFlow({
   ) => {
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || !isTaskKind(existingTask.kind) || !dueDate) return;
+    if (!existingTask || !isTaskPost(existingTask) || !dueDate) return;
     if (!canUserUpdateTask(existingTask, currentUser)) {
       notifyStatusRestricted();
       return;
@@ -1048,7 +1048,7 @@ export function useTaskPublishFlow({
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || !isTaskKind(existingTask.kind)) return;
+    if (!existingTask || !isTaskPost(existingTask)) return;
     if (!canUserUpdateTask(existingTask, currentUser)) {
       notifyStatusRestricted();
       return;

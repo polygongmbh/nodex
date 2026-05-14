@@ -11,6 +11,7 @@ import {
   type TaskStatus,
   getTaskState,
   getTaskPrimaryDate,
+  isTaskPost,
 } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -38,7 +39,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { isTaskTerminal } from "@/domain/content/task-state";
-import { isTaskKind } from "@/domain/content/task-kind";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
@@ -188,7 +188,7 @@ export function ListView({
   }, [sortVersion, priorityScores, taskLookup]);
 
   const hasChildren = useCallback((taskId: string): boolean => {
-    return allTasks.some((task) => isTaskKind(task.kind) && task.parentId === taskId);
+    return allTasks.some((task) => isTaskPost(task) && task.parentId === taskId);
   }, [allTasks]);
 
   const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);

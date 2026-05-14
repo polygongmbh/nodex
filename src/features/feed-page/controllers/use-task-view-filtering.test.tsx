@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
-import { isTaskKind } from "@/domain/content/task-kind";
+import { isTaskPost } from "@/types";
 import type { Channel, Task } from "@/types";
 
 function Harness({
@@ -22,7 +22,7 @@ function Harness({
     people: [makePerson()],
     channels,
     channelMatchMode: "and",
-    taskPredicate: (task) => isTaskKind(task.kind),
+    taskPredicate: (task) => isTaskPost(task),
   });
 
   return <output data-testid="filtered-task-ids">{filtered.map((task) => task.id).join(",")}</output>;

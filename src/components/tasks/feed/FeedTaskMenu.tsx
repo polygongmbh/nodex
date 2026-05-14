@@ -1,4 +1,4 @@
-import { getTaskPrimaryDate, getTaskPriority } from "@/types";
+import { getTaskPrimaryDate, getTaskPriority, isTaskPost } from "@/types";
 import { useEffect, useState, type MouseEvent } from "react";
 import { ArrowLeft, CalendarClock, ChevronDown, Flag, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -22,7 +22,6 @@ import {
 import { cn } from "@/lib/utils";
 import { canAuthorMutate } from "@/domain/content/task-edit-window";
 import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
-import { isTaskKind } from "@/domain/content/task-kind";
 import { DISPLAY_PRIORITY_OPTIONS, displayPriorityFromStored, storedPriorityFromDisplay } from "@/domain/content/task-priority";
 import { TaskDueDateEditorForm } from "@/components/tasks/TaskMetadataEditors";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -70,7 +69,7 @@ export function FeedTaskMenu({
     currentUserPubkey,
     hasChildren,
   });
-  const canEditTaskMetadata = isTaskKind(task.kind) && canPubkeyUpdateTask(task, currentUserPubkey);
+  const canEditTaskMetadata = isTaskPost(task) && canPubkeyUpdateTask(task, currentUserPubkey);
   const currentDisplayPriority = displayPriorityFromStored(getTaskPriority(task));
 
   const stop = (event: MouseEvent) => {

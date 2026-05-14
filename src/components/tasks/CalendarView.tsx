@@ -12,6 +12,7 @@ import {
   type ComposeRestoreRequest,
   type TaskStatus,
   getTaskPrimaryDate,
+  isTaskPost,
 } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -53,7 +54,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isTaskTerminal } from "@/domain/content/task-state";
-import { isTaskKind } from "@/domain/content/task-kind";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
@@ -159,7 +159,7 @@ export function CalendarView({
   const getTasksForDay = calendarSelectors.getTasksForDay;
   const getAncestorChain = calendarSelectors.getAncestorChain;
   const hasChildren = useCallback(
-    (taskId: string): boolean => allTasks.some((task) => isTaskKind(task.kind) && task.parentId === taskId),
+    (taskId: string): boolean => allTasks.some((task) => isTaskPost(task) && task.parentId === taskId),
     [allTasks]
   );
   const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);

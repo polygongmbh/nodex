@@ -1,5 +1,4 @@
 import { getTaskStatus, type Task, type TaskPost, getTaskState, getTaskAssigneePubkeys, isTaskPost } from "@/types";
-import { isTaskKind } from "@/domain/content/task-kind";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 
 function normalizePubkey(value: string | undefined | null): string {
@@ -122,7 +121,7 @@ export function hasInProgressTopLevelProject({
   focusedTaskId,
 }: ProjectFilterOptions): boolean {
   for (const task of contextTasks) {
-    if (!isTaskKind(task.kind)) continue;
+    if (!isTaskPost(task)) continue;
     if (getTaskStatus(getTaskState(task)) !== "active") continue;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
@@ -156,7 +155,7 @@ export function selectPeopleOwnedTasks({
 }: PeopleScopedFilterOptions): Task[] {
   if (peopleScope.size === 0) return [];
   return contextTasks.filter((task) => {
-    if (!focusedTaskId && !isTaskKind(task.kind)) return false;
+    if (!focusedTaskId && !isTaskPost(task)) return false;
     return isTaskOwnedByAny(task, peopleScope);
   });
 }
@@ -185,7 +184,7 @@ export function selectStatusTimelinePosts({
   concernsScope,
 }: TimelineFilterOptions): Task[] {
   const matching = contextTasks.filter((task) => {
-    if (!isTaskKind(task.kind)) return true;
+    if (!isTaskPost(task)) return true;
     const isTopLevelInContext = focusedTaskId
       ? task.parentId === focusedTaskId
       : !task.parentId;

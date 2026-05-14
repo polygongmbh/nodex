@@ -9,6 +9,7 @@ import {
   getTaskState,
   getTaskPrimaryDate,
   getTaskPriority,
+  isCommentPost,
 } from "@/types";
 import { getRawEvent } from "@/stores/raw-events";
 import type { Person } from "@/types/person";
@@ -32,7 +33,6 @@ import {
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { isTaskCompleted, isTaskTerminal } from "@/domain/content/task-state";
-import { isTaskKind } from "@/domain/content/task-kind";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
@@ -201,7 +201,7 @@ export function TreeTaskItem({
       }),
     [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, getTaskState(task)]
   );
-  const isComment = !isTaskKind(task.kind);
+  const isComment = isCommentPost(task);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task));
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));

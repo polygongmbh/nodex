@@ -29,8 +29,8 @@ import {
   type TaskState,
   type ComposeRestoreRequest,
   getTaskState,
+  isTaskPost,
 } from "@/types";
-import { isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
@@ -236,7 +236,7 @@ export function KanbanView({
   const subtaskCountsByParent = useMemo(() => {
     const map = new Map<string, { open: number; active: number; done: number }>();
     for (const task of allTasks) {
-      if (!isTaskKind(task.kind) || !task.parentId) continue;
+      if (!isTaskPost(task) || !task.parentId) continue;
       const type = getTaskStatus(getTaskState(task));
       if (type !== "open" && type !== "active" && type !== "done") continue;
       const counts = map.get(task.parentId) ?? { open: 0, active: 0, done: 0 };

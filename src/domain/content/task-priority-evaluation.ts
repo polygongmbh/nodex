@@ -6,8 +6,8 @@ import {
   getTaskPrimaryDate,
   getTaskPriority,
   getTaskStateUpdates,
+  isTaskPost,
 } from "@/types";
-import { isTaskKind } from "@/domain/content/task-kind";
 
 const EPSILON = 0.001;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -57,7 +57,7 @@ function isTerminal(status: TaskStatus): boolean {
 }
 
 function isEvaluable(task: Task): boolean {
-  if (!isTaskKind(task.kind)) return false;
+  if (!isTaskPost(task)) return false;
   return !isTerminal(getTaskStatus(getTaskState(task)));
 }
 
@@ -107,7 +107,7 @@ export function buildChildrenMap(tasks: readonly Task[]): Map<string, Task[]> {
 
 function getSubtasks(taskId: string, childrenMap: Map<string, Task[]>): Task[] {
   const all = childrenMap.get(taskId) ?? [];
-  return all.filter((child) => isTaskKind(child.kind) && getTaskStatus(getTaskState(child)) !== "closed");
+  return all.filter((child) => isTaskPost(child) && getTaskStatus(getTaskState(child)) !== "closed");
 }
 
 export function calculateProgress(
@@ -140,7 +140,7 @@ function gatherTouches(task: Task, childrenMap: Map<string, Task[]>): Date[] {
     out.push(update.timestamp);
   }
   for (const child of childrenMap.get(task.id) ?? []) {
-    if (!isTaskKind(child.kind)) out.push(child.timestamp);
+    if (!isTaskPost(child)) out.push(child.timestamp);
   }
   return out;
 }

@@ -1,7 +1,6 @@
 import type { Task } from "@/types";
-import { getTaskState } from "@/types";
+import { getTaskState, isTaskPost } from "@/types";
 import { isTaskCompleted, isTaskTerminal } from "@/domain/content/task-state";
-import { isTaskKind } from "@/domain/content/task-kind";
 
 export type TreeTaskFoldState = "collapsed" | "matchingOnly" | "allVisible";
 
@@ -44,10 +43,10 @@ export function deriveTreeTaskItemChildren({
   currentTaskIsDirectMatch,
   parentIsTerminal = false,
 }: DeriveTreeTaskItemChildrenParams): TreeTaskItemChildrenState {
-  const allTaskChildren = allChildren.filter((child) => isTaskKind(child.kind));
-  const allCommentChildren = allChildren.filter((child) => !isTaskKind(child.kind));
-  const matchingTaskChildren = matchingChildren.filter((child) => isTaskKind(child.kind));
-  const matchingCommentChildren = matchingChildren.filter((child) => !isTaskKind(child.kind));
+  const allTaskChildren = allChildren.filter((child) => isTaskPost(child));
+  const allCommentChildren = allChildren.filter((child) => !isTaskPost(child));
+  const matchingTaskChildren = matchingChildren.filter((child) => isTaskPost(child));
+  const matchingCommentChildren = matchingChildren.filter((child) => !isTaskPost(child));
   const defaultMatchingTaskChildren = allTaskChildren.filter(
     (child) => !isTaskTerminal(getTaskState(child))
   );
