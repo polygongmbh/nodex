@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -6,8 +6,11 @@ import { canAuthorMutate } from "@/domain/content/task-edit-window";
 import type { Task } from "@/types";
 
 const OPEN_THRESHOLD_PX = 56;
-const ACTIVATION_DELTA_PX = 8;
+const ACTIVATION_DELTA_PX = 4;
 const ACTION_WIDTH_PX = 64;
+const FLICK_VELOCITY_PX_PER_MS = 0.4;
+const SETTLE_TRANSITION = "transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1)";
+const RUBBER_BAND_C = 0.55;
 
 type OpenSetter = (id: string | null) => void;
 const openSetters = new Set<OpenSetter>();
@@ -17,6 +20,12 @@ function setGlobalOpenId(id: string | null) {
   if (currentOpenId === id) return;
   currentOpenId = id;
   for (const setter of openSetters) setter(id);
+}
+
+// Apple's published elastic-resistance curve.
+function rubberBand(overscroll: number, dimension: number) {
+  if (overscroll <= 0 || dimension <= 0) return 0;
+  return (1 - 1 / (overscroll * RUBBER_BAND_C / dimension + 1)) * dimension;
 }
 
 interface FeedTaskSwipeActionsProps {
@@ -43,18 +52,28 @@ export function FeedTaskSwipeActions({
   const { t } = useTranslation("tasks");
   const [openId, setOpenId] = useState<string | null>(currentOpenId);
   const isOpen = openId === task.id;
-  const dragOffsetRef = useRef(0);
-  const [translateX, setTranslateX] = useState(0);
-  const startXRef = useRef<number | null>(null);
-  const activeRef = useRef(false);
-  const startTranslateRef = useRef(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  const startXRef = useRef<number | null>(null);
+  const startYRef = useRef(0);
+  const startTranslateRef = useRef(0);
+  const dragOffsetRef = useRef(0);
+  const activeRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const pendingRef = useRef<number | null>(null);
+  const lastSampleRef = useRef<{ x: number; t: number } | null>(null);
+  const prevSampleRef = useRef<{ x: number; t: number } | null>(null);
 
   useEffect(() => {
     openSetters.add(setOpenId);
     return () => {
       openSetters.delete(setOpenId);
     };
+  }, []);
+
+  useEffect(() => () => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
   }, []);
 
   const gate = canAuthorMutate({ task, currentUserPubkey, hasChildren });
@@ -70,9 +89,61 @@ export function FeedTaskSwipeActions({
   }
   const totalWidth = actions.length * ACTION_WIDTH_PX;
 
-  const settle = useCallback((value: number) => {
-    const target = -Math.abs(value) > -OPEN_THRESHOLD_PX ? 0 : -totalWidth;
-    setTranslateX(target);
+  // Sync DOM transform to settled state whenever isOpen changes externally.
+  // Skipped during an active drag (the gesture handlers own the transform then).
+  useLayoutEffect(() => {
+    if (activeRef.current) return;
+    const target = isOpen ? -totalWidth : 0;
+    dragOffsetRef.current = target;
+    const el = contentRef.current;
+    if (!el) return;
+    el.style.transition = SETTLE_TRANSITION;
+    el.style.transform = `translate3d(${target}px, 0, 0)`;
+  }, [isOpen, totalWidth]);
+
+  // Tap anywhere outside the open row to close it (capture phase so it runs
+  // before any new gesture activates).
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (event: Event) => {
+      const container = containerRef.current;
+      if (!container) return;
+      const target = event.target as Node | null;
+      if (target && container.contains(target)) return;
+      setGlobalOpenId(null);
+    };
+    document.addEventListener("pointerdown", handler, true);
+    return () => document.removeEventListener("pointerdown", handler, true);
+  }, [isOpen]);
+
+  const writeTransform = useCallback((value: number) => {
+    const el = contentRef.current;
+    if (el) el.style.transform = `translate3d(${value}px, 0, 0)`;
+    dragOffsetRef.current = value;
+  }, []);
+
+  const scheduleTransformWrite = useCallback((value: number) => {
+    pendingRef.current = value;
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      const pending = pendingRef.current;
+      pendingRef.current = null;
+      if (pending !== null) writeTransform(pending);
+    });
+  }, [writeTransform]);
+
+  const settle = useCallback((value: number, velocity: number) => {
+    let target: number;
+    if (velocity < -FLICK_VELOCITY_PX_PER_MS) target = -totalWidth;
+    else if (velocity > FLICK_VELOCITY_PX_PER_MS) target = 0;
+    else target = value < -OPEN_THRESHOLD_PX ? -totalWidth : 0;
+
+    const el = contentRef.current;
+    if (el) {
+      el.style.transition = SETTLE_TRANSITION;
+      el.style.transform = `translate3d(${target}px, 0, 0)`;
+    }
     dragOffsetRef.current = target;
     if (target === 0) {
       if (currentOpenId === task.id) setGlobalOpenId(null);
@@ -81,34 +152,56 @@ export function FeedTaskSwipeActions({
     }
   }, [task.id, totalWidth]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setTranslateX(-totalWidth);
-      dragOffsetRef.current = -totalWidth;
-    } else {
-      setTranslateX(0);
-      dragOffsetRef.current = 0;
-    }
-  }, [isOpen, totalWidth]);
-
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse") return;
     startXRef.current = event.clientX;
+    startYRef.current = event.clientY;
     startTranslateRef.current = dragOffsetRef.current;
     activeRef.current = false;
+    lastSampleRef.current = { x: event.clientX, t: event.timeStamp };
+    prevSampleRef.current = null;
+    // We own the transform until release — kill any in-flight settle.
+    const el = contentRef.current;
+    if (el) el.style.transition = "";
   };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (startXRef.current === null) return;
-    const delta = event.clientX - startXRef.current;
+    const dx = event.clientX - startXRef.current;
+    const dy = event.clientY - startYRef.current;
     if (!activeRef.current) {
-      if (Math.abs(delta) < ACTIVATION_DELTA_PX) return;
+      const ax = Math.abs(dx);
+      const ay = Math.abs(dy);
+      if (ay >= ACTIVATION_DELTA_PX && ay > ax) {
+        // Vertical intent — bail and let native scroll proceed.
+        startXRef.current = null;
+        return;
+      }
+      if (ax < ACTIVATION_DELTA_PX || ax <= ay) return;
       activeRef.current = true;
-      containerRef.current?.setPointerCapture(event.pointerId);
+      try {
+        containerRef.current?.setPointerCapture?.(event.pointerId);
+      } catch {
+        // pointer capture unsupported
+      }
+      // Claim the global open-slot now so any other open row collapses
+      // immediately rather than waiting for this gesture to commit.
+      setGlobalOpenId(task.id);
     }
-    const next = Math.min(0, Math.max(-totalWidth, startTranslateRef.current + delta));
-    setTranslateX(next);
-    dragOffsetRef.current = next;
+    prevSampleRef.current = lastSampleRef.current;
+    lastSampleRef.current = { x: event.clientX, t: event.timeStamp };
+
+    const raw = startTranslateRef.current + dx;
+    const dim = containerRef.current?.offsetWidth || totalWidth * 2;
+    let next: number;
+    if (raw >= 0) {
+      next = 0;
+    } else if (raw < -totalWidth) {
+      next = -totalWidth - rubberBand(-totalWidth - raw, dim);
+    } else {
+      next = raw;
+    }
+    scheduleTransformWrite(next);
   };
 
   const handlePointerEnd = (event: PointerEvent<HTMLDivElement>) => {
@@ -117,12 +210,25 @@ export function FeedTaskSwipeActions({
     startXRef.current = null;
     activeRef.current = false;
     try {
-      containerRef.current?.releasePointerCapture(event.pointerId);
+      containerRef.current?.releasePointerCapture?.(event.pointerId);
     } catch {
       // pointer was never captured
     }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      const pending = pendingRef.current;
+      pendingRef.current = null;
+      if (pending !== null) writeTransform(pending);
+    }
     if (!wasActive) return;
-    settle(dragOffsetRef.current);
+
+    let velocity = 0;
+    if (prevSampleRef.current && lastSampleRef.current) {
+      const dt = lastSampleRef.current.t - prevSampleRef.current.t;
+      if (dt > 0) velocity = (lastSampleRef.current.x - prevSampleRef.current.x) / dt;
+    }
+    settle(dragOffsetRef.current, velocity);
   };
 
   const handleAction = (action: () => void) => {
@@ -131,16 +237,24 @@ export function FeedTaskSwipeActions({
   };
 
   return (
-    <div ref={containerRef} className="relative overflow-hidden touch-pan-y">
+    <div
+      ref={containerRef}
+      className="relative overflow-hidden touch-pan-y"
+      data-testid={`feed-task-swipe-container-${task.id}`}
+    >
       <div
-        aria-hidden={!isOpen && translateX === 0}
-        className="absolute inset-y-0 right-0 z-0 flex items-stretch"
+        aria-hidden={!isOpen}
+        className={cn(
+          "absolute inset-y-0 right-0 z-0 flex items-stretch",
+          !isOpen && "pointer-events-none",
+        )}
         style={{ width: `${totalWidth}px` }}
       >
         {actions.map((action) => (
           <button
             key={action.key}
             type="button"
+            tabIndex={isOpen ? 0 : -1}
             onClick={(event) => {
               event.stopPropagation();
               handleAction(action.onClick);
@@ -162,12 +276,13 @@ export function FeedTaskSwipeActions({
         ))}
       </div>
       <div
-        className="relative z-10 bg-background"
+        ref={contentRef}
+        className="relative z-10 bg-background will-change-transform"
+        data-testid={`feed-task-swipe-content-${task.id}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
-        style={{ transform: `translateX(${translateX}px)`, transition: startXRef.current !== null ? undefined : "transform 180ms ease-out" }}
       >
         {children}
       </div>

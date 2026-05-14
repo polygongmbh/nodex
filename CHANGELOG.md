@@ -16,6 +16,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Fixed
 - Mobile feed swipe actions are now hidden behind the row at rest instead of permanently showing alongside every post — the row covers the action strip until you swipe left to reveal it.
+- Mobile feed swipe gesture follows the finger smoothly instead of stalling after a few pixels. The handler now locks the horizontal axis up front so vertical scrolls aren't hijacked, drives the transform directly on the GPU rather than through React state, supports flick-to-open / flick-to-close by velocity, snaps the previously-open row closed the moment a new horizontal drag begins, closes the open row when you tap elsewhere, and applies elastic resistance when dragging past the action strip.
 
 ## [3.2.0] - 2026-05-13
 Minor release for NIP-25 feed reactions and task-kind model cleanup.
