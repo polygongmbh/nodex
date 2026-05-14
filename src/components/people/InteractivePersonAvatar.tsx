@@ -59,6 +59,7 @@ export function InteractivePersonAvatar({
             className,
           )}
           aria-label={label}
+          title=""
         >
           <UserAvatar pubkey={person.pubkey} />
         </button>

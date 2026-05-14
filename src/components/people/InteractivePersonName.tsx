@@ -28,6 +28,7 @@ export function InteractivePersonName({
           type="button"
           className="min-w-0 max-w-full rounded text-left transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           aria-label={label}
+          title=""
         >
           {children}
         </button>
