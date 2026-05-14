@@ -187,6 +187,22 @@ describe("linkifyContent interaction styles", () => {
     expect(onStandaloneMediaClick).not.toHaveBeenCalled();
   });
 
+  it("keeps standalone video embeds inline without triggering preview open", () => {
+    const onStandaloneMediaClick = vi.fn();
+
+    const { container } = render(
+      <div>
+        {linkifyContent("https://example.com/clip.mp4", undefined, {
+          onStandaloneMediaClick,
+        })}
+      </div>
+    );
+
+    fireEvent.click(container.querySelector("video") as HTMLVideoElement);
+
+    expect(onStandaloneMediaClick).not.toHaveBeenCalled();
+  });
+
   it("preserves multiline rendering and basic markdown formatting", () => {
     render(<div>{linkifyContent("first line\n**bold** and *italic* and `code`")}</div>);
 

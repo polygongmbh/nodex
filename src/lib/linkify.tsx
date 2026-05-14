@@ -242,7 +242,6 @@ function renderStandaloneEmbed(url: string, key: string, options?: LinkifyOption
           preload="metadata"
           onClick={(event) => {
             event.stopPropagation();
-            options?.onStandaloneMediaClick?.(url);
           }}
           className="max-h-72 w-full rounded-md border border-border/60 bg-muted/30"
         >

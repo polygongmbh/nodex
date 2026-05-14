@@ -61,7 +61,6 @@ export function TaskAttachmentList({
                 preload="metadata"
                 onClick={(event) => {
                   event.stopPropagation();
-                  onMediaClick?.(attachment.url);
                 }}
                 className="max-h-72 w-full rounded-md border border-border/60 bg-muted/30"
               >
