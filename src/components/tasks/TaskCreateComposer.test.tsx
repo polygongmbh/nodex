@@ -285,10 +285,11 @@ describe("TaskCreateComposer", () => {
     });
   });
 
-  it("allows parent-scoped submit without explicit tags", async () => {
+  it("inherits parent tags as explicit chips when focused on desktop", async () => {
     const parentTask = makeTask({
       id: "parent-task",
       relays: ["relay-a"],
+      tags: ["general"],
     });
 
     renderCreateComposer({
@@ -301,6 +302,70 @@ describe("TaskCreateComposer", () => {
     fireEvent.change(getTaskComposerInput(), {
       target: { value: "Follow-up update for this thread" },
     });
+
+    expect(
+      screen.getByRole("button", { name: /general/i })
+    ).toHaveAttribute("data-chip-kind", "hashtag");
+
+    fireEvent.click(getComposerPrimaryAction());
+
+    await waitFor(() => {
+      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
+        type: "task.create",
+        content: "Follow-up update for this thread",
+        tags: ["general"],
+        focusedTaskId: "parent-task",
+      }));
+    });
+  });
+
+  it("merges inherited parent tags with content-parsed tags on desktop", async () => {
+    const parentTask = makeTask({
+      id: "parent-task",
+      relays: ["relay-a"],
+      tags: ["general"],
+    });
+
+    renderCreateComposer({
+      feedRelays: multiRelays,
+      tasks: [parentTask],
+      allTasks: [parentTask],
+      focusedTaskId: "parent-task",
+    });
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Follow-up #backend" },
+    });
+    fireEvent.click(getComposerPrimaryAction());
+
+    await waitFor(() => {
+      const lastCall = dispatchFeedInteraction.mock.calls.at(-1)?.[0] as FeedInteractionIntent;
+      expect(lastCall.type).toBe("task.create");
+      const tags = (lastCall as { tags?: string[] }).tags ?? [];
+      expect(tags).toEqual(expect.arrayContaining(["general", "backend"]));
+    });
+  });
+
+  it("drops inherited parent tag chip after manual removal", async () => {
+    const parentTask = makeTask({
+      id: "parent-task",
+      relays: ["relay-a"],
+      tags: ["general"],
+    });
+
+    renderCreateComposer({
+      feedRelays: multiRelays,
+      tasks: [parentTask],
+      allTasks: [parentTask],
+      focusedTaskId: "parent-task",
+    });
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Follow-up update for this thread" },
+    });
+
+    const inheritedChip = screen.getByRole("button", { name: /general/i });
+    fireEvent.click(inheritedChip);
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {

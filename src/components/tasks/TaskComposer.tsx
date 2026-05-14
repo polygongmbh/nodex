@@ -87,6 +87,10 @@ interface TaskComposerProps {
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   contextTaskTitle?: string;
+  /** Tags seeded from the focused parent task; shown as removable chips. Desktop-only. */
+  inheritedTagNames?: string[];
+  /** Assignee pubkeys seeded from the focused parent task; shown as removable mention chips. Desktop-only. */
+  inheritedMentionPubkeys?: string[];
 }
 
 type ComposerMessageType = PostType;
@@ -196,6 +200,8 @@ export function TaskComposer({
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
   contextTaskTitle = "",
+  inheritedTagNames,
+  inheritedMentionPubkeys,
 }: TaskComposerProps) {
   const canCreateContent = canCreateContentProp;
   const { coreChannels, isCore } = useCoreChannels();
@@ -283,6 +289,10 @@ export function TaskComposer({
   const prevFilterMentionPubkeysRef = useRef<string[]>([]);
   const autoManagedFilterTagNamesRef = useRef<Set<string>>(new Set());
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
+  const prevInheritedTagNamesRef = useRef<string[]>([]);
+  const prevInheritedMentionPubkeysRef = useRef<string[]>([]);
+  const autoManagedInheritedTagsRef = useRef<Set<string>>(new Set());
+  const autoManagedInheritedMentionsRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const [activeRecomposeOf, setActiveRecomposeOf] = useState<ComposeRecomposeOf | undefined>(undefined);
@@ -782,6 +792,60 @@ export function TaskComposer({
     prevFilterMentionPubkeysRef.current = [...filterMentionPubkeys];
   }, [filterMentionPubkeys]);
 
+  useEffect(() => {
+    if (!inheritedTagNames) return;
+    const previous = new Set(prevInheritedTagNamesRef.current);
+    const next = new Set(inheritedTagNames);
+    const added = inheritedTagNames.filter((name) => !previous.has(name));
+    const removed = prevInheritedTagNamesRef.current.filter((name) => !next.has(name));
+
+    if (added.length === 0 && removed.length === 0) return;
+
+    setExplicitTagNames((current) => {
+      const nextTags = [...current];
+      for (const tagName of added) {
+        if (!nextTags.includes(tagName)) nextTags.push(tagName);
+        autoManagedInheritedTagsRef.current.add(tagName);
+      }
+      for (const tagName of removed) {
+        if (!autoManagedInheritedTagsRef.current.has(tagName)) continue;
+        const index = nextTags.indexOf(tagName);
+        if (index >= 0) nextTags.splice(index, 1);
+        autoManagedInheritedTagsRef.current.delete(tagName);
+      }
+      return nextTags;
+    });
+
+    prevInheritedTagNamesRef.current = [...inheritedTagNames];
+  }, [inheritedTagNames]);
+
+  useEffect(() => {
+    if (!inheritedMentionPubkeys) return;
+    const previous = new Set(prevInheritedMentionPubkeysRef.current);
+    const next = new Set(inheritedMentionPubkeys);
+    const added = inheritedMentionPubkeys.filter((pubkey) => !previous.has(pubkey));
+    const removed = prevInheritedMentionPubkeysRef.current.filter((pubkey) => !next.has(pubkey));
+
+    if (added.length === 0 && removed.length === 0) return;
+
+    setExplicitMentionPubkeys((current) => {
+      const nextMentions = [...current];
+      for (const pubkey of added) {
+        if (!nextMentions.includes(pubkey)) nextMentions.push(pubkey);
+        autoManagedInheritedMentionsRef.current.add(pubkey);
+      }
+      for (const pubkey of removed) {
+        if (!autoManagedInheritedMentionsRef.current.has(pubkey)) continue;
+        const index = nextMentions.indexOf(pubkey);
+        if (index >= 0) nextMentions.splice(index, 1);
+        autoManagedInheritedMentionsRef.current.delete(pubkey);
+      }
+      return nextMentions;
+    });
+
+    prevInheritedMentionPubkeysRef.current = [...inheritedMentionPubkeys];
+  }, [inheritedMentionPubkeys]);
+
   const resolveSubmitType = (value: unknown): ComposerMessageType => {
     if (
       value === "task" ||
@@ -860,12 +924,18 @@ export function TaskComposer({
     setContent("");
     const nextFilterTags = filterTagNames ?? [];
     const nextFilterMentions = filterMentionPubkeys ?? [];
+    const nextInheritedTags = inheritedTagNames ?? [];
+    const nextInheritedMentions = inheritedMentionPubkeys ?? [];
     prevFilterTagNamesRef.current = [...nextFilterTags];
     prevFilterMentionPubkeysRef.current = [...nextFilterMentions];
     autoManagedFilterTagNamesRef.current = new Set(nextFilterTags);
     autoManagedFilterMentionPubkeysRef.current = new Set(nextFilterMentions);
-    setExplicitTagNames([...nextFilterTags]);
-    setExplicitMentionPubkeys([...nextFilterMentions]);
+    prevInheritedTagNamesRef.current = [...nextInheritedTags];
+    prevInheritedMentionPubkeysRef.current = [...nextInheritedMentions];
+    autoManagedInheritedTagsRef.current = new Set(nextInheritedTags);
+    autoManagedInheritedMentionsRef.current = new Set(nextInheritedMentions);
+    setExplicitTagNames(Array.from(new Set([...nextFilterTags, ...nextInheritedTags])));
+    setExplicitMentionPubkeys(Array.from(new Set([...nextFilterMentions, ...nextInheritedMentions])));
     setLocationGeohash(undefined);
     setShowLocationControls(false);
     setNip99({});
@@ -975,12 +1045,18 @@ export function TaskComposer({
     setContent("");
     const nextFilterTags = filterTagNames ?? [];
     const nextFilterMentions = filterMentionPubkeys ?? [];
+    const nextInheritedTags = inheritedTagNames ?? [];
+    const nextInheritedMentions = inheritedMentionPubkeys ?? [];
     prevFilterTagNamesRef.current = [...nextFilterTags];
     prevFilterMentionPubkeysRef.current = [...nextFilterMentions];
     autoManagedFilterTagNamesRef.current = new Set(nextFilterTags);
     autoManagedFilterMentionPubkeysRef.current = new Set(nextFilterMentions);
-    setExplicitTagNames([...nextFilterTags]);
-    setExplicitMentionPubkeys([...nextFilterMentions]);
+    prevInheritedTagNamesRef.current = [...nextInheritedTags];
+    prevInheritedMentionPubkeysRef.current = [...nextInheritedMentions];
+    autoManagedInheritedTagsRef.current = new Set(nextInheritedTags);
+    autoManagedInheritedMentionsRef.current = new Set(nextInheritedMentions);
+    setExplicitTagNames(Array.from(new Set([...nextFilterTags, ...nextInheritedTags])));
+    setExplicitMentionPubkeys(Array.from(new Set([...nextFilterMentions, ...nextInheritedMentions])));
     setLocationGeohash(undefined);
     setShowLocationControls(false);
     setNip99({});
@@ -1429,6 +1505,7 @@ export function TaskComposer({
       autoManagedFilterTagNamesRef.current.delete(normalizedTag);
       filterSync?.onRemoveFilterTag(normalizedTag);
     }
+    autoManagedInheritedTagsRef.current.delete(normalizedTag);
     setExplicitTagNames((previous) => previous.filter((tag) => tag !== normalizedTag));
   };
 
@@ -1439,6 +1516,7 @@ export function TaskComposer({
       autoManagedFilterMentionPubkeysRef.current.delete(normalizedPubkey);
       filterSync?.onRemoveFilterMention(normalizedPubkey);
     }
+    autoManagedInheritedMentionsRef.current.delete(normalizedPubkey);
     setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
   };
 

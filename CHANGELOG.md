@@ -9,6 +9,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Added
 - Core channels: instance operators can set `VITE_CORE_CHANNELS` (comma-separated) to mandate that every root post carry at least one tag from the list. Core channels are pinned to the sidebar even when unused and rendered in bold both in the sidebar and on post tag chips. When the variable is unset, behaviour is unchanged.
 
+### Changed
+- Desktop composer now surfaces the focused parent task's tags and assignees as removable chips under the input, instead of silently inheriting them only when no tags were specified. Inherited chips combine with anything the user types and only disappear when explicitly removed via the X. Mobile keeps the prior silent fallback.
+
 ## [3.3.0] - 2026-05-14
 Minor release for feed post actions, calendar scheduling, and profile/auth reliability.
 
