@@ -1642,6 +1642,92 @@ describe("UnifiedBottomBar channel selector banding", () => {
 
     expect(screen.queryByRole("button", { name: /Show more/ })).not.toBeInTheDocument();
   });
+
+  it("renders channel chips alphabetically regardless of activity-band order", () => {
+    const unsortedPrimary: Channel[] = [
+      { id: "beta", name: "beta", filterState: "neutral" },
+      { id: "alpha", name: "alpha", filterState: "neutral" },
+    ];
+    const unsortedDiscovery: Channel[] = [
+      { id: "delta", name: "delta", filterState: "neutral" },
+      { id: "gamma", name: "gamma", filterState: "neutral" },
+    ];
+    renderSelector({
+      relays,
+      channels: [...unsortedPrimary, ...unsortedDiscovery],
+      visibleChannels: [...unsortedPrimary, ...unsortedDiscovery],
+      primaryChannels: unsortedPrimary,
+      composeChannels: [...unsortedPrimary, ...unsortedDiscovery],
+      people: [],
+      visiblePeople: [],
+      mentionablePeople: [],
+      searchQuery: "",
+      quickFilters: makeQuickFilterState(),
+      channelMatchMode: "and",
+    });
+
+    const collapsedChips = screen
+      .getAllByRole("button", { name: /^#/ })
+      .map((node) => node.textContent?.trim());
+    expect(collapsedChips).toEqual(["#alpha", "#beta"]);
+
+    fireEvent.click(screen.getByRole("button", { name: /Show more/ }));
+
+    const expandedChips = screen
+      .getAllByRole("button", { name: /^#/ })
+      .map((node) => node.textContent?.trim());
+    expect(expandedChips).toEqual(["#alpha", "#beta", "#delta", "#gamma"]);
+  });
+
+  it("tapping a chip toggles include without ever cycling through excluded", () => {
+    const includedChannel: Channel[] = [{ id: "alpha", name: "alpha", filterState: "included" }];
+    renderSelector({
+      relays,
+      channels: includedChannel,
+      visibleChannels: includedChannel,
+      primaryChannels: includedChannel,
+      composeChannels: includedChannel,
+      people: [],
+      visiblePeople: [],
+      mentionablePeople: [],
+      searchQuery: "",
+      quickFilters: makeQuickFilterState(),
+      channelMatchMode: "and",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "#alpha" }));
+
+    const toggleCalls = dispatchFeedInteraction.mock.calls.filter(
+      ([intent]) => (intent as FeedInteractionIntent).type === "sidebar.channel.toggle"
+    );
+    // included → excluded → neutral requires 2 dispatches so excluded is transient,
+    // not the resting state reachable from the bottom bar.
+    expect(toggleCalls).toHaveLength(2);
+  });
+
+  it("tapping an excluded chip moves it back to neutral with a single step", () => {
+    const excludedChannel: Channel[] = [{ id: "alpha", name: "alpha", filterState: "excluded" }];
+    renderSelector({
+      relays,
+      channels: excludedChannel,
+      visibleChannels: excludedChannel,
+      primaryChannels: excludedChannel,
+      composeChannels: excludedChannel,
+      people: [],
+      visiblePeople: [],
+      mentionablePeople: [],
+      searchQuery: "",
+      quickFilters: makeQuickFilterState(),
+      channelMatchMode: "and",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "#alpha" }));
+
+    const toggleCalls = dispatchFeedInteraction.mock.calls.filter(
+      ([intent]) => (intent as FeedInteractionIntent).type === "sidebar.channel.toggle"
+    );
+    expect(toggleCalls).toHaveLength(1);
+  });
 });
 
 afterAll(() => {

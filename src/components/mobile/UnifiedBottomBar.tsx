@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, MapPin, AlertTriangle, Flag } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, MapPin, AlertTriangle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, TaskCreateResult, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
 import type { SidebarPerson } from "@/types/person";
@@ -1292,19 +1292,32 @@ export function UnifiedBottomBar({
             </div>
           )}
           {activeSelector === "channel" && (() => {
+            const byName = (a: Channel, b: Channel) =>
+              a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
             const primaryIds = new Set(primaryChannels.map((c) => c.id));
             const discoveryChannels = channels.filter((c) => !primaryIds.has(c.id));
-            const visibleChannels = showDiscoveryChannels
+            const sourceChannels = showDiscoveryChannels
               ? [...primaryChannels, ...discoveryChannels]
               : primaryChannels;
+            const visibleChannels = [...sourceChannels].sort(byName);
+            const toggleChannelInclusion = (channel: Channel) => {
+              // Bottom-bar chips toggle binary include/off; excluded is only reachable
+              // from the manage pane. The underlying intent cycles neutral → included
+              // → excluded → neutral, so we dispatch the number of steps needed.
+              const steps =
+                channel.filterState === "neutral" ? 1
+                  : channel.filterState === "included" ? 2
+                  : 1;
+              for (let i = 0; i < steps; i++) {
+                void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
+              }
+            };
             return (
               <div className="flex flex-wrap gap-2">
                 {visibleChannels.map((channel) => (
                   <button
                     key={channel.id}
-                    onClick={() => {
-                      void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
-                    }}
+                    onClick={() => toggleChannelInclusion(channel)}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
                       isCore(channel.name) && "font-bold",
@@ -1314,9 +1327,6 @@ export function UnifiedBottomBar({
                     )}
                   >
                     #{channel.name}
-                    {channel.filterState === "included" && <Check className="w-3.5 h-3.5" />}
-                    {channel.filterState === "excluded" && <X className="w-3.5 h-3.5" />}
-                    {channel.filterState === "neutral" && <Minus className="w-3.5 h-3.5 opacity-50" />}
                   </button>
                 ))}
                 {discoveryChannels.length > 0 && (

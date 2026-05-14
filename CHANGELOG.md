@@ -12,6 +12,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - Channel selectors now trim by per-instance activity instead of a fixed 16-channel cap. Each channel gets a composite score from global usage, personal frecency, and whether the user has posted in it; channels below the noise floor (~15% of the top score) are hidden from the sidebar's expanded section and the mobile selector. The mobile bottom-bar selector also defaults to a narrower "primary" band (channels the user actually uses or that are core/pinned/selected) and exposes the rest via a "Show more" toggle. The desktop folded sidebar preview is unchanged.
 - Mobile channel selector now bolds core channels, matching the desktop sidebar.
+- Mobile bottom-bar channel chips are now sorted alphabetically (whether collapsed or expanded), and tapping a chip is a binary include/un-include toggle rather than a three-state cycle. The background color still reflects the current include/exclude state, but excluded chips can only be set from the manage pane. The dash/checkmark/x indicators inside chips have been dropped — color carries the state.
 
 ## [3.4.0] - 2026-05-14
 Minor release for core-channel posting requirements, inherited desktop compose chips, and folded sidebar visibility.
