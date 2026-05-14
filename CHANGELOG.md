@@ -14,6 +14,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Reaction chips no longer appear under feed cards until the post has at least one reaction. The initial reaction now flows through the new actions menu.
 - Profile editor failures now surface the underlying reason: picture upload errors include the HTTP status code (or unreachable host) alongside the server's message, and a failed NIP-05 identity verification probes the well-known endpoint to report whether the domain is unreachable, returned an HTTP error, has no entry for the name, or maps to a different public key.
 
+### Fixed
+- Mobile feed swipe actions are now hidden behind the row at rest instead of permanently showing alongside every post — the row covers the action strip until you swipe left to reveal it.
+
 ## [3.2.0] - 2026-05-13
 Minor release for NIP-25 feed reactions and task-kind model cleanup.
 

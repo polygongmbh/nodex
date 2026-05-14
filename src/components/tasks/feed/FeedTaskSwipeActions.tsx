@@ -134,7 +134,7 @@ export function FeedTaskSwipeActions({
     <div ref={containerRef} className="relative overflow-hidden touch-pan-y">
       <div
         aria-hidden={!isOpen && translateX === 0}
-        className="absolute inset-y-0 right-0 flex items-stretch"
+        className="absolute inset-y-0 right-0 z-0 flex items-stretch"
         style={{ width: `${totalWidth}px` }}
       >
         {actions.map((action) => (
@@ -162,6 +162,7 @@ export function FeedTaskSwipeActions({
         ))}
       </div>
       <div
+        className="relative z-10 bg-background"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
