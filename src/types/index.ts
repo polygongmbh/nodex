@@ -46,6 +46,18 @@ export interface Nip99Metadata {
   publishedAt?: string;
 }
 export type TaskDateType = "due" | "scheduled" | "start" | "end" | "milestone";
+
+/**
+ * A single date attached to a task — sourced from a NIP-52 calendar event
+ * (kinds 31922/31923). A task can hold any number of these (start, end,
+ * milestones, due, scheduled), each independent.
+ */
+export interface TaskDate {
+  date: Date;
+  /** "HH:mm" if the calendar event is time-based; absent for date-only. */
+  time?: string;
+  type: TaskDateType;
+}
 export type TaskCreateFailureReason =
   | "not-authenticated"
   | "missing-tag"
@@ -171,10 +183,9 @@ export interface TaskPost extends BasePost {
   kind: NostrEventKind.Task;
   /** State-change events sorted desc; read current state via getTaskState(). */
   stateUpdates: TaskStateUpdate[];
-  dueDate?: Date;
-  dueTime?: string;
-  dateType?: TaskDateType;
-  assigneePubkeys?: string[];
+  /** Calendar dates attached to this task, in priority order. */
+  dates: TaskDate[];
+  assigneePubkeys: string[];
   priority?: number;
 }
 
@@ -203,9 +214,7 @@ export interface Task extends BasePost {
   kind: NostrEventKind;
   nip99?: Nip99Metadata;
   stateUpdates?: TaskStateUpdate[];
-  dueDate?: Date;
-  dueTime?: string;
-  dateType?: TaskDateType;
+  dates?: TaskDate[];
   assigneePubkeys?: string[];
   priority?: number;
 }
@@ -235,6 +244,21 @@ export function getTaskState(task: Pick<Task, "stateUpdates"> | undefined): Task
 
 export function getTaskStatusFromTask(task: Pick<Task, "stateUpdates"> | undefined): TaskStatus {
   return getTaskState(task).status;
+}
+
+/**
+ * Returns the highest-priority date attached to a task, or undefined when
+ * the task has no calendar dates.
+ */
+export function getTaskPrimaryDate(task: Pick<Task, "dates"> | undefined): TaskDate | undefined {
+  return task?.dates?.[0];
+}
+
+export function findTaskDate(
+  task: Pick<Task, "dates"> | undefined,
+  type: TaskDateType
+): TaskDate | undefined {
+  return task?.dates?.find((entry) => entry.type === type);
 }
 
 export function getLastEditedAt(task: Task): Date {

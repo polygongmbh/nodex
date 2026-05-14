@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { cn } from "@/lib/utils";
-import { Task, Relay, getTaskStatus, getTaskState } from "@/types";
+import { Task, Relay, getTaskStatus, getTaskState, getTaskPrimaryDate } from "@/types";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -195,7 +195,7 @@ export function TreeTaskItem({
   );
   const isComment = !isTaskKind(task.kind);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
-  const dueDateColor = getDueDateColorClass(task.dueDate, getTaskState(task));
+  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task));
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
 
@@ -418,52 +418,56 @@ export function TreeTaskItem({
           )}
 
           {/* Due date */}
-          {task.dueDate && (
-            <Popover open={isDueDatePopoverOpen} onOpenChange={setIsDueDatePopoverOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  disabled={!editableMetadata}
-                  onClick={(event) => event.stopPropagation()}
-                  title={`${getTaskDateTypeLabel(task.dateType)}: ${format(task.dueDate, "MMM d, yyyy")}${task.dueTime ? ` ${task.dueTime}` : ""}`}
-                  className={cn(
-                    "mt-1 flex items-center gap-2 rounded px-1 py-0.5 text-xs transition-colors",
-                    dueDateColor,
-                    editableMetadata ? "cursor-pointer hover:bg-muted/50" : "cursor-default"
-                  )}
-                >
-                  <Calendar className="w-3 h-3" />
-                  <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-                  <span>{format(task.dueDate, "MMM d, yyyy")}</span>
-                  {task.dueTime && (
-                    <>
-                      <Clock className="w-3 h-3 ml-1" />
-                      <span>{task.dueTime}</span>
-                    </>
-                  )}
-                </button>
-              </PopoverTrigger>
-              {editableMetadata && (
-                <PopoverContent
-                  className="w-auto p-0"
-                  align="start"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <TaskDueDateEditorForm
-                    taskId={task.id}
-                    dueDate={task.dueDate}
-                    dueTime={task.dueTime}
-                    dateType={task.dateType}
-                    idPrefix="task"
-                    onClose={() => setIsDueDatePopoverOpen(false)}
-                  />
-                </PopoverContent>
-              )}
-            </Popover>
-          )}
+          {(() => {
+            const primaryDate = getTaskPrimaryDate(task);
+            if (!primaryDate) return null;
+            return (
+              <Popover open={isDueDatePopoverOpen} onOpenChange={setIsDueDatePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={!editableMetadata}
+                    onClick={(event) => event.stopPropagation()}
+                    title={`${getTaskDateTypeLabel(primaryDate.type)}: ${format(primaryDate.date, "MMM d, yyyy")}${primaryDate.time ? ` ${primaryDate.time}` : ""}`}
+                    className={cn(
+                      "mt-1 flex items-center gap-2 rounded px-1 py-0.5 text-xs transition-colors",
+                      dueDateColor,
+                      editableMetadata ? "cursor-pointer hover:bg-muted/50" : "cursor-default"
+                    )}
+                  >
+                    <Calendar className="w-3 h-3" />
+                    <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
+                    <span>{format(primaryDate.date, "MMM d, yyyy")}</span>
+                    {primaryDate.time && (
+                      <>
+                        <Clock className="w-3 h-3 ml-1" />
+                        <span>{primaryDate.time}</span>
+                      </>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                {editableMetadata && (
+                  <PopoverContent
+                    className="w-auto p-0"
+                    align="start"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <TaskDueDateEditorForm
+                      taskId={task.id}
+                      dueDate={primaryDate.date}
+                      dueTime={primaryDate.time}
+                      dateType={primaryDate.type}
+                      idPrefix="task"
+                      onClose={() => setIsDueDatePopoverOpen(false)}
+                    />
+                  </PopoverContent>
+                )}
+              </Popover>
+            );
+          })()}
 
           {showCompactPriority && (
-            <div className={cn(task.dueDate ? "mt-1.5" : "mt-1")}>
+            <div className={cn(getTaskPrimaryDate(task)?.date ? "mt-1.5" : "mt-1")}>
               <TaskPrioritySelect
                 id={`task-priority-${task.id}`}
                 taskId={editablePriority ? task.id : undefined}
@@ -481,7 +485,7 @@ export function TreeTaskItem({
           )}
 
           {showFullMetadataChips && (
-            <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-1.5")}>
+            <div className={cn("flex flex-wrap gap-1", getTaskPrimaryDate(task)?.date ? "mt-1.5" : "mt-1.5")}>
               {typeof task.priority === "number" && !isComment && (
                 <TaskPrioritySelect
                   id={`task-priority-${task.id}`}

@@ -1,4 +1,12 @@
-import { Task, TaskState, TaskStatus, getLastEditedAt, getTaskStatus, getTaskState } from "@/types";
+import {
+  Task,
+  TaskState,
+  TaskStatus,
+  getLastEditedAt,
+  getTaskStatus,
+  getTaskState,
+  getTaskPrimaryDate,
+} from "@/types";
 import { isTaskTerminal } from "./task-state";
 import { getTaskStatusForStateId } from "@/domain/task-states/task-state-config";
 import { isToday, isPast, startOfDay, differenceInDays } from "date-fns";
@@ -48,7 +56,7 @@ export function hasActiveInTree(taskId: string, context: SortContext): boolean {
 // Get the earliest deadline in a task tree (task + descendants)
 export function getEarliestDeadlineInTree(taskId: string, context: SortContext): Date | null {
   const task = getTaskById(taskId, context);
-  let earliest: Date | null = task?.dueDate || null;
+  let earliest: Date | null = getTaskPrimaryDate(task)?.date || null;
   
   const children = context.childrenMap.get(taskId) || [];
   for (const child of children) {
@@ -66,8 +74,9 @@ export function getEarliestDeadlineInTree(taskId: string, context: SortContext):
 // Check if task or any descendant is due today or past
 export function hasDueTodayOrPastInTree(taskId: string, context: SortContext): boolean {
   const task = getTaskById(taskId, context);
-  if (task?.dueDate) {
-    const dueDay = startOfDay(task.dueDate);
+  const due = getTaskPrimaryDate(task)?.date;
+  if (due) {
+    const dueDay = startOfDay(due);
     if (isToday(dueDay) || isPast(dueDay)) {
       return true;
     }

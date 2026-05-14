@@ -1,4 +1,4 @@
-import type { Task, TaskStateUpdate, TaskState } from "@/types";
+import type { Task, TaskDate, TaskStateUpdate, TaskState } from "@/types";
 
 /**
  * Returns `previous` when `fresh` carries the same signal-bearing values, so
@@ -28,9 +28,7 @@ export function areTaskFieldsEqual(a: Task, b: Task): boolean {
   if (a.kind !== b.kind) return false;
   if (a.parentId !== b.parentId) return false;
   if (a.priority !== b.priority) return false;
-  if (a.dueTime !== b.dueTime) return false;
-  if ((a.dueDate?.getTime() ?? 0) !== (b.dueDate?.getTime() ?? 0)) return false;
-  if (a.dateType !== b.dateType) return false;
+  if (!areTaskDateListsEqual(a.dates, b.dates)) return false;
   if (a.author.pubkey !== b.author.pubkey) return false;
   if (!areStateUpdateListsEqual(a.stateUpdates, b.stateUpdates)) return false;
   if (!areStringListsEqual(a.relays, b.relays)) return false;
@@ -44,6 +42,25 @@ function areStatusEqual(a: TaskState | undefined, b: TaskState | undefined): boo
   if (a === b) return true;
   if (a?.status !== b?.status) return false;
   return a?.description === b?.description;
+}
+
+function areTaskDateListsEqual(
+  a: TaskDate[] | undefined,
+  b: TaskDate[] | undefined
+): boolean {
+  if (a === b) return true;
+  const aLen = a?.length ?? 0;
+  const bLen = b?.length ?? 0;
+  if (aLen !== bLen) return false;
+  if (aLen === 0) return true;
+  for (let i = 0; i < aLen; i++) {
+    const left = a![i];
+    const right = b![i];
+    if (left.type !== right.type) return false;
+    if (left.time !== right.time) return false;
+    if (left.date.getTime() !== right.date.getTime()) return false;
+  }
+  return true;
 }
 
 function areStateUpdateListsEqual(

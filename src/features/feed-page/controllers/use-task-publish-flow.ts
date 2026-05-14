@@ -1,3 +1,4 @@
+import { getTaskPrimaryDate } from "@/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
@@ -536,9 +537,9 @@ export function useTaskPublishFlow({
               },
             ]
           : undefined,
-      dueDate: submissionDueDate,
-      dueTime: submissionDueTime,
-      dateType: submissionDateType,
+      dates: submissionDueDate
+        ? [{ date: submissionDueDate, time: submissionDueTime, type: submissionDateType ?? "due" }]
+        : [],
       parentId: submissionParentId ?? undefined,
       mentions: Array.from(new Set([...normalizedMentionIdentifiers, ...mentionPubkeys])),
       assigneePubkeys:
@@ -829,9 +830,9 @@ export function useTaskPublishFlow({
               },
             ]
           : undefined,
-      dueDate,
-      dueTime: draft.dueTime,
-      dateType: draft.dateType,
+      dates: dueDate
+        ? [{ date: dueDate, time: draft.dueTime, type: draft.dateType ?? "due" }]
+        : [],
       parentId: draft.parentId,
       mentions: draft.mentionPubkeys,
       assigneePubkeys: isTaskKind(draft.publishKind) ? draft.assigneePubkeys : undefined,
@@ -905,11 +906,15 @@ export function useTaskPublishFlow({
       return;
     }
     setLocalTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? { ...task, dueDate, dueTime, dateType, lastEditedAt: new Date() }
-          : task
-      )
+      prev.map((task) => {
+        if (task.id !== taskId) return task;
+        const otherDates = (task.dates ?? []).filter((entry) => entry.type !== dateType);
+        return {
+          ...task,
+          dates: [{ date: dueDate, time: dueTime, type: dateType }, ...otherDates],
+          lastEditedAt: new Date(),
+        };
+      })
     );
     void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
   }, [allTasks, currentUser, guardInteraction, publishTaskDueUpdate, setLocalTasks]);
@@ -988,9 +993,9 @@ export function useTaskPublishFlow({
       content: existingTask.content,
       taskType: taskTypeForComposer,
       messageType,
-      dueDate: existingTask.dueDate,
-      dueTime: existingTask.dueTime,
-      dateType: existingTask.dateType,
+      dueDate: getTaskPrimaryDate(existingTask)?.date,
+      dueTime: getTaskPrimaryDate(existingTask)?.time,
+      dateType: getTaskPrimaryDate(existingTask)?.type,
       explicitTagNames,
       explicitMentionPubkeys,
       selectedRelays: existingTask.relays,

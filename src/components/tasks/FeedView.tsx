@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState, type UIEvent, useDeferredValue } from "react";
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
-import { Task, ComposeRestoreRequest, RawNostrEvent, getTaskStatus, getTaskState } from "@/types";
+import {
+  Task,
+  ComposeRestoreRequest,
+  RawNostrEvent,
+  getTaskStatus,
+  getTaskState,
+  getTaskPrimaryDate,
+} from "@/types";
 import { resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -85,8 +92,9 @@ function FeedDueDateChip({
   dueDateColor,
 }: FeedDueDateChipProps) {
   const [open, setOpen] = useState(false);
+  const primaryDate = getTaskPrimaryDate(task);
 
-  if (!task.dueDate) return null;
+  if (!primaryDate) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -102,12 +110,12 @@ function FeedDueDateChip({
           )}
         >
           <Calendar className="w-3 h-3" />
-          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-          <span>{format(task.dueDate, "MMM d, yyyy")}</span>
-          {task.dueTime && (
+          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
+          <span>{format(primaryDate.date, "MMM d, yyyy")}</span>
+          {primaryDate.time && (
             <>
               <Clock className="w-3 h-3 ml-1" />
-              <span>{task.dueTime}</span>
+              <span>{primaryDate.time}</span>
             </>
           )}
         </button>
@@ -120,9 +128,9 @@ function FeedDueDateChip({
         >
           <TaskDueDateEditorForm
             taskId={task.id}
-            dueDate={task.dueDate}
-            dueTime={task.dueTime}
-            dateType={task.dateType}
+            dueDate={getTaskPrimaryDate(task)?.date}
+            dueTime={getTaskPrimaryDate(task)?.time}
+            dateType={getTaskPrimaryDate(task)?.type}
             idPrefix="feed"
             onClose={() => setOpen(false)}
           />
@@ -416,7 +424,7 @@ export function FeedView({
     <FeedDueDateChip
       task={task}
       editable={canCompleteTask(task)}
-      dueDateColor={getDueDateColorClass(task.dueDate, getTaskState(task))}
+      dueDateColor={getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task))}
     />
   ), [canCompleteTask]);
 

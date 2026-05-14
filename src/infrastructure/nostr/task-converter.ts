@@ -1,4 +1,4 @@
-import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskReactions, Task, getLastEditedAt } from "@/types";
+import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskReactions, type TaskDate, type TaskDateType, Task, getLastEditedAt } from "@/types";
 import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
@@ -331,9 +331,10 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     });
   }
 
-  const latestDueByTaskId = new Map<
+  const TASK_DATE_TYPE_ORDER: TaskDateType[] = ["due", "scheduled", "start", "end", "milestone"];
+  const datesByTaskId = new Map<
     string,
-    { createdAt: number; dueDate?: Date; dueTime?: string; dateType?: Task["dateType"] }
+    Map<TaskDateType, { createdAt: number; entry: TaskDate }>
   >();
 
   for (const calendarEvent of calendarEvents) {
@@ -342,27 +343,38 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     const task = taskMap.get(parsed.taskId);
     if (!task) continue;
     if (!canPubkeyUpdateTask(task, calendarEvent.pubkey)) continue;
-    const prev = latestDueByTaskId.get(parsed.taskId);
+    const type: TaskDateType = parsed.dateType ?? "due";
+    const entry: TaskDate = {
+      date: parsed.dueDate,
+      time: parsed.dueTime,
+      type,
+    };
+    let perType = datesByTaskId.get(parsed.taskId);
+    if (!perType) {
+      perType = new Map();
+      datesByTaskId.set(parsed.taskId, perType);
+    }
+    const prev = perType.get(type);
     if (!prev || calendarEvent.created_at >= prev.createdAt) {
-      latestDueByTaskId.set(parsed.taskId, {
-        createdAt: calendarEvent.created_at,
-        dueDate: parsed.dueDate,
-        dueTime: parsed.dueTime,
-        dateType: parsed.dateType,
-      });
+      perType.set(type, { createdAt: calendarEvent.created_at, entry });
     }
   }
 
-  for (const [taskId, due] of latestDueByTaskId.entries()) {
+  for (const [taskId, perType] of datesByTaskId.entries()) {
     const task = taskMap.get(taskId);
     if (!task) continue;
+    const dates = TASK_DATE_TYPE_ORDER.flatMap((type) => {
+      const slot = perType.get(type);
+      return slot ? [slot.entry] : [];
+    });
+    const latestCreatedAt = Math.max(
+      ...Array.from(perType.values()).map((slot) => slot.createdAt)
+    );
     taskMap.set(taskId, {
       ...task,
-      dueDate: due.dueDate,
-      dueTime: due.dueTime,
-      dateType: due.dateType,
-      ...(due.createdAt * 1000 > getLastEditedAt(task).getTime() && {
-        lastEditedAt: new Date(due.createdAt * 1000),
+      dates,
+      ...(latestCreatedAt * 1000 > getLastEditedAt(task).getTime() && {
+        lastEditedAt: new Date(latestCreatedAt * 1000),
       }),
     });
   }

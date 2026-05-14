@@ -3,7 +3,15 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefinition } from "@/domain/task-states/task-state-config";
-import { getTaskState, getTaskStatus, type Task, type TaskState, type ComposeRestoreRequest, type TaskStatus } from "@/types";
+import {
+  getTaskState,
+  getTaskStatus,
+  type Task,
+  type TaskState,
+  type ComposeRestoreRequest,
+  type TaskStatus,
+  getTaskPrimaryDate,
+} from "@/types";
 import type { Person } from "@/types/person";
 import {
   format,
@@ -225,8 +233,9 @@ export function CalendarView({
     const later: Task[] = [];
     
     upcomingTasks.forEach(task => {
-      if (!task.dueDate) return;
-      const dueDay = startOfDay(task.dueDate);
+      const due = getTaskPrimaryDate(task)?.date;
+      if (!due) return;
+      const dueDay = startOfDay(due);
       
       if (isPast(dueDay) && !isToday(dueDay)) {
         overdue.push(task);
@@ -661,10 +670,10 @@ export function CalendarView({
                                      style={{ backgroundColor: authorColor.accent }}
                                    />
                                    <Clock className="w-3 h-3 flex-shrink-0" />
-                                   <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+                                   <span className="uppercase tracking-wide">{getTaskDateTypeLabel(getTaskPrimaryDate(task)?.type)}</span>
                                    <span className="truncate">
-                                     {format(task.dueDate!, "MMM d")}
-                                     {task.dueTime && ` ${task.dueTime}`}
+                                     {format(getTaskPrimaryDate(task)?.date!, "MMM d")}
+                                     {getTaskPrimaryDate(task)?.time && ` ${getTaskPrimaryDate(task)?.time}`}
                                    </span>
                                  </span>
                                  <TaskAssigneeAvatars task={task} />
@@ -1145,10 +1154,10 @@ export function CalendarView({
                               className="mt-1.5 space-y-1"
                               onMediaClick={(url) => openTaskMedia(task.id, url)}
                             />
-                            {task.dueTime && (
+                            {getTaskPrimaryDate(task)?.time && (
                               <div
                                 className="flex items-center gap-2 text-xs mt-1"
-                                title={`Due time: ${task.dueTime}`}
+                                title={`Due time: ${getTaskPrimaryDate(task)?.time}`}
                               >
                                 <span
                                   className="h-1.5 w-1.5 rounded-full"
@@ -1156,7 +1165,7 @@ export function CalendarView({
                                   title={task.author?.displayName || task.author?.name || "Author"}
                                 />
                                 <Clock className="w-3 h-3" />
-                                <span>{task.dueTime}</span>
+                                <span>{getTaskPrimaryDate(task)?.time}</span>
                               </div>
                             )}
                             {(typeof task.priority === "number" || hasTaskMetadataChips(task, activeRelays.length)) && (

@@ -32,6 +32,7 @@ import {
   type TaskStateUpdate,
   type TaskStatus,
   getTaskState,
+  getTaskPrimaryDate,
 } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
@@ -296,7 +297,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       scope: {
         focusedTaskId: source.focusedTaskId,
         hideClosedTasks: true,
-        taskPredicate: (task) => Boolean(task.dueDate) && isTaskKind(task.kind),
+        taskPredicate: (task) => Boolean(getTaskPrimaryDate(task)?.date) && isTaskKind(task.kind),
       },
       criteria: {
         searchQuery: source.searchQuery,
@@ -308,7 +309,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
         },
       },
     };
-    tasksWithDueDatesCache = filterTasksForView(request).filter((task) => Boolean(task.dueDate));
+    tasksWithDueDatesCache = filterTasksForView(request).filter((task) => Boolean(getTaskPrimaryDate(task)?.date));
     return tasksWithDueDatesCache;
   };
 
@@ -316,8 +317,9 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
     if (tasksByDayCache) return tasksByDayCache;
     const byDay = new Map<string, Task[]>();
     for (const task of getTasksWithDueDates()) {
-      if (!task.dueDate) continue;
-      const dayKey = format(startOfDay(task.dueDate), "yyyy-MM-dd");
+      const due = getTaskPrimaryDate(task)?.date;
+      if (!due) continue;
+      const dayKey = format(startOfDay(due), "yyyy-MM-dd");
       const bucket = byDay.get(dayKey);
       if (bucket) {
         bucket.push(task);
@@ -778,7 +780,7 @@ export function useMobileFallbackNoticeState({
     if (currentView !== "list" && currentView !== "calendar") {
       return undefined;
     }
-    return (task: Task) => isTaskKind(task.kind) && Boolean(task.dueDate) && !isTaskTerminal(getTaskState(task));
+    return (task: Task) => isTaskKind(task.kind) && Boolean(getTaskPrimaryDate(task)?.date) && !isTaskTerminal(getTaskState(task));
   }, [currentView]);
   const includeFocusedTaskForActiveView = currentView === "feed";
   const hideClosedForActiveView = currentView === "feed";

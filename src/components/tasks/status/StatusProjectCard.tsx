@@ -13,7 +13,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Task } from "@/types";
-import { getTaskState } from "@/types";
+import { getTaskState, getTaskPrimaryDate } from "@/types";
 import type { Person } from "@/types/person";
 
 interface StatusProjectCardProps {
@@ -35,7 +35,7 @@ export function StatusProjectCard({ task, people, isProject, subtaskCount }: Sta
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
-  const dueDateColor = getDueDateColorClass(task.dueDate, getTaskState(task));
+  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task));
   const showChipRow = hasTaskMetadataChips(task, activeRelayCount);
 
   return (
@@ -55,19 +55,23 @@ export function StatusProjectCard({ task, people, isProject, subtaskCount }: Sta
           void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
         }, { people, disableStandaloneEmbeds: true })}
       </div>
-      {task.dueDate ? (
-        <div className={cn("flex items-center gap-1.5 text-xs", dueDateColor)}>
-          <Calendar className="w-3 h-3" />
-          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-          <span>{format(task.dueDate, "MMM d")}</span>
-          {task.dueTime ? (
-            <>
-              <Clock className="w-3 h-3" />
-              <span>{task.dueTime}</span>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+      {(() => {
+        const primaryDate = getTaskPrimaryDate(task);
+        if (!primaryDate) return null;
+        return (
+          <div className={cn("flex items-center gap-1.5 text-xs", dueDateColor)}>
+            <Calendar className="w-3 h-3" />
+            <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
+            <span>{format(primaryDate.date, "MMM d")}</span>
+            {primaryDate.time ? (
+              <>
+                <Clock className="w-3 h-3" />
+                <span>{primaryDate.time}</span>
+              </>
+            ) : null}
+          </div>
+        );
+      })()}
       <div className="mt-auto flex items-center justify-between gap-2 pt-1">
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <Layers className="w-3 h-3" />

@@ -101,8 +101,9 @@ function createTask(
       initialState.status !== "open"
         ? [{ id, state: initialState, timestamp, authorPubkey: author.pubkey }]
         : undefined,
-    dueDate: options.dueDate,
-    dueTime: options.dueTime,
+    dates: options.dueDate
+      ? [{ date: options.dueDate, time: options.dueTime, type: "due" }]
+      : undefined,
     parentId: options.parentId,
   };
 }

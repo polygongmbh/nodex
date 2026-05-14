@@ -1,4 +1,4 @@
-import type { Channel, Relay, Task, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
+import type { Channel, Relay, Task, TaskDate, TaskDateType, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
 import { normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
@@ -36,11 +36,18 @@ export function makeChannel(overrides: Partial<Channel> = {}): Channel {
 }
 
 /**
- * Test convenience: accepts a `state` shorthand (object or status string) and
- * synthesizes the canonical stateUpdates entry from it. Production code
- * builds tasks via the converter, which seeds stateUpdates directly.
+ * Test convenience: accepts shorthands for state (object or status string)
+ * and the legacy date trio (dueDate / dueTime / dateType). makeTask
+ * synthesizes the canonical stateUpdates and dates entries from them.
+ * Production code builds tasks via the converter, which writes those fields
+ * directly.
  */
-type MakeTaskOverrides = Partial<Task> & { state?: TaskState | TaskStatus };
+type MakeTaskOverrides = Partial<Task> & {
+  state?: TaskState | TaskStatus;
+  dueDate?: Date;
+  dueTime?: string;
+  dateType?: TaskDateType;
+};
 
 /**
  * Test convenience: returns a copy of `task` whose latest stateUpdate is the
@@ -62,7 +69,7 @@ export function withTaskState(task: Task, state: TaskState | TaskStatus): Task {
 }
 
 export function makeTask(overrides: MakeTaskOverrides = {}): Task {
-  const { state, stateUpdates, ...rest } = overrides;
+  const { state, stateUpdates, dueDate, dueTime, dateType, dates, ...rest } = overrides;
   const author = rest.author ?? makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
   const timestamp = rest.timestamp ?? DEFAULT_TIME;
   const id = rest.id ?? "task-1";
@@ -81,6 +88,10 @@ export function makeTask(overrides: MakeTaskOverrides = {}): Task {
           },
         ]
       : stateUpdates ?? [];
+  // Same precedence for dates: explicit dueDate shorthand wins.
+  const resolvedDates: TaskDate[] = dueDate
+    ? [{ date: dueDate, time: dueTime, type: dateType ?? "due" }]
+    : dates ?? [];
   return {
     id,
     kind: NostrEventKind.Task,
@@ -90,6 +101,7 @@ export function makeTask(overrides: MakeTaskOverrides = {}): Task {
     relays: ["demo"],
     timestamp,
     stateUpdates: resolvedStateUpdates,
+    dates: resolvedDates,
     ...rest,
   };
 }

@@ -539,8 +539,8 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].dueDate?.getTime()).toBe(expectedDate.getTime());
-    expect(tasks[0].dueTime).toBe(expectedDueTime);
+    expect(tasks[0].dates?.[0]?.date.getTime()).toBe(expectedDate.getTime());
+    expect(tasks[0].dates?.[0]?.time).toBe(expectedDueTime);
   });
 
   it("ignores unauthorized due-date and priority updates on assigned tasks", () => {
@@ -576,7 +576,7 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].dueDate).toBeUndefined();
+    expect(tasks[0].dates ?? []).toEqual([]);
     expect(tasks[0].priority).toBe(20);
     expect(getLastEditedAt(tasks[0]).getTime()).toBe(1700000020 * 1000);
   });

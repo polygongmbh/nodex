@@ -1,3 +1,4 @@
+import { getTaskPrimaryDate } from "@/types";
 import { Calendar, Clock, Layers, Lock } from "lucide-react";
 import { ScrollableTaskTagChipRow, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskPrioritySelect } from "@/components/tasks/TaskMetadataEditors";
@@ -59,7 +60,7 @@ export function KanbanTaskCard({
   const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
-  const dueDateColor = getDueDateColorClass(task.dueDate, displayStatus);
+  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, displayStatus);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   // Priority editing is also disabled for tasks in terminal states (done/closed) — render as a
@@ -153,23 +154,27 @@ export function KanbanTaskCard({
           disableStandaloneEmbeds: true,
         })}
       </div>
-      {task.dueDate ? (
-        <div
-          className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}
-          data-testid={`kanban-due-row-${task.id}`}
-          title={`${getTaskDateTypeLabel(task.dateType)}: ${format(task.dueDate, "MMM d, yyyy")}${task.dueTime ? ` ${task.dueTime}` : ""}`}
-        >
-          <Calendar className="w-3 h-3" />
-          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-          <span>{format(task.dueDate, "MMM d")}</span>
-          {task.dueTime ? (
-            <>
-              <Clock className="w-3 h-3" />
-              <span>{task.dueTime}</span>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+      {(() => {
+        const primaryDate = getTaskPrimaryDate(task);
+        if (!primaryDate) return null;
+        return (
+          <div
+            className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}
+            data-testid={`kanban-due-row-${task.id}`}
+            title={`${getTaskDateTypeLabel(primaryDate.type)}: ${format(primaryDate.date, "MMM d, yyyy")}${primaryDate.time ? ` ${primaryDate.time}` : ""}`}
+          >
+            <Calendar className="w-3 h-3" />
+            <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
+            <span>{format(primaryDate.date, "MMM d")}</span>
+            {primaryDate.time ? (
+              <>
+                <Clock className="w-3 h-3" />
+                <span>{primaryDate.time}</span>
+              </>
+            ) : null}
+          </div>
+        );
+      })()}
       {/*
        * Bottom-right cluster (lock + assignee avatars) sits inline at the end
        * of the content flow, aligned to the right so it tucks into the bottom

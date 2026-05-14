@@ -9,6 +9,7 @@ import {
   type ComposeRestoreRequest,
   type TaskStatus,
   getTaskState,
+  getTaskPrimaryDate,
 } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -238,12 +239,15 @@ export function ListView({
             (statusOrder[getTaskStatusFromTask(a)] ?? 1) - (statusOrder[getTaskStatusFromTask(b)] ?? 1);
           break;
         }
-        case "dueDate":
-          if (!a.dueDate && !b.dueDate) comparison = 0;
-          else if (!a.dueDate) comparison = 1;
-          else if (!b.dueDate) comparison = -1;
-          else comparison = a.dueDate.getTime() - b.dueDate.getTime();
+        case "dueDate": {
+          const aDue = getTaskPrimaryDate(a)?.date;
+          const bDue = getTaskPrimaryDate(b)?.date;
+          if (!aDue && !bDue) comparison = 0;
+          else if (!aDue) comparison = 1;
+          else if (!bDue) comparison = -1;
+          else comparison = aDue.getTime() - bDue.getTime();
           break;
+        }
         case "timestamp":
           comparison = a.timestamp.getTime() - b.timestamp.getTime();
           break;
@@ -384,7 +388,7 @@ export function ListView({
   // Editable due date cell
   const DueDateCell = ({ task }: { task: Task }) => {
     const [open, setOpen] = useState(false);
-    const dueDateColor = getDueDateColorClass(task.dueDate, getTaskState(task));
+    const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task));
     const editable = canCompleteTask(task);
     const trigger = (
       <button
@@ -399,23 +403,27 @@ export function ListView({
               : "cursor-default"
         )}
       >
-        {task.dueDate ? (
-          <>
-            <Calendar className="w-3.5 h-3.5" />
-            <span className="hidden 2xl:inline uppercase tracking-wide">
-              {t(`tasks.dates.${task.dateType || "due"}`)}
-            </span>
-            <span className="truncate">{format(task.dueDate, "MMM d, yyyy")}</span>
-            {task.dueTime && (
-              <span className="hidden 2xl:inline-flex shrink-0 items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{task.dueTime}</span>
+        {(() => {
+          const primaryDate = getTaskPrimaryDate(task);
+          if (!primaryDate) {
+            return <span className="truncate text-muted-foreground">{t("listView.dates.setDate")}</span>;
+          }
+          return (
+            <>
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="hidden 2xl:inline uppercase tracking-wide">
+                {t(`tasks.dates.${primaryDate.type || "due"}`)}
               </span>
-            )}
-          </>
-        ) : (
-          <span className="truncate text-muted-foreground">{t("listView.dates.setDate")}</span>
-        )}
+              <span className="truncate">{format(primaryDate.date, "MMM d, yyyy")}</span>
+              {primaryDate.time && (
+                <span className="hidden 2xl:inline-flex shrink-0 items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{primaryDate.time}</span>
+                </span>
+              )}
+            </>
+          );
+        })()}
       </button>
     );
 
@@ -429,9 +437,9 @@ export function ListView({
         <PopoverContent className="w-auto p-0" align="start">
           <TaskDueDateEditorForm
             taskId={task.id}
-            dueDate={task.dueDate}
-            dueTime={task.dueTime}
-            dateType={task.dateType}
+            dueDate={getTaskPrimaryDate(task)?.date}
+            dueTime={getTaskPrimaryDate(task)?.time}
+            dateType={getTaskPrimaryDate(task)?.type}
             idPrefix="list"
             onClose={() => setOpen(false)}
           />

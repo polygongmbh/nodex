@@ -1,4 +1,10 @@
-import { getTaskStatus, type Task, type TaskStatus, getTaskState } from "@/types";
+import {
+  getTaskStatus,
+  type Task,
+  type TaskStatus,
+  getTaskState,
+  getTaskPrimaryDate,
+} from "@/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 
 const EPSILON = 0.001;
@@ -73,8 +79,9 @@ export function calculateLocalUrgency(
   now: number,
   params: PriorityEvaluationParams = DEFAULT_PRIORITY_PARAMS,
 ): number {
-  if (!task.dueDate) return params.noDueBaseline;
-  const remaining = daysUntil(task.dueDate, now);
+  const due = getTaskPrimaryDate(task)?.date;
+  if (!due) return params.noDueBaseline;
+  const remaining = daysUntil(due, now);
   if (remaining < 0) {
     return Math.min(1 + params.overdueMultiplier * Math.abs(remaining), params.maxUrgency);
   }

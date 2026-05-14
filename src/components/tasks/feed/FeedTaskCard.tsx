@@ -22,7 +22,13 @@ import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { useTranslation } from "react-i18next";
-import { type Nip99ListingStatus, type RawNostrEvent, type Task, getTaskState } from "@/types";
+import {
+  type Nip99ListingStatus,
+  type RawNostrEvent,
+  type Task,
+  getTaskState,
+  getTaskPrimaryDate,
+} from "@/types";
 import type { Person } from "@/types/person";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -321,7 +327,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}
-                {task.dueDate ? (
+                {getTaskPrimaryDate(task)?.date ? (
                   <>
                     {renderDueDateChip(task)}
                     <span className="shrink-0">·</span>

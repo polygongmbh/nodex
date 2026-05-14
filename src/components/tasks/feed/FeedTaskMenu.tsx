@@ -1,3 +1,4 @@
+import { getTaskPrimaryDate } from "@/types";
 import { useEffect, useState, type MouseEvent } from "react";
 import { ArrowLeft, CalendarClock, ChevronDown, Flag, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -125,9 +126,9 @@ export function FeedTaskMenu({
               </div>
               <TaskDueDateEditorForm
                 taskId={task.id}
-                dueDate={task.dueDate}
-                dueTime={task.dueTime}
-                dateType={task.dateType}
+                dueDate={getTaskPrimaryDate(task)?.date}
+                dueTime={getTaskPrimaryDate(task)?.time}
+                dateType={getTaskPrimaryDate(task)?.type}
                 idPrefix="feed-menu"
                 onClose={() => setMenuOpen(false)}
               />
@@ -185,7 +186,7 @@ export function FeedTaskMenu({
                     }}
                   >
                     <CalendarClock className="mr-2 h-4 w-4" />
-                    {task.dueDate
+                    {getTaskPrimaryDate(task)?.date
                       ? t("tasks.actions.editDueDate")
                       : t("tasks.actions.setDueDate")}
                   </DropdownMenuItem>
@@ -234,7 +235,6 @@ export function FeedTaskMenu({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-
       <AlertDialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
         <AlertDialogContent onClick={stop}>
           <AlertDialogHeader>

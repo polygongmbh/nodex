@@ -277,7 +277,7 @@ function Harness({
       <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
       <output data-testid="local-count">{String(localTasks.length)}</output>
       <output data-testid="first-priority">{String(localTasks[0]?.priority ?? "")}</output>
-      <output data-testid="first-due-date">{localTasks[0]?.dueDate?.toISOString() || ""}</output>
+      <output data-testid="first-due-date">{localTasks[0]?.dates?.[0]?.date.toISOString() || ""}</output>
       <output data-testid="first-assignees">{(localTasks[0]?.assigneePubkeys || []).join(",")}</output>
       <output data-testid="first-mentions">{(localTasks[0]?.mentions || []).join(",")}</output>
       <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
