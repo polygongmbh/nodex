@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getTaskStatusFromTask, type Task, type TaskPost, getTaskStateUpdates } from "@/types";
+import { getTaskStatusFromTask, type Post, type TaskPost, getTaskStateUpdates } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { applyTaskStateUpdate } from "./task-state";
 import { makePerson } from "@/test/fixtures";
@@ -20,8 +20,8 @@ const baseTask: TaskPost = {
 
 describe("applyTaskStateUpdate", () => {
   it("creates a local override for non-local tasks so status does not revert", () => {
-    const localTasks: Task[] = [];
-    const allTasks: Task[] = [baseTask];
+    const localTasks: Post[] = [];
+    const allTasks: Post[] = [baseTask];
 
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "done", "me");
 
@@ -31,8 +31,8 @@ describe("applyTaskStateUpdate", () => {
   });
 
   it("updates lastEditedAt when status changes", () => {
-    const localTasks: Task[] = [baseTask];
-    const allTasks: Task[] = [baseTask];
+    const localTasks: Post[] = [baseTask];
+    const allTasks: Post[] = [baseTask];
 
     const before = Date.now();
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "active", "me");
@@ -43,7 +43,7 @@ describe("applyTaskStateUpdate", () => {
   });
 
   it("updates done tasks to closed", () => {
-    const localTasks: Task[] = [
+    const localTasks: Post[] = [
       {
         ...baseTask,
         stateUpdates: [
@@ -56,7 +56,7 @@ describe("applyTaskStateUpdate", () => {
         ],
       } satisfies TaskPost,
     ];
-    const allTasks: Task[] = localTasks;
+    const allTasks: Post[] = localTasks;
 
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "closed");
 
@@ -75,8 +75,8 @@ describe("applyTaskStateUpdate", () => {
         },
       ],
     };
-    const localTasks: Task[] = [existingLocal];
-    const allTasks: Task[] = [existingLocal];
+    const localTasks: Post[] = [existingLocal];
+    const allTasks: Post[] = [existingLocal];
 
     const updated = applyTaskStateUpdate(localTasks, allTasks, "n1", "active", "me");
     const task = updated.find((t) => t.id === "n1");

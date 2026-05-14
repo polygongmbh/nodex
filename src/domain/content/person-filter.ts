@@ -1,6 +1,6 @@
 import { getTaskAssigneePubkeys } from "@/types";
 import { getTaskStateUpdates } from "@/types";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 
@@ -19,7 +19,7 @@ function buildSelectedPersonIdentifierSet(selectedPeople: Person[]): Set<string>
   return identifiers;
 }
 
-export function taskMatchesSelectedPeople(task: Task, selectedPeople: Person[]): boolean {
+export function taskMatchesSelectedPeople(task: Post, selectedPeople: Person[]): boolean {
   if (selectedPeople.length === 0) return true;
 
   const selectedPersonIds = new Set(selectedPeople.map((person) => normalize(person.pubkey)).filter(Boolean));

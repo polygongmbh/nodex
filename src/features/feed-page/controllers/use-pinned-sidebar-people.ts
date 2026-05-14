@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import type { SelectablePerson, SidebarPerson } from "@/types/person";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
@@ -11,7 +11,7 @@ export interface UsePinnedSidebarPeopleOptions {
   userPubkey: string | undefined;
   effectiveActiveRelayIds: Set<string>;
   people: SelectablePerson[];
-  allTasks: Task[];
+  allTasks: Post[];
 }
 
 export interface UsePinnedSidebarPeopleResult {

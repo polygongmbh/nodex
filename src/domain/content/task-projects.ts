@@ -1,5 +1,5 @@
 import { isTaskTerminal } from "@/domain/content/task-state";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import { getTaskState, isTaskPost } from "@/types";
 
 // A task is a "project" when at least one of its task-typed subtasks is not in
@@ -12,7 +12,7 @@ import { getTaskState, isTaskPost } from "@/types";
 
 export function isProjectFromChildrenMap(
   taskId: string,
-  childrenByParentId: Map<string | undefined, Task[]>
+  childrenByParentId: Map<string | undefined, Post[]>
 ): boolean {
   const children = childrenByParentId.get(taskId) || [];
   return children.some(
@@ -20,7 +20,7 @@ export function isProjectFromChildrenMap(
   );
 }
 
-export function makeIsProject(allTasks: Task[]): (taskId: string) => boolean {
+export function makeIsProject(allTasks: Post[]): (taskId: string) => boolean {
   return (taskId) =>
     allTasks.some(
       (task) =>

@@ -1,4 +1,4 @@
-import type { QuickFilterState, Task } from "@/types";
+import type { QuickFilterState, Post } from "@/types";
 import { getLastEditedAt, getTaskPriority } from "@/types";
 
 export const DEFAULT_RECENT_DAYS = 7;
@@ -30,7 +30,7 @@ export function normalizeQuickFilterState(input?: Partial<QuickFilterState> | nu
 }
 
 export function taskMatchesQuickFilters(
-  task: Task,
+  task: Post,
   quickFilters: QuickFilterState,
   nowMs = Date.now()
 ): boolean {

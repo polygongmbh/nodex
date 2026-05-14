@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import type { Task, TaskPost } from "@/types";
+import type { Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { makePerson } from "@/test/fixtures";
 
@@ -44,13 +44,13 @@ describe("FocusedTaskBreadcrumb", () => {
   });
 
   it("renders full path and makes each level clickable", () => {
-    const middle: Task = {
+    const middle: Post = {
       ...baseTask,
       id: "middle",
       content: "Middle task",
       parentId: "root",
     };
-    const leaf: Task = {
+    const leaf: Post = {
       ...baseTask,
       id: "leaf",
       content: "Leaf task",
@@ -85,7 +85,7 @@ describe("FocusedTaskBreadcrumb", () => {
 
   it("formats breadcrumb labels to first-line plain text without mentions or hashtag markers", () => {
     const longContent = "Task delegated to @averylongusername with enough room to display #frontend!!!\nSecond line";
-    const longTask: Task = {
+    const longTask: Post = {
       ...baseTask,
       id: "long",
       content: longContent,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Channel, Task, TaskPost } from "@/types";
+import type { Channel, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";

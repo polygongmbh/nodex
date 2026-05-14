@@ -8,7 +8,7 @@ import { useRelaySelectionController } from "@/features/feed-page/controllers/us
 import { isDemoFeedEnabled, DEMO_RELAY_ID } from "@/lib/demo-feed-config";
 import { initializeDemoFeedData } from "@/data/demo-feed";
 import { mockRelays as demoRelays } from "@/data/mockData";
-import type { Relay, Task } from "@/types";
+import type { Relay, Post } from "@/types";
 
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 
@@ -16,8 +16,8 @@ export interface FeedRelayState {
   relays: Relay[];
   ndkRelays: NDKRelayStatus[];
   demoFeedActive: boolean;
-  demoTasks: Task[];
-  setDemoTasks: Dispatch<SetStateAction<Task[]>>;
+  demoTasks: Post[];
+  setDemoTasks: Dispatch<SetStateAction<Post[]>>;
   isConnected: boolean;
   subscribe: NDKContextValue["subscribe"];
   activeRelayIds: Set<string>;
@@ -55,7 +55,7 @@ export function FeedRelayProvider({ children }: PropsWithChildren) {
     subscribe,
   } = useNDK();
 
-  const [demoTasks, setDemoTasks] = useState<Task[]>(() => (
+  const [demoTasks, setDemoTasks] = useState<Post[]>(() => (
     DEMO_FEED_ENABLED ? initializeDemoFeedData() : []
   ));
   const demoFeedActive = demoTasks.some((task) => task.relays.includes(DEMO_RELAY_ID));

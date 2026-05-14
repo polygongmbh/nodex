@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TaskMentionChips } from "./TaskMentionChips";
-import type { Task, TaskPost } from "@/types";
+import type { Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";

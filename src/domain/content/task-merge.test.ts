@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getTaskStateUpdates, getTaskStatusFromTask, type Task } from "@/types";
+import { getTaskStateUpdates, getTaskStatusFromTask, type Post } from "@/types";
 import { mergeTasks } from "./task-merge";
 
 describe("mergeTasks", () => {
@@ -8,12 +8,12 @@ describe("mergeTasks", () => {
       id: "task-1",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-a"],
-    } as Task;
+    } as Post;
     const newer = {
       id: "task-1",
       timestamp: new Date("2026-02-17T11:00:00.000Z"),
       relays: ["relay-b"],
-    } as Task;
+    } as Post;
 
     const merged = mergeTasks([older], [newer]);
 
@@ -27,12 +27,12 @@ describe("mergeTasks", () => {
       id: "older",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: [],
-    } as unknown as Task;
+    } as unknown as Post;
     const newer = {
       id: "newer",
       timestamp: new Date("2026-02-17T11:00:00.000Z"),
       relays: [],
-    } as unknown as Task;
+    } as unknown as Post;
 
     const merged = mergeTasks([older], [newer]);
 
@@ -49,7 +49,7 @@ describe("mergeTasks", () => {
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       lastEditedAt: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-a"],
-    } as unknown as Task;
+    } as unknown as Post;
     const incoming = {
       id: "task-1",
       author: { pubkey: "alice" },
@@ -58,7 +58,7 @@ describe("mergeTasks", () => {
       taskType: "task",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: ["relay-a"],
-    } as unknown as Task;
+    } as unknown as Post;
 
     const merged = mergeTasks([existing], [incoming]);
 
@@ -86,7 +86,7 @@ describe("mergeTasks", () => {
           authorPubkey: "local-author",
         },
       ],
-    } as unknown as Task;
+    } as unknown as Post;
     const incoming = {
       id: "task-1",
       kind: 1621,
@@ -106,7 +106,7 @@ describe("mergeTasks", () => {
         },
       ],
       lastEditedAt: new Date("2026-02-17T10:02:00.000Z"),
-    } as unknown as Task;
+    } as unknown as Post;
 
     const merged = mergeTasks([existing], [incoming]);
 

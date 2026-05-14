@@ -1,11 +1,11 @@
 import { getTaskAssigneePubkeys as getTaskAssigneePubkeysField, isTaskPost } from "@/types";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import { extractMentionIdentifiersFromContent, formatMentionIdentifierForDisplay } from "@/lib/mentions";
 import { hexPubkeyToNpub, npubToHexPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { formatAuthorMetaLabel, type Person } from "@/types/person";
 import { resolveTaskEditMode } from "./task-permissions-policy";
 
-function getTaskAssignees(task: Task): string[] {
+function getTaskAssignees(task: Post): string[] {
   const explicitAssigneePubkeys = getTaskAssigneePubkeysField(task)
     .map((value) => value.trim().toLowerCase())
     .filter((value): value is string => Boolean(value));
@@ -19,7 +19,7 @@ function getTaskAssignees(task: Task): string[] {
   return extractMentionIdentifiersFromContent(task.content);
 }
 
-function getTaskAssigneePubkeys(task: Task): string[] {
+function getTaskAssigneePubkeys(task: Post): string[] {
   const explicitAssigneePubkeys = getTaskAssigneePubkeysField(task)
     .map((value) => value.trim().toLowerCase())
     .filter((value): value is string => Boolean(value));
@@ -72,7 +72,7 @@ function getNormalizedUserIdentifiers(user?: Person): Set<string> {
   );
 }
 
-function isTaskOwnedByUser(task: Task, currentUser?: Person): boolean {
+function isTaskOwnedByUser(task: Post, currentUser?: Person): boolean {
   const userIdentifiers = getNormalizedUserIdentifiers(currentUser);
   if (userIdentifiers.size === 0) return false;
   const ownerIdentifiers = [task.author.pubkey, task.author.name, task.author.displayName, task.author.nip05]
@@ -80,7 +80,7 @@ function isTaskOwnedByUser(task: Task, currentUser?: Person): boolean {
   return ownerIdentifiers.some((value) => userIdentifiers.has(value));
 }
 
-function isTaskOwnedByPubkey(task: Task, pubkey?: string): boolean {
+function isTaskOwnedByPubkey(task: Post, pubkey?: string): boolean {
   const normalizedPubkey = normalizeIdentity(pubkey);
   if (!normalizedPubkey) return false;
   return normalizeIdentity(task.author.pubkey) === normalizedPubkey;
@@ -90,7 +90,7 @@ function areAssignedTaskEditsOpenToEveryone(): boolean {
   return resolveTaskEditMode() === "everyone";
 }
 
-export function canUserUpdateTask(task: Task, currentUser?: Person): boolean {
+export function canUserUpdateTask(task: Post, currentUser?: Person): boolean {
   if (!isTaskPost(task)) return false;
   if (!currentUser) return false;
   if (areAssignedTaskEditsOpenToEveryone()) return true;
@@ -103,7 +103,7 @@ export function canUserUpdateTask(task: Task, currentUser?: Person): boolean {
   return assignees.some((assignee) => userIdentifiers.has(assignee));
 }
 
-export function canPubkeyUpdateTask(task: Task, updaterPubkey?: string): boolean {
+export function canPubkeyUpdateTask(task: Post, updaterPubkey?: string): boolean {
   if (!isTaskPost(task)) return false;
   const normalizedPubkey = normalizeIdentity(updaterPubkey);
   if (areAssignedTaskEditsOpenToEveryone()) return Boolean(normalizedPubkey);
@@ -117,7 +117,7 @@ export function canPubkeyUpdateTask(task: Task, updaterPubkey?: string): boolean
   return assigneePubkeys.some((assignee) => assignee === normalizedPubkey);
 }
 
-export function canUserChangeTaskStatus(task: Task, currentUser?: Person): boolean {
+export function canUserChangeTaskStatus(task: Post, currentUser?: Person): boolean {
   return canUserUpdateTask(task, currentUser);
 }
 
@@ -128,7 +128,7 @@ function formatPrincipalLabel(value: string): string {
 }
 
 export function getTaskStatusChangeBlockedReason(
-  task: Task,
+  task: Post,
   currentUser?: Person,
   isInteractionBlocked = false,
   knownPeople: Person[] = []

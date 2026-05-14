@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TaskTree } from "./TaskTree";
 import { TaskViewStatusRow } from "./TaskViewStatusRow";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import type { Channel, Relay, Task, TaskPost } from "@/types";
+import type { Channel, Relay, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 import { makePerson } from "@/test/fixtures";

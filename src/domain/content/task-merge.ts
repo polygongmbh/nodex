@@ -1,4 +1,4 @@
-import type { Post, Task, TaskStateUpdate } from "@/types";
+import type { Post, TaskStateUpdate } from "@/types";
 import { getLastEditedAt, getTaskStateUpdates, isTaskPost } from "@/types";
 import { areTaskFieldsEqual } from "./task-identity";
 
@@ -18,7 +18,7 @@ function mergeStateUpdates(
   return Array.from(byId.values()).sort((left, right) => right.timestamp.getTime() - left.timestamp.getTime());
 }
 
-function getLatestEditedAt(task: Task): Date {
+function getLatestEditedAt(task: Post): Date {
   const latestStateTimestamp = getTaskStateUpdates(task)[0]?.timestamp;
   const editedAt = getLastEditedAt(task);
   if (!latestStateTimestamp) return editedAt;
@@ -27,8 +27,8 @@ function getLatestEditedAt(task: Task): Date {
     : editedAt;
 }
 
-export function mergeTasks(existingTasks: Task[], newTasks: Task[]): Task[] {
-  const byId = new Map<string, Task>();
+export function mergeTasks(existingTasks: Post[], newTasks: Post[]): Post[] {
+  const byId = new Map<string, Post>();
   for (const task of existingTasks) {
     byId.set(task.id, task);
   }
@@ -42,7 +42,7 @@ export function mergeTasks(existingTasks: Task[], newTasks: Task[]): Task[] {
       new Set([...(existing.relays || []), ...(incoming.relays || [])])
     );
     const winner: Post = existing.timestamp.getTime() >= incoming.timestamp.getTime() ? existing : incoming;
-    const mergedTask: Task = isTaskPost(winner)
+    const mergedTask: Post = isTaskPost(winner)
       ? {
           ...winner,
           relays: mergedRelays,

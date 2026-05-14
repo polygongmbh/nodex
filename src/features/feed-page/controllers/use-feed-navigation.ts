@@ -3,13 +3,13 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { isTaskOutsideSelectedRelayScope } from "@/domain/relays/relay-scope";
-import type { Task, Relay } from "@/types";
+import type { Post, Relay } from "@/types";
 
 const VALID_VIEWS: readonly ViewType[] = VIEW_ORDER;
 const MOBILE_MANAGE_ROUTE = "manage";
 
 interface UseFeedNavigationOptions {
-  allTasks: Task[];
+  allTasks: Post[];
   isMobile: boolean;
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];

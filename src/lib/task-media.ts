@@ -1,6 +1,6 @@
 import { getStandaloneEmbeddableUrls } from "@/lib/linkify";
 import { guessMimeTypeFromUrl, normalizePublishedAttachments } from "@/lib/attachments";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 export type TaskMediaKind = "image" | "video" | "audio";
 export type TaskPreviewMediaKind = Exclude<TaskMediaKind, "audio">;
@@ -57,7 +57,7 @@ export function inferTaskMediaKind(url: string, mimeType?: string): TaskMediaKin
   return null;
 }
 
-export function collectTaskMediaItems(task: Task): TaskMediaItem[] {
+export function collectTaskMediaItems(task: Post): TaskMediaItem[] {
   const normalizedAttachments = normalizePublishedAttachments(task.attachments || []);
   const byNormalizedUrl = new Map<string, {
     alt?: string;
@@ -136,7 +136,7 @@ export function collectTaskMediaItems(task: Task): TaskMediaItem[] {
   return mediaItems;
 }
 
-export function collectTaskPreviewMediaItems(task: Task): TaskPreviewMediaItem[] {
+export function collectTaskPreviewMediaItems(task: Post): TaskPreviewMediaItem[] {
   return collectTaskMediaItems(task).filter(
     (item): item is TaskPreviewMediaItem => item.kind === "image" || item.kind === "video"
   );

@@ -57,7 +57,6 @@ import type {
   PublishedAttachment,
   PostedTag,
   Relay,
-  Task,
   TaskPost,
   CommentPost,
   ListingPost,
@@ -89,7 +88,7 @@ interface SessionUser {
 }
 
 interface UseTaskPublishFlowOptions {
-  allTasks: Task[];
+  allTasks: Post[];
   relays: Relay[];
   people: Person[];
   currentUser?: Person;
@@ -842,7 +841,7 @@ export function useTaskPublishFlow({
       locationGeohash: draft.locationGeohash,
       attachments: draft.attachments,
     };
-    let restoredTask: Task;
+    let restoredTask: Post;
     if (isTaskKind(draft.publishKind)) {
       restoredTask = {
         ...restoredBase,

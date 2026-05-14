@@ -5,7 +5,7 @@ import {
   applyTaskSortOverlays,
   dedupeMergedTasks,
 } from "./task-collections";
-import { isListingPost, type Task } from "@/types";
+import { isListingPost, type Post } from "@/types";
 
 const baseAuthor = makePerson({ pubkey: "user-1", name: "me", displayName: "Me" });
 
@@ -13,7 +13,7 @@ function buildTask(
   id: string,
   timestampIso: string,
   overrides: Parameters<typeof makeTask>[0] = {}
-): Task {
+): Post {
   return makeTask({
     id,
     author: baseAuthor,
@@ -70,7 +70,7 @@ describe("applyTaskSortOverlays", () => {
       { "task-1": "done" },
       { "task-1": "2026-03-16T11:00:00.000Z" }
     );
-    const overlaidTask = updated[0] as Task & { sortStatus?: string; sortLastEditedAt?: Date };
+    const overlaidTask = updated[0] as Post & { sortStatus?: string; sortLastEditedAt?: Date };
 
     expect(overlaidTask).toMatchObject({
       id: "task-1",

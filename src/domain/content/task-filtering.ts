@@ -1,17 +1,17 @@
-import type { Channel, ChannelMatchMode, Task } from "@/types";
+import type { Channel, ChannelMatchMode, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 
 interface FilterTasksByRelayAndPeopleParams {
-  tasks: Task[];
+  tasks: Post[];
   activeRelayIds: Set<string>;
   people: SelectablePerson[];
   allowUnknownRelayMetadata?: boolean;
 }
 
 interface FilterTasksParams {
-  tasks: Task[];
+  tasks: Post[];
   activeRelayIds: Set<string>;
   channels: Channel[];
   people: SelectablePerson[];
@@ -24,7 +24,7 @@ export function filterTasksByRelayAndPeople({
   activeRelayIds,
   people,
   allowUnknownRelayMetadata = true,
-}: FilterTasksByRelayAndPeopleParams): Task[] {
+}: FilterTasksByRelayAndPeopleParams): Post[] {
   const selectedPeople = people.filter((person) => person.isSelected);
 
   return tasks.filter((task) => {
@@ -50,7 +50,7 @@ export function filterTasks({
   people,
   channelMatchMode,
   allowUnknownRelayMetadata = true,
-}: FilterTasksParams): Task[] {
+}: FilterTasksParams): Post[] {
   const { included, excluded } = getIncludedExcludedChannelNames(channels);
   return filterTasksByRelayAndPeople({
     tasks,

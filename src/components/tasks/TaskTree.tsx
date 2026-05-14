@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
-import { Task, ComposeRestoreRequest, isTaskPost } from "@/types";
+import { Post, ComposeRestoreRequest, isTaskPost } from "@/types";
 import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -16,8 +16,8 @@ import { useTaskViewServices } from "./use-task-view-services";
 import { TaskAuthorProfilesProvider } from "./task-author-profiles-context";
 
 interface TaskTreeProps {
-  tasks: Task[];
-  allTasks: Task[];
+  tasks: Post[];
+  allTasks: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;

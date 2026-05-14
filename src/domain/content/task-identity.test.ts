@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Task, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
+import type { Post, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
 import { normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {

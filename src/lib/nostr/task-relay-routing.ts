@@ -1,4 +1,4 @@
-import type { Relay, Task, TaskEntryType } from "@/types";
+import type { Relay, Post, TaskEntryType } from "@/types";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 export const RELAY_SELECTION_ERROR_KEY = "toasts.errors.selectRelayOrParent";
@@ -61,7 +61,7 @@ function resolveSingleActiveWritableRelayId(relays: Relay[], demoRelayId?: strin
   return candidates.length === 1 ? candidates[0]?.id : undefined;
 }
 
-export function resolveOriginRelayIdForTask(task: Task | undefined, demoRelayId?: string): string | undefined {
+export function resolveOriginRelayIdForTask(task: Post | undefined, demoRelayId?: string): string | undefined {
   if (!task || task.relays.length === 0) return undefined;
   const nonDemoRelay = demoRelayId
     ? task.relays.find((relayId) => relayId !== demoRelayId)
@@ -73,7 +73,7 @@ export function resolveRelaySelectionForSubmission(params: {
   taskType: TaskEntryType;
   selectedRelayIds: string[];
   relays: Relay[];
-  parentTask?: Task;
+  parentTask?: Post;
   demoRelayId?: string;
 }): { relayIds: string[]; errorKey?: string } {
   const { taskType, selectedRelayIds, relays, parentTask, demoRelayId } = params;

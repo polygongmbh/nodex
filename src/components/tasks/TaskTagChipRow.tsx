@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Task } from "@/types";
+import { Post } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { TaskLocationChip } from "./TaskLocationChip";
@@ -12,7 +12,7 @@ import { formatPriorityLabel } from "@/domain/content/task-priority";
 import { resolveRelayIcon } from "@/infrastructure/nostr/relay-icon";
 
 interface BaseTaskTagChipProps {
-  task: Task;
+  task: Post;
   people?: Person[];
   priority?: number;
   className?: string;
@@ -25,7 +25,7 @@ interface BaseTaskTagChipProps {
 type TaskTagChipInlineProps = Omit<BaseTaskTagChipProps, "priority" | "className" | "testId">;
 
 function hasTaskChipContent(
-  task: Task,
+  task: Post,
   activeRelayCount: number,
   includeRelayChip: boolean,
   includeLocationChip: boolean
@@ -38,11 +38,11 @@ function hasTaskChipContent(
   );
 }
 
-export function hasTaskMetadataChips(task: Task, activeRelayCount: number): boolean {
+export function hasTaskMetadataChips(task: Post, activeRelayCount: number): boolean {
   return hasTaskChipContent(task, activeRelayCount, true, true);
 }
 
-export function hasTaskMentionTagChips(task: Task): boolean {
+export function hasTaskMentionTagChips(task: Post): boolean {
   return hasTaskMentionChips(task) || task.tags.length > 0;
 }
 

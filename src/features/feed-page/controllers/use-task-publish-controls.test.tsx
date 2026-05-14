@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTaskPublishControls } from "./use-task-publish-controls";
 import { makeRelay, makeTask } from "@/test/fixtures";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { Relay, Task } from "@/types";
+import type { Relay, Post } from "@/types";
 
 vi.mock("@/lib/notifications", () => ({
   notifyDisconnectedSelectedFeeds: vi.fn(),
@@ -15,12 +15,12 @@ vi.mock("@/lib/notifications", () => ({
 function Harness({
   canModifyContent = true,
   relays = [makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" })],
-  tasks = [makeTask({ id: "a".repeat(64), relays: ["relay-one"] }) as Task],
+  tasks = [makeTask({ id: "a".repeat(64), relays: ["relay-one"] }) as Post],
   effectiveActiveRelayIds = new Set(["relay-one"]),
 }: {
   canModifyContent?: boolean;
   relays?: Relay[];
-  tasks?: Task[];
+  tasks?: Post[];
   effectiveActiveRelayIds?: Set<string>;
 }) {
   const [authCount, setAuthCount] = useState(0);

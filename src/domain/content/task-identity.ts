@@ -1,4 +1,4 @@
-import type { Task, TaskDate, TaskStateUpdate, TaskState } from "@/types";
+import type { Post, TaskDate, TaskStateUpdate, TaskState } from "@/types";
 import { getTaskAssigneePubkeys, getTaskPriority, getTaskStateUpdates, isTaskPost } from "@/types";
 
 /**
@@ -7,21 +7,21 @@ import { getTaskAssigneePubkeys, getTaskPriority, getTaskStateUpdates, isTaskPos
  * (NDK subscriptions stream events for several seconds after page load and
  * `nostrEventsToTasks` rebuilds every Task object from scratch each time).
  */
-export function preserveTaskIdentity(previous: Task | undefined, fresh: Task): Task {
+export function preserveTaskIdentity(previous: Post | undefined, fresh: Post): Post {
   if (!previous) return fresh;
   if (previous === fresh) return previous;
   if (previous.id !== fresh.id) return fresh;
   return areTaskFieldsEqual(previous, fresh) ? previous : fresh;
 }
 
-export function preserveTaskListIdentity(previous: readonly Task[], fresh: Task[]): Task[] {
+export function preserveTaskListIdentity(previous: readonly Post[], fresh: Post[]): Post[] {
   if (previous.length === 0) return fresh;
-  const previousById = new Map<string, Task>();
+  const previousById = new Map<string, Post>();
   for (const task of previous) previousById.set(task.id, task);
   return fresh.map((task) => preserveTaskIdentity(previousById.get(task.id), task));
 }
 
-export function areTaskFieldsEqual(a: Task, b: Task): boolean {
+export function areTaskFieldsEqual(a: Post, b: Post): boolean {
   if (a === b) return true;
   if (a.timestamp.getTime() !== b.timestamp.getTime()) return false;
   if ((a.lastEditedAt?.getTime() ?? 0) !== (b.lastEditedAt?.getTime() ?? 0)) return false;

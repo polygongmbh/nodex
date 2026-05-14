@@ -1,14 +1,14 @@
 import { ReactNode, useMemo } from "react";
 import { ArrowLeft, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Task } from "@/types";
+import { Post } from "@/types";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface FocusedTaskBreadcrumbProps {
-  allTasks: Task[];
+  allTasks: Post[];
   focusedTaskId: string | null;
   className?: string;
   rightSlot?: ReactNode;
@@ -27,9 +27,9 @@ export function FocusedTaskBreadcrumb({
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
   };
   const path = useMemo(() => {
-    if (!focusedTaskId) return [] as Task[];
+    if (!focusedTaskId) return [] as Post[];
     const byId = new Map(allTasks.map((task) => [task.id, task]));
-    const chain: Task[] = [];
+    const chain: Post[] = [];
     const visited = new Set<string>();
     let current = byId.get(focusedTaskId);
 

@@ -6,7 +6,7 @@ import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-
 import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Relay, Task } from "@/types";
+import type { Relay, Post } from "@/types";
 import { getTaskAssigneePubkeys, getTaskPriority, getTaskPrimaryDate } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
@@ -43,7 +43,7 @@ function Harness({
   publishEvent = vi.fn(async () => ({ success: true, eventId: "b".repeat(64), publishedRelayUrls: ["wss://relay.one"] })),
   signEvent,
   broadcastSignedEvent,
-  initialTasks = [] as Task[],
+  initialTasks = [] as Post[],
   currentUser = makePerson({ pubkey: "a".repeat(64), name: "Alice", displayName: "Alice" }),
   people = [] as SelectablePerson[],
   dispatchFrecencyIntent = vi.fn(),
@@ -57,7 +57,7 @@ function Harness({
   publishEvent?: ReturnType<typeof vi.fn>;
   signEvent?: ReturnType<typeof vi.fn>;
   broadcastSignedEvent?: ReturnType<typeof vi.fn>;
-  initialTasks?: Task[];
+  initialTasks?: Post[];
   currentUser?: SelectablePerson;
   people?: SelectablePerson[];
   dispatchFrecencyIntent?: ReturnType<typeof vi.fn>;

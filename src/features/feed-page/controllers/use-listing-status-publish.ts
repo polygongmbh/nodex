@@ -6,7 +6,7 @@ import { isNostrEventId } from "@/lib/nostr/event-id";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
-import type { Nip99ListingStatus, Task } from "@/types";
+import type { ListingPost, Nip99ListingStatus, Post } from "@/types";
 import { isListingPost } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -15,7 +15,7 @@ interface PublishResult {
 }
 
 interface UseListingStatusPublishOptions {
-  allTasks: Task[];
+  allTasks: Post[];
   currentUser: Person | undefined;
   guardInteraction: (mode: "post" | "modify") => boolean;
   publishEvent: (
@@ -52,17 +52,19 @@ export function useListingStatusPublish({
 
     setLocalTasks((prev) => {
       const nextNip99 = { ...existing.nip99, status };
-      const matchesListing = (task: Task) =>
+      const matchesListing = (task: Post) =>
         task.id === taskId ||
         getListingReplaceableKey(task, LISTING_EVENT_KIND) === replaceableKey;
       let touched = false;
       const next = prev.map((task) => {
-        if (!matchesListing(task)) return task;
+        if (!matchesListing(task) || !isListingPost(task)) return task;
         touched = true;
-        return { ...task, nip99: nextNip99, lastEditedAt: new Date() } as Task;
+        const updated: ListingPost = { ...task, nip99: nextNip99, lastEditedAt: new Date() };
+        return updated;
       });
       if (touched) return next;
-      return [{ ...existing, nip99: nextNip99, lastEditedAt: new Date() } as Task, ...next];
+      const seeded: ListingPost = { ...existing, nip99: nextNip99, lastEditedAt: new Date() };
+      return [seeded, ...next];
     });
 
     if (!isNostrEventId(existing.id)) return;
@@ -98,11 +100,12 @@ export function useListingStatusPublish({
         const taskReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
         if (taskReplaceableKey !== replaceableKey) return task;
         if (!isListingPost(task)) return task;
-        return {
+        const reverted: ListingPost = {
           ...task,
           nip99: { ...task.nip99, status: previousStatus || "active" },
           lastEditedAt: new Date(),
-        } as Task;
+        };
+        return reverted;
       }));
     });
   }, [

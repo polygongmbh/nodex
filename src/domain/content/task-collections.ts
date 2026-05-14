@@ -1,11 +1,11 @@
 import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
-import type { Task, TaskStatus } from "@/types";
+import type { Post, TaskStatus } from "@/types";
 
 const LISTING_EVENT_KIND = 30402;
 
-export function dedupeMergedTasks(tasks: Task[]): Task[] {
-  const byId = new Map<string, Task>();
-  const byListingReplaceableKey = new Map<string, Task>();
+export function dedupeMergedTasks(tasks: Post[]): Post[] {
+  const byId = new Map<string, Post>();
+  const byListingReplaceableKey = new Map<string, Post>();
 
   for (const task of tasks) {
     const listingReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
@@ -39,10 +39,10 @@ export function dedupeMergedTasks(tasks: Task[]): Task[] {
 }
 
 export function applyTaskSortOverlays(
-  tasks: Task[],
+  tasks: Post[],
   sortStatusHoldByTaskId: Record<string, TaskStatus>,
   sortModifiedAtHoldByTaskId: Record<string, string>
-): Task[] {
+): Post[] {
   return tasks
     .map((task) => {
       const sortStatus = sortStatusHoldByTaskId[task.id];

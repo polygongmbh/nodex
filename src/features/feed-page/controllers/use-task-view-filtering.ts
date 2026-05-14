@@ -5,12 +5,12 @@ import {
   filterTasksForView,
   type TaskViewFilterRequest,
 } from "@/domain/content/task-view-filtering";
-import type { Channel, ChannelMatchMode, QuickFilterState, Task } from "@/types";
+import type { Channel, ChannelMatchMode, QuickFilterState, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
-interface UseTaskViewFilteringParams<T extends Task = Task> {
-  allTasks: Task[];
-  tasks: Task[];
+interface UseTaskViewFilteringParams<T extends Post = Post> {
+  allTasks: Post[];
+  tasks: Post[];
   focusedTaskId: string | null;
   includeFocusedTask?: boolean;
   hideClosedTasks?: boolean;
@@ -24,10 +24,10 @@ interface UseTaskViewFilteringParams<T extends Task = Task> {
    * (e.g. `useTaskViewFiltering<TaskPost>(...)`) to get a properly narrowed
    * result without a follow-up refilter.
    */
-  taskPredicate?: (task: Task) => boolean;
+  taskPredicate?: (task: Post) => boolean;
 }
 
-export function useTaskViewFiltering<T extends Task = Task>({
+export function useTaskViewFiltering<T extends Post = Post>({
   allTasks,
   tasks,
   focusedTaskId,

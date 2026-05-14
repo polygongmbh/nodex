@@ -2,7 +2,7 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { makeComment, makePerson, makeTask, withTaskState } from "@/test/fixtures";
 import { setRawEvent } from "@/stores/raw-events";
@@ -50,7 +50,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
 
-const baseTask: Task = makeTask({
+const baseTask: Post = makeTask({
   id: "t1",
   author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
   content: "Ship feature #frontend",
@@ -94,7 +94,7 @@ describe("TreeTaskItem status actions", () => {
     const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", state: {
       status: "open"
     } });
-    const childrenMap = new Map<string | undefined, Task[]>([["t1", [openChild, doneChild]]]);
+    const childrenMap = new Map<string | undefined, Post[]>([["t1", [openChild, doneChild]]]);
 
     renderTreeTaskItem({
       childrenMap,
@@ -148,7 +148,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("opens raw nostr event dialog on shift+alt+click and skips task selection", () => {
-    const taskWithRawEvent: Task = { ...baseTask, id: "task-with-raw-event" };
+    const taskWithRawEvent: Post = { ...baseTask, id: "task-with-raw-event" };
     setRawEvent(taskWithRawEvent.id, {
       id: "event-1",
       pubkey: "b".repeat(64),
@@ -289,7 +289,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("supports modifier-based author filtering from comment avatar/name clicks", () => {
-    const commentTask: Task = {
+    const commentTask: Post = {
       ...baseTask,
       id: "c1",
       kind: NostrEventKind.TextNote,
@@ -312,7 +312,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not focus the task on a plain comment author click", () => {
-    const commentTask: Task = {
+    const commentTask: Post = {
       ...baseTask,
       id: "c-plain-author",
       kind: NostrEventKind.TextNote,
@@ -352,7 +352,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not render attachment previews in tree cards", () => {
-    const taskWithAttachment: Task = {
+    const taskWithAttachment: Post = {
       ...baseTask,
       id: "attachment-task",
       attachments: [

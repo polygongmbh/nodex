@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { setReactionsByTargetId } from "@/features/feed-page/stores/reactions-registry";
-import type { Task, Channel, Relay, TaskStatus, PostedTag } from "@/types";
+import type { Post, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
@@ -52,7 +52,7 @@ function logSpamDrop(event: CachedNostrEvent, keyword: string): void {
 
 export interface UseIndexDerivedDataOptions {
   nostrEvents: CachedNostrEvent[];
-  demoTasks: Task[];
+  demoTasks: Post[];
   people: SelectablePerson[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   cachedKind0Events: Kind0LikeEvent[];
@@ -66,10 +66,10 @@ export interface UseIndexDerivedDataOptions {
 
 export interface UseIndexDerivedDataResult {
   filteredNostrEvents: CachedNostrEvent[];
-  nostrTasks: Task[];
-  allTasks: Task[];
+  nostrTasks: Post[];
+  allTasks: Post[];
   personalizedChannelScores: Map<string, number>;
-  scopedLocalTasksForChannels: Task[];
+  scopedLocalTasksForChannels: Post[];
   scopedNostrEventsForChannels: CachedNostrEvent[];
   channels: Channel[];
   composeChannels: Channel[];
@@ -138,8 +138,8 @@ export function useIndexDerivedData({
     });
   }, [nostrEvents, suppressedNostrEventIds]);
 
-  const lastNostrTasksRef = useRef<Task[]>([]);
-  const nostrTasks: Task[] = useMemo(() => {
+  const lastNostrTasksRef = useRef<Post[]>([]);
+  const nostrTasks: Post[] = useMemo(() => {
     if (isHydrating) return lastNostrTasksRef.current;
     const fresh = nostrEventsToTasks(
       filteredNostrEvents.map((event) => ({

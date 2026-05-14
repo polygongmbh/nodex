@@ -5,12 +5,12 @@ import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-conf
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { notifyTaskActionBlocked } from "@/lib/notifications";
-import type { Task, TaskState } from "@/types";
+import type { Post, TaskState } from "@/types";
 import { getTaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface UseTaskStatusMenuOptions {
-  task: Task;
+  task: Post;
   currentUser?: Person;
   people: Person[];
   isInteractionBlocked?: boolean;

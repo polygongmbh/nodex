@@ -1,4 +1,4 @@
-import { getTaskStatus, type Task, type TaskPost, getTaskState, getTaskAssigneePubkeys, isTaskPost } from "@/types";
+import { getTaskStatus, type Post, type TaskPost, getTaskState, getTaskAssigneePubkeys, isTaskPost } from "@/types";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 
 function normalizePubkey(value: string | undefined | null): string {
@@ -14,7 +14,7 @@ function buildPubkeySet(pubkeys: Iterable<string>): Set<string> {
   return set;
 }
 
-function getNormalizedAssignees(task: Task): string[] {
+function getNormalizedAssignees(task: Post): string[] {
   return (getTaskAssigneePubkeys(task) ?? []).map(normalizePubkey).filter(Boolean);
 }
 
@@ -22,7 +22,7 @@ function getNormalizedAssignees(task: Task): string[] {
  * "Owned" by a person = explicitly assigned, OR authored without any assignees.
  * Mirrors the implicit-ownership rule used to pick the avatar shown on a task.
  */
-export function isTaskOwnedByAny(task: Task, pubkeys: Set<string>): boolean {
+export function isTaskOwnedByAny(task: Post, pubkeys: Set<string>): boolean {
   if (pubkeys.size === 0) return false;
   const assignees = getNormalizedAssignees(task);
   if (assignees.length > 0) {
@@ -36,7 +36,7 @@ export function isTaskOwnedByAny(task: Task, pubkeys: Set<string>): boolean {
  * author OR appears among the assignees. Broader than `isTaskOwnedByAny`:
  * a task you authored but assigned to someone else still concerns you.
  */
-export function taskConcernsAny(task: Task, pubkeys: Set<string>): boolean {
+export function taskConcernsAny(task: Post, pubkeys: Set<string>): boolean {
   if (pubkeys.size === 0) return false;
   const author = normalizePubkey(task.author?.pubkey);
   if (author && pubkeys.has(author)) return true;
@@ -77,7 +77,7 @@ export function resolveStatusConcernsScope(
 
 interface TopLevelTaskFilterOptions {
   /** Tasks already pre-scoped by sidebar (relay/channel/people/quick filters). */
-  contextTasks: Task[];
+  contextTasks: Post[];
   /** Focused task id (a.k.a. context root); null when scope is unfocused. */
   focusedTaskId: string | null;
 }
@@ -106,7 +106,7 @@ export function selectStatusInProgressTopLevelTasks({
 
 interface ProjectFilterOptions extends TopLevelTaskFilterOptions {
   /** Map of parentId → children, built once across allTasks for subtask checks. */
-  childrenByParentId: Map<string | undefined, Task[]>;
+  childrenByParentId: Map<string | undefined, Post[]>;
 }
 
 /**
@@ -133,7 +133,7 @@ export function hasInProgressTopLevelProject({
 }
 
 interface PeopleScopedFilterOptions {
-  contextTasks: Task[];
+  contextTasks: Post[];
   peopleScope: Set<string>;
   /**
    * When null (unfocused scope), comments are excluded — "My tasks" should not
@@ -152,7 +152,7 @@ export function selectPeopleOwnedTasks({
   contextTasks,
   peopleScope,
   focusedTaskId,
-}: PeopleScopedFilterOptions): Task[] {
+}: PeopleScopedFilterOptions): Post[] {
   if (peopleScope.size === 0) return [];
   return contextTasks.filter((task) => {
     if (!focusedTaskId && !isTaskPost(task)) return false;
@@ -161,7 +161,7 @@ export function selectPeopleOwnedTasks({
 }
 
 interface TimelineFilterOptions {
-  contextTasks: Task[];
+  contextTasks: Post[];
   focusedTaskId: string | null;
   /**
    * Pubkeys whose author/assignee involvement should pull non-top-level items
@@ -182,7 +182,7 @@ export function selectStatusTimelinePosts({
   contextTasks,
   focusedTaskId,
   concernsScope,
-}: TimelineFilterOptions): Task[] {
+}: TimelineFilterOptions): Post[] {
   const matching = contextTasks.filter((task) => {
     if (!isTaskPost(task)) return true;
     const isTopLevelInContext = focusedTaskId

@@ -1,5 +1,5 @@
 import { getTaskAssigneePubkeys } from "@/types";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import type { Person } from "@/types/person";
 import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ function buildFallbackPersonFromPubkey(pubkey: string): Person {
   };
 }
 
-function collectMentionPubkeys(task: Task): string[] {
+function collectMentionPubkeys(task: Post): string[] {
   const values = [
     ...(getTaskAssigneePubkeys(task) || []),
     ...((task.mentions || []).filter((mention) => PUBKEY_PATTERN.test(mention))),
@@ -34,12 +34,12 @@ function collectMentionPubkeys(task: Task): string[] {
   );
 }
 
-export function hasTaskMentionChips(task: Task): boolean {
+export function hasTaskMentionChips(task: Post): boolean {
   return collectMentionPubkeys(task).length > 0;
 }
 
 interface TaskMentionChipsProps {
-  task: Task;
+  task: Post;
   people?: Person[];
   className?: string;
   inline?: boolean;

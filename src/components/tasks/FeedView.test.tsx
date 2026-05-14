@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { FeedView } from "./FeedView";
-import { Task, Channel, Relay } from "@/types";
+import { Post, Channel, Relay } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import { setRawEvent } from "@/stores/raw-events";
@@ -41,7 +41,7 @@ const author: SelectablePerson = makePerson({
   displayName: "Alice Doe",
 });
 
-const tasks: Task[] = [makeTask({ id: "task-1", author, state: {
+const tasks: Post[] = [makeTask({ id: "task-1", author, state: {
   status: "open"
 } })];
 const channels: Channel[] = [makeChannel()];
@@ -84,8 +84,8 @@ function renderFeedView(
 
 function makeFeedTasks(
   length: number,
-  build?: (index: number) => Partial<Task>
-): Task[] {
+  build?: (index: number) => Partial<Post>
+): Post[] {
   return Array.from({ length }, (_, index) =>
     makeTask({
       id: `task-${index + 1}`,

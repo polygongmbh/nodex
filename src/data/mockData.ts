@@ -1,4 +1,4 @@
-import { Relay, Channel, Task, TaskStatus, normalizeTaskState } from "@/types";
+import { Relay, Channel, Post, TaskStatus, normalizeTaskState } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
 import { addDays, subDays } from "date-fns";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -84,7 +84,7 @@ function createTask(
     dueTime?: string;
     timestamp?: Date;
   } = {}
-): Task {
+): Post {
   const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 14);
   const id = generateMockEventId();
   const initialState = normalizeTaskState(options.status);
@@ -118,7 +118,7 @@ function createComment(
     parentId?: string;
     timestamp?: Date;
   } = {}
-): Task {
+): Post {
   const timestamp = options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7);
   return {
     id: generateMockEventId(),
@@ -339,7 +339,7 @@ const commentC5 = createComment(mockPeople[2], "FYI: The staging server will be 
   timestamp: new Date(Date.now() - 1000 * 60 * 45),
 });
 
-export const mockTasks: Task[] = [
+export const mockTasks: Post[] = [
   task1, task1a, task1b, task1b1, task1b2, comment1bc1, task1c,
   task2, task2a, task2b, task2b1, comment2bc1, task2c,
   task3, task3a, task3b,

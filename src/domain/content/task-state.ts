@@ -1,5 +1,5 @@
 import {
-  Task,
+  Post,
   TaskState,
   TaskStatus,
   TaskStateUpdate,
@@ -22,15 +22,15 @@ export function isTaskTerminal(state: TaskState | TaskStatus | undefined): boole
 }
 
 export function applyTaskStateUpdate(
-  localTasks: Task[],
-  allTasks: Task[],
+  localTasks: Post[],
+  allTasks: Post[],
   taskId: string,
   newStatus: TaskState | TaskStatus,
   authorPubkey?: string
-): Task[] {
+): Post[] {
   const now = new Date();
   const normalized = normalizeTaskState(newStatus);
-  const toLocalStatusUpdatedTask = (task: Task): Task => {
+  const toLocalStatusUpdatedTask = (task: Post): Post => {
     if (!isTaskPost(task)) return task;
     const optimisticUpdate: TaskStateUpdate = {
       id: `local-${task.id}-${now.getTime()}`,

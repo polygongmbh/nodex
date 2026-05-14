@@ -15,7 +15,7 @@ import { buildLinkedTaskCalendarEvent } from "@/infrastructure/nostr/nip52-task-
 import { buildTaskPriorityUpdateEvent } from "@/infrastructure/nostr/task-property-events";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskKind } from "@/domain/content/task-kind";
-import type { Task, TaskDateType, TaskState, Relay } from "@/types";
+import type { Post, TaskDateType, TaskState, Relay } from "@/types";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
 
@@ -27,7 +27,7 @@ interface PublishResult {
 }
 
 interface UseTaskPublishControlsOptions {
-  allTasks: Task[];
+  allTasks: Post[];
   relays: Relay[];
   effectiveActiveRelayIds: Set<string>;
   demoFeedActive: boolean;

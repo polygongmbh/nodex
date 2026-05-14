@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useFocusedTaskCollapsedSidebarPreview } from "./use-focused-task-collapsed-sidebar-preview";
 import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
-import type { Channel, Task } from "@/types";
+import type { Channel, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
 const channels: Channel[] = [
@@ -17,7 +17,7 @@ const people: SelectablePerson[] = [
   makePerson({ pubkey: "cara", name: "cara", displayName: "Cara" }),
 ];
 
-const allTasks: Task[] = [
+const allTasks: Post[] = [
   makeTask({
     id: "root",
     content: "Root #general",

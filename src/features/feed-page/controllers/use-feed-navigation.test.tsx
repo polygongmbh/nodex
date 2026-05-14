@@ -2,7 +2,8 @@ import { render, screen, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { useFeedNavigation } from "./use-feed-navigation";
-import type { Relay, Task } from "@/types";
+import type { Relay, Post } from "@/types";
+import { makeTask } from "@/test/fixtures";
 
 vi.mock("@/hooks/use-swipe-navigation", () => ({
   useSwipeNavigation: () => ({
@@ -18,7 +19,7 @@ vi.mock("@/hooks/use-keyboard-shortcuts", () => ({
 }));
 
 const NO_RELAYS: Relay[] = [];
-const NO_TASKS: Task[] = [];
+const NO_TASKS: Post[] = [];
 const EMPTY_RELAY_IDS = new Set<string>();
 
 function Harness({
@@ -147,19 +148,12 @@ describe("useFeedNavigation", () => {
   });
 
   it("clears focusedTaskId when focused task leaves relay scope", () => {
-    const task: Task = {
+    const task = makeTask({
       id: "task-scoped",
       content: "test task",
-      status: {
-        status: "open"
-      },
-      timestamp: new Date(),
-      tags: [],
       relays: ["relay-a"],
-      relayIds: ["relay-a"],
-      author: { pubkey: "pubkey-1", name: "Author" },
-      taskType: "task",
-    } as unknown as Task;
+      author: { pubkey: "pubkey-1", name: "Author", displayName: "Author" },
+    });
 
     const relay: Relay = {
       id: "relay-b",

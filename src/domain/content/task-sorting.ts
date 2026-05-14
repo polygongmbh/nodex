@@ -1,5 +1,5 @@
 import {
-  Task,
+  Post,
   TaskState,
   TaskStatus,
   getLastEditedAt,
@@ -25,21 +25,21 @@ import { evaluateTaskPriorities, type PriorityScore } from "./task-priority-eval
  */
 
 export interface SortContext {
-  childrenMap: Map<string | undefined, Task[]>;
-  allTasks: Task[];
-  taskById?: Map<string, Task>;
+  childrenMap: Map<string | undefined, Post[]>;
+  allTasks: Post[];
+  taskById?: Map<string, Post>;
   priorityScores?: Map<string, PriorityScore>;
   now?: number;
 }
 
-type SortAwareTask = Task & { sortStatus?: TaskStatus; sortLastEditedAt?: Date };
+type SortAwareTask = Post & { sortStatus?: TaskStatus; sortLastEditedAt?: Date };
 
-function getStatusForSort(task: Task | undefined): TaskStatus | undefined {
+function getStatusForSort(task: Post | undefined): TaskStatus | undefined {
   if (!task) return undefined;
   return (task as SortAwareTask).sortStatus ?? getTaskStatus(getTaskState(task));
 }
 
-function getTaskById(taskId: string, context: SortContext): Task | undefined {
+function getTaskById(taskId: string, context: SortContext): Post | undefined {
   if (context.taskById) return context.taskById.get(taskId);
   return context.allTasks.find((task) => task.id === taskId);
 }
@@ -86,17 +86,17 @@ export function hasDueTodayOrPastInTree(taskId: string, context: SortContext): b
   return children.some(child => hasDueTodayOrPastInTree(child.id, context));
 }
 
-function getLatestModifiedMs(task: Task | undefined): number {
+function getLatestModifiedMs(task: Post | undefined): number {
   if (!task) return Number.NEGATIVE_INFINITY;
   const sortAwareTask = task as SortAwareTask;
   return (sortAwareTask.sortLastEditedAt || getLastEditedAt(task)).getTime();
 }
 
-export function getTaskLatestModifiedMs(task: Task): number {
+export function getTaskLatestModifiedMs(task: Post): number {
   return getLatestModifiedMs(task);
 }
 
-export function sortTasks<T extends Task>(tasks: T[], context: SortContext): T[] {
+export function sortTasks<T extends Post>(tasks: T[], context: SortContext): T[] {
   const taskById = context.taskById ?? new Map(context.allTasks.map((task) => [task.id, task] as const));
   const latestModifiedInTreeCache = new Map<string, number>();
   const priorityScores =
@@ -145,8 +145,8 @@ export function sortTasks<T extends Task>(tasks: T[], context: SortContext): T[]
 }
 
 // Build children map from tasks
-export function buildChildrenMap(allTasks: Task[]): Map<string | undefined, Task[]> {
-  const map = new Map<string | undefined, Task[]>();
+export function buildChildrenMap(allTasks: Post[]): Map<string | undefined, Post[]> {
+  const map = new Map<string | undefined, Post[]>();
   allTasks.forEach(task => {
     const parentId = task.parentId;
     if (!map.has(parentId)) {

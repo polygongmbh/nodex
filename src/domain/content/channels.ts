@@ -1,4 +1,4 @@
-import { Channel, PostedTag, Task } from "@/types";
+import { Channel, PostedTag, Post } from "@/types";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 
 interface NostrEventLike {
@@ -33,7 +33,7 @@ function resolveDeriveOptions(
 }
 
 export function deriveChannels(
-  localTasks: Pick<Task, "tags">[],
+  localTasks: Pick<Post, "tags">[],
   nostrEvents: NostrEventLike[],
   userPostedTags: PostedTag[],
   minCountOrOptions: number | DeriveChannelsOptions = 6

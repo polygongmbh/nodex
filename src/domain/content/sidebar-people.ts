@@ -1,4 +1,4 @@
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import type { PersonPresenceSnapshot, SelectablePerson, SidebarPerson } from "@/types/person";
 import { PRESENCE_ONLINE_WINDOW_MS, PRESENCE_RECENT_WINDOW_MS, type LatestPresenceSnapshot } from "@/lib/presence-status";
 
@@ -16,7 +16,7 @@ interface SidebarPersonStats {
 
 export function deriveSidebarPeople(
   people: SelectablePerson[],
-  tasks: Task[],
+  tasks: Post[],
   latestPresenceByAuthorId: Map<string, LatestPresenceSnapshot> = new Map(),
   now: Date = new Date(),
   options: DeriveSidebarPeopleOptions = {}

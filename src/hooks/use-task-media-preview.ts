@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import { collectTaskPreviewMediaItems, type TaskPreviewMediaItem } from "@/lib/task-media";
 
 interface UseTaskMediaPreviewResult {
@@ -18,7 +18,7 @@ interface UseTaskMediaPreviewResult {
 
 const normalizeUrl = (value: string): string => value.trim().toLowerCase();
 
-export function useTaskMediaPreview(orderedTasks: Task[]): UseTaskMediaPreviewResult {
+export function useTaskMediaPreview(orderedTasks: Post[]): UseTaskMediaPreviewResult {
   const mediaItems = useMemo(() => {
     return orderedTasks.flatMap((task) => collectTaskPreviewMediaItems(task));
   }, [orderedTasks]);

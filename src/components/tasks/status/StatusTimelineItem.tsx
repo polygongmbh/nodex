@@ -15,12 +15,12 @@ import { isCommentPost } from "@/types";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { formatAuthorMetaParts } from "@/types/person";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import { getTaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface StatusTimelineItemProps {
-  task: Task;
+  task: Post;
   people: Person[];
 }
 

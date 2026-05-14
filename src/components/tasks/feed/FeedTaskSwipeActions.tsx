@@ -4,7 +4,7 @@ import { Link2, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { canAuthorMutate } from "@/domain/content/task-edit-window";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 const OPEN_THRESHOLD_PX = 56;
 const ACTIVATION_DELTA_PX = 4;
@@ -31,7 +31,7 @@ function rubberBand(overscroll: number, dimension: number) {
 }
 
 interface FeedTaskSwipeActionsProps {
-  task: Task;
+  task: Post;
   currentUserPubkey?: string;
   hasChildren: boolean;
   onReact: (emoji: string) => void;

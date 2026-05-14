@@ -8,11 +8,11 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
-import { isTaskPost, type Task } from "@/types";
+import { isTaskPost, type Post } from "@/types";
 
 interface StatusProjectsRowProps {
-  contextTasks: Task[];
-  allTasks: Task[];
+  contextTasks: Post[];
+  allTasks: Post[];
   focusedTaskId: string | null;
 }
 

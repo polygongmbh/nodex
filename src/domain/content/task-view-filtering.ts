@@ -9,7 +9,7 @@ import {
   getTaskStatus,
   type ChannelMatchMode,
   type QuickFilterState,
-  type Task,
+  type Post,
   getTaskState,
 } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
@@ -26,7 +26,7 @@ export interface TaskViewFilterIndex {
 }
 
 export function buildTaskViewFilterIndex(
-  allTasks: Task[],
+  allTasks: Post[],
   people: SelectablePerson[] = []
 ): TaskViewFilterIndex {
   const childrenByParentId = new Map<string, string[]>();
@@ -82,7 +82,7 @@ export function buildTaskViewFilterIndex(
   };
 }
 
-export function getDescendantTaskIds(allTasks: Task[], rootTaskId: string): Set<string> {
+export function getDescendantTaskIds(allTasks: Post[], rootTaskId: string): Set<string> {
   return buildTaskViewFilterIndex(allTasks).descendantIdsByTaskId.get(rootTaskId) ?? new Set<string>();
 }
 
@@ -114,7 +114,7 @@ function taskMatchesChannelIndex(
 }
 
 export interface TaskViewFilterSource {
-  allTasks: Task[];
+  allTasks: Post[];
   filterIndex?: TaskViewFilterIndex;
   prefilteredTaskIds: Set<string>;
   people: SelectablePerson[];
@@ -124,7 +124,7 @@ export interface TaskViewFilterScope {
   focusedTaskId: string | null;
   includeFocusedTask?: boolean;
   hideClosedTasks?: boolean;
-  taskPredicate?: (task: Task) => boolean;
+  taskPredicate?: (task: Post) => boolean;
 }
 
 export interface TaskViewFilterCriteria {
@@ -211,7 +211,7 @@ export function getDirectMatchTaskIdsForView({
   return matchingIds;
 }
 
-export function filterTasksForView(request: TaskViewFilterRequest): Task[] {
+export function filterTasksForView(request: TaskViewFilterRequest): Post[] {
   const matchingIds = getDirectMatchTaskIdsForView(request);
   return request.source.allTasks.filter((task) => matchingIds.has(task.id));
 }

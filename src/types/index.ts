@@ -207,22 +207,9 @@ export interface ListingPost extends BasePost {
 export type Post = TaskPost | CommentPost | ListingPost;
 
 /**
- * Legacy kitchen-sink shape: `kind` is the wide union and every variant's
- * fields are optional. Existing call sites accept this without narrowing.
- * New code should prefer `Post` (discriminated) plus the variant types.
- */
-/**
- * `Task` is now an alias for the discriminated `Post` union. The legacy
- * kitchen-sink interface is gone; consumers that touched kind-specific
- * fields must narrow via `isTaskPost` / `isListingPost` / etc., or declare
- * a narrower variant type (e.g. `TaskPost[]`) up front.
- */
-export type Task = Post;
-
-/**
  * Boundary normalizer: accepts either the canonical object form or a bare
  * status-type string (event-converter inputs, test shorthands) and returns the
- * canonical object form. Internal callers reading `Task.state` directly can
+ * canonical object form. Internal callers reading post state directly can
  * skip this — the field is always a `TaskState` once stored.
  */
 export function normalizeTaskState(state: TaskState | TaskStatus | undefined): TaskState {
@@ -301,13 +288,13 @@ export function getTaskStateUpdates(post: Post | undefined): TaskStateUpdate[] {
   return post && isTaskPost(post) ? post.stateUpdates : [];
 }
 
-export function getLastEditedAt(task: Task): Date {
-  return task.lastEditedAt ?? task.timestamp;
+export function getLastEditedAt(post: Post): Date {
+  return post.lastEditedAt ?? post.timestamp;
 }
 
 export interface SharedTaskViewContext {
-  tasks: Task[];
-  allTasks: Task[];
+  tasks: Post[];
+  allTasks: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   composeRestoreRequest?: ComposeRestoreRequest | null;

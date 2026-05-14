@@ -25,12 +25,12 @@ import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
 import { DISPLAY_PRIORITY_OPTIONS, displayPriorityFromStored, storedPriorityFromDisplay } from "@/domain/content/task-priority";
 import { TaskDueDateEditorForm } from "@/components/tasks/TaskMetadataEditors";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 const QUICK_EMOJIS = ["👍", "❤️", "🎉", "😄", "🚀", "👀", "🙏", "🙌", "🛠️", "👎"];
 
 interface FeedTaskMenuProps {
-  task: Task;
+  task: Post;
   currentUserPubkey?: string;
   hasChildren: boolean;
   onReact: (emoji: string) => void;

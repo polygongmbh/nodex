@@ -3,15 +3,15 @@ import { describe, expect, it } from "vitest";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
 import { isTaskPost } from "@/types";
-import type { Channel, Task } from "@/types";
+import type { Channel, Post } from "@/types";
 
 function Harness({
   allTasks,
   tasks,
   channels,
 }: {
-  allTasks: Task[];
-  tasks: Task[];
+  allTasks: Post[];
+  tasks: Post[];
   channels: Channel[];
 }) {
   const filtered = useTaskViewFiltering({

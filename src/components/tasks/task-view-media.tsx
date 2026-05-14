@@ -1,6 +1,6 @@
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 export type TaskViewMediaController = ReturnType<typeof useTaskMediaPreview>;
 
@@ -9,7 +9,7 @@ interface TaskViewMediaLightboxProps {
   onOpenTask: (taskId: string | null) => void;
 }
 
-export function useTaskViewMedia(tasks: Task[]): TaskViewMediaController {
+export function useTaskViewMedia(tasks: Post[]): TaskViewMediaController {
   return useTaskMediaPreview(tasks);
 }
 

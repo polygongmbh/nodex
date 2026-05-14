@@ -1,6 +1,6 @@
 import { getTaskAssigneePubkeys } from "@/types";
 import { useMemo } from "react";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import type { Person } from "@/types/person";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,7 @@ import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAv
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TaskAssigneeAvatarsProps {
-  task: Task;
+  task: Post;
   className?: string;
   /** Tailwind size class applied to each avatar (e.g. "w-5 h-5"). */
   avatarSizeClassName?: string;

@@ -3,7 +3,7 @@ import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Ca
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { cn } from "@/lib/utils";
 import {
-  Task,
+  Post,
   Relay,
   getTaskStatus,
   getTaskState,
@@ -51,15 +51,15 @@ import {
 } from "./tree-task-item-helpers";
 
 interface TreeTaskItemProps {
-  task: Task;
-  matchingChildren: Task[];
-  childrenMap: Map<string | undefined, Task[]>;
+  task: Post;
+  matchingChildren: Post[];
+  childrenMap: Map<string | undefined, Post[]>;
   people?: Person[];
   currentUser?: Person;
   depth?: number;
   matchedByFilter?: boolean;
   isDirectMatchFn?: (taskId: string) => boolean;
-  getMatchingChildrenFn: (parentId: string) => Task[];
+  getMatchingChildrenFn: (parentId: string) => Post[];
   hasMatchingFilters?: boolean;
   parentFoldState?: TreeTaskFoldState; // Propagate parent's fold state for recursive expansion
   initialFoldState?: TreeTaskFoldState; // Override the default initial fold state (e.g. always collapsed)
@@ -546,8 +546,8 @@ export function TreeTaskItem({
             // Determine which children to show based on fold state.
             // Note: in the matchingOnly view, done child tasks are already excluded by
             // deriveTreeTaskItemChildren unless this parent is itself terminal.
-            let commentsToShow: Task[];
-            let tasksToShow: Task[];
+            let commentsToShow: Post[];
+            let tasksToShow: Post[];
 
             if (foldState === "allVisible") {
               commentsToShow = allCommentChildren;

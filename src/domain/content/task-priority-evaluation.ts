@@ -1,6 +1,6 @@
 import {
   getTaskStatus,
-  type Task,
+  type Post,
   type TaskStatus,
   getTaskState,
   getTaskPrimaryDate,
@@ -56,7 +56,7 @@ function isTerminal(status: TaskStatus): boolean {
   return status === "done" || status === "closed";
 }
 
-function isEvaluable(task: Task): boolean {
+function isEvaluable(task: Post): boolean {
   if (!isTaskPost(task)) return false;
   return !isTerminal(getTaskStatus(getTaskState(task)));
 }
@@ -69,7 +69,7 @@ function minutesSince(target: Date, now: number): number {
   return Math.max((now - target.getTime()) / MS_PER_MINUTE, 1);
 }
 
-function getImportance(task: Task): number {
+function getImportance(task: Post): number {
   const priority = getTaskPriority(task);
   if (typeof priority === "number" && Number.isFinite(priority)) {
     return Math.max(priority / IMPORTANCE_BASELINE, EPSILON);
@@ -78,7 +78,7 @@ function getImportance(task: Task): number {
 }
 
 export function calculateLocalUrgency(
-  task: Task,
+  task: Post,
   now: number,
   params: PriorityEvaluationParams = DEFAULT_PRIORITY_PARAMS,
 ): number {
@@ -91,8 +91,8 @@ export function calculateLocalUrgency(
   return Math.pow(params.dueBase, -remaining);
 }
 
-export function buildChildrenMap(tasks: readonly Task[]): Map<string, Task[]> {
-  const map = new Map<string, Task[]>();
+export function buildChildrenMap(tasks: readonly Post[]): Map<string, Post[]> {
+  const map = new Map<string, Post[]>();
   for (const task of tasks) {
     if (!task.parentId) continue;
     let bucket = map.get(task.parentId);
@@ -105,14 +105,14 @@ export function buildChildrenMap(tasks: readonly Task[]): Map<string, Task[]> {
   return map;
 }
 
-function getSubtasks(taskId: string, childrenMap: Map<string, Task[]>): Task[] {
+function getSubtasks(taskId: string, childrenMap: Map<string, Post[]>): Post[] {
   const all = childrenMap.get(taskId) ?? [];
   return all.filter((child) => isTaskPost(child) && getTaskStatus(getTaskState(child)) !== "closed");
 }
 
 export function calculateProgress(
-  task: Task,
-  childrenMap: Map<string, Task[]>,
+  task: Post,
+  childrenMap: Map<string, Post[]>,
   cache: Map<string, number> = new Map(),
 ): number {
   const cached = cache.get(task.id);
@@ -134,7 +134,7 @@ export function calculateProgress(
   return value;
 }
 
-function gatherTouches(task: Task, childrenMap: Map<string, Task[]>): Date[] {
+function gatherTouches(task: Post, childrenMap: Map<string, Post[]>): Date[] {
   const out: Date[] = [];
   for (const update of getTaskStateUpdates(task) ?? []) {
     out.push(update.timestamp);
@@ -146,8 +146,8 @@ function gatherTouches(task: Task, childrenMap: Map<string, Task[]>): Date[] {
 }
 
 export function calculateFrecency(
-  task: Task,
-  childrenMap: Map<string, Task[]>,
+  task: Post,
+  childrenMap: Map<string, Post[]>,
   now: number,
   params: PriorityEvaluationParams = DEFAULT_PRIORITY_PARAMS,
 ): number {
@@ -179,8 +179,8 @@ export function selfSum(self: number, influences: readonly number[], dampening: 
   return total;
 }
 
-function getAncestors(taskId: string, byId: Map<string, Task>): Task[] {
-  const path: Task[] = [];
+function getAncestors(taskId: string, byId: Map<string, Post>): Post[] {
+  const path: Post[] = [];
   const visited = new Set<string>();
   let current: string | undefined = taskId;
   while (current && !visited.has(current)) {
@@ -193,7 +193,7 @@ function getAncestors(taskId: string, byId: Map<string, Task>): Task[] {
   return path;
 }
 
-function depthOf(taskId: string, byId: Map<string, Task>, cache: Map<string, number>): number {
+function depthOf(taskId: string, byId: Map<string, Post>, cache: Map<string, number>): number {
   const cached = cache.get(taskId);
   if (cached !== undefined) return cached;
   const visited = new Set<string>();
@@ -211,11 +211,11 @@ function depthOf(taskId: string, byId: Map<string, Task>, cache: Map<string, num
 }
 
 export function evaluateTaskPriorities(
-  tasks: readonly Task[],
+  tasks: readonly Post[],
   now: number = Date.now(),
   params: PriorityEvaluationParams = DEFAULT_PRIORITY_PARAMS,
 ): Map<string, PriorityScore> {
-  const byId = new Map<string, Task>(tasks.map((t) => [t.id, t]));
+  const byId = new Map<string, Post>(tasks.map((t) => [t.id, t]));
   const childrenMap = buildChildrenMap(tasks);
   const evaluable = tasks.filter(isEvaluable);
   const evaluableIds = new Set(evaluable.map((t) => t.id));

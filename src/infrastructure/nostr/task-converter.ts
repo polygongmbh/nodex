@@ -1,4 +1,4 @@
-import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskReactions, type TaskDate, type TaskDateType, Task, getLastEditedAt, isTaskPost } from "@/types";
+import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskReactions, type TaskDate, type TaskDateType, Post, getLastEditedAt, isTaskPost } from "@/types";
 import { setRawEvent } from "@/stores/raw-events";
 import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
@@ -73,7 +73,7 @@ function replaceIndexedPersonMentions(content: string, tags: string[][]): string
   });
 }
 
-export function nostrEventToTask(event: NostrEventWithRelay): Task {
+export function nostrEventToTask(event: NostrEventWithRelay): Post {
   const authorFallbackLabel = formatUserFacingPubkey(event.pubkey);
   const author: Person = {
     pubkey: event.pubkey,
@@ -260,7 +260,7 @@ export function summarizeReactionsByTarget(
   return result;
 }
 
-export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
+export function nostrEventsToTasks(events: NostrEventWithRelay[]): Post[] {
   const isPriorityPropertyNote = (event: NostrEventWithRelay): boolean =>
     isPriorityPropertyEvent(event.kind, event.tags);
 
@@ -319,7 +319,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       event.kind === NostrEventKind.CalendarTimeBased
   );
 
-  const taskMap = new Map<string, Task>(
+  const taskMap = new Map<string, Post>(
     taskEvents.map((event) => {
       const task = nostrEventToTask(event);
       return [task.id, task];

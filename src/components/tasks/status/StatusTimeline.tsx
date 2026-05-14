@@ -4,12 +4,12 @@ import { StatusTimelineItem } from "./StatusTimelineItem";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { selectStatusTimelinePosts } from "./status-filters";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 const TIMELINE_LIMIT = 40;
 
 interface StatusTimelineProps {
-  contextTasks: Task[];
+  contextTasks: Post[];
   focusedTaskId: string | null;
   concernsScope: Set<string>;
 }

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Task, TaskPost } from "@/types";
+import type { Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import {

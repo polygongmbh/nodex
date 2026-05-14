@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Channel, Task } from "@/types";
+import type { Channel, Post } from "@/types";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 export interface UsePinnedSidebarChannelsOptions {
@@ -7,7 +7,7 @@ export interface UsePinnedSidebarChannelsOptions {
   effectiveActiveRelayIds: Set<string>;
   channels: Channel[];
   channelFilterStates: Map<string, Channel["filterState"]>;
-  allTasks: Task[];
+  allTasks: Post[];
 }
 
 export interface UsePinnedSidebarChannelsResult {

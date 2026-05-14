@@ -11,10 +11,10 @@ import {
   selectStatusTimelinePosts,
   taskConcernsAny,
 } from "./status-filters";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
-function buildChildrenMap(tasks: Task[]): Map<string | undefined, Task[]> {
-  const map = new Map<string | undefined, Task[]>();
+function buildChildrenMap(tasks: Post[]): Map<string | undefined, Post[]> {
+  const map = new Map<string | undefined, Post[]>();
   for (const task of tasks) {
     const key = task.parentId;
     const bucket = map.get(key);

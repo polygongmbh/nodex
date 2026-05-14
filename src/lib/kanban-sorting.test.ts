@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Task, TaskPost } from "@/types";
+import type { Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { sortByLatestModified } from "./kanban-sorting";
 import { makePerson } from "@/test/fixtures";

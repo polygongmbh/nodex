@@ -1,11 +1,11 @@
 import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
 import { useNostrProfiles, type NostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 const TaskAuthorProfilesContext = createContext<Record<string, NostrProfile>>({});
 
 interface TaskAuthorProfilesProviderProps extends PropsWithChildren {
-  tasks: Task[];
+  tasks: Post[];
 }
 
 export function TaskAuthorProfilesProvider({

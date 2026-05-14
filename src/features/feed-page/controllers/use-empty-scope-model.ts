@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel, type EmptyScopeModel } from "@/lib/empty-scope";
-import type { Channel, QuickFilterState, Relay, Task } from "@/types";
+import type { Channel, QuickFilterState, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
 interface UseEmptyScopeModelOptions {
@@ -12,8 +12,8 @@ interface UseEmptyScopeModelOptions {
   searchQuery?: string;
   contextTaskTitle?: string;
   focusedTaskId: string | null;
-  taskById?: Map<string, Pick<Task, "content">>;
-  allTasks?: Pick<Task, "id" | "content">[];
+  taskById?: Map<string, Pick<Post, "content">>;
+  allTasks?: Pick<Post, "id" | "content">[];
 }
 
 export function useEmptyScopeModel({

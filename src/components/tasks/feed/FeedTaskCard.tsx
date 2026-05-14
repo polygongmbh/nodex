@@ -25,7 +25,7 @@ import { useTranslation } from "react-i18next";
 import {
   type Nip99ListingStatus,
   type RawNostrEvent,
-  type Task,
+  type Post,
   getTaskState,
   getTaskPrimaryDate,
   isListingPost,
@@ -43,7 +43,7 @@ import { useReactionsFor } from "@/features/feed-page/stores/reactions-registry"
 import { useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 
 interface FeedTaskCardProps {
-  task: Task;
+  task: Post;
   people: Person[];
   currentUser?: Person;
   resolvedAuthor: Person;
@@ -63,8 +63,8 @@ interface FeedTaskCardProps {
   onOpenTaskMedia: (taskId: string, url: string) => void;
   onToggleExpandedContent: (taskId: string) => void;
   onOpenRawEvent: (event: RawNostrEvent) => void;
-  renderPriorityChip: (task: Task) => ReactNode;
-  renderDueDateChip: (task: Task) => ReactNode;
+  renderPriorityChip: (task: Post) => ReactNode;
+  renderDueDateChip: (task: Post) => ReactNode;
 }
 
 export const FeedTaskCard = memo(function FeedTaskCard({

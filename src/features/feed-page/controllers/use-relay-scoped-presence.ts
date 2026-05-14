@@ -11,7 +11,7 @@ import {
   buildActivePresenceTags,
   buildOfflinePresenceTags,
 } from "@/lib/presence-status";
-import type { Relay, Task } from "@/types";
+import type { Relay, Post } from "@/types";
 
 const OFFLINE_PRESENCE_FINGERPRINT = "offline";
 const ACTIVE_PRESENCE_PUBLISH_DEBOUNCE_MS = 3000;
@@ -35,7 +35,7 @@ interface RelayPresenceState {
 
 interface BuildRelayScopedPresenceTargetsOptions {
   currentView: string;
-  focusedTask: Task | null;
+  focusedTask: Post | null;
   relayScopeIds: Set<string>;
   relays: Relay[];
 }

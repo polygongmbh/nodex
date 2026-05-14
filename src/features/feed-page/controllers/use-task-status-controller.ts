@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { Task, TaskState, TaskStatus } from "@/types";
+import type { Post, TaskState, TaskStatus } from "@/types";
 import { getTaskState } from "@/types";
 import { getLastEditedAt, getTaskStatus, normalizeTaskState } from "@/types";
 import type { Person } from "@/types/person";
@@ -19,7 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 
 export interface UseTaskStatusControllerOptions {
-  allTasks: Task[];
+  allTasks: Post[];
   currentUser: Person | undefined;
   guardInteraction: (mode: "post" | "modify") => boolean;
   publishTaskStateUpdate: (taskId: string, status: TaskState, relayUrls?: string[]) => Promise<unknown>;
@@ -153,7 +153,7 @@ export function useTaskStatusController({
   );
 
   const resolveAuthorizedTask = useCallback(
-    (taskId: string): Task | undefined => {
+    (taskId: string): Post | undefined => {
       if (guardInteraction("modify")) return undefined;
       const existingTask = allTasks.find((task) => task.id === taskId);
       if (!existingTask) return undefined;

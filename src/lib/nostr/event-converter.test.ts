@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { nip19 } from "nostr-tools";
 import {
-  Task,
+  Post,
   getLastEditedAt,
   getTaskStatus,
   getTaskState,
@@ -799,14 +799,14 @@ describe("mergeTasks", () => {
     const existing = [
       { id: "1", timestamp: new Date(1000) },
       { id: "2", timestamp: new Date(2000) },
-    ] as Pick<Task, "id" | "timestamp">[];
+    ] as Pick<Post, "id" | "timestamp">[];
     
     const newTasks = [
       { id: "2", timestamp: new Date(2000) },
       { id: "3", timestamp: new Date(3000) },
-    ] as Pick<Task, "id" | "timestamp">[];
+    ] as Pick<Post, "id" | "timestamp">[];
     
-    const merged = mergeTasks(existing as Task[], newTasks as Task[]);
+    const merged = mergeTasks(existing as Post[], newTasks as Post[]);
     
     expect(merged).toHaveLength(3);
     expect(merged.map((t) => t.id)).toContain("1");
@@ -817,14 +817,14 @@ describe("mergeTasks", () => {
   it("sorts merged tasks by timestamp descending", () => {
     const existing = [
       { id: "1", timestamp: new Date(1000) },
-    ] as Pick<Task, "id" | "timestamp">[];
+    ] as Pick<Post, "id" | "timestamp">[];
     
     const newTasks = [
       { id: "2", timestamp: new Date(3000) },
       { id: "3", timestamp: new Date(2000) },
-    ] as Pick<Task, "id" | "timestamp">[];
+    ] as Pick<Post, "id" | "timestamp">[];
     
-    const merged = mergeTasks(existing as Task[], newTasks as Task[]);
+    const merged = mergeTasks(existing as Post[], newTasks as Post[]);
     
     expect(merged[0].id).toBe("2"); // Most recent first
     expect(merged[1].id).toBe("3");
@@ -834,10 +834,10 @@ describe("mergeTasks", () => {
   it("merges relay ids when duplicate task ids are merged", () => {
     const existing = [
       { id: "same", relays: ["relay-a"], timestamp: new Date(1000) },
-    ] as Pick<Task, "id" | "relays" | "timestamp">[] as Task[];
+    ] as Pick<Post, "id" | "relays" | "timestamp">[] as Post[];
     const incoming = [
       { id: "same", relays: ["relay-b"], timestamp: new Date(2000) },
-    ] as Pick<Task, "id" | "relays" | "timestamp">[] as Task[];
+    ] as Pick<Post, "id" | "relays" | "timestamp">[] as Post[];
 
     const merged = mergeTasks(existing, incoming);
 

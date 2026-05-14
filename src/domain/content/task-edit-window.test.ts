@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import { canAuthorMutate, resolveEditWindowMinutes } from "./task-edit-window";
 
-function makeTask(overrides: { author?: { pubkey: string }; timestamp?: Date } = {}): Pick<Task, "author" | "timestamp"> {
+function makeTask(overrides: { author?: { pubkey: string }; timestamp?: Date } = {}): Pick<Post, "author" | "timestamp"> {
   return {
     author: {
       pubkey: overrides.author?.pubkey ?? "owner-pub",

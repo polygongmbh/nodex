@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilteredEmptyState } from "./FilteredEmptyState";
-import type { Channel, Relay, Task } from "@/types";
+import type { Channel, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { makeTask, makePerson } from "@/test/fixtures";
@@ -50,7 +50,7 @@ const RECENT_SCOPE = "from the last 7 days";
 const PRIORITY_SCOPE = "at priority P4 or higher";
 
 function renderOverlay(
-  viewModel: { isHydrating?: boolean; focusedTaskId?: string | null; allTasks?: Task[] } = {},
+  viewModel: { isHydrating?: boolean; focusedTaskId?: string | null; allTasks?: Post[] } = {},
   surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
   return render(

@@ -1,9 +1,9 @@
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 
 interface TaskViewStatusRowProps {
-  allTasks: Task[];
+  allTasks: Post[];
   focusedTaskId: string | null;
   isHydrating?: boolean;
   className?: string;

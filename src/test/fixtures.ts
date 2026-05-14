@@ -1,4 +1,4 @@
-import type { Channel, CommentPost, ListingPost, Nip99Metadata, Post, Relay, Task, TaskDate, TaskDateType, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
+import type { Channel, CommentPost, ListingPost, Nip99Metadata, Post, Relay, TaskDate, TaskDateType, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
 import { normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";

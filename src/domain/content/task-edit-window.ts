@@ -1,4 +1,4 @@
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 const ENV_KEY = "VITE_EDIT_WINDOW_MINUTES";
 const DEFAULT_MINUTES = 7 * 24 * 60;
@@ -20,7 +20,7 @@ export interface MutationGate {
 }
 
 export interface CanAuthorMutateInput {
-  task: Pick<Task, "author" | "timestamp">;
+  task: Pick<Post, "author" | "timestamp">;
   currentUserPubkey?: string;
   hasChildren: boolean;
   now?: Date;

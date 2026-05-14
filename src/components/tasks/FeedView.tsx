@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState, typ
 import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import {
-  Task,
+  Post,
   ComposeRestoreRequest,
   RawNostrEvent,
   getTaskStatus,
@@ -60,8 +60,8 @@ import { useFeedHydrationWindow } from "./use-feed-hydration-window";
 import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
 
 interface FeedViewProps {
-  tasks: Task[];
-  allTasks: Task[];
+  tasks: Post[];
+  allTasks: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -82,7 +82,7 @@ const FEED_REVEAL_SCROLL_THRESHOLD_VIEWPORT_RATIO = 0.75;
 const DESKTOP_FEED_ROW_CONTENT_PADDING = "px-3";
 
 interface FeedDueDateChipProps {
-  task: Task;
+  task: Post;
   editable: boolean;
   dueDateColor: string;
 }
@@ -142,7 +142,7 @@ function FeedDueDateChip({
 }
 
 interface FeedPriorityChipProps {
-  task: Task;
+  task: Post;
   editable: boolean;
 }
 
@@ -393,10 +393,10 @@ export function FeedView({
     }
   }, [keyboardFocusedTaskId]);
 
-  const canCompleteTask = useCallback((task: Task) => {
+  const canCompleteTask = useCallback((task: Post) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   }, [currentUser, isInteractionBlocked]);
-  const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {
+  const getParentBreadcrumb = (task: Post): { id: string; text: string }[] => {
     return getAncestorChainFromSource({ taskById }, task.id, focusedTaskId);
   };
 
@@ -415,13 +415,13 @@ export function FeedView({
     setActiveRawEvent(event);
     setRawEventDialogOpen(true);
   }, []);
-  const renderPriorityChip = useCallback((task: Task) => (
+  const renderPriorityChip = useCallback((task: Post) => (
     <FeedPriorityChip
       task={task}
       editable={canCompleteTask(task) && !isTaskTerminal(getTaskState(task))}
     />
   ), [canCompleteTask]);
-  const renderDueDateChip = useCallback((task: Task) => (
+  const renderDueDateChip = useCallback((task: Post) => (
     <FeedDueDateChip
       task={task}
       editable={canCompleteTask(task)}

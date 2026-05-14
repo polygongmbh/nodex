@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "./use-mobile-toast-offset";
-import type { Channel, Relay, Task } from "@/types";
+import type { Channel, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
@@ -166,7 +166,7 @@ vi.mock("@/components/tasks/CalendarView", () => ({
 const relays: Relay[] = [makeRelay()];
 const channels: Channel[] = [makeChannel()];
 const people: SelectablePerson[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
-const tasks: Task[] = [];
+const tasks: Post[] = [];
 
 const baseFeedViewState: FeedViewState = {
   currentView: "tree",
@@ -370,7 +370,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const sampleTasks: Task[] = [
+    const sampleTasks: Post[] = [
       makeTask({ id: "task-1", content: "Ship #general", tags: ["general"] }),
     ];
 
@@ -390,7 +390,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const sampleTasks: Task[] = [
+    const sampleTasks: Post[] = [
       makeTask({ id: "task-nodex", content: "Ship #nodex", tags: ["nodex"] }),
     ];
 
@@ -414,7 +414,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
-    const sampleTasks: Task[] = [
+    const sampleTasks: Post[] = [
       makeTask({ id: "task-alice", content: "Ship #general", author: alice }),
     ];
 
@@ -433,7 +433,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const sampleTasks: Task[] = [
+    const sampleTasks: Post[] = [
       makeTask({ id: "task-1", content: "Ship #general", tags: ["general"] }),
     ];
 
@@ -450,7 +450,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const sampleTasks: Task[] = [
+    const sampleTasks: Post[] = [
       makeTask({ id: "task-1", content: "Ship #general", tags: ["general"] }),
     ];
 
@@ -477,7 +477,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const datedTasks: Task[] = [
+    const datedTasks: Post[] = [
       makeTask({
         id: "task-upcoming",
         content: "Upcoming #general",
@@ -546,7 +546,7 @@ describe("MobileLayout auth wiring", () => {
 
     const selectedPerson = makePerson({ pubkey: "me", name: "me", displayName: "Me", isSelected: true });
     const otherPerson = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false });
-    const sampleTasks: Task[] = [
+    const sampleTasks: Post[] = [
       makeTask({ id: "task-1", content: "Ship #general", tags: ["general"], author: otherPerson }),
     ];
 

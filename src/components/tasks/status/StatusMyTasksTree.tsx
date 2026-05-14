@@ -8,13 +8,13 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { selectPeopleOwnedTasks } from "./status-filters";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 const MY_TASKS_LIMIT = 20;
 
 interface StatusMyTasksTreeProps {
-  contextTasks: Task[];
-  allTasks: Task[];
+  contextTasks: Post[];
+  allTasks: Post[];
   peopleScope: Set<string>;
   focusedTaskId: string | null;
 }
@@ -51,7 +51,7 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
   // Children are only consulted when the user expands a row; in that case we
   // hand TreeTaskItem the real task children so it can render them recursively.
   const getRevealedChildren = useCallback(
-    (parentId: string): Task[] => sortTasks(childrenMap.get(parentId) || [], sortContext),
+    (parentId: string): Post[] => sortTasks(childrenMap.get(parentId) || [], sortContext),
     [childrenMap, sortContext]
   );
 

@@ -5,7 +5,7 @@ import {
   notifyNeedWritableRelay,
   notifyTaskActionBlocked,
 } from "@/lib/notifications";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import type { Person } from "@/types/person";
 
 export type InteractionBlockKind =
@@ -48,7 +48,7 @@ export function resolveInteractionBlock(
 }
 
 export interface ResolveTaskInteractionBlockInput extends ResolveInteractionBlockInput {
-  task: Task;
+  task: Post;
   currentUser?: Person;
   knownPeople?: Person[];
 }

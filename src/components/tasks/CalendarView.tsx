@@ -6,7 +6,7 @@ import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefini
 import {
   getTaskState,
   getTaskStatus,
-  type Task,
+  type Post,
   type TaskPost,
   type TaskState,
   type ComposeRestoreRequest,
@@ -71,8 +71,8 @@ import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useTaskViewServices } from "./use-task-view-services";
 
 interface CalendarViewProps {
-  tasks: Task[];
-  allTasks: Task[];
+  tasks: Post[];
+  allTasks: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -385,7 +385,7 @@ export function CalendarView({
     };
   }, [desktopMonthSections]);
 
-  const canCompleteTask = (task: Task) => {
+  const canCompleteTask = (task: Post) => {
     return canUserChangeTaskStatus(task, currentUser);
   };
   const dispatchStatusChange = (taskId: string, stateId: string) => {
@@ -396,7 +396,7 @@ export function CalendarView({
   const dispatchToggleComplete = (taskId: string) => {
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
   };
-  const getStatusButtonTitle = (task: Task) => {
+  const getStatusButtonTitle = (task: Post) => {
     if (canCompleteTask(task)) return getStatusToggleHint(getTaskState(task));
     return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(getTaskState(task));
   };
@@ -422,7 +422,7 @@ export function CalendarView({
     allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
   };
 
-  const handleStatusTriggerKeyDown = (event: KeyboardEvent<HTMLElement>, task: Task) => {
+  const handleStatusTriggerKeyDown = (event: KeyboardEvent<HTMLElement>, task: Post) => {
     if (!canCompleteTask(task)) return;
     if (event.key !== "Enter" && event.key !== " " && event.key !== "ArrowDown") return;
     event.preventDefault();

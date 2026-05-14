@@ -1,13 +1,13 @@
 import type { SetStateAction } from "react";
 import { create } from "zustand";
-import type { PostedTag, Task } from "@/types";
+import type { PostedTag, Post } from "@/types";
 
 interface TaskMutationState {
-  localTasks: Task[];
+  localTasks: Post[];
   postedTags: PostedTag[];
   suppressedNostrEventIds: Set<string>;
 
-  setLocalTasks: (updater: SetStateAction<Task[]>) => void;
+  setLocalTasks: (updater: SetStateAction<Post[]>) => void;
   setPostedTags: (updater: SetStateAction<PostedTag[]>) => void;
   setSuppressedNostrEventIds: (updater: SetStateAction<Set<string>>) => void;
 }

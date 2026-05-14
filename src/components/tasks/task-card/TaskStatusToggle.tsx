@@ -15,11 +15,11 @@ import {
 } from "@/domain/task-states/task-state-config";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { cn } from "@/lib/utils";
-import { getTaskState, getTaskStatus, type Task, type TaskState } from "@/types";
+import { getTaskState, getTaskStatus, type Post, type TaskState } from "@/types";
 import type { Person } from "@/types/person";
 
 interface TaskStatusToggleProps {
-  task: Task;
+  task: Post;
   currentUser?: Person;
   people: Person[];
   buttonClassName?: string;

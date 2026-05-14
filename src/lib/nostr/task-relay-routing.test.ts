@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Relay, Task, TaskPost } from "@/types";
+import type { Relay, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   RELAY_SELECTION_ERROR_KEY,

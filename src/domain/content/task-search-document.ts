@@ -1,5 +1,5 @@
 import { getTaskAssigneePubkeys } from "@/types";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import type { Person } from "@/types/person";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
 
@@ -48,7 +48,7 @@ function collectResolvedMentionPeople(
 }
 
 export function buildTaskSearchableText(
-  task: Task,
+  task: Post,
   people: Person[] | Map<string, Person> = []
 ): string {
   const peopleById = resolvePeopleLookup(people);

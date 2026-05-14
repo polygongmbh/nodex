@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Relay, Task, TaskPost } from "@/types";
+import type { Relay, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   buildRelayScopedPresenceTargets,

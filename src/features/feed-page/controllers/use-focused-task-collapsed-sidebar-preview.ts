@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { buildTaskViewFilterIndex } from "@/domain/content/task-view-filtering";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
-import type { Channel, Task } from "@/types";
+import type { Channel, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
 function normalize(value: string): string {
@@ -9,7 +9,7 @@ function normalize(value: string): string {
 }
 
 export interface DeriveFocusedTaskCollapsedSidebarPreviewParams {
-  allTasks: Task[];
+  allTasks: Post[];
   focusedTaskId: string | null;
   activeRelayIds: Set<string>;
   channels: Channel[];

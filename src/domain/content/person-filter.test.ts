@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Task, TaskPost } from "@/types";
+import type { Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import { taskMatchesSelectedPeople } from "./person-filter";
@@ -114,7 +114,7 @@ describe("taskMatchesSelectedPeople", () => {
       ...baseTask,
       author: { ...baseTask.author, pubkey: undefined },
       mentions: ["alice-pubkey"],
-    } as unknown as Task;
+    } as unknown as Post;
 
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
   });
@@ -123,7 +123,7 @@ describe("taskMatchesSelectedPeople", () => {
     const task = {
       ...baseTask,
       mentions: [null, 42, "alice-pubkey"],
-    } as unknown as Task;
+    } as unknown as Post;
 
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
   });

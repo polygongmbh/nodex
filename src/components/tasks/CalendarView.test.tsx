@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CalendarView } from "./CalendarView";
-import type { Channel, Relay, Task, TaskPost } from "@/types";
+import type { Channel, Relay, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 import { makePerson, makeTask } from "@/test/fixtures";
@@ -37,7 +37,7 @@ const people: SelectablePerson[] = [
   }),
 ];
 
-const tasks: Task[] = [];
+const tasks: Post[] = [];
 
 describe("CalendarView responsiveness", () => {
   it("focuses ancestor from day-card breadcrumb without selecting current card task", () => {

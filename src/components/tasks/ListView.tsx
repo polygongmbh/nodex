@@ -5,7 +5,7 @@ import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefini
 import {
   getTaskStatus,
   getTaskStatusFromTask,
-  type Task,
+  type Post,
   type TaskPost,
   type ComposeRestoreRequest,
   type TaskStatus,
@@ -53,8 +53,8 @@ import { useTaskViewServices } from "./use-task-view-services";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface ListViewProps {
-  tasks: Task[];
-  allTasks: Task[];
+  tasks: Post[];
+  allTasks: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -291,7 +291,7 @@ export function ListView({
     setSortVersion(v => v + 1);
   };
 
-  const canCompleteTask = (task: Task) => {
+  const canCompleteTask = (task: Post) => {
     return authPolicy.canModifyContent && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
   const dispatchStatusChange = (taskId: string, stateId: string) => {
@@ -339,7 +339,7 @@ export function ListView({
   );
 
   // Editable status cell
-  const StatusCell = ({ task }: { task: Task }) => {
+  const StatusCell = ({ task }: { task: Post }) => {
     const status = getTaskState(task);
     const editable = canCompleteTask(task);
     const statusClassName = cn(
@@ -387,7 +387,7 @@ export function ListView({
   };
 
   // Editable due date cell
-  const DueDateCell = ({ task }: { task: Task }) => {
+  const DueDateCell = ({ task }: { task: Post }) => {
     const [open, setOpen] = useState(false);
     const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task));
     const editable = canCompleteTask(task);
@@ -450,7 +450,7 @@ export function ListView({
   };
 
   // Editable tags cell
-  const TagsCell = ({ task }: { task: Task }) => {
+  const TagsCell = ({ task }: { task: Post }) => {
     return (
       <TaskMentionTagChipRow
         task={task}

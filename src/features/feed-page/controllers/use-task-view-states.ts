@@ -28,7 +28,7 @@ import {
   type Channel,
   type ChannelMatchMode,
   type Relay,
-  type Task,
+  type Post,
   type TaskPost,
   type TaskStateUpdate,
   type TaskStatus,
@@ -40,8 +40,8 @@ import type { SelectablePerson } from "@/types/person";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
 
 interface BaseViewStateInput {
-  tasks: Task[];
-  allTasks: Task[];
+  tasks: Post[];
+  allTasks: Post[];
   focusedTaskId: string | null;
   searchQueryOverride?: string;
 }
@@ -56,19 +56,19 @@ export interface FeedEntry {
   type: "task" | "state-update";
   id: string;
   timestamp: Date;
-  task: Task;
+  task: Post;
   update?: TaskStateUpdate;
 }
 
 export interface FeedViewState {
   searchQuery: string;
-  focusedTask: Task | null;
-  taskById: Map<string, Task>;
-  feedTasks: Task[];
+  focusedTask: Post | null;
+  taskById: Map<string, Post>;
+  feedTasks: Post[];
   allFeedEntries: FeedEntry[];
   feedEntries: FeedEntry[];
   activeFeedEntries: FeedEntry[];
-  mediaPreviewTasks: Task[];
+  mediaPreviewTasks: Post[];
   shouldShowMobileScopeFallback: boolean;
   shouldShowInlineEmptyHint: boolean;
   shouldShowScopeFooterHint: boolean;
@@ -77,8 +77,8 @@ export interface FeedViewState {
 
 export interface ListViewState {
   searchQuery: string;
-  focusedTask: Task | null;
-  taskById: Map<string, Task>;
+  focusedTask: Post | null;
+  taskById: Map<string, Post>;
   filteredTaskCandidates: TaskPost[];
   baseListTaskCandidates: TaskPost[];
   hasActiveFilters: boolean;
@@ -94,7 +94,7 @@ export interface KanbanViewState {
 }
 
 export interface TaskViewSource {
-  allTasks: Task[];
+  allTasks: Post[];
   focusedTaskId: string | null;
   searchQuery: string;
   deferredSearchQuery: string;
@@ -105,8 +105,8 @@ export interface TaskViewSource {
   people: SelectablePerson[];
   quickFilters: ReturnType<typeof useFeedSurfaceState>["quickFilters"];
   channelMatchMode: ChannelMatchMode;
-  taskById: Map<string, Task>;
-  childrenMap: Map<string | undefined, Task[]>;
+  taskById: Map<string, Post>;
+  childrenMap: Map<string | undefined, Post[]>;
   prefilteredTaskIds: Set<string>;
   filterIndex: ReturnType<typeof buildTaskViewFilterIndex>;
   sortContext: SortContext;
@@ -139,10 +139,10 @@ export interface CalendarSelectors {
 
 export interface TreeSelectors {
   hasMatchingFilters(): boolean;
-  getCurrentContextTask(): Task | null;
-  getVisibleTasks(): Task[];
-  getDisplayedTasks(options?: { useMobileFallback?: boolean }): Task[];
-  getMatchingChildren(parentId: string): Task[];
+  getCurrentContextTask(): Post | null;
+  getVisibleTasks(): Post[];
+  getDisplayedTasks(options?: { useMobileFallback?: boolean }): Post[];
+  getMatchingChildren(parentId: string): Post[];
   isDirectMatch(taskId: string): boolean;
   getEmptyStateFlags(options?: { isMobile?: boolean }): {
     shouldShowMobileScopeFallback: boolean;
@@ -161,8 +161,8 @@ interface TreeVisibilitySource {
 export interface TreeVisibilityState {
   directlyMatchingIds: Set<string>;
   matchingVisibleIds: Set<string>;
-  baseVisibleTasks: Task[];
-  visibleTasks: Task[];
+  baseVisibleTasks: Post[];
+  visibleTasks: Post[];
 }
 
 export interface MobileFallbackNoticeState {
@@ -180,7 +180,7 @@ function clearSelectedPeople(people: SelectablePerson[]): SelectablePerson[] {
   return people.map((person) => (person.isSelected ? { ...person, isSelected: false } : person));
 }
 
-function buildFeedEntries(tasks: Task[], focusedTaskId: string | null): FeedEntry[] {
+function buildFeedEntries(tasks: Post[], focusedTaskId: string | null): FeedEntry[] {
   const entries: FeedEntry[] = [];
   for (const task of [...tasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
     if (getTaskStatus(getTaskState(task)) !== "closed" || task.id === focusedTaskId) {
@@ -499,7 +499,7 @@ export function buildTreeVisibilityState({
     }
   }
 
-  let rootTasks: Task[];
+  let rootTasks: Post[];
   if (focusedTaskId) {
     rootTasks = childrenMap.get(focusedTaskId) || [];
   } else {
@@ -738,7 +738,7 @@ export function useKanbanViewState({
     taskPredicate: isTaskPost,
   });
   const kanbanTasks = useMemo<TaskPost[]>(
-    () => filterTasksByDepthMode({ tasks: filteredTaskCandidates, depthMode, focusedTaskId, getDepth, hasChildren }) as TaskPost[],
+    () => filterTasksByDepthMode({ tasks: filteredTaskCandidates, depthMode, focusedTaskId, getDepth, hasChildren }),
     [depthMode, filteredTaskCandidates, focusedTaskId, getDepth, hasChildren]
   );
   const tasksByStatus = useMemo<Record<TaskStatus, TaskPost[]>>(() => {
@@ -784,7 +784,7 @@ export function useMobileFallbackNoticeState({
     if (currentView !== "list" && currentView !== "calendar") {
       return undefined;
     }
-    return (task: Task) => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)?.date) && !isTaskTerminal(getTaskState(task));
+    return (task: Post) => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)?.date) && !isTaskTerminal(getTaskState(task));
   }, [currentView]);
   const includeFocusedTaskForActiveView = currentView === "feed";
   const hideClosedForActiveView = currentView === "feed";

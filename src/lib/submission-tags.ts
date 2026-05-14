@@ -1,4 +1,4 @@
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 function normalizeTags(tags: string[]): string[] {
   return Array.from(new Set(tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean)));
@@ -6,7 +6,7 @@ function normalizeTags(tags: string[]): string[] {
 
 export function resolveSubmissionTags(
   extractedTags: string[],
-  parentTask?: Pick<Task, "tags">
+  parentTask?: Pick<Post, "tags">
 ): { submissionTags: string[]; usedParentFallback: boolean } {
   const normalizedExtractedTags = normalizeTags(extractedTags);
   if (normalizedExtractedTags.length > 0) {

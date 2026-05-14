@@ -1,25 +1,25 @@
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 import { getTaskState, isTaskPost } from "@/types";
 import { isTaskCompleted, isTaskTerminal } from "@/domain/content/task-state";
 
 export type TreeTaskFoldState = "collapsed" | "matchingOnly" | "allVisible";
 
 interface DeriveTreeTaskItemChildrenParams {
-  allChildren: Task[];
-  matchingChildren: Task[];
+  allChildren: Post[];
+  matchingChildren: Post[];
   hasMatchingFilters: boolean;
   currentTaskIsDirectMatch: boolean;
   parentIsTerminal?: boolean;
 }
 
 export interface TreeTaskItemChildrenState {
-  allChildren: Task[];
-  allTaskChildren: Task[];
-  allCommentChildren: Task[];
-  matchingTaskChildren: Task[];
-  matchingCommentChildren: Task[];
-  defaultMatchingTaskChildren: Task[];
-  defaultMatchingCommentChildren: Task[];
+  allChildren: Post[];
+  allTaskChildren: Post[];
+  allCommentChildren: Post[];
+  matchingTaskChildren: Post[];
+  matchingCommentChildren: Post[];
+  defaultMatchingTaskChildren: Post[];
+  defaultMatchingCommentChildren: Post[];
   taskChildCount: number;
   commentChildCount: number;
   completedTaskChildCount: number;
@@ -27,7 +27,7 @@ export interface TreeTaskItemChildrenState {
   allVisibleDiffersFromMatching: boolean;
 }
 
-function mergeChildrenPreservingOrder(allChildren: Task[], primaryChildren: Task[], extraChildren: Task[]): Task[] {
+function mergeChildrenPreservingOrder(allChildren: Post[], primaryChildren: Post[], extraChildren: Post[]): Post[] {
   const includedIds = new Set<string>([
     ...primaryChildren.map((child) => child.id),
     ...extraChildren.map((child) => child.id),

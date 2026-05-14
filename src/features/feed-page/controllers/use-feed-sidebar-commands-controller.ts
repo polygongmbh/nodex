@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import type { Channel, Task } from "@/types";
+import type { Channel, Post } from "@/types";
 import type { ChannelMatchMode } from "@/types";
 import type { SidebarPerson } from "@/types/person";
 import type { FeedSidebarCommands } from "./feed-sidebar-commands-context";
@@ -13,7 +13,7 @@ export interface UseFeedSidebarCommandsControllerOptions {
   sidebarChannels: Channel[];
   channelFilterStates: Map<string, Channel["filterState"]>;
   sidebarPeople: SidebarPerson[];
-  allTasks: Task[];
+  allTasks: Post[];
   // Channel filter commands
   onToggleChannel: (channelId: string) => void;
   onShowOnlyChannel: (channelId: string) => void;

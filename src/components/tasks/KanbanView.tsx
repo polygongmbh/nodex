@@ -24,7 +24,7 @@ import {
 import {
   getTaskStatus,
   normalizeTaskState,
-  type Task,
+  type Post,
   type TaskPost,
   type TaskState,
   type ComposeRestoreRequest,
@@ -49,8 +49,8 @@ import { buildChildrenMap, type SortContext } from "@/domain/content/task-sortin
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 
 interface KanbanViewProps {
-  tasks: Task[];
-  allTasks: Task[];
+  tasks: Post[];
+  allTasks: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -68,7 +68,7 @@ interface KanbanColumn {
   color: string;
 }
 
-function getColumns(tasks: Task[]): KanbanColumn[] {
+function getColumns(tasks: Post[]): KanbanColumn[] {
   const registry = getTaskStateRegistry();
   const columns: KanbanColumn[] = [];
   const seen = new Set<string>();
@@ -229,7 +229,7 @@ export function KanbanView({
     });
   }, [canonicalStateIdByTaskId]);
   const getTaskEffectiveStatus = useCallback(
-    (task: Task): TaskState => optimisticStatusByTaskId[task.id] || getTaskState(task),
+    (task: Post): TaskState => optimisticStatusByTaskId[task.id] || getTaskState(task),
     [optimisticStatusByTaskId]
   );
   const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
