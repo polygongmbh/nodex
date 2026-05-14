@@ -42,12 +42,18 @@ describe("buildCollapsedPreviewItems", () => {
 });
 
 describe("getCollapsedPreviewMaxItems", () => {
-  it("uses coarse height buckets", () => {
-    expect(getCollapsedPreviewMaxItems(600)).toBe(4);
-    expect(getCollapsedPreviewMaxItems(720)).toBe(6);
-    expect(getCollapsedPreviewMaxItems(840)).toBe(6);
-    expect(getCollapsedPreviewMaxItems(900)).toBe(8);
-    expect(getCollapsedPreviewMaxItems(1080)).toBe(8);
+  it("never returns fewer than the floor on tiny screens", () => {
+    expect(getCollapsedPreviewMaxItems(0)).toBeGreaterThanOrEqual(4);
+    expect(getCollapsedPreviewMaxItems(400)).toBeGreaterThanOrEqual(4);
+    expect(getCollapsedPreviewMaxItems(600)).toBeGreaterThanOrEqual(4);
+  });
+
+  it("grows monotonically with available height", () => {
+    const heights = [600, 800, 1000, 1400, 2000];
+    const counts = heights.map(getCollapsedPreviewMaxItems);
+    for (let i = 1; i < counts.length; i++) {
+      expect(counts[i]).toBeGreaterThanOrEqual(counts[i - 1]);
+    }
   });
 });
 

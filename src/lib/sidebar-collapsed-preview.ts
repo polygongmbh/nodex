@@ -7,10 +7,15 @@ interface BuildCollapsedPreviewItemsOptions<T> {
   isAlwaysIncluded?: (item: T) => boolean;
 }
 
+const COLLAPSED_PREVIEW_ROW_HEIGHT_PX = 80;
+const COLLAPSED_PREVIEW_RESERVED_HEIGHT_PX = 360;
+const COLLAPSED_PREVIEW_MIN_VISIBLE = 4;
+
 export function getCollapsedPreviewMaxItems(screenHeight: number): number {
-  if (screenHeight >= 900) return 8;
-  if (screenHeight >= 720) return 6;
-  return 4;
+  const fits = Math.floor(
+    (screenHeight - COLLAPSED_PREVIEW_RESERVED_HEIGHT_PX) / COLLAPSED_PREVIEW_ROW_HEIGHT_PX
+  );
+  return Math.max(COLLAPSED_PREVIEW_MIN_VISIBLE, fits);
 }
 
 export function buildCollapsedPreviewItems<T>({
