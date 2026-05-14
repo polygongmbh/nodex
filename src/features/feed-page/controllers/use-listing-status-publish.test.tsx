@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useListingStatusPublish } from "./use-listing-status-publish";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { NostrEventKind } from "@/lib/nostr/types";
+import { isListingPost } from "@/types";
 import { makePerson, makeTask } from "@/test/fixtures";
 
 vi.mock("sonner", () => ({
@@ -45,7 +46,7 @@ function Harness({
   return (
     <>
       <button onClick={() => handleListingStatusChange("b".repeat(64), "sold")}>Sold</button>
-      <output data-testid="status">{allTasks[0]?.nip99?.status || ""}</output>
+      <output data-testid="status">{(isListingPost(allTasks[0]) ? allTasks[0].nip99.status : "") || ""}</output>
       <output data-testid="publish-count">{String(publishEvent.mock.calls.length)}</output>
     </>
   );

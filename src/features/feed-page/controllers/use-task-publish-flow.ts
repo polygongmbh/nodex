@@ -1,4 +1,4 @@
-import { getTaskPrimaryDate } from "@/types";
+import { getTaskPrimaryDate, isListingPost } from "@/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
@@ -547,7 +547,7 @@ export function useTaskPublishFlow({
           ? assigneePubkeys
           : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
-      nip99: normalizedMessageType === "listing" ? nip99 : undefined,
+      ...(normalizedMessageType === "listing" && nip99 ? { nip99 } : {}),
       locationGeohash: normalizedLocationGeohash,
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
@@ -1001,7 +1001,7 @@ export function useTaskPublishFlow({
       selectedRelays: existingTask.relays,
       priority: existingTask.priority,
       attachments: existingTask.attachments,
-      nip99: existingTask.nip99,
+      nip99: isListingPost(existingTask) ? existingTask.nip99 : undefined,
       locationGeohash: existingTask.locationGeohash,
       recomposeOf: {
         eventId: existingTask.id,

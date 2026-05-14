@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { nip19 } from "nostr-tools";
-import { Task, getLastEditedAt, getTaskStatus, getTaskState, getTaskStatusFromTask } from "@/types";
+import { Task, getLastEditedAt, getTaskStatus, getTaskState, getTaskStatusFromTask, isListingPost } from "@/types";
 import { basicNostrEvents } from "@/data/basic-nostr-events";
 import { mergeTasks } from "@/domain/content/task-merge";
 import {
@@ -672,7 +672,7 @@ describe("nostrEventsToTasks", () => {
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
     expect(tasks[0].id).toBe("listing-new");
-    expect(tasks[0].nip99?.status).toBe("sold");
+    expect(isListingPost(tasks[0]) && tasks[0].nip99.status).toBe("sold");
   });
 
   it("discards invalid parameterized replaceable events missing d", () => {

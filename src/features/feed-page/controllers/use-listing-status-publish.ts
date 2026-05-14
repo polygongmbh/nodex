@@ -2,12 +2,12 @@ import { useCallback } from "react";
 import { notifyPublishListingStatusFailed } from "@/lib/notifications";
 import { buildImetaTag } from "@/lib/attachments";
 import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
-import { isListingKind } from "@/domain/content/task-kind";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Nip99ListingStatus, Task } from "@/types";
+import { isListingPost } from "@/types";
 import type { Person } from "@/types/person";
 
 interface PublishResult {
@@ -43,7 +43,7 @@ export function useListingStatusPublish({
     if (guardInteraction("modify")) return;
 
     const existing = allTasks.find((task) => task.id === taskId);
-    if (!existing || !isListingKind(existing.kind) || !existing.nip99) return;
+    if (!existing || !isListingPost(existing)) return;
     if (!currentUser?.pubkey || currentUser.pubkey.toLowerCase() !== existing.author.pubkey.toLowerCase()) return;
 
     const previousStatus = existing.nip99.status;
@@ -51,7 +51,7 @@ export function useListingStatusPublish({
     if (!replaceableKey) return;
 
     setLocalTasks((prev) => {
-      const nextNip99 = { ...(existing.nip99 || {}), status };
+      const nextNip99 = { ...existing.nip99, status };
       const matchesListing = (task: Task) =>
         task.id === taskId ||
         getListingReplaceableKey(task, LISTING_EVENT_KIND) === replaceableKey;
@@ -59,10 +59,10 @@ export function useListingStatusPublish({
       const next = prev.map((task) => {
         if (!matchesListing(task)) return task;
         touched = true;
-        return { ...task, nip99: nextNip99, lastEditedAt: new Date() };
+        return { ...task, nip99: nextNip99, lastEditedAt: new Date() } as Task;
       });
       if (touched) return next;
-      return [{ ...existing, nip99: nextNip99, lastEditedAt: new Date() }, ...next];
+      return [{ ...existing, nip99: nextNip99, lastEditedAt: new Date() } as Task, ...next];
     });
 
     if (!isNostrEventId(existing.id)) return;
@@ -97,11 +97,12 @@ export function useListingStatusPublish({
       setLocalTasks((prev) => prev.map((task) => {
         const taskReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
         if (taskReplaceableKey !== replaceableKey) return task;
+        if (!isListingPost(task)) return task;
         return {
           ...task,
-          nip99: { ...(task.nip99 || {}), status: previousStatus || "active" },
+          nip99: { ...task.nip99, status: previousStatus || "active" },
           lastEditedAt: new Date(),
-        };
+        } as Task;
       }));
     });
   }, [

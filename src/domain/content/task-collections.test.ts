@@ -5,11 +5,15 @@ import {
   applyTaskSortOverlays,
   dedupeMergedTasks,
 } from "./task-collections";
-import type { Task } from "@/types";
+import { isListingPost, type Task } from "@/types";
 
 const baseAuthor = makePerson({ pubkey: "user-1", name: "me", displayName: "Me" });
 
-function buildTask(id: string, timestampIso: string, overrides: Partial<Task> = {}): Task {
+function buildTask(
+  id: string,
+  timestampIso: string,
+  overrides: Parameters<typeof makeTask>[0] = {}
+): Task {
   return makeTask({
     id,
     author: baseAuthor,
@@ -52,7 +56,7 @@ describe("dedupeMergedTasks", () => {
 
     expect(deduped).toHaveLength(1);
     expect(deduped[0]?.id).toBe("listing-b");
-    expect(deduped[0]?.nip99?.status).toBe("sold");
+    expect(isListingPost(deduped[0]) && deduped[0].nip99.status).toBe("sold");
   });
 });
 

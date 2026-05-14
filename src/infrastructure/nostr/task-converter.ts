@@ -142,7 +142,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     content: normalizedContent,
     tags: allTags,
     relays: getRelayIdsFromEvent(event),
-    nip99,
+    ...(nip99 ? { nip99 } : {}),
     locationGeohash,
     timestamp: new Date(event.created_at * 1000),
     parentId,

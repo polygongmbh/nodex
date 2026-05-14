@@ -1,4 +1,4 @@
-import type { Channel, Relay, Task, TaskDate, TaskDateType, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
+import type { Channel, Nip99Metadata, Relay, Task, TaskDate, TaskDateType, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
 import { normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
@@ -47,6 +47,8 @@ type MakeTaskOverrides = Partial<Task> & {
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
+  /** Listing-only metadata; preserved on the resulting task for tests. */
+  nip99?: Nip99Metadata;
 };
 
 /**
@@ -69,7 +71,7 @@ export function withTaskState(task: Task, state: TaskState | TaskStatus): Task {
 }
 
 export function makeTask(overrides: MakeTaskOverrides = {}): Task {
-  const { state, stateUpdates, dueDate, dueTime, dateType, dates, ...rest } = overrides;
+  const { state, stateUpdates, dueDate, dueTime, dateType, dates, nip99, ...rest } = overrides;
   const author = rest.author ?? makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
   const timestamp = rest.timestamp ?? DEFAULT_TIME;
   const id = rest.id ?? "task-1";
@@ -102,6 +104,7 @@ export function makeTask(overrides: MakeTaskOverrides = {}): Task {
     timestamp,
     stateUpdates: resolvedStateUpdates,
     dates: resolvedDates,
+    ...(nip99 ? { nip99 } : {}),
     ...rest,
-  };
+  } as Task;
 }

@@ -28,6 +28,7 @@ import {
   type Task,
   getTaskState,
   getTaskPrimaryDate,
+  isListingPost,
 } from "@/types";
 import type { Person } from "@/types/person";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
@@ -107,7 +108,8 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   };
   const isListing = isListingKind(task.kind);
   const isComment = isCommentKind(task.kind);
-  const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
+  const listingStatus: Nip99ListingStatus =
+    isListingPost(task) && task.nip99.status === "sold" ? "sold" : "active";
   const isSoldListing = isListing && listingStatus === "sold";
   const isCompletedVisual = isTaskTerminal(getTaskState(task)) || isSoldListing;
   const isLockedUntilStart = isTaskLockedUntilStart(task);

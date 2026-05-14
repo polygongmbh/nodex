@@ -1,5 +1,5 @@
 import type { Person } from "./person";
-import type { NostrEventKind } from "@/lib/nostr/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 export interface Relay {
   id: string;
@@ -195,7 +195,7 @@ export interface CommentPost extends BasePost {
 
 export interface ListingPost extends BasePost {
   kind: NostrEventKind.ClassifiedListing;
-  nip99?: Nip99Metadata;
+  nip99: Nip99Metadata;
 }
 
 export type Post = TaskPost | CommentPost | ListingPost;
@@ -212,7 +212,6 @@ export type Post = TaskPost | CommentPost | ListingPost;
  */
 export interface Task extends BasePost {
   kind: NostrEventKind;
-  nip99?: Nip99Metadata;
   stateUpdates?: TaskStateUpdate[];
   dates?: TaskDate[];
   assigneePubkeys?: string[];
@@ -244,6 +243,17 @@ export function getTaskState(task: Pick<Task, "stateUpdates"> | undefined): Task
 
 export function getTaskStatusFromTask(task: Pick<Task, "stateUpdates"> | undefined): TaskStatus {
   return getTaskState(task).status;
+}
+
+/**
+ * Type guard that narrows any post-shaped value to also carry the
+ * ListingPost-only fields (currently `nip99`). Lets call sites pass a `Task`
+ * (kitchen-sink) and gain access to listing-specific fields after the check.
+ */
+export function isListingPost<T extends { kind: NostrEventKind }>(
+  post: T | undefined
+): post is T & ListingPost {
+  return post?.kind === NostrEventKind.ClassifiedListing;
 }
 
 /**
