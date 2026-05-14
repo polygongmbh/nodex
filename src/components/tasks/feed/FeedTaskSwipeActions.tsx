@@ -172,15 +172,18 @@ export function FeedTaskSwipeActions({
     if (!activeRef.current) {
       const ax = Math.abs(dx);
       const ay = Math.abs(dy);
-      if (ay >= ACTIVATION_DELTA_PX && ay > ax) {
-        // Vertical intent — bail and let native scroll proceed.
-        startXRef.current = null;
-        return;
-      }
+      // Wait until horizontal motion has crossed the threshold AND
+      // dominates the vertical component. No bail-out: if the user's
+      // gesture turns out to be a vertical scroll, the browser engages
+      // pan-y and fires pointercancel, which resets us cleanly.
       if (ax < ACTIVATION_DELTA_PX || ax <= ay) return;
       activeRef.current = true;
       try {
-        containerRef.current?.setPointerCapture?.(event.pointerId);
+        // Capture on the same element that owns the listeners — the
+        // content div — so subsequent pointer events keep being
+        // delivered to these handlers even when the finger drifts off
+        // the row or the content translates out from under it.
+        event.currentTarget.setPointerCapture?.(event.pointerId);
       } catch {
         // pointer capture unsupported
       }
@@ -210,7 +213,7 @@ export function FeedTaskSwipeActions({
     startXRef.current = null;
     activeRef.current = false;
     try {
-      containerRef.current?.releasePointerCapture?.(event.pointerId);
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
     } catch {
       // pointer was never captured
     }
