@@ -137,6 +137,7 @@ interface PrioritySelectProps {
   priority?: number;
   onPriorityChange: (priority?: number) => void;
   className?: string;
+  contentClassName?: string;
   disabled?: boolean;
   stopPropagation?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -156,6 +157,7 @@ export function PrioritySelect({
   priority,
   onPriorityChange,
   className,
+  contentClassName,
   disabled = false,
   stopPropagation = false,
   onOpenChange,
@@ -241,7 +243,7 @@ export function PrioritySelect({
         </SelectValue>
       </SelectTrigger>
       <SelectContent
-        className="pointer-events-auto"
+        className={cn("pointer-events-auto", contentClassName)}
         onCloseAutoFocus={(event) => {
           onCloseAutoFocus?.(event);
           if (stopPropagation) event.preventDefault();

@@ -164,6 +164,8 @@ export function UnifiedBottomBar({
   const initialComposerState = initialComposerStateRef.current;
   const [sharedText, setSharedText] = useState(initialComposerState.content);
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
+  const [priorityOpen, setPriorityOpen] = useState(false);
+  const [attachmentPickerOpen, setAttachmentPickerOpen] = useState(false);
   const [isBottomBarFocused, setIsBottomBarFocused] = useState(false);
   const [isBottomBarInteracting, setIsBottomBarInteracting] = useState(false);
   const [isComposeFocused, setIsComposeFocused] = useState(false);
@@ -795,6 +797,21 @@ export function UnifiedBottomBar({
     setActiveSelector(activeSelector === type ? null : type);
   };
 
+  const openAttachmentPicker = () => {
+    setActiveSelector(null);
+    setAttachmentPickerOpen(true);
+    fileInputRef.current?.click();
+  };
+
+  // OS file picker dismissal isn't directly observable; restoring window focus
+  // is the most reliable cross-browser signal that the picker closed.
+  useEffect(() => {
+    if (!attachmentPickerOpen) return;
+    const clear = () => setAttachmentPickerOpen(false);
+    window.addEventListener("focus", clear);
+    return () => window.removeEventListener("focus", clear);
+  }, [attachmentPickerOpen]);
+
   // Count active filters for badge display
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
@@ -1352,12 +1369,17 @@ export function UnifiedBottomBar({
           {uploadEnabled && canCreateContent && (
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 active:bg-muted transition-colors shrink-0 touch-target-sm"
+              onClick={openAttachmentPicker}
+              className={cn(
+                "h-8 flex items-center gap-1.5 px-2 rounded-md border transition-colors text-xs leading-none shrink-0",
+                attachmentPickerOpen
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              )}
               aria-label={t("composer.attachments.add")}
               title={t("composer.attachments.add")}
             >
-              <Paperclip className="w-4 h-4" />
+              <Paperclip className="w-3.5 h-3.5" />
             </button>
           )}
           {showInlineTaskSubmitBlock && showTaskSubmitBlockBanner ? (
@@ -1382,11 +1404,18 @@ export function UnifiedBottomBar({
                   priority={priority}
                   onPriorityChange={setPriority}
                   leadingIcon={<Flag className="w-3.5 h-3.5" />}
+                  onOpenChange={(open) => {
+                    setPriorityOpen(open);
+                    if (open) setActiveSelector(null);
+                  }}
+                  contentClassName="z-[120]"
                   className={cn(
                     "h-8 inline-flex items-center gap-1.5 pl-2 pr-2 rounded-md border bg-transparent text-xs leading-none shadow-none transition-colors cursor-pointer focus:outline-none max-[420px]:max-w-[5.5rem]",
-                    typeof priority === "number"
-                      ? "border-border text-foreground hover:bg-muted/60"
-                      : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    priorityOpen
+                      ? "border-primary bg-primary/10 text-primary"
+                      : typeof priority === "number"
+                        ? "border-border text-foreground hover:bg-muted/60"
+                        : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   )}
                 />
                 <button
@@ -1889,9 +1918,11 @@ export function UnifiedBottomBar({
             multiple
             className="hidden"
             onChange={(event) => {
+              setAttachmentPickerOpen(false);
               queueSelectedFiles(event.target.files);
               event.currentTarget.value = "";
             }}
+            onCancel={() => setAttachmentPickerOpen(false)}
           />
         </>
       )}
