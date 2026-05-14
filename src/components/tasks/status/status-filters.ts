@@ -169,19 +169,35 @@ interface TimelineFilterOptions {
    * items or comments.
    */
   concernsScope: Set<string>;
+  /**
+   * Full task pool, used to surface posts that live in pinned channels but
+   * may have been filtered out of `contextTasks` by sidebar selections.
+   * Optional for backwards compatibility — when omitted, no pinned-channel
+   * expansion happens.
+   */
+  allTasks?: Post[];
+  /**
+   * Channel ids the user has pinned in the sidebar. Posts whose tags include
+   * any of these are unconditionally added to the timeline (only when the
+   * scope is unfocused — focus still narrows the view).
+   */
+  pinnedChannelIds?: Set<string>;
 }
 
 /**
  * Activity timeline: top-level tasks/posts of the current context, plus any
  * comments inside the context, plus any non-top-level items where someone in
- * `concernsScope` is author or assignee. Ordered newest first. State-change
- * entries are excluded by construction (only tasks/posts are considered, never
- * `state-update` feed entries).
+ * `concernsScope` is author or assignee, plus posts from any pinned channels
+ * regardless of sidebar filters (unfocused scope only). Ordered newest first.
+ * State-change entries are excluded by construction (only tasks/posts are
+ * considered, never `state-update` feed entries).
  */
 export function selectStatusTimelinePosts({
   contextTasks,
   focusedTaskId,
   concernsScope,
+  allTasks,
+  pinnedChannelIds,
 }: TimelineFilterOptions): Post[] {
   const matching = contextTasks.filter((task) => {
     if (!isTaskPost(task)) return true;
@@ -191,5 +207,26 @@ export function selectStatusTimelinePosts({
     if (isTopLevelInContext) return true;
     return taskConcernsAny(task, concernsScope);
   });
+
+  if (!focusedTaskId && pinnedChannelIds && pinnedChannelIds.size > 0 && allTasks) {
+    const normalizedPinned = new Set<string>();
+    for (const id of pinnedChannelIds) {
+      const normalized = normalizePubkey(id);
+      if (normalized) normalizedPinned.add(normalized);
+    }
+    if (normalizedPinned.size > 0) {
+      const existingIds = new Set(matching.map((t) => t.id));
+      for (const task of allTasks) {
+        if (existingIds.has(task.id)) continue;
+        const tagMatches = (task.tags ?? []).some((tag) =>
+          normalizedPinned.has(normalizePubkey(tag))
+        );
+        if (!tagMatches) continue;
+        matching.push(task);
+        existingIds.add(task.id);
+      }
+    }
+  }
+
   return [...matching].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }

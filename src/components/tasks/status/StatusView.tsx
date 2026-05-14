@@ -74,6 +74,15 @@ export function StatusView() {
     () => resolveStatusConcernsScope(selectedPeoplePubkeys, viewModel.currentUser?.pubkey),
     [selectedPeoplePubkeys, viewModel.currentUser?.pubkey]
   );
+  const pinnedChannelIds = useMemo(
+    () =>
+      new Set(
+        taskSource.channels
+          .filter((channel) => channel.pinIndex !== undefined)
+          .map((channel) => channel.id)
+      ),
+    [taskSource.channels]
+  );
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
@@ -99,8 +108,10 @@ export function StatusView() {
           <div className="h-[calc(100%-2rem)]">
             <StatusTimeline
               contextTasks={contextTasks}
+              allTasks={taskSource.allTasks}
               focusedTaskId={taskSource.focusedTaskId}
               concernsScope={timelineConcernsScope}
+              pinnedChannelIds={pinnedChannelIds}
             />
           </div>
         </div>

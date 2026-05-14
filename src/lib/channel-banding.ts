@@ -17,9 +17,9 @@ export interface ChannelBandThresholds {
 }
 
 const DEFAULTS: Required<ChannelBandThresholds> = {
-  primaryPct: 0.7,
+  primaryPct: 0.8,
   expandedPct: 0.5,
-  primaryFloor: 2,
+  primaryFloor: 3,
 };
 
 const INVOLVEMENT_BOOST = 0.5;

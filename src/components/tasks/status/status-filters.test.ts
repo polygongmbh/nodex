@@ -335,4 +335,73 @@ describe("selectStatusTimelinePosts", () => {
     });
     expect(result.map((task) => task.id)).toEqual(["cmt", "r2", "r1"]);
   });
+
+  it("includes posts from pinned channels even when filtered out of context", () => {
+    const pinnedPost = makeTask({
+      id: "pinned-post",
+      tags: ["release"],
+      timestamp: new Date("2026-04-15"),
+    });
+    const unrelatedPost = makeTask({
+      id: "unrelated",
+      tags: ["other"],
+      timestamp: new Date("2026-04-20"),
+    });
+    const result = selectStatusTimelinePosts({
+      contextTasks: [root1, root2],
+      allTasks: [root1, root2, pinnedPost, unrelatedPost],
+      focusedTaskId: null,
+      concernsScope: new Set(),
+      pinnedChannelIds: new Set(["release"]),
+    });
+    expect(result.map((task) => task.id)).toEqual(["pinned-post", "r2", "r1"]);
+  });
+
+  it("matches pinned channel ids case-insensitively", () => {
+    const pinnedPost = makeTask({
+      id: "pinned-post",
+      tags: ["Release"],
+      timestamp: new Date("2026-04-15"),
+    });
+    const result = selectStatusTimelinePosts({
+      contextTasks: [],
+      allTasks: [pinnedPost],
+      focusedTaskId: null,
+      concernsScope: new Set(),
+      pinnedChannelIds: new Set(["release"]),
+    });
+    expect(result.map((task) => task.id)).toEqual(["pinned-post"]);
+  });
+
+  it("does not duplicate posts already in context when their channel is pinned", () => {
+    const post = makeTask({
+      id: "post",
+      tags: ["release"],
+      timestamp: new Date("2026-04-15"),
+    });
+    const result = selectStatusTimelinePosts({
+      contextTasks: [post],
+      allTasks: [post],
+      focusedTaskId: null,
+      concernsScope: new Set(),
+      pinnedChannelIds: new Set(["release"]),
+    });
+    expect(result.map((task) => task.id)).toEqual(["post"]);
+  });
+
+  it("does not expand pinned channels when a task is focused", () => {
+    const pinnedPost = makeTask({
+      id: "pinned-post",
+      tags: ["release"],
+      timestamp: new Date("2026-04-15"),
+    });
+    const result = selectStatusTimelinePosts({
+      contextTasks: [child],
+      allTasks: [root1, child, pinnedPost],
+      focusedTaskId: "r1",
+      concernsScope: new Set(),
+      pinnedChannelIds: new Set(["release"]),
+    });
+    expect(result.map((task) => task.id)).toEqual(["c1"]);
+  });
 });

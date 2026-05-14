@@ -10,8 +10,10 @@ const TIMELINE_LIMIT = 40;
 
 interface StatusTimelineProps {
   contextTasks: Post[];
+  allTasks: Post[];
   focusedTaskId: string | null;
   concernsScope: Set<string>;
+  pinnedChannelIds: Set<string>;
 }
 
 /**
@@ -19,14 +21,27 @@ interface StatusTimelineProps {
  * current context plus comments and any items concerning the scope (no
  * status-update entries, no composer).
  */
-export function StatusTimeline({ contextTasks, focusedTaskId, concernsScope }: StatusTimelineProps) {
+export function StatusTimeline({
+  contextTasks,
+  allTasks,
+  focusedTaskId,
+  concernsScope,
+  pinnedChannelIds,
+}: StatusTimelineProps) {
   const { t } = useTranslation("tasks");
   const { t: tShell } = useTranslation("shell");
   const { people } = useFeedSurfaceState();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const posts = useMemo(
-    () => selectStatusTimelinePosts({ contextTasks, focusedTaskId, concernsScope }),
-    [contextTasks, focusedTaskId, concernsScope]
+    () =>
+      selectStatusTimelinePosts({
+        contextTasks,
+        focusedTaskId,
+        concernsScope,
+        allTasks,
+        pinnedChannelIds,
+      }),
+    [contextTasks, focusedTaskId, concernsScope, allTasks, pinnedChannelIds]
   );
 
   if (posts.length === 0) return null;
