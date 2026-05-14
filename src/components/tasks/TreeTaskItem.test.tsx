@@ -5,6 +5,7 @@ import { TreeTaskItem } from "./TreeTaskItem";
 import type { Task } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { makePerson, makeTask, withTaskState } from "@/test/fixtures";
+import { setRawEvent } from "@/stores/raw-events";
 
 const dispatchFeedInteraction = vi.fn();
 
@@ -147,18 +148,16 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("opens raw nostr event dialog on shift+alt+click and skips task selection", () => {
-    const taskWithRawEvent: Task = {
-      ...baseTask,
-      rawNostrEvent: {
-        id: "event-1",
-        pubkey: "b".repeat(64),
-        created_at: 1700000000,
-        kind: 1,
-        tags: [["t", "frontend"]],
-        content: "Ship feature #frontend",
-        sig: "c".repeat(128),
-      },
-    };
+    const taskWithRawEvent: Task = { ...baseTask, id: "task-with-raw-event" };
+    setRawEvent(taskWithRawEvent.id, {
+      id: "event-1",
+      pubkey: "b".repeat(64),
+      created_at: 1700000000,
+      kind: 1,
+      tags: [["t", "frontend"]],
+      content: "Ship feature #frontend",
+      sig: "c".repeat(128),
+    });
 
     renderTreeTaskItem({ task: taskWithRawEvent });
 

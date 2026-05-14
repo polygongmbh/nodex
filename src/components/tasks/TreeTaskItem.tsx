@@ -3,6 +3,7 @@ import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Ca
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { cn } from "@/lib/utils";
 import { Task, Relay, getTaskStatus, getTaskState, getTaskPrimaryDate } from "@/types";
+import { getRawEvent } from "@/stores/raw-events";
 import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -219,9 +220,10 @@ export function TreeTaskItem({
   };
 
   const [isRawEventDialogOpen, setIsRawEventDialogOpen] = useState(false);
+  const rawEvent = getRawEvent(task.id);
 
   const handleTaskContainerClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (task.rawNostrEvent && isRawNostrEventShortcutClick(event)) {
+    if (rawEvent && isRawNostrEventShortcutClick(event)) {
       event.preventDefault();
       event.stopPropagation();
       setIsRawEventDialogOpen(true);
@@ -619,7 +621,7 @@ export function TreeTaskItem({
       <RawNostrEventDialog
         open={isRawEventDialogOpen}
         onOpenChange={setIsRawEventDialogOpen}
-        event={task.rawNostrEvent || null}
+        event={rawEvent || null}
       />
     </div>
   );

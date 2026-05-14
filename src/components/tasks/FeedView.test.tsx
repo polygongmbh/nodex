@@ -5,6 +5,7 @@ import { FeedView } from "./FeedView";
 import { Task, Channel, Relay } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
+import { setRawEvent } from "@/stores/raw-events";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import * as linkify from "@/lib/linkify";
@@ -142,15 +143,15 @@ describe("FeedView", () => {
       state: {
         status: "open"
       },
-      rawNostrEvent: {
-        id: "event-raw-1",
-        pubkey: author.pubkey,
-        created_at: 1700000000,
-        kind: 1,
-        tags: [["t", "general"]],
-        content: "Raw content #general",
-        sig: "f".repeat(128),
-      },
+    });
+    setRawEvent("task-raw", {
+      id: "event-raw-1",
+      pubkey: author.pubkey,
+      created_at: 1700000000,
+      kind: 1,
+      tags: [["t", "general"]],
+      content: "Raw content #general",
+      sig: "f".repeat(128),
     });
 
     const { container } = render(

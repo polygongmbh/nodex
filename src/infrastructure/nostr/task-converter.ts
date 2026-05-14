@@ -1,4 +1,5 @@
 import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskReactions, type TaskDate, type TaskDateType, Task, getLastEditedAt } from "@/types";
+import { setRawEvent } from "@/stores/raw-events";
 import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
@@ -135,6 +136,16 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     ...contentAttachments,
   ]);
 
+  setRawEvent(event.id, {
+    id: event.id,
+    pubkey: event.pubkey,
+    created_at: event.created_at,
+    kind: event.kind,
+    tags: event.tags,
+    content: event.content,
+    sig: event.sig,
+  });
+
   return {
     id: event.id,
     kind: event.kind,
@@ -150,15 +161,6 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
     priority,
     attachments: attachments.length > 0 ? attachments : undefined,
-    rawNostrEvent: {
-      id: event.id,
-      pubkey: event.pubkey,
-      created_at: event.created_at,
-      kind: event.kind,
-      tags: event.tags,
-      content: event.content,
-      sig: event.sig,
-    },
   };
 }
 

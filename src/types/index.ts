@@ -176,7 +176,6 @@ export interface BasePost {
   mentions?: string[];
   attachments?: PublishedAttachment[];
   locationGeohash?: string;
-  rawNostrEvent?: RawNostrEvent;
 }
 
 export interface TaskPost extends BasePost {

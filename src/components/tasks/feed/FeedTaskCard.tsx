@@ -30,6 +30,7 @@ import {
   getTaskPrimaryDate,
   isListingPost,
 } from "@/types";
+import { getRawEvent } from "@/stores/raw-events";
 import type { Person } from "@/types/person";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -205,10 +206,11 @@ export const FeedTaskCard = memo(function FeedTaskCard({
       taskId={task.id}
       title={surfaceTitle}
       onClick={(event) => {
-        if (task.rawNostrEvent && isRawNostrEventShortcutClick(event)) {
+        const rawEvent = getRawEvent(task.id);
+        if (rawEvent && isRawNostrEventShortcutClick(event)) {
           event.preventDefault();
           event.stopPropagation();
-          onOpenRawEvent(task.rawNostrEvent);
+          onOpenRawEvent(rawEvent);
           return;
         }
         if (hasTextSelection()) return;
