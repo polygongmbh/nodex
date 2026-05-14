@@ -158,9 +158,11 @@ vi.mock("@/components/tasks/FeedView", () => ({
 }));
 
 vi.mock("@/components/tasks/CalendarView", () => ({
-  CalendarView: ({ mobileView }: { mobileView?: "calendar" | "upcoming" }) => (
-    <div data-testid="calendar-view" data-mobile-view={mobileView ?? "calendar"} />
-  ),
+  CalendarView: () => <div data-testid="calendar-view" />,
+}));
+
+vi.mock("@/components/tasks/UpcomingView", () => ({
+  UpcomingView: () => <div data-testid="upcoming-view" />,
 }));
 
 const relays: Relay[] = [makeRelay()];
@@ -514,14 +516,14 @@ describe("MobileLayout auth wiring", () => {
       taskViewModel: { tasks: [childTask], allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
     });
 
-    expect(screen.getByTestId("calendar-view")).toHaveAttribute("data-mobile-view", "upcoming");
+    expect(screen.getByTestId("upcoming-view")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /up/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^all$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Root task general" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Child task general" })).toBeInTheDocument();
   });
 
-  it("shows the focused breadcrumb on mobile calendar", () => {
+  it("shows the focused breadcrumb on mobile calendar", async () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
@@ -533,7 +535,9 @@ describe("MobileLayout auth wiring", () => {
       taskViewModel: { tasks: [childTask], allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
     });
 
-    expect(screen.getByTestId("calendar-view")).toHaveAttribute("data-mobile-view", "calendar");
+    await waitFor(() => {
+      expect(screen.getByTestId("calendar-view")).toBeInTheDocument();
+    });
     expect(screen.getByRole("button", { name: /up/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^all$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Root task general" })).toBeInTheDocument();

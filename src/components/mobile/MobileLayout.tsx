@@ -22,6 +22,9 @@ const FeedView = lazy(() =>
 const CalendarView = lazy(() =>
   import("@/components/tasks/CalendarView").then((module) => ({ default: module.CalendarView }))
 );
+const UpcomingView = lazy(() =>
+  import("@/components/tasks/UpcomingView").then((module) => ({ default: module.UpcomingView }))
+);
 
 export function MobileLayout() {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -167,9 +170,9 @@ export function MobileLayout() {
       case "feed":
         return <FeedView {...effectiveTaskViewModel} isMobile />;
       case "list":
-        return <CalendarView {...effectiveTaskViewModel} isMobile mobileView="upcoming" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <UpcomingView {...effectiveTaskViewModel} />;
       case "calendar":
-        return <CalendarView {...effectiveTaskViewModel} searchQueryOverride="" isMobile mobileView="calendar" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView {...effectiveTaskViewModel} searchQueryOverride="" isMobile selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
         return <TaskTree {...effectiveTaskViewModel} isMobile />;
     }

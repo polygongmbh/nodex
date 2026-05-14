@@ -158,10 +158,6 @@
     "loadingMoreEvents": "Lade weitere Ereignisse..."
   },
   "calendar": {
-    "tabs": {
-      "upcoming": "Anstehend",
-      "calendar": "Kalender"
-    },
     "weekShort": "KW",
     "moreTasks": "+{{count}} mehr",
     "nav": {

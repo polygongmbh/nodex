@@ -69,7 +69,6 @@ describe("CalendarView responsiveness", () => {
         tasks={[child]}
         allTasks={[root, child]}
         isMobile
-        mobileView="calendar"
         selectedDate={new Date("2026-02-18T10:00:00.000Z")}
       />
     );
@@ -109,7 +108,6 @@ describe("CalendarView responsiveness", () => {
         tasks={tasks}
         allTasks={tasks}
         isMobile
-        mobileView="calendar"
       />
     );
 

@@ -1,16 +1,14 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect, type KeyboardEvent } from "react";
 import { hasTextSelection } from "@/lib/click-intent";
-import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefinition } from "@/domain/task-states/task-state-config";
 import {
   getTaskState,
   getTaskStatus,
   type Post,
-  type TaskPost,
   type TaskState,
   type ComposeRestoreRequest,
-  type TaskStatus,
   getTaskPrimaryDate,
   isTaskPost,
 } from "@/types";
@@ -25,9 +23,7 @@ import {
   addMonths,
   subMonths,
   isToday,
-  isPast,
   startOfDay,
-  isTomorrow,
   startOfWeek,
   endOfWeek,
   eachWeekOfInterval,
@@ -80,7 +76,6 @@ interface CalendarViewProps {
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
-  mobileView?: "calendar" | "upcoming";
   isHydrating?: boolean;
 }
 
@@ -95,9 +90,7 @@ export function CalendarView({
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
   isMobile = false,
-  mobileView,
   composeRestoreRequest = null,
-  isHydrating = false,
 }: CalendarViewProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -126,14 +119,12 @@ export function CalendarView({
     closeOnSuccess: true,
     onCancel: closeEventComposer,
   });
-  const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
   const statusMenuOpenedFromKeyboardTaskIdsRef = useRef<Set<string>>(new Set());
   const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
-  const effectiveMobileTab = mobileView ?? mobileTab;
   const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
   const desktopScrollerRef = useRef<HTMLDivElement | null>(null);
   const desktopMonthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -153,9 +144,6 @@ export function CalendarView({
     searchQueryOverride,
   });
   const calendarSelectors = useMemo(() => createCalendarSelectors(taskSource), [taskSource]);
-  const searchQuery = taskSource.searchQuery;
-  const tasksWithDueDates = calendarSelectors.getTasksWithDueDates();
-  const upcomingTasks = calendarSelectors.getUpcomingTasks();
   const getTasksForDay = calendarSelectors.getTasksForDay;
   const getAncestorChain = calendarSelectors.getAncestorChain;
   const hasChildren = useCallback(
@@ -221,47 +209,6 @@ export function CalendarView({
       return [...prev, monthStart].sort((a, b) => a.getTime() - b.getTime());
     });
   }, []);
-
-  // Group upcoming tasks by date category
-  const groupedUpcoming = useMemo(() => {
-    const groups: { label: string; tasks: TaskPost[]; isOverdue?: boolean }[] = [];
-    const today = startOfDay(new Date());
-
-    const overdue: TaskPost[] = [];
-    const todayTasks: TaskPost[] = [];
-    const tomorrowTasks: TaskPost[] = [];
-    const thisWeek: TaskPost[] = [];
-    const later: TaskPost[] = [];
-    
-    upcomingTasks.forEach(task => {
-      const due = getTaskPrimaryDate(task)?.date;
-      if (!due) return;
-      const dueDay = startOfDay(due);
-      
-      if (isPast(dueDay) && !isToday(dueDay)) {
-        overdue.push(task);
-      } else if (isToday(dueDay)) {
-        todayTasks.push(task);
-      } else if (isTomorrow(dueDay)) {
-        tomorrowTasks.push(task);
-      } else {
-        const daysUntil = Math.floor((dueDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysUntil <= 7) {
-          thisWeek.push(task);
-        } else {
-          later.push(task);
-        }
-      }
-    });
-    
-    if (overdue.length > 0) groups.push({ label: "Overdue", tasks: overdue, isOverdue: true });
-    if (todayTasks.length > 0) groups.push({ label: "Today", tasks: todayTasks });
-    if (tomorrowTasks.length > 0) groups.push({ label: "Tomorrow", tasks: tomorrowTasks });
-    if (thisWeek.length > 0) groups.push({ label: "This Week", tasks: thisWeek });
-    if (later.length > 0) groups.push({ label: "Later", tasks: later });
-    
-    return groups;
-  }, [upcomingTasks]);
 
   useEffect(() => {
     if (desktopInitialAlignDoneRef.current) return;
@@ -453,254 +400,8 @@ export function CalendarView({
           isMobile ? "flex-col" : "flex-col xl:flex-row"
         )}
       >
-        {/* Mobile Tab Switcher */}
-        {isMobile && !mobileView && (
-          <div className="flex border-b border-border flex-shrink-0">
-            <button
-              onClick={() => setMobileTab("upcoming")}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors",
-                mobileTab === "upcoming" 
-                  ? "text-primary border-b-2 border-primary" 
-                  : "text-muted-foreground"
-              )}
-            >
-              <List className="w-4 h-4" />
-              {t("calendar.tabs.upcoming")}
-            </button>
-            <button
-              onClick={() => setMobileTab("calendar")}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors",
-                mobileTab === "calendar" 
-                  ? "text-primary border-b-2 border-primary" 
-                  : "text-muted-foreground"
-              )}
-            >
-              <Grid className="w-4 h-4" />
-              {t("calendar.tabs.calendar")}
-            </button>
-          </div>
-        )}
-
-        {/* Mobile Upcoming Feed */}
-        {isMobile && effectiveMobileTab === "upcoming" && (
-          <div className="flex-1 overflow-auto p-3">
-            {groupedUpcoming.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">{t("tasks.empty.noUpcoming")}</p>
-            ) : (
-              <div className="space-y-4">
-                {groupedUpcoming.map((group) => (
-                  <div key={group.label}>
-                    <h3 className={cn(
-                      "text-xs font-semibold uppercase tracking-wide mb-2",
-                      group.isOverdue ? "text-destructive" : "text-muted-foreground"
-                    )}>
-                      {group.label} ({group.tasks.length})
-                    </h3>
-                    <div className="space-y-1.5">
-                       {group.tasks.map((task) => {
-                         const authorColor = getAuthorColor(task.author);
-                         const canChangeStatus = canCompleteTask(task);
-                         const canEditPriority = canChangeStatus && !isTaskTerminal(getTaskState(task));
-                         return (
-                           <div
-                             key={task.id}
-                             data-task-id={task.id}
-                             className="relative flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
-                           >
-                             {typeof task.priority === "number" ? (
-                               <div className="absolute right-2 top-2 z-10">
-                                 <TaskPrioritySelect
-                                   id={`upcoming-priority-${task.id}`}
-                                   taskId={canEditPriority ? task.id : undefined}
-                                   priority={task.priority}
-                                   stopPropagation
-                                   className={cn(
-                                     "px-1.5 py-0.5 text-sm focus:outline-none",
-                                     TASK_CHIP_STYLES.priority,
-                                     "text-sm",
-                                     canEditPriority ? "cursor-pointer hover:bg-warning/20" : "cursor-not-allowed opacity-60"
-                                   )}
-                                 />
-                               </div>
-                             ) : null}
-                             <DropdownMenu
-                               open={Boolean(statusMenuOpenByTaskId[task.id])}
-                               onOpenChange={(open) => {
-                                 if (!open) {
-                                   closeStatusMenu(task.id);
-                                   clearStatusMenuOpenIntent(task.id);
-                                   statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                   return;
-                                 }
-                                 if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
-                                   openStatusMenu(task.id);
-                                 } else {
-                                   closeStatusMenu(task.id);
-                                 }
-                                 clearStatusMenuOpenIntent(task.id);
-                                 statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                               }}
-                             >
-                               <DropdownMenuTrigger asChild>
-                                 <button
-                                    onKeyDown={(event) => handleStatusTriggerKeyDown(event, task)}
-                                   onClick={(e) => {
-                                     if (!canCompleteTask(task)) return;
-                                     if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
-                                       e.stopPropagation();
-                                       return;
-                                     }
-                                      if (statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id)) {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        return;
-                                      }
-                                     handleTaskStatusToggleClick(e, {
-                                       status: getTaskState(task),
-                                       hasStatusChangeHandler: canCompleteTask(task),
-                                       isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
-                                       openMenu: () => openStatusMenu(task.id),
-                                       closeMenu: () => closeStatusMenu(task.id),
-                                       allowMenuOpen: () => allowStatusMenuOpen(task.id),
-                                       clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                                        toggleStatus: () => dispatchToggleComplete(task.id),
-                                        focusTask: () => focusTask(task.id),
-                                        focusOnQuickToggle: hasChildren(task.id),
-                                      });
-                                   }}
-                                    onFocus={() => {
-                                      // Tab focus must not auto-open the status menu.
-                                      statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                                    }}
-                                   onPointerDown={() => {
-                                     statusTriggerPointerDownTaskIdsRef.current.add(task.id);
-                                     clearStatusMenuOpenIntent(task.id);
-                                     statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                   }}
-                                   onPointerDownCapture={(e) => {
-                                     if (!canCompleteTask(task)) return;
-                                     if (
-                                       shouldOpenStatusMenuForDirectSelection({
-                                         status: getTaskState(task),
-                                         altKey: e.altKey,
-                                         hasStatusChangeHandler: canCompleteTask(task),
-                                       })
-                                     ) {
-                                       e.preventDefault();
-                                       allowStatusMenuOpen(task.id);
-                                       statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
-                                       openStatusMenu(task.id);
-                                     }
-                                   }}
-                                   onBlur={() => {
-                                     statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                                     clearStatusMenuOpenIntent(task.id);
-                                      statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id);
-                                     statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                   }}
-                                   disabled={!canCompleteTask(task)}
-                                   aria-label={t("tasks.actions.setStatus")}
-                                   title={getStatusButtonTitle(task)}
-                                   className={cn(
-                                     "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
-                                     canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
-                                   )}
-                                 >
-                                   <TaskStateIcon status={getTaskState(task)} />
-                                 </button>
-                               </DropdownMenuTrigger>
-                               {canCompleteTask(task) && (
-                                  <DropdownMenuContent align="start">
-                                    {getTaskStateRegistry().map((state) => {
-                                      const isCurrent = resolveTaskStateFromStatus(getTaskState(task)).id === state.id;
-                                      return (
-                                        <DropdownMenuItem
-                                          key={state.id}
-                                          ref={isCurrent ? (node) => {
-                                            if (node && statusMenuOpenByTaskId[task.id]) {
-                                              requestAnimationFrame(() => node.focus());
-                                            }
-                                          } : undefined}
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            dispatchStatusChange(task.id, state.id);
-                                          }}
-                                          className={cn(isCurrent && "bg-muted")}
-                                        >
-                                          <TaskStateDefIcon state={state} className="mr-2" />
-                                          {state.label}
-                                        </DropdownMenuItem>
-                                      );
-                                    })}
-                                  </DropdownMenuContent>
-                               )}
-                             </DropdownMenu>
-                             <div className="flex-1 min-w-0">
-                               <p
-                                 onClick={() => {
-                                   if (!hasTextSelection() && hasChildren(task.id)) {
-                                     focusTask(task.id);
-                                   }
-                                 }}
-                                 className={cn(
-                                   `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`,
-                                   typeof task.priority === "number" && "pr-14"
-                                 )}
-                                 title={(() => {
-                                   const typeLabel = t("tasks.task").toLowerCase();
-                                   const preview = getTaskTooltipPreview(task.content);
-                                   return preview
-                                     ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-                                     : t("tasks.focusTaskTitle", { type: typeLabel });
-                                 })()}
-                               >
-                                 {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
-                                   void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
-                                 }, {
-                                   plainHashtags: isTaskTerminal(getTaskState(task)),
-                                   people,
-                                   disableStandaloneEmbeds: true,
-                                 })}
-                               </p>
-                               <div className="mt-1 flex items-end justify-between gap-2">
-                                 {(() => {
-                                   const primaryDate = getTaskPrimaryDate(task);
-                                   if (!primaryDate) return null;
-                                   return (
-                                     <span className="text-xs flex items-center gap-2 min-w-0">
-                                       <span
-                                         className="h-1.5 w-1.5 rounded-full flex-shrink-0"
-                                         style={{ backgroundColor: authorColor.accent }}
-                                       />
-                                       <Clock className="w-3 h-3 flex-shrink-0" />
-                                       <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
-                                       <span className="truncate">
-                                         {format(primaryDate.date, "MMM d")}
-                                         {primaryDate.time && ` ${primaryDate.time}`}
-                                       </span>
-                                     </span>
-                                   );
-                                 })()}
-                                 <TaskAssigneeAvatars task={task} />
-                               </div>
-                             </div>
-                           </div>
-                         );
-                       })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Calendar Grid - shown on desktop or when calendar tab selected on mobile */}
-        {(!isMobile || effectiveMobileTab === "calendar") && (
-          <div
-            ref={desktopScrollerRef}
+        <div
+          ref={desktopScrollerRef}
             className={cn(
               "flex-1 overflow-auto min-w-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
               isMobile ? "p-2 space-y-0" : "p-4 space-y-2"
@@ -860,11 +561,8 @@ export function CalendarView({
               </section>
             ))}
           </div>
-        )}
 
-        {/* Selected Day Panel - desktop or mobile calendar tab */}
-        {(!isMobile || effectiveMobileTab === "calendar") && (
-          <div className={cn(
+        <div className={cn(
             "border-border overflow-y-auto flex-shrink-0",
             isMobile 
               ? "border-t p-2 flex-1" 
@@ -1201,7 +899,6 @@ export function CalendarView({
             <p className="text-sm text-muted-foreground">{t("tasks.empty.selectDay")}</p>
           )}
         </div>
-        )}
       </div>
       {mediaController.activeMediaIndex !== null && (
         <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
