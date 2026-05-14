@@ -153,7 +153,7 @@
       "submitCurrentKind": "Als aktuellen Typ senden",
       "submitOppositeKind": "Als anderen Typ senden (wenn kein Autocomplete offen ist)",
       "insertHighlightedSuggestion": "Bei offenem Autocomplete: markierten Vorschlag einfügen",
-      "addMetadataOnly": "Bei offenem @/#-Autocomplete: markierten Tag/Mention nur als Veröffentlichungs-Metadaten hinzufügen (ohne Tokentext)"
+      "addMetadataOnly": "Bei offenem @/#-Autocomplete: markierten Tag/Mention nur als Metadaten fürs Senden hinzufügen (ohne Tokentext)"
     }
   },
   "theme": {

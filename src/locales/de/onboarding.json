@@ -35,7 +35,7 @@
       },
       "compose": {
         "title": "Erstellen",
-        "description": "Veröffentliche Aufgaben/Kommentare mit #tags und @mentions."
+        "description": "Erstelle Aufgaben und Kommentare mit #tags und @mentions."
       },
       "kanban": {
         "title": "Kanban",
@@ -86,7 +86,7 @@
       },
       "composeKind": {
         "title": "Aufgabe oder Kommentar",
-        "description": "Wähle vor dem Posten den Beitragstyp aus, um zusätzliche optionale Eigenschaften festzulegen."
+        "description": "Wähle vor dem Senden den Beitragstyp aus, um zusätzliche optionale Eigenschaften festzulegen."
       },
       "composeInput": {
         "title": "Mit #Tags und @Mentions Schreiben",

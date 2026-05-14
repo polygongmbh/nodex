@@ -49,7 +49,7 @@
       "recompose": "Neu verfassen…",
       "delete": "Löschen",
       "deleteConfirmTitle": "Diesen Beitrag löschen?",
-      "deleteConfirmBody": "Ein Löschereignis wird veröffentlicht. Relays können trotzdem eine Kopie behalten.",
+      "deleteConfirmBody": "Ein Löschereignis wird gesendet. Relays können trotzdem eine Kopie behalten.",
       "deleteConfirmAction": "Löschen",
       "recomposeConfirmTitle": "Beitrag neu verfassen?",
       "recomposeConfirmBody": "Dein Entwurf erscheint im Editor. Das Original wird erst nach erfolgreichem Senden gelöscht.",

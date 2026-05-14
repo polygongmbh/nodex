@@ -11,8 +11,8 @@
           "withoutContext": "Füge einen Kommentar hinzu"
         },
         "listing": {
-          "withContext": "Veröffentliche ein Inserat unter {{title}}",
-          "withoutContext": "Veröffentliche ein Inserat"
+          "withContext": "Erstelle ein Inserat unter {{title}}",
+          "withoutContext": "Erstelle ein Inserat"
         }
       },
       "parts": {
@@ -37,12 +37,12 @@
       "signin": "Anmeldung erforderlich",
       "write": "Schreibe zuerst eine Nachricht",
       "tag": "Mindestens einen #channel hinzufügen oder auswählen",
-      "coreTag": "Wähle einen dieser Kanäle zum Veröffentlichen aus: {{tags}}",
+      "coreTag": "Wähle einen dieser Kanäle zum Senden aus: {{tags}}",
       "rootPostPostingContext": "Wähle einen Space oder einen Beitrag zum Antworten aus.",
       "rootTaskExclusivePostingContext": "Wähle einen einzelnen Space oder einen Beitrag zum Antworten aus.",
-      "selectedSpacesNotWritable": "In den ausgewählten Spaces kann nicht gepostet werden.",
+      "selectedSpacesNotWritable": "An die ausgewählten Spaces kann nicht gesendet werden.",
       "uploading": "Warte, bis die Anhänge hochgeladen sind.",
-      "publishing": "Wird veröffentlicht..."
+      "publishing": "Wird gesendet..."
     },
     "blockedDetail": {
       "title": "Noch nicht sendebereit",
@@ -59,7 +59,7 @@
     "actions": {
       "createTask": "Aufgabe erstellen",
       "addComment": "Kommentar hinzufügen",
-      "postListing": "Inserat veröffentlichen",
+      "postListing": "Inserat erstellen",
       "signin": "Anmelden",
       "useCurrentLocation": "Aktuellen Standort verwenden",
       "clearLocation": "Standort entfernen",
@@ -136,25 +136,25 @@
   },
   "toasts": {
     "errors": {
-      "needTag": "Mindestens einen #channel vor dem Veröffentlichen hinzufügen",
-      "needCoreTag": "Wähle vor dem Veröffentlichen einen dieser Kanäle aus: {{tags}}",
+      "needTag": "Mindestens einen #channel vor dem Senden hinzufügen",
+      "needCoreTag": "Wähle vor dem Senden einen dieser Kanäle aus: {{tags}}",
       "spamRejected": "Beitrag blockiert: vom Spam-Filter erkannt",
-      "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
+      "needSigninPost": "Anmeldung zum Senden erforderlich",
       "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",
       "statusRestricted": "Aufgaben-Updates sind auf markierte Zuständige und den Ersteller beschränkt",
       "selectRelayOrParent": "Wähle einen einzelnen Space oder einen Thread bzw. eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
-      "selectedSpacesNotWritable": "In den ausgewählten Spaces kann nicht gepostet werden.",
-      "publishStatusFailed": "Status-Update konnte nicht an Relays veröffentlicht werden",
-      "publishDateFailed": "Datums-Update konnte nicht an Relay veröffentlicht werden",
-      "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden",
+      "selectedSpacesNotWritable": "An die ausgewählten Spaces kann nicht gesendet werden.",
+      "publishStatusFailed": "Status-Update konnte nicht an Relays gesendet werden",
+      "publishDateFailed": "Datums-Update konnte nicht an Relay gesendet werden",
+      "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay gesendet werden",
       "taskCreationFailed": "Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
-      "publishSavedForRetry": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert",
-      "publishSavedForRetryWithReason": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert ({{reason}})",
-      "publishSavedForRetryWithRelayReason": "Veröffentlichung auf {{relayUrl}} fehlgeschlagen; für erneuten Versuch gespeichert ({{reason}})",
+      "publishSavedForRetry": "Senden an Nostr fehlgeschlagen; für erneuten Versuch gespeichert",
+      "publishSavedForRetryWithReason": "Senden an Nostr fehlgeschlagen; für erneuten Versuch gespeichert ({{reason}})",
+      "publishSavedForRetryWithRelayReason": "Senden an {{relayUrl}} fehlgeschlagen; für erneuten Versuch gespeichert ({{reason}})",
       "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Space ist nicht mehr konfiguriert",
-      "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Space nicht akzeptiert",
-      "retryRejectedByRelayWithReason": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Space nicht akzeptiert ({{reason}})",
-      "publishListingStatusFailed": "Listing-Statusupdate konnte nicht an den Relay veröffentlicht werden",
+      "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Senden wurde vom Space nicht akzeptiert",
+      "retryRejectedByRelayWithReason": "Erneuter Versuch fehlgeschlagen: Senden wurde vom Space nicht akzeptiert ({{reason}})",
+      "publishListingStatusFailed": "Listing-Statusupdate konnte nicht an den Relay gesendet werden",
       "publishDeleteFailed": "Beitrag konnte nicht im Relay gelöscht werden",
       "deleteNotAuthorized": "Nur eigene Beiträge können gelöscht werden",
       "deleteOutsideWindow": "Dieser Beitrag kann nicht mehr gelöscht werden",
@@ -166,18 +166,18 @@
       "locationPositionUnavailable": "Dein aktueller Standort konnte nicht bestimmt werden",
       "locationTimeout": "Standortabfrage hat zu lange gedauert",
       "relayVerificationReadFailed": "Lesezugriff von {{relayUrl}} abgelehnt",
-      "relayVerificationWriteFailed": "Veröffentlichung von {{relayUrl}} abgelehnt",
+      "relayVerificationWriteFailed": "Senden an {{relayUrl}} abgelehnt",
       "relayVerificationUnknownFailed": "Zugriff von {{relayUrl}} abgelehnt",
       "relayReconnectFailedDeselected": "Verbindung zu {{relayDomain}} konnte nicht wiederhergestellt werden. Der Space wurde wieder abgewählt."
     },
     "success": {
-      "publishedTask": "Aufgabe an Nostr veröffentlicht und lokal hinzugefügt",
-      "publishedComment": "Kommentar an Nostr veröffentlicht und lokal hinzugefügt",
-      "publishedToSpaces": "In Space {{spaceNames}} veröffentlicht",
+      "publishedTask": "Aufgabe an Nostr gesendet und lokal hinzugefügt",
+      "publishedComment": "Kommentar an Nostr gesendet und lokal hinzugefügt",
+      "publishedToSpaces": "An Space {{spaceNames}} gesendet",
       "localTask": "Aufgabe lokal hinzugefügt (nur Demo)",
       "localComment": "Kommentar lokal hinzugefügt (nur Demo)",
       "publishUndone": "Beitrag vor dem Senden zurückgenommen",
-      "postDeleted": "Beitragslöschung veröffentlicht",
+      "postDeleted": "Beitragslöschung gesendet",
       "permalinkCopied": "Link in die Zwischenablage kopiert",
       "relayFilterEnabled": "Space {{relayDomain}} wird angezeigt",
       "relayFilterDisabled": "Space {{relayDomain}} wird ausgeblendet",
@@ -197,7 +197,7 @@
       "frequentPeopleDeselected": "Ausgewählte Personen abgewählt",
       "locationCaptured": "Standort auf {{geohash}} gesetzt",
       "relayVerificationRead": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} erfolgreich",
-      "relayVerificationWrite": "Relay-Verifizierung fürs Veröffentlichen auf {{relayUrl}} erfolgreich",
+      "relayVerificationWrite": "Relay-Verifizierung fürs Senden an {{relayUrl}} erfolgreich",
       "relayVerificationUnknown": "Relay-Verifizierung auf {{relayUrl}} erfolgreich"
     },
     "info": {
@@ -209,23 +209,23 @@
       "undo": "Rückgängig"
     },
     "warnings": {
-      "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link veröffentlicht",
-      "disconnectedSelectedFeeds": "Verbinde die ausgewählten Spaces wieder, bevor du etwas änderst oder veröffentlichst",
+      "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link gesendet",
+      "disconnectedSelectedFeeds": "Verbinde die ausgewählten Spaces wieder, bevor du etwas änderst oder sendest",
       "noWritableRelay": "Verbinde mindestens einen Space, um fortzufahren",
-      "partialPublish": "Veröffentlicht auf {{publishedCount}} von {{targetCount}} ausgewählten Spaces",
+      "partialPublish": "An {{publishedCount}} von {{targetCount}} ausgewählten Spaces gesendet",
       "readOnlyParentReplyHidden": "Dieser Thread liegt auf einem schreibgeschützten Space, daher sind Antworten hier deaktiviert."
     }
   },
   "publishQueue": {
-    "failedCount": "{{count}} Beitrag konnte nicht veröffentlicht werden",
+    "failedCount": "{{count}} Beitrag konnte nicht gesendet werden",
     "retry": "Erneut versuchen",
     "retrying": "Wird erneut versucht...",
-    "retryHint": "Erneut auf den ursprünglichen Relay-Zielen veröffentlichen",
+    "retryHint": "Erneut an die ursprünglichen Relay-Ziele senden",
     "retryUnavailable": "Wähle einen ursprünglichen Space, um den erneuten Versuch zu aktivieren",
-    "repost": "Neu auf Space posten",
-    "reposting": "Wird neu gepostet...",
-    "repostHint": "Auf aktuell ausgewählten Space-Relays neu veröffentlichen",
-    "repostUnavailable": "Wähle einen anderen Space, um Neu posten zu aktivieren",
+    "repost": "Erneut an Space senden",
+    "reposting": "Wird erneut gesendet...",
+    "repostHint": "An aktuell ausgewählte Space-Relays neu senden",
+    "repostUnavailable": "Wähle einen anderen Space, um erneut zu senden",
     "scopeSelected": "Ausgewählte Spaces",
     "scopeAll": "Alle fehlgeschlagenen",
     "hiddenCount": "{{count}} ausgeblendet",

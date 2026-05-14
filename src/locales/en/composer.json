@@ -225,7 +225,7 @@
     "repost": "Repost",
     "reposting": "Reposting...",
     "repostHint": "Repost to currently selected space relays",
-    "repostUnavailable": "Select a different space to enable repost",
+    "repostUnavailable": "Select a different space to send again",
     "scopeSelected": "Selected spaces",
     "scopeAll": "All failed",
     "hiddenCount": "{{count}} hidden",
