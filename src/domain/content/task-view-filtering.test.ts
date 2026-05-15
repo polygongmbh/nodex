@@ -244,6 +244,40 @@ describe("task view filtering", () => {
     expect(result.map((task) => task.id)).toEqual(["todo-task", "done-task"]);
   });
 
+  it("fuzzy-matches channel filters that differ from tags by up to two trailing characters", () => {
+    const tasks = [
+      makeTask({ id: "plural", content: "Plural", tags: ["personas"] }),
+      makeTask({ id: "agent", content: "Agent", tags: ["sleeper"] }),
+      makeTask({ id: "unrelated", content: "Unrelated", tags: ["cab"] }),
+      makeTask({ id: "too-long", content: "Too long", tags: ["personally"] }),
+    ];
+    const filterIndex = buildTaskViewFilterIndex(tasks);
+    const baseSource = {
+      allTasks: tasks,
+      filterIndex,
+      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+      people: [],
+    };
+
+    const included = getDirectMatchTaskIdsForView({
+      source: baseSource,
+      criteria: {
+        searchQuery: "",
+        channels: { included: ["persona", "sleep"], excluded: [], matchMode: "or" },
+      },
+    });
+    expect(included).toEqual(new Set(["plural", "agent"]));
+
+    const excluded = getDirectMatchTaskIdsForView({
+      source: baseSource,
+      criteria: {
+        searchQuery: "",
+        channels: { included: [], excluded: ["persona"], matchMode: "or" },
+      },
+    });
+    expect(excluded).toEqual(new Set(["agent", "unrelated", "too-long"]));
+  });
+
   it("keeps an explicitly focused closed task visible when includeFocusedTask is enabled", () => {
     const tasks = [
       makeTask({

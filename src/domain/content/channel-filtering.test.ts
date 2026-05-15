@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Channel } from "@/types";
-import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "./channel-filtering";
+import {
+  fuzzyChannelTagMatch,
+  getIncludedExcludedChannelNames,
+  taskMatchesChannelFilters,
+} from "./channel-filtering";
 
 describe("channel filtering helpers", () => {
   it("extracts included and excluded channels with lowercase normalization", () => {
@@ -37,5 +41,37 @@ describe("channel filtering helpers", () => {
 
   it("matches case-insensitively", () => {
     expect(taskMatchesChannelFilters(["General", "Release"], ["general"], [], "and")).toBe(true);
+  });
+
+  describe("fuzzy suffix tolerance", () => {
+    it("matches when the tag has up to two extra trailing characters", () => {
+      expect(fuzzyChannelTagMatch("persona", "personas")).toBe(true);
+      expect(fuzzyChannelTagMatch("sleep", "sleeper")).toBe(true);
+    });
+
+    it("matches when the filter has up to two extra trailing characters", () => {
+      expect(fuzzyChannelTagMatch("personas", "persona")).toBe(true);
+      expect(fuzzyChannelTagMatch("sleeper", "sleep")).toBe(true);
+    });
+
+    it("rejects pairs with no prefix relationship", () => {
+      expect(fuzzyChannelTagMatch("cat", "cab")).toBe(false);
+      expect(fuzzyChannelTagMatch("sleep", "steep")).toBe(false);
+    });
+
+    it("rejects pairs that differ by more than two trailing characters", () => {
+      expect(fuzzyChannelTagMatch("persona", "personally")).toBe(false);
+      expect(fuzzyChannelTagMatch("run", "running")).toBe(false);
+    });
+
+    it("includes tasks whose tag fuzzy-matches an included channel filter", () => {
+      expect(taskMatchesChannelFilters(["personas"], ["persona"], [], "or")).toBe(true);
+      expect(taskMatchesChannelFilters(["sleep"], ["sleeper"], [], "and")).toBe(true);
+    });
+
+    it("excludes tasks whose tag fuzzy-matches an excluded channel filter", () => {
+      expect(taskMatchesChannelFilters(["personas"], [], ["persona"], "or")).toBe(false);
+      expect(taskMatchesChannelFilters(["sleep"], [], ["sleeper"], "and")).toBe(false);
+    });
   });
 });

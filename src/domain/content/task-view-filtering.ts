@@ -1,3 +1,4 @@
+import { fuzzyChannelTagMatch } from "@/domain/content/channel-filtering";
 import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import {
@@ -102,15 +103,22 @@ function taskMatchesChannelIndex(
   mode: ChannelMatchMode,
   filterIndex: TaskViewFilterIndex
 ): boolean {
-  const taskTagSet = filterIndex.normalizedTagsByTaskId.get(taskId) ?? new Set<string>();
+  const taskTagSet = filterIndex.normalizedTagsByTaskId.get(taskId);
+  const tagsArray = taskTagSet ? Array.from(taskTagSet) : [];
+  const anyTagMatches = (channel: string) => {
+    for (const tag of tagsArray) {
+      if (fuzzyChannelTagMatch(channel, tag)) return true;
+    }
+    return false;
+  };
 
   for (const excluded of excludedChannels) {
-    if (taskTagSet.has(excluded)) return false;
+    if (anyTagMatches(excluded)) return false;
   }
 
   if (includedChannels.length === 0) return true;
-  if (mode === "or") return includedChannels.some((included) => taskTagSet.has(included));
-  return includedChannels.every((included) => taskTagSet.has(included));
+  if (mode === "or") return includedChannels.some(anyTagMatches);
+  return includedChannels.every(anyTagMatches);
 }
 
 export interface TaskViewFilterSource {

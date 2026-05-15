@@ -23,29 +23,40 @@ export function getIncludedExcludedChannelNames(channels: Channel[]): ChannelBuc
   return { included, excluded };
 }
 
+// Filter F matches tag T when one is a prefix of the other and they differ in
+// length by at most 2 characters. Symmetric, language-agnostic, no stem table.
+export function fuzzyChannelTagMatch(filter: string, tag: string): boolean {
+  if (filter === tag) return true;
+  if (tag.length > filter.length) {
+    return tag.length - filter.length <= 2 && tag.startsWith(filter);
+  }
+  return filter.length - tag.length <= 2 && filter.startsWith(tag);
+}
+
+function anyTagFuzzyMatches(tags: string[], channel: string): boolean {
+  for (const tag of tags) {
+    if (fuzzyChannelTagMatch(channel, tag)) return true;
+  }
+  return false;
+}
+
 export function taskMatchesChannelFilters(
   taskTags: string[],
   includedChannels: string[],
   excludedChannels: string[],
   mode: ChannelMatchMode
 ): boolean {
-  const taskTagSet = new Set(taskTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean));
+  const normalizedTags = taskTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
 
-  if (excludedChannels.length > 0) {
-    for (const excluded of excludedChannels) {
-      if (taskTagSet.has(excluded)) {
-        return false;
-      }
-    }
+  for (const excluded of excludedChannels) {
+    if (anyTagFuzzyMatches(normalizedTags, excluded)) return false;
   }
 
-  if (includedChannels.length === 0) {
-    return true;
-  }
+  if (includedChannels.length === 0) return true;
 
   if (mode === "or") {
-    return includedChannels.some((included) => taskTagSet.has(included));
+    return includedChannels.some((included) => anyTagFuzzyMatches(normalizedTags, included));
   }
 
-  return includedChannels.every((included) => taskTagSet.has(included));
+  return includedChannels.every((included) => anyTagFuzzyMatches(normalizedTags, included));
 }
