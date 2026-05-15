@@ -230,16 +230,17 @@ function collectHashtags(tags: string[][], content: string): string[] {
   return Array.from(new Set([...tagHashtags, ...contentHashtags]));
 }
 
-function hasLinkedTaskRef(tags: string[][]): boolean {
+export function hasLinkedTaskRef(tags: string[][]): boolean {
   return tags.some((tag) => tag[0] === "e" && tag[1] && tag[3] === "task");
 }
 
 /**
- * Builds a standalone NIP-52 calendar event post from a raw Nostr event.
+ * Builds a standalone calendar event post from a raw Nostr event. The caller
+ * decides whether to use the result — for linked calendar events, hydration
+ * onto the task usually wins, but orphaned events (task ref present but task
+ * not in scope) can still be surfaced via this path.
  *
- * Returns `null` when:
- *  - the event references a task (the linked-hydration path owns it), or
- *  - the start tag is missing/malformed.
+ * Returns `null` when the event is not a calendar kind or start is missing.
  */
 export function parseStandaloneCalendarEvent(
   event: NostrEventWithRelay
@@ -250,7 +251,6 @@ export function parseStandaloneCalendarEvent(
   ) {
     return null;
   }
-  if (hasLinkedTaskRef(event.tags)) return null;
 
   const parsed = parseCalendarEventDates(event.kind, event.tags);
   const author: Person = {

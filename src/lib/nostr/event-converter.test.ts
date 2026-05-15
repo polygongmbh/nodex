@@ -554,6 +554,81 @@ describe("nostrEventsToTasks", () => {
     expect((isTaskPost(tasks[0]) ? tasks[0].dates : [])?.[0]?.time).toBe(expectedDueTime);
   });
 
+  it("emits a standalone CalendarEventPost for a 31923 event with no task ref", () => {
+    const startUnix = Math.floor(new Date(2026, 5, 1, 10, 0).getTime() / 1000);
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "evt-timed",
+        pubkey: "author-1",
+        created_at: 1700000010,
+        kind: NostrEventKind.CalendarTimeBased,
+        tags: [
+          ["d", "standalone"],
+          ["title", "1:1 with team"],
+          ["start", String(startUnix)],
+        ],
+        content: "Catch up",
+        sig: "sig",
+      }),
+    ];
+    const result = nostrEventsToTasks(events);
+    expect(result).toHaveLength(1);
+    expect(result[0].kind).toBe(NostrEventKind.CalendarTimeBased);
+    expect((result[0] as Post & { title?: string }).title).toBe("1:1 with team");
+  });
+
+  it("does not emit a standalone event when 31923 is linked to a known task", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "host-task",
+        pubkey: "author-1",
+        kind: NostrEventKind.Task,
+        content: "Linked task",
+        sig: "sig",
+      }),
+      makeRelayEvent({
+        id: "cal-linked",
+        pubkey: "author-1",
+        created_at: 1700000010,
+        kind: NostrEventKind.CalendarTimeBased,
+        tags: [
+          ["d", "linked"],
+          ["title", "Linked"],
+          ["start", "1774276200"],
+          ["e", "host-task", "", "task"],
+        ],
+        content: "Linked",
+        sig: "sig2",
+      }),
+    ];
+    const result = nostrEventsToTasks(events);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("host-task");
+    expect(result[0].kind).toBe(NostrEventKind.Task);
+  });
+
+  it("emits an orphan calendar event when its referenced task is not in scope", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "cal-orphan",
+        pubkey: "author-1",
+        created_at: 1700000010,
+        kind: NostrEventKind.CalendarTimeBased,
+        tags: [
+          ["d", "orphan"],
+          ["title", "Orphaned"],
+          ["start", "1774276200"],
+          ["e", "missing-task", "", "task"],
+        ],
+        content: "Orphaned",
+        sig: "sig",
+      }),
+    ];
+    const result = nostrEventsToTasks(events);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("cal-orphan");
+  });
+
   it("ignores unauthorized due-date and priority updates on assigned tasks", () => {
     const events: NostrEventWithRelay[] = [
       makeRelayEvent({

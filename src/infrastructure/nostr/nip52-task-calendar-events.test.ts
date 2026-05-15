@@ -124,7 +124,7 @@ describe("task calendar event helpers", () => {
   });
 
   describe("parseStandaloneCalendarEvent", () => {
-    it("returns null when the event references a task (linked-hydration path owns it)", () => {
+    it("still parses task-linked events so the caller can decide (orphan recovery)", () => {
       const event = makeRawEvent({
         kind: NostrEventKind.CalendarTimeBased,
         tags: [
@@ -132,7 +132,9 @@ describe("task calendar event helpers", () => {
           ["e", "task-x", "", "task"],
         ],
       });
-      expect(parseStandaloneCalendarEvent(event)).toBeNull();
+      const parsed = parseStandaloneCalendarEvent(event);
+      expect(parsed).not.toBeNull();
+      expect(isTimeBasedEventPost(parsed!)).toBe(true);
     });
 
     it("returns a DateBasedEventPost for kind 31922 with title/summary/location", () => {

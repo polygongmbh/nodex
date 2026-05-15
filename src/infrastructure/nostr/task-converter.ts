@@ -22,7 +22,11 @@ import {
   isPriorityPropertyEvent,
   parsePriorityTag,
 } from "@/infrastructure/nostr/task-property-events";
-import { parseLinkedTaskDueFromCalendarEvent } from "@/infrastructure/nostr/nip52-task-calendar-events";
+import {
+  hasLinkedTaskRef,
+  parseLinkedTaskDueFromCalendarEvent,
+  parseStandaloneCalendarEvent,
+} from "@/infrastructure/nostr/nip52-task-calendar-events";
 import { parseNip99MetadataFromTags } from "@/infrastructure/nostr/nip99-metadata";
 import { parseFirstGeohashTag } from "@/infrastructure/nostr/geohash-location";
 import {
@@ -448,5 +452,37 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Post[] {
     });
   }
 
-  return Array.from(taskMap.values());
+  const standaloneEventsByReplaceableKey = new Map<string, Post>();
+  const standaloneEventsById = new Map<string, Post>();
+  for (const calendarEvent of calendarEvents) {
+    if (isDeletedByOwnAuthor(calendarEvent)) continue;
+    if (hasLinkedTaskRef(calendarEvent.tags)) {
+      const linkedTaskId = calendarEvent.tags.find(
+        (tag) => tag[0] === "e" && tag[1] && tag[3] === "task"
+      )?.[1];
+      if (linkedTaskId && taskMap.has(linkedTaskId)) continue;
+    }
+    const eventPost = parseStandaloneCalendarEvent(calendarEvent);
+    if (!eventPost) continue;
+    const replaceableKey = getReplaceableEventKey(calendarEvent);
+    if (replaceableKey) {
+      const existing = standaloneEventsByReplaceableKey.get(replaceableKey);
+      if (
+        !existing ||
+        calendarEvent.created_at > existing.timestamp.getTime() / 1000 ||
+        (calendarEvent.created_at === existing.timestamp.getTime() / 1000 &&
+          eventPost.id > existing.id)
+      ) {
+        standaloneEventsByReplaceableKey.set(replaceableKey, eventPost);
+      }
+    } else {
+      standaloneEventsById.set(eventPost.id, eventPost);
+    }
+  }
+
+  return [
+    ...taskMap.values(),
+    ...standaloneEventsById.values(),
+    ...standaloneEventsByReplaceableKey.values(),
+  ];
 }
