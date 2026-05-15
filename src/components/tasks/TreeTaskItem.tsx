@@ -126,6 +126,7 @@ export function TreeTaskItem({
     name: nostrProfile?.name || task.author.name,
     displayName: authorName,
     avatar: authorAvatar,
+    nip05: authorNip05 || task.author.nip05,
   };
   const dispatchHashtagInclude = (tag: string) => {
     void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
@@ -350,8 +351,6 @@ export function TreeTaskItem({
                 <>
                   <InteractivePersonName
                     person={authorPerson}
-                    primary={authorName}
-                    verified={!!authorNip05}
                   />
                   <span>·</span>
                   <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>
