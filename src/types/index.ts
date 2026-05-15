@@ -302,7 +302,6 @@ export interface SharedTaskViewContext {
   allTasks: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
 export interface FilterState {

@@ -1,5 +1,6 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
 import type {
+  ComposeRestoreRequest,
   SharedTaskViewContext,
 } from "@/types";
 
@@ -7,8 +8,9 @@ export interface FeedTaskViewModel extends SharedTaskViewContext {
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   isPendingPublishTask?: (taskId: string) => boolean;
-  onMentionRequestConsumed?: (requestId: number) => void;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   onComposeRestoreRequestConsumed?: (requestId: number) => void;
+  onMentionRequestConsumed?: (requestId: number) => void;
   mentionRequest?: {
     mention: string;
     id: number;
