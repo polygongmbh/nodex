@@ -609,7 +609,7 @@ describe("FeedView", () => {
     expect(screen.queryByRole("button", { name: /focus task: middle breadcrumb/i })).not.toBeInTheDocument();
   });
 
-  it("shows a shortened fallback npub on slim desktop", async () => {
+  it("renders the npub as the primary label when no display name is set", async () => {
     const pubkeyOnlyAuthor: SelectablePerson = {
       pubkey: author.pubkey,
       name: author.pubkey,
@@ -619,18 +619,6 @@ describe("FeedView", () => {
     const pubkeyTask = makeTask({ id: "task-pubkey", author: pubkeyOnlyAuthor, state: {
       status: "open"
     } });
-    const matchMediaSpy = vi
-      .spyOn(window, "matchMedia")
-      .mockImplementation((query: string) => ({
-        matches: query === "(min-width: 768px) and (max-width: 1023px)",
-        media: query,
-        onchange: null,
-        addListener: () => {},
-        removeListener: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        dispatchEvent: () => false,
-      }));
 
     render(
       <FeedView
@@ -644,115 +632,11 @@ describe("FeedView", () => {
       expect(screen.getByTestId("feed-author-primary-task-pubkey")).toBeInTheDocument();
     });
     const fallbackAuthorLabel = screen.getByTestId("feed-author-primary-task-pubkey");
-    expect(fallbackAuthorLabel).toHaveTextContent("npub1");
-    expect(fallbackAuthorLabel.textContent).toContain("…");
-    expect(fallbackAuthorLabel.closest("button")).not.toHaveAttribute("title");
-    matchMediaSpy.mockRestore();
+    expect(fallbackAuthorLabel.textContent).toContain("npub1");
+    expect(fallbackAuthorLabel.closest("button")).toHaveAttribute("title", "");
   });
 
-  it("shows the full fallback npub on xl desktop widths", async () => {
-    const pubkeyOnlyAuthor: SelectablePerson = {
-      pubkey: author.pubkey,
-      name: author.pubkey,
-      displayName: author.pubkey,
-      isSelected: false,
-    };
-    const pubkeyTask = makeTask({ id: "task-pubkey-2xl", author: pubkeyOnlyAuthor, state: {
-      status: "open"
-    } });
-    const matchMediaSpy = vi
-      .spyOn(window, "matchMedia")
-      .mockImplementation((query: string) => ({
-        matches: query === "(min-width: 1280px)",
-        media: query,
-        onchange: null,
-        addListener: () => {},
-        removeListener: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        dispatchEvent: () => false,
-      }));
-
-    render(
-      <FeedView
-        focusedTaskId={null}
-        tasks={[pubkeyTask]}
-        allTasks={[pubkeyTask]}
-      />
-    );
-
-    await waitFor(() => {
-      const fallbackAuthorLabel = screen.getByTestId("feed-author-primary-task-pubkey-2xl");
-      expect(fallbackAuthorLabel.textContent).toContain("npub1");
-      expect(fallbackAuthorLabel.textContent).not.toContain("…");
-    });
-    matchMediaSpy.mockRestore();
-  });
-
-  it("keeps username metadata inline on slim desktop", async () => {
-    const matchMediaSpy = vi
-      .spyOn(window, "matchMedia")
-      .mockImplementation((query: string) => ({
-        matches: query === "(min-width: 768px) and (max-width: 1023px)",
-        media: query,
-        onchange: null,
-        addListener: () => {},
-        removeListener: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        dispatchEvent: () => false,
-      }));
-
-    render(
-      <FeedView
-        focusedTaskId={null}
-        tasks={tasks}
-        allTasks={tasks}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("feed-author-primary-task-1")).toBeInTheDocument();
-    });
-
-    expect(screen.getByTestId("feed-author-primary-task-1")).toBeVisible();
-    expect(screen.getByTestId("feed-author-secondary-task-1")).toBeVisible();
-
-    matchMediaSpy.mockRestore();
-  });
-
-  it("keeps author metadata inline when desktop is beyond slim breakpoint", async () => {
-    const matchMediaSpy = vi
-      .spyOn(window, "matchMedia")
-      .mockImplementation((query: string) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addListener: () => {},
-        removeListener: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        dispatchEvent: () => false,
-      }));
-
-    render(
-      <FeedView
-        focusedTaskId={null}
-        tasks={tasks}
-        allTasks={tasks}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("feed-author-primary-task-1")).toBeInTheDocument();
-    });
-    expect(screen.getByTestId("feed-author-primary-task-1")).toBeVisible();
-    expect(screen.getByTestId("feed-author-secondary-task-1")).toBeVisible();
-
-    matchMediaSpy.mockRestore();
-  });
-
-  it("shows author metadata label with username and feed-truncated npub", () => {
+  it("shows the author display name and parenthesized handle inline on desktop", () => {
     render(
       <FeedView
         focusedTaskId={null}
@@ -762,8 +646,9 @@ describe("FeedView", () => {
     );
 
     expect(screen.getByTestId("feed-author-primary-task-1")).toHaveTextContent("Alice Doe");
-    expect(screen.getByTestId("feed-author-secondary-task-1")).toHaveTextContent("@alice · npub1");
-    expect(screen.getByTestId("feed-author-secondary-task-1").textContent).toMatch(/…[a-z0-9]{3}\)$/i);
+    const authorButton = screen.getByTestId("feed-author-primary-task-1").closest("button");
+    expect(authorButton).not.toBeNull();
+    expect(authorButton!.textContent).toMatch(/Alice Doe.*\(@alice/);
     expect(screen.getByTitle(/task created at/i)).toHaveAttribute(
       "title",
       expect.stringMatching(/task created at .*\d{2}:\d{2}:\d{2}/i)

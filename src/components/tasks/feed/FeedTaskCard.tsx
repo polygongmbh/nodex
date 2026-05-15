@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from "react";
-import { BadgeCheck, MessageSquare, Package } from "lucide-react";
+import { MessageSquare, Package } from "lucide-react";
 import { isCommentKind, isListingKind } from "@/domain/content/task-kind";
 import { getTaskStateToneClass } from "@/components/tasks/task-state-ui";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
@@ -17,8 +17,7 @@ import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminal } from "@/domain/content/task-state";
 import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
-import { formatAuthorMetaParts } from "@/types/person";
-import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { getCompactPersonLabel } from "@/types/person";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { useTranslation } from "react-i18next";
@@ -51,11 +50,8 @@ interface FeedTaskCardProps {
   isActiveTask: boolean;
   isKeyboardFocused: boolean;
   isMobile: boolean;
-  isSlimDesktop: boolean;
-  isXLDesktop: boolean;
   isInteractionBlocked: boolean;
   isPendingPublish: boolean;
-  isNip05Verified: boolean;
   isProject: boolean;
   hasChildren: boolean;
   expandedContent: boolean;
@@ -76,11 +72,8 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   isActiveTask,
   isKeyboardFocused,
   isMobile,
-  isSlimDesktop,
-  isXLDesktop,
   isInteractionBlocked,
   isPendingPublish,
-  isNip05Verified,
   isProject,
   hasChildren,
   expandedContent,
@@ -106,11 +99,6 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
-  const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
-  const formatFeedNpubLabel = (value: string, showFull: boolean): string => {
-    if (showFull || value.length <= 11) return value;
-    return `${value.slice(0, 8)}…${value.slice(-3)}`;
-  };
   const isListing = isListingKind(task.kind);
   const isComment = isCommentKind(task.kind);
   const listingStatus: Nip99ListingStatus =
@@ -120,30 +108,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const feedMessageLabel = isListing ? t("tasks.listing.label") : t("tasks.comment");
   const listingSoldLabel = t("tasks.listing.sold");
-  const authorMeta = formatAuthorMetaParts({
-    pubkey: resolvedAuthor.pubkey,
-    displayName: resolvedAuthor.displayName,
-    name: resolvedAuthor.name,
-  });
-  const authorUserFacingId = toUserFacingPubkey(resolvedAuthor.pubkey);
-  const isPubkeyPrimary =
-    authorMeta.primary === resolvedAuthor.pubkey ||
-    authorMeta.primary === authorUserFacingId;
-  const displayNpub = formatFeedNpubLabel(authorUserFacingId, isXLDesktop);
-  const primaryAuthorLabel = isPubkeyPrimary ? displayNpub : authorMeta.primary;
-  const hasPrimaryAuthorLabel = primaryAuthorLabel.length > 0;
-  const secondaryAuthorLabel = (() => {
-    if (!authorMeta.secondary) return "";
-    if (!NPUB_DISPLAY_PATTERN.test(authorMeta.secondary)) return authorMeta.secondary;
-    if (isSlimDesktop) {
-      return authorMeta.secondary
-        .replace(NPUB_DISPLAY_PATTERN, "")
-        .replace(/\s*[·•]\s*$/, "")
-        .replace(/\s{2,}/g, " ")
-        .trim();
-    }
-    return authorMeta.secondary.replace(NPUB_DISPLAY_PATTERN, displayNpub);
-  })();
+  const authorCompactLabel = getCompactPersonLabel(resolvedAuthor);
   const timeLabel = timeLabelFormatter(task.timestamp);
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
   const canUpdateListingStatus =
@@ -278,7 +243,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
             </button>
           ) : (
             <span
-              title={t("tasks.listing.commentBy", { author: authorMeta.primary })}
+              title={t("tasks.listing.commentBy", { author: authorCompactLabel })}
               className={cn("flex-shrink-0 mt-0.5 inline-flex items-center justify-center", isMobile ? "p-1" : "p-0.5")}
             >
               <MessageSquare className={cn("text-muted-foreground", "w-5 h-5")} />
@@ -287,7 +252,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
           <InteractivePersonAvatar
             person={resolvedAuthor}
             sizeClassName={isMobile ? "w-7 h-7" : "w-8 h-8"}
-            ariaLabel={t("people.actions.openMenu", { name: authorMeta.primary })}
+            ariaLabel={t("people.actions.openMenu", { name: authorCompactLabel })}
             // On mobile the timeline behaves like the other views — a tap
             // immediately filters by this person rather than opening the
             // menu. Desktop keeps the menu as the primary affordance.
@@ -296,31 +261,12 @@ export const FeedTaskCard = memo(function FeedTaskCard({
           <div className="flex-1 min-w-0">
             <div className={cn("mb-1 flex min-w-0 items-start text-muted-foreground", isMobile ? "gap-1 text-xs" : "gap-2 text-sm")}>
               <div className={cn("min-w-0 flex-1 flex-wrap items-center", isMobile ? "gap-1" : "gap-2", "inline-flex")}>
-                {hasPrimaryAuthorLabel ? (
-                  <>
-                    <InteractivePersonName
-                      person={resolvedAuthor}
-                    >
-                      <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate font-medium text-foreground">
-                        {primaryAuthorLabel}
-                      </span>
-                      {isNip05Verified ? (
-                        <BadgeCheck
-                          className="inline-block align-middle h-3.5 w-3.5 ml-0.5 text-blue-500"
-                          aria-label={t("people.nip05Verified")}
-                        >
-                          {resolvedAuthor.nip05 ? <title>{resolvedAuthor.nip05}</title> : null}
-                        </BadgeCheck>
-                      ) : null}
-                      {secondaryAuthorLabel && !isMobile ? (
-                        <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
-                          {` (${secondaryAuthorLabel})`}
-                        </span>
-                      ) : null}
-                    </InteractivePersonName>
-                    <span className="shrink-0">·</span>
-                  </>
-                ) : null}
+                <InteractivePersonName
+                  person={resolvedAuthor}
+                  withHandle={!isMobile}
+                  testId={`feed-author-primary-${task.id}`}
+                />
+                <span className="shrink-0">·</span>
                 {!isComment && typeof getTaskPriority(task) === "number" ? (
                   <>
                     {renderPriorityChip(task)}

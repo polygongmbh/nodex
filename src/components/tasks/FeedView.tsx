@@ -20,7 +20,6 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { useScrollCapture } from "@/features/feed-page/views/scroll-capture-context";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { makeIsProject } from "@/domain/content/task-projects";
-import { formatAuthorMetaParts } from "@/types/person";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
@@ -33,7 +32,6 @@ import {
 } from "@/components/ui/popover";
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { isTaskTerminal } from "@/domain/content/task-state";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
@@ -57,7 +55,6 @@ import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
-import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
 
 interface FeedViewProps {
   tasks: Post[];
@@ -183,13 +180,8 @@ export function FeedView({
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { relays, channels, people, quickFilters, channelMatchMode = "and" } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
-  const nip05VerifiedPubkeys = useNip05VerifiedPubkeys(people);
   const { forceShowComposer } = useFeedViewInteractionModel();
 
-  const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1023px)";
-  const XL_DESKTOP_QUERY = "(min-width: 1280px)";
-  const [isSlimDesktop, setIsSlimDesktop] = useState(false);
-  const [isXLDesktop, setIsXLDesktop] = useState(false);
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
   const {
@@ -209,50 +201,6 @@ export function FeedView({
     searchQueryOverride,
     isMobile,
   });
-  useEffect(() => {
-    if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      setIsSlimDesktop(false);
-      return;
-    }
-
-    const mediaQuery = window.matchMedia(SLIM_DESKTOP_QUERY);
-    const handleMediaQueryChange = () => {
-      setIsSlimDesktop(mediaQuery.matches);
-    };
-
-    handleMediaQueryChange();
-
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", handleMediaQueryChange);
-      return () => mediaQuery.removeEventListener("change", handleMediaQueryChange);
-    }
-
-    mediaQuery.addListener(handleMediaQueryChange);
-    return () => mediaQuery.removeListener(handleMediaQueryChange);
-  }, [isMobile]);
-
-  useEffect(() => {
-    if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      setIsXLDesktop(false);
-      return;
-    }
-
-    const mediaQuery = window.matchMedia(XL_DESKTOP_QUERY);
-    const handleMediaQueryChange = () => {
-      setIsXLDesktop(mediaQuery.matches);
-    };
-
-    handleMediaQueryChange();
-
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", handleMediaQueryChange);
-      return () => mediaQuery.removeEventListener("change", handleMediaQueryChange);
-    }
-
-    mediaQuery.addListener(handleMediaQueryChange);
-    return () => mediaQuery.removeListener(handleMediaQueryChange);
-  }, [isMobile]);
-
   const filterKey = useMemo(() =>
     channels
       .filter((c) => c.filterState !== "neutral")
@@ -435,12 +383,6 @@ export function FeedView({
       const resolvedUpdateAuthor =
         peopleById.get(update.authorPubkey.toLowerCase()) ||
         task.author;
-      const updateAuthorMeta = formatAuthorMetaParts({
-        pubkey: resolvedUpdateAuthor.pubkey,
-        displayName: resolvedUpdateAuthor.displayName,
-        name: resolvedUpdateAuthor.name,
-      });
-      const updateAuthorUserFacingId = toUserFacingPubkey(resolvedUpdateAuthor.pubkey);
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
@@ -466,11 +408,10 @@ export function FeedView({
                 <div className="min-w-0 inline-flex flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
                   <span className="truncate">{displayLabel}</span>
                   <span className="shrink-0">·</span>
-                  <span className="shrink-0 text-foreground">
-                    <InteractivePersonName person={resolvedUpdateAuthor}>
-                      {updateAuthorMeta.primary}
-                    </InteractivePersonName>
-                  </span>
+                  <InteractivePersonName
+                    person={resolvedUpdateAuthor}
+                    className="shrink-0"
+                  />
                   <span className="shrink-0">·</span>
                   <button
                     type="button"
@@ -518,11 +459,8 @@ export function FeedView({
         isActiveTask={focusedTaskId === task.id}
         isKeyboardFocused={isKeyboardFocused}
         isMobile={isMobile}
-        isSlimDesktop={isSlimDesktop}
-        isXLDesktop={isXLDesktop}
         isInteractionBlocked={isInteractionBlocked}
         isPendingPublish={isPendingPublish}
-        isNip05Verified={nip05VerifiedPubkeys.has(resolvedAuthor.pubkey)}
         isProject={isProject(task.id)}
         hasChildren={parentIdsWithChildren.has(task.id)}
         expandedContent={isContentExpanded}

@@ -13,7 +13,6 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminal } from "@/domain/content/task-state";
 import { isCommentPost } from "@/types";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { formatAuthorMetaParts } from "@/types/person";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import type { Post } from "@/types";
 import { getTaskState } from "@/types";
@@ -30,14 +29,6 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
   const { peopleById } = useFeedPersonLookup();
   const { currentUser } = useFeedTaskViewModel();
   const resolvedAuthor = peopleById.get(task.author.pubkey.toLowerCase()) ?? task.author;
-  const authorMeta = useMemo(
-    () => formatAuthorMetaParts({
-      pubkey: resolvedAuthor.pubkey,
-      displayName: resolvedAuthor.displayName,
-      name: resolvedAuthor.name,
-    }),
-    [resolvedAuthor]
-  );
   const isComment = isCommentPost(task);
   const isTerminal = isTaskTerminal(getTaskState(task));
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
@@ -71,9 +62,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <InteractivePersonName person={resolvedAuthor}>
-            <span className="truncate font-medium text-foreground">{authorMeta.primary}</span>
-          </InteractivePersonName>
+          <InteractivePersonName person={resolvedAuthor} />
           <span className="ml-auto shrink-0" title={task.timestamp.toLocaleString()}>{timeAgo}</span>
         </div>
         <div

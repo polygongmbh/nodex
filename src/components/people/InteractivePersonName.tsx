@@ -1,36 +1,87 @@
-import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { getCompactPersonLabel, type Person } from "@/types/person";
+import { BadgeCheck } from "lucide-react";
+import {
+  formatAuthorMetaParts,
+  getCompactPersonLabel,
+  type Person,
+} from "@/types/person";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
+import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
+import { cn } from "@/lib/utils";
 
 interface InteractivePersonNameProps {
   person: Person;
-  children: ReactNode;
+  /** When true, also render the secondary handle ("(@alice)") after the name. */
+  withHandle?: boolean;
+  /** Optional test id placed on the visible name span. */
+  testId?: string;
+  /** Extra classes for the button wrapper, e.g. layout overrides. */
+  className?: string;
 }
 
 /**
- * Shared interactive author/name button. Single button trigger that opens
- * the action menu on click/tap and shows the hover card on desktop hover.
- * Use this anywhere we render a clickable person name.
+ * Canonical interactive author chip: display name + (optional) NIP-05 badge +
+ * (optional) parenthesized handle. The whole chip is one button — clicks open
+ * the action menu, desktop hover opens the person card. All callers go through
+ * this so hover state, native-tooltip suppression, badge styling, and label
+ * formatting stay consistent.
  */
 export function InteractivePersonName({
   person,
-  children,
+  withHandle = false,
+  testId,
+  className,
 }: InteractivePersonNameProps) {
   const { t } = useTranslation("tasks");
-  const label = t("people.actions.openMenu", { name: getCompactPersonLabel(person) });
+
+  const peopleList = useMemo(() => [person], [person]);
+  const verifiedPubkeys = useNip05VerifiedPubkeys(peopleList);
+  const verified = verifiedPubkeys.has(person.pubkey);
+
+  const { primary, secondary } = useMemo(
+    () =>
+      formatAuthorMetaParts({
+        pubkey: person.pubkey,
+        displayName: person.displayName,
+        name: person.name,
+        nip05: person.nip05,
+      }),
+    [person],
+  );
+
+  const accessibleLabel = t("people.actions.openMenu", {
+    name: getCompactPersonLabel(person),
+  });
 
   return (
     <PersonHoverCard person={person}>
       <PersonActionMenu person={person} enableModifierShortcuts>
         <button
           type="button"
-          className="min-w-0 max-w-full rounded text-left transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-          aria-label={label}
+          className={cn(
+            "group inline-flex max-w-full min-w-0 items-center gap-0.5 rounded text-left transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50",
+            className,
+          )}
+          aria-label={accessibleLabel}
           title=""
         >
-          {children}
+          <span
+            data-testid={testId}
+            className="truncate font-medium text-foreground group-hover:text-primary"
+          >
+            {primary}
+          </span>
+          {verified && (
+            <BadgeCheck
+              className="h-3.5 w-3.5 shrink-0 text-blue-500"
+              aria-label={t("people.nip05Verified")}
+            />
+          )}
+          {withHandle && secondary && (
+            <span className="truncate opacity-60">{` (${secondary})`}</span>
+          )}
         </button>
       </PersonActionMenu>
     </PersonHoverCard>

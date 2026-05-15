@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, BadgeCheck } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock } from "lucide-react";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { cn } from "@/lib/utils";
 import {
@@ -350,16 +350,9 @@ export function TreeTaskItem({
                 <>
                   <InteractivePersonName
                     person={authorPerson}
-                  >
-                    <span className="inline-flex items-center gap-1 font-medium text-foreground/80">
-                      {authorName}
-                      {authorNip05 && (
-                        <span title={authorNip05}>
-                          <BadgeCheck className="w-3 h-3 text-success" />
-                        </span>
-                      )}
-                    </span>
-                  </InteractivePersonName>
+                    primary={authorName}
+                    verified={!!authorNip05}
+                  />
                   <span>·</span>
                   <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>
                 </>
