@@ -34,7 +34,8 @@ export type Tag = Channel;
 
 export type TaskEntryType = "task" | "comment";
 export type FeedMessageType = "listing";
-export type PostType = TaskEntryType | FeedMessageType;
+export type CalendarEntryType = "event";
+export type PostType = TaskEntryType | FeedMessageType | CalendarEntryType;
 // Legacy alias for compatibility with older task/comment-only call sites.
 export type TaskType = TaskEntryType;
 export type Nip99ListingStatus = "active" | "sold";
@@ -137,13 +138,20 @@ export interface ComposeRecomposeOf {
 
 export interface ComposeRestoreState {
   content: string;
-  taskType: TaskEntryType;
+  taskType: PostType;
   messageType?: PostType;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
+  /** Optional end date/time for calendar events composed in "event" mode. */
+  endDate?: Date;
+  endTime?: string;
+  /** Title/summary/location for event or listing modes. */
+  eventTitle?: string;
+  eventSummary?: string;
+  eventLocation?: string;
   explicitMentionPubkeys?: string[];
   explicitTagNames?: string[];
   selectedRelays?: string[];
@@ -188,6 +196,17 @@ export interface BasePost {
   mentions?: string[];
   attachments?: PublishedAttachment[];
   locationGeohash?: string;
+  /** Free-form location string (NIP-52 `location` tag, NIP-99 `location` tag). Distinct from `locationGeohash`. */
+  location?: string;
+}
+
+/**
+ * Posts that carry a NIP-style title/summary at the top level. NIP-52 calendar
+ * events and NIP-99 listings both surface these.
+ */
+export interface TitledPost extends BasePost {
+  title?: string;
+  summary?: string;
 }
 
 export interface TaskPost extends BasePost {
@@ -204,12 +223,33 @@ export interface CommentPost extends BasePost {
   kind: NostrEventKind.TextNote;
 }
 
-export interface ListingPost extends BasePost {
+export interface ListingPost extends TitledPost {
   kind: NostrEventKind.ClassifiedListing;
   nip99: Nip99Metadata;
 }
 
-export type Post = TaskPost | CommentPost | ListingPost;
+/**
+ * NIP-52 date-based (all-day) calendar event. Dates are stored as the spec's
+ * timezone-independent `YYYY-MM-DD` strings — `Date` cannot represent a date
+ * without a timezone. Views parse to a local-midnight `Date` only at the
+ * placement boundary.
+ */
+export interface DateBasedEventPost extends TitledPost {
+  kind: NostrEventKind.CalendarDateBased;
+  startDate: string;
+  endDate?: string;
+}
+
+/** NIP-52 time-based calendar event with full start/end datetimes. */
+export interface TimeBasedEventPost extends TitledPost {
+  kind: NostrEventKind.CalendarTimeBased;
+  start: Date;
+  end?: Date;
+}
+
+export type CalendarEventPost = DateBasedEventPost | TimeBasedEventPost;
+
+export type Post = TaskPost | CommentPost | ListingPost | CalendarEventPost;
 
 /**
  * Boundary normalizer: accepts either the canonical object form or a bare
@@ -266,12 +306,51 @@ export function isListingPost<T extends { kind: NostrEventKind }>(
   return post?.kind === NostrEventKind.ClassifiedListing;
 }
 
+export function isDateBasedEventPost<T extends { kind: NostrEventKind }>(
+  post: T | undefined
+): post is T & DateBasedEventPost {
+  return post?.kind === NostrEventKind.CalendarDateBased;
+}
+
+export function isTimeBasedEventPost<T extends { kind: NostrEventKind }>(
+  post: T | undefined
+): post is T & TimeBasedEventPost {
+  return post?.kind === NostrEventKind.CalendarTimeBased;
+}
+
+export function isCalendarEventPost<T extends { kind: NostrEventKind }>(
+  post: T | undefined
+): post is T & CalendarEventPost {
+  return isDateBasedEventPost(post) || isTimeBasedEventPost(post);
+}
+
+function parseIsoDateLocal(iso: string): Date | undefined {
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return undefined;
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function formatHourMinute(date: Date): string {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
 /**
  * Returns the highest-priority date attached to a post, or undefined for
- * variants that don't carry dates.
+ * variants that don't carry dates. Calendar events expose their start as the
+ * primary date so view placement (calendar grid, feed sort) works uniformly.
  */
 export function getTaskPrimaryDate(post: Post | undefined): TaskDate | undefined {
-  return post && isTaskPost(post) ? post.dates[0] : undefined;
+  if (!post) return undefined;
+  if (isTaskPost(post)) return post.dates[0];
+  if (isDateBasedEventPost(post)) {
+    const date = parseIsoDateLocal(post.startDate);
+    return date ? { date, type: "start" } : undefined;
+  }
+  if (isTimeBasedEventPost(post)) {
+    return { date: post.start, time: formatHourMinute(post.start), type: "start" };
+  }
+  return undefined;
 }
 
 export function findTaskDate(
