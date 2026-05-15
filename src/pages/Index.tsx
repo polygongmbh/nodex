@@ -536,6 +536,7 @@ function FeedIndexContent() {
 
   const {
     composeRestoreRequest,
+    onComposeRestoreRequestConsumed,
     isPendingPublishTask,
     handleUndoPendingPublish,
     handleNewTask,
@@ -697,6 +698,7 @@ function FeedIndexContent() {
       focusedTaskId,
       isPendingPublishTask,
       composeRestoreRequest,
+      onComposeRestoreRequestConsumed,
       mentionRequest,
       onMentionRequestConsumed: (requestId: number) => {
         setMentionRequest((current) => (current?.id === requestId ? null : current));
@@ -714,6 +716,7 @@ function FeedIndexContent() {
       focusedTaskId,
       isPendingPublishTask,
       composeRestoreRequest,
+      onComposeRestoreRequestConsumed,
       mentionRequest,
       setMentionRequest,
       forceShowComposeForGuide,

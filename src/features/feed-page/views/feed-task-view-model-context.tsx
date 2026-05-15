@@ -8,6 +8,7 @@ export interface FeedTaskViewModel extends SharedTaskViewContext {
   composeGuideActivationSignal?: number;
   isPendingPublishTask?: (taskId: string) => boolean;
   onMentionRequestConsumed?: (requestId: number) => void;
+  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   mentionRequest?: {
     mention: string;
     id: number;

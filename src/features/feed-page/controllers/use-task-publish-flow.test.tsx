@@ -229,6 +229,14 @@ function Harness({
       </button>
       <button onClick={() => hook.handleRecomposeTask("task-1")}>Recompose</button>
       <button
+        onClick={() => {
+          const id = hook.composeRestoreRequest?.id;
+          if (typeof id === "number") hook.onComposeRestoreRequestConsumed(id);
+        }}
+      >
+        ConsumeRestoreRequest
+      </button>
+      <button
         onClick={async () => {
           const result = await hook.handleNewTask(
             "Edited",
@@ -449,6 +457,30 @@ describe("useTaskPublishFlow", () => {
       expect(screen.getByTestId("restore-content")).toHaveTextContent("Original body #general");
     });
     expect(screen.getByTestId("restore-recompose")).toHaveTextContent("task-1");
+  });
+
+  it("clears the compose restore request once consumed", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({
+      id: "task-1",
+      content: "Original body #general",
+      relays: ["relay-one"],
+      author: currentUser,
+    });
+
+    renderHarness({ initialTasks: [initialTask], currentUser });
+    fireEvent.click(screen.getByRole("button", { name: "Recompose" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-recompose")).toHaveTextContent("task-1");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "ConsumeRestoreRequest" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-id")).toHaveTextContent("");
+    });
+    expect(screen.getByTestId("restore-recompose")).toHaveTextContent("");
   });
 
   it("fires a deletion event after a re-compose submit succeeds", async () => {

@@ -59,6 +59,7 @@ interface ListViewProps {
   focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   depthMode?: DisplayDepthMode;
   isInteractionBlocked?: boolean;
   isHydrating?: boolean;
@@ -125,6 +126,7 @@ export function ListView({
   depthMode = "leaves",
   focusedTaskId,
   composeRestoreRequest = null,
+  onComposeRestoreRequestConsumed,
   isInteractionBlocked = false,
   isHydrating = false,
 }: ListViewProps) {
@@ -464,6 +466,7 @@ export function ListView({
       {(authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
           composeRestoreRequest={composeRestoreRequest}
+          onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
           allowComment={false}
         />

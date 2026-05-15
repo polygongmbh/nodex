@@ -73,6 +73,7 @@ interface CalendarViewProps {
   focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
@@ -91,6 +92,7 @@ export function CalendarView({
   onSelectedDateChange,
   isMobile = false,
   composeRestoreRequest = null,
+  onComposeRestoreRequestConsumed,
 }: CalendarViewProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -631,6 +633,7 @@ export function CalendarView({
                     allowComment={false}
                     defaultDueDate={selectedDate}
                     composeRestoreRequest={composeRestoreRequest}
+                    onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
                   />
                 </div>
               )}

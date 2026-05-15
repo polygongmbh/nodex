@@ -55,6 +55,7 @@ interface KanbanViewProps {
   focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   depthMode: DisplayDepthMode;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
@@ -155,6 +156,7 @@ export function KanbanView({
   focusedTaskId,
   isPendingPublishTask,
   composeRestoreRequest = null,
+  onComposeRestoreRequestConsumed,
   isInteractionBlocked = false,
 }: KanbanViewProps) {
   const { t } = useTranslation("tasks");
@@ -520,6 +522,7 @@ export function KanbanView({
                       focusedTaskId={focusedTaskId}
                       allowComment={false}
                       composeRestoreRequest={composeRestoreRequest}
+                      onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
                     />
                   </div>
                 )}

@@ -63,6 +63,7 @@ interface FeedViewProps {
   focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   isMobile?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
   onMentionRequestConsumed?: (requestId: number) => void;
@@ -170,6 +171,7 @@ export function FeedView({
   isMobile = false,
   isPendingPublishTask,
   composeRestoreRequest = null,
+  onComposeRestoreRequestConsumed,
   onMentionRequestConsumed,
   mentionRequest = null,
   isInteractionBlocked = false,
@@ -481,6 +483,7 @@ export function FeedView({
           mentionRequest={mentionRequest}
           onMentionRequestConsumed={onMentionRequestConsumed}
           composeRestoreRequest={composeRestoreRequest}
+          onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
           allowFeedMessageTypes
         />

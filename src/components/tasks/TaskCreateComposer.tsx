@@ -28,6 +28,7 @@ interface TaskCreateComposerProps {
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   onSubmit?: (data: TaskComposerFormData) => void;
 }
 
@@ -46,6 +47,7 @@ export function TaskCreateComposer({
   allowComment = true,
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
+  onComposeRestoreRequestConsumed,
   onSubmit,
 }: TaskCreateComposerProps) {
   const { createHttpAuthHeader } = useNDK();
@@ -117,6 +119,7 @@ export function TaskCreateComposer({
         allowComment={allowComment}
         allowFeedMessageTypes={allowFeedMessageTypes}
         composeRestoreRequest={composeRestoreRequest}
+        onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
         contextTaskTitle={contextTaskTitle}
         inheritedTagNames={inheritedTagNames}
         inheritedMentionPubkeys={inheritedMentionPubkeys}

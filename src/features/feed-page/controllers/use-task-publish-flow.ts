@@ -1071,8 +1071,13 @@ export function useTaskPublishFlow({
     void publishTaskPriorityUpdate(taskId, priority);
   }, [allTasks, currentUser, guardInteraction, publishTaskPriorityUpdate, setLocalTasks]);
 
+  const handleComposeRestoreRequestConsumed = useCallback((requestId: number) => {
+    setComposeRestoreRequest((current) => (current?.id === requestId ? null : current));
+  }, []);
+
   return {
     composeRestoreRequest,
+    onComposeRestoreRequestConsumed: handleComposeRestoreRequestConsumed,
     isPendingPublishTask,
     handleUndoPendingPublish,
     handleNewTask,

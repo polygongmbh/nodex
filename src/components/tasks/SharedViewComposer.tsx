@@ -21,6 +21,7 @@ interface SharedViewComposerProps {
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  onComposeRestoreRequestConsumed?: (requestId: number) => void;
 }
 
 export function SharedViewComposer({
@@ -33,6 +34,7 @@ export function SharedViewComposer({
   allowComment = true,
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
+  onComposeRestoreRequestConsumed,
 }: SharedViewComposerProps) {
   const { t } = useTranslation("composer");
   const authPolicy = useAuthActionPolicy();
@@ -73,6 +75,7 @@ export function SharedViewComposer({
         allowComment={allowComment}
         allowFeedMessageTypes={allowFeedMessageTypes}
         composeRestoreRequest={composeRestoreRequest}
+        onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
       />
     </div>
   );

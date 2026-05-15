@@ -86,6 +86,7 @@ interface TaskComposerProps {
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   contextTaskTitle?: string;
   /** Tags seeded from the focused parent task; shown as removable chips. Desktop-only. */
   inheritedTagNames?: string[];
@@ -199,6 +200,7 @@ export function TaskComposer({
   allowComment = true,
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
+  onComposeRestoreRequestConsumed,
   contextTaskTitle = "",
   inheritedTagNames,
   inheritedMentionPubkeys,
@@ -502,7 +504,8 @@ export function TaskComposer({
     if (adaptiveSize) {
       setIsExpanded(true);
     }
-  }, [adaptiveSize, allowComment, allowFeedMessageTypes, composeRestoreRequest]);
+    onComposeRestoreRequestConsumed?.(composeRestoreRequest.id);
+  }, [adaptiveSize, allowComment, allowFeedMessageTypes, composeRestoreRequest, onComposeRestoreRequestConsumed]);
 
   useEffect(() => {
     if (!draftStorageKey) return;
