@@ -1,6 +1,6 @@
 import type { Post } from "@/types";
-import type { PersonPresenceSnapshot, SelectablePerson, SidebarPerson } from "@/types/person";
-import { PRESENCE_ONLINE_WINDOW_MS, PRESENCE_RECENT_WINDOW_MS, type LatestPresenceSnapshot } from "@/lib/presence-status";
+import type { SelectablePerson, SidebarPerson } from "@/types/person";
+import { derivePersonPresenceSnapshot, type LatestPresenceSnapshot } from "@/lib/presence-status";
 
 const DEFAULT_MIN_POSTS = 3;
 
@@ -47,8 +47,6 @@ export function deriveSidebarPeople(
     });
   }
 
-  const nowMs = now.getTime();
-
   return people
     .map((person) => {
       const normalizedId = person.pubkey.trim().toLowerCase();
@@ -59,31 +57,17 @@ export function deriveSidebarPeople(
       const personalScore = personalizeScores.get(normalizedId) || 0;
 
       const latestPresence = latestPresenceByAuthorId.get(normalizedId);
+      const presence = derivePersonPresenceSnapshot(
+        latestPresence,
+        stats.latestTimestampMs,
+        now,
+      );
       const latestPresenceTimestampMs =
         latestPresence?.state === "active" ? latestPresence.reportedAtMs : undefined;
       const latestActivityTimestampMs = Math.max(
-        stats?.latestTimestampMs ?? Number.NEGATIVE_INFINITY,
-        latestPresenceTimestampMs ?? Number.NEGATIVE_INFINITY
+        stats.latestTimestampMs ?? Number.NEGATIVE_INFINITY,
+        latestPresenceTimestampMs ?? Number.NEGATIVE_INFINITY,
       );
-      const ageMs =
-        latestActivityTimestampMs === Number.NEGATIVE_INFINITY
-          ? Number.POSITIVE_INFINITY
-          : nowMs - latestActivityTimestampMs;
-      const presenceState: "online" | "recent" | "offline" = latestPresence?.state === "offline"
-        ? "offline"
-        : ageMs <= PRESENCE_ONLINE_WINDOW_MS
-          ? "online"
-          : ageMs <= PRESENCE_RECENT_WINDOW_MS
-            ? "recent"
-            : "offline";
-
-      const presence: PersonPresenceSnapshot = {
-        state: presenceState,
-        reportedAtMs: latestPresence?.reportedAtMs,
-        context: latestPresence?.state === "active"
-          ? { view: latestPresence.view, taskId: latestPresence.taskId ?? null }
-          : undefined,
-      };
 
       return {
         person: { ...person, presence },

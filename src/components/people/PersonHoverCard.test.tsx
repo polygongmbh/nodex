@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PersonHoverCard, resumePersonHoverCards, suspendPersonHoverCards } from "./PersonHoverCard";
 import type { Person } from "@/types/person";
 import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
+import { PersonPresenceProvider } from "@/lib/person-presence-context";
+import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 import { makeTask } from "@/test/fixtures";
 
 const alice: Person = {
@@ -115,27 +117,35 @@ describe("PersonHoverCard", () => {
   it("shows presence details and resolves the viewed task title", () => {
     vi.useFakeTimers();
 
+    const presenceByAuthor = new Map<string, LatestPresenceSnapshot>([
+      [
+        alice.pubkey,
+        {
+          state: "active",
+          reportedAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
+          view: "feed",
+          taskId: "task-123",
+        },
+      ],
+    ]);
+
     render(
-      <FeedTaskViewModelProvider
-        value={{
-          tasks: [],
-          allTasks: [makeTask({ id: "task-123", content: "Fix relay reconnect jitter" })],
-          focusedTaskId: null,
-        }}
+      <PersonPresenceProvider
+        latestPresenceByAuthor={presenceByAuthor}
+        now={new Date("2026-04-04T11:59:00.000Z")}
       >
-        <PersonHoverCard
-          person={{
-            ...alice,
-            presence: {
-              state: "online",
-              reportedAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
-              context: { view: "feed", taskId: "task-123" },
-            },
+        <FeedTaskViewModelProvider
+          value={{
+            tasks: [],
+            allTasks: [makeTask({ id: "task-123", content: "Fix relay reconnect jitter" })],
+            focusedTaskId: null,
           }}
         >
-          <button type="button">Alice trigger</button>
-        </PersonHoverCard>
-      </FeedTaskViewModelProvider>
+          <PersonHoverCard person={alice}>
+            <button type="button">Alice trigger</button>
+          </PersonHoverCard>
+        </FeedTaskViewModelProvider>
+      </PersonPresenceProvider>
     );
 
     fireEvent.focus(screen.getByRole("button", { name: "Alice trigger" }));
@@ -150,19 +160,27 @@ describe("PersonHoverCard", () => {
   it("falls back to the current view when a presence task id is not in the current task model", () => {
     vi.useFakeTimers();
 
+    const presenceByAuthor = new Map<string, LatestPresenceSnapshot>([
+      [
+        alice.pubkey,
+        {
+          state: "active",
+          reportedAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
+          view: "tree",
+          taskId: "missing-task",
+        },
+      ],
+    ]);
+
     render(
-      <PersonHoverCard
-        person={{
-          ...alice,
-          presence: {
-            state: "online",
-            reportedAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
-            context: { view: "tree", taskId: "missing-task" },
-          },
-        }}
+      <PersonPresenceProvider
+        latestPresenceByAuthor={presenceByAuthor}
+        now={new Date("2026-04-04T11:59:00.000Z")}
       >
-        <button type="button">Alice trigger</button>
-      </PersonHoverCard>
+        <PersonHoverCard person={alice}>
+          <button type="button">Alice trigger</button>
+        </PersonHoverCard>
+      </PersonPresenceProvider>
     );
 
     fireEvent.focus(screen.getByRole("button", { name: "Alice trigger" }));
@@ -172,5 +190,38 @@ describe("PersonHoverCard", () => {
 
     expect(screen.getByText("Tree")).toBeInTheDocument();
     expect(screen.queryByText("Unknown task")).not.toBeInTheDocument();
+  });
+
+  it("reads presence from the shared context so it cannot disagree with the sidebar", () => {
+    vi.useFakeTimers();
+
+    const presenceByAuthor = new Map<string, LatestPresenceSnapshot>([
+      [
+        alice.pubkey,
+        {
+          state: "active",
+          reportedAtMs: new Date("2026-04-04T11:58:00.000Z").getTime(),
+          view: "feed",
+        },
+      ],
+    ]);
+
+    render(
+      <PersonPresenceProvider
+        latestPresenceByAuthor={presenceByAuthor}
+        now={new Date("2026-04-04T11:59:00.000Z")}
+      >
+        <PersonHoverCard person={alice}>
+          <button type="button">Alice trigger</button>
+        </PersonHoverCard>
+      </PersonPresenceProvider>
+    );
+
+    fireEvent.focus(screen.getByRole("button", { name: "Alice trigger" }));
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    expect(screen.getByText("online")).toBeInTheDocument();
   });
 });

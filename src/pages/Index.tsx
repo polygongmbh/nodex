@@ -58,6 +58,7 @@ import {
 } from "@/features/feed-page/views/feed-task-view-model-context";
 import { FeedPageProviders } from "@/features/feed-page/views/FeedPageProviders";
 import { FeedRelayProvider, useFeedRelayState } from "@/features/feed-page/views/FeedRelayProvider";
+import { PersonPresenceProvider } from "@/lib/person-presence-context";
 import { MotdBanner } from "@/components/MotdBanner";
 import { featureDebugLog } from "@/lib/feature-debug";
 
@@ -838,6 +839,10 @@ function FeedIndexContent() {
   );
 
   return (
+    <PersonPresenceProvider
+      latestPresenceByAuthor={latestPresenceByAuthor}
+      allTasks={allTasks}
+    >
     <FeedPageProviders
       coreHandlers={coreHandlers}
       surfaceState={feedSurfaceState}
@@ -871,6 +876,7 @@ function FeedIndexContent() {
       {welcomeController}
       {onboardingController}
     </FeedPageProviders>
+    </PersonPresenceProvider>
   );
 }
 

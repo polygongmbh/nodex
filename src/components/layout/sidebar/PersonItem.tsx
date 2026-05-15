@@ -10,6 +10,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
+import { usePersonPresence } from "@/lib/person-presence-context";
 
 interface PersonItemProps {
   person: SidebarPerson;
@@ -27,7 +28,8 @@ export function PersonItem({
   const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const personName = person.pubkey === "me" ? t("sidebar.filters.me") : person.displayName;
-  const onlineStatus = person.presence?.state ?? "offline";
+  const sharedPresence = usePersonPresence(person.pubkey);
+  const onlineStatus = sharedPresence?.state ?? person.presence?.state ?? "offline";
   const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-warning" : null;
   const handlePersonShortcut = (event: MouseEvent, fallback: "toggle" | "exclusive") => {
     const shortcutIntent = getPersonShortcutIntent(event);

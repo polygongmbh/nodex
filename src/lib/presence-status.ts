@@ -1,3 +1,5 @@
+import type { PersonPresenceSnapshot } from "@/types/person";
+
 export const NIP38_PRESENCE_TAG = "nodex-presence";
 export const NODEX_PRESENCE_VIEW_TAG = "nodex-view";
 
@@ -80,6 +82,46 @@ export function deriveLatestPresenceByAuthor(
   }
 
   return latestPresenceByAuthor;
+}
+
+/**
+ * Single source of truth for turning the raw NIP-38 presence signal (and any
+ * recent activity timestamp) into the online/recent/offline state shown in
+ * UI surfaces. Used by both the sidebar list and the hover card so they
+ * cannot disagree.
+ */
+export function derivePersonPresenceSnapshot(
+  latestPresence: LatestPresenceSnapshot | undefined,
+  latestActivityMs: number | undefined,
+  now: Date,
+): PersonPresenceSnapshot {
+  const nowMs = now.getTime();
+  const latestPresenceTimestampMs =
+    latestPresence?.state === "active" ? latestPresence.reportedAtMs : undefined;
+  const combinedTimestampMs = Math.max(
+    latestActivityMs ?? Number.NEGATIVE_INFINITY,
+    latestPresenceTimestampMs ?? Number.NEGATIVE_INFINITY,
+  );
+  const ageMs =
+    combinedTimestampMs === Number.NEGATIVE_INFINITY
+      ? Number.POSITIVE_INFINITY
+      : nowMs - combinedTimestampMs;
+  const state: PersonPresenceSnapshot["state"] =
+    latestPresence?.state === "offline"
+      ? "offline"
+      : ageMs <= PRESENCE_ONLINE_WINDOW_MS
+        ? "online"
+        : ageMs <= PRESENCE_RECENT_WINDOW_MS
+          ? "recent"
+          : "offline";
+  return {
+    state,
+    reportedAtMs: latestPresence?.reportedAtMs,
+    context:
+      latestPresence?.state === "active"
+        ? { view: latestPresence.view, taskId: latestPresence.taskId ?? null }
+        : undefined,
+  };
 }
 
 export function deriveLatestActivePresenceByAuthor(

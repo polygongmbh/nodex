@@ -2,7 +2,8 @@ import React from "react";
 import { AtSign, Copy, Filter, MessageSquareMore } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import type { Person, PersonPresenceSnapshot } from "@/types/person";
+import type { Person } from "@/types/person";
+import { usePersonPresence } from "@/lib/person-presence-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
   DropdownMenu,
@@ -260,7 +261,7 @@ export function PersonActionMenuContent({
   const isMobile = useIsMobile();
   const compactLabel = getCompactPersonLabel(person);
   const pubkeyLabel = toUserFacingPubkey(person.pubkey);
-  const presence = (person as Person & { presence?: PersonPresenceSnapshot }).presence;
+  const presence = usePersonPresence(person.pubkey);
   const statusKey: "online" | "recent" | "offline" = presence?.state ?? "offline";
 
   const copyToClipboard = async (value: string, successMessageKey: string) => {

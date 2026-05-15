@@ -9,6 +9,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Added
 - Status view activity feed now also surfaces posts from pinned channels, even when those channels are not selected in the sidebar. Only applies when no task is focused — focused scope continues to narrow the timeline.
 
+### Fixed
+- Person hover card no longer shows people as offline when the sidebar shows them as online (and vice versa). Both surfaces now read from the same shared presence source (NIP-38 presence events + recent activity), so they cannot disagree.
+
 ### Changed
 - Person name chips (feed, tree, status timeline, status update entries) now share a single rendering: display name + NIP-05 verified badge + optional parenthesized handle. Hover state lights up the full name, not just the secondary handle, and the surrounding card's native tooltip no longer bleeds through on top of the person hover card. The slim/XL responsive npub truncation has been replaced by CSS clipping, so the full npub is now in the DOM and visually ellipsizes only when the row runs out of room.
 - Channel selectors now trim by per-instance activity instead of a fixed 16-channel cap. Each channel gets a composite score from global usage, personal frecency, and whether the user has posted in it; channels below the noise floor (~15% of the top score) are hidden from the sidebar's expanded section and the mobile selector. The mobile bottom-bar selector also defaults to a narrower "primary" band (channels the user actually uses or that are core/pinned/selected) and exposes the rest via a "Show more" toggle. The desktop folded sidebar preview is unchanged.

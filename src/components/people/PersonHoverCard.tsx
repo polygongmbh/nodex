@@ -3,7 +3,7 @@ import { BadgeCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import type { Person, PersonPresenceSnapshot } from "@/types/person";
+import type { Person } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getCompactPersonLabel } from "@/types/person";
 import { cn } from "@/lib/utils";
@@ -11,9 +11,10 @@ import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
+import { usePersonPresence } from "@/lib/person-presence-context";
 
 interface PersonHoverCardProps {
-  person: Person & { presence?: PersonPresenceSnapshot };
+  person: Person;
   children: ReactNode;
   openDelay?: number;
   side?: "top" | "right" | "bottom" | "left";
@@ -69,10 +70,6 @@ export function resumePersonHoverCards() {
   emitHoverCardStore();
 }
 
-function getStatusKey(person: { presence?: PersonPresenceSnapshot }): "online" | "recent" | "offline" {
-  return person.presence?.state ?? "offline";
-}
-
 export function PersonHoverCard({
   person,
   children,
@@ -107,9 +104,10 @@ export function PersonHoverCard({
   const [requestedOpen, setRequestedOpen] = useState(false);
   const compactLabel = getCompactPersonLabel(person);
   const pubkeyLabel = toUserFacingPubkey(person.pubkey);
-  const statusKey = getStatusKey(person);
-  const presenceTaskId = person.presence?.context?.taskId;
-  const presenceView = person.presence?.context?.view;
+  const presence = usePersonPresence(person.pubkey);
+  const statusKey = presence?.state ?? "offline";
+  const presenceTaskId = presence?.context?.taskId;
+  const presenceView = presence?.context?.view;
   const resolvedPresenceTaskTitle = presenceTaskId
     ? getTrimmedFirstTaskContentLine(
         allTasks.find((task) => task.id === presenceTaskId)?.content
@@ -230,17 +228,17 @@ export function PersonHoverCard({
             </p>
           </div>
         </div>
-        {person.presence?.reportedAtMs || viewingLabel ? (
+        {presence?.reportedAtMs || viewingLabel ? (
           <div className="mt-3 rounded-md border border-border/60 bg-muted/40 p-3">
             <div className="grid gap-2 text-xs text-muted-foreground">
-              {person.presence?.reportedAtMs ? (
+              {presence?.reportedAtMs ? (
                 <div className="flex items-start justify-between gap-3">
                   <span>{t("people.presence.lastSeen")}</span>
                   <span className="text-right text-foreground">
                     {new Intl.DateTimeFormat(i18n.language, {
                       dateStyle: "medium",
                       timeStyle: "short",
-                    }).format(new Date(person.presence.reportedAtMs))}
+                    }).format(new Date(presence.reportedAtMs))}
                   </span>
                 </div>
               ) : null}
