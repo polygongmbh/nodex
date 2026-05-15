@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
-import { Post, ComposeRestoreRequest, isTaskPost } from "@/types";
+import { Post, isTaskPost } from "@/types";
 import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -21,15 +21,8 @@ interface TaskTreeProps {
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
-  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   isMobile?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
-  onMentionRequestConsumed?: (requestId: number) => void;
-  mentionRequest?: {
-    mention: string;
-    id: number;
-  } | null;
   isInteractionBlocked?: boolean;
   isHydrating?: boolean;
 }
@@ -42,10 +35,6 @@ export function TaskTree({
   focusedTaskId,
   isMobile = false,
   isPendingPublishTask,
-  onMentionRequestConsumed,
-  composeRestoreRequest = null,
-  onComposeRestoreRequestConsumed,
-  mentionRequest = null,
   isInteractionBlocked = false,
   isHydrating = false,
 }: TaskTreeProps) {
@@ -229,10 +218,6 @@ export function TaskTree({
       {!isMobile && (authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
           onExpandedChange={setIsComposerExpanded}
-          mentionRequest={mentionRequest}
-          onMentionRequestConsumed={onMentionRequestConsumed}
-          composeRestoreRequest={composeRestoreRequest}
-          onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
           collapseOnSuccess
           allowComment={Boolean(focusedTaskId)}

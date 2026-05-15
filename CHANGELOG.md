@@ -11,7 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Fixed
 - Person hover card no longer shows people as offline when the sidebar shows them as online (and vice versa). Both surfaces now read from the same shared presence source (NIP-38 presence events + recent activity), so they cannot disagree.
-- Discarding a re-compose now sticks across view switches. The pending restore request was kept alive in parent state and re-applied whenever a different view mounted a fresh composer; it is now cleared as soon as the composer consumes it.
+- Discarding a re-compose now sticks across view switches. The pending request is consumed on apply, and the recompose intent now rides in the persisted draft — so switching views mid-recompose keeps the banner, but discarding clears it permanently.
 
 ### Changed
 - Channel filters now match tags that differ by up to two trailing characters, so `#persona` surfaces tasks tagged `#personas` and `#sleep` matches `#sleeper` (and vice versa). Applies symmetrically to included and excluded filters; the sidebar channel list and composer autocomplete are unchanged.

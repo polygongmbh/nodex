@@ -24,7 +24,6 @@ import {
   type Post,
   type TaskPost,
   type TaskState,
-  type ComposeRestoreRequest,
 } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -60,7 +59,6 @@ interface UpcomingViewProps {
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
   isHydrating?: boolean;
 }
 

@@ -8,6 +8,7 @@ import {
 } from "@/lib/mentions";
 import type {
   Channel,
+  ComposeRecomposeOf,
   ComposeRestoreRequest,
   Nip99Metadata,
   PostType,
@@ -33,6 +34,7 @@ export interface TaskComposerDraftState {
   attachments?: PublishedAttachment[];
   nip99?: Nip99Metadata;
   locationGeohash?: string;
+  recomposeOf?: ComposeRecomposeOf;
 }
 
 export interface TaskComposerInitialState {
@@ -47,6 +49,7 @@ export interface TaskComposerInitialState {
   attachments: PublishedAttachment[];
   nip99: Nip99Metadata;
   locationGeohash?: string;
+  recomposeOf?: ComposeRecomposeOf;
 }
 
 export interface ResolvedTaskComposerEnvironment {
@@ -297,6 +300,7 @@ export function resolveTaskComposerInitialState({
     priority: draftState?.priority,
     attachments: draftState?.attachments || [],
     nip99: { ...(draftState?.nip99 || {}) },
+    recomposeOf: isStaleDraft ? undefined : draftState?.recomposeOf,
     locationGeohash: isStaleDraft ? undefined : draftState?.locationGeohash,
   };
 }
@@ -331,6 +335,7 @@ export interface PersistableComposerSnapshot {
   nip99?: Nip99Metadata;
   /** Already-persistable attachments (uploaded with url). */
   attachments: PublishedAttachment[];
+  recomposeOf?: ComposeRecomposeOf;
 }
 
 /**
@@ -369,6 +374,7 @@ export function persistTaskComposerDraft(
     nip99: snapshot.nip99,
     locationGeohash: snapshot.locationGeohash,
     attachments: snapshot.attachments,
+    recomposeOf: snapshot.recomposeOf,
   });
 }
 

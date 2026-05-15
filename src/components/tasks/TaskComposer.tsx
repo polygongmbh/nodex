@@ -297,7 +297,7 @@ export function TaskComposer({
   const autoManagedInheritedMentionsRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
-  const [activeRecomposeOf, setActiveRecomposeOf] = useState<ComposeRecomposeOf | undefined>(undefined);
+  const [activeRecomposeOf, setActiveRecomposeOf] = useState<ComposeRecomposeOf | undefined>(initialComposerState.recomposeOf);
   const lastAppliedMentionRequestIdRef = useRef<number | null>(null);
   const dragDepthRef = useRef(0);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
@@ -535,10 +535,11 @@ export function TaskComposer({
         nip99,
         locationGeohash,
         attachments: persistableAttachments,
+        recomposeOf: activeRecomposeOf,
       },
       storedPriorityFromDisplay
     );
-  }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;

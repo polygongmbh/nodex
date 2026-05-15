@@ -6,35 +6,23 @@ import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { ComposeRestoreRequest } from "@/types";
 
 interface SharedViewComposerProps {
   onExpandedChange?: (expanded: boolean) => void;
-  mentionRequest?: {
-    mention: string;
-    id: number;
-  } | null;
-  onMentionRequestConsumed?: (requestId: number) => void;
   defaultContent?: string;
   className?: string;
   collapseOnSuccess?: boolean;
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
-  onComposeRestoreRequestConsumed?: (requestId: number) => void;
 }
 
 export function SharedViewComposer({
   onExpandedChange,
-  mentionRequest = null,
-  onMentionRequestConsumed,
   defaultContent = "",
   className = "relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
   collapseOnSuccess = false,
   allowComment = true,
   allowFeedMessageTypes = false,
-  composeRestoreRequest = null,
-  onComposeRestoreRequestConsumed,
 }: SharedViewComposerProps) {
   const { t } = useTranslation("composer");
   const authPolicy = useAuthActionPolicy();
@@ -67,15 +55,11 @@ export function SharedViewComposer({
         focusedTaskId={focusedTaskId}
         adaptiveSize
         onExpandedChange={onExpandedChange}
-        mentionRequest={mentionRequest}
-        onMentionRequestConsumed={onMentionRequestConsumed}
         defaultContent={defaultContent}
         focusOnMount={false}
         collapseOnSuccess={collapseOnSuccess}
         allowComment={allowComment}
         allowFeedMessageTypes={allowFeedMessageTypes}
-        composeRestoreRequest={composeRestoreRequest}
-        onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
       />
     </div>
   );

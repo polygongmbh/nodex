@@ -8,7 +8,7 @@ import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getTaskAssigneePubkeys, type ComposeRestoreRequest } from "@/types";
+import { getTaskAssigneePubkeys } from "@/types";
 
 interface TaskCreateComposerProps {
   onCancel: () => void;
@@ -19,16 +19,9 @@ interface TaskCreateComposerProps {
   adaptiveSize?: boolean;
   focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
-  mentionRequest?: {
-    mention: string;
-    id: number;
-  } | null;
-  onMentionRequestConsumed?: (requestId: number) => void;
   collapseOnSuccess?: boolean;
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
-  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   onSubmit?: (data: TaskComposerFormData) => void;
 }
 
@@ -41,17 +34,20 @@ export function TaskCreateComposer({
   adaptiveSize = false,
   focusOnMount = true,
   onExpandedChange,
-  mentionRequest = null,
-  onMentionRequestConsumed,
   collapseOnSuccess = false,
   allowComment = true,
   allowFeedMessageTypes = false,
-  composeRestoreRequest = null,
-  onComposeRestoreRequestConsumed,
   onSubmit,
 }: TaskCreateComposerProps) {
   const { createHttpAuthHeader } = useNDK();
-  const { allTasks, composeGuideActivationSignal } = useFeedTaskViewModel();
+  const {
+    allTasks,
+    composeGuideActivationSignal,
+    mentionRequest = null,
+    onMentionRequestConsumed,
+    composeRestoreRequest = null,
+    onComposeRestoreRequestConsumed,
+  } = useFeedTaskViewModel();
   const environment = useResolvedTaskComposerEnvironment({});
   const {
     shouldHideComposer,

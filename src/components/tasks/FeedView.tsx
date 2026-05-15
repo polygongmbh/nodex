@@ -3,7 +3,6 @@ import { MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-rea
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import {
   Post,
-  ComposeRestoreRequest,
   RawNostrEvent,
   getTaskStatus,
   getTaskState,
@@ -62,15 +61,8 @@ interface FeedViewProps {
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
-  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   isMobile?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
-  onMentionRequestConsumed?: (requestId: number) => void;
-  mentionRequest?: {
-    mention: string;
-    id: number;
-  } | null;
   isInteractionBlocked?: boolean;
   isHydrating?: boolean;
 }
@@ -170,10 +162,6 @@ export function FeedView({
   searchQueryOverride,
   isMobile = false,
   isPendingPublishTask,
-  composeRestoreRequest = null,
-  onComposeRestoreRequestConsumed,
-  onMentionRequestConsumed,
-  mentionRequest = null,
   isInteractionBlocked = false,
   isHydrating = false,
 }: FeedViewProps) {
@@ -480,10 +468,6 @@ export function FeedView({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {!isMobile && (authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
-          mentionRequest={mentionRequest}
-          onMentionRequestConsumed={onMentionRequestConsumed}
-          composeRestoreRequest={composeRestoreRequest}
-          onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
           allowFeedMessageTypes
         />

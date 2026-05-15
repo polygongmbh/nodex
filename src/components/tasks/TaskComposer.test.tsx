@@ -279,6 +279,56 @@ describe("TaskComposer", () => {
     expect(screen.getByLabelText(/kind/i)).toHaveAttribute("tabindex", "-1");
   });
 
+  it("restores the recompose banner from the persisted draft on remount", () => {
+    localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
+      content: "second pass at the post",
+      messageType: "task",
+      savedAt: new Date().toISOString(),
+      recomposeOf: {
+        eventId: "evt-1",
+        originalKind: 1,
+        relayIds: ["relay-one"],
+        contentPreview: "first pass",
+      },
+    }));
+
+    renderComposer();
+
+    expect(screen.getByTestId("task-composer-recompose-banner")).toBeInTheDocument();
+    expect(getComposerInput()).toHaveValue("second pass at the post");
+  });
+
+  it("clears the recompose banner across remounts after a discard", async () => {
+    const { unmount } = renderComposer({
+      composeRestoreRequest: {
+        id: 1,
+        state: {
+          content: "second pass at the post",
+          taskType: "task",
+          messageType: "task",
+          recomposeOf: {
+            eventId: "evt-1",
+            originalKind: 1,
+            relayIds: ["relay-one"],
+            contentPreview: "first pass",
+          },
+        },
+      },
+    });
+
+    expect(screen.getByTestId("task-composer-recompose-banner")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /discard/i }));
+    await waitFor(() => {
+      expect(screen.queryByTestId("task-composer-recompose-banner")).not.toBeInTheDocument();
+    });
+
+    unmount();
+    renderComposer();
+
+    expect(screen.queryByTestId("task-composer-recompose-banner")).not.toBeInTheDocument();
+    expect(getComposerInput()).toHaveValue("");
+  });
+
   it("does not restore drafts without text, attachments, or NIP-99 content", () => {
     // Auxiliary state alone (date/priority/tags/mentions/location) must not
     // leak from a previous composer context (e.g. the calendar view) into a

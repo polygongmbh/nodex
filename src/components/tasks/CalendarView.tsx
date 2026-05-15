@@ -8,7 +8,6 @@ import {
   getTaskStatus,
   type Post,
   type TaskState,
-  type ComposeRestoreRequest,
   getTaskPrimaryDate,
   isTaskPost,
 } from "@/types";
@@ -72,8 +71,6 @@ interface CalendarViewProps {
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
-  onComposeRestoreRequestConsumed?: (requestId: number) => void;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
@@ -91,8 +88,6 @@ export function CalendarView({
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
   isMobile = false,
-  composeRestoreRequest = null,
-  onComposeRestoreRequestConsumed,
 }: CalendarViewProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -632,8 +627,6 @@ export function CalendarView({
                     focusedTaskId={focusedTaskId}
                     allowComment={false}
                     defaultDueDate={selectedDate}
-                    composeRestoreRequest={composeRestoreRequest}
-                    onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
                   />
                 </div>
               )}
