@@ -8,8 +8,11 @@ The UI supports multiple task views (status, tree, feed, list, kanban, and calen
 ## Core Concepts
 - Tasks and comments are represented as Nostr-compatible events.
 - Channels are hashtag-driven (`#channel`) and used for both filtering and compose defaults.
+- Channel filters tolerate small singular/plural endings, so related tags like `#persona` and `#personas` can match the same visible content.
 - Relay selection controls where new events are published.
 - People and channel filters can narrow visible content across views.
+- Mobile channel chips are quick include toggles;
+  use the manage pane for excluded channels and broader channel lists.
 
 ## Local Development
 Requirements:

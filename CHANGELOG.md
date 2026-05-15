@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-05-15
+Minor release for channel filtering ergonomics, mobile channel selection, status activity scope, and person presence consistency.
+
 ### Added
 - Status view activity feed now also surfaces posts from pinned channels, even when those channels are not selected in the sidebar. Only applies when no task is focused — focused scope continues to narrow the timeline.
 
