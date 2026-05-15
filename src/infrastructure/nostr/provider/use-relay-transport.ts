@@ -61,13 +61,26 @@ export function useRelayTransport({
       }
 
       const mappedStatus = mapRelayTransportStatus(relay);
-      if (mappedStatus !== "connecting") return;
+      if (mappedStatus === "connected") return;
 
-      nostrDevLog("relay", "Relay connection attempt timed out before opening; closing socket", {
+      if (mappedStatus === "connecting") {
+        nostrDevLog("relay", "Relay connection attempt timed out before opening; closing socket", {
+          relayUrl: normalizedRelayUrl,
+        });
+        // Close the dead socket; onRelayDisconnect's initial-failure path then schedules retry.
+        relay.disconnect();
+        return;
+      }
+
+      // Pool transport is DISCONNECTED but we're still inside the connect
+      // watchdog window — this is the "WS opened and closed without firing
+      // relay:connect" case (e.g. relay closed during NIP-42 challenge before
+      // we were signed in). onRelayDisconnect never ran, so nothing has
+      // scheduled a retry. Kick one off so the relay isn't stuck forever.
+      nostrDevLog("relay", "Relay disconnected silently during connect; scheduling reconnect", {
         relayUrl: normalizedRelayUrl,
       });
-      // Close the dead socket; onRelayDisconnect's initial-failure path then schedules retry.
-      relay.disconnect();
+      relay.connect();
     }, RELAY_CONNECTING_WATCHDOG_MS);
 
     relayConnectWatchdogIdsRef.current.set(normalizedRelayUrl, timeoutId);

@@ -686,22 +686,23 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       if (cancelled) return;
       if (allSettled()) return;
 
-      const { driftCorrections, stillConnecting } = reconcileRelayStatusesFromPool(ndk);
-      if (driftCorrections > 0 || stillConnecting.length > 0) {
+      const { driftCorrections, stuckOnTransport } = reconcileRelayStatusesFromPool(ndk);
+      if (driftCorrections > 0 || stuckOnTransport.length > 0) {
         nostrDevLog("relay", "Startup reconciliation tick", {
           tickIndex,
           driftCorrections,
-          stillConnecting,
+          stuckOnTransport,
         });
       }
 
-      // After the second tick (~3s), if the underlying transport is still
-      // "connecting" too (i.e. genuine handshake stall, not just state drift),
-      // force-reconnect with a fresh socket. The 15s connect watchdog covers
-      // the longer-running case; this is a faster nudge for clearly stalled
-      // initial handshakes.
+      // After the second tick (~3s), force-reconnect any relay whose React
+      // state is "connecting" but whose underlying transport is not connected
+      // — either still mid-handshake, or silently disconnected (e.g. relay
+      // closed the WS during NIP-42 before promoting to CONNECTED, so
+      // relay:disconnect never fired and the 15s watchdog short-circuited
+      // because mapNativeRelayStatus already returns "disconnected").
       if (tickIndex >= 1) {
-        stillConnecting.forEach((relayUrl) => {
+        stuckOnTransport.forEach((relayUrl) => {
           nostrDevLog("relay", "Startup reconciliation forcing relay reconnect", { relayUrl });
           reconnectRelay(relayUrl, { forceNewSocket: true });
         });

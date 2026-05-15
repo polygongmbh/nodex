@@ -1019,6 +1019,43 @@ describe("NDKProvider relay lifecycle", () => {
     vi.useRealTimers();
   });
 
+  it("unsticks a relay whose WebSocket closed during the connect window without firing relay:disconnect", async () => {
+    vi.useFakeTimers();
+    mockedNdk.relayConnectModes.set("wss://relay.one", "hang");
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connecting");
+
+    // Simulate the silent-close race: NDK's underlying relay status moves to
+    // DISCONNECTED (the WS opened+closed) but neither relay:connect nor
+    // relay:disconnect reached our handler, so React stays on "connecting".
+    const ndk = mockedNdk.ndkInstances[0];
+    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+    firstRelay.status = mockedNdk.MockNDKRelayStatus.DISCONNECTED;
+
+    // Flip the relay to "success" so the reconciler's force-reconnect succeeds.
+    mockedNdk.relayConnectModes.set("wss://relay.one", "success");
+
+    // Tick 1 fires at 3s and triggers reconnectRelay(forceNewSocket: true).
+    await act(async () => {
+      vi.advanceTimersByTime(3500);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    expect(ndk.pool.getCreatedRelays("wss://relay.one").length).toBeGreaterThan(1);
+    vi.useRealTimers();
+  });
+
   it("reconciles a stuck 'connecting' React state when the underlying relay is already connected", async () => {
     vi.useFakeTimers();
     // Hang on the very first dispatch so React state initialises to 'connecting'

@@ -155,17 +155,23 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Reconcile React relay state against NDK's pool. Catches missed `relay:connect`
-  // events on initial mount — e.g. when session restore re-adds a default relay
-  // and races the WebSocket handshake, leaving React stuck on "connecting" while
-  // NDK's underlying relay is already CONNECTED. Returns the number of stuck
-  // relays it fixed, plus any URLs that are still stuck at the transport level.
+  // Reconcile React relay state against NDK's pool. Catches two divergence cases
+  // that can leave the sidebar stuck on "connecting" after initial load:
+  //   1. Missed `relay:connect` — pool is CONNECTED but React shows connecting.
+  //      Typically when session restore replaces the pool relay between the
+  //      relay:connecting and relay:connect dispatches, making handleRelayConnect
+  //      bail at its replaced-instance guard. Fix: replay handleRelayConnect.
+  //   2. Silent transport close — pool moved to DISCONNECTED (or never left
+  //      CONNECTING long enough to fire relay:connect) but no relay:disconnect
+  //      reached our handler. Seen with relays that close the WS during the
+  //      NIP-42 handshake before the client is signed in. Fix: nudge the
+  //      caller (ndk-provider runs reconnectRelay with forceNewSocket).
   const reconcileRelayStatusesFromPool = useCallback((ndkInstance: NDK): {
     driftCorrections: number;
-    stillConnecting: string[];
+    stuckOnTransport: string[];
   } => {
     let driftCorrections = 0;
-    const stillConnecting: string[] = [];
+    const stuckOnTransport: string[] = [];
     ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
       const normalized = normalizeRelayUrl(relay.url);
       if (removedRelaysRef.current.has(normalized)) return;
@@ -182,11 +188,14 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         driftCorrections += 1;
         return;
       }
-      if (mappedStatus === "connecting" && reactEntry.status === "connecting") {
-        stillConnecting.push(normalized);
+      if (reactEntry.status === "connecting") {
+        // Pool is connecting-or-worse and React is still showing connecting.
+        // The transport made no observable progress; let the caller decide
+        // whether to force-reconnect.
+        stuckOnTransport.push(normalized);
       }
     });
-    return { driftCorrections, stillConnecting };
+    return { driftCorrections, stuckOnTransport };
   }, [handleRelayConnect]);
 
   const attachPoolHandlers = useCallback((ndkInstance: NDK): (() => void) => {
