@@ -107,6 +107,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     removedRelaysRef,
     updateRelayEntry,
     attachPoolHandlers,
+    reconcileRelayStatusesFromPool,
     resetRejectedRelayStatuses,
   } = useRelayPool(poolDepsRef);
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
@@ -389,6 +390,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     );
 
     void ndkInstance.connect();
+    nostrDevLog("relay", "Initial NDK connect() dispatched", {
+      pooledRelayCount: ndkInstance.pool.relays.size,
+      explicitRelayUrls: ndkInstance.explicitRelayUrls,
+    });
     void session.restore();
     const inFlightKind0ProfileRequests = kind0ProfileInFlightRef.current;
 
@@ -657,6 +662,62 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       window.removeEventListener("online", onOnline);
     };
   }, [ndk, reconnectRelay, relaysRef, removedRelaysRef]);
+
+  // Startup reconciliation: catches divergence between React relay state and NDK's
+  // pool that can leave the sidebar showing "connecting" forever after initial load.
+  // The most common case is a missed `relay:connect` event when session restore
+  // re-adds a default relay between the relay:connecting and relay:connect dispatches,
+  // which makes onRelayConnect bail at its "pool relay instance was replaced" guard.
+  useEffect(() => {
+    if (!ndk) return;
+    const TICK_DELAYS_MS = [1000, 3000, 7000, 14000, 22000];
+    let cancelled = false;
+    const timeoutIds: number[] = [];
+
+    const allSettled = () =>
+      relaysRef.current.every((relay) =>
+        removedRelaysRef.current.has(relay.url)
+        || relay.status === "connected"
+        || relay.status === "read-only"
+        || relay.status === "verification-failed"
+      );
+
+    const runTick = (tickIndex: number) => {
+      if (cancelled) return;
+      if (allSettled()) return;
+
+      const { driftCorrections, stillConnecting } = reconcileRelayStatusesFromPool(ndk);
+      if (driftCorrections > 0 || stillConnecting.length > 0) {
+        nostrDevLog("relay", "Startup reconciliation tick", {
+          tickIndex,
+          driftCorrections,
+          stillConnecting,
+        });
+      }
+
+      // After the second tick (~3s), if the underlying transport is still
+      // "connecting" too (i.e. genuine handshake stall, not just state drift),
+      // force-reconnect with a fresh socket. The 15s connect watchdog covers
+      // the longer-running case; this is a faster nudge for clearly stalled
+      // initial handshakes.
+      if (tickIndex >= 1) {
+        stillConnecting.forEach((relayUrl) => {
+          nostrDevLog("relay", "Startup reconciliation forcing relay reconnect", { relayUrl });
+          reconnectRelay(relayUrl, { forceNewSocket: true });
+        });
+      }
+    };
+
+    TICK_DELAYS_MS.forEach((delay, index) => {
+      const id = window.setTimeout(() => runTick(index), delay);
+      timeoutIds.push(id);
+    });
+
+    return () => {
+      cancelled = true;
+      timeoutIds.forEach((id) => window.clearTimeout(id));
+    };
+  }, [ndk, reconcileRelayStatusesFromPool, reconnectRelay, relaysRef, removedRelaysRef]);
 
   const { publishEvent, signEvent, broadcastSignedEvent } = usePublish({
     ndk,

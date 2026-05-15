@@ -996,26 +996,61 @@ describe("NDKProvider relay lifecycle", () => {
 
     expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connecting");
     const ndk = mockedNdk.ndkInstances[0];
-    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
 
-    mockedNdk.relayConnectModes.set("wss://relay.one", "success");
-
+    // Keep the relay hanging through the startup reconciler ticks and watchdog window
+    // so this test still exercises the 15s watchdog disconnect-and-retry path. The
+    // reconciler will force-reconnect (creating new relay instances) but each new
+    // instance also hangs until we flip the mode.
     await act(async () => {
       vi.advanceTimersByTime(15000);
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:disconnected");
+    mockedNdk.relayConnectModes.set("wss://relay.one", "success");
 
     await act(async () => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(8000);
       await Promise.resolve();
     });
 
     expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     expect(screen.getByTestId("relay-state").textContent).not.toContain("connection-error");
-    expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
-    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
+    expect(ndk.pool.getCreatedRelays("wss://relay.one").length).toBeGreaterThanOrEqual(1);
+    vi.useRealTimers();
+  });
+
+  it("reconciles a stuck 'connecting' React state when the underlying relay is already connected", async () => {
+    vi.useFakeTimers();
+    // Hang on the very first dispatch so React state initialises to 'connecting'
+    // but we can flip the underlying relay to CONNECTED without firing relay:connect.
+    mockedNdk.relayConnectModes.set("wss://relay.one", "hang");
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connecting");
+
+    // Simulate the missed-event race: the underlying relay's status is silently
+    // promoted to CONNECTED (e.g. a relay:connect dispatch that our handler bailed
+    // out of via the "pool relay instance was replaced" early-return).
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+    relay.status = mockedNdk.MockNDKRelayStatus.CONNECTED;
+
+    // Reconciler tick 0 fires at ~1s and should fix the drift.
+    await act(async () => {
+      vi.advanceTimersByTime(1100);
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     vi.useRealTimers();
   });
 

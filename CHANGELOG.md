@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Relays no longer stay stuck on "connecting" in the sidebar after initial page load when React state diverges from NDK's pool (e.g. a `relay:connect` event was missed because session restore replaced the relay instance mid-handshake). A startup reconciliation pass now compares React state against the pool for the first ~22 seconds after mount, fixes drift, and force-reconnects relays whose underlying handshake has genuinely stalled.
+
 ## [3.5.0] - 2026-05-15
 Minor release for channel filtering ergonomics, mobile channel selection, status activity scope, and person presence consistency.
 

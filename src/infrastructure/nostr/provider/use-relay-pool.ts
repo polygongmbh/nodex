@@ -56,96 +56,142 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     );
   }, []);
 
-  const attachPoolHandlers = useCallback((ndkInstance: NDK): (() => void) => {
-    const syncRelayStatusesFromPool = () => {
-      setRelays((prev) => {
-        const previousEntryByUrl = new Map(
-          prev.map((entry) => [entry.url, entry] as const)
-        );
-        const updates: typeof prev = [];
-        ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
-          const normalized = normalizeRelayUrl(relay.url);
-          if (removedRelaysRef.current.has(normalized)) return;
-          const previousEntry = previousEntryByUrl.get(normalized);
-          const mappedStatus = mapRelayTransportStatus(relay);
-          updates.push({
-            ...previousEntry,
-            url: normalized,
-            status: mappedStatus === "connected"
-              ? resolveConnectedRelayStatus(previousEntry?.status)
-              : mappedStatus,
-          });
+  const syncRelayStatusesFromPool = useCallback((ndkInstance: NDK) => {
+    setRelays((prev) => {
+      const previousEntryByUrl = new Map(
+        prev.map((entry) => [entry.url, entry] as const)
+      );
+      const updates: typeof prev = [];
+      ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
+        const normalized = normalizeRelayUrl(relay.url);
+        if (removedRelaysRef.current.has(normalized)) return;
+        const previousEntry = previousEntryByUrl.get(normalized);
+        const mappedStatus = mapRelayTransportStatus(relay);
+        updates.push({
+          ...previousEntry,
+          url: normalized,
+          status: mappedStatus === "connected"
+            ? resolveConnectedRelayStatus(previousEntry?.status)
+            : mappedStatus,
         });
-        return mergeRelayStatusUpdates(prev, updates);
       });
-    };
+      return mergeRelayStatusUpdates(prev, updates);
+    });
+  }, []);
 
-    const onRelayConnecting = (relay: NDKRelay) => {
-      const { scheduleRelayConnectWatchdog } = depsRef.current;
-      const normalized = normalizeRelayUrl(relay.url);
-      const pooledRelay = ndkInstance.pool.relays.get(normalized);
-      if (!pooledRelay || pooledRelay === relay) {
-        scheduleRelayConnectWatchdog(ndkInstance, relay);
+  const handleRelayConnecting = useCallback((ndkInstance: NDK, relay: NDKRelay) => {
+    const { scheduleRelayConnectWatchdog } = depsRef.current;
+    const normalized = normalizeRelayUrl(relay.url);
+    const pooledRelay = ndkInstance.pool.relays.get(normalized);
+    if (!pooledRelay || pooledRelay === relay) {
+      scheduleRelayConnectWatchdog(ndkInstance, relay);
+    } else {
+      nostrDevLog("relay", "relay:connecting fired for replaced pool relay instance", {
+        relayUrl: normalized,
+      });
+    }
+    syncRelayStatusesFromPool(ndkInstance);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncRelayStatusesFromPool]);
+
+  const handleRelayConnect = useCallback((ndkInstance: NDK, relay: NDKRelay) => {
+    const {
+      clearRelayConnectWatchdog,
+      attachRelayOkRejectObserver,
+      relayConnectedOnceRef,
+      relayInitialFailureCountsRef,
+      relayInfoRef,
+      relayInfoFetchedAtRef,
+      primeRelayAuthChallenge,
+      pendingRelayVerificationRef,
+      markRelayVerificationSuccess,
+    } = depsRef.current;
+    const normalized = normalizeRelayUrl(relay.url);
+    const pooledRelay = ndkInstance.pool.relays.get(normalized);
+    if (pooledRelay && pooledRelay !== relay) {
+      nostrDevLog("relay", "relay:connect ignored: pool relay instance was replaced", {
+        relayUrl: normalized,
+      });
+      return;
+    }
+    clearRelayConnectWatchdog(normalized);
+    attachRelayOkRejectObserver(relay);
+    nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
+    relayConnectedOnceRef.current.add(normalized);
+    relayInitialFailureCountsRef.current.delete(normalized);
+    const relayInfo = relayInfoRef.current.get(normalized);
+    if (relayInfo?.authRequired) {
+      primeRelayAuthChallenge(ndkInstance, normalized);
+    }
+    const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
+    if (pendingVerification) {
+      pendingRelayVerificationRef.current.delete(normalized);
+      markRelayVerificationSuccess(normalized, pendingVerification.operation);
+    }
+    if (removedRelaysRef.current.has(normalized)) return;
+    setRelays((prev) => {
+      const existing = prev.find((r) => r.url === normalized);
+      const newStatus = resolveConnectedRelayStatus(existing?.status);
+      if (existing) {
+        if (existing.status === newStatus) return prev;
+        return prev.map((r) =>
+          r.url === normalized ? { ...r, status: newStatus } : r
+        );
       }
-      syncRelayStatusesFromPool();
-    };
+      const info = relayInfoRef.current.get(normalized);
+      const checkedAt = relayInfoFetchedAtRef.current.get(normalized);
+      return [...prev, {
+        url: normalized,
+        status: newStatus,
+        nip11: info
+          ? {
+              authRequired: info.authRequired,
+              supportsNip42: info.supportsNip42,
+              checkedAt: checkedAt ?? Date.now(),
+            }
+          : undefined,
+      }];
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    const onRelayConnect = (relay: NDKRelay) => {
-      const {
-        clearRelayConnectWatchdog,
-        attachRelayOkRejectObserver,
-        relayConnectedOnceRef,
-        relayInitialFailureCountsRef,
-        relayInfoRef,
-        relayInfoFetchedAtRef,
-        primeRelayAuthChallenge,
-        pendingRelayVerificationRef,
-        markRelayVerificationSuccess,
-      } = depsRef.current;
+  // Reconcile React relay state against NDK's pool. Catches missed `relay:connect`
+  // events on initial mount — e.g. when session restore re-adds a default relay
+  // and races the WebSocket handshake, leaving React stuck on "connecting" while
+  // NDK's underlying relay is already CONNECTED. Returns the number of stuck
+  // relays it fixed, plus any URLs that are still stuck at the transport level.
+  const reconcileRelayStatusesFromPool = useCallback((ndkInstance: NDK): {
+    driftCorrections: number;
+    stillConnecting: string[];
+  } => {
+    let driftCorrections = 0;
+    const stillConnecting: string[] = [];
+    ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
       const normalized = normalizeRelayUrl(relay.url);
-      const pooledRelay = ndkInstance.pool.relays.get(normalized);
-      if (pooledRelay && pooledRelay !== relay) {
+      if (removedRelaysRef.current.has(normalized)) return;
+      const reactEntry = relaysRef.current.find((entry) => entry.url === normalized);
+      if (!reactEntry) return;
+      if (reactEntry.status === "connected" || reactEntry.status === "read-only") return;
+      const mappedStatus = mapRelayTransportStatus(relay);
+      if (mappedStatus === "connected") {
+        nostrDevLog("relay", "Reconcile: pool reports connected; React state was not — replaying connect", {
+          relayUrl: normalized,
+          reactStatus: reactEntry.status,
+        });
+        handleRelayConnect(ndkInstance, relay);
+        driftCorrections += 1;
         return;
       }
-      clearRelayConnectWatchdog(normalized);
-      attachRelayOkRejectObserver(relay);
-      nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
-      relayConnectedOnceRef.current.add(normalized);
-      relayInitialFailureCountsRef.current.delete(normalized);
-      const relayInfo = relayInfoRef.current.get(normalized);
-      if (relayInfo?.authRequired) {
-        primeRelayAuthChallenge(ndkInstance, normalized);
+      if (mappedStatus === "connecting" && reactEntry.status === "connecting") {
+        stillConnecting.push(normalized);
       }
-      const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
-      if (pendingVerification) {
-        pendingRelayVerificationRef.current.delete(normalized);
-        markRelayVerificationSuccess(normalized, pendingVerification.operation);
-      }
-      if (removedRelaysRef.current.has(normalized)) return;
-      setRelays((prev) => {
-        const existing = prev.find((r) => r.url === normalized);
-        const newStatus = resolveConnectedRelayStatus(existing?.status);
-        if (existing) {
-          if (existing.status === newStatus) return prev;
-          return prev.map((r) =>
-            r.url === normalized ? { ...r, status: newStatus } : r
-          );
-        }
-        const info = relayInfoRef.current.get(normalized);
-        const checkedAt = relayInfoFetchedAtRef.current.get(normalized);
-        return [...prev, {
-          url: normalized,
-          status: newStatus,
-          nip11: info
-            ? {
-                authRequired: info.authRequired,
-                supportsNip42: info.supportsNip42,
-                checkedAt: checkedAt ?? Date.now(),
-              }
-            : undefined,
-        }];
-      });
-    };
+    });
+    return { driftCorrections, stillConnecting };
+  }, [handleRelayConnect]);
+
+  const attachPoolHandlers = useCallback((ndkInstance: NDK): (() => void) => {
+    const onRelayConnecting = (relay: NDKRelay) => handleRelayConnecting(ndkInstance, relay);
+    const onRelayConnect = (relay: NDKRelay) => handleRelayConnect(ndkInstance, relay);
 
     const onRelayAuthed = (relay: NDKRelay) => {
       const {
@@ -266,7 +312,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     };
     // depsRef is a stable ref-of-deps; handlers read .current at fire time.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleRelayConnect, handleRelayConnecting]);
 
   const resetRejectedRelayStatuses = useCallback(() => {
     setRelays((previous) =>
@@ -285,6 +331,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     removedRelaysRef,
     updateRelayEntry,
     attachPoolHandlers,
+    reconcileRelayStatusesFromPool,
     resetRejectedRelayStatuses,
   };
 }
