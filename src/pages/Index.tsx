@@ -199,7 +199,7 @@ function FeedIndexContent() {
 
   const {
     mentionRequest,
-    setMentionRequest,
+    onMentionRequestConsumed,
     channelFilterStates,
     setChannelFilterStates,
     channelMatchMode,
@@ -700,9 +700,7 @@ function FeedIndexContent() {
       composeRestoreRequest,
       onComposeRestoreRequestConsumed,
       mentionRequest,
-      onMentionRequestConsumed: (requestId: number) => {
-        setMentionRequest((current) => (current?.id === requestId ? null : current));
-      },
+      onMentionRequestConsumed,
       forceShowComposer: forceShowComposeForGuide,
       composeGuideActivationSignal,
       isInteractionBlocked,
@@ -718,7 +716,7 @@ function FeedIndexContent() {
       composeRestoreRequest,
       onComposeRestoreRequestConsumed,
       mentionRequest,
-      setMentionRequest,
+      onMentionRequestConsumed,
       forceShowComposeForGuide,
       composeGuideActivationSignal,
       isInteractionBlocked,

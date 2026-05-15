@@ -60,6 +60,9 @@ export function useChannelFilterController({
   const setChannelMatchMode = useFilterStore((s) => s.setChannelMatchMode);
 
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
+  const handleMentionRequestConsumed = useCallback((requestId: number) => {
+    setMentionRequest((current) => (current?.id === requestId ? null : current));
+  }, []);
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>(() => normalizeQuickFilterState());
 
   const captureFilterSnapshot = useCallback(() => {
@@ -396,7 +399,7 @@ export function useChannelFilterController({
 
   return {
     mentionRequest,
-    setMentionRequest,
+    onMentionRequestConsumed: handleMentionRequestConsumed,
     channelFilterStates,
     setChannelFilterStates,
     channelMatchMode,
