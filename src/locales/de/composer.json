@@ -60,10 +60,20 @@
       "createTask": "Aufgabe erstellen",
       "addComment": "Kommentar hinzufügen",
       "postListing": "Inserat erstellen",
+      "postEvent": "Termin erstellen",
       "signin": "Anmelden",
       "useCurrentLocation": "Aktuellen Standort verwenden",
       "clearLocation": "Standort entfernen",
       "location": "Standort"
+    },
+    "event": {
+      "title": "Titel des Termins",
+      "location": "Ort",
+      "summary": "Zusammenfassung",
+      "endDate": "Enddatum",
+      "endTime": "Endzeit",
+      "missingStart": "Startdatum auswählen",
+      "missingTitle": "Termin-Titel hinzufügen"
     },
     "attachments": {
       "add": "Anhang hinzufügen",
@@ -115,6 +125,7 @@
       "task": "Aufgabe",
       "comment": "Kommentar",
       "listing": "Inserat",
+      "event": "Termin",
       "mentions": "Erwähnungen",
       "date": "Datum"
     },

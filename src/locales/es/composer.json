@@ -60,10 +60,20 @@
       "createTask": "Crear tarea",
       "addComment": "Añadir comentario",
       "postListing": "Publicar anuncio",
+      "postEvent": "Publicar evento",
       "signin": "Iniciar sesión",
       "useCurrentLocation": "Usar ubicación actual",
       "clearLocation": "Quitar ubicación",
       "location": "Ubicación"
+    },
+    "event": {
+      "title": "Título del evento",
+      "location": "Ubicación",
+      "summary": "Resumen",
+      "endDate": "Fecha de fin",
+      "endTime": "Hora de fin",
+      "missingStart": "Selecciona una fecha de inicio",
+      "missingTitle": "Añade un título al evento"
     },
     "attachments": {
       "add": "Añadir archivo",
@@ -115,6 +125,7 @@
       "task": "Tarea",
       "comment": "Comentario",
       "listing": "Anuncio",
+      "event": "Evento",
       "mentions": "Menciones",
       "date": "Fecha"
     },

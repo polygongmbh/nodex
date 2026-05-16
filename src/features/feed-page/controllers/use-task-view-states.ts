@@ -24,7 +24,10 @@ import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-in
 import type { EmptyScopeModel } from "@/lib/empty-scope";
 import {
   getTaskStatus,
+  isCalendarEntryPost,
   isTaskPost,
+  getPostDateEntries,
+  type CalendarEntryPost as TypesCalendarEntryPost,
   type Channel,
   type ChannelMatchMode,
   type Relay,
@@ -130,10 +133,12 @@ type TreeSelectorSource = Pick<
   | "scopeModel"
 >;
 
+export type CalendarEntryPost = TypesCalendarEntryPost;
+
 export interface CalendarSelectors {
-  getTasksWithDueDates(): TaskPost[];
-  getUpcomingTasks(): TaskPost[];
-  getTasksForDay(day: Date): TaskPost[];
+  getTasksWithDueDates(): CalendarEntryPost[];
+  getUpcomingTasks(): CalendarEntryPost[];
+  getTasksForDay(day: Date): CalendarEntryPost[];
   getAncestorChain(taskId: string): { id: string; text: string }[];
 }
 
@@ -282,9 +287,9 @@ export function getAncestorChainFromSource(
 }
 
 export function createCalendarSelectors(source: TaskViewSource): CalendarSelectors {
-  let tasksWithDueDatesCache: TaskPost[] | null = null;
-  let tasksByDayCache: Map<string, TaskPost[]> | null = null;
-  let upcomingTasksCache: TaskPost[] | null = null;
+  let tasksWithDueDatesCache: CalendarEntryPost[] | null = null;
+  let tasksByDayCache: Map<string, CalendarEntryPost[]> | null = null;
+  let upcomingTasksCache: CalendarEntryPost[] | null = null;
   const { included, excluded } = getIncludedExcludedChannelNames(source.channels);
 
   const getTasksWithDueDates = () => {
@@ -299,7 +304,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       scope: {
         focusedTaskId: source.focusedTaskId,
         hideClosedTasks: true,
-        taskPredicate: (task) => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)?.date),
+        taskPredicate: (task) => isCalendarEntryPost(task) && Boolean(getTaskPrimaryDate(task)?.date),
       },
       criteria: {
         searchQuery: source.searchQuery,
@@ -312,15 +317,15 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       },
     };
     tasksWithDueDatesCache = filterTasksForView(request).filter(
-      (task): task is TaskPost => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)?.date)
+      (task): task is CalendarEntryPost => isCalendarEntryPost(task) && Boolean(getTaskPrimaryDate(task)?.date)
     );
     return tasksWithDueDatesCache;
   };
 
   const getTasksByDay = () => {
     if (tasksByDayCache) return tasksByDayCache;
-    const byDay = new Map<string, Set<TaskPost>>();
-    const addToDay = (day: Date, task: TaskPost) => {
+    const byDay = new Map<string, Set<CalendarEntryPost>>();
+    const addToDay = (day: Date, task: CalendarEntryPost) => {
       const dayKey = format(startOfDay(day), "yyyy-MM-dd");
       const bucket = byDay.get(dayKey);
       if (bucket) {
@@ -330,8 +335,9 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       }
     };
     for (const task of getTasksWithDueDates()) {
-      const start = task.dates.find((d) => d.type === "start")?.date;
-      const end = task.dates.find((d) => d.type === "end")?.date;
+      const entries = getPostDateEntries(task);
+      const start = entries.find((d) => d.type === "start")?.date;
+      const end = entries.find((d) => d.type === "end")?.date;
       const rangeStart = start && end ? startOfDay(start <= end ? start : end) : null;
       const rangeEnd = start && end ? startOfDay(start <= end ? end : start) : null;
       if (rangeStart && rangeEnd) {
@@ -339,14 +345,14 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
           addToDay(cursor, task);
         }
       }
-      for (const entry of task.dates) {
+      for (const entry of entries) {
         if (rangeStart && (entry.type === "start" || entry.type === "end")) continue;
         addToDay(entry.date, task);
       }
     }
-    const result = new Map<string, TaskPost[]>();
+    const result = new Map<string, CalendarEntryPost[]>();
     for (const [dayKey, dayTasks] of byDay.entries()) {
-      result.set(dayKey, sortTasks(Array.from(dayTasks), source.sortContext));
+      result.set(dayKey, sortTasks(Array.from(dayTasks), source.sortContext) as CalendarEntryPost[]);
     }
     tasksByDayCache = result;
     return tasksByDayCache;

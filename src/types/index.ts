@@ -324,6 +324,19 @@ export function isCalendarEventPost<T extends { kind: NostrEventKind }>(
   return isDateBasedEventPost(post) || isTimeBasedEventPost(post);
 }
 
+/**
+ * Posts that may carry a calendar date — TaskPost (via its `dates` array) or
+ * any CalendarEventPost variant. Use this in calendar/feed selectors so they
+ * don't have to enumerate the underlying kinds.
+ */
+export type CalendarEntryPost = TaskPost | CalendarEventPost;
+
+export function isCalendarEntryPost<T extends { kind: NostrEventKind }>(
+  post: T | undefined
+): post is T & CalendarEntryPost {
+  return isTaskPost(post) || isCalendarEventPost(post);
+}
+
 function parseIsoDateLocal(iso: string): Date | undefined {
   const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return undefined;
@@ -358,6 +371,37 @@ export function findTaskDate(
   type: TaskDateType
 ): TaskDate | undefined {
   return post && isTaskPost(post) ? post.dates.find((entry) => entry.type === type) : undefined;
+}
+
+/**
+ * Polymorphic accessor for all dates carried by a post — TaskPost's tagged
+ * `dates`, plus the synthetic `start` / `end` entries derived from a calendar
+ * event variant. Lets calendar/feed selectors treat tasks and events uniformly
+ * without narrowing.
+ */
+export function getPostDateEntries(post: Post | undefined): TaskDate[] {
+  if (!post) return [];
+  if (isTaskPost(post)) return post.dates;
+  if (isDateBasedEventPost(post)) {
+    const start = parseIsoDateLocal(post.startDate);
+    if (!start) return [];
+    const entries: TaskDate[] = [{ date: start, type: "start" }];
+    if (post.endDate) {
+      const end = parseIsoDateLocal(post.endDate);
+      if (end) entries.push({ date: end, type: "end" });
+    }
+    return entries;
+  }
+  if (isTimeBasedEventPost(post)) {
+    const entries: TaskDate[] = [
+      { date: post.start, time: formatHourMinute(post.start), type: "start" },
+    ];
+    if (post.end) {
+      entries.push({ date: post.end, time: formatHourMinute(post.end), type: "end" });
+    }
+    return entries;
+  }
+  return [];
 }
 
 export function getTaskPriority(post: Post | undefined): number | undefined {

@@ -8,6 +8,9 @@ import {
   getTaskState,
   getTaskPrimaryDate,
   getTaskPriority,
+  isCalendarEventPost,
+  isDateBasedEventPost,
+  isTimeBasedEventPost,
 } from "@/types";
 import { resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 import type { Person } from "@/types/person";
@@ -77,6 +80,13 @@ interface FeedDueDateChipProps {
   dueDateColor: string;
 }
 
+function parseIsoDateLocal(value: string): Date | undefined {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return undefined;
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
 function FeedDueDateChip({
   task,
   editable,
@@ -84,24 +94,43 @@ function FeedDueDateChip({
 }: FeedDueDateChipProps) {
   const [open, setOpen] = useState(false);
   const primaryDate = getTaskPrimaryDate(task);
+  const isEvent = isCalendarEventPost(task);
 
   if (!primaryDate) return null;
+
+  const eventEndLabel = (() => {
+    if (!isEvent) return null;
+    if (isTimeBasedEventPost(task) && task.end) {
+      return format(task.end, "HH:mm");
+    }
+    if (isDateBasedEventPost(task) && task.endDate) {
+      const end = parseIsoDateLocal(task.endDate);
+      if (end && format(end, "yyyy-MM-dd") !== format(primaryDate.date, "yyyy-MM-dd")) {
+        return format(end, "MMM d");
+      }
+    }
+    return null;
+  })();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
-          disabled={!editable}
+          disabled={!editable || isEvent}
           onClick={(event) => event.stopPropagation()}
           className={cn(
             "inline-flex items-center gap-1 rounded px-1 py-0.5 text-left transition-colors",
             dueDateColor,
-            editable ? "cursor-pointer hover:bg-muted/50" : "cursor-default"
+            editable && !isEvent ? "cursor-pointer hover:bg-muted/50" : "cursor-default"
           )}
         >
           <Calendar className="w-3 h-3" />
-          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
+          {isEvent ? (
+            <span className="uppercase tracking-wide">EVENT</span>
+          ) : (
+            <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
+          )}
           <span>{format(primaryDate.date, "MMM d, yyyy")}</span>
           {primaryDate.time && (
             <>
@@ -109,9 +138,10 @@ function FeedDueDateChip({
               <span>{primaryDate.time}</span>
             </>
           )}
+          {eventEndLabel && <span>– {eventEndLabel}</span>}
         </button>
       </PopoverTrigger>
-      {editable && (
+      {editable && !isEvent && (
         <PopoverContent
           className="w-auto p-0"
           align="start"
