@@ -19,13 +19,18 @@ export function normalizeTaskType(value: unknown): TaskEntryType {
 }
 
 export function normalizeComposerMessageType(value: unknown): ComposerMessageType {
-  if (value === "task" || value === "comment" || value === "listing") {
+  if (value === "task" || value === "comment" || value === "listing" || value === "event") {
     return value;
   }
 
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
-    if (normalized === "task" || normalized === "comment" || normalized === "listing") {
+    if (
+      normalized === "task" ||
+      normalized === "comment" ||
+      normalized === "listing" ||
+      normalized === "event"
+    ) {
       return normalized;
     }
   }

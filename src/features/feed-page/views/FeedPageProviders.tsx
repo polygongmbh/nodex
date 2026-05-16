@@ -182,6 +182,7 @@ function FeedInteractionBusFromContexts({
           intent.nip99,
           intent.locationGeohash,
           intent.recomposeOf,
+          intent.eventMetadata,
         );
       },
       "task.toggleComplete": (intent) => {

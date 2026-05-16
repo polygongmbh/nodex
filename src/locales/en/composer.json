@@ -60,10 +60,20 @@
       "createTask": "Create Task",
       "addComment": "Add Comment",
       "postListing": "Post Listing",
+      "postEvent": "Post Event",
       "signin": "Sign in",
       "useCurrentLocation": "Use current location",
       "clearLocation": "Clear location",
       "location": "Location"
+    },
+    "event": {
+      "title": "Event title",
+      "location": "Location",
+      "summary": "Summary",
+      "endDate": "End date",
+      "endTime": "End time",
+      "missingStart": "Pick a start date",
+      "missingTitle": "Add an event title"
     },
     "attachments": {
       "add": "Add attachment",
@@ -115,6 +125,7 @@
       "task": "Task",
       "comment": "Comment",
       "listing": "Listing",
+      "event": "Event",
       "mentions": "Mentions",
       "date": "Date"
     },

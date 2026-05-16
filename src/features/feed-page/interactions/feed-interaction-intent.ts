@@ -79,6 +79,13 @@ export type FeedInteractionIntent =
       nip99?: Nip99Metadata;
       locationGeohash?: string;
       recomposeOf?: ComposeRecomposeOf;
+      eventMetadata?: {
+        title?: string;
+        summary?: string;
+        location?: string;
+        endDate?: Date;
+        endTime?: string;
+      };
     }
   | { type: "task.toggleComplete"; taskId: string }
   | { type: "task.changeStatus"; taskId: string; state: TaskState }

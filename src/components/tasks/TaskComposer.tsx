@@ -96,6 +96,14 @@ interface TaskComposerProps {
 
 type ComposerMessageType = PostType;
 
+export interface TaskComposerEventMetadata {
+  title?: string;
+  summary?: string;
+  location?: string;
+  endDate?: Date;
+  endTime?: string;
+}
+
 export interface TaskComposerFormData {
   content: string;
   tags: string[];
@@ -110,6 +118,7 @@ export interface TaskComposerFormData {
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   recomposeOf?: ComposeRecomposeOf;
+  eventMetadata?: TaskComposerEventMetadata;
 }
 
 const NIP99_TITLE_MAX_LENGTH = 80;
@@ -259,6 +268,11 @@ export function TaskComposer({
     }));
   });
   const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...initialComposerState.nip99 }));
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [endTime, setEndTime] = useState<string>("");
+  const [eventTitle, setEventTitle] = useState<string>("");
+  const [eventSummary, setEventSummary] = useState<string>("");
+  const [eventLocation, setEventLocation] = useState<string>("");
   const [locationGeohash, setLocationGeohash] = useState<string | undefined>(() => normalizeGeohash(initialComposerState.locationGeohash));
   const [showLocationControls, setShowLocationControls] = useState<boolean>(
     () => Boolean(normalizeGeohash(initialComposerState.locationGeohash))
@@ -854,7 +868,7 @@ export function TaskComposer({
     if (
       value === "task" ||
       value === "comment" ||
-      (allowFeedMessageTypes && value === "listing")
+      (allowFeedMessageTypes && (value === "listing" || value === "event"))
     ) {
       return value;
     }
@@ -945,6 +959,11 @@ export function TaskComposer({
     setNip99({});
     setIsNip99TitleTouched(false);
     setIsNip99SummaryTouched(false);
+    setEndDate(undefined);
+    setEndTime("");
+    setEventTitle("");
+    setEventSummary("");
+    setEventLocation("");
     setAttachments([]);
     attachmentFileRef.current = {};
     if (draftStorageKey) {
@@ -969,10 +988,20 @@ export function TaskComposer({
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
     const effectiveTaskType = resolveSubmitType(submitType);
-    const shouldSubmitTaskDates = effectiveTaskType === "task";
-    const submissionDueDate = shouldSubmitTaskDates ? dueDate : undefined;
-    const submissionDueTime = shouldSubmitTaskDates ? (dueTime || undefined) : undefined;
-    const submissionDateType = shouldSubmitTaskDates ? dateType : undefined;
+    const carriesStartDate = effectiveTaskType === "task" || effectiveTaskType === "event";
+    const submissionDueDate = carriesStartDate ? dueDate : undefined;
+    const submissionDueTime = carriesStartDate ? (dueTime || undefined) : undefined;
+    const submissionDateType = effectiveTaskType === "task" ? dateType : undefined;
+    if (effectiveTaskType === "event") {
+      if (!dueDate) {
+        toast.error(t("composer.event.missingStart"));
+        return;
+      }
+      if (!eventTitle.trim()) {
+        toast.error(t("composer.event.missingTitle"));
+        return;
+      }
+    }
 
     const extractedTags = extractHashtagsFromContent(content);
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
@@ -1022,6 +1051,16 @@ export function TaskComposer({
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
     const submittedRecomposeOf = activeRecomposeOf;
     setActiveRecomposeOf(undefined);
+    const eventMetadata: TaskComposerEventMetadata | undefined =
+      effectiveTaskType === "event"
+        ? {
+            title: eventTitle.trim() || undefined,
+            summary: eventSummary.trim() || undefined,
+            location: eventLocation.trim() || undefined,
+            endDate,
+            endTime: endTime.trim() || undefined,
+          }
+        : undefined;
     onSubmit({
       content,
       tags: submitTags,
@@ -1036,6 +1075,7 @@ export function TaskComposer({
       nip99: listingMetadata,
       ...(normalizedLocationGeohash ? { locationGeohash: normalizedLocationGeohash } : {}),
       ...(submittedRecomposeOf ? { recomposeOf: submittedRecomposeOf } : {}),
+      ...(eventMetadata ? { eventMetadata } : {}),
     });
 
     setIsSendLaunching(true);
@@ -1066,6 +1106,11 @@ export function TaskComposer({
     setNip99({});
     setIsNip99TitleTouched(false);
     setIsNip99SummaryTouched(false);
+    setEndDate(undefined);
+    setEndTime("");
+    setEventTitle("");
+    setEventSummary("");
+    setEventLocation("");
     setAttachments([]);
     attachmentFileRef.current = {};
     if (collapseOnSuccess && adaptiveSize) {
@@ -2146,6 +2191,57 @@ export function TaskComposer({
         </div>
       )}
 
+      {showExpandedControls && taskType === "event" && (
+        <div className={cn("order-6 flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
+          <input
+            value={eventTitle}
+            onChange={(event) => setEventTitle(event.target.value)}
+            placeholder={t("composer.event.title")}
+            aria-label={t("composer.event.title")}
+            className="h-8 min-w-[12rem] flex-1 rounded-md border border-border/50 bg-background px-2 text-xs"
+          />
+          <input
+            value={eventLocation}
+            onChange={(event) => setEventLocation(event.target.value)}
+            placeholder={t("composer.event.location")}
+            aria-label={t("composer.event.location")}
+            className="h-8 min-w-[8rem] rounded-md border border-border/50 bg-background px-2 text-xs"
+          />
+          <input
+            value={eventSummary}
+            onChange={(event) => setEventSummary(event.target.value)}
+            placeholder={t("composer.event.summary")}
+            aria-label={t("composer.event.summary")}
+            className="h-8 min-w-[12rem] flex-[2] rounded-md border border-border/50 bg-background px-2 text-xs"
+          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("composer.event.endDate")}
+                className="h-8 inline-flex items-center gap-1 rounded-md border border-border/50 bg-background px-2 text-xs"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>{endDate ? format(endDate, "MMM d") : t("composer.event.endDate")}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                mode="single"
+                selected={endDate}
+                onSelect={(date) => setEndDate(date ?? undefined)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          <TaskTimeInput
+            value={endTime}
+            onChange={setEndTime}
+            aria-label={t("composer.event.endTime")}
+          />
+        </div>
+      )}
+
       {/* Actions */}
       {showExpandedControls && (
       <div className={cn("order-4 flex flex-wrap items-center justify-between gap-2", adaptiveSize && "motion-ink-reveal motion-ink-stagger [--stagger-index:4]")}>
@@ -2244,6 +2340,7 @@ export function TaskComposer({
                   <option value="task">{t("composer.labels.task")}</option>
                   <option value="comment">{t("composer.labels.comment")}</option>
                   {allowFeedMessageTypes && <option value="listing">{t("composer.labels.listing")}</option>}
+                  {allowFeedMessageTypes && <option value="event">{t("composer.labels.event")}</option>}
                 </select>
                 <button
                   type="button"
@@ -2289,6 +2386,22 @@ export function TaskComposer({
                     <span>{t("composer.labels.listing")}</span>
                   </button>
                 )}
+                {allowFeedMessageTypes && (
+                  <button
+                    type="button"
+                    onClick={() => setTaskType("event")}
+                    aria-label={t("composer.labels.event")}
+                    className={cn(
+                      "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                      taskType === "event"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{t("composer.labels.event")}</span>
+                  </button>
+                )}
               </div>
             )}
             {(() => {
@@ -2297,13 +2410,17 @@ export function TaskComposer({
                   ? t("composer.actions.createTask")
                   : taskType === "listing"
                     ? t("composer.actions.postListing")
-                    : t("composer.actions.addComment");
+                    : taskType === "event"
+                      ? t("composer.actions.postEvent")
+                      : t("composer.actions.addComment");
               const submitActionIcon =
                 taskType === "task"
                   ? <CheckSquare className="w-4 h-4" />
                   : taskType === "listing"
                     ? <Package className="w-4 h-4" />
-                    : <MessageSquare className="w-4 h-4" />;
+                    : taskType === "event"
+                      ? <Calendar className="w-4 h-4" />
+                      : <MessageSquare className="w-4 h-4" />;
               const submitButtonTitle = submitBlock?.reason || submitActionLabel;
               if (!canCreateContent) {
                 return (

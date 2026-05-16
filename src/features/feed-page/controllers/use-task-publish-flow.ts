@@ -26,6 +26,7 @@ import { normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
 import {   buildImetaTag, extractEmbeddableAttachmentsFromContent, normalizePublishedAttachments, } from "@/lib/attachments";
 import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
+import { buildStandaloneCalendarEvent } from "@/infrastructure/nostr/nip52-task-calendar-events";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SignedNostrEvent } from "@/infrastructure/nostr/provider/use-publish";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
@@ -49,9 +50,11 @@ import {
 } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
+  CalendarEventPost,
   ComposeRecomposeOf,
   ComposeRestoreRequest,
   ComposeRestoreState,
+  DateBasedEventPost,
   Nip99Metadata,
   Nip99ListingStatus,
   Post,
@@ -66,6 +69,7 @@ import type {
   TaskDateType,
   TaskEntryType,
   TaskState,
+  TimeBasedEventPost,
 } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -307,6 +311,13 @@ export function useTaskPublishFlow({
     nip99?: Nip99Metadata,
     locationGeohash?: string,
     recomposeOf?: ComposeRecomposeOf,
+    eventMetadata?: {
+      title?: string;
+      summary?: string;
+      location?: string;
+      endDate?: Date;
+      endTime?: string;
+    },
   ): Promise<TaskCreateResult> => {
     const normalizedMessageType = normalizeComposerMessageType(taskType);
     if (normalizedMessageType !== taskType) {
@@ -314,6 +325,26 @@ export function useTaskPublishFlow({
     }
 
     const normalizedTaskType: TaskEntryType = normalizedMessageType === "task" ? "task" : "comment";
+    const isEventSubmission = normalizedMessageType === "event";
+    const eventStartDateTime: Date | undefined = (() => {
+      if (!isEventSubmission || !dueDate) return undefined;
+      if (!dueTime) return dueDate;
+      const match = dueTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+      if (!match) return dueDate;
+      const merged = new Date(dueDate);
+      merged.setHours(Number(match[1]), Number(match[2]), 0, 0);
+      return merged;
+    })();
+    const eventEndDateTime: Date | undefined = (() => {
+      if (!isEventSubmission || !eventMetadata?.endDate) return undefined;
+      if (!eventMetadata.endTime) return eventMetadata.endDate;
+      const match = eventMetadata.endTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+      if (!match) return eventMetadata.endDate;
+      const merged = new Date(eventMetadata.endDate);
+      merged.setHours(Number(match[1]), Number(match[2]), 0, 0);
+      return merged;
+    })();
+    const eventIsAllDay = isEventSubmission && !dueTime;
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
@@ -438,46 +469,66 @@ export function useTaskPublishFlow({
       return fallbackAuthor;
     })();
 
+    const eventBuilt = isEventSubmission && eventStartDateTime
+      ? buildStandaloneCalendarEvent({
+          title: eventMetadata?.title?.trim() || content.slice(0, 200),
+          content,
+          start: eventStartDateTime,
+          end: eventEndDateTime,
+          isAllDay: eventIsAllDay,
+          summary: eventMetadata?.summary?.trim() || undefined,
+          location: eventMetadata?.location?.trim() || undefined,
+          mentions: undefined,
+        })
+      : undefined;
     const publishKind: NostrEventKind =
-      normalizedMessageType === "task"
+      eventBuilt?.kind ??
+      (normalizedMessageType === "task"
         ? NostrEventKind.Task
         : normalizedMessageType === "listing"
           ? NostrEventKind.ClassifiedListing
-          : NostrEventKind.TextNote;
+          : NostrEventKind.TextNote);
     const validParentId = submissionParentId && /^[a-f0-9]{64}$/i.test(submissionParentId) ? submissionParentId : undefined;
     const primaryRelayUrl = selectedRelayUrls[0] ?? "";
     const publishTags = shouldPublish
       ? (
-          normalizedTaskType === "task"
-            ? buildTaskPublishTags(
-                validParentId,
-                primaryRelayUrl,
-                assigneePubkeys || [],
-                priority,
-                resolvedSubmissionTags,
-                normalizedAttachments,
-                normalizedLocationGeohash
-              )
-            : normalizedMessageType === "listing"
-              ? buildNip99PublishTags({
-                  metadata: nip99,
-                  hashtags: resolvedSubmissionTags,
-                  mentionPubkeys,
-                  attachmentTags: normalizedAttachments
-                    .map((attachment) => buildImetaTag(attachment))
-                    .filter((tag) => tag.length > 0),
-                  fallbackTitle: content.slice(0, 80),
-                  statusOverride: (nip99?.status || "active") as Nip99ListingStatus,
-                  locationGeohash: normalizedLocationGeohash,
-                })
-              : [
-                  ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
-                  ...resolvedSubmissionTags.map((tag) => ["t", tag] as string[]),
-                  ...normalizedAttachments
-                    .map((attachment) => buildImetaTag(attachment))
-                    .filter((tag) => tag.length > 0),
-                  ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
-                ]
+          eventBuilt
+            ? [
+                ...eventBuilt.tags,
+                ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
+                ...resolvedSubmissionTags.map((tag) => ["t", tag] as string[]),
+                ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
+              ]
+            : normalizedTaskType === "task"
+              ? buildTaskPublishTags(
+                  validParentId,
+                  primaryRelayUrl,
+                  assigneePubkeys || [],
+                  priority,
+                  resolvedSubmissionTags,
+                  normalizedAttachments,
+                  normalizedLocationGeohash
+                )
+              : normalizedMessageType === "listing"
+                ? buildNip99PublishTags({
+                    metadata: nip99,
+                    hashtags: resolvedSubmissionTags,
+                    mentionPubkeys,
+                    attachmentTags: normalizedAttachments
+                      .map((attachment) => buildImetaTag(attachment))
+                      .filter((tag) => tag.length > 0),
+                    fallbackTitle: content.slice(0, 80),
+                    statusOverride: (nip99?.status || "active") as Nip99ListingStatus,
+                    locationGeohash: normalizedLocationGeohash,
+                  })
+                : [
+                    ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
+                    ...resolvedSubmissionTags.map((tag) => ["t", tag] as string[]),
+                    ...normalizedAttachments
+                      .map((attachment) => buildImetaTag(attachment))
+                      .filter((tag) => tag.length > 0),
+                    ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
+                  ]
         )
       : [];
     const publishParentId =
@@ -541,6 +592,37 @@ export function useTaskPublishFlow({
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
     const buildPost = (id: string): Post => {
+      if (isEventSubmission && eventStartDateTime && eventBuilt) {
+        const titledBase = {
+          ...baseFields,
+          id,
+          title: eventMetadata?.title?.trim() || undefined,
+          summary: eventMetadata?.summary?.trim() || undefined,
+          location: eventMetadata?.location?.trim() || undefined,
+        };
+        if (eventIsAllDay) {
+          const toIso = (date: Date): string => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const d = String(date.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+          };
+          const dateBasedPost: DateBasedEventPost = {
+            ...titledBase,
+            kind: NostrEventKind.CalendarDateBased,
+            startDate: toIso(eventStartDateTime),
+            endDate: eventEndDateTime ? toIso(eventEndDateTime) : undefined,
+          };
+          return dateBasedPost;
+        }
+        const timeBasedPost: TimeBasedEventPost = {
+          ...titledBase,
+          kind: NostrEventKind.CalendarTimeBased,
+          start: eventStartDateTime,
+          end: eventEndDateTime,
+        };
+        return timeBasedPost;
+      }
       if (normalizedTaskType === "task") {
         const taskPost: TaskPost = {
           ...baseFields,

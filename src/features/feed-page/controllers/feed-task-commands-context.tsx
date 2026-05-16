@@ -30,6 +30,13 @@ export interface FeedTaskCommands {
     nip99?: Nip99Metadata,
     locationGeohash?: string,
     recomposeOf?: ComposeRecomposeOf,
+    eventMetadata?: {
+      title?: string;
+      summary?: string;
+      location?: string;
+      endDate?: Date;
+      endTime?: string;
+    },
   ): Promise<TaskCreateResult>;
   toggleComplete(taskId: string): void;
   changeStatus(taskId: string, status: TaskState): void;
