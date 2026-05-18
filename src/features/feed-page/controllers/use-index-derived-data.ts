@@ -6,6 +6,7 @@ import {
   setReactionsViewerPubkey,
 } from "@/features/feed-page/stores/reactions-registry";
 import { useCachedPosts } from "@/features/feed-page/controllers/use-cached-posts";
+import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
 import type { Post, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
@@ -36,7 +37,6 @@ import { isTaskStateEventKind } from "@/infrastructure/nostr/task-state-events";
 import { isPriorityPropertyEvent } from "@/infrastructure/nostr/task-property-events";
 import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
-import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
 
 const spamDropCountsByRelay = new Map<string, number>();
@@ -269,25 +269,11 @@ export function useIndexDerivedData({
     });
   }, [postedTags, scopedPostsForChannels, effectiveActiveRelayIds, relays, coreChannels, user?.pubkey]);
 
-  const mentionAutocompletePeople = useMemo(() => {
-    const visiblePubkeys = Array.from(
-      new Set(
-        [
-          ...scopedPostsForChannels.map((task) => task.author.pubkey?.trim().toLowerCase()),
-          ...cachedKind0Events.map((event) => event.pubkey?.trim().toLowerCase()),
-        ].filter((pubkey): pubkey is string => Boolean(pubkey))
-      )
-    );
-
-    if (visiblePubkeys.length === 0) return [];
-
-    return derivePeopleFromKind0Events(
-      visiblePubkeys,
-      cachedKind0Events,
-      cachedKind0Events,
-      people
-    );
-  }, [cachedKind0Events, people, scopedPostsForChannels]);
+  const mentionAutocompletePeople = useMentionAutocompletePeople({
+    scopedPosts: scopedPostsForChannels,
+    cachedKind0Events,
+    people,
+  });
 
   const scopedTasksForSidebarPeople = useMemo(() => {
     const sidebarRelayScopeIds = resolveChannelRelayScopeIds(
