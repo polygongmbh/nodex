@@ -70,9 +70,7 @@ export interface UseIndexDerivedDataOptions {
 }
 
 export interface UseIndexDerivedDataResult {
-  nostrTasks: Post[];
   allTasks: Post[];
-  personalizedChannelScores: Map<string, number>;
   channels: Channel[];
   composeChannels: Channel[];
   mentionAutocompletePeople: SelectablePerson[];
@@ -322,9 +320,7 @@ export function useIndexDerivedData({
   );
 
   return {
-    nostrTasks,
     allTasks,
-    personalizedChannelScores,
     channels,
     composeChannels,
     mentionAutocompletePeople,
