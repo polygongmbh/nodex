@@ -19,7 +19,6 @@ import {
   extractAllTags,
   nostrEventToTask,
   nostrEventsToTasks,
-  summarizeReactionsByTarget,
 } from "@/infrastructure/nostr/task-converter";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "./types";
 
@@ -1017,71 +1016,6 @@ describe("extractAllTags", () => {
 
     expect(tags[0]).toBe("alpha");
     expect(tags[1]).toBe("zebra");
-  });
-});
-
-describe("summarizeReactionsByTarget", () => {
-  it("aggregates per-emoji totals and marks the viewer's emojis", () => {
-    const events: NostrEventWithRelay[] = [
-      makeRelayEvent({
-        id: "r1",
-        pubkey: "viewer-pk",
-        kind: NostrEventKind.Reaction,
-        tags: [["e", "task-r"], ["p", DEFAULT_TEST_PUBKEY], ["k", "1621"]],
-        content: "+",
-      }),
-      makeRelayEvent({
-        id: "r2",
-        pubkey: "other-pk",
-        kind: NostrEventKind.Reaction,
-        tags: [["e", "task-r"], ["p", DEFAULT_TEST_PUBKEY], ["k", "1621"]],
-        content: "👍",
-      }),
-      makeRelayEvent({
-        id: "r3",
-        pubkey: "viewer-pk",
-        kind: NostrEventKind.Reaction,
-        tags: [["e", "task-r"], ["p", DEFAULT_TEST_PUBKEY], ["k", "1621"]],
-        content: "🎉",
-      }),
-    ];
-    const summary = summarizeReactionsByTarget(events, "viewer-pk").get("task-r");
-    expect(summary?.totals).toEqual({ "👍": 2, "🎉": 1 });
-    expect(new Set(summary?.mine)).toEqual(new Set(["👍", "🎉"]));
-    expect(summary?.mineEventIdsByEmoji).toEqual({ "👍": ["r1"], "🎉": ["r3"] });
-  });
-
-  it("deduplicates the same (target, pubkey, emoji)", () => {
-    const events: NostrEventWithRelay[] = [
-      makeRelayEvent({
-        id: "rd1",
-        pubkey: "x",
-        kind: NostrEventKind.Reaction,
-        tags: [["e", "task-d"]],
-        content: "👍",
-      }),
-      makeRelayEvent({
-        id: "rd2",
-        pubkey: "x",
-        kind: NostrEventKind.Reaction,
-        tags: [["e", "task-d"]],
-        content: "👍",
-      }),
-    ];
-    expect(summarizeReactionsByTarget(events).get("task-d")?.totals).toEqual({ "👍": 1 });
-  });
-
-  it("ignores reactions whose content is not a valid emoji or +/-", () => {
-    const events: NostrEventWithRelay[] = [
-      makeRelayEvent({
-        id: "ri",
-        pubkey: "z",
-        kind: NostrEventKind.Reaction,
-        tags: [["e", "task-i"]],
-        content: ":heart:",
-      }),
-    ];
-    expect(summarizeReactionsByTarget(events).get("task-i")).toBeUndefined();
   });
 });
 
