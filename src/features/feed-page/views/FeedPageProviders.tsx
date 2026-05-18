@@ -228,10 +228,10 @@ function FeedInteractionBusFromContexts({
           dismissRetryInProgress(toastId);
         }
       },
-      "publish.failed.dismiss": (intent) => {
+      "publish.failed.discard": (intent) => {
         taskCommands.dismissFailedPublish(intent.draftId);
       },
-      "publish.failed.dismissAll": () => {
+      "publish.failed.discardAll": () => {
         taskCommands.dismissAllFailedPublish();
       },
     }),

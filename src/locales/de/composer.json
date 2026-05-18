@@ -240,7 +240,7 @@
     "scopeSelected": "Ausgewählte Spaces",
     "scopeAll": "Alle fehlgeschlagenen",
     "hiddenCount": "{{count}} ausgeblendet",
-    "dismissAll": "Alle schließen",
-    "dismiss": "Fehlgeschlagenen Beitrag schließen"
+    "discardAll": "Alle verwerfen",
+    "discard": "Fehlgeschlagenen Beitrag verwerfen"
   }
 }

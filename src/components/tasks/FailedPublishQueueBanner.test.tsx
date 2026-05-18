@@ -80,14 +80,14 @@ describe("FailedPublishQueueBanner", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Dismiss all" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Discard all" })).toBeInTheDocument();
     view.rerender(
       <FailedPublishQueueBanner
         drafts={[]}
         selectedFeedDrafts={[]}
       />
     );
-    expect(screen.queryByRole("button", { name: "Dismiss all" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Discard all" })).not.toBeInTheDocument();
   });
 
   it("renders dismiss all action and fires callback once", () => {
@@ -102,8 +102,8 @@ describe("FailedPublishQueueBanner", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Dismiss all" }));
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "publish.failed.dismissAll" });
+    fireEvent.click(screen.getByRole("button", { name: "Discard all" }));
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "publish.failed.discardAll" });
   });
 
   it("enables retry only with selected original relays and repost only with selected non-original relays", () => {

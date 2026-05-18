@@ -240,7 +240,7 @@
     "scopeSelected": "Spaces seleccionados",
     "scopeAll": "Todas fallidas",
     "hiddenCount": "{{count}} ocultas",
-    "dismissAll": "Descartar todas",
-    "dismiss": "Descartar publicación fallida"
+    "discardAll": "Descartar todas",
+    "discard": "Descartar publicación fallida"
   }
 }

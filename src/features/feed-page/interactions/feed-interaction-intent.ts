@@ -98,7 +98,7 @@ export type FeedInteractionIntent =
   | { type: "task.undoPendingPublish"; taskId: string }
   | { type: "publish.failed.retry"; draftId: string }
   | { type: "publish.failed.repost"; draftId: string }
-  | { type: "publish.failed.dismiss"; draftId: string }
-  | { type: "publish.failed.dismissAll" };
+  | { type: "publish.failed.discard"; draftId: string }
+  | { type: "publish.failed.discardAll" };
 
 export type FeedInteractionIntentType = FeedInteractionIntent["type"];

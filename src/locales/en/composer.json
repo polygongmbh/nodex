@@ -240,7 +240,7 @@
     "scopeSelected": "Selected spaces",
     "scopeAll": "All failed",
     "hiddenCount": "{{count}} hidden",
-    "dismissAll": "Dismiss all",
-    "dismiss": "Dismiss failed post"
+    "discardAll": "Discard all",
+    "discard": "Discard failed post"
   }
 }

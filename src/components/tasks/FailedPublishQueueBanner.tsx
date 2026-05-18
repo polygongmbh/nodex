@@ -67,13 +67,13 @@ export function FailedPublishQueueBanner({
           <button
             type="button"
             onClick={() => {
-              void dispatchFeedInteraction({ type: "publish.failed.dismissAll" });
+              void dispatchFeedInteraction({ type: "publish.failed.discardAll" });
             }}
             className="rounded px-2 py-0.5 text-[11px] font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
-            title={t("publishQueue.dismissAll")}
-            aria-label={t("publishQueue.dismissAll")}
+            title={t("publishQueue.discardAll")}
+            aria-label={t("publishQueue.discardAll")}
           >
-            {t("publishQueue.dismissAll")}
+            {t("publishQueue.discardAll")}
           </button>
         )}
       </div>
@@ -174,12 +174,12 @@ export function FailedPublishQueueBanner({
               <button
                 type="button"
                 onClick={() => {
-                  void dispatchFeedInteraction({ type: "publish.failed.dismiss", draftId: draft.id });
+                  void dispatchFeedInteraction({ type: "publish.failed.discard", draftId: draft.id });
                 }}
                 disabled={isPending}
                 className="rounded p-1 text-destructive/80 transition-colors hover:bg-destructive/15 hover:text-destructive"
-                title={t("publishQueue.dismiss")}
-                aria-label={t("publishQueue.dismiss")}
+                title={t("publishQueue.discard")}
+                aria-label={t("publishQueue.discard")}
               >
                 <XCircle className="h-3.5 w-3.5" />
               </button>
