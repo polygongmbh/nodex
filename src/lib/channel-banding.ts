@@ -22,13 +22,17 @@ const DEFAULTS: Required<ChannelBandThresholds> = {
   primaryFloor: 3,
 };
 
-const INVOLVEMENT_BOOST = 0.5;
+const USER_POST_WEIGHT = 0.8;
 
 function rawScore(channel: Channel): number {
   const count = channel.usageCount ?? 0;
   const personal = channel.personalScore ?? 0;
-  const involvement = channel.userPosted ? INVOLVEMENT_BOOST : 0;
-  return Math.log1p(count) + 2 * Math.log1p(personal) + involvement;
+  const userPosts = channel.userPostCount ?? 0;
+  return (
+    Math.log1p(count)
+    + 2 * Math.log1p(personal)
+    + USER_POST_WEIGHT * Math.log1p(userPosts)
+  );
 }
 
 function isForceIncluded(

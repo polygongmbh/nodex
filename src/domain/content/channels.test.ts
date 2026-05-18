@@ -1,21 +1,24 @@
 import { describe, it, expect } from "vitest";
 import { deriveChannels } from "./channels";
 
+function post(tags: string[], pubkey?: string) {
+  return { tags, author: pubkey ? { pubkey } : undefined };
+}
+
 describe("deriveChannels", () => {
   it("includes newly posted tags even below frequency threshold", () => {
-    const channels = deriveChannels([{ tags: ["frontend"] }], [], [{ name: "newtag", relayIds: [] }], 6);
+    const channels = deriveChannels([post(["frontend"])], [{ name: "newtag", relayIds: [] }], 6);
     expect(channels.map((c) => c.name)).toContain("newtag");
   });
 
-  it("counts T tags case-insensitively from nostr events", () => {
-    const channels = deriveChannels([], [{ tags: [["T", "Backend"]], content: "" }], [], 1);
+  it("counts tags case-insensitively from posts", () => {
+    const channels = deriveChannels([post(["Backend"])], [], 1);
     expect(channels.map((c) => c.name)).toContain("backend");
   });
 
   it("attaches usage counts for ranking decisions", () => {
     const channels = deriveChannels(
-      [{ tags: ["alpha", "alpha", "beta"] }],
-      [{ tags: [["t", "alpha"]], content: "#beta" }],
+      [post(["alpha", "beta"]), post(["alpha"]), post(["alpha", "beta"])],
       [],
       1
     );
@@ -27,10 +30,16 @@ describe("deriveChannels", () => {
     expect(beta?.usageCount).toBe(2);
   });
 
+  it("dedupes tag counts within a single post", () => {
+    // The converter unions t-tags and content hashtags before producing Post.tags,
+    // but a defensive dedupe protects against duplicate entries inflating counts.
+    const channels = deriveChannels([post(["alpha", "ALPHA", "alpha"])], [], 1);
+    expect(channels.find((c) => c.name === "alpha")?.usageCount).toBe(1);
+  });
+
   it("prioritizes personalized channels with dampened frecency", () => {
     const channels = deriveChannels(
-      [{ tags: ["alpha", "alpha", "beta"] }],
-      [{ tags: [["t", "beta"]], content: "" }],
+      [post(["alpha"]), post(["alpha"]), post(["beta"])],
       [],
       {
         minCount: 1,
@@ -46,8 +55,7 @@ describe("deriveChannels", () => {
 
   it("caps initial channel list when maxCount is provided", () => {
     const channels = deriveChannels(
-      [{ tags: ["alpha", "beta", "gamma"] }],
-      [],
+      [post(["alpha"]), post(["beta"]), post(["gamma"])],
       [],
       { minCount: 1, maxCount: 2 }
     );
@@ -57,8 +65,7 @@ describe("deriveChannels", () => {
 
   it("sorts visible channels alphabetically after score-based selection", () => {
     const channels = deriveChannels(
-      [{ tags: ["zeta", "zeta", "alpha", "beta"] }],
-      [],
+      [post(["zeta"]), post(["zeta"]), post(["alpha"]), post(["beta"])],
       [],
       {
         minCount: 1,
@@ -73,8 +80,7 @@ describe("deriveChannels", () => {
 
   it("force-includes core channels with zero usage", () => {
     const channels = deriveChannels(
-      [{ tags: ["random"] }],
-      [],
+      [post(["random"])],
       [],
       {
         minCount: 6,
@@ -90,8 +96,7 @@ describe("deriveChannels", () => {
 
   it("populates personalScore from personalize scores map", () => {
     const channels = deriveChannels(
-      [{ tags: ["a"] }, { tags: ["b"] }],
-      [],
+      [post(["a"]), post(["b"])],
       [],
       {
         minCount: 1,
@@ -103,26 +108,28 @@ describe("deriveChannels", () => {
     expect(byName.get("b")?.personalScore).toBeUndefined();
   });
 
-  it("flags userPosted true for channels in userPostedTags", () => {
+  it("counts user-authored posts per channel via userPubkey", () => {
     const channels = deriveChannels(
-      [{ tags: ["a"] }, { tags: ["b"] }],
+      [
+        post(["a"], "me"),
+        post(["a"], "me"),
+        post(["a"], "other"),
+        post(["b"], "other"),
+      ],
       [],
-      [{ name: "a", relayIds: [] }],
-      1
+      { minCount: 1, userPubkey: "me" }
     );
     const byName = new Map(channels.map((c) => [c.name, c]));
-    expect(byName.get("a")?.userPosted).toBe(true);
-    expect(byName.get("b")?.userPosted).toBeUndefined();
+    expect(byName.get("a")?.userPostCount).toBe(2);
+    expect(byName.get("b")?.userPostCount).toBeUndefined();
   });
 
-  it("does not parse hashtags embedded inside words", () => {
+  it("ignores authorless posts when counting user-authored posts", () => {
     const channels = deriveChannels(
+      [post(["a"]), post(["a"], "me")],
       [],
-      [{ tags: [], content: "email#ops #release" }],
-      [],
-      1
+      { minCount: 1, userPubkey: "me" }
     );
-
-    expect(channels.map((channel) => channel.name)).toEqual(["release"]);
+    expect(channels.find((c) => c.name === "a")?.userPostCount).toBe(1);
   });
 });

@@ -1,10 +1,4 @@
 import { Channel, PostedTag, Post } from "@/types";
-import { extractHashtagsFromContent } from "@/lib/hashtags";
-
-interface NostrEventLike {
-  tags: string[][];
-  content: string;
-}
 
 interface DeriveChannelsOptions {
   minCount?: number;
@@ -12,11 +6,13 @@ interface DeriveChannelsOptions {
   maxCount?: number;
   sortVisibleAlphabetically?: boolean;
   coreChannels?: Set<string>;
+  /** Pubkey of the current user; used to count user-authored posts per channel. */
+  userPubkey?: string;
 }
 
 function resolveDeriveOptions(
   minCountOrOptions: number | DeriveChannelsOptions = 6
-): Required<DeriveChannelsOptions> {
+): Required<Omit<DeriveChannelsOptions, "userPubkey">> & { userPubkey?: string } {
   if (typeof minCountOrOptions === "number") {
     return {
       minCount: minCountOrOptions,
@@ -32,37 +28,38 @@ function resolveDeriveOptions(
     maxCount: minCountOrOptions.maxCount ?? Number.POSITIVE_INFINITY,
     sortVisibleAlphabetically: minCountOrOptions.sortVisibleAlphabetically ?? false,
     coreChannels: minCountOrOptions.coreChannels ?? new Set(),
+    userPubkey: minCountOrOptions.userPubkey,
   };
 }
 
+type ChannelPost = Pick<Post, "tags"> & { author?: Pick<Post["author"], "pubkey"> };
+
 export function deriveChannels(
-  localTasks: Pick<Post, "tags">[],
-  nostrEvents: NostrEventLike[],
+  posts: ChannelPost[],
   userPostedTags: PostedTag[],
   minCountOrOptions: number | DeriveChannelsOptions = 6
 ): Channel[] {
   const options = resolveDeriveOptions(minCountOrOptions);
   const tagCounts = new Map<string, number>();
+  const userPostCounts = new Map<string, number>();
+  const normalizedUserPubkey = options.userPubkey?.trim().toLowerCase();
 
-  localTasks.forEach((task) => {
-    task.tags.forEach((tag) => {
+  posts.forEach((post) => {
+    const authorPubkey = post.author?.pubkey?.trim().toLowerCase();
+    const isUserAuthored =
+      Boolean(normalizedUserPubkey) && authorPubkey === normalizedUserPubkey;
+    // Posts can repeat tags; dedupe per-post so a single post can't double-count
+    // a channel because the t-tag and the in-content hashtag both appear.
+    const seen = new Set<string>();
+    post.tags.forEach((tag) => {
       const lower = tag.toLowerCase();
+      if (seen.has(lower)) return;
+      seen.add(lower);
       tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
+      if (isUserAuthored) {
+        userPostCounts.set(lower, (userPostCounts.get(lower) || 0) + 1);
+      }
     });
-  });
-
-  nostrEvents.forEach((event) => {
-    event.tags
-      .filter((tag) => tag[0]?.toLowerCase() === "t" && tag[1])
-      .forEach((tag) => {
-        const lower = tag[1].toLowerCase();
-        tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
-      });
-
-    for (const hashtag of extractHashtagsFromContent(event.content)) {
-      const lower = hashtag.toLowerCase();
-      tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
-    }
   });
 
   const forceInclude = new Set<string>([
@@ -101,19 +98,16 @@ export function deriveChannels(
     selected.sort(([nameA], [nameB]) => nameA.localeCompare(nameB));
   }
 
-  const userPostedSet = new Set(
-    userPostedTags.map((tag) => tag.name.toLowerCase())
-  );
-
   return selected.map(([name, count]) => {
     const personalScore = options.personalizeScores.get(name) ?? 0;
+    const userPostCount = userPostCounts.get(name) ?? 0;
     return {
       id: name,
       name,
       usageCount: count,
       filterState: "neutral" as const,
       personalScore: personalScore > 0 ? personalScore : undefined,
-      userPosted: userPostedSet.has(name) ? true : undefined,
+      userPostCount: userPostCount > 0 ? userPostCount : undefined,
     };
   });
 }

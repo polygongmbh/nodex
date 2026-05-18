@@ -10,7 +10,7 @@ function channel(partial: Partial<Channel> & { name: string }): Channel {
     usageCount: partial.usageCount,
     pinIndex: partial.pinIndex,
     personalScore: partial.personalScore,
-    userPosted: partial.userPosted,
+    userPostCount: partial.userPostCount,
   };
 }
 
@@ -113,6 +113,21 @@ describe("bandChannelsByActivity", () => {
     });
     expect(primary.map((c) => c.name)).toContain("personal");
     expect(primary.map((c) => c.name)).not.toContain("noise");
+  });
+
+  it("ranks a heavily user-posted channel above a less-involved but busier channel", () => {
+    // Reproduces the reported bug: a channel with dozens of your own posts
+    // should outrank a channel with comparable raw count but no involvement.
+    const channels = [
+      channel({ name: "yours", usageCount: 30, userPostCount: 25 }),
+      channel({ name: "busy", usageCount: 40 }),
+    ];
+    const { primary } = bandChannelsByActivity(channels, noneCore, {
+      primaryPct: 0.95,
+      expandedPct: 0.5,
+      primaryFloor: 1,
+    });
+    expect(primary[0].name).toBe("yours");
   });
 
   it("preserves input order within each band", () => {

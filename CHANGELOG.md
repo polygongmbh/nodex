@@ -9,6 +9,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Added
 - Calendar events (NIP-52, kinds 31922 and 31923) can now be posted directly from the composer via a new "Event" mode next to Task / Comment / Listing. Event mode reuses the existing date/time inputs as the event start, adds optional end date/end time, and exposes title/summary/location fields. All-day events publish as kind 31922 (timezone-independent `YYYY-MM-DD`); timed events publish as kind 31923. Events show up in the feed and on the calendar grid alongside tasks, marked with an "EVENT" label and their start–end range. Calendar events that reference an unknown task are still surfaced (orphan recovery).
 
+### Changed
+- Channel ranking now counts posts from the converted timeline instead of every raw Nostr event. Status updates, reactions, deletions, and other auxiliary events no longer inflate a channel's usage count, so a channel with many state transitions on a single task is no longer treated as more active than one with several real posts. The involvement signal also scales with the number of posts you've authored in a channel instead of being a flat one-or-zero flag, so heavily user-posted channels rank visibly above busy channels you've never contributed to.
+
 ### Fixed
 - Relays no longer stay stuck on "connecting" in the sidebar after initial page load when React state diverges from NDK's pool (e.g. a `relay:connect` event was missed because session restore replaced the relay instance mid-handshake). A startup reconciliation pass now compares React state against the pool for the first ~22 seconds after mount, fixes drift, and force-reconnects relays whose underlying handshake has genuinely stalled.
 

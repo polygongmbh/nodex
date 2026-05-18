@@ -177,6 +177,19 @@ export function useIndexDerivedData({
     [personFrecencyState]
   );
 
+  const scopedPostsForChannels = useMemo(() => {
+    const channelRelayScopeIds = resolveChannelRelayScopeIds(
+      effectiveActiveRelayIds,
+      relays.map((relay) => relay.id)
+    );
+    return allTasks.filter(
+      (task) =>
+        task.relays.length === 0 ||
+        task.relays.some((relayId) => channelRelayScopeIds.has(relayId))
+    );
+  }, [allTasks, effectiveActiveRelayIds, relays]);
+
+  // Retained for mention autocomplete (Phase D removes it).
   const scopedSeedTasksForChannels = useMemo(() => {
     const channelRelayScopeIds = resolveChannelRelayScopeIds(
       effectiveActiveRelayIds,
@@ -214,25 +227,21 @@ export function useIndexDerivedData({
       effectiveActiveRelayIds,
       relays.map((relay) => relay.id)
     );
-    return deriveChannels(
-      scopedSeedTasksForChannels,
-      scopedNostrEventsForChannels,
-      scopedPostedTags,
-      {
-        minCount: 2,
-        personalizeScores: personalizedChannelScores,
-        sortVisibleAlphabetically: true,
-        coreChannels,
-      }
-    );
+    return deriveChannels(scopedPostsForChannels, scopedPostedTags, {
+      minCount: 2,
+      personalizeScores: personalizedChannelScores,
+      sortVisibleAlphabetically: true,
+      coreChannels,
+      userPubkey: user?.pubkey,
+    });
   }, [
-    scopedSeedTasksForChannels,
-    scopedNostrEventsForChannels,
+    scopedPostsForChannels,
     postedTags,
     effectiveActiveRelayIds,
     personalizedChannelScores,
     relays,
     coreChannels,
+    user?.pubkey,
   ]);
 
   const composeChannels: Channel[] = useMemo(() => {
@@ -241,11 +250,12 @@ export function useIndexDerivedData({
       effectiveActiveRelayIds,
       relays.map((relay) => relay.id)
     );
-    return deriveChannels(scopedSeedTasksForChannels, scopedNostrEventsForChannels, scopedPostedTags, {
+    return deriveChannels(scopedPostsForChannels, scopedPostedTags, {
       minCount: 1,
       coreChannels,
+      userPubkey: user?.pubkey,
     });
-  }, [postedTags, scopedSeedTasksForChannels, scopedNostrEventsForChannels, effectiveActiveRelayIds, relays, coreChannels]);
+  }, [postedTags, scopedPostsForChannels, effectiveActiveRelayIds, relays, coreChannels, user?.pubkey]);
 
   const mentionAutocompletePeople = useMemo(() => {
     const visiblePubkeys = Array.from(

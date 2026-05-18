@@ -18,8 +18,8 @@ export interface Channel {
   pinIndex?: number;
   /** Personal frecency score; 0 or undefined means no personal interaction. */
   personalScore?: number;
-  /** True when the user has posted in this channel. */
-  userPosted?: boolean;
+  /** Number of posts authored by the current user in this channel; absent/0 means none. */
+  userPostCount?: number;
 }
 
 export interface PostedTag {
