@@ -35,7 +35,6 @@ import { isTaskStateEventKind } from "@/infrastructure/nostr/task-state-events";
 import { isPriorityPropertyEvent } from "@/infrastructure/nostr/task-property-events";
 import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
-import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
 
@@ -68,12 +67,9 @@ export interface UseIndexDerivedDataOptions {
 }
 
 export interface UseIndexDerivedDataResult {
-  filteredNostrEvents: CachedNostrEvent[];
   nostrTasks: Post[];
   allTasks: Post[];
   personalizedChannelScores: Map<string, number>;
-  scopedLocalTasksForChannels: Post[];
-  scopedNostrEventsForChannels: CachedNostrEvent[];
   channels: Channel[];
   composeChannels: Channel[];
   mentionAutocompletePeople: SelectablePerson[];
@@ -224,38 +220,6 @@ export function useIndexDerivedData({
     );
   }, [allTasks, effectiveActiveRelayIds, relays]);
 
-  // Retained for mention autocomplete (Phase D removes it).
-  const scopedSeedTasksForChannels = useMemo(() => {
-    const channelRelayScopeIds = resolveChannelRelayScopeIds(
-      effectiveActiveRelayIds,
-      relays.map((relay) => relay.id)
-    );
-    return [...demoTasks, ...localTasks].filter(
-      (task) =>
-        task.relays.length === 0 ||
-        task.relays.some((relayId) => channelRelayScopeIds.has(relayId))
-    );
-  }, [demoTasks, effectiveActiveRelayIds, localTasks, relays]);
-
-  const scopedNostrEventsForChannels = useMemo(() => {
-    const channelRelayScopeIds = resolveChannelRelayScopeIds(
-      effectiveActiveRelayIds,
-      relays.map((relay) => relay.id)
-    );
-    return filteredNostrEvents.filter((event) => {
-      const relayUrls = [
-        ...(event.relayUrls || []),
-        ...(event.relayUrl ? [event.relayUrl] : []),
-      ]
-        .map((url) => url.trim().replace(/\/+$/, ""))
-        .filter((url) => Boolean(url));
-      if (relayUrls.length === 0) return false;
-      return relayUrls.some((relayUrl) =>
-        channelRelayScopeIds.has(getRelayIdFromUrl(relayUrl))
-      );
-    });
-  }, [effectiveActiveRelayIds, filteredNostrEvents, relays]);
-
   const channels: Channel[] = useMemo(() => {
     const scopedPostedTags = getPostedTagsForRelayScope(
       postedTags,
@@ -296,7 +260,7 @@ export function useIndexDerivedData({
     const visiblePubkeys = Array.from(
       new Set(
         [
-          ...scopedNostrEventsForChannels.map((event) => event.pubkey?.trim().toLowerCase()),
+          ...scopedPostsForChannels.map((task) => task.author.pubkey?.trim().toLowerCase()),
           ...cachedKind0Events.map((event) => event.pubkey?.trim().toLowerCase()),
         ].filter((pubkey): pubkey is string => Boolean(pubkey))
       )
@@ -310,7 +274,7 @@ export function useIndexDerivedData({
       cachedKind0Events,
       people
     );
-  }, [cachedKind0Events, people, scopedNostrEventsForChannels]);
+  }, [cachedKind0Events, people, scopedPostsForChannels]);
 
   const scopedTasksForSidebarPeople = useMemo(() => {
     const sidebarRelayScopeIds = resolveChannelRelayScopeIds(
@@ -343,12 +307,9 @@ export function useIndexDerivedData({
   );
 
   return {
-    filteredNostrEvents,
     nostrTasks,
     allTasks,
     personalizedChannelScores,
-    scopedLocalTasksForChannels: scopedSeedTasksForChannels,
-    scopedNostrEventsForChannels,
     channels,
     composeChannels,
     mentionAutocompletePeople,
