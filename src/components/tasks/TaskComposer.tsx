@@ -773,15 +773,19 @@ export function TaskComposer({
       }
       for (const tagName of removed) {
         if (!autoManagedFilterTagNamesRef.current.has(tagName)) continue;
+        autoManagedFilterTagNamesRef.current.delete(tagName);
+        if (inheritedTagNames?.includes(tagName)) {
+          autoManagedInheritedTagsRef.current.add(tagName);
+          continue;
+        }
         const index = nextTags.indexOf(tagName);
         if (index >= 0) nextTags.splice(index, 1);
-        autoManagedFilterTagNamesRef.current.delete(tagName);
       }
       return nextTags;
     });
 
     prevFilterTagNamesRef.current = [...filterTagNames];
-  }, [filterTagNames]);
+  }, [filterTagNames, inheritedTagNames]);
 
   useEffect(() => {
     if (!filterMentionPubkeys) return;
@@ -800,15 +804,19 @@ export function TaskComposer({
       }
       for (const pubkey of removed) {
         if (!autoManagedFilterMentionPubkeysRef.current.has(pubkey)) continue;
+        autoManagedFilterMentionPubkeysRef.current.delete(pubkey);
+        if (inheritedMentionPubkeys?.includes(pubkey)) {
+          autoManagedInheritedMentionsRef.current.add(pubkey);
+          continue;
+        }
         const index = nextMentions.indexOf(pubkey);
         if (index >= 0) nextMentions.splice(index, 1);
-        autoManagedFilterMentionPubkeysRef.current.delete(pubkey);
       }
       return nextMentions;
     });
 
     prevFilterMentionPubkeysRef.current = [...filterMentionPubkeys];
-  }, [filterMentionPubkeys]);
+  }, [filterMentionPubkeys, inheritedMentionPubkeys]);
 
   useEffect(() => {
     if (!inheritedTagNames) return;
@@ -827,15 +835,19 @@ export function TaskComposer({
       }
       for (const tagName of removed) {
         if (!autoManagedInheritedTagsRef.current.has(tagName)) continue;
+        autoManagedInheritedTagsRef.current.delete(tagName);
+        if (filterTagNames?.includes(tagName)) {
+          autoManagedFilterTagNamesRef.current.add(tagName);
+          continue;
+        }
         const index = nextTags.indexOf(tagName);
         if (index >= 0) nextTags.splice(index, 1);
-        autoManagedInheritedTagsRef.current.delete(tagName);
       }
       return nextTags;
     });
 
     prevInheritedTagNamesRef.current = [...inheritedTagNames];
-  }, [inheritedTagNames]);
+  }, [inheritedTagNames, filterTagNames]);
 
   useEffect(() => {
     if (!inheritedMentionPubkeys) return;
@@ -854,15 +866,19 @@ export function TaskComposer({
       }
       for (const pubkey of removed) {
         if (!autoManagedInheritedMentionsRef.current.has(pubkey)) continue;
+        autoManagedInheritedMentionsRef.current.delete(pubkey);
+        if (filterMentionPubkeys?.includes(pubkey)) {
+          autoManagedFilterMentionPubkeysRef.current.add(pubkey);
+          continue;
+        }
         const index = nextMentions.indexOf(pubkey);
         if (index >= 0) nextMentions.splice(index, 1);
-        autoManagedInheritedMentionsRef.current.delete(pubkey);
       }
       return nextMentions;
     });
 
     prevInheritedMentionPubkeysRef.current = [...inheritedMentionPubkeys];
-  }, [inheritedMentionPubkeys]);
+  }, [inheritedMentionPubkeys, filterMentionPubkeys]);
 
   const resolveSubmitType = (value: unknown): ComposerMessageType => {
     if (

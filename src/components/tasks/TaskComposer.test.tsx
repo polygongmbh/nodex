@@ -536,4 +536,59 @@ describe("TaskComposer", () => {
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /create task/i })).not.toBeInTheDocument();
   });
+
+  it("keeps inherited tags that were previously sidebar-active when scope focus clears the filter", () => {
+    const filterSyncWithFoo = {
+      filterTagNames: ["foo"],
+      filterMentionPubkeys: [],
+      onRemoveFilterTag: vi.fn(),
+      onRemoveFilterMention: vi.fn(),
+    };
+    const filterSyncEmpty = {
+      filterTagNames: [] as string[],
+      filterMentionPubkeys: [] as string[],
+      onRemoveFilterTag: vi.fn(),
+      onRemoveFilterMention: vi.fn(),
+    };
+
+    const { rerender } = render(
+      <TaskComposerRuntimeProvider value={buildRuntimeValue()}>
+        <TaskComposer
+          onSubmit={() => {}}
+          onCancel={() => {}}
+          filterSync={filterSyncWithFoo}
+        />
+      </TaskComposerRuntimeProvider>
+    );
+
+    expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="foo"]')).not.toBeNull();
+
+    rerender(
+      <TaskComposerRuntimeProvider value={buildRuntimeValue()}>
+        <TaskComposer
+          onSubmit={() => {}}
+          onCancel={() => {}}
+          filterSync={filterSyncWithFoo}
+          inheritedTagNames={["foo", "bar"]}
+        />
+      </TaskComposerRuntimeProvider>
+    );
+
+    expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="foo"]')).not.toBeNull();
+    expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="bar"]')).not.toBeNull();
+
+    rerender(
+      <TaskComposerRuntimeProvider value={buildRuntimeValue()}>
+        <TaskComposer
+          onSubmit={() => {}}
+          onCancel={() => {}}
+          filterSync={filterSyncEmpty}
+          inheritedTagNames={["foo", "bar"]}
+        />
+      </TaskComposerRuntimeProvider>
+    );
+
+    expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="foo"]')).not.toBeNull();
+    expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="bar"]')).not.toBeNull();
+  });
 });
