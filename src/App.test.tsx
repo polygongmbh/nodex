@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
 const startupRelaysModule = vi.hoisted(() => ({
   readStartupRelayBootstrap: vi.fn(),
@@ -139,6 +140,18 @@ describe("App routes", () => {
         undefined
       );
     });
+  });
+
+  it("focuses the sidebar active-relay filter to the path-derived relay on permalink boot", async () => {
+    startupRelaysModule.extractPathRelayOverride.mockReturnValue("wss://relay.example.com");
+    useFilterStore.setState({
+      activeRelayIds: new Set(["relay-persisted", "relay-other"]),
+    });
+
+    render(<App />);
+
+    await screen.findByTestId("index-page");
+    expect(useFilterStore.getState().activeRelayIds).toEqual(new Set(["relay-example-com"]));
   });
 
   it("updates the NDK provider with a discovered startup Noas host without blocking app boot", async () => {

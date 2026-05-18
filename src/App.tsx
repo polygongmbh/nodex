@@ -12,6 +12,8 @@ import {
   extractPathRelayOverride,
 } from "@/infrastructure/nostr/startup-relays";
 import { readStartupNoasBootstrap, resolveStartupNoasBootstrap } from "@/infrastructure/nostr/startup-noas";
+import { relayUrlToId } from "@/infrastructure/nostr/relay-url";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -55,6 +57,13 @@ function ViewRoute() {
 function NostrBootstrapProvider({ children }: { children: ReactNode }) {
   const pathRelayOverride =
     typeof window !== "undefined" ? extractPathRelayOverride(window.location.pathname) : null;
+  if (pathRelayOverride) {
+    // Permalink visit: narrow the sidebar's active-relay filter to just the
+    // path-derived relay so the focused scope matches the URL.
+    useFilterStore.setState({
+      activeRelayIds: new Set([relayUrlToId(pathRelayOverride)]),
+    });
+  }
   const initialBootstrap = readStartupRelayBootstrap({ pathRelayOverride });
   const initialNoasBootstrap = readStartupNoasBootstrap();
   const [relayUrls, setRelayUrls] = useState(initialBootstrap.relayUrls);

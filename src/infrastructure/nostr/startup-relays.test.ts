@@ -105,6 +105,7 @@ describe("startup relay bootstrap", () => {
     });
     expect(storageModule.savePersistedRelayUrls).not.toHaveBeenCalled();
   });
+
 });
 
 describe("extractPathRelayOverride", () => {
