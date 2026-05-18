@@ -196,17 +196,18 @@ export interface BasePost {
   mentions?: string[];
   attachments?: PublishedAttachment[];
   locationGeohash?: string;
-  /** Free-form location string (NIP-52 `location` tag, NIP-99 `location` tag). Distinct from `locationGeohash`. */
-  location?: string;
 }
 
 /**
  * Posts that carry a NIP-style title/summary at the top level. NIP-52 calendar
- * events and NIP-99 listings both surface these.
+ * events and NIP-99 listings both surface these, alongside the free-form
+ * `location` tag (distinct from BasePost's structured `locationGeohash`).
  */
 export interface TitledPost extends BasePost {
   title?: string;
   summary?: string;
+  /** Free-form location string (NIP-52 `location` tag, NIP-99 `location` tag). */
+  location?: string;
 }
 
 export interface TaskPost extends BasePost {
