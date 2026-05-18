@@ -122,6 +122,7 @@ function FeedIndexContent() {
   const isMobile = useIsMobile();
   const {
     events: nostrEvents,
+    feedScopeKey,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
     isHydrating,
   } = useNostrEventCache({
@@ -189,6 +190,8 @@ function FeedIndexContent() {
     channelFrecencyState,
     personFrecencyState,
     isHydrating,
+    feedScopeKey,
+    hasLiveHydratedScope: hasLiveHydratedRelayScope,
   });
 
   const sidebarPeopleWithSelected = useMemo(() => {

@@ -5,6 +5,7 @@ import {
   mergeReactionEvents,
   setReactionsViewerPubkey,
 } from "@/features/feed-page/stores/reactions-registry";
+import { useCachedPosts } from "@/features/feed-page/controllers/use-cached-posts";
 import type { Post, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
@@ -64,6 +65,8 @@ export interface UseIndexDerivedDataOptions {
   channelFrecencyState: ChannelFrecencyState;
   personFrecencyState: PersonFrecencyState;
   isHydrating?: boolean;
+  feedScopeKey: string;
+  hasLiveHydratedScope: boolean;
 }
 
 export interface UseIndexDerivedDataResult {
@@ -103,6 +106,8 @@ export function useIndexDerivedData({
   channelFrecencyState,
   personFrecencyState,
   isHydrating = false,
+  feedScopeKey,
+  hasLiveHydratedScope,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
   const localTasks = useTaskMutationStore((s) => s.localTasks);
   const postedTags = useTaskMutationStore((s) => s.postedTags);
@@ -194,10 +199,20 @@ export function useIndexDerivedData({
     }
   }, [filteredNostrEvents, user?.pubkey]);
 
+  const cachedPosts = useCachedPosts({
+    feedScopeKey,
+    postsToPersist: nostrTasks,
+    canPersist: hasLiveHydratedScope,
+  });
+
   const allTasks = useMemo(() => {
-    const fixtureAndNostrTasks = dedupeMergedTasks(mergeTasks(demoTasks, nostrTasks));
+    // Cached posts hydrate the timeline before live events arrive; mergeTasks
+    // dedupes by id and prefers the freshest version, so a stale cached entry
+    // gets overwritten as soon as the live event comes back from the relay.
+    const cachedAndLive = dedupeMergedTasks(mergeTasks(cachedPosts, nostrTasks));
+    const fixtureAndNostrTasks = dedupeMergedTasks(mergeTasks(demoTasks, cachedAndLive));
     return dedupeMergedTasks(mergeTasks(localTasks, fixtureAndNostrTasks));
-  }, [demoTasks, localTasks, nostrTasks]);
+  }, [cachedPosts, demoTasks, localTasks, nostrTasks]);
 
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),

@@ -83,6 +83,8 @@ function Harness() {
     channelFrecencyState: {},
     personFrecencyState: {},
     isHydrating: false,
+    feedScopeKey: "test",
+    hasLiveHydratedScope: false,
   });
 
   const filters = useChannelFilterController({
@@ -190,6 +192,8 @@ function SidebarPeopleHarness() {
     channelFrecencyState: {},
     personFrecencyState,
     isHydrating: false,
+    feedScopeKey: "test",
+    hasLiveHydratedScope: false,
   });
 
   return (
@@ -288,6 +292,8 @@ describe("useIndexDerivedData current user profile metadata", () => {
         channelFrecencyState: {},
         personFrecencyState: {},
         isHydrating: false,
+        feedScopeKey: "test",
+        hasLiveHydratedScope: false,
       })
     );
 
@@ -316,6 +322,8 @@ describe("useIndexDerivedData current user profile metadata", () => {
         channelFrecencyState: {},
         personFrecencyState: {},
         isHydrating: false,
+        feedScopeKey: "test",
+        hasLiveHydratedScope: false,
       })
     );
 
@@ -350,6 +358,8 @@ describe("useIndexDerivedData current user profile metadata", () => {
         channelFrecencyState: {},
         personFrecencyState: {},
         isHydrating: false,
+        feedScopeKey: "test",
+        hasLiveHydratedScope: false,
       })
     );
 
@@ -383,6 +393,8 @@ function MentionAutocompleteHarness() {
     channelFrecencyState: {},
     personFrecencyState: {},
     isHydrating: false,
+    feedScopeKey: "test",
+    hasLiveHydratedScope: false,
   });
 
   return (
