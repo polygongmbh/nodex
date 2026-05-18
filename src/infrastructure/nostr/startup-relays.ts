@@ -37,6 +37,14 @@ export function readStartupRelayBootstrap(
 ): StartupRelayBootstrap {
   const pathRelayOverride = options?.pathRelayOverride ?? null;
   if (pathRelayOverride) {
+    const previouslyPersisted = loadPersistedRelayUrls() ?? [];
+    if (previouslyPersisted.includes(pathRelayOverride)) {
+      return {
+        relayUrls: previouslyPersisted,
+        source: "persisted",
+        needsAsyncFallback: false,
+      };
+    }
     savePersistedRelayUrls([pathRelayOverride]);
     return {
       relayUrls: [pathRelayOverride],

@@ -89,6 +89,22 @@ describe("startup relay bootstrap", () => {
     expect(storageModule.savePersistedRelayUrls).toHaveBeenCalledWith(["wss://relay.example.com"]);
     expect(defaultRelaysModule.getConfiguredDefaultRelays).not.toHaveBeenCalled();
   });
+
+  it("keeps the persisted relay list intact when it already contains the path-override relay", () => {
+    storageModule.loadPersistedRelayUrls.mockReturnValue([
+      "wss://relay.persisted",
+      "wss://relay.example.com",
+    ]);
+
+    expect(
+      readStartupRelayBootstrap({ pathRelayOverride: "wss://relay.example.com" })
+    ).toEqual({
+      relayUrls: ["wss://relay.persisted", "wss://relay.example.com"],
+      source: "persisted",
+      needsAsyncFallback: false,
+    });
+    expect(storageModule.savePersistedRelayUrls).not.toHaveBeenCalled();
+  });
 });
 
 describe("extractPathRelayOverride", () => {
