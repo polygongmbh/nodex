@@ -1,4 +1,4 @@
-import { type TaskStateUpdate, type TaskState, type TaskStatus, type TaskDate, type TaskDateType, Post, getLastEditedAt, isTaskPost } from "@/types";
+import { type TaskStatus, type TaskDate, type TaskDateType, Post, getLastEditedAt, isTaskPost } from "@/types";
 import { setRawEvent } from "@/stores/raw-events";
 import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
@@ -6,8 +6,8 @@ import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
   extractTaskStateTargetId,
   isTaskStateEventKind,
-  mapTaskStateEventToTaskStatus,
 } from "@/infrastructure/nostr/task-state-events";
+import { foldTaskStateEventIntoPost } from "@/infrastructure/nostr/task-state-fold";
 import {
   extractDeletionTargetIds,
   isDeletionEvent,
@@ -270,49 +270,13 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Post[] {
     })
   );
 
-  const latestStateByTaskId = new Map<
-    string,
-    { createdAt: number; status: TaskState }
-  >();
-  const stateUpdatesByTaskId = new Map<string, TaskStateUpdate[]>();
-
   for (const stateEvent of stateEvents) {
-    const targetTaskId = extractTaskStateTargetId(stateEvent.tags);
-    if (!targetTaskId) continue;
-    const task = taskMap.get(targetTaskId);
+    const targetId = extractTaskStateTargetId(stateEvent.tags);
+    if (!targetId) continue;
+    const task = taskMap.get(targetId);
     if (!task) continue;
-    if (!canPubkeyUpdateTask(task, stateEvent.pubkey)) continue;
-
-    const mapped = mapTaskStateEventToTaskStatus(stateEvent.kind, stateEvent.content);
-    const prev = latestStateByTaskId.get(targetTaskId);
-    if (!prev || stateEvent.created_at >= prev.createdAt) {
-      latestStateByTaskId.set(targetTaskId, {
-        createdAt: stateEvent.created_at,
-        status: mapped,
-      });
-    }
-
-    const existingUpdates = stateUpdatesByTaskId.get(targetTaskId) || [];
-    existingUpdates.push({
-      id: stateEvent.id,
-      state: mapped,
-      timestamp: new Date(stateEvent.created_at * 1000),
-      authorPubkey: stateEvent.pubkey,
-    });
-    stateUpdatesByTaskId.set(targetTaskId, existingUpdates);
-  }
-
-  for (const [taskId, state] of latestStateByTaskId.entries()) {
-    const task = taskMap.get(taskId);
-    if (!task || !isTaskPost(task)) continue;
-    const stateUpdates = (stateUpdatesByTaskId.get(taskId) ?? []).sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-    );
-    taskMap.set(taskId, {
-      ...task,
-      stateUpdates,
-      lastEditedAt: new Date(state.createdAt * 1000),
-    });
+    const folded = foldTaskStateEventIntoPost(task, stateEvent);
+    if (folded !== task) taskMap.set(targetId, folded);
   }
 
   const TASK_DATE_TYPE_ORDER: TaskDateType[] = ["due", "scheduled", "start", "end", "milestone"];
