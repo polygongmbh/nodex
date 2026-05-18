@@ -11,8 +11,6 @@ import {
 } from "@/infrastructure/nostr/relay-url";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {
-  removeCachedNostrEventsByRelayUrl,
-  removeCachedNostrEventScopesByRelayId,
   removeRelayUrlFromCachedEvents,
   type CachedNostrEvent,
 } from "@/infrastructure/nostr/event-cache";
@@ -124,12 +122,10 @@ export function useIndexRelayShell({
         { queryKey: NOSTR_EVENTS_QUERY_KEY },
         (previous) => removeRelayUrlFromCachedEvents(previous || [], normalizedRelayUrl)
       );
-      removeCachedNostrEventsByRelayUrl(normalizedRelayUrl);
       removeCachedRelayProfile(normalizedRelayUrl);
 
       const relayId = getRelayIdFromUrl(normalizedRelayUrl);
       if (relayId) {
-        removeCachedNostrEventScopesByRelayId(relayId);
         setActiveRelayIds((previous) => {
           if (!previous.has(relayId)) return previous;
           const next = new Set(previous);

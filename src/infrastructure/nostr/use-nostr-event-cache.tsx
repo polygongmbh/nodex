@@ -4,9 +4,6 @@ import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-
 import {
   ALL_RELAYS_SCOPE_KEY,
   EMPTY_RELAY_SCOPE_KEY,
-  loadCachedNostrEventsForBootstrap,
-  loadCachedNostrEvents,
-  saveCachedNostrEvents,
   type CachedNostrEvent,
 } from "@/infrastructure/nostr/event-cache";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
@@ -15,7 +12,6 @@ import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/infras
 
 export const NOSTR_EVENTS_QUERY_KEY = ["nostr-events-cache"] as const;
 const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
-const CACHE_PERSIST_DEBOUNCE_MS = 750;
 const HYDRATION_FLUSH_BATCH_SIZE = 50;
 const HYDRATION_FLUSH_DELAY_MS = 64;
 // When the pending queue is large the relay is in a bulk-backfill burst.
@@ -186,10 +182,8 @@ export function useNostrEventCache({
   const queryKey = useMemo(() => getNostrEventsQueryKey(feedScopeKey), [feedScopeKey]);
   const hasFinalizedBootstrapRef = useRef(false);
   const hasMarkedLiveHydratedScopeRef = useRef(false);
-  const persistTimerRef = useRef<number | null>(null);
   const hydrationFlushTimerRef = useRef<number | null>(null);
   const pendingHydrationEventsRef = useRef<CachedNostrEvent[]>([]);
-  const latestPersistedEventsRef = useRef<CachedNostrEvent[]>([]);
 
   const clearHydrationFlushTimer = useCallback(() => {
     if (hydrationFlushTimerRef.current === null || typeof window === "undefined") return;
@@ -257,15 +251,11 @@ export function useNostrEventCache({
 
   const { data: nostrEvents = [] } = useQuery({
     queryKey,
-    queryFn: () => loadCachedNostrEventsForBootstrap(feedScopeKey),
-    initialData: () => loadCachedNostrEventsForBootstrap(feedScopeKey),
+    queryFn: (): CachedNostrEvent[] => [],
+    initialData: (): CachedNostrEvent[] => [],
     staleTime: Infinity,
     gcTime: Infinity,
   });
-
-  useEffect(() => {
-    latestPersistedEventsRef.current = nostrEvents;
-  }, [nostrEvents]);
 
   const markLiveHydratedScope = useCallback(() => {
     if (hasMarkedLiveHydratedScopeRef.current) return;
@@ -340,48 +330,6 @@ export function useNostrEventCache({
       subscriptionRef.current = null;
     };
   }, []);
-
-  const flushPersist = useCallback(() => {
-    if (typeof window !== "undefined" && persistTimerRef.current !== null) {
-      window.clearTimeout(persistTimerRef.current);
-      persistTimerRef.current = null;
-    }
-    flushPendingEvents(true);
-    const latestEvents =
-      queryClient.getQueryData<CachedNostrEvent[]>(queryKey) || latestPersistedEventsRef.current;
-    saveCachedNostrEvents(latestEvents, feedScopeKey);
-  }, [feedScopeKey, flushPendingEvents, queryClient, queryKey]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      saveCachedNostrEvents(nostrEvents, feedScopeKey);
-      return;
-    }
-
-    if (persistTimerRef.current !== null) {
-      window.clearTimeout(persistTimerRef.current);
-    }
-    persistTimerRef.current = window.setTimeout(flushPersist, CACHE_PERSIST_DEBOUNCE_MS);
-
-    return () => {
-      if (persistTimerRef.current === null) return;
-      window.clearTimeout(persistTimerRef.current);
-      persistTimerRef.current = null;
-    };
-  }, [feedScopeKey, flushPersist, nostrEvents]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const onVisibilityChange = () => {
-      if (document.visibilityState !== "hidden") return;
-      flushPersist();
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      flushPersist();
-    };
-  }, [flushPersist]);
 
   return {
     events: nostrEvents,

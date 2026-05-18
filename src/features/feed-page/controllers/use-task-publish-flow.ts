@@ -6,7 +6,7 @@ import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-
 import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { toast } from "sonner";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
-import {   removeCachedNostrEventById, type CachedNostrEvent, } from "@/infrastructure/nostr/event-cache";
+import { type CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import { type FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import {
   extractMentionIdentifiersFromContent,
@@ -201,7 +201,6 @@ export function useTaskPublishFlow({
       { queryKey: NOSTR_EVENTS_QUERY_KEY },
       (previous) => (previous || []).filter((event) => !blockedIds.has(event.id))
     );
-    blockedIds.forEach((eventId) => removeCachedNostrEventById(eventId));
   }, [queryClient, suppressedNostrEventIds]);
 
   const resolveMentionPubkeys = useCallback(async (mentionIdentifiers: string[]): Promise<string[]> => {
@@ -255,7 +254,6 @@ export function useTaskPublishFlow({
       { queryKey: NOSTR_EVENTS_QUERY_KEY },
       (previous) => (previous || []).filter((event) => event.id !== normalizedEventId)
     );
-    removeCachedNostrEventById(normalizedEventId);
   }, [queryClient, setSuppressedNostrEventIds]);
 
   const parseStoredDate = useCallback((value?: string): Date | undefined => {
