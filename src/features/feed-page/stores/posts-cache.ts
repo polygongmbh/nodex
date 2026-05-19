@@ -1,27 +1,26 @@
 import type { Post } from "@/types";
 import { isTaskPost } from "@/types";
+import { mergeTasks } from "@/domain/content/task-merge";
 
 /**
- * Per-scope localStorage cache of projected Posts. Replaces the previous
- * raw-event cache: cold starts now hydrate from already-converted Posts
- * instead of replaying every raw event through the converter.
+ * Per-relay localStorage cache of projected Posts.
  *
- * Each scope is identified by the active relay set (the same key the
- * ingestion hook uses). Posts older than the retention window are discarded,
- * and each scope is capped at a fixed count to avoid runaway storage.
+ * Each relay id is its own bucket (`nodex.posts.cache:<relayId>`). A post that
+ * was seen on multiple relays is stored once in each of its relays' buckets;
+ * deduping happens at read time via mergeTasks. Toggling a relay on or off is
+ * an O(1) cache-key change instead of rebuilding a combination-keyed entry.
  */
 
 export const POSTS_CACHE_STORAGE_KEY_PREFIX = "nodex.posts.cache:";
 export const POSTS_CACHE_RETENTION_SECONDS = 7 * 24 * 60 * 60;
-export const POSTS_CACHE_MAX_POSTS_PER_SCOPE = 500;
-const EMPTY_SCOPE_KEY = "none";
+export const POSTS_CACHE_MAX_POSTS_PER_RELAY = 500;
 
 function hasLocalStorage(): boolean {
   return typeof window !== "undefined" && Boolean(window.localStorage);
 }
 
-function getStorageKey(scopeKey: string): string {
-  return `${POSTS_CACHE_STORAGE_KEY_PREFIX}${scopeKey}`;
+function getStorageKey(relayId: string): string {
+  return `${POSTS_CACHE_STORAGE_KEY_PREFIX}${relayId}`;
 }
 
 interface SerializedDate {
@@ -87,20 +86,18 @@ function applyRetentionLimits(posts: Post[], nowSeconds = Math.floor(Date.now() 
   return posts
     .filter((post) => post.timestamp.getTime() >= cutoffMillis)
     .sort((left, right) => right.timestamp.getTime() - left.timestamp.getTime())
-    .slice(0, POSTS_CACHE_MAX_POSTS_PER_SCOPE);
+    .slice(0, POSTS_CACHE_MAX_POSTS_PER_RELAY);
 }
 
-export function loadCachedPosts(scopeKey: string): Post[] {
-  if (!hasLocalStorage() || scopeKey === EMPTY_SCOPE_KEY) return [];
+export function loadCachedPostsForRelay(relayId: string): Post[] {
+  if (!hasLocalStorage() || !relayId) return [];
   try {
-    const raw = window.localStorage.getItem(getStorageKey(scopeKey));
+    const raw = window.localStorage.getItem(getStorageKey(relayId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     const revived = parsed.map((entry) => deserialize(entry));
     const posts = revived.filter(hasMinimalPostShape) as Post[];
-    // Defensive: stateUpdates / dates should also have their Date fields revived;
-    // drop entries where revival failed so the converter doesn't choke later.
     const sanitized = posts.filter((post) => {
       if (!isTaskPost(post)) return true;
       return post.stateUpdates.every((update) => update.timestamp instanceof Date)
@@ -112,27 +109,56 @@ export function loadCachedPosts(scopeKey: string): Post[] {
   }
 }
 
-export function saveCachedPosts(scopeKey: string, posts: Post[]): void {
-  if (!hasLocalStorage() || scopeKey === EMPTY_SCOPE_KEY) return;
-  const trimmed = applyRetentionLimits(posts);
+export function loadCachedPostsForRelays(relayIds: string[]): Post[] {
+  if (relayIds.length === 0) return [];
+  return relayIds.reduce<Post[]>(
+    (acc, relayId) => mergeTasks(acc, loadCachedPostsForRelay(relayId)),
+    [],
+  );
+}
+
+export function saveCachedPostsForRelay(relayId: string, posts: Post[]): void {
+  if (!hasLocalStorage() || !relayId) return;
+  const merged = mergeTasks(loadCachedPostsForRelay(relayId), posts);
+  const trimmed = applyRetentionLimits(merged);
   try {
     const serialized = serialize(trimmed);
-    window.localStorage.setItem(getStorageKey(scopeKey), JSON.stringify(serialized));
+    window.localStorage.setItem(getStorageKey(relayId), JSON.stringify(serialized));
   } catch {
     console.warn("Failed to persist posts cache", {
-      scope: scopeKey,
+      relayId,
       postCount: trimmed.length,
     });
   }
 }
 
-export function clearCachedPosts(scopeKey?: string): void {
+/**
+ * Fans posts out into every relay bucket their `relays` array points to.
+ * Posts with no relay attribution are dropped (the wire-boundary check in the
+ * router should have caught them earlier; this is defensive).
+ */
+export function saveCachedPosts(posts: Post[]): void {
+  if (!hasLocalStorage() || posts.length === 0) return;
+  const byRelay = new Map<string, Post[]>();
+  for (const post of posts) {
+    for (const relayId of post.relays) {
+      if (!relayId) continue;
+      const bucket = byRelay.get(relayId);
+      if (bucket) bucket.push(post);
+      else byRelay.set(relayId, [post]);
+    }
+  }
+  for (const [relayId, bucket] of byRelay) {
+    saveCachedPostsForRelay(relayId, bucket);
+  }
+}
+
+export function clearCachedPostsForRelay(relayId?: string): void {
   if (!hasLocalStorage()) return;
-  if (scopeKey) {
-    window.localStorage.removeItem(getStorageKey(scopeKey));
+  if (relayId) {
+    window.localStorage.removeItem(getStorageKey(relayId));
     return;
   }
-  // Sweep all post-cache entries (used when wiping all locally cached state).
   for (let i = window.localStorage.length - 1; i >= 0; i -= 1) {
     const key = window.localStorage.key(i);
     if (key?.startsWith(POSTS_CACHE_STORAGE_KEY_PREFIX)) {

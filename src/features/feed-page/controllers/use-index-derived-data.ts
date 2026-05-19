@@ -65,7 +65,6 @@ export interface UseIndexDerivedDataOptions {
   channelFrecencyState: ChannelFrecencyState;
   personFrecencyState: PersonFrecencyState;
   isHydrating?: boolean;
-  feedScopeKey: string;
   hasLiveHydratedScope: boolean;
 }
 
@@ -104,7 +103,6 @@ export function useIndexDerivedData({
   channelFrecencyState,
   personFrecencyState,
   isHydrating = false,
-  feedScopeKey,
   hasLiveHydratedScope,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
   const localTasks = useTaskMutationStore((s) => s.localTasks);
@@ -198,7 +196,7 @@ export function useIndexDerivedData({
   }, [filteredNostrEvents, user?.pubkey]);
 
   const cachedPosts = useCachedPosts({
-    feedScopeKey,
+    activeRelayIds: effectiveActiveRelayIds,
     postsToPersist: nostrTasks,
     canPersist: hasLiveHydratedScope,
   });

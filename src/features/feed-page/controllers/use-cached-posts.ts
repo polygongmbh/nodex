@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Post } from "@/types";
 import {
-  loadCachedPosts,
+  loadCachedPostsForRelays,
   saveCachedPosts,
 } from "@/features/feed-page/stores/posts-cache";
 
 const SAVE_DEBOUNCE_MS = 1500;
 
 interface UseCachedPostsOptions {
-  feedScopeKey: string;
+  activeRelayIds: Set<string>;
   postsToPersist: Post[];
   /**
    * Only persist after the live subscription has finished its initial replay —
@@ -19,21 +19,36 @@ interface UseCachedPostsOptions {
 }
 
 /**
- * Loads previously-cached Posts for the current scope on mount and persists
- * the live Post list back to localStorage on debounce / visibility hide.
- * Cached Posts are merged into the timeline by the caller so cold starts can
- * render immediately while live relay subscriptions catch up.
+ * Loads previously-cached Posts from the per-relay buckets that match the
+ * currently-active relay set, and fans the live Post list back out into
+ * those buckets (debounced + on visibility hide). Cached Posts are merged
+ * into the timeline by the caller so cold starts can render immediately
+ * while live relay subscriptions catch up.
  */
 export function useCachedPosts({
-  feedScopeKey,
+  activeRelayIds,
   postsToPersist,
   canPersist,
 }: UseCachedPostsOptions): Post[] {
-  const [cachedPosts, setCachedPosts] = useState<Post[]>(() => loadCachedPosts(feedScopeKey));
+  const relayKey = useMemo(
+    () => Array.from(activeRelayIds).filter(Boolean).sort().join(","),
+    [activeRelayIds],
+  );
+  const activeRelayIdList = useMemo(
+    () => Array.from(activeRelayIds).filter(Boolean),
+    // `relayKey` already encodes the membership; recomputing on the set
+    // reference would churn unrelated downstream effects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [relayKey],
+  );
+
+  const [cachedPosts, setCachedPosts] = useState<Post[]>(
+    () => loadCachedPostsForRelays(activeRelayIdList),
+  );
 
   useEffect(() => {
-    setCachedPosts(loadCachedPosts(feedScopeKey));
-  }, [feedScopeKey]);
+    setCachedPosts(loadCachedPostsForRelays(activeRelayIdList));
+  }, [activeRelayIdList]);
 
   const postsToPersistRef = useRef(postsToPersist);
   useEffect(() => {
@@ -42,20 +57,20 @@ export function useCachedPosts({
 
   const flush = useCallback(() => {
     if (!canPersist) return;
-    saveCachedPosts(feedScopeKey, postsToPersistRef.current);
-  }, [canPersist, feedScopeKey]);
+    saveCachedPosts(postsToPersistRef.current);
+  }, [canPersist]);
 
   useEffect(() => {
     if (!canPersist) return;
     if (typeof window === "undefined") {
-      saveCachedPosts(feedScopeKey, postsToPersist);
+      saveCachedPosts(postsToPersist);
       return;
     }
     const timer = window.setTimeout(() => {
-      saveCachedPosts(feedScopeKey, postsToPersist);
+      saveCachedPosts(postsToPersist);
     }, SAVE_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [canPersist, feedScopeKey, postsToPersist]);
+  }, [canPersist, postsToPersist]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
