@@ -25,6 +25,8 @@ export function getFlushDelayMs(pendingCount: number): number {
   return pendingCount > HYDRATION_BURST_THRESHOLD ? HYDRATION_BURST_DELAY_MS : HYDRATION_FLUSH_DELAY_MS;
 }
 
+type IngestableEvent = Pick<CachedNostrEvent, "id" | "pubkey" | "created_at" | "kind" | "tags" | "content" | "sig" | "relayUrl" | "relayUrls">;
+
 interface UseNostrEventCacheParams {
   isConnected: boolean;
   subscribedKinds: number[];
@@ -35,6 +37,13 @@ interface UseNostrEventCacheParams {
     onEvent: (event: NDKEvent) => void,
     options?: { closeOnEose?: boolean }
   ) => NDKSubscription | null;
+  /**
+   * Push hook fired for each wire-validated event before it enters the
+   * central array. Per-concern stores (reactions registry, posts store,
+   * presence store, …) ingest through this callback so we can incrementally
+   * drop the central array.
+   */
+  onEvent?: (event: IngestableEvent) => void;
 }
 
 interface UseNostrEventCacheResult {
@@ -171,6 +180,7 @@ export function useNostrEventCache({
   activeRelayIds,
   availableRelayIds,
   subscribe,
+  onEvent,
 }: UseNostrEventCacheParams): UseNostrEventCacheResult {
   const queryClient = useQueryClient();
   const [hasLiveHydratedScope, setHasLiveHydratedScope] = useState(false);
@@ -275,9 +285,13 @@ export function useNostrEventCache({
     markLiveHydratedScope();
   }, [flushPendingEvents, markLiveHydratedScope]);
 
+  const onEventRef = useRef(onEvent);
+  useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
+
   const pushEvent = useCallback((event: EventLike, relayOverride?: RelayLike) => {
     const cachedEvent = toCachedEvent(event, relayOverride);
     if (!cachedEvent) return;
+    onEventRef.current?.(cachedEvent);
     markLiveHydratedScope();
     pendingHydrationEventsRef.current = [...pendingHydrationEventsRef.current, cachedEvent];
     schedulePendingEventFlush();

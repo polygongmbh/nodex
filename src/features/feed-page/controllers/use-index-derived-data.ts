@@ -1,10 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
-import {
-  bootstrapReactions,
-  mergeReactionEvents,
-  setReactionsViewerPubkey,
-} from "@/features/feed-page/stores/reactions-registry";
 import { useCachedPosts } from "@/features/feed-page/controllers/use-cached-posts";
 import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
 import type { Post, Channel, Relay, TaskStatus, PostedTag } from "@/types";
@@ -159,41 +154,6 @@ export function useIndexDerivedData({
     lastNostrTasksRef.current = tasks;
     return tasks;
   }, [filteredNostrEvents, isHydrating]);
-
-  // Reactions registry maintains its own bookkeeping; we only need to push
-  // the delta of new reaction/deletion events each render. If the scope just
-  // reset (some previously-processed event is no longer present) we rebootstrap
-  // from scratch instead of merging.
-  const seenReactionishEventIdsRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    setReactionsViewerPubkey(user?.pubkey);
-  }, [user?.pubkey]);
-  useEffect(() => {
-    const relevantEvents = filteredNostrEvents.filter(
-      (event) =>
-        event.kind === NostrEventKind.Reaction ||
-        event.kind === NostrEventKind.EventDeletion,
-    );
-    const currentIds = new Set(relevantEvents.map((event) => event.id));
-    const seen = seenReactionishEventIdsRef.current;
-    let scopeReset = false;
-    for (const id of seen) {
-      if (!currentIds.has(id)) {
-        scopeReset = true;
-        break;
-      }
-    }
-    if (scopeReset) {
-      bootstrapReactions(relevantEvents, user?.pubkey);
-      seenReactionishEventIdsRef.current = currentIds;
-      return;
-    }
-    const delta = relevantEvents.filter((event) => !seen.has(event.id));
-    if (delta.length > 0) {
-      mergeReactionEvents(delta);
-      for (const event of delta) seen.add(event.id);
-    }
-  }, [filteredNostrEvents, user?.pubkey]);
 
   const cachedPosts = useCachedPosts({
     activeRelayIds: effectiveActiveRelayIds,

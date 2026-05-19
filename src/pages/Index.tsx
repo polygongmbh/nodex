@@ -11,6 +11,11 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { OnboardingController } from "@/components/onboarding/OnboardingController";
 import { WelcomeController } from "@/components/welcome/WelcomeController";
 import { NostrEventKind } from "@/lib/nostr/types";
+import {
+  bootstrapReactions,
+  mergeReactionEvents,
+  setReactionsViewerPubkey,
+} from "@/features/feed-page/stores/reactions-registry";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useChannelFilterController } from "@/features/feed-page/controllers/use-channel-filter-controller";
@@ -120,6 +125,14 @@ function FeedIndexContent() {
   );
 
   const isMobile = useIsMobile();
+  const dispatchIncomingEvent = useCallback(
+    (event: { id: string; kind: number; pubkey: string; tags: string[][]; content: string }) => {
+      if (event.kind === NostrEventKind.Reaction || event.kind === NostrEventKind.EventDeletion) {
+        mergeReactionEvents([event]);
+      }
+    },
+    [],
+  );
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
@@ -130,7 +143,21 @@ function FeedIndexContent() {
     activeRelayIds: nostrRelayIdSet,
     availableRelayIds: allRelayIds,
     subscribe,
+    onEvent: dispatchIncomingEvent,
   });
+  useEffect(() => {
+    setReactionsViewerPubkey(user?.pubkey);
+  }, [user?.pubkey]);
+  const relaySetSignature = useMemo(
+    () => Array.from(nostrRelayIdSet).sort().join(","),
+    [nostrRelayIdSet],
+  );
+  useEffect(() => {
+    // Subscription is torn down and rebuilt when the relay set changes, so
+    // the in-memory reactions registry must reset too — otherwise reactions
+    // from a previous scope linger after the underlying events are gone.
+    bootstrapReactions([], user?.pubkey);
+  }, [relaySetSignature, user?.pubkey]);
 
   const {
     people,
