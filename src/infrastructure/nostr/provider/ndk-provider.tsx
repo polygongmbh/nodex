@@ -348,6 +348,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const ndkInstance = new NDK({
       explicitRelayUrls: resolvedDefaultRelays,
       cacheAdapter: relayStatusCacheAdapter,
+      // NDK defaults to true: on signer set, it fetches the user's kind 3 / 10002 and
+      // silently connects to every relay listed there, bypassing our relay-state tracking.
+      autoConnectUserRelays: false,
+      // NDK otherwise spins up an "outbox pool" hardwired to purplepag.es / nos.lol
+      // (DEFAULT_OUTBOX_RELAYS) and connects it on ndk.connect(), even when signed out.
+      enableOutboxModel: false,
     });
 
     ndkInstance.relayAuthDefaultPolicy = createRelayNip42AuthPolicy(ndkInstance, notifyRelayVerificationEvent);
