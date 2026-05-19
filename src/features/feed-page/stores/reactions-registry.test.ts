@@ -3,6 +3,7 @@ import { renderHook, act } from "@testing-library/react";
 import {
   __resetReactionsRegistryForTests,
   bootstrapReactions,
+  getReactionsForTarget,
   mergeReactionEvents,
   setReactionsViewerPubkey,
   useReactionsFor,
@@ -141,5 +142,18 @@ describe("reactions-registry", () => {
     });
     expect(a.result.current?.totals["👍"]).toBe(1);
     expect(b.result.current).toBeUndefined();
+  });
+
+  describe("getReactionsForTarget", () => {
+    it("returns the same snapshot as useReactionsFor outside a render path", () => {
+      mergeReactionEvents([reaction("r1", "alice", "task-a")]);
+      expect(getReactionsForTarget("task-a")?.totals["👍"]).toBe(1);
+    });
+
+    it("returns undefined for an unknown target or empty id", () => {
+      mergeReactionEvents([reaction("r1", "alice", "task-a")]);
+      expect(getReactionsForTarget("task-b")).toBeUndefined();
+      expect(getReactionsForTarget(undefined)).toBeUndefined();
+    });
   });
 });

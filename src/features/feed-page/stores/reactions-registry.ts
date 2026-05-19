@@ -229,6 +229,12 @@ export function useReactionsFor(targetId: string | undefined): TaskReactions | u
   );
 }
 
+/** Non-hook read for imperative call sites (e.g. unreact lookup). */
+export function getReactionsForTarget(targetId: string | undefined): TaskReactions | undefined {
+  if (!targetId) return undefined;
+  return reactionsByTargetId.get(targetId);
+}
+
 /** Test helper: reset registry between cases. */
 export function __resetReactionsRegistryForTests(): void {
   byTarget.clear();
