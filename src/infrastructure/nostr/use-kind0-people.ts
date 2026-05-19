@@ -10,7 +10,7 @@ import {
   rememberCachedKind0Profile,
   rememberLoggedInIdentity,
   removeCachedKind0EventsByRelayUrl,
-  saveCachedKind0Events,
+  subscribeToKind0Cache,
   type Kind0LikeEvent,
 } from "@/infrastructure/nostr/people-from-kind0";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
@@ -87,35 +87,23 @@ export function useKind0People(
   );
   const [fallbackKind0Events, setFallbackKind0Events] = useState<Kind0LikeEvent[]>(() => loadCachedKind0Events());
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
-  const [cacheRevision, setCacheRevision] = useState(0);
-
-  const liveKind0Events = useMemo(
-    () =>
-      nostrEvents
-        .filter((event) => event.kind === NostrEventKind.Metadata)
-        .map((event) => ({
-          kind: event.kind,
-          pubkey: event.pubkey,
-          created_at: event.created_at,
-          content: event.content || "",
-          relayUrls: [
-            ...(event.relayUrls || []),
-            ...(event.relayUrl ? [event.relayUrl] : []),
-          ]
-            .map((relayUrl) => relayUrl.trim().replace(/\/+$/, ""))
-            .filter(Boolean),
-        })),
-    [nostrEvents]
-  );
 
   useEffect(() => {
-    const nextScoped = loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls);
-    setCachedKind0Events((previous) => (areKind0EventListsEqual(previous, nextScoped) ? previous : nextScoped));
-    const nextFallback = loadCachedKind0Events();
-    setFallbackKind0Events((previous) => (areKind0EventListsEqual(previous, nextFallback) ? previous : nextFallback));
+    const reload = () => {
+      const nextScoped = loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls);
+      setCachedKind0Events((previous) =>
+        areKind0EventListsEqual(previous, nextScoped) ? previous : nextScoped
+      );
+      const nextFallback = loadCachedKind0Events();
+      setFallbackKind0Events((previous) =>
+        areKind0EventListsEqual(previous, nextFallback) ? previous : nextFallback
+      );
+    };
+    reload();
+    return subscribeToKind0Cache(reload);
     // Equivalent normalized relay scopes should not trigger another cache refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheRevision, selectedRelayScopeKey]);
+  }, [selectedRelayScopeKey]);
 
   const latestPresenceByAuthor = useMemo(() => {
     return deriveLatestPresenceByAuthor(
@@ -156,38 +144,6 @@ export function useKind0People(
   }, [latestPresenceByAuthor, nostrEvents]);
 
   useEffect(() => {
-    if (liveKind0Events.length === 0) return;
-    const eventsByRelayUrl = new Map<string, Kind0LikeEvent[]>();
-    liveKind0Events.forEach((event) => {
-      event.relayUrls.forEach((relayUrl) => {
-        const previous = eventsByRelayUrl.get(relayUrl) || [];
-        eventsByRelayUrl.set(relayUrl, [
-          ...previous,
-          {
-            kind: event.kind,
-            pubkey: event.pubkey,
-            created_at: event.created_at,
-            content: event.content,
-          },
-        ]);
-      });
-    });
-
-    if (eventsByRelayUrl.size === 0) return;
-
-    let storageChanged = false;
-    eventsByRelayUrl.forEach((events, relayUrl) => {
-      const existing = loadCachedKind0Events(relayUrl);
-      if (saveCachedKind0Events([...existing, ...events], relayUrl)) {
-        storageChanged = true;
-      }
-    });
-    if (storageChanged) {
-      setCacheRevision((previous) => previous + 1);
-    }
-  }, [liveKind0Events]);
-
-  useEffect(() => {
     if (!user?.pubkey) return;
     setLoggedInIdentityPriority(rememberLoggedInIdentity(user.pubkey));
   }, [user?.pubkey]);
@@ -208,20 +164,10 @@ export function useKind0People(
 
   useEffect(() => {
     if (!profileCachePayload) return;
-    const previous = loadCachedKind0Events();
-    const next = rememberCachedKind0Profile(
-      profileCachePayload.pubkey,
-      {
-        name: profileCachePayload.profile.name,
-        displayName: profileCachePayload.profile.displayName,
-        about: profileCachePayload.profile.about,
-        picture: profileCachePayload.profile.picture,
-        nip05: profileCachePayload.profile.nip05,
-      }
-    );
-    if (next.length !== previous.length || next.some((event, index) => event.content !== previous[index]?.content || event.pubkey !== previous[index]?.pubkey)) {
-      setCacheRevision((revision) => revision + 1);
-    }
+    // rememberCachedKind0Profile notifies kind 0 subscribers internally when
+    // its write changes the cache; the per-relay save is now driven by the
+    // subscription dispatcher (ingestKind0Event).
+    rememberCachedKind0Profile(profileCachePayload.pubkey, profileCachePayload.profile);
   }, [profileCachePayload]);
 
   const visiblePubkeys = useMemo(
@@ -277,8 +223,9 @@ export function useKind0People(
   }, [cachedKind0Events, fallbackKind0Events, loggedInIdentityPriority, user, visiblePubkeys]);
 
   const removeCachedRelayProfile = useCallback((relayUrl: string) => {
+    // removeCachedKind0EventsByRelayUrl notifies subscribers internally; the
+    // subscribe effect above will re-read both bucket views.
     removeCachedKind0EventsByRelayUrl(relayUrl);
-    setCacheRevision((previous) => previous + 1);
   }, []);
 
   return {

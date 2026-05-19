@@ -16,6 +16,7 @@ import {
   mergeReactionEvents,
   setReactionsViewerPubkey,
 } from "@/features/feed-page/stores/reactions-registry";
+import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useChannelFilterController } from "@/features/feed-page/controllers/use-channel-filter-controller";
@@ -126,9 +127,22 @@ function FeedIndexContent() {
 
   const isMobile = useIsMobile();
   const dispatchIncomingEvent = useCallback(
-    (event: { id: string; kind: number; pubkey: string; tags: string[][]; content: string }) => {
+    (event: {
+      id: string;
+      kind: number;
+      pubkey: string;
+      created_at?: number;
+      tags: string[][];
+      content: string;
+      relayUrl?: string;
+      relayUrls?: string[];
+    }) => {
       if (event.kind === NostrEventKind.Reaction || event.kind === NostrEventKind.EventDeletion) {
         mergeReactionEvents([event]);
+        return;
+      }
+      if (event.kind === NostrEventKind.Metadata) {
+        ingestKind0Event(event);
       }
     },
     [],

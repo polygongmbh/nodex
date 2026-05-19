@@ -152,13 +152,16 @@ export function loadCachedKind0EventsForRelayUrls(relayUrls: string[]): Kind0Lik
 
 export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: string): boolean {
   if (!canUseStorage()) return false;
+  let changed = false;
   if (!relayUrl) {
-    return writeStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY, events);
+    changed = writeStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY, events);
+  } else {
+    const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+    if (!normalizedRelayUrl) return false;
+    changed = writeStoredKind0Events(getRelayStorageKey(normalizedRelayUrl), events);
   }
-
-  const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
-  if (!normalizedRelayUrl) return false;
-  return writeStoredKind0Events(getRelayStorageKey(normalizedRelayUrl), events);
+  if (changed) notifyKind0Subscribers();
+  return changed;
 }
 
 export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
@@ -170,6 +173,60 @@ export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
   } catch {
     // Ignore remove failures.
   }
+  notifyKind0Subscribers();
+}
+
+// Tiny pub-sub so hooks that read the kind 0 cache can re-read on writes
+// from anywhere (the subscription dispatcher, the signed-in user's profile
+// sync, or per-relay disconnect cleanup) without each writer threading a
+// cache-revision counter back to them.
+const kind0Subscribers = new Set<() => void>();
+
+function notifyKind0Subscribers(): void {
+  for (const notify of kind0Subscribers) notify();
+}
+
+export function subscribeToKind0Cache(callback: () => void): () => void {
+  kind0Subscribers.add(callback);
+  return () => { kind0Subscribers.delete(callback); };
+}
+
+interface IngestableKind0Event {
+  kind: number;
+  pubkey: string;
+  created_at?: number;
+  content: string;
+  relayUrl?: string;
+  relayUrls?: string[];
+}
+
+/**
+ * Push-style ingest used by the subscription dispatcher: fan a single kind 0
+ * event out into each relay bucket it was seen on, then notify cache readers.
+ * Returns true when at least one bucket actually changed on disk.
+ */
+export function ingestKind0Event(event: IngestableKind0Event): boolean {
+  if (!isMetadataEvent(event)) return false;
+  const relayUrls = [
+    ...(event.relayUrls || []),
+    ...(event.relayUrl ? [event.relayUrl] : []),
+  ]
+    .map((url) => url.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+  if (relayUrls.length === 0) return false;
+  const payload: Kind0LikeEvent = {
+    kind: event.kind,
+    pubkey: event.pubkey,
+    created_at: event.created_at,
+    content: event.content,
+  };
+  let changed = false;
+  for (const relayUrl of relayUrls) {
+    const existing = loadCachedKind0Events(relayUrl);
+    // saveCachedKind0Events notifies kind 0 subscribers on every changed write.
+    if (saveCachedKind0Events([...existing, payload], relayUrl)) changed = true;
+  }
+  return changed;
 }
 
 function resolveKind0EventForPubkey(
