@@ -152,6 +152,17 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
           : undefined,
       }];
     });
+    // For non-auth relays joining the pool after subscriptions were registered (e.g.
+    // re-add), NDK won't replay subscriptions on its own. relay:authed already does
+    // this for NIP-42 relays; consumeRelayPendingSubscriptionReplay is atomic, so
+    // only the first signal wins and we never double-replay.
+    const {
+      consumeRelayPendingSubscriptionReplay,
+      replayActiveSubscriptionsForRelay,
+    } = depsRef.current;
+    if (consumeRelayPendingSubscriptionReplay(normalized)) {
+      replayActiveSubscriptionsForRelay(ndkInstance, normalized);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

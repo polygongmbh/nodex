@@ -429,10 +429,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     void probeRelayInfo(normalized);
 
     // Keep NDK's explicit relay list in sync so subscription routing includes this relay.
-    // NDK's pool monitor uses explicitRelayUrls to decide whether to send REQ to newly
-    // connected relays for existing subscriptions.
-    if (!ndk.explicitRelayUrls?.some((entry) => normalizeRelayUrl(entry) === normalized)) {
-      ndk.explicitRelayUrls = dedupeNormalizedRelayUrls([...(ndk.explicitRelayUrls || []), normalized]);
+    // NDK's pool monitor watches explicitRelayUrls; re-assigning the property nudges NDK
+    // to re-drive connect() against every URL in the list, opening fresh sockets for
+    // every relay we already have connected. Mutate in place to avoid that.
+    if (!ndk.explicitRelayUrls) {
+      ndk.explicitRelayUrls = [];
+    }
+    if (!ndk.explicitRelayUrls.some((entry) => normalizeRelayUrl(entry) === normalized)) {
+      ndk.explicitRelayUrls.push(normalized);
     }
 
     // Add to relays state
@@ -468,7 +472,16 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // per-relay listeners here to avoid: hardcoded "connected" overriding write-rejected
     // state, leaked beginRelayOperation("read") calls, and listener accumulation on re-add.
     connectManagedRelay(ndk, normalized);
-  }, [connectManagedRelay, ndk, probeRelayInfo]);
+
+    // The global subscription was registered with the NDK sub-manager before this relay
+    // joined the pool, so NDK won't automatically send its REQ to the new socket. Flag
+    // the relay for replay; relay:connect (and relay:authed for NIP-42 relays) will then
+    // call replayActiveSubscriptionsForRelay so events flow back.
+    markRelayPendingSubscriptionReplay(normalized);
+    if (ndk.signer) {
+      primeRelayAuthChallenge(ndk, normalized);
+    }
+  }, [connectManagedRelay, markRelayPendingSubscriptionReplay, ndk, primeRelayAuthChallenge, probeRelayInfo]);
 
   const connectResolvedAuthRelayUrls = useCallback((relayUrls: string[]) => {
     relayUrls
@@ -490,8 +503,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         return previous;
       }
 
-      const nextRelayUrls = next.map((relay) => relay.url);
-      ndk.explicitRelayUrls = dedupeNormalizedRelayUrls(nextRelayUrls);
+      const nextRelayUrls = dedupeNormalizedRelayUrls(next.map((relay) => relay.url));
+      // Mutate in place (see addRelay) so NDK's pool monitor doesn't reconnect everything.
+      if (!ndk.explicitRelayUrls) {
+        ndk.explicitRelayUrls = [];
+      }
+      ndk.explicitRelayUrls.length = 0;
+      ndk.explicitRelayUrls.push(...nextRelayUrls);
       savePersistedRelayUrls(nextRelayUrls);
       nostrDevLog("relay", "Relay order updated", { relayUrls: nextRelayUrls });
       return next;
@@ -578,9 +596,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
 
     // Remove from NDK's explicit relay list so subscriptions stop routing to it.
-    ndk.explicitRelayUrls = dedupeNormalizedRelayUrls(
-      (ndk.explicitRelayUrls || []).filter((u) => normalizeRelayUrl(u) !== normalized)
-    );
+    // Mutate in place (see addRelay) to avoid NDK reconnecting every relay in the list.
+    const explicit = ndk.explicitRelayUrls;
+    if (explicit) {
+      for (let i = explicit.length - 1; i >= 0; i -= 1) {
+        if (normalizeRelayUrl(explicit[i]) === normalized) explicit.splice(i, 1);
+      }
+    }
 
     disconnectTrackedRelayInstance(ndk, normalized);
   }, [clearRelayInfo, disconnectTrackedRelayInstance, ndk]);

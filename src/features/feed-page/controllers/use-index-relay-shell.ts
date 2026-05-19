@@ -1,5 +1,4 @@
 import { useMemo, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import type { Relay } from "@/types";
 import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
@@ -9,11 +8,6 @@ import {
   isRelayUrl,
   normalizeRelayUrl,
 } from "@/infrastructure/nostr/relay-url";
-import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
-import {
-  removeRelayUrlFromCachedEvents,
-  type CachedNostrEvent,
-} from "@/infrastructure/nostr/event-cache";
 
 export interface UseIndexRelayShellOptions {
   ndkRelays: NDKRelayStatus[];
@@ -73,8 +67,6 @@ export function useIndexRelayShell({
   setActiveRelayIds,
   removeCachedRelayProfile,
 }: UseIndexRelayShellOptions): UseIndexRelayShellResult {
-  const queryClient = useQueryClient();
-
   const nostrRelays = useMemo(() => {
     return ndkRelays.map((r) => ({
       url: r.url,
@@ -118,10 +110,10 @@ export function useIndexRelayShell({
       const normalizedRelayUrl = url.trim().replace(/\/+$/, "");
       if (!normalizedRelayUrl) return;
 
-      queryClient.setQueriesData<CachedNostrEvent[]>(
-        { queryKey: NOSTR_EVENTS_QUERY_KEY },
-        (previous) => removeRelayUrlFromCachedEvents(previous || [], normalizedRelayUrl)
-      );
+      // Don't strip the relay URL from cached events. Removing then re-adding the
+      // same relay should restore its feed; toggling the active relay set changes
+      // feedScopeKey so the now-inactive bucket isn't rendered anyway, and the
+      // memory footprint until the next re-add is transient.
       removeCachedRelayProfile(normalizedRelayUrl);
 
       const relayId = getRelayIdFromUrl(normalizedRelayUrl);
@@ -136,7 +128,7 @@ export function useIndexRelayShell({
 
       removeRelay(normalizedRelayUrl);
     },
-    [queryClient, removeCachedRelayProfile, removeRelay, setActiveRelayIds]
+    [removeCachedRelayProfile, removeRelay, setActiveRelayIds]
   );
 
   return {
