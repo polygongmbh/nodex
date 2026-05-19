@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { nip19 } from "nostr-tools";
 import {
   Post,
@@ -221,6 +221,19 @@ describe("nostrEventToTask", () => {
     });
 
     expect(task.relays).toEqual(["relay-a", "relay-b"]);
+  });
+
+  it("does not fabricate a synthetic relay id when attribution is missing", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const task = nostrEventToTask({
+      ...baseEvent,
+      relayUrl: undefined,
+      relayUrls: undefined,
+    });
+
+    expect(task.relays).toEqual([]);
+    expect(task.relays).not.toContain("nostr");
+    errorSpy.mockRestore();
   });
 
   it("extracts numeric priority from tags", () => {

@@ -49,9 +49,19 @@ function getRelayIdsFromEvent(event: NostrEventWithRelay): string[] {
   ]
     .map((url) => url.trim().replace(/\/+$/, ""))
     .filter((url) => Boolean(url));
-  const relayIds = Array.from(new Set(relayUrls.map((url) => getRelayIdFromUrl(url))));
-  if (relayIds.length === 0) return ["nostr"];
-  return relayIds;
+  if (relayUrls.length === 0) {
+    // Every event NDK hands us should arrive with relay attribution. Reaching
+    // here means an upstream subscription path lost it — log loudly instead of
+    // fabricating a synthetic bucket that would poison every Post it merges
+    // with via mergeTasks.
+    console.error("[task-converter] event has no relay attribution", {
+      id: event.id,
+      kind: event.kind,
+      pubkey: event.pubkey,
+    });
+    return [];
+  }
+  return Array.from(new Set(relayUrls.map((url) => getRelayIdFromUrl(url))));
 }
 
 function getDisplayNameFromPubkey(pubkey: string): string {
