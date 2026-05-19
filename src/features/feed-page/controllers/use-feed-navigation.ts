@@ -126,7 +126,10 @@ export function useFeedNavigation({
 
   // After hydration completes, if the focused id from the URL is still not in
   // the loaded post set, the id is stale or wrong — drop focus and toast so
-  // the user isn't stuck staring at an empty "No post yet" page.
+  // the user isn't stuck staring at an empty "No post yet" page. We navigate
+  // directly here (with replace) instead of via setFocusedTaskId; that callback
+  // closes over `currentView` and `location`, which can lag the in-flight
+  // redirect from a permalink (`/relay.host/<id>` → `/feed/<id>`) by a render.
   const reportedMissingFocusRef = useRef<string | null>(null);
   useEffect(() => {
     if (!focusedTaskId || focusedTask || isHydrating) return;
@@ -136,8 +139,25 @@ export function useFeedNavigation({
       focusedTaskId,
     });
     toast(t("tasks.toasts.postNotFound", { id: shortenPostId(focusedTaskId) }));
-    setFocusedTaskId(null);
-  }, [focusedTaskId, focusedTask, isHydrating, setFocusedTaskId, t]);
+    const fallbackView = resolvedUrlView ?? lastContentViewRef.current;
+    navigate(
+      {
+        pathname: `/${fallbackView}`,
+        search: location.search,
+        hash: location.hash,
+      },
+      { replace: true }
+    );
+  }, [
+    focusedTaskId,
+    focusedTask,
+    isHydrating,
+    navigate,
+    resolvedUrlView,
+    location.search,
+    location.hash,
+    t,
+  ]);
 
   useEffect(() => {
     if (focusedTaskId && focusedTask) {

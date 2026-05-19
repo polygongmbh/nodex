@@ -1,6 +1,6 @@
 import { render, screen, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useFeedNavigation } from "./use-feed-navigation";
 import type { Relay, Post } from "@/types";
@@ -44,11 +44,14 @@ function Harness({
     isHydrating,
   });
 
+  const location = useLocation();
+
   return (
     <>
       <output data-testid="current-view">{nav.currentView}</output>
       <output data-testid="focused-task-id">{nav.focusedTaskId ?? "null"}</output>
       <output data-testid="is-manage">{String(nav.isManageRouteActive)}</output>
+      <output data-testid="pathname">{location.pathname}</output>
       <button onClick={() => nav.setCurrentView("tree")}>go-tree</button>
       <button onClick={() => nav.setCurrentView("kanban")}>go-kanban</button>
       <button onClick={() => nav.setCurrentView("calendar")}>go-calendar</button>
@@ -172,6 +175,7 @@ describe("useFeedNavigation", () => {
     vi.mocked(toast).mockClear();
     renderAt("/feed/missing-task-id-1234567890", { isHydrating: false });
     expect(screen.getByTestId("focused-task-id")).toHaveTextContent("null");
+    expect(screen.getByTestId("pathname")).toHaveTextContent("/feed");
     expect(toast).toHaveBeenCalledTimes(1);
     expect(vi.mocked(toast).mock.calls[0][0]).toContain("missing-");
   });
