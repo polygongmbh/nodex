@@ -15,6 +15,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Opening a permalink shaped `DOMAIN/RELAY[/TASKID]` now preserves the connected relay list when that relay is already part of it, and focuses the sidebar's active-relay filter to only the path-derived relay so the viewed scope matches the URL. Previously the connected list was always replaced with just the path-derived relay.
 
 ### Fixed
+- Opening a URL with an unknown post id now clears the focus and surfaces a toast naming the missing id once the scope finishes hydrating, instead of leaving the user on a silent "No post yet" page with no indication that the id was invalid.
 - Composer chips no longer drop a tag that was sidebar-active when you focus a post that also carries that tag. Previously, the sidebar filter being cleared by scope focus and the focused post inheriting its tags arrived in separate renders, and the filter-cleared effect removed the tag before the inherit effect could re-claim it; now the two sources transfer ownership so any tag that's still wanted by either side stays on the chip preview.
 - Relays no longer stay stuck on "connecting" in the sidebar after initial page load when React state diverges from NDK's pool (e.g. a `relay:connect` event was missed because session restore replaced the relay instance mid-handshake). A startup reconciliation pass now compares React state against the pool for the first ~22 seconds after mount, fixes drift, and force-reconnects relays whose underlying handshake has genuinely stalled.
 

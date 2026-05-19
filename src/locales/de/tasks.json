@@ -57,7 +57,8 @@
       "cancel": "Abbrechen"
     },
     "toasts": {
-      "actionBlocked": "Diese Aktion ist gerade nicht verfügbar"
+      "actionBlocked": "Diese Aktion ist gerade nicht verfügbar",
+      "postNotFound": "Beitrag {{id}} im aktuellen Bereich nicht gefunden."
     },
     "rawEvent": {
       "title": "Rohes Nostr-Event",

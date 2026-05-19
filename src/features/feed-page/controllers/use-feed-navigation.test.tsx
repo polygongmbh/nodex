@@ -1,9 +1,14 @@
 import { render, screen, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { toast } from "sonner";
 import { useFeedNavigation } from "./use-feed-navigation";
 import type { Relay, Post } from "@/types";
 import { makeTask } from "@/test/fixtures";
+
+vi.mock("sonner", () => ({
+  toast: vi.fn(),
+}));
 
 vi.mock("@/hooks/use-swipe-navigation", () => ({
   useSwipeNavigation: () => ({
@@ -27,8 +32,17 @@ function Harness({
   isMobile = false,
   effectiveActiveRelayIds = EMPTY_RELAY_IDS,
   relays = NO_RELAYS,
+  // Default to hydrating so unrelated existing tests can use synthetic task IDs
+  // without tripping the post-not-found cleanup effect.
+  isHydrating = true,
 }: Partial<Parameters<typeof useFeedNavigation>[0]>) {
-  const nav = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
+  const nav = useFeedNavigation({
+    allTasks,
+    isMobile,
+    effectiveActiveRelayIds,
+    relays,
+    isHydrating,
+  });
 
   return (
     <>
@@ -145,6 +159,21 @@ describe("useFeedNavigation", () => {
     act(() => screen.getByRole("button", { name: "go-calendar" }).click());
     expect(screen.getByTestId("current-view")).toHaveTextContent("calendar");
     expect(screen.getByTestId("is-manage")).toHaveTextContent("false");
+  });
+
+  it("does not clear an unknown focused task while still hydrating", () => {
+    vi.mocked(toast).mockClear();
+    renderAt("/feed/unknown-task", { isHydrating: true });
+    expect(screen.getByTestId("focused-task-id")).toHaveTextContent("unknown-task");
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it("clears focusedTaskId and toasts when the focused task is not found after hydration", () => {
+    vi.mocked(toast).mockClear();
+    renderAt("/feed/missing-task-id-1234567890", { isHydrating: false });
+    expect(screen.getByTestId("focused-task-id")).toHaveTextContent("null");
+    expect(toast).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(toast).mock.calls[0][0]).toContain("missing-");
   });
 
   it("clears focusedTaskId when focused task leaves relay scope", () => {

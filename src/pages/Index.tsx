@@ -338,6 +338,7 @@ function FeedIndexContent() {
     isMobile,
     effectiveActiveRelayIds,
     relays,
+    isHydrating,
     onToggleChannelMatchMode: handleToggleChannelMatchModeShortcut,
     onToggleRecentFilter: handleToggleRecentFilterShortcut,
     onTogglePriorityFilter: handleTogglePriorityFilterShortcut,

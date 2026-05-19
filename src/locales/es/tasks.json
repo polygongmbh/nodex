@@ -57,7 +57,8 @@
       "cancel": "Cancelar"
     },
     "toasts": {
-      "actionBlocked": "Esta acción no está disponible ahora"
+      "actionBlocked": "Esta acción no está disponible ahora",
+      "postNotFound": "Publicación {{id}} no encontrada en el alcance actual."
     },
     "rawEvent": {
       "title": "Evento Nostr bruto",

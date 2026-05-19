@@ -57,7 +57,8 @@
       "cancel": "Cancel"
     },
     "toasts": {
-      "actionBlocked": "This action isn't available right now"
+      "actionBlocked": "This action isn't available right now",
+      "postNotFound": "Post {{id}} not found in the current scope."
     },
     "rawEvent": {
       "title": "Raw Nostr Event",
