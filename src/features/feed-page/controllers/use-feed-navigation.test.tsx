@@ -1,4 +1,4 @@
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -171,11 +171,13 @@ describe("useFeedNavigation", () => {
     expect(toast).not.toHaveBeenCalled();
   });
 
-  it("clears focusedTaskId and toasts when the focused task is not found after hydration", () => {
+  it("clears focusedTaskId and toasts when the focused task is not found after hydration", async () => {
     vi.mocked(toast).mockClear();
     renderAt("/feed/missing-task-id-1234567890", { isHydrating: false });
-    expect(screen.getByTestId("focused-task-id")).toHaveTextContent("null");
-    expect(screen.getByTestId("pathname")).toHaveTextContent("/feed");
+    await waitFor(() => {
+      expect(screen.getByTestId("focused-task-id")).toHaveTextContent("null");
+      expect(screen.getByTestId("pathname")).toHaveTextContent("/feed");
+    });
     expect(toast).toHaveBeenCalledTimes(1);
     expect(vi.mocked(toast).mock.calls[0][0]).toContain("missing-");
   });

@@ -126,10 +126,15 @@ export function useFeedNavigation({
 
   // After hydration completes, if the focused id from the URL is still not in
   // the loaded post set, the id is stale or wrong — drop focus and toast so
-  // the user isn't stuck staring at an empty "No post yet" page. We navigate
-  // directly here (with replace) instead of via setFocusedTaskId; that callback
-  // closes over `currentView` and `location`, which can lag the in-flight
-  // redirect from a permalink (`/relay.host/<id>` → `/feed/<id>`) by a render.
+  // the user isn't stuck staring at an empty "No post yet" page.
+  //
+  // The navigation is queued onto a timeout instead of running synchronously
+  // because the permalink path (`/relay.host/<id>` → `/feed/<id>`) is driven by
+  // a `<Navigate replace>` in App.tsx that itself fires inside a layout effect.
+  // When hydration flips just as that redirect lands, a sync navigate from
+  // here races and loses — the toast surfaces but the URL stays on the missing
+  // id. Queuing defers our navigate until after the current React work has
+  // flushed, so it wins.
   const reportedMissingFocusRef = useRef<string | null>(null);
   useEffect(() => {
     if (!focusedTaskId || focusedTask || isHydrating) return;
@@ -140,14 +145,19 @@ export function useFeedNavigation({
     });
     toast(t("tasks.toasts.postNotFound", { id: shortenPostId(focusedTaskId) }));
     const fallbackView = resolvedUrlView ?? lastContentViewRef.current;
-    navigate(
-      {
-        pathname: `/${fallbackView}`,
-        search: location.search,
-        hash: location.hash,
-      },
-      { replace: true }
-    );
+    const searchAtSchedule = location.search;
+    const hashAtSchedule = location.hash;
+    const timer = setTimeout(() => {
+      navigate(
+        {
+          pathname: `/${fallbackView}`,
+          search: searchAtSchedule,
+          hash: hashAtSchedule,
+        },
+        { replace: true }
+      );
+    }, 0);
+    return () => clearTimeout(timer);
   }, [
     focusedTaskId,
     focusedTask,
