@@ -41,7 +41,6 @@ export interface UseIndexDerivedDataOptions {
   relays: Relay[];
   channelFrecencyState: ChannelFrecencyState;
   personFrecencyState: PersonFrecencyState;
-  isHydrating?: boolean;
   hasLiveHydratedScope: boolean;
 }
 
@@ -78,7 +77,6 @@ export function useIndexDerivedData({
   relays,
   channelFrecencyState,
   personFrecencyState,
-  isHydrating: _isHydrating = false,
   hasLiveHydratedScope,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
   const localTasks = useTaskMutationStore((s) => s.localTasks);

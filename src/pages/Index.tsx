@@ -227,7 +227,6 @@ function FeedIndexContent() {
     relays,
     channelFrecencyState,
     personFrecencyState,
-    isHydrating,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
   });
 
