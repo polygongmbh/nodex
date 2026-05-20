@@ -4,10 +4,24 @@ import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 
 // Subscription manager for the NDK live feed. Validates each incoming event's
 // relay attribution at the wire boundary and hands it off to a per-concern
-// dispatcher; downstream stores (nostr-events-store, reactions-registry,
-// per-relay kind 0 cache, presence map) own their own state.
+// dispatcher; downstream stores (posts-store, reactions-registry, per-relay
+// kind 0 cache, presence map) own their own state.
+//
+// Events arrive on separate microtasks from NDK, so naive per-event flushing
+// causes one React render per backfill event. The router coalesces them
+// behind a short debounce so the burst that follows EOSE / scope change
+// turns into a small handful of synchronous flush batches — within each
+// batch React batches the resulting state updates into one render.
 
 const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
+const HYDRATION_FLUSH_BATCH_SIZE = 50;
+const HYDRATION_FLUSH_DELAY_MS = 64;
+const HYDRATION_BURST_THRESHOLD = 200;
+const HYDRATION_BURST_DELAY_MS = 500;
+
+function getFlushDelayMs(pendingCount: number): number {
+  return pendingCount > HYDRATION_BURST_THRESHOLD ? HYDRATION_BURST_DELAY_MS : HYDRATION_FLUSH_DELAY_MS;
+}
 
 export interface IngestableEvent {
   id: string;
@@ -83,17 +97,61 @@ export function useNostrEventRouter({
   const onEventRef = useRef(onEvent);
   useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
 
+  const pendingEventsRef = useRef<IngestableEvent[]>([]);
+  const flushTimerRef = useRef<number | null>(null);
+
+  const flushPending = useCallback(() => {
+    if (flushTimerRef.current !== null && typeof window !== "undefined") {
+      window.clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+    const pending = pendingEventsRef.current;
+    if (pending.length === 0) return;
+    const batchSize = Math.min(pending.length, HYDRATION_FLUSH_BATCH_SIZE);
+    // Splice out the batch synchronously so the onEvent loop below — which
+    // mutates downstream stores — completes within a single tick. React then
+    // batches the resulting state updates into a single render.
+    const batch = pending.splice(0, batchSize);
+    for (const ingestable of batch) {
+      onEventRef.current(ingestable);
+    }
+    if (pending.length > 0 && typeof window !== "undefined") {
+      flushTimerRef.current = window.setTimeout(() => {
+        flushTimerRef.current = null;
+        flushPending();
+      }, getFlushDelayMs(pending.length));
+    }
+  }, []);
+
+  const schedulePendingFlush = useCallback(() => {
+    if (typeof window === "undefined") {
+      flushPending();
+      return;
+    }
+    if (flushTimerRef.current !== null) return;
+    flushTimerRef.current = window.setTimeout(() => {
+      flushTimerRef.current = null;
+      flushPending();
+    }, getFlushDelayMs(pendingEventsRef.current.length));
+  }, [flushPending]);
+
   const pushEvent = useCallback((event: EventLike, relayOverride?: RelayLike) => {
     const ingestable = toIngestable(event, relayOverride);
     if (!ingestable) return;
-    onEventRef.current(ingestable);
+    pendingEventsRef.current.push(ingestable);
     if (!hasLiveHydratedScope) setHasLiveHydratedScope(true);
-  }, [hasLiveHydratedScope]);
+    schedulePendingFlush();
+  }, [hasLiveHydratedScope, schedulePendingFlush]);
 
   const finalizeBootstrapScope = useCallback(() => {
+    // Drain any pending events synchronously so the post-EOSE state matches
+    // the events the relay actually delivered.
+    while (pendingEventsRef.current.length > 0) {
+      flushPending();
+    }
     setIsHydrating(false);
     setHasLiveHydratedScope(true);
-  }, []);
+  }, [flushPending]);
 
   const pushEventRef = useRef(pushEvent);
   const finalizeBootstrapScopeRef = useRef(finalizeBootstrapScope);
@@ -134,6 +192,11 @@ export function useNostrEventRouter({
         window.clearTimeout(bootstrapTimeoutRef.current);
         bootstrapTimeoutRef.current = null;
       }
+      if (flushTimerRef.current !== null) {
+        window.clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      pendingEventsRef.current = [];
       setIsHydrating(false);
       subscriptionRef.current?.stop();
       subscriptionRef.current = null;
