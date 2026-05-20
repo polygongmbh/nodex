@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [3.5.1] - 2026-05-20
+Patch release for relay startup recovery and inline color swatch rendering.
+
 ### Added
 - Uppercase hex color codes in post content (e.g. `#FEE`, `#ABD`, `#123FEF`, `#A1B2C3D4`) now render as inline color swatches and are excluded from tag extraction, so they are no longer published as Nostr `t` tags. Lowercase tokens like `#fee` still behave as ordinary hashtags — switching to lowercase preserves the tag-creation path.
 
