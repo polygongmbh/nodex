@@ -129,17 +129,62 @@ export function mergeKind0EventsWithCache(
   return mergeKind0EventLists(cachedEvents, liveEvents);
 }
 
+// In-memory mirror of the per-relay kind 0 cache. Reads come from here;
+// localStorage is the cold-start source and the on-page-unload sink.
+// Without this, every kind 0 event during backfill triggered a synchronous
+// read + JSON parse + sort + JSON stringify + write, blocking the main
+// thread for hundreds of ms across a typical relay backfill.
+const kind0InMemoryByStorageKey = new Map<string, Kind0LikeEvent[]>();
+const dirtyStorageKeys = new Set<string>();
+let pendingFlushTimer: number | null = null;
+const FLUSH_DEBOUNCE_MS = 750;
+
+function ensureLoaded(storageKey: string): Kind0LikeEvent[] {
+  const memo = kind0InMemoryByStorageKey.get(storageKey);
+  if (memo) return memo;
+  const loaded = readStoredKind0Events(storageKey);
+  kind0InMemoryByStorageKey.set(storageKey, loaded);
+  return loaded;
+}
+
+function scheduleFlushToStorage(): void {
+  if (!canUseStorage()) return;
+  if (pendingFlushTimer !== null) return;
+  if (typeof window === "undefined") {
+    flushDirtyStorageKeys();
+    return;
+  }
+  pendingFlushTimer = window.setTimeout(() => {
+    pendingFlushTimer = null;
+    flushDirtyStorageKeys();
+  }, FLUSH_DEBOUNCE_MS);
+}
+
+function flushDirtyStorageKeys(): void {
+  for (const storageKey of dirtyStorageKeys) {
+    const events = kind0InMemoryByStorageKey.get(storageKey);
+    if (!events) continue;
+    writeStoredKind0Events(storageKey, events);
+  }
+  dirtyStorageKeys.clear();
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", flushDirtyStorageKeys);
+  window.addEventListener("pagehide", flushDirtyStorageKeys);
+}
+
 export function loadCachedKind0Events(relayUrl?: string): Kind0LikeEvent[] {
   if (!canUseStorage()) return [];
   if (relayUrl) {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     if (!normalizedRelayUrl) return [];
-    return readStoredKind0Events(getRelayStorageKey(normalizedRelayUrl));
+    return ensureLoaded(getRelayStorageKey(normalizedRelayUrl));
   }
 
   return mergeKind0EventLists(
-    readStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY),
-    ...listKnownRelayStorageKeys().map((storageKey) => readStoredKind0Events(storageKey))
+    ensureLoaded(KIND0_CACHE_LOCAL_STORAGE_KEY),
+    ...listKnownRelayStorageKeys().map((storageKey) => ensureLoaded(storageKey))
   );
 }
 
@@ -149,16 +194,40 @@ export function loadCachedKind0EventsForRelayUrls(relayUrls: string[]): Kind0Lik
   );
 }
 
+function applyKind0CacheUpdate(storageKey: string, events: Kind0LikeEvent[]): boolean {
+  const merged = mergeKind0EventLists(events);
+  const previous = kind0InMemoryByStorageKey.get(storageKey);
+  if (previous && areKind0EventListsShallowEqual(previous, merged)) return false;
+  kind0InMemoryByStorageKey.set(storageKey, merged);
+  dirtyStorageKeys.add(storageKey);
+  scheduleFlushToStorage();
+  return true;
+}
+
+function areKind0EventListsShallowEqual(a: Kind0LikeEvent[], b: Kind0LikeEvent[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    const left = a[i];
+    const right = b[i];
+    if (left.pubkey !== right.pubkey) return false;
+    if ((left.created_at || 0) !== (right.created_at || 0)) return false;
+    if (left.content !== right.content) return false;
+  }
+  return true;
+}
+
 export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: string): boolean {
   if (!canUseStorage()) return false;
-  let changed = false;
+  let storageKey: string;
   if (!relayUrl) {
-    changed = writeStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY, events);
+    storageKey = KIND0_CACHE_LOCAL_STORAGE_KEY;
   } else {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     if (!normalizedRelayUrl) return false;
-    changed = writeStoredKind0Events(getRelayStorageKey(normalizedRelayUrl), events);
+    storageKey = getRelayStorageKey(normalizedRelayUrl);
   }
+  const changed = applyKind0CacheUpdate(storageKey, events);
   if (changed) notifyKind0Subscribers();
   return changed;
 }
@@ -167,8 +236,11 @@ export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
   if (!canUseStorage()) return;
   const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
   if (!normalizedRelayUrl) return;
+  const storageKey = getRelayStorageKey(normalizedRelayUrl);
+  kind0InMemoryByStorageKey.delete(storageKey);
+  dirtyStorageKeys.delete(storageKey);
   try {
-    window.localStorage.removeItem(getRelayStorageKey(normalizedRelayUrl));
+    window.localStorage.removeItem(storageKey);
   } catch {
     // Ignore remove failures.
   }
@@ -219,9 +291,22 @@ export function ingestKind0Event(event: IngestableKind0Event): boolean {
     created_at: event.created_at,
     content: event.content,
   };
+  const normalizedIncomingPubkey = normalizePubkey(payload.pubkey);
   let changed = false;
   for (const relayUrl of relayUrls) {
     const existing = loadCachedKind0Events(relayUrl);
+    // Cheap dedup: if the relay bucket already has this pubkey's profile at
+    // an equal-or-newer timestamp and identical content, skip the work.
+    const existingForPubkey = existing.find(
+      (entry) => normalizePubkey(entry.pubkey) === normalizedIncomingPubkey
+    );
+    if (
+      existingForPubkey &&
+      (existingForPubkey.created_at || 0) >= (payload.created_at || 0) &&
+      existingForPubkey.content === payload.content
+    ) {
+      continue;
+    }
     // saveCachedKind0Events notifies kind 0 subscribers on every changed write.
     if (saveCachedKind0Events([...existing, payload], relayUrl)) changed = true;
   }

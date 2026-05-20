@@ -14,14 +14,14 @@ import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 // batch React batches the resulting state updates into one render.
 
 const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
-const HYDRATION_FLUSH_BATCH_SIZE = 50;
+// 200 events fit easily inside a 16ms frame budget with the typed
+// posts-store's O(1) folds, so we drain that many synchronously per tick
+// and keep the inter-batch delay at the cross-microtask coalesce window.
+// The previous release tier'd up to 500ms once pending exceeded a
+// threshold; that was needed for the old O(N) per-batch upsert path and
+// is now pure latency.
+const HYDRATION_FLUSH_BATCH_SIZE = 200;
 const HYDRATION_FLUSH_DELAY_MS = 64;
-const HYDRATION_BURST_THRESHOLD = 200;
-const HYDRATION_BURST_DELAY_MS = 500;
-
-function getFlushDelayMs(pendingCount: number): number {
-  return pendingCount > HYDRATION_BURST_THRESHOLD ? HYDRATION_BURST_DELAY_MS : HYDRATION_FLUSH_DELAY_MS;
-}
 
 export interface IngestableEvent {
   id: string;
@@ -119,7 +119,7 @@ export function useNostrEventRouter({
       flushTimerRef.current = window.setTimeout(() => {
         flushTimerRef.current = null;
         flushPending();
-      }, getFlushDelayMs(pending.length));
+      }, HYDRATION_FLUSH_DELAY_MS);
     }
   }, []);
 
@@ -132,7 +132,7 @@ export function useNostrEventRouter({
     flushTimerRef.current = window.setTimeout(() => {
       flushTimerRef.current = null;
       flushPending();
-    }, getFlushDelayMs(pendingEventsRef.current.length));
+    }, HYDRATION_FLUSH_DELAY_MS);
   }, [flushPending]);
 
   const pushEvent = useCallback((event: EventLike, relayOverride?: RelayLike) => {
