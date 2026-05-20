@@ -4,7 +4,6 @@ import {
   createNodexCacheAdapter,
   getFreshRelayInfoSummaryFromCache,
   RELAY_NIP11_CACHE_TTL_MS,
-  relayInfoSummaryToNip11Document,
 } from "@/infrastructure/cache/ndk-cache-adapter";
 import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
@@ -72,26 +71,27 @@ export function useRelayNip11({ updateRelayEntry }: UseRelayNip11Args) {
       return;
     }
 
-    const info = await fetchRelayInfo(normalizedRelayUrl);
-    if (!info) {
+    const fetched = await fetchRelayInfo(normalizedRelayUrl);
+    if (!fetched) {
       nostrDevLog("relay", "Relay NIP-11 info unavailable", {
         relayUrl: normalizedRelayUrl,
       });
       return;
     }
+    const { document, summary } = fetched;
     const checkedAt = Date.now();
-    relayInfoRef.current.set(normalizedRelayUrl, info);
+    relayInfoRef.current.set(normalizedRelayUrl, summary);
     relayInfoFetchedAtRef.current.set(normalizedRelayUrl, checkedAt);
     void relayStatusCacheAdapter.updateRelayStatus?.(normalizedRelayUrl, {
       nip11: {
-        data: relayInfoSummaryToNip11Document(info),
+        data: document,
         fetchedAt: checkedAt,
       },
     });
     updateRelayEntry(normalizedRelayUrl, (relay) => {
       const nextNip11 = {
-        authRequired: info.authRequired,
-        supportsNip42: info.supportsNip42,
+        authRequired: summary.authRequired,
+        supportsNip42: summary.supportsNip42,
         checkedAt,
       };
       if (
@@ -105,8 +105,8 @@ export function useRelayNip11({ updateRelayEntry }: UseRelayNip11Args) {
     });
     nostrDevLog("relay", "Relay NIP-11 info loaded", {
       relayUrl: normalizedRelayUrl,
-      authRequired: info.authRequired,
-      supportsNip42: info.supportsNip42,
+      authRequired: summary.authRequired,
+      supportsNip42: summary.supportsNip42,
     });
   }, [relayStatusCacheAdapter, updateRelayEntry]);
 

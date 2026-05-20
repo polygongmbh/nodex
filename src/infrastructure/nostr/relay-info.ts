@@ -8,11 +8,17 @@ export interface RelayInformationDocument {
     auth_required?: boolean;
     payment_required?: boolean;
   };
+  [key: string]: unknown;
 }
 
 export interface RelayInfoSummary {
   authRequired: boolean;
   supportsNip42: boolean;
+}
+
+export interface RelayInfoFetchResult {
+  document: RelayInformationDocument;
+  summary: RelayInfoSummary;
 }
 
 export function relayWebsocketUrlToHttpUrl(relayUrl: string): string | null {
@@ -39,7 +45,7 @@ export function summarizeRelayInfo(doc: RelayInformationDocument): RelayInfoSumm
   };
 }
 
-export async function fetchRelayInfo(relayUrl: string): Promise<RelayInfoSummary | null> {
+export async function fetchRelayInfo(relayUrl: string): Promise<RelayInfoFetchResult | null> {
   const infoUrl = relayWebsocketUrlToHttpUrl(relayUrl);
   if (!infoUrl) return null;
 
@@ -51,8 +57,8 @@ export async function fetchRelayInfo(relayUrl: string): Promise<RelayInfoSummary
       },
     });
     if (!response.ok) return null;
-    const data = await response.json() as RelayInformationDocument;
-    return summarizeRelayInfo(data);
+    const document = await response.json() as RelayInformationDocument;
+    return { document, summary: summarizeRelayInfo(document) };
   } catch {
     return null;
   }

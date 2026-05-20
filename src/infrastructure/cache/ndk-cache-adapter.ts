@@ -10,7 +10,7 @@ import type {
 } from "@nostr-dev-kit/ndk";
 import { NIP05_CACHE_STORAGE_KEY, RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
-import { summarizeRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
+import { summarizeRelayInfo, type RelayInfoSummary, type RelayInformationDocument } from "@/infrastructure/nostr/relay-info";
 
 export const RELAY_NIP11_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const NIP05_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -46,8 +46,7 @@ function saveNip05Cache(cache: Nip05Cache): void {
 
 interface PersistedRelayStatusEntry {
   nip11?: {
-    authRequired: boolean;
-    supportsNip42: boolean;
+    document: RelayInformationDocument;
     fetchedAt: number;
   };
 }
@@ -75,24 +74,20 @@ function loadPersistedRelayStatusCache(): PersistedRelayStatusCache {
         next[relayUrl] = {};
         return;
       }
-      const nip11 = entry.nip11 as {
-        authRequired?: unknown;
-        supportsNip42?: unknown;
-        fetchedAt?: unknown;
-      };
+      const nip11 = entry.nip11 as { document?: unknown; fetchedAt?: unknown };
       if (
-        typeof nip11.authRequired !== "boolean" ||
-        typeof nip11.supportsNip42 !== "boolean" ||
+        !nip11.document ||
+        typeof nip11.document !== "object" ||
         typeof nip11.fetchedAt !== "number" ||
         !Number.isFinite(nip11.fetchedAt)
       ) {
+        // Drop legacy/invalid entries; a fresh probe will repopulate.
         next[relayUrl] = {};
         return;
       }
       next[relayUrl] = {
         nip11: {
-          authRequired: nip11.authRequired,
-          supportsNip42: nip11.supportsNip42,
+          document: nip11.document as RelayInformationDocument,
           fetchedAt: nip11.fetchedAt,
         },
       };
@@ -112,15 +107,6 @@ function savePersistedRelayStatusCache(cache: PersistedRelayStatusCache): void {
   }
 }
 
-export function relayInfoSummaryToNip11Document(info: RelayInfoSummary): NDKRelayInformation {
-  return {
-    supported_nips: info.supportsNip42 ? [42] : [],
-    limitation: {
-      auth_required: info.authRequired,
-    },
-  };
-}
-
 function cachedRelayStatusToSummary(
   status: NDKCacheRelayInfo
 ): { summary: RelayInfoSummary; fetchedAt: number } | null {
@@ -128,7 +114,7 @@ function cachedRelayStatusToSummary(
   const fetchedAt = status.nip11.fetchedAt;
   if (typeof fetchedAt !== "number" || !Number.isFinite(fetchedAt)) return null;
   return {
-    summary: summarizeRelayInfo(status.nip11.data),
+    summary: summarizeRelayInfo(status.nip11.data as RelayInformationDocument),
     fetchedAt,
   };
 }
@@ -185,12 +171,10 @@ export function createNodexCacheAdapter(): NDKCacheAdapter {
         return;
       }
 
-      const summary = summarizeRelayInfo(info.nip11.data);
       cache[normalizedRelayUrl] = {
         ...(cache[normalizedRelayUrl] || {}),
         nip11: {
-          authRequired: summary.authRequired,
-          supportsNip42: summary.supportsNip42,
+          document: info.nip11.data as RelayInformationDocument,
           fetchedAt: info.nip11.fetchedAt,
         },
       };
@@ -207,10 +191,7 @@ export function createNodexCacheAdapter(): NDKCacheAdapter {
 
       return {
         nip11: {
-          data: relayInfoSummaryToNip11Document({
-            authRequired: entry.nip11.authRequired,
-            supportsNip42: entry.nip11.supportsNip42,
-          }),
+          data: entry.nip11.document as NDKRelayInformation,
           fetchedAt: entry.nip11.fetchedAt,
         },
       };

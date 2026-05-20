@@ -1546,8 +1546,10 @@ describe("NDKProvider relay lifecycle", () => {
     window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
       "wss://relay.one": {
         nip11: {
-          authRequired: true,
-          supportsNip42: true,
+          document: {
+            supported_nips: [42],
+            limitation: { auth_required: true },
+          },
           fetchedAt,
         },
       },
@@ -1610,8 +1612,10 @@ describe("NDKProvider relay lifecycle", () => {
     window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
       "wss://relay.one": {
         nip11: {
-          authRequired: true,
-          supportsNip42: true,
+          document: {
+            supported_nips: [42],
+            limitation: { auth_required: true },
+          },
           fetchedAt,
         },
       },
@@ -1692,8 +1696,10 @@ describe("NDKProvider relay lifecycle", () => {
     window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
       "wss://relay.one": {
         nip11: {
-          authRequired: true,
-          supportsNip42: true,
+          document: {
+            supported_nips: [42],
+            limitation: { auth_required: true },
+          },
           fetchedAt,
         },
       },
