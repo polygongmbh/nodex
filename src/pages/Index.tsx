@@ -16,6 +16,7 @@ import {
 } from "@/features/feed-page/stores/reactions-registry";
 import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
 import { ingestPresenceEvent } from "@/lib/presence-status";
+import { ingestNostrEvent } from "@/features/feed-page/stores/nostr-events-store";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useChannelFilterController } from "@/features/feed-page/controllers/use-channel-filter-controller";
@@ -129,12 +130,14 @@ function FeedIndexContent() {
       id: string;
       kind: number;
       pubkey: string;
-      created_at?: number;
+      created_at: number;
       tags: string[][];
       content: string;
+      sig?: string;
       relayUrl?: string;
       relayUrls?: string[];
     }) => {
+      ingestNostrEvent(event);
       if (event.kind === NostrEventKind.Reaction || event.kind === NostrEventKind.EventDeletion) {
         mergeReactionEvents([event]);
         return;

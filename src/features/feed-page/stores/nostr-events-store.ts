@@ -31,7 +31,19 @@ function getRelayUrls(event: { relayUrl?: string; relayUrls?: string[] }): strin
   ]);
 }
 
-export function ingestNostrEvent(event: NostrEventWithRelay): boolean {
+export interface IngestableNostrEvent {
+  id: string;
+  pubkey: string;
+  created_at: number;
+  kind: number;
+  tags: string[][];
+  content: string;
+  sig?: string;
+  relayUrl?: string;
+  relayUrls?: string[];
+}
+
+export function ingestNostrEvent(event: IngestableNostrEvent): boolean {
   if (!event.id) return false;
   if (isParameterizedReplaceableKind(event.kind) && getReplaceableEventKey(event) === null) {
     return false;
@@ -56,6 +68,8 @@ export function ingestNostrEvent(event: NostrEventWithRelay): boolean {
 
   const normalized: NostrEventWithRelay = {
     ...event,
+    sig: event.sig || "",
+    kind: event.kind,
     relayUrl: mergedRelays[0],
     relayUrls: mergedRelays,
   };
