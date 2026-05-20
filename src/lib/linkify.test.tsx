@@ -41,6 +41,22 @@ describe("linkifyContent interaction styles", () => {
     expect(onHashtagClick).toHaveBeenCalledWith("frontend");
   });
 
+  it("renders uppercase hex tokens as inline color swatches, not as hashtag filters", () => {
+    const onHashtagClick = vi.fn();
+    render(<div>{linkifyContent("palette bg #FFAA00 keep #fee end", onHashtagClick)}</div>);
+
+    expect(screen.queryByRole("button", { name: "Filter by #FFAA00" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Filter by #ffaa00" })).not.toBeInTheDocument();
+
+    const swatchLabel = screen.getByText((_text, element) => element?.textContent === "#FFAA00");
+    expect(swatchLabel).toBeInTheDocument();
+    const swatch = swatchLabel.querySelector('[aria-hidden="true"]') as HTMLElement | null;
+    expect(swatch).not.toBeNull();
+    expect(swatch?.style.backgroundColor).toBe("rgb(255, 170, 0)");
+
+    expect(screen.getByRole("button", { name: "Filter by #fee" })).toBeInTheDocument();
+  });
+
   it("renders plain hashtags when plainHashtags is enabled", () => {
     render(<div>{linkifyContent("Ship #frontend", vi.fn(), { plainHashtags: true })}</div>);
 

@@ -25,4 +25,25 @@ describe("hashtags helpers", () => {
     expect(extractCommittedHashtags("ship #alpha next #bet")).toEqual(["alpha", "bet"]);
     expect(extractCommittedHashtags("ship #alpha,next email#ops")).toEqual([]);
   });
+
+  it("excludes uppercase hex color tokens from hashtag extraction", () => {
+    expect(extractHashtagsFromContent("bg #FEE fg #FE0F accent #123FEF alpha #A1B2C3D4 keep #fee #abc123")).toEqual([
+      "fee",
+      "abc123",
+    ]);
+  });
+
+  it("keeps tokens that fail the strict uppercase hex rule as hashtags", () => {
+    expect(extractHashtagsFromContent("mix #Fee odd #GHI len5 #ABCDE pure #123")).toEqual([
+      "fee",
+      "ghi",
+      "abcde",
+      "123",
+    ]);
+  });
+
+  it("counts and commits hex-color exclusions consistently", () => {
+    expect(countHashtagsInContent("bg #FEE keep #fee #design")).toBe(2);
+    expect(extractCommittedHashtags("bg #FEE keep #fee #design")).toEqual(["fee", "design"]);
+  });
 });

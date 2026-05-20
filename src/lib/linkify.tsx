@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import { nip19 } from "nostr-tools";
-import { LINKIFY_CONTENT_TOKEN_REGEX } from "@/lib/content-tokens";
+import { LINKIFY_CONTENT_TOKEN_REGEX, isHexColorToken } from "@/lib/content-tokens";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Person } from "@/types/person";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
@@ -25,6 +25,7 @@ const linkify = new LinkifyIt();
 
 const HASH_LINK_PREFIX = "https://nodex.local/hashtag/";
 const MENTION_LINK_PREFIX = "https://nodex.local/mention/";
+const COLOR_LINK_PREFIX = "https://nodex.local/color/";
 const NOSTR_EVENT_LINK_PREFIX = "https://njump.me/";
 const INLINE_TOKEN_CLASS =
   `${TASK_INTERACTION_STYLES.inlineLink} inline whitespace-normal break-all align-baseline p-0 border-0 bg-transparent font-inherit`;
@@ -329,7 +330,11 @@ function preprocessMarkdownTokens(value: string): string {
     }
 
     if (token.startsWith("#") && hashtag) {
-      nodes.push(`[#${hashtag}](${HASH_LINK_PREFIX}${encodeURIComponent(hashtag)})`);
+      if (isHexColorToken(hashtag)) {
+        nodes.push(`[#${hashtag}](${COLOR_LINK_PREFIX}${hashtag})`);
+      } else {
+        nodes.push(`[#${hashtag}](${HASH_LINK_PREFIX}${encodeURIComponent(hashtag)})`);
+      }
     } else if (token.startsWith("@") && mention) {
       const mentionIdentifier = normalizeMentionIdentifier(mention);
       nodes.push(`[@${mentionIdentifier}](${MENTION_LINK_PREFIX}${encodeURIComponent(mentionIdentifier)})`);
@@ -374,6 +379,23 @@ function renderMarkdownBlock(
   options?: LinkifyOptions
 ): React.ReactNode {
   const MarkdownAnchor = ({ href, children }: { href?: string; children?: React.ReactNode }) => {
+    if (href?.startsWith(COLOR_LINK_PREFIX)) {
+      const hex = href.slice(COLOR_LINK_PREFIX.length);
+      return (
+        <span
+          className="inline-flex items-center gap-1 align-baseline rounded px-1 font-mono text-[0.9em] border border-border"
+          title={`Color #${hex}`}
+        >
+          <span
+            aria-hidden
+            style={{ backgroundColor: `#${hex}` }}
+            className="inline-block h-3 w-3 rounded-sm border border-border"
+          />
+          #{hex}
+        </span>
+      );
+    }
+
     if (href?.startsWith(HASH_LINK_PREFIX)) {
       const hashtag = decodeURIComponent(href.slice(HASH_LINK_PREFIX.length));
       return (

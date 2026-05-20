@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Uppercase hex color codes in post content (e.g. `#FEE`, `#ABD`, `#123FEF`, `#A1B2C3D4`) now render as inline color swatches and are excluded from tag extraction, so they are no longer published as Nostr `t` tags. Lowercase tokens like `#fee` still behave as ordinary hashtags — switching to lowercase preserves the tag-creation path.
+
 ### Fixed
 - Relays no longer stay stuck on "connecting" in the sidebar after initial page load when React state diverges from NDK's pool (e.g. a `relay:connect` event was missed because session restore replaced the relay instance mid-handshake). A startup reconciliation pass now compares React state against the pool for the first ~22 seconds after mount, fixes drift, and force-reconnects relays whose underlying handshake has genuinely stalled.
 
