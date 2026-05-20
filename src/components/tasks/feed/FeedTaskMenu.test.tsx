@@ -49,7 +49,6 @@ function renderMenu(overrides: Partial<Parameters<typeof FeedTaskMenu>[0]> = {})
     onCopyPermalink: vi.fn(),
     onRecompose: vi.fn(),
     onDelete: vi.fn(),
-    pinned: true,
     ...overrides,
   };
   return {

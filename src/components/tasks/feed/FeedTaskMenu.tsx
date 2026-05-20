@@ -37,8 +37,6 @@ interface FeedTaskMenuProps {
   onCopyPermalink: () => void;
   onRecompose: () => void;
   onDelete: () => void;
-  /** Force the trigger to stay visible (e.g. while the active row is focused). */
-  pinned?: boolean;
   className?: string;
 }
 
@@ -50,7 +48,6 @@ export function FeedTaskMenu({
   onCopyPermalink,
   onRecompose,
   onDelete,
-  pinned,
   className,
 }: FeedTaskMenuProps) {
   const { t } = useTranslation("tasks");
@@ -89,7 +86,7 @@ export function FeedTaskMenu({
               "inline-flex h-5 items-center justify-center overflow-hidden rounded-md bg-muted/80 text-muted-foreground",
               "transition-[max-width,opacity,margin] duration-150 ease-out",
               "hover:bg-muted hover:text-foreground",
-              pinned || menuOpen
+              menuOpen
                 ? "ml-1 max-w-[20px] opacity-100"
                 : "ml-0 max-w-0 opacity-0 group-hover/feed-card:ml-1 group-hover/feed-card:max-w-[20px] group-hover/feed-card:opacity-100 focus-visible:ml-1 focus-visible:max-w-[20px] focus-visible:opacity-100",
               className,

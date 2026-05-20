@@ -313,16 +313,15 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                 >
                   {t("composer:toasts.actions.undo")}
                 </button>
-              ) : !isMobile ? (
+              ) : !isMobile && currentUser ? (
                 <FeedTaskMenu
                   task={task}
-                  currentUserPubkey={currentUser?.pubkey}
+                  currentUserPubkey={currentUser.pubkey}
                   hasChildren={hasChildren}
                   onReact={handleMenuReact}
                   onCopyPermalink={() => taskCommands.copyPermalink(task.id)}
                   onRecompose={() => taskCommands.recomposePost(task.id)}
                   onDelete={() => { void taskCommands.deletePost(task.id); }}
-                  pinned={isActiveTask}
                   className="shrink-0"
                 />
               ) : null}
