@@ -21,17 +21,18 @@ export function TaskAttachmentList({
   const items = normalized.map((attachment) => ({
     attachment,
     mediaKind: inferTaskMediaKind(attachment.url, attachment.mimeType),
+    caption: attachment.alt || attachment.name || attachment.url,
   }));
-  const mediaItems = items.filter((item) => item.mediaKind !== null);
+  const imageItems = items.filter((item) => item.mediaKind === "image");
+  const videoItems = items.filter((item) => item.mediaKind === "video");
+  const audioItems = items.filter((item) => item.mediaKind === "audio");
   const linkItems = items.filter((item) => item.mediaKind === null);
 
   return (
     <div className={className}>
-      {mediaItems.map(({ attachment, mediaKind }) => {
-        const caption = attachment.alt || attachment.name || attachment.url;
-
-        if (mediaKind === "image") {
-          return (
+      {imageItems.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {imageItems.map(({ attachment, caption }) => (
             <button
               key={attachment.url}
               type="button"
@@ -39,7 +40,7 @@ export function TaskAttachmentList({
                 event.stopPropagation();
                 onMediaClick?.(attachment.url);
               }}
-              className="group relative block max-w-sm"
+              className="group relative block shrink-0"
             >
               <TaskProgressiveImage
                 src={attachment.url}
@@ -49,26 +50,27 @@ export function TaskAttachmentList({
                 previewImageUrl={attachment.previewImageUrl}
                 dimensions={attachment.dimensions}
                 renderMode="inline"
-                className="max-h-64 rounded-md border border-border/60"
-                imageClassName="max-h-64"
+                className="max-h-[35vh] rounded-md border border-border/60"
+                imageClassName="max-h-[35vh]"
               />
               <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-background/85 px-2 py-1 text-left text-xs text-foreground opacity-0 transition-opacity group-hover:opacity-100">
                 <p className="truncate" title={caption}>{caption}</p>
               </div>
             </button>
-          );
-        }
-
-        if (mediaKind === "video") {
-          return (
-            <div key={attachment.url} className="group relative max-w-xl">
+          ))}
+        </div>
+      )}
+      {videoItems.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {videoItems.map(({ attachment, caption }) => (
+            <div key={attachment.url} className="group relative shrink-0">
               <video
                 controls
                 preload="metadata"
                 onClick={(event) => {
                   event.stopPropagation();
                 }}
-                className="max-h-72 w-full rounded-md border border-border/60 bg-muted/30"
+                className="max-h-[35vh] w-auto rounded-md border border-border/60 bg-muted/30"
               >
                 <source src={attachment.url} type={attachment.mimeType || undefined} />
               </video>
@@ -76,11 +78,12 @@ export function TaskAttachmentList({
                 <p className="truncate" title={caption}>{caption}</p>
               </div>
             </div>
-          );
-        }
-
-        if (mediaKind === "audio") {
-          return (
+          ))}
+        </div>
+      )}
+      {audioItems.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {audioItems.map(({ attachment, caption }) => (
             <div key={attachment.url} className="w-full max-w-xl">
               <audio
                 controls
@@ -96,11 +99,9 @@ export function TaskAttachmentList({
                 {caption}
               </p>
             </div>
-          );
-        }
-
-        return null;
-      })}
+          ))}
+        </div>
+      )}
       {linkItems.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {linkItems.map(({ attachment }) => (
