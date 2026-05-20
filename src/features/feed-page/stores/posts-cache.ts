@@ -13,7 +13,7 @@ import { mergeTasks } from "@/domain/content/task-merge";
 
 export const POSTS_CACHE_STORAGE_KEY_PREFIX = "nodex.posts.cache:";
 export const POSTS_CACHE_RETENTION_SECONDS = 7 * 24 * 60 * 60;
-export const POSTS_CACHE_MAX_POSTS_PER_RELAY = 500;
+export const POSTS_CACHE_MAX_POSTS_PER_RELAY = 2000;
 
 function hasLocalStorage(): boolean {
   return typeof window !== "undefined" && Boolean(window.localStorage);

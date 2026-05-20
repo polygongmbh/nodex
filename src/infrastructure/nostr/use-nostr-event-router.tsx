@@ -22,6 +22,12 @@ const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
 // is now pure latency.
 const HYDRATION_FLUSH_BATCH_SIZE = 200;
 const HYDRATION_FLUSH_DELAY_MS = 64;
+// EOSE is unreliable across many relays: a single slow relay drags the
+// global EOSE out for seconds while the feed is already visually filled.
+// Once we've drained at least one batch and stayed quiet for this long,
+// declare bootstrap done — late-arriving events still ingest normally,
+// they just no longer block the loading UI.
+const HYDRATION_QUIESCENCE_MS = 1500;
 
 export interface IngestableEvent {
   id: string;
@@ -99,6 +105,27 @@ export function useNostrEventRouter({
 
   const pendingEventsRef = useRef<IngestableEvent[]>([]);
   const flushTimerRef = useRef<number | null>(null);
+  const quiescenceTimerRef = useRef<number | null>(null);
+
+  const clearQuiescenceTimer = useCallback(() => {
+    if (quiescenceTimerRef.current !== null && typeof window !== "undefined") {
+      window.clearTimeout(quiescenceTimerRef.current);
+      quiescenceTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleQuiescenceFinalize = useCallback(() => {
+    if (typeof window === "undefined") return;
+    clearQuiescenceTimer();
+    quiescenceTimerRef.current = window.setTimeout(() => {
+      quiescenceTimerRef.current = null;
+      // Only finalize if no events have arrived since this timer was armed
+      // (pendingEventsRef is empty AND we're not already finalized).
+      if (pendingEventsRef.current.length === 0) {
+        finalizeBootstrapScopeRef.current();
+      }
+    }, HYDRATION_QUIESCENCE_MS);
+  }, [clearQuiescenceTimer]);
 
   const flushPending = useCallback(() => {
     if (flushTimerRef.current !== null && typeof window !== "undefined") {
@@ -120,8 +147,11 @@ export function useNostrEventRouter({
         flushTimerRef.current = null;
         flushPending();
       }, HYDRATION_FLUSH_DELAY_MS);
+    } else {
+      // Drained — start quiescence countdown. New events will reset it.
+      scheduleQuiescenceFinalize();
     }
-  }, []);
+  }, [scheduleQuiescenceFinalize]);
 
   const schedulePendingFlush = useCallback(() => {
     if (typeof window === "undefined") {
@@ -139,11 +169,15 @@ export function useNostrEventRouter({
     const ingestable = toIngestable(event, relayOverride);
     if (!ingestable) return;
     pendingEventsRef.current.push(ingestable);
+    // A new event arrived — cancel any pending quiescence-based finalize so
+    // we wait for this burst to drain before re-arming.
+    clearQuiescenceTimer();
     if (!hasLiveHydratedScope) setHasLiveHydratedScope(true);
     schedulePendingFlush();
-  }, [hasLiveHydratedScope, schedulePendingFlush]);
+  }, [hasLiveHydratedScope, schedulePendingFlush, clearQuiescenceTimer]);
 
   const finalizeBootstrapScope = useCallback(() => {
+    clearQuiescenceTimer();
     // Drain any pending events synchronously so the post-EOSE state matches
     // the events the relay actually delivered.
     while (pendingEventsRef.current.length > 0) {
@@ -151,7 +185,7 @@ export function useNostrEventRouter({
     }
     setIsHydrating(false);
     setHasLiveHydratedScope(true);
-  }, [flushPending]);
+  }, [flushPending, clearQuiescenceTimer]);
 
   const pushEventRef = useRef(pushEvent);
   const finalizeBootstrapScopeRef = useRef(finalizeBootstrapScope);
@@ -195,6 +229,10 @@ export function useNostrEventRouter({
       if (flushTimerRef.current !== null) {
         window.clearTimeout(flushTimerRef.current);
         flushTimerRef.current = null;
+      }
+      if (quiescenceTimerRef.current !== null) {
+        window.clearTimeout(quiescenceTimerRef.current);
+        quiescenceTimerRef.current = null;
       }
       pendingEventsRef.current = [];
       setIsHydrating(false);
