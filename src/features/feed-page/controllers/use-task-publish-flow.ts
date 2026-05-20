@@ -1,12 +1,9 @@
 import { getTaskPrimaryDate, isListingPost, isTaskPost, getTaskAssigneePubkeys, getTaskPriority } from "@/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
-import type { QueryClient } from "@tanstack/react-query";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { toast } from "sonner";
-import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
-import { type CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import { type FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import {
   extractMentionIdentifiersFromContent,
@@ -103,7 +100,6 @@ interface UseTaskPublishFlowOptions {
   effectiveActiveRelayIds: Set<string>;
   demoFeedActive: boolean;
   demoRelayId: string;
-  queryClient: QueryClient;
   dispatchFrecencyIntent: (intent: FeedInteractionFrecencyIntent) => void;
   guardInteraction: (mode: "post" | "modify") => boolean;
   hasDisconnectedSelectedRelays: boolean;
@@ -157,7 +153,6 @@ export function useTaskPublishFlow({
   effectiveActiveRelayIds,
   demoFeedActive,
   demoRelayId,
-  queryClient,
   dispatchFrecencyIntent,
   guardInteraction,
   hasDisconnectedSelectedRelays,
@@ -193,15 +188,6 @@ export function useTaskPublishFlow({
       pendingPublishState.clear();
     };
   }, []);
-
-  useEffect(() => {
-    if (suppressedNostrEventIds.size === 0) return;
-    const blockedIds = new Set(suppressedNostrEventIds);
-    queryClient.setQueriesData<CachedNostrEvent[]>(
-      { queryKey: NOSTR_EVENTS_QUERY_KEY },
-      (previous) => (previous || []).filter((event) => !blockedIds.has(event.id))
-    );
-  }, [queryClient, suppressedNostrEventIds]);
 
   const resolveMentionPubkeys = useCallback(async (mentionIdentifiers: string[]): Promise<string[]> => {
     return resolveMentionIdentifiersToPubkeysAsync(mentionIdentifiers, people, {
@@ -250,11 +236,7 @@ export function useTaskPublishFlow({
       next.add(normalizedEventId);
       return next;
     });
-    queryClient.setQueriesData<CachedNostrEvent[]>(
-      { queryKey: NOSTR_EVENTS_QUERY_KEY },
-      (previous) => (previous || []).filter((event) => event.id !== normalizedEventId)
-    );
-  }, [queryClient, setSuppressedNostrEventIds]);
+  }, [setSuppressedNostrEventIds]);
 
   const parseStoredDate = useCallback((value?: string): Date | undefined => {
     if (!value) return undefined;

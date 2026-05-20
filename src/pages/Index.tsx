@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
@@ -70,7 +69,6 @@ import { featureDebugLog } from "@/lib/feature-debug";
 
 function FeedIndexContent() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { publishEvent, signEvent, broadcastSignedEvent, setPresenceRelayUrls, user, defaultNoasHostUrl, isSessionLocked } = useNDK();
 
@@ -595,7 +593,6 @@ function FeedIndexContent() {
     effectiveActiveRelayIds,
     demoFeedActive,
     demoRelayId: DEMO_RELAY_ID,
-    queryClient,
     dispatchFrecencyIntent,
     guardInteraction,
     hasDisconnectedSelectedRelays,
