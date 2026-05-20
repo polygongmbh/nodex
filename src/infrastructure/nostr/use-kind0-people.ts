@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import type { SelectablePerson } from "@/types/person";
-import { NostrEventKind } from "@/lib/nostr/types";
-import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import {
   derivePeopleFromKind0Events,
   loadCachedKind0Events,
@@ -20,6 +18,7 @@ import {
   subscribeToPresenceChanges,
   type LatestPresenceSnapshot,
 } from "@/lib/presence-status";
+import { useNostrEvents } from "@/features/feed-page/stores/nostr-events-store";
 
 interface UserProfileSnapshot {
   name?: string;
@@ -73,10 +72,10 @@ function arePeopleListsEqual(previous: SelectablePerson[], next: SelectablePerso
 }
 
 export function useKind0People(
-  nostrEvents: CachedNostrEvent[],
   selectedRelayUrls: string[],
   user: NostrUserLike | null,
 ): UseKind0PeopleResult {
+  const nostrEvents = useNostrEvents();
   const normalizedSelectedRelayUrls = useMemo(
     () => normalizeRelayUrlScope(selectedRelayUrls),
     [selectedRelayUrls]

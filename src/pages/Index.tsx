@@ -175,7 +175,6 @@ function FeedIndexContent() {
     latestPresenceByAuthor,
     removeCachedRelayProfile,
   } = useKind0People(
-    nostrEvents,
     selectedRelayUrls,
     user,
   );

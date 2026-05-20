@@ -4,10 +4,12 @@ import { useKind0People } from "./use-kind0-people";
 import * as peopleFromKind0 from "./people-from-kind0";
 import { DEMO_RELAY_URL } from "@/data/basic-nostr-events";
 import { NostrEventKind } from "@/lib/nostr/types";
+import { __resetNostrEventsStoreForTests } from "@/features/feed-page/stores/nostr-events-store";
 
 describe("useKind0People", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    __resetNostrEventsStoreForTests();
   });
 
   it("derives people from selected relay kind0 cache without live task events", async () => {
@@ -24,7 +26,7 @@ describe("useKind0People", () => {
       },
     ], DEMO_RELAY_URL);
 
-    const { result } = renderHook(() => useKind0People([], [DEMO_RELAY_URL], null));
+    const { result } = renderHook(() => useKind0People([DEMO_RELAY_URL], null));
 
     await waitFor(() => {
       expect(result.current.people).toHaveLength(1);
@@ -45,7 +47,7 @@ describe("useKind0People", () => {
     const loadSpy = vi.spyOn(peopleFromKind0, "loadCachedKind0EventsForRelayUrls");
 
     const { rerender } = renderHook(
-      ({ relayUrls }) => useKind0People([], relayUrls, null),
+      ({ relayUrls }) => useKind0People(relayUrls, null),
       {
         initialProps: { relayUrls: [DEMO_RELAY_URL] },
       }
