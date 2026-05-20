@@ -6,7 +6,11 @@ import { useIndexDerivedData } from "./use-index-derived-data";
 import { useChannelFilterController } from "./use-channel-filter-controller";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
-import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
+import {
+  ingestNostrEvent,
+  __resetNostrEventsStoreForTests,
+} from "@/features/feed-page/stores/nostr-events-store";
+import type { NostrEventWithRelay } from "@/lib/nostr/types";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay } from "@/types";
@@ -37,7 +41,7 @@ const relays: Relay[] = [
   makeRelay({ id: "relay-two", name: "Relay Two", url: "wss://relay.two", isActive: true }),
 ];
 
-const nostrEvents: CachedNostrEvent[] = [
+const nostrEvents: NostrEventWithRelay[] = [
   {
     id: "event-one",
     pubkey: "a".repeat(64),
@@ -62,6 +66,11 @@ const nostrEvents: CachedNostrEvent[] = [
   },
 ];
 
+function seedNostrEventsStore(events: NostrEventWithRelay[]): void {
+  __resetNostrEventsStoreForTests();
+  for (const event of events) ingestNostrEvent(event);
+}
+
 function Harness() {
   const [people, setPeople] = useState<SelectablePerson[]>([]);
   const activeRelayIds = useFilterStore((s) => s.activeRelayIds);
@@ -72,7 +81,6 @@ function Harness() {
   }));
 
   const derived = useIndexDerivedData({
-    nostrEvents,
     demoTasks: [],
     people,
     latestPresenceByAuthor: new Map(),
@@ -117,6 +125,7 @@ function Harness() {
 describe("useIndexDerivedData compose channels", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    seedNostrEventsStore(nostrEvents);
     useFilterStore.setState({ activeRelayIds: new Set(["relay-one"]), channelFilterStates: new Map(), channelMatchMode: "and" });
     useTaskMutationStore.setState({
       localTasks: [],
@@ -180,7 +189,6 @@ function SidebarPeopleHarness() {
   ];
 
   const derived = useIndexDerivedData({
-    nostrEvents: [],
     demoTasks: [],
     people: [alice, bob],
     latestPresenceByAuthor: new Map(),
@@ -216,6 +224,7 @@ function SidebarPeopleHarness() {
 describe("useIndexDerivedData sidebar people", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    __resetNostrEventsStoreForTests();
     const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" });
     const bob = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" });
     useTaskMutationStore.setState({
@@ -267,6 +276,10 @@ describe("useIndexDerivedData sidebar people", () => {
 });
 
 describe("useIndexDerivedData current user profile metadata", () => {
+  beforeEach(() => {
+    __resetNostrEventsStoreForTests();
+  });
+
   it("treats a signed-in guest with local name and displayName as already having profile metadata", () => {
     const guestUser: Partial<NDKUser> = {
       pubkey: "a".repeat(64),
@@ -279,7 +292,6 @@ describe("useIndexDerivedData current user profile metadata", () => {
 
     const { result } = renderHook(() =>
       useIndexDerivedData({
-        nostrEvents: [],
         demoTasks: [],
         people: [],
         latestPresenceByAuthor: new Map(),
@@ -308,7 +320,6 @@ describe("useIndexDerivedData current user profile metadata", () => {
 
     const { result } = renderHook(() =>
       useIndexDerivedData({
-        nostrEvents: [],
         demoTasks: [],
         people: [],
         latestPresenceByAuthor: new Map(),
@@ -336,7 +347,6 @@ describe("useIndexDerivedData current user profile metadata", () => {
 
     const { result } = renderHook(() =>
       useIndexDerivedData({
-        nostrEvents: [],
         demoTasks: [],
         people: [],
         latestPresenceByAuthor: new Map(),
@@ -370,7 +380,6 @@ function MentionAutocompleteHarness() {
   const carol = makePerson({ pubkey: "c".repeat(64), name: "carol", displayName: "Carol" });
 
   const derived = useIndexDerivedData({
-    nostrEvents,
     demoTasks: [],
     people: [alice, carol],
     latestPresenceByAuthor: new Map(),
@@ -402,6 +411,10 @@ function MentionAutocompleteHarness() {
 }
 
 describe("useIndexDerivedData mention autocomplete people", () => {
+  beforeEach(() => {
+    seedNostrEventsStore(nostrEvents);
+  });
+
   it("combines active-scope message authors with active-scope cached kind0 profiles", () => {
     render(
       <MemoryRouter>

@@ -4,8 +4,9 @@ import { useCachedPosts } from "@/features/feed-page/controllers/use-cached-post
 import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
 import type { Post, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
-import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
+import type { NostrEventWithRelay } from "@/lib/nostr/types";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
+import { useNostrEvents } from "@/features/feed-page/stores/nostr-events-store";
 import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
@@ -35,7 +36,7 @@ import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
 
 const spamDropCountsByRelay = new Map<string, number>();
-function logSpamDrop(event: CachedNostrEvent, keyword: string): void {
+function logSpamDrop(event: NostrEventWithRelay, keyword: string): void {
   const relayKey = event.relayUrl || event.relayUrls?.[0] || "unknown";
   const prev = spamDropCountsByRelay.get(relayKey) ?? 0;
   spamDropCountsByRelay.set(relayKey, prev + 1);
@@ -49,7 +50,6 @@ function logSpamDrop(event: CachedNostrEvent, keyword: string): void {
 }
 
 export interface UseIndexDerivedDataOptions {
-  nostrEvents: CachedNostrEvent[];
   demoTasks: Post[];
   people: SelectablePerson[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
@@ -87,7 +87,6 @@ function getPostedTagsForRelayScope(
 }
 
 export function useIndexDerivedData({
-  nostrEvents,
   demoTasks,
   people,
   latestPresenceByAuthor,
@@ -100,6 +99,7 @@ export function useIndexDerivedData({
   isHydrating = false,
   hasLiveHydratedScope,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
+  const nostrEvents = useNostrEvents();
   const localTasks = useTaskMutationStore((s) => s.localTasks);
   const postedTags = useTaskMutationStore((s) => s.postedTags);
   const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);

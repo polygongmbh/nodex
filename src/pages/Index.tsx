@@ -153,7 +153,6 @@ function FeedIndexContent() {
     [],
   );
   const {
-    events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
     isHydrating,
   } = useNostrEventCache({
@@ -213,7 +212,6 @@ function FeedIndexContent() {
     currentUser,
     hasCurrentUserProfileMetadata,
   } = useIndexDerivedData({
-    nostrEvents,
     demoTasks,
     people,
     latestPresenceByAuthor,
