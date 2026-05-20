@@ -1,177 +1,236 @@
 import { useSyncExternalStore } from "react";
 import type { Post } from "@/types";
-import type { NostrEventWithRelay } from "@/lib/nostr/types";
-import { NostrEventKind } from "@/lib/nostr/types";
-import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
-import { isTaskStateEventKind } from "@/infrastructure/nostr/task-state-events";
-import { isPriorityPropertyEvent } from "@/infrastructure/nostr/task-property-events";
-import { isDeletionEvent } from "@/infrastructure/nostr/deletion-events";
-import { findSpamKeyword } from "@/lib/nostr/spam-filter";
-import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import {
-  getReplaceableEventKey,
-  isParameterizedReplaceableKind,
-} from "@/infrastructure/nostr/replaceable-events";
-import { preserveTaskListIdentity } from "@/domain/content/task-identity";
+  applyDatesToPost,
+  foldDateUpdateIntoMap,
+  foldPriorityUpdateIntoPost,
+  foldStateUpdateIntoPost,
+  type PostDateLatestMap,
+  type PostDateUpdateRequest,
+  type PostDeletionRequest,
+  type PostPriorityUpdateRequest,
+  type PostStateUpdateRequest,
+} from "@/domain/content/post-updates";
 
-// Owns the live timeline projection. Raw post-relevant events live INSIDE the
-// store; consumers only see Post[]. Routed events (kind 0, kind 7, kind
-// 30315) flow into their own concern stores and never reach here.
+// Stores Post objects keyed by id. The store does NOT know about Nostr
+// events — every input is already a typed Post or a typed fold/delete
+// request. The boundary (post-event-ingest) handles the conversion.
 
-interface IngestablePostEvent {
-  id: string;
-  pubkey: string;
-  created_at: number;
-  kind: number;
-  tags: string[][];
-  content: string;
-  sig?: string;
-  relayUrl?: string;
-  relayUrls?: string[];
+const postsById = new Map<string, Post>();
+const replaceableKeyToPostId = new Map<string, string>();
+
+// Tombstone: a deletion event from author A targeting id X is recorded as
+// (A, X). When a post arrives with author A and id X, it is rejected. Other
+// authors' deletions of the same id are NOT honored (matches NIP-09).
+const deletionsByAuthor = new Map<string, Set<string>>();
+
+// Per-post date bookkeeping. Lives outside the Post so we can do the
+// "latest by created_at per type" merge incrementally without storing
+// the timestamp on the user-facing Post.
+const datesByPostId = new Map<string, PostDateLatestMap>();
+const priorityTimestampByPostId = new Map<string, number>();
+
+// Folds that arrived before their target Post. Once the Post lands, we
+// replay these and clear the bucket. Bounded by a soft cap to keep memory
+// flat in pathological streams.
+const PENDING_FOLDS_CAP = 5000;
+interface PendingFolds {
+  states: PostStateUpdateRequest[];
+  dates: PostDateUpdateRequest[];
+  priorities: PostPriorityUpdateRequest[];
 }
+const pendingFoldsByTargetId = new Map<string, PendingFolds>();
+let pendingFoldsCount = 0;
 
-const POST_EVENT_KINDS: ReadonlySet<number> = new Set([
-  NostrEventKind.Task,
-  NostrEventKind.TextNote,
-  NostrEventKind.ClassifiedListing,
-  NostrEventKind.ClassifiedListingDraft,
-  NostrEventKind.CalendarDateBased,
-  NostrEventKind.CalendarTimeBased,
-  NostrEventKind.Procedure,
-]);
-
-function isFreeFormHashtagKind(kind: number): boolean {
-  return kind === NostrEventKind.TextNote || kind === NostrEventKind.Task;
-}
-
-function hasHashtagSignal(event: Pick<IngestablePostEvent, "tags" | "content">): boolean {
-  return (
-    event.tags.some((tag) => tag[0]?.toLowerCase() === "t" && Boolean(tag[1])) ||
-    /#\w+/.test(event.content)
-  );
-}
-
-function isPostRelevantKind(event: Pick<IngestablePostEvent, "kind" | "tags" | "content">): boolean {
-  if (isTaskStateEventKind(event.kind)) return true;
-  if (isDeletionEvent(event.kind)) return true;
-  if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
-  if (POST_EVENT_KINDS.has(event.kind)) {
-    if (isFreeFormHashtagKind(event.kind)) {
-      // TextNote / Task only count as posts when they carry a hashtag signal.
-      return hasHashtagSignal(event);
-    }
-    return true;
-  }
-  return false;
-}
-
-const eventsById = new Map<string, NostrEventWithRelay>();
-const replaceableKeyToId = new Map<string, string>();
 const subscribers = new Set<() => void>();
 let version = 0;
-let cachedPosts: Post[] = [];
-let cachedPostsAtVersion = -1;
-let suppressedEventIds: ReadonlySet<string> = new Set();
-
-const spamDropCountsByRelay = new Map<string, number>();
-function logSpamDrop(event: IngestablePostEvent, keyword: string): void {
-  const relayKey = event.relayUrl || event.relayUrls?.[0] || "unknown";
-  const prev = spamDropCountsByRelay.get(relayKey) ?? 0;
-  spamDropCountsByRelay.set(relayKey, prev + 1);
-  if (prev === 0) {
-    console.debug(
-      `[spam-filter] dropped kind-1 event ${event.id} from ${relayKey} (matched "${keyword}")`
-    );
-  } else if (prev + 1 === 10 || (prev + 1) % 100 === 0) {
-    console.debug(`[spam-filter] ${prev + 1} kind-1 events dropped from ${relayKey}`);
-  }
-}
+let cachedSnapshot: Post[] = [];
+let cachedSnapshotAtVersion = -1;
+let suppressedIds: ReadonlySet<string> = new Set();
 
 function notifyChange(): void {
   version += 1;
   for (const subscriber of subscribers) subscriber();
 }
 
-function getRelayUrls(event: { relayUrl?: string; relayUrls?: string[] }): string[] {
-  return normalizeRelayUrlScope([
-    ...(event.relayUrls || []),
-    ...(event.relayUrl ? [event.relayUrl] : []),
-  ]);
+function getPendingBucket(targetId: string): PendingFolds {
+  let bucket = pendingFoldsByTargetId.get(targetId);
+  if (!bucket) {
+    bucket = { states: [], dates: [], priorities: [] };
+    pendingFoldsByTargetId.set(targetId, bucket);
+  }
+  return bucket;
 }
 
-export function ingestPostEvent(event: IngestablePostEvent): boolean {
-  if (!event.id) return false;
-  if (!isPostRelevantKind(event)) return false;
-  if (isParameterizedReplaceableKind(event.kind) && getReplaceableEventKey(event) === null) {
-    return false;
+function trimPendingFolds(): void {
+  while (pendingFoldsCount > PENDING_FOLDS_CAP && pendingFoldsByTargetId.size > 0) {
+    // Drop the oldest insertion (Map iteration order is insertion order).
+    const oldestKey = pendingFoldsByTargetId.keys().next().value;
+    if (oldestKey === undefined) break;
+    const bucket = pendingFoldsByTargetId.get(oldestKey);
+    if (!bucket) {
+      pendingFoldsByTargetId.delete(oldestKey);
+      continue;
+    }
+    pendingFoldsCount -= bucket.states.length + bucket.dates.length + bucket.priorities.length;
+    pendingFoldsByTargetId.delete(oldestKey);
   }
-  if (event.kind === NostrEventKind.TextNote && !isPriorityPropertyEvent(event.kind, event.tags)) {
-    const spamKeyword = findSpamKeyword(event.content);
-    if (spamKeyword) {
-      logSpamDrop(event, spamKeyword);
-      return false;
+}
+
+function isDeletedByOwnAuthor(authorPubkey: string, postId: string): boolean {
+  return deletionsByAuthor.get(authorPubkey)?.has(postId) ?? false;
+}
+
+function applyPendingFolds(post: Post): Post {
+  const bucket = pendingFoldsByTargetId.get(post.id);
+  if (!bucket) return post;
+  let next = post;
+  for (const state of bucket.states) {
+    next = foldStateUpdateIntoPost(next, state);
+  }
+  let dateMap: PostDateLatestMap | undefined;
+  for (const dateUpdate of bucket.dates) {
+    dateMap = foldDateUpdateIntoMap(dateMap, dateUpdate);
+  }
+  if (dateMap && dateMap.size > 0) {
+    datesByPostId.set(post.id, dateMap);
+    next = applyDatesToPost(next, dateMap);
+  }
+  let priorityTimestamp = priorityTimestampByPostId.get(post.id) ?? 0;
+  for (const priorityUpdate of bucket.priorities) {
+    const folded = foldPriorityUpdateIntoPost(next, priorityUpdate, priorityTimestamp);
+    if (folded) {
+      next = folded.post;
+      priorityTimestamp = folded.timestampMs;
     }
   }
+  if (priorityTimestamp > 0) priorityTimestampByPostId.set(post.id, priorityTimestamp);
+  pendingFoldsCount -= bucket.states.length + bucket.dates.length + bucket.priorities.length;
+  pendingFoldsByTargetId.delete(post.id);
+  return next;
+}
 
-  const existing = eventsById.get(event.id);
-  const incomingRelays = getRelayUrls(event);
-  const mergedRelays = existing
-    ? Array.from(new Set([...getRelayUrls(existing), ...incomingRelays])).sort()
-    : incomingRelays;
+export interface IngestPostInput {
+  post: Post;
+  replaceableKey?: string | null;
+}
 
-  if (mergedRelays.length === 0) {
-    console.warn("[posts-store] dropping event without relay attribution", {
-      id: event.id,
-      kind: event.kind,
-      pubkey: event.pubkey,
-    });
-    return false;
-  }
+export function ingestPost({ post, replaceableKey }: IngestPostInput): boolean {
+  if (isDeletedByOwnAuthor(post.author.pubkey, post.id)) return false;
 
-  const normalized: NostrEventWithRelay = {
-    id: event.id,
-    pubkey: event.pubkey,
-    created_at: event.created_at,
-    kind: event.kind,
-    tags: event.tags,
-    content: event.content,
-    sig: event.sig || "",
-    relayUrl: mergedRelays[0],
-    relayUrls: mergedRelays,
-  };
-
-  const replaceableKey = getReplaceableEventKey(normalized);
   if (replaceableKey) {
-    const replacedId = replaceableKeyToId.get(replaceableKey);
-    if (replacedId && replacedId !== normalized.id) {
-      eventsById.delete(replacedId);
+    const existingId = replaceableKeyToPostId.get(replaceableKey);
+    if (existingId && existingId !== post.id) {
+      const existing = postsById.get(existingId);
+      if (existing && existing.timestamp.getTime() > post.timestamp.getTime()) {
+        // Newer existing wins; drop the incoming.
+        return false;
+      }
+      postsById.delete(existingId);
+      datesByPostId.delete(existingId);
+      priorityTimestampByPostId.delete(existingId);
     }
-    replaceableKeyToId.set(replaceableKey, normalized.id);
+    replaceableKeyToPostId.set(replaceableKey, post.id);
   }
 
-  eventsById.set(normalized.id, normalized);
+  const withFolds = applyPendingFolds(post);
+  postsById.set(withFolds.id, withFolds);
   notifyChange();
   return true;
 }
 
+export function applyStateUpdate(update: PostStateUpdateRequest): void {
+  const post = postsById.get(update.targetId);
+  if (!post) {
+    if (isDeletedByOwnAuthor(update.authorPubkey, update.targetId)) return;
+    const bucket = getPendingBucket(update.targetId);
+    bucket.states.push(update);
+    pendingFoldsCount += 1;
+    trimPendingFolds();
+    return;
+  }
+  const folded = foldStateUpdateIntoPost(post, update);
+  if (folded === post) return;
+  postsById.set(post.id, folded);
+  notifyChange();
+}
+
+export function applyDateUpdate(update: PostDateUpdateRequest): void {
+  const post = postsById.get(update.targetId);
+  if (!post) {
+    const bucket = getPendingBucket(update.targetId);
+    bucket.dates.push(update);
+    pendingFoldsCount += 1;
+    trimPendingFolds();
+    return;
+  }
+  const dateMap = foldDateUpdateIntoMap(datesByPostId.get(post.id), update);
+  datesByPostId.set(post.id, dateMap);
+  const next = applyDatesToPost(post, dateMap);
+  if (next === post) return;
+  postsById.set(post.id, next);
+  notifyChange();
+}
+
+export function applyPriorityUpdate(update: PostPriorityUpdateRequest): void {
+  const post = postsById.get(update.targetId);
+  if (!post) {
+    const bucket = getPendingBucket(update.targetId);
+    bucket.priorities.push(update);
+    pendingFoldsCount += 1;
+    trimPendingFolds();
+    return;
+  }
+  const previousTimestamp = priorityTimestampByPostId.get(post.id) ?? 0;
+  const folded = foldPriorityUpdateIntoPost(post, update, previousTimestamp);
+  if (!folded) return;
+  postsById.set(post.id, folded.post);
+  priorityTimestampByPostId.set(post.id, folded.timestampMs);
+  notifyChange();
+}
+
+export function applyDeletion(deletion: PostDeletionRequest): void {
+  let authorTombstones = deletionsByAuthor.get(deletion.byPubkey);
+  if (!authorTombstones) {
+    authorTombstones = new Set();
+    deletionsByAuthor.set(deletion.byPubkey, authorTombstones);
+  }
+  let removedAny = false;
+  for (const targetId of deletion.targetIds) {
+    authorTombstones.add(targetId);
+    const existing = postsById.get(targetId);
+    if (existing && existing.author.pubkey === deletion.byPubkey) {
+      postsById.delete(targetId);
+      datesByPostId.delete(targetId);
+      priorityTimestampByPostId.delete(targetId);
+      removedAny = true;
+    }
+    const pending = pendingFoldsByTargetId.get(targetId);
+    if (pending) {
+      pendingFoldsCount -= pending.states.length + pending.dates.length + pending.priorities.length;
+      pendingFoldsByTargetId.delete(targetId);
+    }
+  }
+  if (removedAny) notifyChange();
+}
+
 export function setPostsSuppression(ids: ReadonlySet<string>): void {
-  if (ids === suppressedEventIds) return;
-  if (ids.size === suppressedEventIds.size && [...ids].every((id) => suppressedEventIds.has(id))) return;
-  suppressedEventIds = ids;
+  if (ids === suppressedIds) return;
+  if (ids.size === suppressedIds.size && [...ids].every((id) => suppressedIds.has(id))) return;
+  suppressedIds = ids;
   notifyChange();
 }
 
 function projectPosts(): Post[] {
-  if (cachedPostsAtVersion === version) return cachedPosts;
-  const events: NostrEventWithRelay[] = [];
-  for (const event of eventsById.values()) {
-    if (suppressedEventIds.has(event.id)) continue;
-    events.push(event);
+  if (cachedSnapshotAtVersion === version) return cachedSnapshot;
+  const out: Post[] = [];
+  for (const post of postsById.values()) {
+    if (suppressedIds.has(post.id)) continue;
+    out.push(post);
   }
-  const fresh = nostrEventsToTasks(events);
-  cachedPosts = preserveTaskListIdentity(cachedPosts, fresh);
-  cachedPostsAtVersion = version;
-  return cachedPosts;
+  cachedSnapshot = out;
+  cachedSnapshotAtVersion = version;
+  return cachedSnapshot;
 }
 
 export function getPosts(): Post[] {
@@ -195,11 +254,15 @@ export function usePosts(): Post[] {
 }
 
 export function __resetPostsStoreForTests(): void {
-  eventsById.clear();
-  replaceableKeyToId.clear();
-  cachedPosts = [];
-  cachedPostsAtVersion = -1;
+  postsById.clear();
+  replaceableKeyToPostId.clear();
+  deletionsByAuthor.clear();
+  datesByPostId.clear();
+  priorityTimestampByPostId.clear();
+  pendingFoldsByTargetId.clear();
+  pendingFoldsCount = 0;
+  cachedSnapshot = [];
+  cachedSnapshotAtVersion = -1;
   version = 0;
-  suppressedEventIds = new Set();
-  spamDropCountsByRelay.clear();
+  suppressedIds = new Set();
 }

@@ -16,7 +16,7 @@ import {
 } from "@/features/feed-page/stores/reactions-registry";
 import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
 import { ingestPresenceEvent } from "@/lib/presence-status";
-import { ingestPostEvent } from "@/features/feed-page/stores/posts-store";
+import { ingestPostEvent } from "@/infrastructure/nostr/post-event-ingest";
 import { noteSeenPubkey } from "@/features/feed-page/stores/seen-pubkeys-store";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
@@ -137,6 +137,7 @@ function FeedIndexContent() {
       relayUrls?: string[];
     }) => {
       noteSeenPubkey(event.pubkey);
+      const postEventLike = { ...event, sig: event.sig ?? "" };
       if (event.kind === NostrEventKind.Reaction) {
         mergeReactionEvents([event]);
         return;
@@ -145,7 +146,7 @@ function FeedIndexContent() {
         // NIP-09 deletions can target a reaction OR a task; both stores get to
         // see them and decide whether the targeted id is theirs.
         mergeReactionEvents([event]);
-        ingestPostEvent(event);
+        ingestPostEvent(postEventLike);
         return;
       }
       if (event.kind === NostrEventKind.Metadata) {
@@ -156,7 +157,7 @@ function FeedIndexContent() {
         ingestPresenceEvent(event);
         return;
       }
-      ingestPostEvent(event);
+      ingestPostEvent(postEventLike);
     },
     [],
   );

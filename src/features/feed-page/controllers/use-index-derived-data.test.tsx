@@ -6,10 +6,8 @@ import { useIndexDerivedData } from "./use-index-derived-data";
 import { useChannelFilterController } from "./use-channel-filter-controller";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
-import {
-  ingestPostEvent,
-  __resetPostsStoreForTests,
-} from "@/features/feed-page/stores/posts-store";
+import { __resetPostsStoreForTests } from "@/features/feed-page/stores/posts-store";
+import { ingestPostEvent } from "@/infrastructure/nostr/post-event-ingest";
 import type { NostrEventWithRelay } from "@/lib/nostr/types";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";

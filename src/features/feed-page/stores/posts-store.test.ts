@@ -1,24 +1,32 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { NostrEventKind } from "@/lib/nostr/types";
+import type { Post, TaskPost } from "@/types";
+import { makePerson } from "@/test/fixtures";
 import {
-  ingestPostEvent,
+  applyDateUpdate,
+  applyDeletion,
+  applyPriorityUpdate,
+  applyStateUpdate,
+  ingestPost,
   getPosts,
   setPostsSuppression,
   __resetPostsStoreForTests,
 } from "./posts-store";
 
-function makePostEvent(
-  overrides: Partial<Parameters<typeof ingestPostEvent>[0]> = {}
-): Parameters<typeof ingestPostEvent>[0] {
+function makeTaskPost(overrides: Partial<TaskPost> = {}): TaskPost {
+  const author = overrides.author ?? makePerson({ pubkey: "a".repeat(64) });
   return {
-    id: "post-1",
-    pubkey: "a".repeat(64),
-    created_at: 1000,
-    kind: NostrEventKind.TextNote,
-    tags: [["t", "ops"]],
-    content: "#ops",
-    sig: "sig",
-    relayUrl: "wss://relay-a.example",
+    id: "task-1",
+    kind: NostrEventKind.Task,
+    author,
+    content: "#ops do the thing",
+    tags: ["ops"],
+    relays: ["relay-a"],
+    timestamp: new Date("2026-05-01T00:00:00Z"),
+    stateUpdates: [],
+    dates: [],
+    assigneePubkeys: [],
+    mentions: [],
     ...overrides,
   };
 }
@@ -28,73 +36,117 @@ describe("posts-store", () => {
     __resetPostsStoreForTests();
   });
 
-  it("projects ingested events into Post objects", () => {
-    const accepted = ingestPostEvent(makePostEvent({ id: "post-1" }));
-    expect(accepted).toBe(true);
-
+  it("ingests a Post and exposes it via getPosts", () => {
+    ingestPost({ post: makeTaskPost({ id: "task-a" }) });
     const posts = getPosts();
-    expect(posts).toHaveLength(1);
-    expect(posts[0].id).toBe("post-1");
+    expect(posts.map((p) => p.id)).toEqual(["task-a"]);
   });
 
-  it("rejects unrelated kinds at the ingestion boundary", () => {
-    const accepted = ingestPostEvent(
-      makePostEvent({ id: "kind-7", kind: NostrEventKind.Reaction })
-    );
-    expect(accepted).toBe(false);
+  it("folds a state update into an existing Post", () => {
+    const author = makePerson({ pubkey: "a".repeat(64) });
+    ingestPost({ post: makeTaskPost({ id: "task-a", author }) });
+    applyStateUpdate({
+      targetId: "task-a",
+      updateId: "state-1",
+      newState: "done",
+      authorPubkey: author.pubkey,
+      timestampMs: Date.now(),
+    });
+    const [post] = getPosts() as TaskPost[];
+    expect(post.stateUpdates).toHaveLength(1);
+    expect(post.stateUpdates[0].state).toBe("done");
+  });
+
+  it("buffers a state update arriving before its target Post and replays on ingest", () => {
+    const author = makePerson({ pubkey: "a".repeat(64) });
+    applyStateUpdate({
+      targetId: "task-late",
+      updateId: "state-1",
+      newState: "done",
+      authorPubkey: author.pubkey,
+      timestampMs: Date.now(),
+    });
+
+    expect(getPosts()).toHaveLength(0);
+
+    ingestPost({ post: makeTaskPost({ id: "task-late", author }) });
+    const [post] = getPosts() as TaskPost[];
+    expect(post.stateUpdates).toHaveLength(1);
+    expect(post.stateUpdates[0].state).toBe("done");
+  });
+
+  it("applies a deletion targeting an existing Post and rejects subsequent re-ingest by the same author", () => {
+    const author = makePerson({ pubkey: "a".repeat(64) });
+    ingestPost({ post: makeTaskPost({ id: "task-doomed", author }) });
+    applyDeletion({ targetIds: ["task-doomed"], byPubkey: author.pubkey });
+
+    expect(getPosts()).toHaveLength(0);
+
+    const replayAccepted = ingestPost({ post: makeTaskPost({ id: "task-doomed", author }) });
+    expect(replayAccepted).toBe(false);
     expect(getPosts()).toHaveLength(0);
   });
 
-  it("drops orphan events with no relay attribution", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const accepted = ingestPostEvent(
-      makePostEvent({ id: "orphan", relayUrl: undefined, relayUrls: undefined })
-    );
-    expect(accepted).toBe(false);
-    expect(warnSpy).toHaveBeenCalled();
-    warnSpy.mockRestore();
-  });
-
-  it("filters out events flagged as spam at ingest time", () => {
-    const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
-    const spammy = makePostEvent({
-      id: "spam-1",
-      content: "Earn $$$ from home http://scam.example #ops",
-    });
-    // Spam filter only kicks in for TextNote without priority property tags.
-    // If findSpamKeyword returns falsy for this content the test is moot;
-    // assert the ingest is accepted in that case rather than asserting on the
-    // spam-filter's specific dictionary.
-    ingestPostEvent(spammy);
-    debugSpy.mockRestore();
+  it("ignores a deletion from a different author than the post owner", () => {
+    const author = makePerson({ pubkey: "a".repeat(64) });
+    ingestPost({ post: makeTaskPost({ id: "task-x", author }) });
+    applyDeletion({ targetIds: ["task-x"], byPubkey: "b".repeat(64) });
+    expect(getPosts().map((p) => p.id)).toEqual(["task-x"]);
   });
 
   it("filters out suppressed event ids when projecting", () => {
-    ingestPostEvent(makePostEvent({ id: "keep" }));
-    ingestPostEvent(makePostEvent({ id: "drop", pubkey: "b".repeat(64) }));
-
-    expect(getPosts().map((p) => p.id).sort()).toEqual(["drop", "keep"]);
+    ingestPost({ post: makeTaskPost({ id: "keep" }) });
+    ingestPost({ post: makeTaskPost({ id: "drop" }) });
 
     setPostsSuppression(new Set(["drop"]));
-    expect(getPosts().map((p) => p.id)).toEqual(["keep"]);
+    expect(getPosts().map((p) => p.id).sort()).toEqual(["keep"]);
 
     setPostsSuppression(new Set());
     expect(getPosts().map((p) => p.id).sort()).toEqual(["drop", "keep"]);
   });
 
-  it("merges relay attribution on duplicate ingest", () => {
-    ingestPostEvent(makePostEvent({ id: "dup", relayUrl: "wss://relay-a.example" }));
-    ingestPostEvent(makePostEvent({ id: "dup", relayUrl: "wss://relay-b.example" }));
-
-    const posts = getPosts();
-    expect(posts).toHaveLength(1);
-    expect(posts[0].relays.length).toBe(2);
+  it("replaces a replaceable Post when a newer one with the same key arrives", () => {
+    const author = makePerson({ pubkey: "a".repeat(64) });
+    const oldPost = makeTaskPost({
+      id: "listing-old",
+      author,
+      timestamp: new Date("2026-04-01"),
+    });
+    const newPost = makeTaskPost({
+      id: "listing-new",
+      author,
+      timestamp: new Date("2026-05-01"),
+    });
+    ingestPost({ post: oldPost, replaceableKey: "30402:author:slug" });
+    ingestPost({ post: newPost, replaceableKey: "30402:author:slug" });
+    expect(getPosts().map((p) => p.id)).toEqual(["listing-new"]);
   });
 
-  it("reuses the projected Post[] across reads when nothing changed", () => {
-    ingestPostEvent(makePostEvent({ id: "post-1" }));
-    const first = getPosts();
-    const second = getPosts();
-    expect(first).toBe(second);
+  it("applies a priority update incrementally", () => {
+    const author = makePerson({ pubkey: "a".repeat(64) });
+    ingestPost({ post: makeTaskPost({ id: "task-prio", author }) });
+    applyPriorityUpdate({
+      targetId: "task-prio",
+      authorPubkey: author.pubkey,
+      priority: 7,
+      timestampMs: Date.now(),
+    });
+    const [post] = getPosts() as TaskPost[];
+    expect(post.priority).toBe(7);
+  });
+
+  it("applies a date update incrementally", () => {
+    const author = makePerson({ pubkey: "a".repeat(64) });
+    ingestPost({ post: makeTaskPost({ id: "task-date", author }) });
+    applyDateUpdate({
+      targetId: "task-date",
+      authorPubkey: author.pubkey,
+      type: "due",
+      date: new Date("2026-06-15T00:00:00Z"),
+      timestampMs: Date.now(),
+    });
+    const [post] = getPosts() as TaskPost[];
+    expect(post.dates).toHaveLength(1);
+    expect(post.dates[0].type).toBe("due");
   });
 });
