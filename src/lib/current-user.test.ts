@@ -20,13 +20,17 @@ const people: SelectablePerson[] = [
 ];
 
 describe("resolveCurrentUser", () => {
-  it("prefers authenticated pubkey match", () => {
+  it("returns the person matching the authenticated pubkey", () => {
     const current = resolveCurrentUser(people, { pubkey: "pubkey-alice" });
     expect(current?.name).toBe("alice");
   });
 
-  it("falls back to local 'me' profile", () => {
-    const current = resolveCurrentUser(people, { pubkey: "unknown" });
-    expect(current?.name).toBe("me");
+  it("returns undefined when no auth user is provided", () => {
+    expect(resolveCurrentUser(people, null)).toBeUndefined();
+    expect(resolveCurrentUser(people, undefined)).toBeUndefined();
+  });
+
+  it("returns undefined when the authenticated pubkey has no matching person", () => {
+    expect(resolveCurrentUser(people, { pubkey: "unknown" })).toBeUndefined();
   });
 });
