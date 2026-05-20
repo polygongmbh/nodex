@@ -18,7 +18,7 @@ import {
   subscribeToPresenceChanges,
   type LatestPresenceSnapshot,
 } from "@/lib/presence-status";
-import { useNostrEvents } from "@/features/feed-page/stores/nostr-events-store";
+import { useSeenPubkeys } from "@/features/feed-page/stores/seen-pubkeys-store";
 
 interface UserProfileSnapshot {
   name?: string;
@@ -75,7 +75,7 @@ export function useKind0People(
   selectedRelayUrls: string[],
   user: NostrUserLike | null,
 ): UseKind0PeopleResult {
-  const nostrEvents = useNostrEvents();
+  const seenPubkeys = useSeenPubkeys();
   const normalizedSelectedRelayUrls = useMemo(
     () => normalizeRelayUrlScope(selectedRelayUrls),
     [selectedRelayUrls]
@@ -144,13 +144,13 @@ export function useKind0People(
       Array.from(
         new Set(
           [
-            ...nostrEvents.map((event) => event.pubkey?.trim().toLowerCase()),
+            ...seenPubkeys,
             ...cachedKind0Events.map((event) => event.pubkey?.trim().toLowerCase()),
           ]
             .filter((pubkey): pubkey is string => Boolean(pubkey))
         )
       ),
-    [cachedKind0Events, nostrEvents]
+    [cachedKind0Events, seenPubkeys]
   );
 
   useEffect(() => {

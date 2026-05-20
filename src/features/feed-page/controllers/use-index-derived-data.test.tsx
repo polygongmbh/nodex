@@ -7,9 +7,9 @@ import { useChannelFilterController } from "./use-channel-filter-controller";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import {
-  ingestNostrEvent,
-  __resetNostrEventsStoreForTests,
-} from "@/features/feed-page/stores/nostr-events-store";
+  ingestPostEvent,
+  __resetPostsStoreForTests,
+} from "@/features/feed-page/stores/posts-store";
 import type { NostrEventWithRelay } from "@/lib/nostr/types";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -67,8 +67,8 @@ const nostrEvents: NostrEventWithRelay[] = [
 ];
 
 function seedNostrEventsStore(events: NostrEventWithRelay[]): void {
-  __resetNostrEventsStoreForTests();
-  for (const event of events) ingestNostrEvent(event);
+  __resetPostsStoreForTests();
+  for (const event of events) ingestPostEvent(event);
 }
 
 function Harness() {
@@ -224,7 +224,7 @@ function SidebarPeopleHarness() {
 describe("useIndexDerivedData sidebar people", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    __resetNostrEventsStoreForTests();
+    __resetPostsStoreForTests();
     const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" });
     const bob = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" });
     useTaskMutationStore.setState({
@@ -277,7 +277,7 @@ describe("useIndexDerivedData sidebar people", () => {
 
 describe("useIndexDerivedData current user profile metadata", () => {
   beforeEach(() => {
-    __resetNostrEventsStoreForTests();
+    __resetPostsStoreForTests();
   });
 
   it("treats a signed-in guest with local name and displayName as already having profile metadata", () => {

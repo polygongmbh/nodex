@@ -1,22 +1,21 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useCachedPosts } from "@/features/feed-page/controllers/use-cached-posts";
 import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
 import type { Post, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
-import type { NostrEventWithRelay } from "@/lib/nostr/types";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
-import { useNostrEvents } from "@/features/feed-page/stores/nostr-events-store";
+import {
+  setPostsSuppression,
+  usePosts,
+} from "@/features/feed-page/stores/posts-store";
 import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
-import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
-import { findSpamKeyword } from "@/lib/nostr/spam-filter";
 import {
   applyTaskSortOverlays,
   dedupeMergedTasks,
 } from "@/domain/content/task-collections";
 import { mergeTasks } from "@/domain/content/task-merge";
-import { preserveTaskListIdentity } from "@/domain/content/task-identity";
 import { deriveChannels } from "@/domain/content/channels";
 import { useCoreChannels } from "@/lib/use-core-channels";
 import {
@@ -28,26 +27,9 @@ import {
   type PersonFrecencyState,
 } from "@/lib/person-frecency";
 import { resolveCurrentUser } from "@/lib/current-user";
-import { NostrEventKind } from "@/lib/nostr/types";
-import { isTaskStateEventKind } from "@/infrastructure/nostr/task-state-events";
-import { isPriorityPropertyEvent } from "@/infrastructure/nostr/task-property-events";
 import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
-
-const spamDropCountsByRelay = new Map<string, number>();
-function logSpamDrop(event: NostrEventWithRelay, keyword: string): void {
-  const relayKey = event.relayUrl || event.relayUrls?.[0] || "unknown";
-  const prev = spamDropCountsByRelay.get(relayKey) ?? 0;
-  spamDropCountsByRelay.set(relayKey, prev + 1);
-  if (prev === 0) {
-    console.debug(
-      `[spam-filter] dropped kind-1 event ${event.id} from ${relayKey} (matched "${keyword}")`
-    );
-  } else if (prev + 1 === 10 || (prev + 1) % 100 === 0) {
-    console.debug(`[spam-filter] ${prev + 1} kind-1 events dropped from ${relayKey}`);
-  }
-}
 
 export interface UseIndexDerivedDataOptions {
   demoTasks: Post[];
@@ -96,64 +78,22 @@ export function useIndexDerivedData({
   relays,
   channelFrecencyState,
   personFrecencyState,
-  isHydrating = false,
+  isHydrating: _isHydrating = false,
   hasLiveHydratedScope,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
-  const nostrEvents = useNostrEvents();
   const localTasks = useTaskMutationStore((s) => s.localTasks);
   const postedTags = useTaskMutationStore((s) => s.postedTags);
   const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
   const { coreChannels } = useCoreChannels();
-  const filteredNostrEvents = useMemo(() => {
-    return nostrEvents.filter((event) => {
-      if (suppressedNostrEventIds.has(event.id)) return false;
-      if (event.kind === NostrEventKind.Metadata) return false;
-      if (isTaskStateEventKind(event.kind)) return true;
-      if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
-      if (event.kind === NostrEventKind.ClassifiedListing) return true;
-      if (event.kind === NostrEventKind.Reaction) return true;
-      if (event.kind === NostrEventKind.EventDeletion) return true;
-      if (
-        event.kind === NostrEventKind.CalendarDateBased ||
-        event.kind === NostrEventKind.CalendarTimeBased
-      ) {
-        return true;
-      }
-      const hasTags =
-        event.tags.some((tag) => tag[0]?.toLowerCase() === "t" && tag[1]) ||
-        /#\w+/.test(event.content);
-      if (!hasTags) return false;
-      if (event.kind === NostrEventKind.TextNote) {
-        const spamKeyword = findSpamKeyword(event.content);
-        if (spamKeyword) {
-          logSpamDrop(event, spamKeyword);
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [nostrEvents, suppressedNostrEventIds]);
 
-  const lastNostrTasksRef = useRef<Post[]>([]);
-  const nostrTasks: Post[] = useMemo(() => {
-    if (isHydrating) return lastNostrTasksRef.current;
-    const fresh = nostrEventsToTasks(
-      filteredNostrEvents.map((event) => ({
-        id: event.id,
-        pubkey: event.pubkey,
-        created_at: event.created_at,
-        kind: event.kind as NostrEventKind,
-        tags: event.tags,
-        content: event.content,
-        sig: event.sig || "",
-        relayUrl: event.relayUrl,
-        relayUrls: event.relayUrls,
-      })),
-    );
-    const tasks = preserveTaskListIdentity(lastNostrTasksRef.current, fresh);
-    lastNostrTasksRef.current = tasks;
-    return tasks;
-  }, [filteredNostrEvents, isHydrating]);
+  // Push the suppression set down so posts-store can skip suppressed ids
+  // when projecting. Re-renders driven only by suppression are dropped by
+  // posts-store's set-equality check.
+  useEffect(() => {
+    setPostsSuppression(suppressedNostrEventIds);
+  }, [suppressedNostrEventIds]);
+
+  const nostrTasks: Post[] = usePosts();
 
   const cachedPosts = useCachedPosts({
     activeRelayIds: effectiveActiveRelayIds,

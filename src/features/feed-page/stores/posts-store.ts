@@ -40,11 +40,28 @@ const POST_EVENT_KINDS: ReadonlySet<number> = new Set([
   NostrEventKind.Procedure,
 ]);
 
-function isPostRelevantKind(event: Pick<IngestablePostEvent, "kind" | "tags">): boolean {
-  if (POST_EVENT_KINDS.has(event.kind)) return true;
+function isFreeFormHashtagKind(kind: number): boolean {
+  return kind === NostrEventKind.TextNote || kind === NostrEventKind.Task;
+}
+
+function hasHashtagSignal(event: Pick<IngestablePostEvent, "tags" | "content">): boolean {
+  return (
+    event.tags.some((tag) => tag[0]?.toLowerCase() === "t" && Boolean(tag[1])) ||
+    /#\w+/.test(event.content)
+  );
+}
+
+function isPostRelevantKind(event: Pick<IngestablePostEvent, "kind" | "tags" | "content">): boolean {
   if (isTaskStateEventKind(event.kind)) return true;
   if (isDeletionEvent(event.kind)) return true;
   if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
+  if (POST_EVENT_KINDS.has(event.kind)) {
+    if (isFreeFormHashtagKind(event.kind)) {
+      // TextNote / Task only count as posts when they carry a hashtag signal.
+      return hasHashtagSignal(event);
+    }
+    return true;
+  }
   return false;
 }
 
