@@ -12,11 +12,11 @@ import { OnboardingController } from "@/components/onboarding/OnboardingControll
 import { WelcomeController } from "@/components/welcome/WelcomeController";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
-  bootstrapReactions,
   mergeReactionEvents,
   setReactionsViewerPubkey,
 } from "@/features/feed-page/stores/reactions-registry";
 import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
+import { ingestPresenceEvent } from "@/lib/presence-status";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useChannelFilterController } from "@/features/feed-page/controllers/use-channel-filter-controller";
@@ -143,6 +143,10 @@ function FeedIndexContent() {
       }
       if (event.kind === NostrEventKind.Metadata) {
         ingestKind0Event(event);
+        return;
+      }
+      if (event.kind === NostrEventKind.UserStatus) {
+        ingestPresenceEvent(event);
       }
     },
     [],
@@ -162,16 +166,6 @@ function FeedIndexContent() {
   useEffect(() => {
     setReactionsViewerPubkey(user?.pubkey);
   }, [user?.pubkey]);
-  const relaySetSignature = useMemo(
-    () => Array.from(nostrRelayIdSet).sort().join(","),
-    [nostrRelayIdSet],
-  );
-  useEffect(() => {
-    // Subscription is torn down and rebuilt when the relay set changes, so
-    // the in-memory reactions registry must reset too — otherwise reactions
-    // from a previous scope linger after the underlying events are gone.
-    bootstrapReactions([], user?.pubkey);
-  }, [relaySetSignature, user?.pubkey]);
 
   const {
     people,

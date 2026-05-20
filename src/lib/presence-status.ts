@@ -84,6 +84,58 @@ export function deriveLatestPresenceByAuthor(
   return latestPresenceByAuthor;
 }
 
+// In-memory presence map fed by the subscription dispatcher. Hooks read it
+// via useSyncExternalStore so kind 30315 events update presence-aware UI
+// surfaces without going through the central event cache.
+const presenceMap = new Map<string, LatestPresenceSnapshot>();
+const presenceSubscribers = new Set<() => void>();
+let presenceMapVersion = 0;
+
+function notifyPresenceSubscribers(): void {
+  presenceMapVersion += 1;
+  for (const notify of presenceSubscribers) notify();
+}
+
+export function ingestPresenceEvent(event: PresenceLikeEvent): boolean {
+  const authorId = event.pubkey?.trim().toLowerCase();
+  if (!authorId) return false;
+  const presence = parsePresenceTags(event.tags);
+  if (!presence) return false;
+  const createdAtMs = (event.created_at || 0) * 1000;
+  const previous = presenceMap.get(authorId);
+  if (previous && createdAtMs < previous.reportedAtMs) return false;
+  if (
+    previous &&
+    createdAtMs === previous.reportedAtMs &&
+    previous.state === presence.state &&
+    previous.view === presence.view &&
+    previous.taskId === presence.taskId
+  ) {
+    return false;
+  }
+  presenceMap.set(authorId, {
+    reportedAtMs: createdAtMs,
+    state: presence.state,
+    view: presence.view,
+    taskId: presence.taskId,
+  });
+  notifyPresenceSubscribers();
+  return true;
+}
+
+export function getLatestPresenceByAuthor(): Map<string, LatestPresenceSnapshot> {
+  return presenceMap;
+}
+
+export function getPresenceMapVersion(): number {
+  return presenceMapVersion;
+}
+
+export function subscribeToPresenceChanges(callback: () => void): () => void {
+  presenceSubscribers.add(callback);
+  return () => { presenceSubscribers.delete(callback); };
+}
+
 /**
  * Single source of truth for turning the raw NIP-38 presence signal (and any
  * recent activity timestamp) into the online/recent/offline state shown in

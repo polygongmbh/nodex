@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import type { SelectablePerson } from "@/types/person";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
@@ -15,7 +15,9 @@ import {
 } from "@/infrastructure/nostr/people-from-kind0";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import {
-  deriveLatestPresenceByAuthor,
+  getLatestPresenceByAuthor,
+  getPresenceMapVersion,
+  subscribeToPresenceChanges,
   type LatestPresenceSnapshot,
 } from "@/lib/presence-status";
 
@@ -105,11 +107,12 @@ export function useKind0People(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRelayScopeKey]);
 
-  const latestPresenceByAuthor = useMemo(() => {
-    return deriveLatestPresenceByAuthor(
-      nostrEvents.filter((event) => event.kind === NostrEventKind.UserStatus),
-    );
-  }, [nostrEvents]);
+  // Subscribed instead of derived from nostrEvents: kind 30315 ingests through
+  // the subscription dispatcher into the presence-status module's in-memory
+  // map. The version counter is what useSyncExternalStore re-reads on; the
+  // map identity itself is stable.
+  useSyncExternalStore(subscribeToPresenceChanges, getPresenceMapVersion, getPresenceMapVersion);
+  const latestPresenceByAuthor = getLatestPresenceByAuthor();
 
   const supplementalLatestActivityByAuthor = useMemo(() => {
     const latestActivePresenceByAuthor = new Map<string, number>();
