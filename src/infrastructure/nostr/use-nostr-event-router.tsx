@@ -13,7 +13,10 @@ import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 // turns into a small handful of synchronous flush batches — within each
 // batch React batches the resulting state updates into one render.
 
-const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
+// Fallback cap on how long to wait for a relay's stored-events backfill
+// (EOSE/close) before flipping out of hydration. No local event cache is
+// consulted here — the timeout governs the relay's server-side flush.
+const BOOTSTRAP_EOSE_TIMEOUT_MS = 8000;
 // 200 events fit easily inside a 16ms frame budget with the typed
 // posts-store's O(1) folds, so we drain that many synchronously per tick
 // and keep the inter-batch delay at the cross-microtask coalesce window.
@@ -205,7 +208,7 @@ export function useNostrEventRouter({
     setIsHydrating(true);
     bootstrapTimeoutRef.current = window.setTimeout(() => {
       finalizeBootstrapScopeRef.current();
-    }, CACHE_BOOTSTRAP_MAX_AGE_MS);
+    }, BOOTSTRAP_EOSE_TIMEOUT_MS);
 
     const subscription = subscribeRef.current(
       [{ kinds: subscribedKindsRef.current }],

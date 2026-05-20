@@ -227,6 +227,9 @@ export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: strin
     if (!normalizedRelayUrl) return false;
     storageKey = getRelayStorageKey(normalizedRelayUrl);
   }
+  // Make sure any pending per-event ingest for this bucket is folded in
+  // before we apply this bulk update, so we don't lose buffered events.
+  flushPendingKind0ForStorageKey(storageKey);
   const changed = applyKind0CacheUpdate(storageKey, events);
   if (changed) notifyKind0Subscribers();
   return changed;
@@ -239,6 +242,7 @@ export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
   const storageKey = getRelayStorageKey(normalizedRelayUrl);
   kind0InMemoryByStorageKey.delete(storageKey);
   dirtyStorageKeys.delete(storageKey);
+  pendingKind0ByStorageKey.delete(storageKey);
   try {
     window.localStorage.removeItem(storageKey);
   } catch {
@@ -271,10 +275,65 @@ interface IngestableKind0Event {
   relayUrls?: string[];
 }
 
+// Buffer for per-event ingest. The dispatcher fires once per kind 0 event
+// it sees on the wire; running the full merge/sort/slice + cross-relay
+// reread per event during a backfill burst was allocating ~10 large arrays
+// per event (the 3.5.0 path batched into a single useEffect per render).
+// We buffer here and drain on a short debounce, collapsing N events × M
+// relays into one merge per relay bucket.
+const pendingKind0ByStorageKey = new Map<string, Kind0LikeEvent[]>();
+let pendingKind0FlushTimer: number | null = null;
+const PENDING_KIND0_FLUSH_DELAY_MS = 64;
+
+function schedulePendingKind0Flush(): void {
+  if (pendingKind0ByStorageKey.size === 0) return;
+  if (typeof window === "undefined") {
+    flushAllPendingKind0();
+    return;
+  }
+  if (pendingKind0FlushTimer !== null) return;
+  pendingKind0FlushTimer = window.setTimeout(() => {
+    pendingKind0FlushTimer = null;
+    flushAllPendingKind0();
+  }, PENDING_KIND0_FLUSH_DELAY_MS);
+}
+
+function flushPendingKind0ForStorageKey(storageKey: string): boolean {
+  const pending = pendingKind0ByStorageKey.get(storageKey);
+  if (!pending || pending.length === 0) return false;
+  pendingKind0ByStorageKey.delete(storageKey);
+  const existing = ensureLoaded(storageKey);
+  const merged = mergeKind0EventLists(existing, pending);
+  if (areKind0EventListsShallowEqual(existing, merged)) return false;
+  kind0InMemoryByStorageKey.set(storageKey, merged);
+  dirtyStorageKeys.add(storageKey);
+  return true;
+}
+
+function flushAllPendingKind0(): void {
+  if (pendingKind0ByStorageKey.size === 0) return;
+  let anyChanged = false;
+  for (const storageKey of Array.from(pendingKind0ByStorageKey.keys())) {
+    if (flushPendingKind0ForStorageKey(storageKey)) anyChanged = true;
+  }
+  if (anyChanged) {
+    scheduleFlushToStorage();
+    notifyKind0Subscribers();
+  }
+}
+
+if (typeof window !== "undefined") {
+  // Ensure buffered events are persisted on page unload.
+  window.addEventListener("beforeunload", flushAllPendingKind0);
+  window.addEventListener("pagehide", flushAllPendingKind0);
+}
+
 /**
- * Push-style ingest used by the subscription dispatcher: fan a single kind 0
- * event out into each relay bucket it was seen on, then notify cache readers.
- * Returns true when at least one bucket actually changed on disk.
+ * Buffer a single kind-0 event for ingest. Multiple events land in
+ * per-relay-bucket queues and a debounced flush folds the whole burst into
+ * the in-memory mirror with a single merge per bucket. Returns true when
+ * the event was accepted into the queue (false when filtered out as stale
+ * or non-metadata).
  */
 export function ingestKind0Event(event: IngestableKind0Event): boolean {
   if (!isMetadataEvent(event)) return false;
@@ -292,11 +351,12 @@ export function ingestKind0Event(event: IngestableKind0Event): boolean {
     content: event.content,
   };
   const normalizedIncomingPubkey = normalizePubkey(payload.pubkey);
-  let changed = false;
+  let buffered = false;
   for (const relayUrl of relayUrls) {
-    const existing = loadCachedKind0Events(relayUrl);
-    // Cheap dedup: if the relay bucket already has this pubkey's profile at
-    // an equal-or-newer timestamp and identical content, skip the work.
+    const storageKey = getRelayStorageKey(relayUrl);
+    // Dedup against currently-applied state: if the bucket already has this
+    // pubkey at an equal-or-newer timestamp with identical content, drop.
+    const existing = ensureLoaded(storageKey);
     const existingForPubkey = existing.find(
       (entry) => normalizePubkey(entry.pubkey) === normalizedIncomingPubkey
     );
@@ -307,10 +367,28 @@ export function ingestKind0Event(event: IngestableKind0Event): boolean {
     ) {
       continue;
     }
-    // saveCachedKind0Events notifies kind 0 subscribers on every changed write.
-    if (saveCachedKind0Events([...existing, payload], relayUrl)) changed = true;
+    // Dedup against another pending event for the same pubkey within the
+    // same flush window: keep the newer payload. Bounds the pending bucket
+    // by unique pubkeys, not by event volume.
+    let pending = pendingKind0ByStorageKey.get(storageKey);
+    if (!pending) {
+      pending = [];
+      pendingKind0ByStorageKey.set(storageKey, pending);
+    }
+    const pendingIdx = pending.findIndex(
+      (entry) => normalizePubkey(entry.pubkey) === normalizedIncomingPubkey
+    );
+    if (pendingIdx >= 0) {
+      const previous = pending[pendingIdx];
+      if ((previous.created_at || 0) >= (payload.created_at || 0)) continue;
+      pending[pendingIdx] = payload;
+    } else {
+      pending.push(payload);
+    }
+    buffered = true;
   }
-  return changed;
+  if (buffered) schedulePendingKind0Flush();
+  return buffered;
 }
 
 function resolveKind0EventForPubkey(
