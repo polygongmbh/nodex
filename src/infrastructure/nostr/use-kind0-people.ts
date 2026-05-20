@@ -40,7 +40,6 @@ interface UseKind0PeopleResult {
   setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
   cachedKind0Events: Kind0LikeEvent[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
-  supplementalLatestActivityByAuthor: Map<string, number>;
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
@@ -113,38 +112,6 @@ export function useKind0People(
   // map identity itself is stable.
   useSyncExternalStore(subscribeToPresenceChanges, getPresenceMapVersion, getPresenceMapVersion);
   const latestPresenceByAuthor = getLatestPresenceByAuthor();
-
-  const supplementalLatestActivityByAuthor = useMemo(() => {
-    const latestActivePresenceByAuthor = new Map<string, number>();
-    for (const [authorId, snapshot] of latestPresenceByAuthor.entries()) {
-      if (snapshot.state === "active") {
-        latestActivePresenceByAuthor.set(authorId, snapshot.reportedAtMs);
-      }
-    }
-    const latestByAuthor = new Map<string, number>();
-
-    for (const event of nostrEvents) {
-      if (event.kind === NostrEventKind.Metadata || event.kind === NostrEventKind.UserStatus) continue;
-
-      const authorId = event.pubkey?.trim().toLowerCase();
-      if (!authorId) continue;
-
-      const timestampMs = (event.created_at || 0) * 1000;
-      const previous = latestByAuthor.get(authorId) ?? Number.NEGATIVE_INFINITY;
-      if (timestampMs > previous) {
-        latestByAuthor.set(authorId, timestampMs);
-      }
-    }
-
-    for (const [authorId, presenceTimestampMs] of latestActivePresenceByAuthor.entries()) {
-      const previous = latestByAuthor.get(authorId) ?? Number.NEGATIVE_INFINITY;
-      if (presenceTimestampMs > previous) {
-        latestByAuthor.set(authorId, presenceTimestampMs);
-      }
-    }
-
-    return latestByAuthor;
-  }, [latestPresenceByAuthor, nostrEvents]);
 
   useEffect(() => {
     if (!user?.pubkey) return;
@@ -236,7 +203,6 @@ export function useKind0People(
     setPeople,
     cachedKind0Events,
     latestPresenceByAuthor,
-    supplementalLatestActivityByAuthor,
     removeCachedRelayProfile,
   };
 }
