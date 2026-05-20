@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
 import { useFocusedTaskCollapsedSidebarPreview } from "@/features/feed-page/controllers/use-focused-task-collapsed-sidebar-preview";
 import { useTaskScopeSpecificFilters } from "@/features/feed-page/controllers/use-task-scope-specific-filters";
-import { useNostrEventCache } from "@/infrastructure/nostr/use-nostr-event-cache";
+import { useNostrEventRouter } from "@/infrastructure/nostr/use-nostr-event-router";
 import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { OnboardingController } from "@/components/onboarding/OnboardingController";
@@ -153,7 +153,7 @@ function FeedIndexContent() {
   const {
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
     isHydrating,
-  } = useNostrEventCache({
+  } = useNostrEventRouter({
     isConnected,
     subscribedKinds,
     subscribe,

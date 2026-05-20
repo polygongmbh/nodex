@@ -3,7 +3,7 @@ import { getTaskAssigneePubkeys, getTaskPriority, getTaskStateUpdates, isTaskPos
 
 /**
  * Returns `previous` when `fresh` carries the same signal-bearing values, so
- * downstream React.memo'd consumers don't churn on every event-cache flush
+ * downstream React.memo'd consumers don't churn on every subscription tick
  * (NDK subscriptions stream events for several seconds after page load and
  * `nostrEventsToTasks` rebuilds every Task object from scratch each time).
  */

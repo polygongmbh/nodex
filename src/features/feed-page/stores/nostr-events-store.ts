@@ -7,10 +7,9 @@ import {
 } from "@/infrastructure/nostr/replaceable-events";
 
 // Module-level store of raw Nostr events fed by the subscription dispatcher.
-// Replaces the react-query-backed central CachedNostrEvent[] array. Each
-// downstream concern (post timeline, kind 0 people list, …) reads from here
-// via useNostrEvents(); per-concern stores (reactions, presence) ingest from
-// the same dispatcher and own their own projections separately.
+// Each downstream concern (post timeline, kind 0 people list, …) reads from
+// here via useNostrEvents(); per-concern stores (reactions, presence) ingest
+// from the same dispatcher and own their own projections separately.
 
 const eventsById = new Map<string, NostrEventWithRelay>();
 const replaceableKeyToId = new Map<string, string>();

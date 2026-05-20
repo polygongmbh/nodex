@@ -21,11 +21,9 @@ export interface IngestableEvent {
   relayUrls?: string[];
 }
 
-interface UseNostrEventCacheParams {
+interface UseNostrEventRouterParams {
   isConnected: boolean;
   subscribedKinds: number[];
-  activeRelayIds: Set<string>;
-  availableRelayIds: string[];
   subscribe: (
     filters: NDKFilter[],
     onEvent: (event: NDKEvent) => void,
@@ -34,7 +32,7 @@ interface UseNostrEventCacheParams {
   onEvent: (event: IngestableEvent) => void;
 }
 
-interface UseNostrEventCacheResult {
+interface UseNostrEventRouterResult {
   hasLiveHydratedScope: boolean;
   /** True while the initial subscription backfill is in progress (pre-EOSE). */
   isHydrating: boolean;
@@ -73,12 +71,12 @@ function toIngestable(event: EventLike, relayOverride?: RelayLike): IngestableEv
   };
 }
 
-export function useNostrEventCache({
+export function useNostrEventRouter({
   isConnected,
   subscribedKinds,
   subscribe,
   onEvent,
-}: UseNostrEventCacheParams): UseNostrEventCacheResult {
+}: UseNostrEventRouterParams): UseNostrEventRouterResult {
   const [hasLiveHydratedScope, setHasLiveHydratedScope] = useState(false);
   const [isHydrating, setIsHydrating] = useState(false);
 
