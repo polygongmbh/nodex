@@ -92,8 +92,6 @@ function FeedIndexContent() {
     setActiveRelayIds,
     effectiveActiveRelayIds,
     selectedRelayUrls,
-    nostrRelayIdSet,
-    allRelayIds,
     handleRelayToggle,
     handleRelayExclusive,
     handleRelaySelectIntent,
@@ -158,8 +156,6 @@ function FeedIndexContent() {
   } = useNostrEventCache({
     isConnected,
     subscribedKinds,
-    activeRelayIds: nostrRelayIdSet,
-    availableRelayIds: allRelayIds,
     subscribe,
     onEvent: dispatchIncomingEvent,
   });

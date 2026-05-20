@@ -1,8 +1,8 @@
-import type { NostrEventWithRelay } from "@/lib/nostr/types";
-import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
-
-type ReplaceableLikeEvent = Pick<NostrEventWithRelay, "kind" | "pubkey" | "tags">;
-type ReplaceableCachedEvent = Pick<CachedNostrEvent, "kind" | "pubkey" | "tags">;
+type ReplaceableLikeEvent = {
+  kind: number;
+  pubkey: string;
+  tags: string[][];
+};
 
 const KIND_METADATA = 0;
 const KIND_CONTACTS = 3;
@@ -25,7 +25,7 @@ function getDTag(tags: string[][]): string | undefined {
   return normalized ? normalized : undefined;
 }
 
-export function getReplaceableEventKey(event: ReplaceableLikeEvent | ReplaceableCachedEvent): string | null {
+export function getReplaceableEventKey(event: ReplaceableLikeEvent): string | null {
   const kind = Number(event.kind);
   const pubkey = event.pubkey?.trim().toLowerCase();
   if (!Number.isFinite(kind) || !pubkey) return null;

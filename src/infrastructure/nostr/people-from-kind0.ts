@@ -1,6 +1,5 @@
 import type { SelectablePerson } from "@/types/person";
-import { normalizeCachedRelayUrl } from "@/infrastructure/nostr/event-cache";
-import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
+import { normalizeRelayUrl, normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
@@ -67,7 +66,7 @@ function mergeKind0EventLists(...eventLists: Kind0LikeEvent[][]): Kind0LikeEvent
 }
 
 function getRelayStorageKey(relayUrl: string): string {
-  return `${KIND0_CACHE_RELAY_PREFIX}${normalizeCachedRelayUrl(relayUrl)}`;
+  return `${KIND0_CACHE_RELAY_PREFIX}${normalizeRelayUrl(relayUrl)}`;
 }
 
 function listKnownRelayStorageKeys(): string[] {
@@ -133,7 +132,7 @@ export function mergeKind0EventsWithCache(
 export function loadCachedKind0Events(relayUrl?: string): Kind0LikeEvent[] {
   if (!canUseStorage()) return [];
   if (relayUrl) {
-    const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     if (!normalizedRelayUrl) return [];
     return readStoredKind0Events(getRelayStorageKey(normalizedRelayUrl));
   }
@@ -156,7 +155,7 @@ export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: strin
   if (!relayUrl) {
     changed = writeStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY, events);
   } else {
-    const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     if (!normalizedRelayUrl) return false;
     changed = writeStoredKind0Events(getRelayStorageKey(normalizedRelayUrl), events);
   }
@@ -166,7 +165,7 @@ export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: strin
 
 export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
   if (!canUseStorage()) return;
-  const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+  const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
   if (!normalizedRelayUrl) return;
   try {
     window.localStorage.removeItem(getRelayStorageKey(normalizedRelayUrl));
