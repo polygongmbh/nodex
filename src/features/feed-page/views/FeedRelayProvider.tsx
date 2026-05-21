@@ -9,6 +9,7 @@ import { isDemoFeedEnabled, DEMO_RELAY_ID } from "@/lib/demo-feed-config";
 import { initializeDemoFeedData } from "@/data/demo-feed";
 import { mockRelays as demoRelays } from "@/data/mockData";
 import type { Relay, Post } from "@/types";
+import { isSafeHttpUrl } from "@/lib/safe-http-url";
 
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 
@@ -61,13 +62,17 @@ export function FeedRelayProvider({ children }: PropsWithChildren) {
   const demoFeedActive = demoTasks.some((task) => task.relays.includes(DEMO_RELAY_ID));
 
   const relays: Relay[] = useMemo(() => {
-    const nostrRelayItems: Relay[] = ndkRelays.map((r): Relay => ({
-      id: getRelayIdFromUrl(r.url),
-      name: getRelayNameFromUrl(r.url),
-      isActive: r.status === "connected" || r.status === "read-only",
-      connectionStatus: r.status,
-      url: r.url,
-    }));
+    const nostrRelayItems: Relay[] = ndkRelays.map((r): Relay => {
+      const iconCandidate = r.nip11?.document?.icon;
+      return {
+        id: getRelayIdFromUrl(r.url),
+        name: getRelayNameFromUrl(r.url),
+        isActive: r.status === "connected" || r.status === "read-only",
+        connectionStatus: r.status,
+        url: r.url,
+        iconUrl: isSafeHttpUrl(iconCandidate) ? iconCandidate : undefined,
+      };
+    });
     if (!demoFeedActive) return nostrRelayItems;
     return [...demoRelays, ...nostrRelayItems];
   }, [demoFeedActive, ndkRelays]);

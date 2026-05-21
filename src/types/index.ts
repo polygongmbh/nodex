@@ -7,6 +7,8 @@ export interface Relay {
   isActive: boolean;
   connectionStatus?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   url: string;
+  /** Resolved relay icon from NIP-11 (when present, https/http, and valid). */
+  iconUrl?: string;
 }
 
 export interface Channel {

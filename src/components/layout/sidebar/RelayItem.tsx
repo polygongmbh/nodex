@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Relay } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
@@ -37,6 +38,8 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
   const { t } = useTranslation("relay");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const Icon = resolveRelayIcon(relay.url);
+  const [iconLoadFailed, setIconLoadFailed] = useState(false);
+  const useRemoteIcon = Boolean(relay.iconUrl) && !iconLoadFailed;
   const relayDisplayName = relayUrlToName(relay.url);
   const relayTooltipName = stripRelayProtocol(relay.url);
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
@@ -67,13 +70,22 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
       >
         <div
           className={cn(
-            "w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:ring-2 hover:ring-primary/50",
+            "w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:ring-2 hover:ring-primary/50 overflow-hidden",
             relay.isActive
               ? cn(connectionSurfaceClass, "motion-filter-pop")
               : "bg-muted/50 text-muted-foreground group-hover:text-sidebar-foreground"
           )}
         >
-          <Icon className="w-4 h-4" />
+          {useRemoteIcon ? (
+            <img
+              src={relay.iconUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={() => setIconLoadFailed(true)}
+            />
+          ) : (
+            <Icon className="w-4 h-4" />
+          )}
         </div>
       </button>
 
