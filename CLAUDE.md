@@ -81,6 +81,13 @@ High-impact areas that require test coverage:
 
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash` and warn if there are multiple unrelated changed files.
 - Use Conventional Commits: `feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`
+- Commit message structure (commits are the source of truth for the changelog):
+  - **Subject:** terse, conventional-commits format.
+  - **First body paragraph:** user-facing description of what changed — this is what lands in the changelog. Skip it for purely internal commits (`refactor:`, `test:`, `chore:`, etc.); they're excluded by default.
+  - **Later paragraphs:** internal reasoning, refactor notes, caveats. Stays in `git log`, not in the changelog.
+  - **`Changelog: <text>`** trailer to override the first-paragraph text when the body isn't shaped right for users.
+  - **`Changelog: none`** trailer to suppress an otherwise-included commit (`feat`/`fix`/`enhance`/`perf`).
+  - **`Changelog: <text>`** trailer on an otherwise-skipped type (e.g. a `refactor:` with user-visible side effects) to opt it in.
 - After each self-contained change, commit — for multi-step tasks, commit incrementally as you go rather than batching everything into a single end-of-task commit
 - After finishing work, concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
 - Amend the immediately previous local commit when the change is a direct fixup of it; use a new commit otherwise.
@@ -88,9 +95,10 @@ High-impact areas that require test coverage:
 When the user says `squash`, inspect recent unpushed commits and suggest sensible squashes for fixups or tightly related follow-ups; list candidates with original and target messages before executing anything.
 
 ### Changelog
-- Keep `CHANGELOG.md` updated; add user-visible changes to `## [Unreleased]` as you go
-- Use `### Added` for new capabilities, `### Changed` for enhancements and changes, `### Fixed` for regressions; omit subheadings when fewer than 4 bullets in a version
-- Do not add entries for minor/internal-only changes
+- `CHANGELOG.md` is **generated** from commit messages by [git-cliff](https://git-cliff.org) using `cliff.toml`. Do not hand-edit it.
+- Regenerate at release time: `git cliff --tag vX.Y.Z -o CHANGELOG.md` (or `git cliff --unreleased --prepend CHANGELOG.md` to refresh only the Unreleased section).
+- Routing by commit type: `feat:` → `### Added`, `fix:` → `### Fixed`, `enhance:`/`perf:`/breaking → `### Changed`. `refactor`/`test`/`docs`/`chore`/`style`/`build`/`ci` are skipped unless they carry a `Changelog:` trailer.
+- `.gitattributes` sets `CHANGELOG.md merge=union` as a fallback in case two branches both regenerated it.
 
 ### Logging and Toasts
 - Use `console.warn`/`console.error` for actionable issues

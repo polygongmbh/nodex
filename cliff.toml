@@ -1,0 +1,84 @@
+# git-cliff configuration for Nodex.
+# Generates CHANGELOG.md from Conventional Commits.
+#
+# Entry text precedence per commit:
+#   1. `Changelog:` trailer (explicit override; `Changelog: none` skips)
+#   2. First paragraph of the commit body (user-facing description)
+#   3. Subject line, with the conventional prefix stripped
+#
+# Run:  git cliff --unreleased --prepend CHANGELOG.md
+# Or:   git cliff -o CHANGELOG.md           # regenerate the whole file
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to Nodex are documented in this file.
+
+The format is inspired by Keep a Changelog and follows Semantic Versioning.
+"""
+body = """
+{% if version %}\
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+## [Unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+
+### {{ group | upper_first }}
+{% for commit in commits %}\
+{%- set changelog_trailer = commit.footers | filter(attribute="token", value="Changelog") | first -%}
+{%- if changelog_trailer -%}
+{%- set entry = changelog_trailer.value -%}
+{%- elif commit.body -%}
+{%- set entry = commit.body | split(pat="\n\n") | first | trim -%}
+{%- else -%}
+{%- set entry = commit.message -%}
+{%- endif -%}
+- {{ entry | trim }}
+{% endfor %}\
+{% endfor %}\n
+"""
+trim = true
+footer = ""
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+
+# Strip the "type(scope): " prefix from the subject so the subject fallback reads cleanly.
+commit_preprocessors = [
+  { pattern = '^(?P<type>\w+)(\([^)]+\))?!?:\s+', replace = "" },
+]
+
+commit_parsers = [
+  # Explicit opt-out wins over everything.
+  { footer = "^Changelog: ?none", skip = true },
+
+  # Breaking changes get top billing.
+  { message = "^.+!:", group = "Changed" },
+  { footer = "^BREAKING CHANGE", group = "Changed" },
+
+  # Standard buckets.
+  { message = "^feat",     group = "Added" },
+  { message = "^fix",      group = "Fixed" },
+  { message = "^enhance",  group = "Changed" },
+  { message = "^perf",     group = "Changed" },
+
+  # Internal types: included only if the author opted in with a Changelog: trailer.
+  { footer = "^Changelog:", group = "Changed" },
+  { message = "^refactor", skip = true },
+  { message = "^test",     skip = true },
+  { message = "^docs",     skip = true },
+  { message = "^chore",    skip = true },
+  { message = "^style",    skip = true },
+  { message = "^build",    skip = true },
+  { message = "^ci",       skip = true },
+]
+
+protect_breaking_commits = false
+filter_commits = true
+tag_pattern = "v[0-9].*"
+topo_order = false
+sort_commits = "oldest"
