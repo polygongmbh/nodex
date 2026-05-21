@@ -1,7 +1,8 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import NDK, { NDKEvent, profileFromEvent, type NDKUserProfile, type NDKRelay } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isAuthRequiredCloseReason, isPermanentAuthDenialReason } from "./relay-verification";
+import { registerMemdiagStore } from "@/lib/memdiag";
 
 const KIND0_PROFILE_CACHE_TTL_MS = 120000;
 const KIND0_PROFILE_FAILURE_COOLDOWN_MS = 15000;
@@ -24,6 +25,17 @@ export function useProfile({
   const kind0ProfileCacheRef = useRef<Map<string, { profile: NDKUserProfile | null; fetchedAt: number }>>(new Map());
   const kind0ProfileInFlightRef = useRef<Map<string, Promise<NDKUserProfile | null>>>(new Map());
   const kind0ProfileFailureUntilRef = useRef<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    registerMemdiagStore("kind0-profile-refs", () => ({
+      size: kind0ProfileCacheRef.current.size,
+      extras: {
+        inFlight: kind0ProfileInFlightRef.current.size,
+        failureUntil: kind0ProfileFailureUntilRef.current.size,
+      },
+    }));
+  }, []);
 
   const fetchLatestKind0Profile = useCallback(async (
     pubkey: string,

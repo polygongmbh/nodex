@@ -3,6 +3,7 @@ import { normalizeRelayUrl, normalizeRelayUrlScope } from "@/infrastructure/nost
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind, type NostrEvent, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
+import { registerMemdiagStore } from "@/lib/memdiag";
 
 const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache";
 const KIND0_CACHE_RELAY_PREFIX = `${KIND0_CACHE_STORAGE_PREFIX}:relay:`;
@@ -293,6 +294,31 @@ export const defaultKind0Cache = new Kind0Cache();
 if (typeof window !== "undefined") {
   window.addEventListener("beforeunload", () => defaultKind0Cache.flushDirtyToStorage());
   window.addEventListener("pagehide", () => defaultKind0Cache.flushDirtyToStorage());
+}
+
+if (import.meta.env.DEV) {
+  registerMemdiagStore("kind0-cache", () => {
+    const buckets = (defaultKind0Cache as unknown as {
+      bucketByStorageKey: Map<string, Map<string, NostrEvent>>;
+      dirtyStorageKeys: Set<string>;
+      subscribers: Set<() => void>;
+    });
+    let total = 0;
+    let largest = 0;
+    for (const bucket of buckets.bucketByStorageKey.values()) {
+      total += bucket.size;
+      if (bucket.size > largest) largest = bucket.size;
+    }
+    return {
+      size: total,
+      extras: {
+        buckets: buckets.bucketByStorageKey.size,
+        largestBucket: largest,
+        dirtyBuckets: buckets.dirtyStorageKeys.size,
+        subscribers: buckets.subscribers.size,
+      },
+    };
+  });
 }
 
 // Free-function adapters around the default cache. Production code uses these

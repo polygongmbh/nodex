@@ -11,6 +11,7 @@ import {
   type PostPriorityUpdateRequest,
   type PostStateUpdateRequest,
 } from "@/domain/content/post-updates";
+import { registerMemdiagStore } from "@/lib/memdiag";
 
 // Stores Post objects keyed by id. The store does NOT know about Nostr
 // events — every input is already a typed Post or a typed fold/delete
@@ -47,6 +48,22 @@ let version = 0;
 let cachedSnapshot: Post[] = [];
 let cachedSnapshotAtVersion = -1;
 let suppressedIds: ReadonlySet<string> = new Set();
+
+if (import.meta.env.DEV) {
+  registerMemdiagStore("posts", () => ({
+    size: postsById.size,
+    extras: {
+      replaceableKeys: replaceableKeyToPostId.size,
+      datesByPostId: datesByPostId.size,
+      priorityTimestamps: priorityTimestampByPostId.size,
+      deletionAuthors: deletionsByAuthor.size,
+      pendingFoldTargets: pendingFoldsByTargetId.size,
+      pendingFoldsCount,
+      cachedSnapshotLen: cachedSnapshot.length,
+      subscribers: subscribers.size,
+    },
+  }));
+}
 
 function notifyChange(): void {
   version += 1;

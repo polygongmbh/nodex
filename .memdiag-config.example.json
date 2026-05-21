@@ -1,0 +1,10 @@
+{
+  "_comment": "Copy to .memdiag-config.json (gitignored) and edit. Used by scripts/memdiag-run.mjs.",
+  "nsec": "nsec1examplePutARealOrThrowawayNsecHere",
+  "relays": [
+    "wss://relay.damus.io",
+    "wss://nos.lol"
+  ],
+  "durationSec": 180,
+  "sampleEverySec": 10
+}

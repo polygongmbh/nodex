@@ -28,3 +28,7 @@ plans/
 mostr-cli/
 noas/
 *.tsbuildinfo
+
+# Memory diagnostic harness (scripts/memdiag-run.mjs)
+.memdiag-config.json
+memdiag-runs/

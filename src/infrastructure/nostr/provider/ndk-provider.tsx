@@ -9,6 +9,7 @@ import type { EditableNostrProfile } from "@/infrastructure/nostr/profile-metada
 import { getConfiguredDefaultRelays } from "@/infrastructure/nostr/default-relays";
 import { dedupeNormalizedRelayUrls, isRelayUrl, normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { registerMemdiagStore } from "@/lib/memdiag";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus } from "./contracts";
 import { seedNostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
 import {
@@ -84,6 +85,26 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   // relays itself so a single source of truth controls which relays are used.
   const resolvedDefaultRelays = configuredDefaultRelays;
   const [ndk, setNdk] = useState<NDK | null>(null);
+  const ndkRef = useRef<NDK | null>(null);
+  useEffect(() => { ndkRef.current = ndk; }, [ndk]);
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    registerMemdiagStore("ndk", () => {
+      const instance = ndkRef.current as unknown as {
+        subManager?: { subscriptions?: Map<unknown, unknown> };
+        pool?: { relays?: Map<unknown, unknown> };
+      } | null;
+      const subs = instance?.subManager?.subscriptions;
+      const relays = instance?.pool?.relays;
+      return {
+        size: subs?.size ?? 0,
+        extras: {
+          relays: relays?.size ?? 0,
+          hasInstance: instance ? 1 : 0,
+        },
+      };
+    });
+  }, []);
   const [user, setUser] = useState<NDKUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);

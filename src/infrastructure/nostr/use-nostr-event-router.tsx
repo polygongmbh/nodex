@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-kit/ndk";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import type { NostrEventKind, NostrEventWithRelay } from "@/lib/nostr/types";
+import { registerMemdiagStore } from "@/lib/memdiag";
 
 // Subscription manager for the NDK live feed. Validates each incoming event's
 // relay attribution at the wire boundary and hands it off to a per-concern
@@ -83,6 +84,29 @@ export function useNostrEventRouter({
   const pendingEventsRef = useRef<NostrEventWithRelay[]>([]);
   const flushTimerRef = useRef<number | null>(null);
   const quiescenceTimerRef = useRef<number | null>(null);
+  const ingestedTotalRef = useRef(0);
+  const ingestedByKindRef = useRef<Map<number, number>>(new Map());
+  const tagsArraysSeenRef = useRef(0);
+  const tagsCellsSeenRef = useRef(0);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    registerMemdiagStore("event-router", () => {
+      const byKind: Record<string, number> = {};
+      for (const [kind, count] of ingestedByKindRef.current) {
+        byKind[`k${kind}`] = count;
+      }
+      return {
+        size: pendingEventsRef.current.length,
+        extras: {
+          eventsIngestedTotal: ingestedTotalRef.current,
+          tagsArraysSeen: tagsArraysSeenRef.current,
+          tagsCellsSeen: tagsCellsSeenRef.current,
+          ...byKind,
+        },
+      };
+    });
+  }, []);
 
   const clearQuiescenceTimer = useCallback(() => {
     if (quiescenceTimerRef.current !== null && typeof window !== "undefined") {
@@ -118,6 +142,21 @@ export function useNostrEventRouter({
     const batch = pending.splice(0, batchSize);
     for (const ingestable of batch) {
       onEventRef.current(ingestable);
+    }
+    if (import.meta.env.DEV) {
+      ingestedTotalRef.current += batch.length;
+      const byKind = ingestedByKindRef.current;
+      for (const ingestable of batch) {
+        const kind = ingestable.kind as number;
+        byKind.set(kind, (byKind.get(kind) ?? 0) + 1);
+        const tags = ingestable.tags;
+        if (Array.isArray(tags)) {
+          tagsArraysSeenRef.current += tags.length;
+          for (const tag of tags) {
+            if (Array.isArray(tag)) tagsCellsSeenRef.current += tag.length;
+          }
+        }
+      }
     }
     if (pending.length > 0 && typeof window !== "undefined") {
       flushTimerRef.current = window.setTimeout(() => {

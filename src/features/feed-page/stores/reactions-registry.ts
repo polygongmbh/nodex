@@ -9,6 +9,7 @@ import {
   extractDeletionTargetIds,
   isDeletionEvent,
 } from "@/infrastructure/nostr/deletion-events";
+import { registerMemdiagStore } from "@/lib/memdiag";
 
 /**
  * Reaction bookkeeping is intentionally lossy: reactions are low-importance UX
@@ -38,6 +39,22 @@ let viewerPubkey: string | undefined;
 
 const reactionsByTargetId = new Map<string, TaskReactions>();
 const subscribers = new Set<() => void>();
+
+if (import.meta.env.DEV) {
+  registerMemdiagStore("reactions", () => {
+    let eventIdSetTotal = 0;
+    for (const set of eventIdsByTarget.values()) eventIdSetTotal += set.size;
+    return {
+      size: reactionsByEventId.size,
+      extras: {
+        targets: eventIdsByTarget.size,
+        eventIdSetTotal,
+        publishedTargets: reactionsByTargetId.size,
+        subscribers: subscribers.size,
+      },
+    };
+  });
+}
 
 function notifySubscribers(): void {
   for (const notify of subscribers) notify();

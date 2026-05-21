@@ -7,8 +7,29 @@
  */
 
 import type { RawNostrEvent } from "@/types";
+import { registerMemdiagStore } from "@/lib/memdiag";
 
 const rawEventsByPostId = new Map<string, RawNostrEvent>();
+
+if (import.meta.env.DEV) {
+  registerMemdiagStore("raw-events", () => {
+    let tagsArrayCount = 0;
+    let tagsCellCount = 0;
+    for (const event of rawEventsByPostId.values()) {
+      const tags = event.tags;
+      if (Array.isArray(tags)) {
+        tagsArrayCount += tags.length;
+        for (const tag of tags) {
+          if (Array.isArray(tag)) tagsCellCount += tag.length;
+        }
+      }
+    }
+    return {
+      size: rawEventsByPostId.size,
+      extras: { tagsArrayCount, tagsCellCount },
+    };
+  });
+}
 
 export function setRawEvent(postId: string, event: RawNostrEvent): void {
   rawEventsByPostId.set(postId, event);
