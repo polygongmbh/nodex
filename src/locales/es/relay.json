@@ -22,9 +22,10 @@
     "details": {
       "show": "Mostrar detalles del relay",
       "hide": "Ocultar detalles del relay",
-      "title": "Capacidades del relay",
       "authRequired": "Auth requerida",
       "supportsNip42": "Soporta NIP-42",
+      "pubkey": "Pubkey",
+      "contact": "Contacto",
       "yes": "sí",
       "no": "no",
       "unknown": "desconocido"

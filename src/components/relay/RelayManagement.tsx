@@ -35,6 +35,7 @@ import { useTranslation } from "react-i18next";
 import { getRelayStatusDotClass, getRelayStatusTextClass } from "./relayStatusStyles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { isSafeHttpUrl } from "@/lib/safe-http-url";
 
 interface RelayManagementProps {
   relays: NDKRelayStatus[];
@@ -379,13 +380,40 @@ export function RelayManagement({
 
                     {isExpanded && (
                       <div className="rounded-md border border-border/60 bg-background/40 p-2 text-xs space-y-2">
-                        <div className="flex items-center gap-1.5 text-foreground">
-                          {relay.nip11?.authRequired ? (
-                            <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
-                          ) : (
-                            <ShieldCheck className="h-3.5 w-3.5 text-success" />
+                        {relay.nip11?.document?.banner && isSafeHttpUrl(relay.nip11.document.banner) && (
+                          <img
+                            src={relay.nip11.document.banner}
+                            alt=""
+                            className="w-full max-h-24 object-cover rounded"
+                            onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          />
+                        )}
+                        <div className="flex items-start gap-2">
+                          {relay.nip11?.document?.icon && isSafeHttpUrl(relay.nip11.document.icon) && (
+                            <img
+                              src={relay.nip11.document.icon}
+                              alt=""
+                              className="h-8 w-8 rounded shrink-0 object-cover"
+                              onError={(e) => { e.currentTarget.style.display = "none"; }}
+                            />
                           )}
-                          <span className="font-medium">{t("relay.details.title")}</span>
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            {relay.nip11?.document?.name && (
+                              <div className="font-medium text-foreground truncate">
+                                {relay.nip11.document.name}
+                              </div>
+                            )}
+                            {relay.nip11?.document?.description && (
+                              <p className="text-muted-foreground line-clamp-3">
+                                {relay.nip11.document.description}
+                              </p>
+                            )}
+                          </div>
+                          {relay.nip11?.authRequired ? (
+                            <ShieldAlert className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                          ) : (
+                            <ShieldCheck className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+                          )}
                         </div>
                         <div className="grid grid-cols-2 gap-1 text-muted-foreground">
                           <span>{t("relay.details.authRequired")}</span>
@@ -397,6 +425,26 @@ export function RelayManagement({
                             {getCapabilityLabel(relay.nip11?.supportsNip42)}
                           </span>
                         </div>
+                        {(relay.nip11?.document?.pubkey || relay.nip11?.document?.contact) && (
+                          <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-muted-foreground border-t border-border/40 pt-2">
+                            {relay.nip11.document.pubkey && (
+                              <>
+                                <span>{t("relay.details.pubkey")}</span>
+                                <span className="text-foreground font-mono truncate" title={relay.nip11.document.pubkey}>
+                                  {relay.nip11.document.pubkey}
+                                </span>
+                              </>
+                            )}
+                            {relay.nip11.document.contact && (
+                              <>
+                                <span>{t("relay.details.contact")}</span>
+                                <span className="text-foreground truncate" title={relay.nip11.document.contact}>
+                                  {relay.nip11.document.contact}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
