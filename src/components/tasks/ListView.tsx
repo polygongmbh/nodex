@@ -147,21 +147,31 @@ export function ListView({
     searchQueryOverride,
     depthMode,
   });
-  const prevTasksRef = useRef<string>("");
+  const prevTasksHashRef = useRef<number>(0);
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);
 
-  // Detect filter/view changes (not status changes) to trigger re-sort
+  // Detect filter/view changes (not status changes) to trigger re-sort.
+  // Allocation-free hash over (length + first+last char code of each id) —
+  // collisions don't break correctness, only delay a re-sort until the
+  // next genuine change. Nostr event IDs are 64-char hex, so two
+  // endpoints give enough discrimination for a filter-detect heuristic.
   useEffect(() => {
-    const taskIdsSnapshot = tasks.map(t => t.id).sort().join(",");
+    let hash = tasks.length;
+    for (let i = 0; i < tasks.length; i++) {
+      const id = tasks[i].id;
+      const last = id.length - 1;
+      hash = (hash * 31 + id.charCodeAt(0)) | 0;
+      if (last > 0) hash = (hash * 31 + id.charCodeAt(last)) | 0;
+    }
     const filtersChanged =
-      prevTasksRef.current !== taskIdsSnapshot ||
+      prevTasksHashRef.current !== hash ||
       prevSearchRef.current !== searchQuery ||
       prevFocusedRef.current !== focusedTaskId;
-    
+
     if (filtersChanged) {
       setSortVersion(v => v + 1);
-      prevTasksRef.current = taskIdsSnapshot;
+      prevTasksHashRef.current = hash;
       prevSearchRef.current = searchQuery;
       prevFocusedRef.current = focusedTaskId;
     }
