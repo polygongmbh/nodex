@@ -27,17 +27,17 @@ export function TaskBreadcrumbRow({
   if (breadcrumbs.length === 0) return null;
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1 text-xs text-muted-foreground", className)}>
+    <div className={cn("flex items-center gap-1 text-xs text-muted-foreground", className)}>
       {breadcrumbs.map((breadcrumb, index) => (
-        <span key={breadcrumb.id} className={cn("flex max-w-[50%] items-center gap-1", itemClassName)}>
-          {index > 0 ? <span className="text-muted-foreground/50">{separator}</span> : null}
+        <span key={breadcrumb.id} className={cn("flex min-w-0 max-w-[30%] items-center gap-1", itemClassName)}>
+          {index > 0 ? <span className="shrink-0 text-muted-foreground/50">{separator}</span> : null}
           <button
             type="button"
             onClick={(event) => {
               event.stopPropagation();
               onFocusTask(breadcrumb.id);
             }}
-            className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "max-w-full truncate")}
+            className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "min-w-0 truncate")}
             title={t("tasks.focusBreadcrumbTitle", { title: breadcrumb.text })}
             aria-label={t("tasks.focusBreadcrumbTitle", { title: breadcrumb.text })}
           >
