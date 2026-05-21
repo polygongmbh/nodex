@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useProfileSync } from "./use-profile-sync";
 import {
+  defaultKind0Cache,
   loadCachedKind0Events,
   saveCachedKind0Events,
 } from "@/infrastructure/nostr/people-from-kind0";
@@ -47,7 +48,7 @@ function makeHarness(
 
 describe("useProfileSync – updateUserProfile", () => {
   beforeEach(() => {
-    localStorage.clear();
+    defaultKind0Cache.clear();
   });
 
   it("publishes to all relays including degraded ones, not just connected", async () => {
