@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
 import {   Relay, Channel, ChannelMatchMode, QuickFilterState, SavedFilterConfiguration } from "@/types";
 import type { SidebarPerson } from "@/types/person";
@@ -161,25 +161,28 @@ export function Sidebar({
     [collapsedPreviewLimit, collapsedPreviewPeople, people]
   );
 
-  // Build a flat list of all focusable items
-  const getFocusableItems = useCallback(() => {
+  // Flat list of all focusable items — computed once per relevant input
+  // change instead of allocating fresh on every call. Three callers
+  // (keyboard handler, scroll effect, focused-item read) each used to
+  // produce their own copy per render.
+  const focusableItems = useMemo<{ type: 'relay' | 'channel' | 'person'; id: string }[]>(() => {
     const items: { type: 'relay' | 'channel' | 'person'; id: string }[] = [];
     if (expandedSections.feeds) {
-      relays.forEach(r => items.push({ type: 'relay', id: r.id }));
+      for (const r of relays) items.push({ type: 'relay', id: r.id });
     }
     if (expandedSections.channels) {
-      channels.forEach(c => items.push({ type: 'channel', id: c.id }));
+      for (const c of channels) items.push({ type: 'channel', id: c.id });
     } else {
-      channels
-        .filter((channel) => collapsedPreviewChannelIds.has(channel.id))
-        .forEach((channel) => items.push({ type: "channel", id: channel.id }));
+      for (const channel of channels) {
+        if (collapsedPreviewChannelIds.has(channel.id)) items.push({ type: 'channel', id: channel.id });
+      }
     }
     if (expandedSections.people) {
-      people.forEach(p => items.push({ type: 'person', id: p.pubkey }));
+      for (const p of people) items.push({ type: 'person', id: p.pubkey });
     } else {
-      people
-        .filter((person) => collapsedPreviewPersonIds.has(person.pubkey))
-        .forEach((person) => items.push({ type: "person", id: person.pubkey }));
+      for (const person of people) {
+        if (collapsedPreviewPersonIds.has(person.pubkey)) items.push({ type: 'person', id: person.pubkey });
+      }
     }
     return items;
   }, [relays, channels, people, expandedSections, collapsedPreviewChannelIds, collapsedPreviewPersonIds]);
@@ -204,7 +207,7 @@ export function Sidebar({
         return;
       }
 
-      const items = getFocusableItems();
+      const items = focusableItems;
       const key = e.key.toLowerCase();
 
       // L or ArrowRight or Enter - return focus to tasks
@@ -267,13 +270,12 @@ export function Sidebar({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFocused, focusedItemIndex, getFocusableItems, dispatchFeedInteraction]);
+  }, [isFocused, focusedItemIndex, focusableItems, dispatchFeedInteraction]);
 
   // Scroll focused item into view
   useEffect(() => {
     if (isFocused && sidebarRef.current) {
-      const items = getFocusableItems();
-      const item = items[focusedItemIndex];
+      const item = focusableItems[focusedItemIndex];
       if (item) {
         const element = sidebarRef.current.querySelector(`[data-sidebar-item="${item.type}-${item.id}"]`);
         if (element) {
@@ -281,10 +283,10 @@ export function Sidebar({
         }
       }
     }
-  }, [isFocused, focusedItemIndex, getFocusableItems]);
+  }, [isFocused, focusedItemIndex, focusableItems]);
 
   // Get current focused item info
-  const focusedItem = isFocused ? getFocusableItems()[focusedItemIndex] : null;
+  const focusedItem = isFocused ? focusableItems[focusedItemIndex] : null;
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((previous) => ({
