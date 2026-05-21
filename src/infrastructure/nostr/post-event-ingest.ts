@@ -29,7 +29,7 @@ import {
 
 const spamDropCountsByRelay = new Map<string, number>();
 function logSpamDrop(event: NostrEventWithRelay, keyword: string): void {
-  const relayKey = event.relayUrl || event.relayUrls?.[0] || "unknown";
+  const relayKey = event.relayUrls[0] || "unknown";
   const prev = spamDropCountsByRelay.get(relayKey) ?? 0;
   spamDropCountsByRelay.set(relayKey, prev + 1);
   if (prev === 0) {
@@ -125,7 +125,7 @@ function ingestDeletion(event: NostrEventWithRelay): void {
  */
 export function ingestPostEvent(event: NostrEventWithRelay): boolean {
   if (!event.id) return false;
-  if (!event.relayUrl && (!event.relayUrls || event.relayUrls.length === 0)) {
+  if (event.relayUrls.length === 0) {
     console.warn("[post-event-ingest] dropping event without relay attribution", {
       id: event.id,
       kind: event.kind,

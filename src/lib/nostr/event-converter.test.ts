@@ -34,7 +34,7 @@ function makeRelayEvent(overrides: Partial<NostrEventWithRelay> & Pick<NostrEven
     tags: [],
     content: "",
     sig: "sig",
-    relayUrl: "wss://relay.test.com",
+    relayUrls: ["wss://relay.test.com"],
     ...rest,
   };
 }
@@ -48,7 +48,7 @@ describe("nostrEventToTask", () => {
     tags: [],
     content: "Hello world",
     sig: "sig123",
-    relayUrl: "wss://relay.test.com",
+    relayUrls: ["wss://relay.test.com"],
   };
 
   it("converts a basic text note to a comment task", () => {
@@ -216,7 +216,6 @@ describe("nostrEventToTask", () => {
   it("maps relay IDs from relayUrls when event is seen on multiple relays", () => {
     const task = nostrEventToTask({
       ...baseEvent,
-      relayUrl: undefined,
       relayUrls: ["wss://relay.a/", "wss://relay.b", "wss://relay.a"],
     });
 
@@ -227,8 +226,7 @@ describe("nostrEventToTask", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const task = nostrEventToTask({
       ...baseEvent,
-      relayUrl: undefined,
-      relayUrls: undefined,
+      relayUrls: [],
     });
 
     expect(task.relays).toEqual([]);

@@ -11,10 +11,7 @@ import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getRelayIdFromUrl } from "./relay-identity";
 
 function relayIdsFromEvent(event: NostrEventWithRelay): string[] {
-  const relayUrls = [
-    ...(event.relayUrls || []),
-    ...(event.relayUrl ? [event.relayUrl] : []),
-  ]
+  const relayUrls = event.relayUrls
     .map((url) => url.trim().replace(/\/+$/, ""))
     .filter((url) => Boolean(url));
   const relayIds = Array.from(new Set(relayUrls.map((url) => getRelayIdFromUrl(url))));

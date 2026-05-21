@@ -268,14 +268,9 @@ export class Kind0Cache {
    */
   ingest(event: NostrEventWithRelay): boolean {
     if (event.kind !== NostrEventKind.Metadata) return false;
-    const relayUrls = event.relayUrls?.length
-      ? event.relayUrls
-      : event.relayUrl
-        ? [event.relayUrl]
-        : [];
-    if (relayUrls.length === 0) return false;
+    if (event.relayUrls.length === 0) return false;
     let anyChanged = false;
-    for (const relayUrl of relayUrls) {
+    for (const relayUrl of event.relayUrls) {
       const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
       if (!normalizedRelayUrl) continue;
       const storageKey = getRelayStorageKey(normalizedRelayUrl);

@@ -1,19 +1,15 @@
 // Nostr Protocol Types (NIP-01)
 
-export interface NostrEvent {
-  id: string;
-  pubkey: string;
-  created_at: number;
-  kind: NostrEventKind;
-  tags: string[][];
-  content: string;
-  sig: string;
-}
+import type { NDKRawEvent } from "@nostr-dev-kit/ndk";
 
-export interface NostrEventWithRelay extends NostrEvent {
-  relayUrl?: string;
-  relayUrls?: string[];
-}
+// NIP-01 event shape, structurally compatible with NDKRawEvent but narrowed
+// so `kind` carries the project's NostrEventKind discriminant.
+export type NostrEvent = Omit<NDKRawEvent, "kind"> & { kind: NostrEventKind };
+
+// Boundary transport from the NDK subscription layer into the typed stores.
+// Carries the relay URLs the event was observed on; the field is required but
+// may be empty (ingest rejects empty at the next layer).
+export type NostrEventWithRelay = NostrEvent & { relayUrls: string[] };
 
 export enum NostrEventKind {
   Metadata = 0,

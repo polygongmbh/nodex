@@ -83,8 +83,8 @@ describe("Kind0Cache", () => {
 
   it("ingests events per relay and reads them back, latest per pubkey wins", () => {
     const cache = new Kind0Cache();
-    cache.ingest({ ...metadataEvent(ALICE, { name: "v1" }, 1), relayUrl: "wss://relay.one" });
-    cache.ingest({ ...metadataEvent(ALICE, { name: "v2" }, 2), relayUrl: "wss://relay.one" });
+    cache.ingest({ ...metadataEvent(ALICE, { name: "v1" }, 1), relayUrls: ["wss://relay.one"] });
+    cache.ingest({ ...metadataEvent(ALICE, { name: "v2" }, 2), relayUrls: ["wss://relay.one"] });
 
     const events = cache.loadForRelay("wss://relay.one");
     expect(events).toHaveLength(1);
@@ -93,8 +93,8 @@ describe("Kind0Cache", () => {
 
   it("keeps per-relay variants separate for the same pubkey", () => {
     const cache = new Kind0Cache();
-    cache.ingest({ ...metadataEvent(ALICE, { name: "one" }, 1), relayUrl: "wss://relay.one" });
-    cache.ingest({ ...metadataEvent(ALICE, { name: "two" }, 1), relayUrl: "wss://relay.two" });
+    cache.ingest({ ...metadataEvent(ALICE, { name: "one" }, 1), relayUrls: ["wss://relay.one"] });
+    cache.ingest({ ...metadataEvent(ALICE, { name: "two" }, 1), relayUrls: ["wss://relay.two"] });
 
     expect(cache.loadForRelay("wss://relay.one")[0].content).toContain("one");
     expect(cache.loadForRelay("wss://relay.two")[0].content).toContain("two");
@@ -102,7 +102,7 @@ describe("Kind0Cache", () => {
 
   it("drops a relay's cache when removeRelay is called", () => {
     const cache = new Kind0Cache();
-    cache.ingest({ ...metadataEvent(ALICE, { name: "alice" }, 1), relayUrl: "wss://relay.one" });
+    cache.ingest({ ...metadataEvent(ALICE, { name: "alice" }, 1), relayUrls: ["wss://relay.one"] });
     cache.removeRelay("wss://relay.one/");
     expect(cache.loadForRelay("wss://relay.one")).toEqual([]);
   });

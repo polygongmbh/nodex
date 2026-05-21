@@ -6,18 +6,19 @@ import {
   parseLinkedTaskDueFromCalendarEvent,
   parseStandaloneCalendarEvent,
 } from "./nip52-task-calendar-events";
-import { NostrEventKind, type NostrEvent } from "@/lib/nostr/types";
+import { NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { isDateBasedEventPost, isTimeBasedEventPost } from "@/types";
 
-function makeRawEvent(partial: Partial<NostrEvent> & { kind: NostrEventKind; tags: string[][] }): NostrEvent {
+function makeRawEvent(
+  partial: Partial<NostrEventWithRelay> & { kind: NostrEventKind; tags: string[][] }
+): NostrEventWithRelay {
   return {
     id: "event-id",
     pubkey: "pub1",
     created_at: 1_700_000_000,
-    kind: partial.kind,
-    tags: partial.tags,
-    content: partial.content ?? "",
+    content: "",
     sig: "sig",
+    relayUrls: ["wss://relay.example"],
     ...partial,
   };
 }

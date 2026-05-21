@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-kit/ndk";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
+import type { NostrEventKind, NostrEventWithRelay } from "@/lib/nostr/types";
 
 // Subscription manager for the NDK live feed. Validates each incoming event's
 // relay attribution at the wire boundary and hands it off to a per-concern
@@ -32,18 +33,6 @@ const HYDRATION_FLUSH_DELAY_MS = 64;
 // they just no longer block the loading UI.
 const HYDRATION_QUIESCENCE_MS = 1500;
 
-export interface IngestableEvent {
-  id: string;
-  pubkey: string;
-  created_at: number;
-  kind: number;
-  tags: string[][];
-  content: string;
-  sig?: string;
-  relayUrl?: string;
-  relayUrls?: string[];
-}
-
 interface UseNostrEventRouterParams {
   isConnected: boolean;
   subscribedKinds: number[];
@@ -52,7 +41,7 @@ interface UseNostrEventRouterParams {
     onEvent: (event: NDKEvent) => void,
     options?: { closeOnEose?: boolean }
   ) => NDKSubscription | null;
-  onEvent: (event: IngestableEvent) => void;
+  onEvent: (event: NostrEventWithRelay) => void;
 }
 
 interface UseNostrEventRouterResult {
@@ -61,14 +50,7 @@ interface UseNostrEventRouterResult {
   isHydrating: boolean;
 }
 
-type RelayLike = Pick<NDKRelay, "url"> | null | undefined;
-
-type EventLike = Pick<NDKEvent, "id" | "pubkey" | "created_at" | "kind" | "tags" | "content" | "sig"> & {
-  relay?: RelayLike;
-  onRelays?: RelayLike[];
-};
-
-function getRelayUrlsFromEvent(event: EventLike, relayOverride?: RelayLike): string[] {
+function getRelayUrls(event: NDKEvent, relayOverride?: NDKRelay | null): string[] {
   return normalizeRelayUrlScope(
     [
       relayOverride?.url,
@@ -78,19 +60,11 @@ function getRelayUrlsFromEvent(event: EventLike, relayOverride?: RelayLike): str
   );
 }
 
-function toIngestable(event: EventLike, relayOverride?: RelayLike): IngestableEvent | null {
-  if (!event.id) return null;
-  const relayUrls = getRelayUrlsFromEvent(event, relayOverride);
+function toIngestable(event: NDKEvent, relayOverride?: NDKRelay | null): NostrEventWithRelay {
   return {
-    id: event.id,
-    pubkey: event.pubkey,
-    created_at: event.created_at || Math.floor(Date.now() / 1000),
-    kind: event.kind,
-    tags: event.tags,
-    content: event.content || "",
-    sig: event.sig || undefined,
-    relayUrl: relayUrls[0],
-    relayUrls: relayUrls.length > 0 ? relayUrls : undefined,
+    ...event.rawEvent(),
+    kind: event.kind as NostrEventKind,
+    relayUrls: getRelayUrls(event, relayOverride),
   };
 }
 
@@ -106,7 +80,7 @@ export function useNostrEventRouter({
   const onEventRef = useRef(onEvent);
   useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
 
-  const pendingEventsRef = useRef<IngestableEvent[]>([]);
+  const pendingEventsRef = useRef<NostrEventWithRelay[]>([]);
   const flushTimerRef = useRef<number | null>(null);
   const quiescenceTimerRef = useRef<number | null>(null);
 
@@ -168,10 +142,8 @@ export function useNostrEventRouter({
     }, HYDRATION_FLUSH_DELAY_MS);
   }, [flushPending]);
 
-  const pushEvent = useCallback((event: EventLike, relayOverride?: RelayLike) => {
-    const ingestable = toIngestable(event, relayOverride);
-    if (!ingestable) return;
-    pendingEventsRef.current.push(ingestable);
+  const pushEvent = useCallback((event: NDKEvent, relayOverride?: NDKRelay | null) => {
+    pendingEventsRef.current.push(toIngestable(event, relayOverride));
     // A new event arrived — cancel any pending quiescence-based finalize so
     // we wait for this burst to drain before re-arming.
     clearQuiescenceTimer();
@@ -212,12 +184,14 @@ export function useNostrEventRouter({
 
     const subscription = subscribeRef.current(
       [{ kinds: subscribedKindsRef.current }],
-      (event) => pushEventRef.current(event as EventLike),
+      (event) => pushEventRef.current(event),
       { closeOnEose: false }
     );
     subscriptionRef.current = subscription;
     subscription?.on("event:dup", (event, relay) => {
-      pushEventRef.current(event as EventLike, relay);
+      // event:dup is typed (NDKEvent | NDK's NostrEvent) but NDK only ever
+      // emits NDKEvent instances; the union is overly defensive.
+      pushEventRef.current(event as NDKEvent, relay);
     });
     subscription?.on("eose", () => finalizeBootstrapScopeRef.current());
     subscription?.on("close", () => finalizeBootstrapScopeRef.current());

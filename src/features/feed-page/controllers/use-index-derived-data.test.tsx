@@ -48,7 +48,6 @@ const nostrEvents: NostrEventWithRelay[] = [
     tags: [["t", "ops"]],
     content: "#ops",
     sig: "b".repeat(128),
-    relayUrl: "wss://relay.one",
     relayUrls: ["wss://relay.one"],
   },
   {
@@ -59,7 +58,6 @@ const nostrEvents: NostrEventWithRelay[] = [
     tags: [["t", "general"]],
     content: "#general",
     sig: "d".repeat(128),
-    relayUrl: "wss://relay.two",
     relayUrls: ["wss://relay.two"],
   },
 ];

@@ -43,10 +43,7 @@ import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nost
 import { getRelayIdFromUrl } from "./relay-identity";
 
 function getRelayIdsFromEvent(event: NostrEventWithRelay): string[] {
-  const relayUrls = [
-    ...(event.relayUrls || []),
-    ...(event.relayUrl ? [event.relayUrl] : []),
-  ]
+  const relayUrls = event.relayUrls
     .map((url) => url.trim().replace(/\/+$/, ""))
     .filter((url) => Boolean(url));
   if (relayUrls.length === 0) {

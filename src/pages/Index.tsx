@@ -9,7 +9,7 @@ import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { OnboardingController } from "@/components/onboarding/OnboardingController";
 import { WelcomeController } from "@/components/welcome/WelcomeController";
-import { NostrEventKind } from "@/lib/nostr/types";
+import { NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import {
   mergeReactionEvents,
   setReactionsViewerPubkey,
@@ -125,19 +125,8 @@ function FeedIndexContent() {
 
   const isMobile = useIsMobile();
   const dispatchIncomingEvent = useCallback(
-    (event: {
-      id: string;
-      kind: number;
-      pubkey: string;
-      created_at: number;
-      tags: string[][];
-      content: string;
-      sig?: string;
-      relayUrl?: string;
-      relayUrls?: string[];
-    }) => {
+    (event: NostrEventWithRelay) => {
       noteSeenPubkey(event.pubkey);
-      const postEventLike = { ...event, sig: event.sig ?? "" };
       if (event.kind === NostrEventKind.Reaction) {
         mergeReactionEvents([event]);
         return;
@@ -146,7 +135,7 @@ function FeedIndexContent() {
         // NIP-09 deletions can target a reaction OR a task; both stores get to
         // see them and decide whether the targeted id is theirs.
         mergeReactionEvents([event]);
-        ingestPostEvent(postEventLike);
+        ingestPostEvent(event);
         return;
       }
       if (event.kind === NostrEventKind.Metadata) {
@@ -157,7 +146,7 @@ function FeedIndexContent() {
         ingestPresenceEvent(event);
         return;
       }
-      ingestPostEvent(postEventLike);
+      ingestPostEvent(event);
     },
     [],
   );
