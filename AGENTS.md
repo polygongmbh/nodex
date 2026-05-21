@@ -295,12 +295,10 @@ policies:
 - Ignore `package-lock.json` unless dependencies or dependency-affecting scripts changed, ignore `.env`, and ignore incidental `plans/` changes unless the task explicitly requires them.
 
 ### Changelog Discipline
-- Keep `CHANGELOG.md` current, with `## [Unreleased]` at the top until release.
-- Update the changelog in the same change set for notable user-visible behavior changes.
-- Skip changelog entries for minor or internal-only changes unless explicitly requested.
-- Keep entries concrete and user-facing; summarize related work once instead of logging iteration details.
-- Use semantic versions, ISO dates, and the existing `Added`/`Changed`/`Fixed` classification rules.
-- On release or push prep, reconcile `Unreleased` against `git log --first-parent <latest-tag>..HEAD` and `git diff --stat <latest-tag>..HEAD`.
+- `CHANGELOG.md` is generated from commit messages by **git-cliff** (config in `cliff.toml`). Do NOT hand-edit it; entries from v4.0.0 onward are derived at release time.
+- Commit body shapes the entry: first paragraph is the user-facing description; later paragraphs are internal notes. Use a `Changelog: <text>` trailer to override, `Changelog: none` to suppress.
+- `feat:` → Added, `fix:` → Fixed, `enhance:`/`perf:`/breaking → Changed. `refactor`/`test`/`docs`/`chore`/`style`/`build`/`ci` are skipped unless they carry a `Changelog:` trailer.
+- Regenerate at release time via the `release` skill (`git cliff --tag v<version> --unreleased --prepend CHANGELOG.md`).
 
 ### Release Scope
 - Treat minor releases as opt-in. Default to patch unless the configured `feat:` count or production-code churn threshold is met.
@@ -340,7 +338,7 @@ When asked to create a plan to fix or implement something:
 
 Detailed step-by-step workflows live as on-demand skills under `.claude/skills/` (Claude Code) — agents in other harnesses should follow the same procedures:
 
-- **`push`** — full release workflow (version bump, changelog reconciliation, verification matrix, tag, push). See `.claude/skills/push/SKILL.md`. Never shortcut directly to `git push` unless the user explicitly bypasses the routine.
+- **`release`** (also invoked by `push` in a release sense) — full release workflow (version bump, changelog regeneration via git-cliff, verification matrix, tag, push). See `.claude/skills/release/SKILL.md`. Never shortcut directly to `git push` unless the user explicitly bypasses the routine.
 - **`squash`** — inspect unpushed commits and propose sensible squashes for fixups / tightly related follow-ups; preserve atomic coherent history and only rewrite unpushed history by default. See `.claude/skills/squash/SKILL.md`.
 
 The release-policy YAML and verification matrix above remain canonical; the skills reference them.
