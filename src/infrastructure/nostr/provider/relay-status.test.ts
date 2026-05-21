@@ -105,13 +105,14 @@ describe("inferMappedStatusFromUiStatus", () => {
 
 describe("mergeRelayStatusUpdates", () => {
   it("returns the previous array when updates do not change relay fields", () => {
+    const document = { supported_nips: [42], limitation: { auth_required: false } };
     const previous = [{
       url: "wss://relay.example",
       status: "connected" as const,
       nip11: {
         authRequired: false,
         supportsNip42: true,
-        checkedAt: 123,
+        document,
       },
     }];
 
@@ -121,7 +122,7 @@ describe("mergeRelayStatusUpdates", () => {
       nip11: {
         authRequired: false,
         supportsNip42: true,
-        checkedAt: 123,
+        document,
       },
     }]);
 

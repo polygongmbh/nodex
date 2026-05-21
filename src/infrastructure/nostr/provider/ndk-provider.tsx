@@ -27,6 +27,7 @@ import { createRelayNip42AuthPolicy } from "@/infrastructure/nostr/nip42-relay-a
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import { shouldReconnectRelayAfterSignIn } from "./relay-verification";
 import { useRelayNip11 } from "./use-relay-nip11";
+import { buildNip11Status } from "./relay-status";
 import { useRelayTransport } from "./use-relay-transport";
 import { useRelayVerification } from "./use-relay-verification";
 import { useProfile } from "./use-profile";
@@ -117,8 +118,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const relayConnectedOnceRef = useRef<Set<string>>(new Set());
   const connectResolvedAuthRelayUrlsRef = useRef<(relayUrls: string[]) => void>(() => undefined);
   const {
-    relayInfoRef,
-    relayInfoFetchedAtRef,
+    relayDocumentRef,
     relayStatusCacheAdapter,
     probeRelayInfo,
     hydrateStartupCache,
@@ -190,7 +190,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     clearAuthSessionState,
   } = useRelayVerification({
     updateRelayEntry,
-    relayInfoRef,
+    relayDocumentRef,
     authMethodRef,
   });
 
@@ -332,8 +332,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     replayActiveSubscriptionsForRelay,
     scheduleRelayTimeout,
     resolveRelayConnectRetryDelay,
-    relayInfoRef,
-    relayInfoFetchedAtRef,
+    relayDocumentRef,
     relayInitialFailureCountsRef,
     relayConnectedOnceRef,
     pendingRelayVerificationRef,
@@ -365,18 +364,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     hydrateStartupCache(resolvedDefaultRelays);
     setRelays(resolvedDefaultRelays.map((url) => {
       const normalizedUrl = normalizeRelayUrl(url);
-      const info = relayInfoRef.current.get(normalizedUrl);
-      const checkedAt = relayInfoFetchedAtRef.current.get(normalizedUrl);
+      const document = relayDocumentRef.current.get(normalizedUrl);
       return {
         url: normalizedUrl,
         status: "connecting",
-        nip11: info
-          ? {
-              authRequired: info.authRequired,
-              supportsNip42: info.supportsNip42,
-              checkedAt: checkedAt ?? Date.now(),
-            }
-          : undefined,
+        nip11: document ? buildNip11Status(document) : undefined,
       };
     }));
     nostrDevLog("relay", "Relay state initialized as connecting", {
@@ -449,18 +441,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         savePersistedRelayUrls(next.map((relay) => relay.url));
         return next;
       }
-      const info = relayInfoRef.current.get(normalized);
-      const checkedAt = relayInfoFetchedAtRef.current.get(normalized);
+      const document = relayDocumentRef.current.get(normalized);
       next = [...prev, {
         url: normalized,
         status: "connecting",
-        nip11: info
-          ? {
-              authRequired: info.authRequired,
-              supportsNip42: info.supportsNip42,
-              checkedAt: checkedAt ?? Date.now(),
-            }
-          : undefined,
+        nip11: document ? buildNip11Status(document) : undefined,
       }];
       savePersistedRelayUrls(next.map((relay) => relay.url));
       return next;

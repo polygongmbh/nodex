@@ -1,5 +1,16 @@
 import { NDKRelayStatus as NativeNDKRelayStatus } from "@nostr-dev-kit/ndk";
+import type { NDKRelayInformation } from "@nostr-dev-kit/ndk";
+import { summarizeRelayInfo } from "@/infrastructure/nostr/relay-info";
 import type { NDKRelayStatus } from "./contracts";
+
+export function buildNip11Status(document: NDKRelayInformation): NonNullable<NDKRelayStatus["nip11"]> {
+  const summary = summarizeRelayInfo(document);
+  return {
+    authRequired: summary.authRequired,
+    supportsNip42: summary.supportsNip42,
+    document,
+  };
+}
 
 export const RELAY_CONNECTING_GRACE_MS = 1000;
 
@@ -81,9 +92,7 @@ function areRelayNip11SummariesEqual(
 ): boolean {
   if (left === right) return true;
   if (!left || !right) return !left && !right;
-  return left.authRequired === right.authRequired
-    && left.supportsNip42 === right.supportsNip42
-    && left.checkedAt === right.checkedAt;
+  return left.document === right.document;
 }
 
 export function areRelayStatusesEqual(left: NDKRelayStatus, right: NDKRelayStatus): boolean {

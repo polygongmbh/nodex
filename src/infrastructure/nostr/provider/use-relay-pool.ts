@@ -1,11 +1,11 @@
 import { useCallback, useRef, useState, type MutableRefObject } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
-import { type NDKRelay } from "@nostr-dev-kit/ndk";
+import { type NDKRelay, type NDKRelayInformation } from "@nostr-dev-kit/ndk";
 import type { NDKRelayStatus } from "./contracts";
-import { mapNativeRelayStatus, mapRelayStatuses, mergeRelayStatusUpdates } from "./relay-status";
+import { buildNip11Status, mapNativeRelayStatus, mapRelayStatuses, mergeRelayStatusUpdates } from "./relay-status";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import type { RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
+import { summarizeRelayInfo } from "@/infrastructure/nostr/relay-info";
 
 export function mapRelayTransportStatus(relay: NDKRelay): NDKRelayStatus["status"] {
   return mapNativeRelayStatus(relay.status);
@@ -31,8 +31,7 @@ export interface UseRelayPoolDeps {
   replayActiveSubscriptionsForRelay: (ndkInstance: NDK, relayUrl: string) => void;
   scheduleRelayTimeout: (callback: () => void, delayMs: number) => number;
   resolveRelayConnectRetryDelay: (failureCount: number) => number;
-  relayInfoRef: MutableRefObject<Map<string, RelayInfoSummary>>;
-  relayInfoFetchedAtRef: MutableRefObject<Map<string, number>>;
+  relayDocumentRef: MutableRefObject<Map<string, NDKRelayInformation>>;
   relayInitialFailureCountsRef: MutableRefObject<Map<string, number>>;
   relayConnectedOnceRef: MutableRefObject<Set<string>>;
   pendingRelayVerificationRef: MutableRefObject<Map<string, { operation: "read" | "write" | "unknown"; requestedAt: number }>>;
@@ -100,8 +99,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
       attachRelayOkRejectObserver,
       relayConnectedOnceRef,
       relayInitialFailureCountsRef,
-      relayInfoRef,
-      relayInfoFetchedAtRef,
+      relayDocumentRef,
       primeRelayAuthChallenge,
       pendingRelayVerificationRef,
       markRelayVerificationSuccess,
@@ -119,8 +117,8 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
     relayConnectedOnceRef.current.add(normalized);
     relayInitialFailureCountsRef.current.delete(normalized);
-    const relayInfo = relayInfoRef.current.get(normalized);
-    if (relayInfo?.authRequired) {
+    const relayDocument = relayDocumentRef.current.get(normalized);
+    if (relayDocument && summarizeRelayInfo(relayDocument).authRequired) {
       primeRelayAuthChallenge(ndkInstance, normalized);
     }
     const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
@@ -138,18 +136,11 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
           r.url === normalized ? { ...r, status: newStatus } : r
         );
       }
-      const info = relayInfoRef.current.get(normalized);
-      const checkedAt = relayInfoFetchedAtRef.current.get(normalized);
+      const document = relayDocumentRef.current.get(normalized);
       return [...prev, {
         url: normalized,
         status: newStatus,
-        nip11: info
-          ? {
-              authRequired: info.authRequired,
-              supportsNip42: info.supportsNip42,
-              checkedAt: checkedAt ?? Date.now(),
-            }
-          : undefined,
+        nip11: document ? buildNip11Status(document) : undefined,
       }];
     });
     // For non-auth relays joining the pool after subscriptions were registered (e.g.

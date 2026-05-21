@@ -1,5 +1,5 @@
 import type NDK from "@nostr-dev-kit/ndk";
-import type { NDKEvent, NDKFilter, NDKSubscription, NDKUser } from "@nostr-dev-kit/ndk";
+import type { NDKEvent, NDKFilter, NDKRelayInformation, NDKSubscription, NDKUser } from "@nostr-dev-kit/ndk";
 import type { PublishResult, SignedNostrEvent } from "./use-publish";
 import type { ReactNode } from "react";
 import type { NoasAuthResult } from "@/lib/nostr/noas-client";
@@ -17,7 +17,7 @@ export interface NDKRelayStatus {
   nip11?: {
     authRequired: boolean;
     supportsNip42: boolean;
-    checkedAt: number;
+    document: NDKRelayInformation;
   };
 }
 

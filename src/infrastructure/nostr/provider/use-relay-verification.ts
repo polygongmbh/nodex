@@ -11,7 +11,8 @@ import {
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
 import type { RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
-import type { RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
+import { summarizeRelayInfo } from "@/infrastructure/nostr/relay-info";
+import type { NDKRelayInformation } from "@nostr-dev-kit/ndk";
 import type { AuthMethod, NDKRelayStatus } from "./contracts";
 
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
@@ -23,13 +24,13 @@ interface UseRelayVerificationArgs {
     normalizedRelayUrl: string,
     transform: (relay: NDKRelayStatus) => NDKRelayStatus
   ) => void;
-  relayInfoRef: MutableRefObject<Map<string, RelayInfoSummary>>;
+  relayDocumentRef: MutableRefObject<Map<string, NDKRelayInformation>>;
   authMethodRef: MutableRefObject<AuthMethod>;
 }
 
 export function useRelayVerification({
   updateRelayEntry,
-  relayInfoRef,
+  relayDocumentRef,
   authMethodRef,
 }: UseRelayVerificationArgs) {
   const relayVerificationReadOpsRef = useRef(0);
@@ -129,8 +130,8 @@ export function useRelayVerification({
       return;
     }
     const normalizedUrl = relayUrl.replace(/\/+$/, "");
-    const info = relayInfoRef.current.get(normalizedUrl);
-    if (info?.authRequired === false) {
+    const document = relayDocumentRef.current.get(normalizedUrl);
+    if (document && summarizeRelayInfo(document).authRequired === false) {
       return;
     }
     if (operation === "read") {
@@ -142,7 +143,7 @@ export function useRelayVerification({
       return;
     }
     toast.success(i18n.t("composer:toasts.success.relayVerificationUnknown", { relayUrl }));
-  }, [authMethodRef, relayInfoRef, shouldShowRelayVerificationToast, updateRelayCapabilityStatus]);
+  }, [authMethodRef, relayDocumentRef, shouldShowRelayVerificationToast, updateRelayCapabilityStatus]);
 
   const markRelayVerificationFailure = useCallback((
     relayUrl: string,

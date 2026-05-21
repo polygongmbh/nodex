@@ -1,6 +1,5 @@
 import type {
   NDKCacheAdapter,
-  NDKCacheRelayInfo,
   NDKEvent,
   NDKFilter,
   NDKRelay,
@@ -10,7 +9,6 @@ import type {
 } from "@nostr-dev-kit/ndk";
 import { NIP05_CACHE_STORAGE_KEY, RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
-import { summarizeRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 
 export const RELAY_NIP11_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const NIP05_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -107,30 +105,29 @@ function savePersistedRelayStatusCache(cache: PersistedRelayStatusCache): void {
   }
 }
 
-function cachedRelayStatusToSummary(
-  status: NDKCacheRelayInfo
-): { summary: RelayInfoSummary; fetchedAt: number } | null {
-  if (!status.nip11) return null;
-  const fetchedAt = status.nip11.fetchedAt;
-  if (typeof fetchedAt !== "number" || !Number.isFinite(fetchedAt)) return null;
-  return {
-    summary: summarizeRelayInfo(status.nip11.data),
-    fetchedAt,
-  };
-}
-
-export function getFreshRelayInfoSummaryFromCache(
-  status: NDKCacheRelayInfo | undefined,
+export function loadCachedRelayNip11(
+  relayUrl: string,
   options?: { now?: number; maxAgeMs?: number }
-): { summary: RelayInfoSummary; fetchedAt: number } | null {
-  if (!status) return null;
-  const cached = cachedRelayStatusToSummary(status);
-  if (!cached) return null;
-
+): NDKRelayInformation | null {
+  const normalized = normalizeRelayUrl(relayUrl);
+  if (!normalized) return null;
+  const entry = loadPersistedRelayStatusCache()[normalized]?.nip11;
+  if (!entry) return null;
   const now = options?.now ?? Date.now();
   const maxAgeMs = options?.maxAgeMs ?? RELAY_NIP11_CACHE_TTL_MS;
-  if (now - cached.fetchedAt > maxAgeMs) return null;
-  return cached;
+  if (now - entry.fetchedAt > maxAgeMs) return null;
+  return entry.document;
+}
+
+export function saveCachedRelayNip11(relayUrl: string, document: NDKRelayInformation): void {
+  const normalized = normalizeRelayUrl(relayUrl);
+  if (!normalized) return;
+  const cache = loadPersistedRelayStatusCache();
+  cache[normalized] = {
+    ...(cache[normalized] || {}),
+    nip11: { document, fetchedAt: Date.now() },
+  };
+  savePersistedRelayStatusCache(cache);
 }
 
 export function createNodexCacheAdapter(): NDKCacheAdapter {

@@ -396,12 +396,6 @@ export function RelayManagement({
                           <span className="text-foreground">
                             {getCapabilityLabel(relay.nip11?.supportsNip42)}
                           </span>
-                          <span>{t("relay.details.nip11Checked")}</span>
-                          <span className="text-foreground">
-                            {relay.nip11?.checkedAt
-                              ? new Date(relay.nip11.checkedAt).toLocaleTimeString()
-                              : t("relay.details.unknown")}
-                          </span>
                         </div>
                       </div>
                     )}

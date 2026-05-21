@@ -1,4 +1,6 @@
+import type { NDKRelayInformation } from "@nostr-dev-kit/ndk";
 import type { NDKRelayStatus } from "./contracts";
+import { buildNip11Status } from "./relay-status";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 
 export function appendResolvedRelayUrl(relayUrls: string[], relayUrl: string): string[] {
@@ -65,7 +67,7 @@ export function mergeConfiguredRelayStatuses(params: {
   relays: NDKRelayStatus[];
   configuredRelayUrls: string[];
   removedRelayUrls?: Set<string>;
-  relayInfoByUrl?: Map<string, { authRequired: boolean; supportsNip42: boolean }>;
+  relayDocumentByUrl?: Map<string, NDKRelayInformation>;
 }): NDKRelayStatus[] {
   const removedRelayUrls = params.removedRelayUrls ?? new Set<string>();
   const nextByUrl = new Map(
@@ -80,17 +82,11 @@ export function mergeConfiguredRelayStatuses(params: {
   params.configuredRelayUrls.forEach((relayUrl) => {
     const normalized = normalizeRelayUrl(relayUrl);
     if (!normalized || removedRelayUrls.has(normalized) || nextByUrl.has(normalized)) return;
-    const info = params.relayInfoByUrl?.get(normalized);
+    const document = params.relayDocumentByUrl?.get(normalized);
     nextByUrl.set(normalized, {
       url: normalized,
       status: "connecting",
-      nip11: info
-        ? {
-            authRequired: info.authRequired,
-            supportsNip42: info.supportsNip42,
-            checkedAt: Date.now(),
-          }
-        : undefined,
+      nip11: document ? buildNip11Status(document) : undefined,
     });
   });
 

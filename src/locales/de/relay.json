@@ -25,7 +25,6 @@
       "title": "Relay-Fähigkeiten",
       "authRequired": "Auth erforderlich",
       "supportsNip42": "Unterstützt NIP-42",
-      "nip11Checked": "NIP-11 geprüft",
       "yes": "ja",
       "no": "nein",
       "unknown": "unbekannt"

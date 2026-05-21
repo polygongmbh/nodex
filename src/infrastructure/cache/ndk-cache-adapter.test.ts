@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   createNodexCacheAdapter,
-  getFreshRelayInfoSummaryFromCache,
+  loadCachedRelayNip11,
+  saveCachedRelayNip11,
   RELAY_NIP11_CACHE_TTL_MS,
 } from "./ndk-cache-adapter";
 import { RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
@@ -32,16 +33,9 @@ describe("createNodexCacheAdapter", () => {
 
     const cached = await adapter.getRelayStatus?.("wss://relay.one");
     expect(cached?.nip11?.fetchedAt).toBe(fetchedAt);
-    const summary = getFreshRelayInfoSummaryFromCache(cached, {
-      now: fetchedAt + 1,
-      maxAgeMs: RELAY_NIP11_CACHE_TTL_MS,
-    });
-    expect(summary).toEqual({
-      summary: {
-        authRequired: true,
-        supportsNip42: true,
-      },
-      fetchedAt,
+    expect(cached?.nip11?.data).toEqual({
+      supported_nips: [42],
+      limitation: { auth_required: true },
     });
   });
 
@@ -88,21 +82,29 @@ describe("createNodexCacheAdapter", () => {
   });
 });
 
-describe("getFreshRelayInfoSummaryFromCache", () => {
-  it("returns null when cache entry is older than ttl", () => {
-    const staleFetchedAt = 1000;
-    const stale = getFreshRelayInfoSummaryFromCache({
-      nip11: {
-        fetchedAt: staleFetchedAt,
-        data: {
-          limitation: { auth_required: true },
-          supported_nips: [42],
-        },
-      },
-    }, {
-      now: staleFetchedAt + RELAY_NIP11_CACHE_TTL_MS + 1,
-      maxAgeMs: RELAY_NIP11_CACHE_TTL_MS,
+describe("loadCachedRelayNip11", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("returns the persisted document for a fresh entry", () => {
+    saveCachedRelayNip11("wss://relay.one", {
+      name: "Relay One",
+      supported_nips: [42],
+      limitation: { auth_required: true },
     });
-    expect(stale).toBeNull();
+
+    expect(loadCachedRelayNip11("wss://relay.one/")).toEqual({
+      name: "Relay One",
+      supported_nips: [42],
+      limitation: { auth_required: true },
+    });
+  });
+
+  it("returns null when the entry is older than the ttl", () => {
+    saveCachedRelayNip11("wss://relay.one", { name: "Relay One" });
+
+    const past = Date.now() + RELAY_NIP11_CACHE_TTL_MS + 1;
+    expect(loadCachedRelayNip11("wss://relay.one", { now: past })).toBeNull();
   });
 });
