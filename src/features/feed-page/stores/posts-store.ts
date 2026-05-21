@@ -12,6 +12,17 @@ import {
   type PostStateUpdateRequest,
 } from "@/domain/content/post-updates";
 import { registerMemdiagStore } from "@/lib/memdiag";
+import { deleteRawEvent } from "@/stores/raw-events";
+import { clearReactionsForTarget } from "./reactions-registry";
+
+// Side-store cleanup: when a Post leaves postsById (deleted/superseded),
+// drop its raw-event entry and its reaction records too. The Post is the
+// canonical owner of those side stores' keys — they have no other source
+// of truth, so without this hook they grow with churn.
+function releaseSideStoresForPost(postId: string): void {
+  deleteRawEvent(postId);
+  clearReactionsForTarget(postId);
+}
 
 // Stores Post objects keyed by id. The store does NOT know about Nostr
 // events — every input is already a typed Post or a typed fold/delete
@@ -146,6 +157,7 @@ export function ingestPost({ post, replaceableKey }: IngestPostInput): boolean {
       postsById.delete(existingId);
       datesByPostId.delete(existingId);
       priorityTimestampByPostId.delete(existingId);
+      releaseSideStoresForPost(existingId);
     }
     replaceableKeyToPostId.set(replaceableKey, post.id);
   }
@@ -220,6 +232,7 @@ export function applyDeletion(deletion: PostDeletionRequest): void {
       postsById.delete(targetId);
       datesByPostId.delete(targetId);
       priorityTimestampByPostId.delete(targetId);
+      releaseSideStoresForPost(targetId);
       removedAny = true;
     }
     const pending = pendingFoldsByTargetId.get(targetId);

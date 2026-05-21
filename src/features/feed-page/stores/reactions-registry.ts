@@ -226,6 +226,23 @@ export function getReactionsForTarget(targetId: string | undefined): TaskReactio
   return reactionsByTargetId.get(targetId);
 }
 
+/**
+ * Drop every reaction record whose target is `targetId`. Called when the
+ * host post is deleted/superseded — reactions about a post that no longer
+ * exists would otherwise linger in the registry forever.
+ */
+export function clearReactionsForTarget(targetId: string): void {
+  const eventIds = eventIdsByTarget.get(targetId);
+  if (!eventIds) {
+    if (reactionsByTargetId.delete(targetId)) notifySubscribers();
+    return;
+  }
+  for (const eventId of eventIds) reactionsByEventId.delete(eventId);
+  eventIdsByTarget.delete(targetId);
+  const hadPublished = reactionsByTargetId.delete(targetId);
+  if (eventIds.size > 0 || hadPublished) notifySubscribers();
+}
+
 /** Test helper: reset registry between cases. */
 export function __resetReactionsRegistryForTests(): void {
   reactionsByEventId.clear();
