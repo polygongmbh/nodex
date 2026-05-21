@@ -502,7 +502,8 @@ export function CalendarView({
                               {dayTasks.length > 0 && (
                                 isMobile ? (
                                   <div className="flex gap-0.5 mt-0.5">
-                                    {dayTasks.slice(0, 3).map((task) => {
+                                    {Array.from({ length: Math.min(dayTasks.length, 3) }, (_, i) => {
+                                      const task = dayTasks[i];
                                       const authorColor = getAuthorColor(task.author);
                                       return (
                                         <span
@@ -518,7 +519,8 @@ export function CalendarView({
                                   </div>
                                 ) : (
                                   <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
-                                    {dayTasks.slice(0, 2).map((task) => {
+                                    {Array.from({ length: Math.min(dayTasks.length, 2) }, (_, i) => {
+                                      const task = dayTasks[i];
                                       const authorColor = getAuthorColor(task.author);
                                       return (
                                         <div
