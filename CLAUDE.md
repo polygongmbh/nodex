@@ -92,7 +92,7 @@ High-impact areas that require test coverage:
 - After finishing work, concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
 - Amend the immediately previous local commit when the change is a direct fixup of it; use a new commit otherwise.
 
-When the user says `squash`, inspect recent unpushed commits and suggest sensible squashes for fixups or tightly related follow-ups; list candidates with original and target messages before executing anything.
+When the user says `squash` or `push`, invoke the matching skill under `.claude/skills/` — these encapsulate the full procedures (history rewrite rules for `squash`; release reconciliation, version bump, verification, tag, and push for `push`). Never shortcut directly to `git push` for a release unless the user explicitly bypasses the routine.
 
 ### Changelog
 - `CHANGELOG.md` is **generated** from commit messages by [git-cliff](https://git-cliff.org) using `cliff.toml`. Do not hand-edit it.

@@ -338,27 +338,12 @@ When asked to create a plan to fix or implement something:
 
 ### Special Commands
 
-#### squash
-- `squash` (or starts with `squash`): inspect recent commits and suggest sensible squashes for repetitive/fixup/tightly related follow-ups.
-- Before any squash/rebase execution, list each squash candidate with its original commit message and intended target commit message.
-- For squash checks, preserve atomic coherent history and do not squash unrelated functional changes.
-- Rewrite only unpushed local history for squash/rebase unless explicitly instructed otherwise.
-- When the commits to rewrite are a contiguous block at the tip, prefer `git reset --soft <target>` followed by selective recommits over an interactive rebase.
-- Reserve interactive rebase for non-contiguous history edits or cases where a soft reset would make commit reconstruction materially less clear.
-- After squashing, diff current commit to the previous head - there should be no difference, if there is, stop and ask how to proceed.
+Detailed step-by-step workflows live as on-demand skills under `.claude/skills/` (Claude Code) — agents in other harnesses should follow the same procedures:
 
-#### push
-- `push` (or starts with `push`) is a special command and MUST run this full release workflow; do not shortcut directly to `git push` unless the user explicitly asks to bypass the routine
-- update user-facing guides before release or push
-- list commits since last version and provide high-level summary
-- reconcile the pending release against `CHANGELOG.md` `Unreleased`, `git log --first-parent <latest-tag>..HEAD`, and `git diff --stat <latest-tag>..HEAD` so already-pushed-but-unreleased entries are included in the version scope unless explicitly deferred
-- omit cosmetic-only and internal details from the changelog
-- update `package.json` version semantically based on the release policy above
-- run npm install to make sure the lockfile is up to date
-- when bumping a patch/minor version, include a short explicit rationale in release/push notes (for example: "patch for fixes only" or "minor for broader user-facing feature scope")
-- create annotated tag matching version (for example `v1.1.0`)
-- apply the changelog discipline and verification matrix above
-- after explicit confirmation, push branch and tags
+- **`push`** — full release workflow (version bump, changelog reconciliation, verification matrix, tag, push). See `.claude/skills/push/SKILL.md`. Never shortcut directly to `git push` unless the user explicitly bypasses the routine.
+- **`squash`** — inspect unpushed commits and propose sensible squashes for fixups / tightly related follow-ups; preserve atomic coherent history and only rewrite unpushed history by default. See `.claude/skills/squash/SKILL.md`.
+
+The release-policy YAML and verification matrix above remain canonical; the skills reference them.
 
 ### Assistant Response Formatting
 - Keep summaries compact and scannable.
