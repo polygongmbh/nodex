@@ -6,6 +6,11 @@
     "4": "P4 - Wichtig",
     "5": "P5 - Kritisch"
   },
+  "common": {
+    "yes": "ja",
+    "no": "nein",
+    "unknown": "unbekannt"
+  },
   "app": {
     "loadingView": "Ansicht wird geladen..."
   },

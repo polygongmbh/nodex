@@ -25,10 +25,7 @@
       "authRequired": "Auth erforderlich",
       "supportsNip42": "Unterstützt NIP-42",
       "pubkey": "Pubkey",
-      "contact": "Kontakt",
-      "yes": "ja",
-      "no": "nein",
-      "unknown": "unbekannt"
+      "contact": "Kontakt"
     },
     "copyDebug": "Diagnose kopieren",
     "copyUrls": "Relay-URLs kopieren",

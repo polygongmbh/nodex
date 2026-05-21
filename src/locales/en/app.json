@@ -6,6 +6,11 @@
     "4": "P4 - Major",
     "5": "P5 - Critical"
   },
+  "common": {
+    "yes": "yes",
+    "no": "no",
+    "unknown": "unknown"
+  },
   "app": {
     "loadingView": "Loading view..."
   },

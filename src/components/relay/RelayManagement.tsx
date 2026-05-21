@@ -161,9 +161,9 @@ export function RelayManagement({
   };
 
   const getCapabilityLabel = (value: boolean | undefined): string => {
-    if (value === true) return t("relay.details.yes");
-    if (value === false) return t("relay.details.no");
-    return t("relay.details.unknown");
+    if (value === true) return t("app:common.yes");
+    if (value === false) return t("app:common.no");
+    return t("app:common.unknown");
   };
 
   const defaultTrigger = (
