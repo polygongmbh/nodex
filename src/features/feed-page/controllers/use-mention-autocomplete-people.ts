@@ -1,16 +1,14 @@
 import { useMemo } from "react";
 import type { Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
-import {
-  derivePeopleFromKind0Events,
-  type Kind0LikeEvent,
-} from "@/infrastructure/nostr/people-from-kind0";
+import type { NostrEvent } from "@/lib/nostr/types";
+import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 
 interface UseMentionAutocompletePeopleOptions {
   /** Posts visible in the current relay scope; their authors join the autocomplete set. */
   scopedPosts: Pick<Post, "author">[];
   /** All known kind:0 profile events (resolved labels, NIP-05, etc). */
-  cachedKind0Events: Kind0LikeEvent[];
+  cachedKind0Events: NostrEvent[];
   /** People manifest passed through unchanged for label resolution. */
   people: SelectablePerson[];
 }

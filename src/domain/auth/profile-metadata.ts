@@ -1,4 +1,4 @@
-import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
+import type { NostrEvent } from "@/lib/nostr/types";
 
 interface ProfileSnapshot {
   name?: string;
@@ -16,7 +16,7 @@ export function hasUsableProfileFields(profile?: ProfileSnapshot | null): boolea
 
 export function hasCurrentUserProfileMetadata(
   user: CurrentUserLike | null | undefined,
-  cachedKind0Events: Kind0LikeEvent[]
+  cachedKind0Events: NostrEvent[]
 ): boolean {
   if (!user?.pubkey) return true;
   if (hasUsableProfileFields(user.profile)) return true;

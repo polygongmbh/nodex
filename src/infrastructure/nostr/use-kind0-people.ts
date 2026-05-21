@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type D
 import type { SelectablePerson } from "@/types/person";
 import {
   derivePeopleFromKind0Events,
+  getKind0CacheVersion,
   loadCachedKind0Events,
   loadCachedKind0EventsForRelayUrls,
   loadLoggedInIdentityPriority,
@@ -9,8 +10,8 @@ import {
   rememberLoggedInIdentity,
   removeCachedKind0EventsByRelayUrl,
   subscribeToKind0Cache,
-  type Kind0LikeEvent,
 } from "@/infrastructure/nostr/people-from-kind0";
+import type { NostrEvent } from "@/lib/nostr/types";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import {
   getLatestPresenceByAuthor,
@@ -37,22 +38,9 @@ interface NostrUserLike {
 interface UseKind0PeopleResult {
   people: SelectablePerson[];
   setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
-  cachedKind0Events: Kind0LikeEvent[];
+  cachedKind0Events: NostrEvent[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   removeCachedRelayProfile: (relayUrl: string) => void;
-}
-
-function areKind0EventListsEqual(previous: Kind0LikeEvent[], next: Kind0LikeEvent[]): boolean {
-  if (previous === next) return true;
-  if (previous.length !== next.length) return false;
-  for (let index = 0; index < previous.length; index += 1) {
-    const a = previous[index];
-    const b = next[index];
-    if (a.pubkey !== b.pubkey || a.created_at !== b.created_at || a.content !== b.content || a.kind !== b.kind) {
-      return false;
-    }
-  }
-  return true;
 }
 
 function arePeopleListsEqual(previous: SelectablePerson[], next: SelectablePerson[]): boolean {
@@ -82,28 +70,26 @@ export function useKind0People(
   );
   const selectedRelayScopeKey = normalizedSelectedRelayUrls.join("|");
   const [people, setPeople] = useState<SelectablePerson[]>([]);
-  const [cachedKind0Events, setCachedKind0Events] = useState<Kind0LikeEvent[]>(() =>
-    loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls)
-  );
-  const [fallbackKind0Events, setFallbackKind0Events] = useState<Kind0LikeEvent[]>(() => loadCachedKind0Events());
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
 
-  useEffect(() => {
-    const reload = () => {
-      const nextScoped = loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls);
-      setCachedKind0Events((previous) =>
-        areKind0EventListsEqual(previous, nextScoped) ? previous : nextScoped
-      );
-      const nextFallback = loadCachedKind0Events();
-      setFallbackKind0Events((previous) =>
-        areKind0EventListsEqual(previous, nextFallback) ? previous : nextFallback
-      );
-    };
-    reload();
-    return subscribeToKind0Cache(reload);
-    // Equivalent normalized relay scopes should not trigger another cache refresh.
+  // The cache's version counter is monotone — it bumps whenever the cache
+  // changes — so we re-derive scope-filtered events on every change. The
+  // downstream arePeopleListsEqual check below collapses people-list
+  // identity churn when the derived shape didn't actually change.
+  const kind0CacheVersion = useSyncExternalStore(
+    subscribeToKind0Cache,
+    getKind0CacheVersion,
+    getKind0CacheVersion,
+  );
+  const cachedKind0Events = useMemo(
+    () => loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRelayScopeKey]);
+    [kind0CacheVersion, selectedRelayScopeKey],
+  );
+  const fallbackKind0Events = useMemo(
+    () => loadCachedKind0Events(),
+    [kind0CacheVersion],
+  );
 
   // Subscribed instead of derived from nostrEvents: kind 30315 ingests through
   // the subscription dispatcher into the presence-status module's in-memory

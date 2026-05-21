@@ -54,13 +54,13 @@ describe("useKind0People", () => {
     );
 
     await waitFor(() => {
-      expect(loadSpy).toHaveBeenCalledTimes(2);
+      expect(loadSpy).toHaveBeenCalledTimes(1);
     });
 
     rerender({ relayUrls: [` ${DEMO_RELAY_URL}/`, DEMO_RELAY_URL] });
 
     await waitFor(() => {
-      expect(loadSpy).toHaveBeenCalledTimes(2);
+      expect(loadSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

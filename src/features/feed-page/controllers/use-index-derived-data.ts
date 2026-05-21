@@ -4,7 +4,7 @@ import { useCachedPosts } from "@/features/feed-page/controllers/use-cached-post
 import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
 import type { Post, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
-import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
+import type { NostrEvent } from "@/lib/nostr/types";
 import {
   setPostsSuppression,
   usePosts,
@@ -35,7 +35,7 @@ export interface UseIndexDerivedDataOptions {
   demoTasks: Post[];
   people: SelectablePerson[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
-  cachedKind0Events: Kind0LikeEvent[];
+  cachedKind0Events: NostrEvent[];
   user: NDKUser | null;
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];

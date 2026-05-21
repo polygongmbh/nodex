@@ -1,15 +1,8 @@
 import type { SelectablePerson } from "@/types/person";
 import { normalizeRelayUrl, normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
-import { NostrEventKind } from "@/lib/nostr/types";
+import { NostrEventKind, type NostrEvent, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
-
-export interface Kind0LikeEvent {
-  kind: number;
-  pubkey: string;
-  created_at?: number;
-  content: string;
-}
 
 interface CachedProfileSnapshot {
   name?: string;
@@ -17,15 +10,6 @@ interface CachedProfileSnapshot {
   about?: string;
   picture?: string;
   nip05?: string;
-}
-
-interface IngestableKind0Event {
-  kind: number;
-  pubkey: string;
-  created_at?: number;
-  content: string;
-  relayUrl?: string;
-  relayUrls?: string[];
 }
 
 const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache";
@@ -36,10 +20,6 @@ const MAX_CACHED_KIND0_EVENTS = 500;
 const MAX_LOGGED_IN_IDENTITIES = 50;
 const FLUSH_DEBOUNCE_MS = 750;
 const NOTIFY_DEBOUNCE_MS = 64;
-
-function isMetadataEvent(event: Pick<Kind0LikeEvent, "kind" | "pubkey">): boolean {
-  return event.kind === NostrEventKind.Metadata && Boolean(event.pubkey);
-}
 
 function normalizePubkey(value: string): string {
   return value.trim().toLowerCase();
@@ -61,17 +41,22 @@ function getRelayStorageKey(relayUrl: string): string {
  * shared globals.
  */
 export class Kind0Cache {
-  private readonly bucketByStorageKey = new Map<string, Map<string, Kind0LikeEvent>>();
+  private readonly bucketByStorageKey = new Map<string, Map<string, NostrEvent>>();
   private readonly dirtyStorageKeys = new Set<string>();
   private readonly subscribers = new Set<() => void>();
   private pendingFlushTimer: number | null = null;
   private pendingNotifyTimer: number | null = null;
+  /** Monotonically-incrementing change counter. Consumers can read this via
+   * useSyncExternalStore to re-derive scope-filtered projections on any
+   * cache change without keeping a parallel state copy. */
+  private versionCounter = 0;
+  getVersion(): number { return this.versionCounter; }
 
   private get canUseStorage(): boolean {
     return typeof window !== "undefined" && Boolean(window.localStorage);
   }
 
-  private getBucket(storageKey: string): Map<string, Kind0LikeEvent> {
+  private getBucket(storageKey: string): Map<string, NostrEvent> {
     let bucket = this.bucketByStorageKey.get(storageKey);
     if (bucket) return bucket;
     bucket = this.loadBucketFromStorage(storageKey);
@@ -79,70 +64,43 @@ export class Kind0Cache {
     return bucket;
   }
 
-  private loadBucketFromStorage(storageKey: string): Map<string, Kind0LikeEvent> {
-    const bucket = new Map<string, Kind0LikeEvent>();
+  /**
+   * Load a bucket from localStorage. The cache format is whatever we last
+   * wrote — we don't migrate legacy shapes; an unparseable bucket starts
+   * empty and the next live ingest backfills it.
+   */
+  private loadBucketFromStorage(storageKey: string): Map<string, NostrEvent> {
+    const bucket = new Map<string, NostrEvent>();
     if (!this.canUseStorage) return bucket;
-    let raw: string | null;
-    try {
-      raw = window.localStorage.getItem(storageKey);
-    } catch {
-      return bucket;
-    }
-    if (!raw) return bucket;
     let parsed: unknown;
     try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return bucket;
       parsed = JSON.parse(raw);
     } catch {
       return bucket;
     }
     if (!Array.isArray(parsed)) return bucket;
-    for (const entry of parsed) {
-      if (!entry || typeof entry !== "object") continue;
-      const candidate = entry as Partial<Kind0LikeEvent>;
-      if (
-        typeof candidate.pubkey !== "string" ||
-        typeof candidate.kind !== "number" ||
-        typeof candidate.content !== "string"
-      ) {
-        continue;
-      }
-      if (!isMetadataEvent(candidate as Kind0LikeEvent)) continue;
-      const normalizedPubkey = normalizePubkey(candidate.pubkey);
-      if (!normalizedPubkey) continue;
-      const existing = bucket.get(normalizedPubkey);
-      if (existing && (existing.created_at || 0) >= (candidate.created_at || 0)) continue;
-      bucket.set(normalizedPubkey, {
-        kind: candidate.kind,
-        pubkey: normalizedPubkey,
-        created_at: candidate.created_at,
-        content: candidate.content,
-      });
+    for (const event of parsed as NostrEvent[]) {
+      this.setIfNewer(bucket, event);
     }
     return bucket;
   }
 
   /** Replace-if-newer into the bucket. Returns true when the bucket changed. */
-  private setIfNewer(bucket: Map<string, Kind0LikeEvent>, event: Kind0LikeEvent): boolean {
-    if (!isMetadataEvent(event)) return false;
+  private setIfNewer(bucket: Map<string, NostrEvent>, event: NostrEvent): boolean {
+    if (event.kind !== NostrEventKind.Metadata) return false;
     const normalizedPubkey = normalizePubkey(event.pubkey);
-    if (!normalizedPubkey) return false;
     const existing = bucket.get(normalizedPubkey);
-    const incomingTs = event.created_at || 0;
-    const existingTs = existing?.created_at || 0;
     if (existing) {
-      if (existingTs > incomingTs) return false;
-      if (existingTs === incomingTs && existing.content === event.content) return false;
+      if (existing.created_at > event.created_at) return false;
+      if (existing.created_at === event.created_at && existing.content === event.content) return false;
     }
-    bucket.set(normalizedPubkey, {
-      kind: event.kind,
-      pubkey: normalizedPubkey,
-      created_at: event.created_at,
-      content: event.content,
-    });
+    bucket.set(normalizedPubkey, event.pubkey === normalizedPubkey ? event : { ...event, pubkey: normalizedPubkey });
     return true;
   }
 
-  private bucketToArray(bucket: Map<string, Kind0LikeEvent>): Kind0LikeEvent[] {
+  private bucketToArray(bucket: Map<string, NostrEvent>): NostrEvent[] {
     if (bucket.size === 0) return [];
     const arr = Array.from(bucket.values());
     if (arr.length <= 1) return arr;
@@ -203,6 +161,7 @@ export class Kind0Cache {
   }
 
   private notifySubscribers(): void {
+    this.versionCounter += 1;
     for (const notify of this.subscribers) notify();
   }
 
@@ -212,9 +171,10 @@ export class Kind0Cache {
   }
 
   /**
-   * Drop all in-memory state and remove every owned key from localStorage.
-   * Used by log-out flows that want to discard cached profiles, and by
-   * integration tests that need a known empty cache between cases.
+   * Drop all in-memory state and remove every owned key from localStorage —
+   * the cache-layer equivalent of localStorage.clear(). Used by integration
+   * tests that exercise the default singleton, and available for an
+   * explicit "clear cached profiles" maintenance action.
    */
   clear(): void {
     if (this.canUseStorage) {
@@ -235,14 +195,14 @@ export class Kind0Cache {
     }
   }
 
-  loadForRelay(relayUrl: string): Kind0LikeEvent[] {
+  loadForRelay(relayUrl: string): NostrEvent[] {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     if (!normalizedRelayUrl) return [];
     return this.bucketToArray(this.getBucket(getRelayStorageKey(normalizedRelayUrl)));
   }
 
-  loadAll(): Kind0LikeEvent[] {
-    const acc = new Map<string, Kind0LikeEvent>();
+  loadAll(): NostrEvent[] {
+    const acc = new Map<string, NostrEvent>();
     for (const [, event] of this.getBucket(KIND0_CACHE_LOCAL_STORAGE_KEY)) this.setIfNewer(acc, event);
     for (const storageKey of this.listKnownRelayStorageKeys()) {
       for (const [, event] of this.getBucket(storageKey)) this.setIfNewer(acc, event);
@@ -250,10 +210,10 @@ export class Kind0Cache {
     return this.bucketToArray(acc);
   }
 
-  loadForRelayUrls(relayUrls: string[]): Kind0LikeEvent[] {
+  loadForRelayUrls(relayUrls: string[]): NostrEvent[] {
     const scope = normalizeRelayUrlScope(relayUrls);
     if (scope.length === 0) return [];
-    const acc = new Map<string, Kind0LikeEvent>();
+    const acc = new Map<string, NostrEvent>();
     for (const relayUrl of scope) {
       const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
       if (!normalizedRelayUrl) continue;
@@ -263,7 +223,7 @@ export class Kind0Cache {
     return this.bucketToArray(acc);
   }
 
-  save(events: Kind0LikeEvent[], relayUrl?: string): boolean {
+  save(events: NostrEvent[], relayUrl?: string): boolean {
     if (!this.canUseStorage) return false;
     let storageKey: string;
     if (!relayUrl) {
@@ -302,32 +262,26 @@ export class Kind0Cache {
   }
 
   /**
-   * Fold a single kind-0 event into its relay buckets. O(1) per relay,
-   * with the subscriber notification debounced so a backfill burst
-   * collapses into one render tick downstream.
+   * Fold a kind-0 event into each relay bucket it was seen on. Per-relay
+   * work is O(1) (a Map.set with a created_at comparison); subscriber
+   * notification is debounced so a backfill burst collapses into one
+   * render tick downstream.
    */
-  ingest(event: IngestableKind0Event): boolean {
-    if (!isMetadataEvent(event)) return false;
-    const relayUrls = [
-      ...(event.relayUrls || []),
-      ...(event.relayUrl ? [event.relayUrl] : []),
-    ]
-      .map((url) => url.trim().replace(/\/+$/, ""))
-      .filter(Boolean);
+  ingest(event: NostrEventWithRelay): boolean {
+    if (event.kind !== NostrEventKind.Metadata) return false;
+    const relayUrls = event.relayUrls?.length
+      ? event.relayUrls
+      : event.relayUrl
+        ? [event.relayUrl]
+        : [];
     if (relayUrls.length === 0) return false;
-    const payload: Kind0LikeEvent = {
-      kind: event.kind,
-      pubkey: event.pubkey,
-      created_at: event.created_at,
-      content: event.content,
-    };
     let anyChanged = false;
     for (const relayUrl of relayUrls) {
       const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
       if (!normalizedRelayUrl) continue;
       const storageKey = getRelayStorageKey(normalizedRelayUrl);
       const bucket = this.getBucket(storageKey);
-      if (this.setIfNewer(bucket, payload)) {
+      if (this.setIfNewer(bucket, event)) {
         this.dirtyStorageKeys.add(storageKey);
         anyChanged = true;
       }
@@ -351,15 +305,15 @@ if (typeof window !== "undefined") {
 // without knowing about the class; tests construct their own Kind0Cache to
 // avoid shared state.
 
-export function loadCachedKind0Events(relayUrl?: string): Kind0LikeEvent[] {
+export function loadCachedKind0Events(relayUrl?: string): NostrEvent[] {
   return relayUrl ? defaultKind0Cache.loadForRelay(relayUrl) : defaultKind0Cache.loadAll();
 }
 
-export function loadCachedKind0EventsForRelayUrls(relayUrls: string[]): Kind0LikeEvent[] {
+export function loadCachedKind0EventsForRelayUrls(relayUrls: string[]): NostrEvent[] {
   return defaultKind0Cache.loadForRelayUrls(relayUrls);
 }
 
-export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: string): boolean {
+export function saveCachedKind0Events(events: NostrEvent[], relayUrl?: string): boolean {
   return defaultKind0Cache.save(events, relayUrl);
 }
 
@@ -367,12 +321,16 @@ export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
   defaultKind0Cache.removeRelay(relayUrl);
 }
 
-export function ingestKind0Event(event: IngestableKind0Event): boolean {
+export function ingestKind0Event(event: NostrEventWithRelay): boolean {
   return defaultKind0Cache.ingest(event);
 }
 
 export function subscribeToKind0Cache(callback: () => void): () => void {
   return defaultKind0Cache.subscribe(callback);
+}
+
+export function getKind0CacheVersion(): number {
+  return defaultKind0Cache.getVersion();
 }
 
 /**
@@ -381,10 +339,10 @@ export function subscribeToKind0Cache(callback: () => void): () => void {
  * arrays directly. The hot ingest path uses Kind0Cache.ingest instead.
  */
 export function mergeKind0EventsWithCache(
-  liveEvents: Kind0LikeEvent[],
-  cachedEvents: Kind0LikeEvent[]
-): Kind0LikeEvent[] {
-  const acc = new Map<string, Kind0LikeEvent>();
+  liveEvents: NostrEvent[],
+  cachedEvents: NostrEvent[]
+): NostrEvent[] {
+  const acc = new Map<string, NostrEvent>();
   for (const event of cachedEvents) foldIntoLatestMap(acc, event);
   for (const event of liveEvents) foldIntoLatestMap(acc, event);
   return Array.from(acc.values()).sort(
@@ -392,23 +350,22 @@ export function mergeKind0EventsWithCache(
   );
 }
 
-function foldIntoLatestMap(acc: Map<string, Kind0LikeEvent>, event: Kind0LikeEvent): void {
-  if (!isMetadataEvent(event)) return;
+function foldIntoLatestMap(acc: Map<string, NostrEvent>, event: NostrEvent): void {
+  if (event.kind !== NostrEventKind.Metadata) return;
   const normalizedPubkey = normalizePubkey(event.pubkey);
-  if (!normalizedPubkey) return;
   const existing = acc.get(normalizedPubkey);
-  if (existing && (existing.created_at || 0) >= (event.created_at || 0)) {
-    if ((existing.created_at || 0) > (event.created_at || 0)) return;
-    if (existing.content === event.content) return;
+  if (existing) {
+    if (existing.created_at > event.created_at) return;
+    if (existing.created_at === event.created_at && existing.content === event.content) return;
   }
-  acc.set(normalizedPubkey, { ...event, pubkey: normalizedPubkey });
+  acc.set(normalizedPubkey, event.pubkey === normalizedPubkey ? event : { ...event, pubkey: normalizedPubkey });
 }
 
 export function rememberCachedKind0Profile(
   pubkey: string,
   profile: CachedProfileSnapshot,
-  existingEvents: Kind0LikeEvent[] = loadCachedKind0Events(),
-): Kind0LikeEvent[] {
+  existingEvents: NostrEvent[] = loadCachedKind0Events(),
+): NostrEvent[] {
   const normalizedPubkey = normalizePubkey(pubkey);
   if (!normalizedPubkey) return existingEvents;
 
@@ -423,11 +380,18 @@ export function rememberCachedKind0Profile(
     nip05: (profile.nip05 || existingProfile.nip05 || "").trim() || undefined,
   };
 
-  const snapshotEvent: Kind0LikeEvent = {
-    kind: NostrEventKind.Metadata,
+  // Local snapshot for the signed-in user: id/tags/sig stay empty because
+  // this is a placeholder we show until the real published event makes its
+  // way back through the relay subscription and overwrites it with a
+  // higher-or-equal created_at.
+  const snapshotEvent: NostrEvent = {
+    id: "",
     pubkey: normalizedPubkey,
     created_at: Math.floor(Date.now() / 1000),
+    kind: NostrEventKind.Metadata,
+    tags: [],
     content: JSON.stringify(merged),
+    sig: "",
   };
 
   saveCachedKind0Events([snapshotEvent]);
@@ -468,17 +432,17 @@ export function rememberLoggedInIdentity(pubkey: string): string[] {
   return next;
 }
 
-function getLatestKind0ByPubkey(events: Kind0LikeEvent[]): Map<string, Kind0LikeEvent> {
-  const latestByPubkey = new Map<string, Kind0LikeEvent>();
+function getLatestKind0ByPubkey(events: NostrEvent[]): Map<string, NostrEvent> {
+  const latestByPubkey = new Map<string, NostrEvent>();
   for (const event of events) foldIntoLatestMap(latestByPubkey, event);
   return latestByPubkey;
 }
 
 function resolveKind0EventForPubkey(
   pubkey: string,
-  selectedLatestByPubkey: Map<string, Kind0LikeEvent>,
-  fallbackLatestByPubkey: Map<string, Kind0LikeEvent>,
-): Kind0LikeEvent | null {
+  selectedLatestByPubkey: Map<string, NostrEvent>,
+  fallbackLatestByPubkey: Map<string, NostrEvent>,
+): NostrEvent | null {
   const normalizedPubkey = normalizePubkey(pubkey);
   if (!normalizedPubkey) return null;
   return (
@@ -490,8 +454,8 @@ function resolveKind0EventForPubkey(
 
 export function derivePeopleFromKind0Events(
   visiblePubkeys: string[],
-  selectedEvents: Kind0LikeEvent[],
-  fallbackEvents: Kind0LikeEvent[],
+  selectedEvents: NostrEvent[],
+  fallbackEvents: NostrEvent[],
   previousPeople: SelectablePerson[],
   options?: { prioritizedPubkeys?: string[] }
 ): SelectablePerson[] {
