@@ -1,18 +1,16 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
-import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, RefreshCcw, } from "lucide-react";
+import {   Hash, Calendar, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, RefreshCcw, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
 import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment } from "@/types";
 import type { ComposerFilterSync } from "./use-composer-filter-sync";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import { TaskDateTypeSelect } from "@/components/tasks/TaskDateTypeSelect";
-import { TaskTimeInput } from "@/components/tasks/TaskTimeInput";
+import { DateTimeControl } from "@/components/tasks/composer/DateTimeControl";
+import { TitledPostFields } from "@/components/tasks/composer/TitledPostFields";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
@@ -85,6 +83,7 @@ interface TaskComposerProps {
   collapseOnSuccess?: boolean;
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
+  defaultPostType?: PostType;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   onComposeRestoreRequestConsumed?: (requestId: number) => void;
   contextTaskTitle?: string;
@@ -121,12 +120,11 @@ export interface TaskComposerFormData {
   eventMetadata?: TaskComposerEventMetadata;
 }
 
-const NIP99_TITLE_MAX_LENGTH = 80;
-const NIP99_SUMMARY_MAX_LENGTH = 160;
+const TITLED_POST_TITLE_MAX_LENGTH = 80;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
 const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
-function normalizeListingTextFromContent(content: string): string {
-  return stripStandaloneMentionsAndHashtags(content)
+function normalizeTitledPostText(value: string): string {
+  return stripStandaloneMentionsAndHashtags(value)
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -141,24 +139,11 @@ function truncateWordSafe(value: string, maxLength: number): string {
   return truncated;
 }
 
-function deriveNip99AutofillFromContent(content: string): Pick<Nip99Metadata, "title" | "summary"> {
-  const normalized = normalizeListingTextFromContent(content);
-  if (!normalized) {
-    return { title: undefined, summary: undefined };
-  }
-  if (normalized.length <= NIP99_TITLE_MAX_LENGTH) {
-    return { title: normalized, summary: undefined };
-  }
-  if (normalized.length <= NIP99_SUMMARY_MAX_LENGTH) {
-    return {
-      title: truncateWordSafe(normalized, NIP99_TITLE_MAX_LENGTH),
-      summary: normalized,
-    };
-  }
-  return {
-    title: truncateWordSafe(normalized, NIP99_TITLE_MAX_LENGTH),
-    summary: truncateWordSafe(normalized, NIP99_SUMMARY_MAX_LENGTH),
-  };
+export function deriveTitledPostTitleFromContent(content: string): string | undefined {
+  const firstLine = content.split(/\r?\n/).find((line) => line.trim().length > 0) ?? "";
+  const normalized = normalizeTitledPostText(firstLine);
+  if (!normalized) return undefined;
+  return truncateWordSafe(normalized, TITLED_POST_TITLE_MAX_LENGTH);
 }
 
 function extractFilesFromDataTransfer(dataTransfer: DataTransfer | null | undefined): File[] {
@@ -208,6 +193,7 @@ export function TaskComposer({
   collapseOnSuccess = false,
   allowComment = true,
   allowFeedMessageTypes = false,
+  defaultPostType,
   composeRestoreRequest = null,
   onComposeRestoreRequestConsumed,
   contextTaskTitle = "",
@@ -233,8 +219,9 @@ export function TaskComposer({
         defaultContent,
         defaultDueDate,
         allowFeedMessageTypes,
+        defaultPostType,
       }),
-    [allowFeedMessageTypes, defaultContent, defaultDueDate, draftStorageKey]
+    [allowFeedMessageTypes, defaultContent, defaultDueDate, defaultPostType, draftStorageKey]
   );
   const shouldFocusOnMount = focusOnMount;
 
@@ -280,9 +267,7 @@ export function TaskComposer({
   const [isNip99TitleTouched, setIsNip99TitleTouched] = useState(
     () => Boolean(initialComposerState.nip99.title?.trim())
   );
-  const [isNip99SummaryTouched, setIsNip99SummaryTouched] = useState(
-    () => Boolean(initialComposerState.nip99.summary?.trim())
-  );
+  const [isEventTitleTouched, setIsEventTitleTouched] = useState(false);
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialComposerState.content.trim().length > 0
   );
@@ -495,7 +480,6 @@ export function TaskComposer({
     setLocationGeohash(restoredGeohash);
     setShowLocationControls(Boolean(restoredGeohash));
     setIsNip99TitleTouched(Boolean(restoreState.nip99?.title?.trim()));
-    setIsNip99SummaryTouched(Boolean(restoreState.nip99?.summary?.trim()));
     setAttachments(
       (restoreState.attachments || []).map((attachment, index) => ({
         id: `restore-${composeRestoreRequest.id}-${index}`,
@@ -937,22 +921,16 @@ export function TaskComposer({
   };
 
   useEffect(() => {
-    if (taskType !== "listing") return;
-    const autoFilled = deriveNip99AutofillFromContent(content);
-    setNip99((previous) => {
-      let changed = false;
-      const next = { ...previous };
-      if (!isNip99TitleTouched && next.title !== autoFilled.title) {
-        next.title = autoFilled.title;
-        changed = true;
-      }
-      if (!isNip99SummaryTouched && next.summary !== autoFilled.summary) {
-        next.summary = autoFilled.summary;
-        changed = true;
-      }
-      return changed ? next : previous;
-    });
-  }, [content, isNip99SummaryTouched, isNip99TitleTouched, taskType]);
+    if (taskType !== "listing" && taskType !== "event") return;
+    const nextTitle = deriveTitledPostTitleFromContent(content);
+    if (taskType === "listing" && !isNip99TitleTouched) {
+      setNip99((previous) =>
+        previous.title === nextTitle ? previous : { ...previous, title: nextTitle }
+      );
+    } else if (taskType === "event" && !isEventTitleTouched) {
+      setEventTitle((previous) => (previous === (nextTitle ?? "") ? previous : nextTitle ?? ""));
+    }
+  }, [content, isEventTitleTouched, isNip99TitleTouched, taskType]);
 
   const resetComposerState = () => {
     setContent("");
@@ -974,7 +952,7 @@ export function TaskComposer({
     setShowLocationControls(false);
     setNip99({});
     setIsNip99TitleTouched(false);
-    setIsNip99SummaryTouched(false);
+    setIsEventTitleTouched(false);
     setEndDate(undefined);
     setEndTime("");
     setEventTitle("");
@@ -1038,9 +1016,8 @@ export function TaskComposer({
     const listingMetadata =
       effectiveTaskType === "listing"
         ? {
-            ...deriveNip99AutofillFromContent(content),
             identifier: nip99.identifier?.trim() || undefined,
-            title: nip99.title?.trim() || undefined,
+            title: nip99.title?.trim() || deriveTitledPostTitleFromContent(content),
             summary: nip99.summary?.trim() || undefined,
             location: nip99.location?.trim() || undefined,
             price: nip99.price?.trim() || undefined,
@@ -1121,7 +1098,7 @@ export function TaskComposer({
     setShowLocationControls(false);
     setNip99({});
     setIsNip99TitleTouched(false);
-    setIsNip99SummaryTouched(false);
+    setIsEventTitleTouched(false);
     setEndDate(undefined);
     setEndTime("");
     setEventTitle("");
@@ -2081,52 +2058,17 @@ export function TaskComposer({
               }}
               className="h-8 w-24 cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
             />
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className={cn(
-                    "h-8 rounded-md border border-border/50 px-2 text-left text-sm transition-colors hover:bg-muted/50 hover:text-foreground",
-                    dueDate ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
-                  {dueDate
-                    ? format(dueDate, "MMM d, yyyy")
-                    : t("composer.dates.setOptional", {
-                        dateType: getTaskDateTypeLabel(dateType),
-                      })}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent ref={dueDatePopoverContentRef} className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-            {dueDate && (
-              <>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <TaskTimeInput
-                  aria-label="Hours"
-                  value={dueTime}
-                  onChange={setDueTime}
-                />
-                <button
-                  aria-label={t("composer.hints.clearDueDate")}
-                  title={t("composer.hints.clearDueDate")}
-                  onClick={() => {
-                    setDueDate(undefined);
-                    setDueTime("");
-                  }}
-                  className="rounded-md p-1.5 hover:bg-muted"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </>
-            )}
+            <DateTimeControl
+              date={dueDate}
+              onDateChange={setDueDate}
+              time={dueTime}
+              onTimeChange={setDueTime}
+              placeholder={t("composer.dates.setOptional", {
+                dateType: getTaskDateTypeLabel(dateType),
+              })}
+              clearLabel={t("composer.hints.clearDueDate")}
+              popoverContentRef={dueDatePopoverContentRef}
+            />
           </div>
 
         </div>
@@ -2134,22 +2076,19 @@ export function TaskComposer({
 
       {showExpandedControls && taskType === "listing" && (
         <div className={cn("order-6 flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
-          <input
-            value={nip99.title || ""}
-            onChange={(event) => {
+          <TitledPostFields
+            title={nip99.title || ""}
+            location={nip99.location || ""}
+            summary={nip99.summary || ""}
+            onTitleChange={(value) => {
               setIsNip99TitleTouched(true);
-              updateNip99({ title: event.target.value });
+              updateNip99({ title: value });
             }}
-            placeholder={t("composer.nip99.title")}
-            aria-label={t("composer.nip99.title")}
-            className="h-8 min-w-[12rem] flex-1 rounded-md border border-border/50 bg-background px-2 text-xs"
-          />
-          <input
-            value={nip99.location || ""}
-            onChange={(event) => updateNip99({ location: event.target.value })}
-            placeholder={t("composer.nip99.location")}
-            aria-label={t("composer.nip99.location")}
-            className="h-8 min-w-[8rem] rounded-md border border-border/50 bg-background px-2 text-xs"
+            onLocationChange={(value) => updateNip99({ location: value })}
+            onSummaryChange={(value) => updateNip99({ summary: value })}
+            titleLabel={t("composer.nip99.title")}
+            locationLabel={t("composer.nip99.location")}
+            summaryLabel={t("composer.nip99.summary")}
           />
           <input
             value={nip99.price || ""}
@@ -2194,67 +2133,55 @@ export function TaskComposer({
             <option value="active">{t("composer.nip99.statusOptions.active")}</option>
             <option value="sold">{t("composer.nip99.statusOptions.sold")}</option>
           </select>
-          <input
-            value={nip99.summary || ""}
-            onChange={(event) => {
-              setIsNip99SummaryTouched(true);
-              updateNip99({ summary: event.target.value });
-            }}
-            placeholder={t("composer.nip99.summary")}
-            aria-label={t("composer.nip99.summary")}
-            className="h-8 min-w-[12rem] flex-[2] rounded-md border border-border/50 bg-background px-2 text-xs"
-          />
         </div>
       )}
 
       {showExpandedControls && taskType === "event" && (
-        <div className={cn("order-6 flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
-          <input
-            value={eventTitle}
-            onChange={(event) => setEventTitle(event.target.value)}
-            placeholder={t("composer.event.title")}
-            aria-label={t("composer.event.title")}
-            className="h-8 min-w-[12rem] flex-1 rounded-md border border-border/50 bg-background px-2 text-xs"
-          />
-          <input
-            value={eventLocation}
-            onChange={(event) => setEventLocation(event.target.value)}
-            placeholder={t("composer.event.location")}
-            aria-label={t("composer.event.location")}
-            className="h-8 min-w-[8rem] rounded-md border border-border/50 bg-background px-2 text-xs"
-          />
-          <input
-            value={eventSummary}
-            onChange={(event) => setEventSummary(event.target.value)}
-            placeholder={t("composer.event.summary")}
-            aria-label={t("composer.event.summary")}
-            className="h-8 min-w-[12rem] flex-[2] rounded-md border border-border/50 bg-background px-2 text-xs"
-          />
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                aria-label={t("composer.event.endDate")}
-                className="h-8 inline-flex items-center gap-1 rounded-md border border-border/50 bg-background px-2 text-xs"
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>{endDate ? format(endDate, "MMM d") : t("composer.event.endDate")}</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={endDate}
-                onSelect={(date) => setEndDate(date ?? undefined)}
-                initialFocus
+        <div className={cn("order-6 flex flex-col gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
+          <div className="flex flex-wrap items-end gap-2">
+            <TitledPostFields
+              title={eventTitle}
+              location={eventLocation}
+              summary={eventSummary}
+              onTitleChange={(value) => {
+                setIsEventTitleTouched(true);
+                setEventTitle(value);
+              }}
+              onLocationChange={setEventLocation}
+              onSummaryChange={setEventSummary}
+              titleLabel={t("composer.event.title")}
+              locationLabel={t("composer.event.location")}
+              summaryLabel={t("composer.event.summary")}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex w-auto items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">{t("composer.event.startDate")}</span>
+              <DateTimeControl
+                date={dueDate}
+                onDateChange={setDueDate}
+                time={dueTime}
+                onTimeChange={setDueTime}
+                placeholder={t("composer.event.startDate")}
+                clearLabel={t("composer.event.clearStart")}
+                timeLabel={t("composer.event.startTime")}
               />
-            </PopoverContent>
-          </Popover>
-          <TaskTimeInput
-            value={endTime}
-            onChange={setEndTime}
-            aria-label={t("composer.event.endTime")}
-          />
+            </div>
+            <div className="inline-flex w-auto items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">{t("composer.event.endDate")}</span>
+              <DateTimeControl
+                date={endDate}
+                onDateChange={setEndDate}
+                time={endTime}
+                onTimeChange={setEndTime}
+                placeholder={t("composer.event.endDate")}
+                clearLabel={t("composer.event.clearEnd")}
+                timeLabel={t("composer.event.endTime")}
+              />
+            </div>
+          </div>
         </div>
       )}
 

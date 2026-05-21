@@ -109,12 +109,12 @@ export function CalendarView({
     return [subMonths(now, 1), now, addMonths(now, 1)];
   });
   const [selectedDateInternal, setSelectedDateInternal] = useState<Date | null>(new Date());
-  const [isComposingEvent, setIsComposingEvent] = useState(false);
-  const closeEventComposer = useCallback(() => setIsComposingEvent(false), []);
-  const handleEventComposerSubmit = useComposerSubmitHandler({
+  const [composerMode, setComposerMode] = useState<"task" | "event" | null>(null);
+  const closeComposer = useCallback(() => setComposerMode(null), []);
+  const handleComposerSubmit = useComposerSubmitHandler({
     focusedTaskId,
     closeOnSuccess: true,
-    onCancel: closeEventComposer,
+    onCancel: closeComposer,
   });
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
@@ -597,43 +597,58 @@ export function CalendarView({
                   {format(selectedDate, "EEEE, MMMM d")}
                 </h3>
                 {authPolicy.canCreateContent && (
-                  <button
-                    onClick={() => setIsComposingEvent(true)}
-                    className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
-                  >
-                    <Plus className="w-3 h-3" />
-                    {t("calendar.actions.addEvent")}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setComposerMode("task")}
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                      {t("calendar.actions.addTask")}
+                    </button>
+                    <button
+                      onClick={() => setComposerMode("event")}
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                      {t("calendar.actions.addEvent")}
+                    </button>
+                  </div>
                 )}
               </div>
 
-              {/* Event Composer */}
-              {isComposingEvent && (
+              {composerMode !== null && (
                 <div className="mb-4 p-3 bg-card border border-border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <CalendarPlus className="w-3 h-3" />
-                      {t("calendar.actions.newEventOn", { date: format(selectedDate, "MMM d") })}
+                      {t(
+                        composerMode === "event"
+                          ? "calendar.actions.newEventOn"
+                          : "calendar.actions.newTaskOn",
+                        { date: format(selectedDate, "MMM d") },
+                      )}
                     </span>
                     <button
-                      onClick={() => setIsComposingEvent(false)}
+                      onClick={closeComposer}
                       className="p-0.5 rounded hover:bg-muted"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
                   <TaskCreateComposer
-                    onCancel={closeEventComposer}
-                    onSubmit={handleEventComposerSubmit}
+                    onCancel={closeComposer}
+                    onSubmit={handleComposerSubmit}
                     compact
                     focusedTaskId={focusedTaskId}
                     allowComment={false}
+                    allowFeedMessageTypes={composerMode === "event"}
+                    defaultPostType={composerMode}
                     defaultDueDate={selectedDate}
                   />
                 </div>
               )}
 
-              {selectedDayTasks.length === 0 && !isComposingEvent ? (
+              {selectedDayTasks.length === 0 && composerMode === null ? (
                 <p className="text-sm text-muted-foreground">{t("tasks.empty.noneScheduledForDay")}</p>
               ) : (
                 <div className="space-y-2">

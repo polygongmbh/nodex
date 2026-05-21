@@ -40,6 +40,21 @@ const people: SelectablePerson[] = [
 const tasks: Post[] = [];
 
 describe("CalendarView responsiveness", () => {
+  it("shows both Add Task and Add Event buttons on the selected-day panel", () => {
+    render(
+      <CalendarView
+        focusedTaskId={null}
+        tasks={tasks}
+        allTasks={tasks}
+        isMobile
+        selectedDate={new Date("2026-02-18T10:00:00.000Z")}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /add task/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add event/i })).toBeInTheDocument();
+  });
+
   it("focuses ancestor from day-card breadcrumb without selecting current card task", () => {
     dispatchFeedInteraction.mockClear();
     const root: TaskPost = {

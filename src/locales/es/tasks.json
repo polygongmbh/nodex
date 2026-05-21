@@ -166,7 +166,9 @@
       "nextMonth": "Mes siguiente"
     },
     "actions": {
+      "addTask": "Añadir tarea",
       "addEvent": "Añadir evento",
+      "newTaskOn": "Nueva tarea el {{date}}",
       "newEventOn": "Nuevo evento el {{date}}"
     }
   },

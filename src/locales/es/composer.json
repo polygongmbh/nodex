@@ -70,8 +70,12 @@
       "title": "Título del evento",
       "location": "Ubicación",
       "summary": "Resumen",
+      "startDate": "Fecha de inicio",
+      "startTime": "Hora de inicio",
       "endDate": "Fecha de fin",
       "endTime": "Hora de fin",
+      "clearStart": "Borrar fecha de inicio",
+      "clearEnd": "Borrar fecha de fin",
       "missingStart": "Selecciona una fecha de inicio",
       "missingTitle": "Añade un título al evento"
     },

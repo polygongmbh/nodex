@@ -240,16 +240,22 @@ function isTaskComposerDraftStale(draftState: TaskComposerDraftState | null): bo
 
 function resolveInitialTaskType(
   draftState: TaskComposerDraftState | null,
-  allowFeedMessageTypes: boolean
+  allowFeedMessageTypes: boolean,
+  defaultPostType?: PostType
 ): PostType {
   const draftMessageType = draftState?.messageType;
   if (draftMessageType === "task" || draftMessageType === "comment") {
     return draftMessageType;
   }
-  if (allowFeedMessageTypes && draftMessageType === "listing") {
+  if (allowFeedMessageTypes && (draftMessageType === "listing" || draftMessageType === "event")) {
     return draftMessageType;
   }
-  return draftState?.taskType === "comment" ? "comment" : "task";
+  if (draftState?.taskType === "comment") return "comment";
+  if (defaultPostType) {
+    if (defaultPostType === "task" || defaultPostType === "comment") return defaultPostType;
+    if (allowFeedMessageTypes) return defaultPostType;
+  }
+  return "task";
 }
 
 export function resolveTaskComposerInitialState({
@@ -257,11 +263,13 @@ export function resolveTaskComposerInitialState({
   defaultContent,
   defaultDueDate,
   allowFeedMessageTypes,
+  defaultPostType,
 }: {
   draftStorageKey?: string;
   defaultContent: string;
   defaultDueDate?: Date;
   allowFeedMessageTypes: boolean;
+  defaultPostType?: PostType;
 }): TaskComposerInitialState {
   const storedDraft = draftStorageKey ? readTaskComposerDraft(draftStorageKey) : null;
   // Only restore drafts with real user-entered substance (text, attachments,
@@ -281,7 +289,7 @@ export function resolveTaskComposerInitialState({
 
   return {
     content: draftState?.content ?? defaultContent,
-    taskType: resolveInitialTaskType(draftState, allowFeedMessageTypes),
+    taskType: resolveInitialTaskType(draftState, allowFeedMessageTypes, defaultPostType),
     dueDate: isStaleDraft ? defaultDueDate : (parseDraftDueDate(draftState?.taskDate?.dueDate) ?? defaultDueDate),
     dueTime: isStaleDraft ? "" : (draftState?.taskDate?.dueTime || ""),
     dateType: isStaleDraft ? "due" : (draftState?.taskDate?.dateType || "due"),

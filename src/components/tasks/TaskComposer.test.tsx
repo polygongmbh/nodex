@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { TaskComposer, type TaskComposerFormData } from "./TaskComposer";
+import { TaskComposer, type TaskComposerFormData, deriveTitledPostTitleFromContent } from "./TaskComposer";
 import {
   TaskComposerRuntimeProvider,
 } from "./task-composer-runtime";
@@ -590,5 +590,122 @@ describe("TaskComposer", () => {
 
     expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="foo"]')).not.toBeNull();
     expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="bar"]')).not.toBeNull();
+  });
+});
+
+describe("deriveTitledPostTitleFromContent", () => {
+  it("returns undefined for empty content", () => {
+    expect(deriveTitledPostTitleFromContent("")).toBeUndefined();
+    expect(deriveTitledPostTitleFromContent("   \n  ")).toBeUndefined();
+  });
+
+  it("uses only the first non-empty line", () => {
+    expect(deriveTitledPostTitleFromContent("Team standup\n\nWeekly sync notes here"))
+      .toBe("Team standup");
+    expect(deriveTitledPostTitleFromContent("\n\nHello\nlater stuff"))
+      .toBe("Hello");
+  });
+
+  it("strips hashtags and mentions from the first line", () => {
+    expect(deriveTitledPostTitleFromContent("Ship #backend now")).toBe("Ship now");
+  });
+
+  it("truncates long first lines word-safely", () => {
+    const longLine = "word ".repeat(40).trim();
+    const result = deriveTitledPostTitleFromContent(longLine);
+    expect(result).toBeDefined();
+    expect(result!.length).toBeLessThanOrEqual(80);
+    expect(result!.endsWith("word")).toBe(true);
+  });
+});
+
+describe("TaskComposer auto-fill", () => {
+  beforeEach(() => {
+    vi.mocked(toast.error).mockClear();
+    localStorage.clear();
+  });
+
+  it("auto-fills listing title from the first line of content", async () => {
+    renderComposer({ allowFeedMessageTypes: true });
+    fireEvent.click(screen.getByRole("button", { name: "Listing" }));
+    fireEvent.change(getComposerInput("listing"), {
+      target: { value: "First line title\n\nBody text continues here." },
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText("Listing title")).toHaveValue("First line title");
+    });
+    expect(screen.getByLabelText("Summary")).toHaveValue("");
+  });
+
+  it("preserves a manually-edited listing title across content changes", async () => {
+    renderComposer({ allowFeedMessageTypes: true });
+    fireEvent.click(screen.getByRole("button", { name: "Listing" }));
+    fireEvent.change(getComposerInput("listing"), {
+      target: { value: "Initial title\n\nBody" },
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText("Listing title")).toHaveValue("Initial title");
+    });
+    fireEvent.change(screen.getByLabelText("Listing title"), {
+      target: { value: "User-curated title" },
+    });
+    fireEvent.change(getComposerInput("listing"), {
+      target: { value: "Different first line\n\nBody" },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByLabelText("Listing title")).toHaveValue("User-curated title");
+  });
+
+  it("auto-fills event title from the first line of content", async () => {
+    renderComposer({ allowFeedMessageTypes: true });
+    fireEvent.click(screen.getByRole("button", { name: "Event" }));
+    fireEvent.change(getComposerInput(), {
+      target: { value: "Team standup\n\nNotes" },
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText("Event title")).toHaveValue("Team standup");
+    });
+  });
+
+  it("preserves a manually-edited event title across content changes", async () => {
+    renderComposer({ allowFeedMessageTypes: true });
+    fireEvent.click(screen.getByRole("button", { name: "Event" }));
+    fireEvent.change(getComposerInput(), {
+      target: { value: "Initial title\n\nBody" },
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText("Event title")).toHaveValue("Initial title");
+    });
+    fireEvent.change(screen.getByLabelText("Event title"), {
+      target: { value: "User-curated event" },
+    });
+    fireEvent.change(getComposerInput(), {
+      target: { value: "Different first line\n\nBody" },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByLabelText("Event title")).toHaveValue("User-curated event");
+  });
+});
+
+describe("TaskComposer Event mode", () => {
+  beforeEach(() => {
+    vi.mocked(toast.error).mockClear();
+    localStorage.clear();
+  });
+
+  it("renders Start and End date controls in Event mode", () => {
+    renderComposer({ allowFeedMessageTypes: true, defaultPostType: "event" });
+    expect(screen.getByRole("button", { name: "Start date" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "End date" })).toBeInTheDocument();
+  });
+
+  it("initializes in Event mode when defaultPostType=event", () => {
+    renderComposer({ allowFeedMessageTypes: true, defaultPostType: "event" });
+    expect(screen.getByRole("button", { name: /post event/i })).toBeInTheDocument();
+  });
+
+  it("initializes in Task mode when defaultPostType=task", () => {
+    renderComposer({ allowFeedMessageTypes: true, defaultPostType: "task" });
+    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
   });
 });

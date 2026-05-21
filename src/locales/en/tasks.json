@@ -166,7 +166,9 @@
       "nextMonth": "Next month"
     },
     "actions": {
+      "addTask": "Add Task",
       "addEvent": "Add Event",
+      "newTaskOn": "New task on {{date}}",
       "newEventOn": "New event on {{date}}"
     }
   },
