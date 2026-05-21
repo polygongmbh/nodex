@@ -267,6 +267,32 @@ export function getPosts(): Post[] {
   return projectPosts();
 }
 
+/**
+ * Canonical id → Post map. Stable reference across store changes — consumers
+ * should treat it as readonly and key memo invalidation off getPostsVersion()
+ * (or off allTasks identity, which already changes with the store version).
+ * Replaces per-view `new Map(allTasks.map(...))` clones that previously ran
+ * in every view-state hook on every re-derive.
+ */
+export function getPostsByIdMap(): ReadonlyMap<string, Post> {
+  return postsById;
+}
+
+/**
+ * Resolve a readonly id → Post map for a view that already has the post list
+ * in hand. In production allTasks is derived from this store so the canonical
+ * Map contains every entry — we just return it (zero allocation). In tests
+ * that pass synthetic Post[] without seeding the store, the cheap presence
+ * check fails and we build a local Map from allTasks.
+ */
+export function resolvePostsByIdFor(allTasks: ReadonlyArray<Post>): ReadonlyMap<string, Post> {
+  if (allTasks.length === 0) return postsById;
+  if (postsById.has(allTasks[0].id)) return postsById;
+  const local = new Map<string, Post>();
+  for (const post of allTasks) local.set(post.id, post);
+  return local;
+}
+
 export function getPostsVersion(): number {
   return version;
 }

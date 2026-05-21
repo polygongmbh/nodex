@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
+import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 
 interface FocusedTaskBreadcrumbProps {
   allTasks: Post[];
@@ -28,7 +29,9 @@ export function FocusedTaskBreadcrumb({
   };
   const path = useMemo(() => {
     if (!focusedTaskId) return [] as Post[];
-    const byId = new Map(allTasks.map((task) => [task.id, task]));
+    // allTasks is a dep so this re-runs on store changes; the lookup itself
+    // reads through the canonical id-map without cloning it.
+    const byId = resolvePostsByIdFor(allTasks);
     const chain: Post[] = [];
     const visited = new Set<string>();
     let current = byId.get(focusedTaskId);

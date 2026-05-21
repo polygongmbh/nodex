@@ -7,6 +7,7 @@ import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
+import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { selectPeopleOwnedTasks } from "./status-filters";
 import type { Post } from "@/types";
 
@@ -36,7 +37,7 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
   const activeRelays = useMemo(() => relays.filter((relay) => relay.isActive), [relays]);
 
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const taskById = resolvePostsByIdFor(allTasks);
   const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
   const sortContext = useMemo<SortContext>(
     () => ({ childrenMap, allTasks, taskById, priorityScores }),

@@ -12,7 +12,7 @@ interface UseEmptyScopeModelOptions {
   searchQuery?: string;
   contextTaskTitle?: string;
   focusedTaskId: string | null;
-  taskById?: Map<string, Pick<Post, "content">>;
+  taskById?: ReadonlyMap<string, Pick<Post, "content">>;
   allTasks?: Pick<Post, "id" | "content">[];
 }
 

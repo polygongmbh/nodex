@@ -17,6 +17,7 @@ import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { useEmptyScopeModel } from "./use-empty-scope-model";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
@@ -66,7 +67,7 @@ export interface FeedEntry {
 export interface FeedViewState {
   searchQuery: string;
   focusedTask: Post | null;
-  taskById: Map<string, Post>;
+  taskById: ReadonlyMap<string, Post>;
   feedTasks: Post[];
   allFeedEntries: FeedEntry[];
   feedEntries: FeedEntry[];
@@ -81,7 +82,7 @@ export interface FeedViewState {
 export interface ListViewState {
   searchQuery: string;
   focusedTask: Post | null;
-  taskById: Map<string, Post>;
+  taskById: ReadonlyMap<string, Post>;
   filteredTaskCandidates: TaskPost[];
   baseListTaskCandidates: TaskPost[];
   hasActiveFilters: boolean;
@@ -108,7 +109,7 @@ export interface TaskViewSource {
   people: SelectablePerson[];
   quickFilters: ReturnType<typeof useFeedSurfaceState>["quickFilters"];
   channelMatchMode: ChannelMatchMode;
-  taskById: Map<string, Post>;
+  taskById: ReadonlyMap<string, Post>;
   childrenMap: Map<string | undefined, Post[]>;
   prefilteredTaskIds: Set<string>;
   filterIndex: ReturnType<typeof buildTaskViewFilterIndex>;
@@ -214,7 +215,7 @@ export function useTaskViewSource({
     useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const taskById = resolvePostsByIdFor(allTasks);
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
   const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
   const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
@@ -506,7 +507,7 @@ export function buildTreeVisibilityState({
 }: TreeVisibilitySource & {
   directlyMatchingIds: Set<string>;
 }): TreeVisibilityState {
-  const taskById = sortContext.taskById ?? new Map(sortContext.allTasks.map((task) => [task.id, task] as const));
+  const taskById = sortContext.taskById ?? resolvePostsByIdFor(sortContext.allTasks);
   const { childrenMap } = sortContext;
   const matchingVisibleIds = new Set<string>();
 
@@ -617,7 +618,7 @@ export function useFeedViewState({
     () => buildFeedEntries(filteredFeedTasksWithClosed, focusedTaskId),
     [filteredFeedTasksWithClosed, focusedTaskId]
   );
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const taskById = resolvePostsByIdFor(allTasks);
   const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
   const scopeModel = useEmptyScopeModel({
     relays,
@@ -688,7 +689,7 @@ export function useListViewState({
     channelMatchMode: deferredChannelMatchMode,
     taskPredicate: isTaskPost,
   });
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const taskById = resolvePostsByIdFor(allTasks);
   const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
   const scopeModel = useEmptyScopeModel({
     relays,
@@ -722,7 +723,7 @@ export function useKanbanViewState({
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const taskById = resolvePostsByIdFor(allTasks);
   const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
   const sortContext = useMemo<SortContext>(
     () => ({ childrenMap, allTasks, taskById, priorityScores }),
@@ -792,7 +793,7 @@ export function useMobileFallbackNoticeState({
   const { t } = useTranslation("tasks");
   const { relays, channels, people, quickFilters, searchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
   const hasSearchQuery = searchQuery.trim().length > 0;
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const taskById = resolvePostsByIdFor(allTasks);
   const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
   const neutralPeople = useMemo(() => clearSelectedPeople(people), [people]);
   const taskFilterIndex = useMemo(() => buildTaskViewFilterIndex(allTasks, people), [allTasks, people]);

@@ -27,7 +27,7 @@ import { evaluateTaskPriorities, type PriorityScore } from "./task-priority-eval
 export interface SortContext {
   childrenMap: Map<string | undefined, Post[]>;
   allTasks: Post[];
-  taskById?: Map<string, Post>;
+  taskById?: ReadonlyMap<string, Post>;
   priorityScores?: Map<string, PriorityScore>;
   now?: number;
 }

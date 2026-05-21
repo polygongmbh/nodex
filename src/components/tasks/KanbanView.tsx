@@ -42,6 +42,7 @@ import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-in
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { sortKanbanColumnTasks, useKanbanViewState } from "@/features/feed-page/controllers/use-task-view-states";
+import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskViewServices } from "./use-task-view-services";
 import { buildChildrenMap, type SortContext } from "@/domain/content/task-sorting";
@@ -175,7 +176,7 @@ export function KanbanView({
     return {
       childrenMap,
       allTasks,
-      taskById: new Map(allTasks.map((task) => [task.id, task] as const)),
+      taskById: resolvePostsByIdFor(allTasks),
       priorityScores,
     };
   }, [allTasks]);
@@ -209,14 +210,9 @@ export function KanbanView({
     }
     return out;
   }, [columns, kanbanTasks, optimisticStatusByTaskId, sortContext]);
-  // Local TaskPost lookup keyed off kanbanTasks. We can't reuse
-  // sortContext.taskById because it's typed as Map<string, Post> (optional)
-  // and kanban cards specifically want TaskPost.
-  const taskById = useMemo<Map<string, TaskPost>>(() => {
-    const map = new Map<string, TaskPost>();
-    for (const task of kanbanTasks) map.set(task.id, task);
-    return map;
-  }, [kanbanTasks]);
+  // Canonical store map. IDs put into taskIdsByColumnId all originate from
+  // kanbanTasks (TaskPost[]); the render-site type guard re-narrows.
+  const taskById = resolvePostsByIdFor(allTasks);
   const canonicalStateIdByTaskId = useMemo(() => {
     const map = new Map<string, string>();
     for (const task of kanbanTasks) {
@@ -552,7 +548,7 @@ export function KanbanView({
                   <div className="flex h-full min-h-full min-w-0 flex-col gap-2">
                     {(taskIdsByColumnId.get(column.id) ?? []).map((taskId) => {
                       const task = taskById.get(taskId);
-                      if (!task) return null;
+                      if (!task || !isTaskPost(task)) return null;
                       const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
                       return (
                         <DraggableCardWrapper

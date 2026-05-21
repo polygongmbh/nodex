@@ -47,6 +47,7 @@ import {
   useListViewState,
 } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
@@ -179,7 +180,10 @@ export function ListView({
 
   // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
   const sortContextRef = useRef<SortContext | null>(null);
-  const taskLookup = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  // Canonical id → Post map from the store; stable reference, no per-render
+  // clone of allTasks. Falls back to a local map in tests that pass
+  // synthetic data without seeding the store.
+  const taskLookup = resolvePostsByIdFor(allTasks);
   const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
   
   const sortContext: SortContext = useMemo(() => {

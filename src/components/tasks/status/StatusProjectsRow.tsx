@@ -7,6 +7,7 @@ import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
+import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { isProjectFromChildrenMap } from "@/domain/content/task-projects";
 import { isTaskPost, type Post } from "@/types";
 
@@ -21,7 +22,7 @@ export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: Sta
   const { people } = useFeedSurfaceState();
   const authPolicy = useAuthActionPolicy();
   const childrenByParentId = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const taskById = resolvePostsByIdFor(allTasks);
   const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
   const sortContext = useMemo<SortContext>(
     () => ({ childrenMap: childrenByParentId, allTasks, taskById, priorityScores }),
