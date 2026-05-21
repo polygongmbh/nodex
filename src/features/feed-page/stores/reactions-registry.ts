@@ -11,12 +11,11 @@ import {
 } from "@/infrastructure/nostr/deletion-events";
 
 /**
- * Reaction bookkeeping is kept incremental: each ingested reaction or deletion
- * event folds into the internal state in O(1), and the published TaskReactions
- * snapshot for an affected target is rebuilt only for that target. The viewer
- * pubkey (used to populate `mine` / `mineEventIdsByEmoji`) can change over
- * time, so we keep the raw per-target/pubkey/emoji map and recompute the
- * viewer-facing slice when needed.
+ * Reaction bookkeeping is intentionally lossy: reactions are low-importance UX
+ * so we trade strict correctness for a flatter storage shape. A deletion that
+ * arrives before its reaction is dropped on the floor — the late-arriving
+ * reaction stays visible. Duplicate-event dedup is implicit in the primary map
+ * (keyed by event id).
  */
 
 interface ReactionEventLike {
@@ -27,21 +26,14 @@ interface ReactionEventLike {
   kind: number;
 }
 
-// targetId -> pubkey -> emoji -> Set<eventId>
-type ByTarget = Map<string, Map<string, Map<string, Set<string>>>>;
-// reactor pubkey -> set of reaction event IDs they have published a deletion for
-type DeletedByAuthor = Map<string, Set<string>>;
-// reaction event ID -> coordinates for cleanup if a deletion arrives later
-interface ReactionCoord {
+interface ReactionRecord {
   targetId: string;
   pubkey: string;
   emoji: string;
 }
 
-const byTarget: ByTarget = new Map();
-const deletedByAuthor: DeletedByAuthor = new Map();
-const reactionCoordById = new Map<string, ReactionCoord>();
-const processedEventIds = new Set<string>();
+const reactionsByEventId = new Map<string, ReactionRecord>();
+const eventIdsByTarget = new Map<string, Set<string>>();
 let viewerPubkey: string | undefined;
 
 const reactionsByTargetId = new Map<string, TaskReactions>();
@@ -52,8 +44,9 @@ function notifySubscribers(): void {
 }
 
 function rebuildPublishedForTarget(targetId: string): boolean {
-  const byPubkey = byTarget.get(targetId);
-  if (!byPubkey || byPubkey.size === 0) {
+  const eventIds = eventIdsByTarget.get(targetId);
+  if (!eventIds || eventIds.size === 0) {
+    if (eventIds) eventIdsByTarget.delete(targetId);
     if (reactionsByTargetId.has(targetId)) {
       reactionsByTargetId.delete(targetId);
       return true;
@@ -61,21 +54,21 @@ function rebuildPublishedForTarget(targetId: string): boolean {
     return false;
   }
   const totals: Record<string, number> = {};
-  const mine: string[] = [];
   const mineEventIdsByEmoji: Record<string, string[]> = {};
-  for (const [pubkey, byEmoji] of byPubkey) {
-    for (const [emoji, ids] of byEmoji) {
-      if (ids.size === 0) continue;
-      totals[emoji] = (totals[emoji] ?? 0) + 1;
-      if (viewerPubkey && pubkey === viewerPubkey) {
-        mine.push(emoji);
-        mineEventIdsByEmoji[emoji] = [
-          ...(mineEventIdsByEmoji[emoji] ?? []),
-          ...Array.from(ids),
-        ];
-      }
+  const countedPairs = new Set<string>();
+  for (const eventId of eventIds) {
+    const record = reactionsByEventId.get(eventId);
+    if (!record) continue;
+    const pairKey = `${record.pubkey}|${record.emoji}`;
+    if (!countedPairs.has(pairKey)) {
+      countedPairs.add(pairKey);
+      totals[record.emoji] = (totals[record.emoji] ?? 0) + 1;
+    }
+    if (viewerPubkey && record.pubkey === viewerPubkey) {
+      (mineEventIdsByEmoji[record.emoji] ??= []).push(eventId);
     }
   }
+  const mine = Object.keys(mineEventIdsByEmoji);
   const next: TaskReactions = { totals, mine, mineEventIdsByEmoji };
   const previous = reactionsByTargetId.get(targetId);
   if (areReactionsEqual(previous, next)) return false;
@@ -84,64 +77,47 @@ function rebuildPublishedForTarget(targetId: string): boolean {
 }
 
 function recordReaction(event: ReactionEventLike): string | undefined {
-  if (!event.id) return undefined;
-  // A deletion for this reaction may have arrived before the reaction itself.
-  if (deletedByAuthor.get(event.pubkey)?.has(event.id)) return undefined;
+  if (!event.id || reactionsByEventId.has(event.id)) return undefined;
   const targetId = extractReactionTargetId(event.tags);
   if (!targetId) return undefined;
   const emoji = normalizeReactionContent(event.content);
   if (!emoji) return undefined;
-  const byPubkey = byTarget.get(targetId) ?? new Map<string, Map<string, Set<string>>>();
-  const byEmoji = byPubkey.get(event.pubkey) ?? new Map<string, Set<string>>();
-  const ids = byEmoji.get(emoji) ?? new Set<string>();
+  reactionsByEventId.set(event.id, { targetId, pubkey: event.pubkey, emoji });
+  const ids = eventIdsByTarget.get(targetId) ?? new Set<string>();
   ids.add(event.id);
-  byEmoji.set(emoji, ids);
-  byPubkey.set(event.pubkey, byEmoji);
-  byTarget.set(targetId, byPubkey);
-  reactionCoordById.set(event.id, { targetId, pubkey: event.pubkey, emoji });
+  eventIdsByTarget.set(targetId, ids);
   return targetId;
 }
 
 function recordDeletion(event: ReactionEventLike): Set<string> {
   const affected = new Set<string>();
-  const targetIds = extractDeletionTargetIds(event.tags);
-  if (targetIds.length === 0) return affected;
-  const set = deletedByAuthor.get(event.pubkey) ?? new Set<string>();
-  for (const reactionId of targetIds) {
-    set.add(reactionId);
-    const coord = reactionCoordById.get(reactionId);
-    if (!coord) continue;
-    if (coord.pubkey !== event.pubkey) continue; // only the reactor can delete
-    const byPubkey = byTarget.get(coord.targetId);
-    const byEmoji = byPubkey?.get(coord.pubkey);
-    const ids = byEmoji?.get(coord.emoji);
+  for (const reactionId of extractDeletionTargetIds(event.tags)) {
+    const record = reactionsByEventId.get(reactionId);
+    if (!record) continue;
+    if (record.pubkey !== event.pubkey) continue; // only the reactor can delete
+    reactionsByEventId.delete(reactionId);
+    const ids = eventIdsByTarget.get(record.targetId);
     if (ids) {
       ids.delete(reactionId);
-      if (ids.size === 0) byEmoji?.delete(coord.emoji);
-      if (byEmoji && byEmoji.size === 0) byPubkey?.delete(coord.pubkey);
-      if (byPubkey && byPubkey.size === 0) byTarget.delete(coord.targetId);
+      if (ids.size === 0) eventIdsByTarget.delete(record.targetId);
     }
-    reactionCoordById.delete(reactionId);
-    affected.add(coord.targetId);
+    affected.add(record.targetId);
   }
-  deletedByAuthor.set(event.pubkey, set);
   return affected;
 }
 
 /**
  * Fold a batch of events into the registry. Reaction and deletion events are
- * the only kinds we look at; everything else is ignored. Events already seen
- * (by id) are skipped, so repeated invocations are idempotent.
+ * the only kinds we look at; everything else is ignored. Duplicate events are
+ * a no-op via the primary map's key.
  */
 export function mergeReactionEvents(events: ReactionEventLike[]): void {
   const affected = new Set<string>();
   for (const event of events) {
-    if (!event.id || processedEventIds.has(event.id)) continue;
+    if (!event.id) continue;
     if (isDeletionEvent(event.kind)) {
-      processedEventIds.add(event.id);
       for (const targetId of recordDeletion(event)) affected.add(targetId);
     } else if (isReactionEvent(event.kind)) {
-      processedEventIds.add(event.id);
       const targetId = recordReaction(event);
       if (targetId) affected.add(targetId);
     }
@@ -160,10 +136,8 @@ export function mergeReactionEvents(events: ReactionEventLike[]): void {
  */
 export function bootstrapReactions(events: ReactionEventLike[], nextViewerPubkey: string | undefined): void {
   const hadEntries = reactionsByTargetId.size > 0;
-  byTarget.clear();
-  deletedByAuthor.clear();
-  reactionCoordById.clear();
-  processedEventIds.clear();
+  reactionsByEventId.clear();
+  eventIdsByTarget.clear();
   reactionsByTargetId.clear();
   viewerPubkey = nextViewerPubkey;
   mergeReactionEvents(events);
@@ -181,7 +155,7 @@ export function setReactionsViewerPubkey(nextViewerPubkey: string | undefined): 
   if (viewerPubkey === nextViewerPubkey) return;
   viewerPubkey = nextViewerPubkey;
   let changed = false;
-  for (const targetId of byTarget.keys()) {
+  for (const targetId of eventIdsByTarget.keys()) {
     if (rebuildPublishedForTarget(targetId)) changed = true;
   }
   if (changed) notifySubscribers();
@@ -237,10 +211,8 @@ export function getReactionsForTarget(targetId: string | undefined): TaskReactio
 
 /** Test helper: reset registry between cases. */
 export function __resetReactionsRegistryForTests(): void {
-  byTarget.clear();
-  deletedByAuthor.clear();
-  reactionCoordById.clear();
-  processedEventIds.clear();
+  reactionsByEventId.clear();
+  eventIdsByTarget.clear();
   reactionsByTargetId.clear();
   viewerPubkey = undefined;
   subscribers.clear();

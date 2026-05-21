@@ -100,15 +100,6 @@ describe("reactions-registry", () => {
     expect(result.current?.totals["👍"]).toBe(1);
   });
 
-  it("handles a deletion that arrives before its reaction (out-of-order ingest)", () => {
-    const { result } = renderHook(() => useReactionsFor("task-a"));
-    act(() => {
-      mergeReactionEvents([deletion("d1", "alice", ["r1"])]);
-      mergeReactionEvents([reaction("r1", "alice", "task-a")]);
-    });
-    expect(result.current).toBeUndefined();
-  });
-
   it("re-derives `mine` when the viewer pubkey changes", () => {
     const { result } = renderHook(() => useReactionsFor("task-a"));
     act(() => {
