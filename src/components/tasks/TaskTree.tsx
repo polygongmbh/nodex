@@ -162,7 +162,14 @@ export function TaskTree({
     const hasSameTaskSet =
       previousOrder.length === nextOrder.length &&
       nextOrder.every((taskId) => previousOrderSet.has(taskId));
-    const orderChanged = previousOrder.join("|") !== nextOrder.join("|");
+    // Index-wise compare instead of join("|") on both sides — same outcome,
+    // no per-layout-effect string allocations of (rows × id-length) chars.
+    let orderChanged = previousOrder.length !== nextOrder.length;
+    if (!orderChanged) {
+      for (let i = 0; i < nextOrder.length; i++) {
+        if (previousOrder[i] !== nextOrder[i]) { orderChanged = true; break; }
+      }
+    }
     const shouldAnimateReorder =
       !prefersReducedMotionRef.current &&
       previousOrder.length > 0 &&
