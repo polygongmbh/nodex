@@ -59,7 +59,7 @@ The user's **context** is the full current slice of content: sidebar filters (ac
 ### Testing
 Tests use Vitest + jsdom + `@testing-library/react`. Setup file is `src/test/setup.ts` (mocks `localStorage`, `matchMedia`, `WebSocket`). Test fixtures are in `src/test/fixtures.ts`. Tests live alongside source files as `*.test.ts(x)`.
 
-Write tests before each change except minor visual/cosmetic changes. Prefer behavior/outcome tests over implementation-detail tests. Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
+Write tests for behavior change. Prefer behavior/outcome tests over implementation-detail tests. Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
 
 High-impact areas that require test coverage:
 - Compose parsing and submission behavior
@@ -104,3 +104,4 @@ When the user says `squash`, inspect recent unpushed commits and suggest sensibl
 - Before making substantial changes to a file, clean it up appropriately
 - Never replicate patterns from legacy files without flagging them
 - Do NOT touch files outside the current task scope
+- localStorage holds caches the live subscription rebuilds. When changing a cache's schema, don't write migration code or default-fill missing fields — reject malformed entries and let the next ingest backfill. Bump the storage key prefix if you want a clean cut.
