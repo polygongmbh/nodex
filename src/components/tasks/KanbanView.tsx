@@ -181,22 +181,35 @@ export function KanbanView({
   }, [allTasks]);
 
   const columns = useMemo(() => getColumns(kanbanTasks), [kanbanTasks]);
-  const tasksByColumnId = useMemo(() => {
-    const grouped: Record<string, TaskPost[]> = Object.fromEntries(columns.map((column) => [column.id, []]));
+  // Group task IDs by column instead of replicating full task references.
+  // The canonical task object lives in sortContext.taskById; consumers look
+  // it up on demand. Sorting still needs object access, but the sorted
+  // intermediate is GC'd as soon as we read out the ids.
+  const taskIdsByColumnId = useMemo(() => {
+    const buckets = new Map<string, TaskPost[]>();
+    for (const column of columns) buckets.set(column.id, []);
 
     for (const task of kanbanTasks) {
       const effectiveStatus = optimisticStatusByTaskId[task.id] || getTaskState(task);
       const columnId = resolveTaskStateFromStatus(effectiveStatus).id;
-      grouped[columnId] ||= [];
-      grouped[columnId].push(task);
+      let bucket = buckets.get(columnId);
+      if (!bucket) {
+        bucket = [];
+        buckets.set(columnId, bucket);
+      }
+      bucket.push(task);
     }
 
+    const out = new Map<string, string[]>();
     for (const column of columns) {
-      grouped[column.id] = sortKanbanColumnTasks(grouped[column.id] || [], column.state.status, sortContext);
+      const sorted = sortKanbanColumnTasks(buckets.get(column.id) ?? [], column.state.status, sortContext);
+      const ids = new Array<string>(sorted.length);
+      for (let i = 0; i < sorted.length; i++) ids[i] = sorted[i].id;
+      out.set(column.id, ids);
     }
-
-    return grouped;
+    return out;
   }, [columns, kanbanTasks, optimisticStatusByTaskId, sortContext]);
+  const taskById = sortContext.taskById;
   const canonicalStateIdByTaskId = useMemo(() => {
     const map = new Map<string, string>();
     for (const task of kanbanTasks) {
@@ -332,15 +345,18 @@ export function KanbanView({
     dispatchStatusChange(taskId, nextStatus);
   };
 
-  // Flatten all visible task IDs for keyboard navigation (across all columns)
+  // Flatten all visible task IDs for keyboard navigation (across all columns).
+  // The id arrays in taskIdsByColumnId are already what we want; flatMap just
+  // glues them together — no per-column .map() copy.
   const allVisibleTaskIds = useMemo(() => {
-    return columns.flatMap((column) => (tasksByColumnId[column.id] || []).map((task) => task.id));
-  }, [columns, tasksByColumnId]);
+    return columns.flatMap((column) => taskIdsByColumnId.get(column.id) ?? []);
+  }, [columns, taskIdsByColumnId]);
 
-  // Column-aware task IDs for Kanban navigation
+  // Column-aware task IDs for Kanban navigation — references reused
+  // verbatim from taskIdsByColumnId; no per-column allocation.
   const columnTaskIds = useMemo(
-    () => columns.map((column) => (tasksByColumnId[column.id] || []).map((task) => task.id)),
-    [columns, tasksByColumnId]
+    () => columns.map((column) => taskIdsByColumnId.get(column.id) ?? []),
+    [columns, taskIdsByColumnId]
   );
 
   // Track keyboard focus state
@@ -429,7 +445,7 @@ export function KanbanView({
         setFocusByTaskId(taskIdToFocus);
       });
     }
-  }, [tasksByColumnId, setFocusByTaskId]);
+  }, [taskIdsByColumnId, setFocusByTaskId]);
 
   // Scroll focused task into view
   useEffect(() => {
@@ -484,7 +500,7 @@ export function KanbanView({
                     <span className={column.color}><TaskStateDefIcon state={column.state} /></span>
                     <span className="font-medium">{column.label}</span>
                     <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                      {(tasksByColumnId[column.id] || []).length}
+                      {(taskIdsByColumnId.get(column.id) ?? []).length}
                     </span>
                   </div>
                   {authPolicy.canOpenCompose && !isInteractionBlocked && column.state.status !== "closed" && (
@@ -527,7 +543,9 @@ export function KanbanView({
                   className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2"
                 >
                   <div className="flex h-full min-h-full min-w-0 flex-col gap-2">
-                    {(tasksByColumnId[column.id] || []).map((task) => {
+                    {(taskIdsByColumnId.get(column.id) ?? []).map((taskId) => {
+                      const task = taskById.get(taskId);
+                      if (!task) return null;
                       const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
                       return (
                         <DraggableCardWrapper
@@ -552,7 +570,7 @@ export function KanbanView({
                         </DraggableCardWrapper>
                       );
                     })}
-                    {(tasksByColumnId[column.id] || []).length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
+                    {(taskIdsByColumnId.get(column.id) ?? []).length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
                     {/* Bottom buffer so the last card isn't flush against the scroll edge */}
                     <div className="h-6 shrink-0" aria-hidden="true" />
                   </div>
