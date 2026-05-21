@@ -10,7 +10,6 @@ import {
   type EditableNostrProfile,
 } from "@/infrastructure/nostr/profile-metadata";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
 import type { NDKRelayStatus, NDKContextValue } from "./contracts";
 
 type PublishEvent = NDKContextValue["publishEvent"];
@@ -86,22 +85,10 @@ export function useProfileSync(
     });
     setNeedsProfileSetup(false);
 
-    // Route the real signed event we just published through the same
-    // ingest path the live subscription uses. No synthesis, no parallel
-    // copy — the cache holds one source of truth (real signed events) for
-    // everybody including the signed-in user.
-    if (result.signedEvent && result.publishedRelayUrls?.length) {
-      ingestKind0Event({
-        id: result.signedEvent.id,
-        pubkey: result.signedEvent.pubkey,
-        created_at: result.signedEvent.created_at ?? Math.floor(Date.now() / 1000),
-        kind: NostrEventKind.Metadata,
-        tags: result.signedEvent.tags,
-        content: result.signedEvent.content,
-        sig: result.signedEvent.sig ?? "",
-        relayUrls: result.publishedRelayUrls,
-      });
-    }
+    // The live subscription is filtering on kind 0 with no author filter,
+    // so the relay will echo this event back through the same dispatch
+    // path every other event uses. No need to ingest it manually here —
+    // doing so would just be a special case for the signed-in user.
 
     nostrDevLog("provider", "Profile updated", { profile });
     return true;

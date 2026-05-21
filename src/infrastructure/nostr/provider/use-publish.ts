@@ -20,12 +20,6 @@ export interface PublishResult {
   eventId?: string;
   rejectionReason?: string;
   publishedRelayUrls?: string[];
-  /** The signed event handed to the relay. Exposed so callers (e.g.
-   * profile-sync) can route it back through the same ingest path the live
-   * subscription uses, instead of synthesizing a parallel copy. Populated
-   * on success and on the early-return paths so callers can tell what
-   * was attempted. */
-  signedEvent?: SignedNostrEvent;
 }
 
 interface UsePublishArgs {
@@ -93,7 +87,7 @@ export function usePublish({
     relayUrls?: string[]
   ): Promise<PublishResult> => {
     if (!ndk) {
-      return { success: false, eventId: event.id, signedEvent: event };
+      return { success: false, eventId: event.id };
     }
     let targetRelayUrls: string[] = [];
     try {
@@ -115,7 +109,7 @@ export function usePublish({
       });
       if (targetRelayUrls.length === 0) {
         console.warn("Event publish skipped: no writable relay targets available");
-        return { success: false, eventId: event.id, signedEvent: event };
+        return { success: false, eventId: event.id };
       }
       const publishedRelayUrlSet = new Set<string>();
       let rejectionReason: string | undefined;
@@ -165,7 +159,7 @@ export function usePublish({
       const publishedRelayUrls = Array.from(publishedRelayUrlSet);
       if (publishedRelayUrls.length === 0) {
         console.warn("Event publish completed but no relays confirmed receipt");
-        return { success: false, eventId: event.id, rejectionReason, signedEvent: event };
+        return { success: false, eventId: event.id, rejectionReason };
       }
 
       publishedRelayUrls.forEach((relayUrl) => {
@@ -177,7 +171,7 @@ export function usePublish({
         targetRelayUrls,
         publishedRelayUrls,
       });
-      return { success: true, eventId: event.id, publishedRelayUrls, signedEvent: event };
+      return { success: true, eventId: event.id, publishedRelayUrls };
     } catch (error) {
       console.error("Failed to publish event:", error);
       const errorMessage = error instanceof Error ? error.message : String(error || "");
@@ -199,7 +193,7 @@ export function usePublish({
           rejectionReason,
         });
       }
-      return { success: false, eventId: event.id, rejectionReason, signedEvent: event };
+      return { success: false, eventId: event.id, rejectionReason };
     } finally {
       endRelayOperation("write");
     }

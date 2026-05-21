@@ -1,8 +1,6 @@
 import { useCallback, useRef } from "react";
 import NDK, { NDKEvent, profileFromEvent, type NDKUserProfile, type NDKRelay } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
-import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { isAuthRequiredCloseReason, isPermanentAuthDenialReason } from "./relay-verification";
 
 const KIND0_PROFILE_CACHE_TTL_MS = 120000;
@@ -88,28 +86,9 @@ export function useProfile({
         if (event.content) {
           candidates.push({ createdAt: event.created_at || 0, content: event.content });
         }
-        // Route through the same cache the live subscription's dispatcher
-        // uses, so a profile fetched via this on-demand subscription
-        // hydrates the cache for next cold start instead of being thrown
-        // away after the promise resolves.
-        const relayUrls = [
-          event.relay?.url,
-          ...((event.onRelays || []).map((relay) => relay?.url)),
-        ]
-          .map((url) => (url ? normalizeRelayUrl(url) : ""))
-          .filter(Boolean);
-        if (event.id && event.pubkey && event.kind != null && relayUrls.length > 0) {
-          ingestKind0Event({
-            id: event.id,
-            pubkey: event.pubkey,
-            created_at: event.created_at ?? 0,
-            kind: event.kind,
-            tags: event.tags,
-            content: event.content,
-            sig: event.sig ?? "",
-            relayUrls,
-          });
-        }
+        // The live subscription is filtering on kind 0 too, so it will
+        // see (and cache) the same event independently — we don't
+        // double-ingest here.
       });
       subscription.on("closed", (_relay: NDKRelay, reason: string) => {
         if (!isAuthRequiredCloseReason(reason || "")) return;
