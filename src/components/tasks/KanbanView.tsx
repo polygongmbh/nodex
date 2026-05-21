@@ -209,7 +209,14 @@ export function KanbanView({
     }
     return out;
   }, [columns, kanbanTasks, optimisticStatusByTaskId, sortContext]);
-  const taskById = sortContext.taskById;
+  // Local TaskPost lookup keyed off kanbanTasks. We can't reuse
+  // sortContext.taskById because it's typed as Map<string, Post> (optional)
+  // and kanban cards specifically want TaskPost.
+  const taskById = useMemo<Map<string, TaskPost>>(() => {
+    const map = new Map<string, TaskPost>();
+    for (const task of kanbanTasks) map.set(task.id, task);
+    return map;
+  }, [kanbanTasks]);
   const canonicalStateIdByTaskId = useMemo(() => {
     const map = new Map<string, string>();
     for (const task of kanbanTasks) {
