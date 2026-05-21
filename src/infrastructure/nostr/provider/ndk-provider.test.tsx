@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect, useRef, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { NDKRelayInformation } from "@nostr-dev-kit/ndk";
 import { toast } from "sonner";
 import { NDKProvider, useNDK } from "./ndk-provider";
 import { fetchRelayInfo } from "../relay-info";
@@ -399,8 +400,8 @@ vi.mock("@/lib/nostr/noas-discovery", () => ({
 
 vi.mock("../relay-info", () => ({
   fetchRelayInfo: vi.fn(async () => null),
-  summarizeRelayInfo: (doc: { supported_nips?: number[]; limitation?: { auth_required?: boolean }; limitations?: { auth_required?: boolean } }) => {
-    const authRequired = Boolean(doc.limitations?.auth_required ?? doc.limitation?.auth_required);
+  summarizeRelayInfo: (doc: NDKRelayInformation) => {
+    const authRequired = Boolean(doc.limitation?.auth_required);
     return {
       authRequired,
       supportsNip42: (doc.supported_nips ?? []).includes(42) || authRequired,

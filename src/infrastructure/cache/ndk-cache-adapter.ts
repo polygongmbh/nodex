@@ -10,7 +10,7 @@ import type {
 } from "@nostr-dev-kit/ndk";
 import { NIP05_CACHE_STORAGE_KEY, RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
-import { summarizeRelayInfo, type RelayInfoSummary, type RelayInformationDocument } from "@/infrastructure/nostr/relay-info";
+import { summarizeRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 
 export const RELAY_NIP11_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const NIP05_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -46,7 +46,7 @@ function saveNip05Cache(cache: Nip05Cache): void {
 
 interface PersistedRelayStatusEntry {
   nip11?: {
-    document: RelayInformationDocument;
+    document: NDKRelayInformation;
     fetchedAt: number;
   };
 }
@@ -87,7 +87,7 @@ function loadPersistedRelayStatusCache(): PersistedRelayStatusCache {
       }
       next[relayUrl] = {
         nip11: {
-          document: nip11.document as RelayInformationDocument,
+          document: nip11.document as NDKRelayInformation,
           fetchedAt: nip11.fetchedAt,
         },
       };
@@ -114,7 +114,7 @@ function cachedRelayStatusToSummary(
   const fetchedAt = status.nip11.fetchedAt;
   if (typeof fetchedAt !== "number" || !Number.isFinite(fetchedAt)) return null;
   return {
-    summary: summarizeRelayInfo(status.nip11.data as RelayInformationDocument),
+    summary: summarizeRelayInfo(status.nip11.data),
     fetchedAt,
   };
 }
@@ -174,7 +174,7 @@ export function createNodexCacheAdapter(): NDKCacheAdapter {
       cache[normalizedRelayUrl] = {
         ...(cache[normalizedRelayUrl] || {}),
         nip11: {
-          document: info.nip11.data as RelayInformationDocument,
+          document: info.nip11.data,
           fetchedAt: info.nip11.fetchedAt,
         },
       };
@@ -191,7 +191,7 @@ export function createNodexCacheAdapter(): NDKCacheAdapter {
 
       return {
         nip11: {
-          data: entry.nip11.document as NDKRelayInformation,
+          data: entry.nip11.document,
           fetchedAt: entry.nip11.fetchedAt,
         },
       };

@@ -14,10 +14,10 @@ describe("relayWebsocketUrlToHttpUrl", () => {
 });
 
 describe("summarizeRelayInfo", () => {
-  it("detects auth requirement via limitations and NIP-42 support", () => {
+  it("detects auth requirement via limitation and NIP-42 support", () => {
     expect(summarizeRelayInfo({
       supported_nips: [1, 11, 42],
-      limitations: { auth_required: false },
+      limitation: { auth_required: false },
     })).toEqual({
       authRequired: false,
       supportsNip42: true,

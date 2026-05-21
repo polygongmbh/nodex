@@ -1,15 +1,4 @@
-export interface RelayInformationDocument {
-  supported_nips?: number[];
-  limitation?: {
-    auth_required?: boolean;
-    payment_required?: boolean;
-  };
-  limitations?: {
-    auth_required?: boolean;
-    payment_required?: boolean;
-  };
-  [key: string]: unknown;
-}
+import type { NDKRelayInformation } from "@nostr-dev-kit/ndk";
 
 export interface RelayInfoSummary {
   authRequired: boolean;
@@ -17,7 +6,7 @@ export interface RelayInfoSummary {
 }
 
 export interface RelayInfoFetchResult {
-  document: RelayInformationDocument;
+  document: NDKRelayInformation;
   summary: RelayInfoSummary;
 }
 
@@ -36,8 +25,8 @@ export function relayWebsocketUrlToHttpUrl(relayUrl: string): string | null {
   }
 }
 
-export function summarizeRelayInfo(doc: RelayInformationDocument): RelayInfoSummary {
-  const authRequired = Boolean(doc.limitations?.auth_required ?? doc.limitation?.auth_required);
+export function summarizeRelayInfo(doc: NDKRelayInformation): RelayInfoSummary {
+  const authRequired = Boolean(doc.limitation?.auth_required);
   const supportsNip42 = (doc.supported_nips ?? []).includes(42) || authRequired;
   return {
     authRequired,
@@ -57,7 +46,7 @@ export async function fetchRelayInfo(relayUrl: string): Promise<RelayInfoFetchRe
       },
     });
     if (!response.ok) return null;
-    const document = await response.json() as RelayInformationDocument;
+    const document = await response.json() as NDKRelayInformation;
     return { document, summary: summarizeRelayInfo(document) };
   } catch {
     return null;
