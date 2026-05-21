@@ -17,7 +17,22 @@ function makeHarness(
   publishResult: { success: boolean; eventId?: string; publishedRelayUrls?: string[] },
   initialUserProfile?: Record<string, string>,
 ) {
-  const publishEvent = vi.fn(async () => publishResult);
+  // Fabricate the signedEvent based on what updateUserProfile sends through
+  // (kind, content). updateUserProfile now relies on it to ingest the
+  // published profile into the kind 0 cache instead of synthesizing.
+  const publishEvent = vi.fn(async (kind: number, content: string) => ({
+    ...publishResult,
+    signedEvent: {
+      id: publishResult.eventId ?? "test-event-id",
+      pubkey: PUBKEY,
+      created_at: Math.floor(Date.now() / 1000),
+      kind,
+      tags: [],
+      content,
+      sig: "test-sig",
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  })) as any;
   const fetchLatestKind0Profile = vi.fn(async () => null);
   const setUser = vi.fn();
   const setNeedsProfileSetup = vi.fn();

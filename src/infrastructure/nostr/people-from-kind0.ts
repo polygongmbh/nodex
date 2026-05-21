@@ -4,14 +4,6 @@ import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind, type NostrEvent, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
 
-interface CachedProfileSnapshot {
-  name?: string;
-  displayName?: string;
-  about?: string;
-  picture?: string;
-  nip05?: string;
-}
-
 const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache";
 const KIND0_CACHE_RELAY_PREFIX = `${KIND0_CACHE_STORAGE_PREFIX}:relay:`;
 const KIND0_CACHE_LOCAL_STORAGE_KEY = `${KIND0_CACHE_STORAGE_PREFIX}:local`;
@@ -110,12 +102,19 @@ export class Kind0Cache {
   }
 
   private listKnownRelayStorageKeys(): string[] {
-    if (!this.canUseStorage) return [];
     const keys = new Set<string>();
-    for (let index = 0; index < window.localStorage.length; index += 1) {
-      const key = window.localStorage.key(index);
-      if (!key || !key.startsWith(KIND0_CACHE_RELAY_PREFIX)) continue;
-      keys.add(key);
+    if (this.canUseStorage) {
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const key = window.localStorage.key(index);
+        if (!key || !key.startsWith(KIND0_CACHE_RELAY_PREFIX)) continue;
+        keys.add(key);
+      }
+    }
+    // In-memory buckets may not have flushed yet (the flush is debounced),
+    // so include them too — otherwise loadAll() misses freshly-ingested
+    // events between ingest and flush.
+    for (const key of this.bucketByStorageKey.keys()) {
+      if (key.startsWith(KIND0_CACHE_RELAY_PREFIX)) keys.add(key);
     }
     return Array.from(keys);
   }
@@ -359,43 +358,6 @@ function foldIntoLatestMap(acc: Map<string, NostrEvent>, event: NostrEvent): voi
     if (existing.created_at === event.created_at && existing.content === event.content) return;
   }
   acc.set(normalizedPubkey, event.pubkey === normalizedPubkey ? event : { ...event, pubkey: normalizedPubkey });
-}
-
-export function rememberCachedKind0Profile(
-  pubkey: string,
-  profile: CachedProfileSnapshot,
-  existingEvents: NostrEvent[] = loadCachedKind0Events(),
-): NostrEvent[] {
-  const normalizedPubkey = normalizePubkey(pubkey);
-  if (!normalizedPubkey) return existingEvents;
-
-  const existingEvent = existingEvents.find((event) => normalizePubkey(event.pubkey) === normalizedPubkey);
-  const existingProfile = existingEvent ? parseKind0Content(existingEvent.content) : {};
-
-  const merged = {
-    name: (profile.name || existingProfile.name || profile.displayName || existingProfile.displayName || normalizedPubkey.slice(0, 8)).trim(),
-    displayName: (profile.displayName || existingProfile.displayName || "").trim() || undefined,
-    about: (profile.about || existingProfile.about || "").trim() || undefined,
-    picture: (profile.picture || existingProfile.picture || "").trim() || undefined,
-    nip05: (profile.nip05 || existingProfile.nip05 || "").trim() || undefined,
-  };
-
-  // Local snapshot for the signed-in user: id/tags/sig stay empty because
-  // this is a placeholder we show until the real published event makes its
-  // way back through the relay subscription and overwrites it with a
-  // higher-or-equal created_at.
-  const snapshotEvent: NostrEvent = {
-    id: "",
-    pubkey: normalizedPubkey,
-    created_at: Math.floor(Date.now() / 1000),
-    kind: NostrEventKind.Metadata,
-    tags: [],
-    content: JSON.stringify(merged),
-    sig: "",
-  };
-
-  saveCachedKind0Events([snapshotEvent]);
-  return loadCachedKind0Events();
 }
 
 export function loadLoggedInIdentityPriority(): string[] {

@@ -6,7 +6,6 @@ import {
   loadCachedKind0Events,
   loadCachedKind0EventsForRelayUrls,
   loadLoggedInIdentityPriority,
-  rememberCachedKind0Profile,
   rememberLoggedInIdentity,
   removeCachedKind0EventsByRelayUrl,
   subscribeToKind0Cache,
@@ -102,28 +101,6 @@ export function useKind0People(
     if (!user?.pubkey) return;
     setLoggedInIdentityPriority(rememberLoggedInIdentity(user.pubkey));
   }, [user?.pubkey]);
-
-  const profileCachePayload = useMemo(() => {
-    if (!user?.pubkey || !user?.profile) return null;
-    return {
-      pubkey: user.pubkey,
-      profile: {
-        name: user.profile.name,
-        displayName: user.profile.displayName,
-        about: user.profile.about,
-        picture: user.profile.picture,
-        nip05: user.profile.nip05,
-      },
-    };
-  }, [user?.profile, user?.pubkey]);
-
-  useEffect(() => {
-    if (!profileCachePayload) return;
-    // rememberCachedKind0Profile notifies kind 0 subscribers internally when
-    // its write changes the cache; the per-relay save is now driven by the
-    // subscription dispatcher (ingestKind0Event).
-    rememberCachedKind0Profile(profileCachePayload.pubkey, profileCachePayload.profile);
-  }, [profileCachePayload]);
 
   const visiblePubkeys = useMemo(
     () =>

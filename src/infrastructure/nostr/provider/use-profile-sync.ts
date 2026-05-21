@@ -10,7 +10,7 @@ import {
   type EditableNostrProfile,
 } from "@/infrastructure/nostr/profile-metadata";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { saveCachedKind0Events, loadCachedKind0Events } from "@/infrastructure/nostr/people-from-kind0";
+import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
 import type { NDKRelayStatus, NDKContextValue } from "./contracts";
 
 type PublishEvent = NDKContextValue["publishEvent"];
@@ -86,18 +86,21 @@ export function useProfileSync(
     });
     setNeedsProfileSetup(false);
 
-    if (user?.pubkey) {
-      const existing = loadCachedKind0Events();
-      const without = existing.filter((e) => e.pubkey !== user.pubkey);
-      saveCachedKind0Events([
-        ...without,
-        {
-          kind: NostrEventKind.Metadata,
-          pubkey: user.pubkey,
-          created_at: Math.floor(Date.now() / 1000),
-          content,
-        },
-      ]);
+    // Route the real signed event we just published through the same
+    // ingest path the live subscription uses. No synthesis, no parallel
+    // copy — the cache holds one source of truth (real signed events) for
+    // everybody including the signed-in user.
+    if (result.signedEvent && result.publishedRelayUrls?.length) {
+      ingestKind0Event({
+        id: result.signedEvent.id,
+        pubkey: result.signedEvent.pubkey,
+        created_at: result.signedEvent.created_at ?? Math.floor(Date.now() / 1000),
+        kind: NostrEventKind.Metadata,
+        tags: result.signedEvent.tags,
+        content: result.signedEvent.content,
+        sig: result.signedEvent.sig ?? "",
+        relayUrls: result.publishedRelayUrls,
+      });
     }
 
     nostrDevLog("provider", "Profile updated", { profile });
