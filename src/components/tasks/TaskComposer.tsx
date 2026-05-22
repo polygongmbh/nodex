@@ -452,7 +452,10 @@ export function TaskComposer({
   }, [adaptiveSize, forceExpandSignal]);
 
   useEffect(() => {
-    if (!allowComment && taskType !== "task") {
+    // Only override "comment" — the calendar's Add Event button passes
+    // allowComment=false but explicitly chose "event", and clobbering that
+    // back to "task" silently produced tasks instead of events.
+    if (!allowComment && taskType === "comment") {
       setTaskType("task");
     }
   }, [allowComment, taskType]);
@@ -2354,7 +2357,7 @@ export function TaskComposer({
                   : taskType === "listing"
                     ? t("composer.actions.postListing")
                     : taskType === "event"
-                      ? t("composer.actions.postEvent")
+                      ? t("composer.actions.createEvent")
                       : t("composer.actions.addComment");
               const submitActionIcon =
                 taskType === "task"

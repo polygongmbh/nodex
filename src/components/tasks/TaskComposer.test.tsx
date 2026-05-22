@@ -701,11 +701,20 @@ describe("TaskComposer Event mode", () => {
 
   it("initializes in Event mode when defaultPostType=event", () => {
     renderComposer({ allowFeedMessageTypes: true, defaultPostType: "event" });
-    expect(screen.getByRole("button", { name: /post event/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create event/i })).toBeInTheDocument();
   });
 
   it("initializes in Task mode when defaultPostType=task", () => {
     renderComposer({ allowFeedMessageTypes: true, defaultPostType: "task" });
     expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
+  });
+
+  // Regression: the calendar's Add Event button passes allowComment=false and
+  // defaultPostType="event". An effect used to coerce any non-task type to
+  // "task" whenever allowComment was false, silently turning the click into
+  // task creation.
+  it("preserves Event mode when allowComment is false", () => {
+    renderComposer({ allowFeedMessageTypes: true, allowComment: false, defaultPostType: "event" });
+    expect(screen.getByRole("button", { name: /create event/i })).toBeInTheDocument();
   });
 });

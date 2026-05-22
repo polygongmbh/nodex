@@ -98,16 +98,28 @@ function FeedDueDateChip({
 
   if (!primaryDate) return null;
 
-  const eventEndLabel = (() => {
+  // For multi-day events the time-of-day is misleading (it applies only to
+  // the first/last day), so show just a date range. Same-day events keep the
+  // start time and end-time hint.
+  const multiDayDateLabel = (() => {
     if (!isEvent) return null;
+    let endDate: Date | undefined;
+    if (isTimeBasedEventPost(task) && task.end) {
+      endDate = task.end;
+    } else if (isDateBasedEventPost(task) && task.endDate) {
+      endDate = parseIsoDateLocal(task.endDate);
+    }
+    if (!endDate) return null;
+    if (format(endDate, "yyyy-MM-dd") === format(primaryDate.date, "yyyy-MM-dd")) return null;
+    const startFmt = "MMM d, yyyy";
+    const endFmt = endDate.getFullYear() === primaryDate.date.getFullYear() ? "MMM d" : "MMM d, yyyy";
+    return `${format(primaryDate.date, startFmt)} – ${format(endDate, endFmt)}`;
+  })();
+
+  const eventEndLabel = (() => {
+    if (!isEvent || multiDayDateLabel) return null;
     if (isTimeBasedEventPost(task) && task.end) {
       return format(task.end, "HH:mm");
-    }
-    if (isDateBasedEventPost(task) && task.endDate) {
-      const end = parseIsoDateLocal(task.endDate);
-      if (end && format(end, "yyyy-MM-dd") !== format(primaryDate.date, "yyyy-MM-dd")) {
-        return format(end, "MMM d");
-      }
     }
     return null;
   })();
@@ -131,8 +143,8 @@ function FeedDueDateChip({
           ) : (
             <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
           )}
-          <span>{format(primaryDate.date, "MMM d, yyyy")}</span>
-          {primaryDate.time && (
+          <span>{multiDayDateLabel ?? format(primaryDate.date, "MMM d, yyyy")}</span>
+          {!multiDayDateLabel && primaryDate.time && (
             <>
               <Clock className="w-3 h-3 ml-1" />
               <span>{primaryDate.time}</span>

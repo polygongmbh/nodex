@@ -40,7 +40,7 @@ const people: SelectablePerson[] = [
 const tasks: Post[] = [];
 
 describe("CalendarView responsiveness", () => {
-  it("shows both Add Task and Add Event buttons on the selected-day panel", () => {
+  it("shows both Create Task and Create Event buttons on the selected-day panel", () => {
     render(
       <CalendarView
         focusedTaskId={null}
@@ -51,8 +51,8 @@ describe("CalendarView responsiveness", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /add task/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add event/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create event/i })).toBeInTheDocument();
   });
 
   it("focuses ancestor from day-card breadcrumb without selecting current card task", () => {

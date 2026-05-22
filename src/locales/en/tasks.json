@@ -17,7 +17,10 @@
       "sold": "Listing unavailable"
     },
     "event": {
-      "label": "Event"
+      "label": "Event",
+      "fromTime": "from {{time}}",
+      "untilTime": "until {{time}}",
+      "allDay": "All day"
     },
     "tags": "Tags",
     "less": "less",
@@ -169,8 +172,6 @@
       "nextMonth": "Next month"
     },
     "actions": {
-      "addTask": "Add Task",
-      "addEvent": "Add Event",
       "newTaskOn": "New task on {{date}}",
       "newEventOn": "New event on {{date}}"
     }

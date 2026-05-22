@@ -60,7 +60,7 @@
       "createTask": "Aufgabe erstellen",
       "addComment": "Kommentar hinzufügen",
       "postListing": "Inserat erstellen",
-      "postEvent": "Termin erstellen",
+      "createEvent": "Ereignis erstellen",
       "signin": "Anmelden",
       "useCurrentLocation": "Aktuellen Standort verwenden",
       "clearLocation": "Standort entfernen",

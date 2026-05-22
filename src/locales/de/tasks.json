@@ -17,7 +17,10 @@
       "sold": "Inserat vergeben"
     },
     "event": {
-      "label": "Termin"
+      "label": "Termin",
+      "fromTime": "ab {{time}}",
+      "untilTime": "bis {{time}}",
+      "allDay": "Ganztägig"
     },
     "tags": "Tags",
     "less": "weniger",
@@ -169,8 +172,6 @@
       "nextMonth": "Nächster Monat"
     },
     "actions": {
-      "addTask": "Aufgabe hinzufügen",
-      "addEvent": "Ereignis hinzufügen",
       "newTaskOn": "Neue Aufgabe am {{date}}",
       "newEventOn": "Neues Ereignis am {{date}}"
     }

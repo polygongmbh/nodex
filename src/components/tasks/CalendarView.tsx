@@ -93,7 +93,7 @@ export function CalendarView({
   onSelectedDateChange,
   isMobile = false,
 }: CalendarViewProps) {
-  const { t } = useTranslation("tasks");
+  const { t } = useTranslation(["tasks", "composer"]);
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();
@@ -607,14 +607,14 @@ export function CalendarView({
                       className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
                     >
                       <Plus className="w-3 h-3" />
-                      {t("calendar.actions.addTask")}
+                      {t("composer:composer.actions.createTask")}
                     </button>
                     <button
                       onClick={() => setComposerMode("event")}
                       className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
                     >
                       <Plus className="w-3 h-3" />
-                      {t("calendar.actions.addEvent")}
+                      {t("composer:composer.actions.createEvent")}
                     </button>
                   </div>
                 )}
@@ -890,6 +890,36 @@ export function CalendarView({
                             {(() => {
                               const primary = getTaskPrimaryDate(task);
                               if (!primary) return null;
+                              const dayKey = selectedDate ? format(startOfDay(selectedDate), "yyyy-MM-dd") : null;
+                              // Multi-day time-based event: bound each day to its
+                              // role in the range (start day, middle day, end day)
+                              // instead of repeating the same time range on every
+                              // expanded copy.
+                              if (isTimeBasedEventPost(task) && task.start && task.end && dayKey) {
+                                const startDayKey = format(startOfDay(task.start), "yyyy-MM-dd");
+                                const endDayKey = format(startOfDay(task.end), "yyyy-MM-dd");
+                                if (startDayKey !== endDayKey) {
+                                  let label: string;
+                                  if (dayKey === startDayKey) {
+                                    label = t("tasks.event.fromTime", { time: format(task.start, "HH:mm") });
+                                  } else if (dayKey === endDayKey) {
+                                    label = t("tasks.event.untilTime", { time: format(task.end, "HH:mm") });
+                                  } else {
+                                    label = t("tasks.event.allDay");
+                                  }
+                                  return (
+                                    <div className="flex items-center gap-2 text-xs mt-1">
+                                      <span
+                                        className="h-1.5 w-1.5 rounded-full"
+                                        style={{ backgroundColor: authorColor.accent }}
+                                        title={task.author?.displayName || task.author?.name || "Author"}
+                                      />
+                                      <Clock className="w-3 h-3" />
+                                      <span>{label}</span>
+                                    </div>
+                                  );
+                                }
+                              }
                               let endLabel: string | null = null;
                               if (isTimeBasedEventPost(task) && task.end) {
                                 endLabel = format(task.end, "HH:mm");

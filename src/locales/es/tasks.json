@@ -17,7 +17,10 @@
       "sold": "Anuncio retirado"
     },
     "event": {
-      "label": "Evento"
+      "label": "Evento",
+      "fromTime": "desde {{time}}",
+      "untilTime": "hasta {{time}}",
+      "allDay": "Todo el día"
     },
     "tags": "Etiquetas",
     "less": "menos",
@@ -169,8 +172,6 @@
       "nextMonth": "Mes siguiente"
     },
     "actions": {
-      "addTask": "Añadir tarea",
-      "addEvent": "Añadir evento",
       "newTaskOn": "Nueva tarea el {{date}}",
       "newEventOn": "Nuevo evento el {{date}}"
     }
