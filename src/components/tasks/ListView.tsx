@@ -400,7 +400,7 @@ export function ListView({
   // Editable due date cell
   const DueDateCell = ({ task }: { task: Post }) => {
     const [open, setOpen] = useState(false);
-    const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task));
+    const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task), getTaskPrimaryDate(task)?.type);
     const editable = canCompleteTask(task);
     const trigger = (
       <button

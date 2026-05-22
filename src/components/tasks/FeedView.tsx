@@ -405,7 +405,7 @@ export function FeedView({
     <FeedDueDateChip
       task={task}
       editable={canCompleteTask(task)}
-      dueDateColor={getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task))}
+      dueDateColor={getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task), getTaskPrimaryDate(task)?.type)}
     />
   ), [canCompleteTask]);
 

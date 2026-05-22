@@ -204,7 +204,7 @@ export function TreeTaskItem({
   );
   const isComment = isCommentPost(task);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
-  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task));
+  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task), getTaskPrimaryDate(task)?.type);
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
 

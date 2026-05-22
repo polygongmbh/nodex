@@ -2,6 +2,7 @@ import {
   Post,
   TaskState,
   TaskStatus,
+  TaskDateType,
   getLastEditedAt,
   getTaskStatus,
   getTaskState,
@@ -157,10 +158,19 @@ export function buildChildrenMap(allTasks: Post[]): Map<string | undefined, Post
   return map;
 }
 
-// Get due date color class based on urgency
-export function getDueDateColorClass(dueDate: Date | undefined, status?: TaskState | TaskStatus): string {
+// Get due date color class based on urgency.
+// Urgency colouring only applies to "due" and "scheduled" date types — calendar
+// events (start/end) and milestones get a neutral muted colour.
+export function getDueDateColorClass(
+  dueDate: Date | undefined,
+  status?: TaskState | TaskStatus,
+  dateType?: TaskDateType,
+): string {
   if (!dueDate || isTaskTerminal(status)) return "text-muted-foreground";
-  
+  if (dateType && dateType !== "due" && dateType !== "scheduled") {
+    return "text-muted-foreground";
+  }
+
   const today = startOfDay(new Date());
   const dueDay = startOfDay(dueDate);
   const daysUntilDue = differenceInDays(dueDay, today);

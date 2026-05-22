@@ -60,7 +60,7 @@ export function KanbanTaskCard({
   const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
-  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, displayStatus);
+  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, displayStatus, getTaskPrimaryDate(task)?.type);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   // Priority editing is also disabled for tasks in terminal states (done/closed) — render as a

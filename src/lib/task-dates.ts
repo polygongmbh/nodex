@@ -1,4 +1,4 @@
-import { getTaskPrimaryDate } from "@/types";
+import { getTaskPrimaryDate, isCalendarEventPost } from "@/types";
 import type { Post, TaskDateType } from "@/types";
 import i18n from "@/lib/i18n/config";
 
@@ -10,6 +10,7 @@ export function getTaskDateTypeLabel(dateType: TaskDateType | undefined): string
 }
 
 export function isTaskLockedUntilStart(task: Post, now: Date = new Date()): boolean {
+  if (isCalendarEventPost(task)) return false;
   const primaryDate = getTaskPrimaryDate(task);
   if (!primaryDate || primaryDate.type !== "start") return false;
   return primaryDate.date.getTime() > now.getTime();
