@@ -14,7 +14,7 @@ const sampleDraft: FailedPublishDraft = {
   tags: ["go"],
   relayIds: ["relay-a"],
   relayUrls: ["wss://relay.a"],
-  taskType: "task",
+  postType: "task",
   createdAt: "2026-02-18T12:00:00.000Z",
   dateType: "due",
   dueDate: "2026-02-20T00:00:00.000Z",

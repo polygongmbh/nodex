@@ -138,33 +138,47 @@ export interface ComposeRecomposeOf {
   contentPreview?: string;
 }
 
-export interface ComposeRestoreState {
+/**
+ * Title/summary/location fields shared by listing and event modes. Stored as
+ * one unit so toggling between modes preserves them without per-mode dupes.
+ */
+export interface TitledPostFields {
+  title?: string;
+  summary?: string;
+  location?: string;
+}
+
+/**
+ * Canonical in-memory composer state. One shape used for: useState seed on
+ * mount, the recompose payload, and the input to the persistence function.
+ * Required fields carry sensible defaults (`""`, `[]`, `{}`); genuine
+ * unknowns stay optional.
+ */
+export interface ComposerDraft {
   content: string;
   postType: PostType;
-  nip99?: Nip99Metadata;
-  locationGeohash?: string;
   dueDate?: Date;
-  dueTime?: string;
-  dateType?: TaskDateType;
-  /** Optional end date/time for calendar events composed in "event" mode. */
+  dueTime: string;
+  dateType: TaskDateType;
   endDate?: Date;
-  endTime?: string;
-  /** Title/summary/location for event or listing modes. */
-  eventTitle?: string;
-  eventSummary?: string;
-  eventLocation?: string;
-  explicitMentionPubkeys?: string[];
-  explicitTagNames?: string[];
-  selectedRelays?: string[];
+  endTime: string;
+  titledPost: TitledPostFields;
+  nip99: Nip99Metadata;
+  locationGeohash?: string;
+  attachments: PublishedAttachment[];
+  /** Display-tier priority (1-5); the persistence layer converts to stored 0-100. */
   priority?: number;
-  attachments?: PublishedAttachment[];
+  explicitTagNames: string[];
+  explicitMentionPubkeys: string[];
   /** When set, a successful submission must publish a deletion for the named event. */
   recomposeOf?: ComposeRecomposeOf;
+  /** Relay IDs captured with the draft (set on recompose; ignored for free-form drafts). */
+  selectedRelays?: string[];
 }
 
 export interface ComposeRestoreRequest {
   id: number;
-  state: ComposeRestoreState;
+  state: ComposerDraft;
 }
 
 export interface TaskReactions {

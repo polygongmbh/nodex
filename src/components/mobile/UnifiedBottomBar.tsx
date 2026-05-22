@@ -164,6 +164,7 @@ export function UnifiedBottomBar({
       draftStorageKey: COMPOSE_DRAFT_STORAGE_KEY,
       defaultContent: searchQuery || defaultContent,
       allowFeedMessageTypes: true,
+      displayPriorityFromStored,
     });
   }
   const initialComposerState = initialComposerStateRef.current;
@@ -189,11 +190,7 @@ export function UnifiedBottomBar({
   const [dueDate, setDueDate] = useState<Date | undefined>(initialComposerState.dueDate);
   const [dueTime, setDueTime] = useState(initialComposerState.dueTime);
   const [dateType, setDateType] = useState<TaskDateType>(initialComposerState.dateType);
-  const [priority, setPriority] = useState<number | undefined>(
-    typeof initialComposerState.priority === "number"
-      ? displayPriorityFromStored(initialComposerState.priority)
-      : undefined
-  );
+  const [priority, setPriority] = useState<number | undefined>(initialComposerState.priority);
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>(initialComposerState.explicitTagNames);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(
     initialComposerState.explicitMentionPubkeys
@@ -393,9 +390,13 @@ export function UnifiedBottomBar({
       COMPOSE_DRAFT_STORAGE_KEY,
       {
         content: sharedText,
+        postType: "task",
         dueDate,
         dueTime,
         dateType,
+        endTime: "",
+        titledPost: {},
+        nip99: {},
         explicitTagNames,
         explicitMentionPubkeys,
         priority,

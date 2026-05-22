@@ -52,8 +52,6 @@ import {
   resolveTaskComposerMention,
   useTaskComposerDraftStorageKey,
   useTaskComposerModel,
-  writeTaskComposerDraft,
-  type TaskComposerDraftState,
 } from "./task-composer-runtime";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
 
@@ -219,6 +217,7 @@ export function TaskComposer({
         defaultDueDate,
         allowFeedMessageTypes,
         defaultPostType,
+        displayPriorityFromStored,
       }),
     [allowFeedMessageTypes, defaultContent, defaultDueDate, defaultPostType, draftStorageKey]
   );
@@ -239,10 +238,7 @@ export function TaskComposer({
   const [isSendLaunching, setIsSendLaunching] = useState(false);
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>(initialComposerState.explicitTagNames);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(initialComposerState.explicitMentionPubkeys);
-  const [priority, setPriority] = useState<number | undefined>(() => {
-    if (typeof initialComposerState.priority !== "number") return undefined;
-    return displayPriorityFromStored(initialComposerState.priority);
-  });
+  const [priority, setPriority] = useState<number | undefined>(initialComposerState.priority);
   const [attachments, setAttachments] = useState<ComposeAttachment[]>(() => {
     const initial = initialComposerState.attachments || [];
     return initial.map((attachment, index) => ({
@@ -489,16 +485,16 @@ export function TaskComposer({
       )
     );
     setDueDate(restoreState.dueDate);
-    setDueTime(restoreState.dueTime || "");
-    setDateType(restoreState.dateType || "due");
-    setPriority(displayPriorityFromStored(restoreState.priority));
-    const restoredNip99: Nip99Metadata = { ...(restoreState.nip99 || {}) };
-    // Shared title/summary/location across listing & event modes: restore from
-    // explicit event fields, falling back to the nip99 fields when re-composing
-    // a listing. Listings keep nip99-specific extras (price, currency, etc.).
-    const restoredTitle = restoreState.eventTitle ?? restoredNip99.title ?? "";
-    const restoredSummary = restoreState.eventSummary ?? restoredNip99.summary ?? "";
-    const restoredLocation = restoreState.eventLocation ?? restoredNip99.location ?? "";
+    setDueTime(restoreState.dueTime);
+    setDateType(restoreState.dateType);
+    setPriority(restoreState.priority);
+    // Shared title/summary/location across listing & event modes: prefer the
+    // unified titledPost slot, falling back to nip99 fields for older drafts.
+    // Listings keep nip99-specific extras (price, currency, etc.).
+    const restoredNip99: Nip99Metadata = { ...restoreState.nip99 };
+    const restoredTitle = restoreState.titledPost.title ?? restoredNip99.title ?? "";
+    const restoredSummary = restoreState.titledPost.summary ?? restoredNip99.summary ?? "";
+    const restoredLocation = restoreState.titledPost.location ?? restoredNip99.location ?? "";
     if (restoredTitle) restoredNip99.title = restoredTitle;
     if (restoredSummary) restoredNip99.summary = restoredSummary;
     if (restoredLocation) restoredNip99.location = restoredLocation;
@@ -508,7 +504,7 @@ export function TaskComposer({
     setEventLocation(restoredLocation);
     setIsEventTitleTouched(Boolean(restoredTitle));
     setEndDate(restoreState.endDate);
-    setEndTime(restoreState.endTime || "");
+    setEndTime(restoreState.endTime);
     const restoredGeohash = normalizeGeohash(restoreState.locationGeohash);
     setLocationGeohash(restoredGeohash);
     setShowLocationControls(Boolean(restoredGeohash));
@@ -569,16 +565,16 @@ export function TaskComposer({
         dueDate,
         dueTime,
         dateType,
-        explicitTagNames,
-        explicitMentionPubkeys,
-        priority,
+        endDate,
+        endTime,
+        titledPost,
         nip99,
         locationGeohash,
         attachments: persistableAttachments,
+        priority,
+        explicitTagNames,
+        explicitMentionPubkeys,
         recomposeOf: activeRecomposeOf,
-        titledPost,
-        endDate,
-        endTime: endTime || undefined,
       },
       storedPriorityFromDisplay
     );

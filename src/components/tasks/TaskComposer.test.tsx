@@ -193,6 +193,7 @@ describe("TaskComposer", () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "persisted hello #note",
       postType: "comment",
+      savedAt: new Date().toISOString(),
     }));
 
     renderComposer();
@@ -226,11 +227,9 @@ describe("TaskComposer", () => {
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
-      taskDate: {
-        dueDate: "2026-04-01T10:00:00.000Z",
-        dueTime: "10:00",
-        dateType: "start",
-      },
+      dueDate: "2026-04-01T10:00:00.000Z",
+      dueTime: "10:00",
+      dateType: "start",
       priority: 80,
       locationGeohash: "u33db",
     }));
@@ -305,6 +304,14 @@ describe("TaskComposer", () => {
         state: {
           content: "second pass at the post",
           postType: "task",
+          dueTime: "",
+          dateType: "due",
+          endTime: "",
+          titledPost: {},
+          nip99: {},
+          attachments: [],
+          explicitTagNames: [],
+          explicitMentionPubkeys: [],
           recomposeOf: {
             eventId: "evt-1",
             originalKind: 1,
@@ -338,11 +345,9 @@ describe("TaskComposer", () => {
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
-      taskDate: {
-        dueDate: "2026-04-01T10:00:00.000Z",
-        dueTime: "10:00",
-        dateType: "start",
-      },
+      dueDate: "2026-04-01T10:00:00.000Z",
+      dueTime: "10:00",
+      dateType: "start",
       priority: 80,
       locationGeohash: "u33db",
     }));
@@ -383,11 +388,9 @@ describe("TaskComposer", () => {
       savedAt: "2026-04-01T10:00:00.000Z",
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
-      taskDate: {
-        dueDate: "2026-04-06T10:00:00.000Z",
-        dueTime: "10:00",
-        dateType: "start",
-      },
+      dueDate: "2026-04-06T10:00:00.000Z",
+      dueTime: "10:00",
+      dateType: "start",
       locationGeohash: "u33db",
       priority: 80,
     }));

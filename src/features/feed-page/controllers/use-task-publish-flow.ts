@@ -24,7 +24,7 @@ import { useCoreChannels } from "@/lib/use-core-channels";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { normalizeComposerMessageType } from "@/domain/content/task-type";
-import { isCommentKind, isListingKind, isTaskKind } from "@/domain/content/task-kind";
+import { isCalendarEventKind, isCommentKind, isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import {   resolveRelaySelectionForSubmission, } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -37,6 +37,7 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import type { SignedNostrEvent } from "@/infrastructure/nostr/provider/use-publish";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { canUserUpdateTask } from "@/domain/content/task-permissions";
+import { displayPriorityFromStored } from "@/domain/content/task-priority";
 import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
 import {
   notifyLocalSaved,
@@ -59,7 +60,7 @@ import type {
   CalendarEventPost,
   ComposeRecomposeOf,
   ComposeRestoreRequest,
-  ComposeRestoreState,
+  ComposerDraft,
   DateBasedEventPost,
   Nip99Metadata,
   Nip99ListingStatus,
@@ -195,7 +196,7 @@ export function useTaskPublishFlow({
   const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
   const [composeRestoreRequest, setComposeRestoreRequest] = useState<ComposeRestoreRequest | null>(null);
   const pendingPublishStateRef = useRef<
-    Map<string, { timeoutId: number; toastId: string | number; composeState: ComposeRestoreState }>
+    Map<string, { timeoutId: number; toastId: string | number; composeState: ComposerDraft }>
   >(new Map());
 
   useEffect(() => {
@@ -545,7 +546,7 @@ export function useTaskPublishFlow({
       tags: resolvedSubmissionTags,
       relayIds: targetRelayIds,
       relayUrls: selectedRelayUrls,
-      taskType: normalizedTaskType,
+      postType: normalizedPostType,
       createdAt: createdAt.toISOString(),
       dueDate: submissionDueDate ? submissionDueDate.toISOString() : undefined,
       dueTime: submissionDueTime,
@@ -662,19 +663,32 @@ export function useTaskPublishFlow({
     };
 
     const parsedHashtagsFromContent = new Set(extractHashtagsFromContent(content));
-    const composeRestoreState: ComposeRestoreState = {
+    const composeRestoreState: ComposerDraft = {
       content,
       postType: normalizedPostType,
       dueDate: submissionDueDate,
-      dueTime: submissionDueTime,
-      dateType: submissionDateType,
+      dueTime: submissionDueTime ?? "",
+      dateType: submissionDateType ?? "due",
+      endTime: eventMetadata?.endTime ?? "",
+      endDate: eventMetadata?.endDate,
+      titledPost: isEventSubmission
+        ? {
+            title: eventMetadata?.title,
+            summary: eventMetadata?.summary,
+            location: eventMetadata?.location,
+          }
+        : {
+            title: nip99?.title,
+            summary: nip99?.summary,
+            location: nip99?.location,
+          },
+      nip99: nip99 ?? {},
+      attachments: normalizedAttachments,
       explicitTagNames: normalizedExtractedTags.filter((tag) => !parsedHashtagsFromContent.has(tag)),
       explicitMentionPubkeys: dedupedExplicitMentionPubkeys,
       selectedRelays: targetRelayIds,
-      priority,
-      nip99,
+      priority: displayPriorityFromStored(priority),
       locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments,
     };
 
     if (!shouldPublish) {
@@ -956,6 +970,30 @@ export function useTaskPublishFlow({
         kind: NostrEventKind.ClassifiedListing,
         nip99: { identifier: restoredId, status: "active" },
       };
+    } else if (isCalendarEventKind(draft.publishKind)) {
+      if (draft.publishKind === NostrEventKind.CalendarTimeBased && dueDate) {
+        const start = new Date(dueDate);
+        const timeMatch = draft.dueTime?.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+        if (timeMatch) start.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
+        restoredTask = {
+          ...restoredBase,
+          kind: NostrEventKind.CalendarTimeBased,
+          start,
+        };
+      } else if (draft.publishKind === NostrEventKind.CalendarDateBased && dueDate) {
+        const yyyy = dueDate.getFullYear();
+        const mm = String(dueDate.getMonth() + 1).padStart(2, "0");
+        const dd = String(dueDate.getDate()).padStart(2, "0");
+        restoredTask = {
+          ...restoredBase,
+          kind: NostrEventKind.CalendarDateBased,
+          startDate: `${yyyy}-${mm}-${dd}`,
+        };
+      } else {
+        // Missing date is unexpected for an event; fall back to a comment so
+        // the failed draft entry is at least dismissable.
+        restoredTask = { ...restoredBase, kind: NostrEventKind.TextNote };
+      }
     } else {
       restoredTask = { ...restoredBase, kind: NostrEventKind.TextNote };
     }
@@ -1139,23 +1177,25 @@ export function useTaskPublishFlow({
       )
     );
 
-    const restoreState: ComposeRestoreState = {
+    const restoreState: ComposerDraft = {
       content: existingTask.content,
       postType,
       dueDate: restoreStartDate,
-      dueTime: restoreStartTime,
-      dateType: getTaskPrimaryDate(existingTask)?.type,
+      dueTime: restoreStartTime ?? "",
+      dateType: getTaskPrimaryDate(existingTask)?.type ?? "due",
       endDate: restoreEndDate,
-      endTime: restoreEndTime,
-      eventTitle: restoreTitle,
-      eventSummary: restoreSummary,
-      eventLocation: restoreLocation,
+      endTime: restoreEndTime ?? "",
+      titledPost: {
+        title: restoreTitle,
+        summary: restoreSummary,
+        location: restoreLocation,
+      },
+      nip99: isListingPost(existingTask) ? existingTask.nip99 : {},
+      attachments: existingTask.attachments ?? [],
       explicitTagNames,
       explicitMentionPubkeys,
       selectedRelays: existingTask.relays,
-      priority: getTaskPriority(existingTask),
-      attachments: existingTask.attachments,
-      nip99: isListingPost(existingTask) ? existingTask.nip99 : undefined,
+      priority: displayPriorityFromStored(getTaskPriority(existingTask)),
       locationGeohash: existingTask.locationGeohash,
       recomposeOf: {
         eventId: existingTask.id,

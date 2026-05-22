@@ -1,5 +1,5 @@
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { PublishedAttachment, TaskDateType, TaskState, TaskType } from "@/types";
+import type { PostType, PublishedAttachment, TaskDateType, TaskState } from "@/types";
 import type { Person } from "@/types/person";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ export interface FailedPublishDraft {
   tags: string[];
   relayIds: string[];
   relayUrls: string[];
-  taskType: TaskType;
+  postType: PostType;
   createdAt: string;
   dateType?: TaskDateType;
   dueDate?: string;
@@ -30,7 +30,7 @@ export interface FailedPublishDraft {
   publishParentId?: string;
 }
 
-const taskTypeSchema = z.enum(["task", "comment"] as const);
+const postTypeSchema = z.enum(["task", "comment", "listing", "event"] as const);
 const taskDateTypeSchema = z.enum(["due", "scheduled", "start", "end", "milestone"] as const);
 const taskStatusSchema = z.enum(["open", "active", "done", "closed"] as const);
 const taskStateSchema = z.object({
@@ -51,7 +51,7 @@ const failedPublishDraftSchema = z.object({
   tags: z.array(z.string()),
   relayIds: z.array(z.string()),
   relayUrls: z.array(z.string()),
-  taskType: taskTypeSchema,
+  postType: postTypeSchema,
   createdAt: z.string(),
   dateType: taskDateTypeSchema.optional(),
   dueDate: z.string().optional(),

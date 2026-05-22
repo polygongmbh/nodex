@@ -11,3 +11,9 @@ export function isCommentKind(kind: NostrEventKind): kind is NostrEventKind.Text
 export function isListingKind(kind: NostrEventKind): kind is NostrEventKind.ClassifiedListing {
   return kind === NostrEventKind.ClassifiedListing;
 }
+
+export function isCalendarEventKind(
+  kind: NostrEventKind
+): kind is NostrEventKind.CalendarDateBased | NostrEventKind.CalendarTimeBased {
+  return kind === NostrEventKind.CalendarDateBased || kind === NostrEventKind.CalendarTimeBased;
+}

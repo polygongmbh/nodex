@@ -10,62 +10,39 @@ import type {
   Channel,
   ComposeRecomposeOf,
   ComposeRestoreRequest,
+  ComposerDraft,
   Nip99Metadata,
   PostType,
   PublishedAttachment,
   Relay,
   TaskDateType,
+  TitledPostFields,
 } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
 
 /**
- * Title/summary/location fields shared by listing and event modes. Stored
- * under one draft key so toggling between listing and event preserves them
- * without per-mode duplicates.
+ * Serialized on-disk shape. Dates are ISO strings, optionals reflect "may be
+ * absent from older drafts" — `deserializeDraft` applies defaults.
  */
-export interface TitledPostDraftFields {
-  title?: string;
-  summary?: string;
-  location?: string;
-}
-
-export interface TaskComposerDraftState {
+interface PersistedComposerDraft {
   content: string;
   postType: PostType;
   savedAt: string;
-  taskDate?: {
-    dueDate?: string;
-    dueTime?: string;
-    dateType?: TaskDateType;
-  };
-  explicitMentionPubkeys?: string[];
-  explicitTagNames?: string[];
-  priority?: number;
-  attachments?: PublishedAttachment[];
-  nip99?: Nip99Metadata;
-  locationGeohash?: string;
-  recomposeOf?: ComposeRecomposeOf;
-  titledPost?: TitledPostDraftFields;
+  dueDate?: string;
+  dueTime?: string;
+  dateType?: TaskDateType;
   endDate?: string;
   endTime?: string;
-}
-
-export interface TaskComposerInitialState {
-  content: string;
-  postType: PostType;
-  dueDate?: Date;
-  dueTime: string;
-  dateType: TaskDateType;
-  explicitMentionPubkeys: string[];
-  explicitTagNames: string[];
-  priority?: number;
-  attachments: PublishedAttachment[];
-  nip99: Nip99Metadata;
+  titledPost?: TitledPostFields;
+  nip99?: Nip99Metadata;
   locationGeohash?: string;
+  attachments?: PublishedAttachment[];
+  /** Stored priority (0-100 scale). */
+  priority?: number;
+  explicitTagNames?: string[];
+  explicitMentionPubkeys?: string[];
   recomposeOf?: ComposeRecomposeOf;
-  titledPost: TitledPostDraftFields;
-  endDate?: Date;
-  endTime: string;
+  selectedRelays?: string[];
 }
 
 export interface ResolvedTaskComposerEnvironment {
@@ -228,34 +205,33 @@ export function useTaskComposerModel(): TaskComposerModel {
   }, [environment]);
 }
 
-export function readTaskComposerDraft(key: string): TaskComposerDraftState | null {
+function parseDraftDate(value?: string): Date | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function readPersistedDraft(key: string): PersistedComposerDraft | null {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as TaskComposerDraftState;
+    const parsed = JSON.parse(raw) as PersistedComposerDraft;
     if (!parsed || typeof parsed !== "object") return null;
+    if (typeof parsed.content !== "string" || typeof parsed.postType !== "string") return null;
     return parsed;
   } catch {
     return null;
   }
 }
 
-function parseDraftDueDate(value?: string): Date | undefined {
-  if (!value) return undefined;
-  const parsedDate = new Date(value);
-  return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
-}
-
-function isTaskComposerDraftStale(draftState: TaskComposerDraftState | null): boolean {
-  const savedAt = draftState?.savedAt;
-  if (!savedAt) return true;
-  const savedAtMs = new Date(savedAt).getTime();
+function isPersistedDraftStale(persisted: PersistedComposerDraft): boolean {
+  const savedAtMs = new Date(persisted.savedAt).getTime();
   if (Number.isNaN(savedAtMs)) return true;
   return Date.now() - savedAtMs > TASK_COMPOSER_STALE_DRAFT_MAX_AGE_MS;
 }
 
 function resolveInitialPostType(
-  draftState: TaskComposerDraftState | null,
+  persisted: PersistedComposerDraft | null,
   allowFeedMessageTypes: boolean,
   defaultPostType?: PostType
 ): PostType {
@@ -266,12 +242,93 @@ function resolveInitialPostType(
     if (defaultPostType === "task" || defaultPostType === "comment") return defaultPostType;
     if (allowFeedMessageTypes) return defaultPostType;
   }
-  const draftPostType = draftState?.postType;
+  const draftPostType = persisted?.postType;
   if (draftPostType === "task" || draftPostType === "comment") return draftPostType;
   if (allowFeedMessageTypes && (draftPostType === "listing" || draftPostType === "event")) {
     return draftPostType;
   }
   return "task";
+}
+
+function emptyDraft(
+  content: string,
+  postType: PostType,
+  defaultDueDate?: Date
+): ComposerDraft {
+  return {
+    content,
+    postType,
+    dueDate: defaultDueDate,
+    dueTime: "",
+    dateType: "due",
+    endTime: "",
+    titledPost: {},
+    nip99: {},
+    attachments: [],
+    explicitTagNames: [],
+    explicitMentionPubkeys: [],
+  };
+}
+
+/**
+ * Deserialize a persisted draft into the in-memory shape, applying defaults
+ * and converting stored priority back to the display tier (1-5).
+ */
+function deserializeDraft(
+  persisted: PersistedComposerDraft,
+  postType: PostType,
+  displayPriorityFromStored: (stored?: number) => number | undefined,
+  defaultDueDate?: Date
+): ComposerDraft {
+  return {
+    content: persisted.content,
+    postType,
+    dueDate: parseDraftDate(persisted.dueDate) ?? defaultDueDate,
+    dueTime: persisted.dueTime || "",
+    dateType: persisted.dateType || "due",
+    endDate: parseDraftDate(persisted.endDate),
+    endTime: persisted.endTime || "",
+    titledPost: { ...(persisted.titledPost || {}) },
+    nip99: { ...(persisted.nip99 || {}) },
+    locationGeohash: persisted.locationGeohash,
+    attachments: persisted.attachments || [],
+    priority: displayPriorityFromStored(persisted.priority),
+    explicitTagNames: (persisted.explicitTagNames || [])
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+    explicitMentionPubkeys: (persisted.explicitMentionPubkeys || [])
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim().toLowerCase())
+      .filter((value) => /^[a-f0-9]{64}$/i.test(value)),
+    recomposeOf: persisted.recomposeOf,
+    selectedRelays: persisted.selectedRelays,
+  };
+}
+
+function serializeDraft(
+  draft: ComposerDraft,
+  storedPriorityFromDisplay: (display?: number) => number | undefined
+): PersistedComposerDraft {
+  return {
+    content: draft.content,
+    postType: draft.postType,
+    savedAt: new Date().toISOString(),
+    dueDate: draft.dueDate?.toISOString(),
+    dueTime: draft.dueTime || undefined,
+    dateType: draft.dateType,
+    endDate: draft.endDate?.toISOString(),
+    endTime: draft.endTime || undefined,
+    titledPost: draft.titledPost,
+    nip99: draft.nip99,
+    locationGeohash: draft.locationGeohash,
+    attachments: draft.attachments,
+    priority: storedPriorityFromDisplay(draft.priority),
+    explicitTagNames: draft.explicitTagNames,
+    explicitMentionPubkeys: draft.explicitMentionPubkeys,
+    recomposeOf: draft.recomposeOf,
+    selectedRelays: draft.selectedRelays,
+  };
 }
 
 export function resolveTaskComposerInitialState({
@@ -280,64 +337,50 @@ export function resolveTaskComposerInitialState({
   defaultDueDate,
   allowFeedMessageTypes,
   defaultPostType,
+  displayPriorityFromStored,
 }: {
   draftStorageKey?: string;
   defaultContent: string;
   defaultDueDate?: Date;
   allowFeedMessageTypes: boolean;
   defaultPostType?: PostType;
-}): TaskComposerInitialState {
-  const storedDraft = draftStorageKey ? readTaskComposerDraft(draftStorageKey) : null;
-  // Only restore drafts with real user-entered substance (text, attachments,
-  // or NIP-99 metadata). Auxiliary state alone — e.g. a seeded due date,
+  displayPriorityFromStored: (stored?: number) => number | undefined;
+}): ComposerDraft {
+  const persisted = draftStorageKey ? readPersistedDraft(draftStorageKey) : null;
+  // Drafts must have real user-entered substance (text, attachments, or NIP-99
+  // metadata) to be eligible. Auxiliary state alone — a seeded due date,
   // priority, channels, or location — must not leak from a previous context
   // (like the calendar view) into a fresh composer elsewhere.
-  const draftState =
-    storedDraft &&
+  const substantive =
+    persisted &&
     hasComposerSubstance({
-      content: storedDraft.content,
-      attachments: storedDraft.attachments,
-      nip99: storedDraft.nip99,
+      content: persisted.content,
+      attachments: persisted.attachments,
+      nip99: persisted.nip99,
     })
-      ? storedDraft
+      ? persisted
       : null;
-  const isStaleDraft = isTaskComposerDraftStale(draftState);
-
-  return {
-    content: draftState?.content ?? defaultContent,
-    postType: resolveInitialPostType(draftState, allowFeedMessageTypes, defaultPostType),
-    dueDate: isStaleDraft ? defaultDueDate : (parseDraftDueDate(draftState?.taskDate?.dueDate) ?? defaultDueDate),
-    dueTime: isStaleDraft ? "" : (draftState?.taskDate?.dueTime || ""),
-    dateType: isStaleDraft ? "due" : (draftState?.taskDate?.dateType || "due"),
-    explicitTagNames:
-      (isStaleDraft ? [] : draftState?.explicitTagNames)
-        ?.filter((value): value is string => typeof value === "string")
-        .map((value) => value.trim().toLowerCase())
-        .filter(Boolean)
-      ?? [],
-    explicitMentionPubkeys:
-      (isStaleDraft ? [] : draftState?.explicitMentionPubkeys)
-        ?.filter((value): value is string => typeof value === "string")
-        .map((value) => value.trim().toLowerCase())
-        .filter((value) => /^[a-f0-9]{64}$/i.test(value))
-      ?? [],
-    priority: draftState?.priority,
-    attachments: draftState?.attachments || [],
-    nip99: { ...(draftState?.nip99 || {}) },
-    recomposeOf: isStaleDraft ? undefined : draftState?.recomposeOf,
-    locationGeohash: isStaleDraft ? undefined : draftState?.locationGeohash,
-    titledPost: isStaleDraft ? {} : { ...(draftState?.titledPost || {}) },
-    endDate: isStaleDraft ? undefined : parseDraftDueDate(draftState?.endDate),
-    endTime: isStaleDraft ? "" : (draftState?.endTime || ""),
-  };
-}
-
-export function writeTaskComposerDraft(key: string, state: TaskComposerDraftState) {
-  try {
-    localStorage.setItem(key, JSON.stringify(state));
-  } catch {
-    // Ignore persistence errors.
+  const postType = resolveInitialPostType(substantive, allowFeedMessageTypes, defaultPostType);
+  if (!substantive) return emptyDraft(defaultContent, postType, defaultDueDate);
+  const restored = deserializeDraft(substantive, postType, displayPriorityFromStored, defaultDueDate);
+  // For stale drafts, the user's text/attachments/listing details are still
+  // worth keeping — those are the "core" content — but auxiliary state (date,
+  // location, tags/mentions, recompose intent, selected relays) is dropped so
+  // it can't leak across long gaps.
+  if (isPersistedDraftStale(substantive)) {
+    restored.dueDate = defaultDueDate;
+    restored.dueTime = "";
+    restored.dateType = "due";
+    restored.endDate = undefined;
+    restored.endTime = "";
+    restored.titledPost = {};
+    restored.locationGeohash = undefined;
+    restored.explicitTagNames = [];
+    restored.explicitMentionPubkeys = [];
+    restored.recomposeOf = undefined;
+    restored.selectedRelays = undefined;
   }
+  return restored;
 }
 
 export function clearTaskComposerDraft(key: string) {
@@ -348,67 +391,30 @@ export function clearTaskComposerDraft(key: string) {
   }
 }
 
-export interface PersistableComposerSnapshot {
-  content: string;
-  postType: PostType;
-  dueDate?: Date;
-  dueTime: string;
-  dateType: TaskDateType;
-  explicitTagNames: string[];
-  explicitMentionPubkeys: string[];
-  /** Display-tier priority (1-5); will be converted to stored 0-100 scale. */
-  priority?: number;
-  locationGeohash?: string;
-  nip99?: Nip99Metadata;
-  /** Already-persistable attachments (uploaded with url). */
-  attachments: PublishedAttachment[];
-  recomposeOf?: ComposeRecomposeOf;
-  /** Shared title/summary/location preserved across listing↔event toggles. */
-  titledPost?: TitledPostDraftFields;
-  endDate?: Date;
-  endTime?: string;
-}
-
 /**
- * Single shared persistence entry point used by both desktop and mobile composers.
- * Writes a substantive draft, or clears storage when the snapshot has no
+ * Persist a substantive draft, or clear storage when the draft has no
  * user-entered substance (text/attachments/nip99).
  */
 export function persistTaskComposerDraft(
   key: string,
-  snapshot: PersistableComposerSnapshot,
-  storedPriorityFromDisplay: (priority?: number) => number | undefined
+  draft: ComposerDraft,
+  storedPriorityFromDisplay: (display?: number) => number | undefined
 ) {
   if (
     !hasComposerSubstance({
-      content: snapshot.content,
-      attachments: snapshot.attachments,
-      nip99: snapshot.nip99,
+      content: draft.content,
+      attachments: draft.attachments,
+      nip99: draft.nip99,
     })
   ) {
     clearTaskComposerDraft(key);
     return;
   }
-  writeTaskComposerDraft(key, {
-    content: snapshot.content,
-    postType: snapshot.postType,
-    savedAt: new Date().toISOString(),
-    taskDate: {
-      dueDate: snapshot.dueDate ? snapshot.dueDate.toISOString() : undefined,
-      dueTime: snapshot.dueTime,
-      dateType: snapshot.dateType,
-    },
-    explicitTagNames: snapshot.explicitTagNames,
-    explicitMentionPubkeys: snapshot.explicitMentionPubkeys,
-    priority: storedPriorityFromDisplay(snapshot.priority),
-    nip99: snapshot.nip99,
-    locationGeohash: snapshot.locationGeohash,
-    attachments: snapshot.attachments,
-    recomposeOf: snapshot.recomposeOf,
-    titledPost: snapshot.titledPost,
-    endDate: snapshot.endDate ? snapshot.endDate.toISOString() : undefined,
-    endTime: snapshot.endTime,
-  });
+  try {
+    localStorage.setItem(key, JSON.stringify(serializeDraft(draft, storedPriorityFromDisplay)));
+  } catch {
+    // Ignore persistence errors.
+  }
 }
 
 

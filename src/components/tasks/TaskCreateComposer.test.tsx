@@ -204,6 +204,7 @@ describe("TaskCreateComposer", () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "Persisted #backend",
       postType: "comment",
+      savedAt: new Date().toISOString(),
     }));
 
     renderCreateComposer();

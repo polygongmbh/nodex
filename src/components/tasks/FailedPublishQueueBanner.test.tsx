@@ -20,7 +20,7 @@ const baseDraft: FailedPublishDraft = {
   tags: ["tag"],
   relayIds: ["relay-a"],
   relayUrls: ["wss://relay.a"],
-  taskType: "task",
+  postType: "task",
   createdAt: new Date().toISOString(),
   mentionPubkeys: [],
   publishKind: 1,
