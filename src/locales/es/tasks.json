@@ -17,10 +17,7 @@
       "sold": "Anuncio retirado"
     },
     "event": {
-      "label": "Evento",
-      "fromTime": "desde {{time}}",
-      "untilTime": "hasta {{time}}",
-      "allDay": "Todo el día"
+      "label": "Evento"
     },
     "tags": "Etiquetas",
     "less": "menos",

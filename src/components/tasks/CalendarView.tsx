@@ -899,14 +899,16 @@ export function CalendarView({
                                 const startDayKey = format(startOfDay(task.start), "yyyy-MM-dd");
                                 const endDayKey = format(startOfDay(task.end), "yyyy-MM-dd");
                                 if (startDayKey !== endDayKey) {
-                                  let label: string;
-                                  if (dayKey === startDayKey) {
-                                    label = t("tasks.event.fromTime", { time: format(task.start, "HH:mm") });
-                                  } else if (dayKey === endDayKey) {
-                                    label = t("tasks.event.untilTime", { time: format(task.end, "HH:mm") });
-                                  } else {
-                                    label = t("tasks.event.allDay");
-                                  }
+                                  // Per-day bounds: anchor whichever side falls
+                                  // on today (the start time on the first day,
+                                  // the end time on the last day) and show the
+                                  // opposite end of the range as a date.
+                                  const startSide = dayKey === startDayKey
+                                    ? format(task.start, "HH:mm")
+                                    : format(task.start, "MMM d");
+                                  const endSide = dayKey === endDayKey
+                                    ? format(task.end, "HH:mm")
+                                    : format(task.end, "MMM d");
                                   return (
                                     <div className="flex items-center gap-2 text-xs mt-1">
                                       <span
@@ -915,7 +917,8 @@ export function CalendarView({
                                         title={task.author?.displayName || task.author?.name || "Author"}
                                       />
                                       <Clock className="w-3 h-3" />
-                                      <span>{label}</span>
+                                      <span>{startSide}</span>
+                                      <span>– {endSide}</span>
                                     </div>
                                   );
                                 }

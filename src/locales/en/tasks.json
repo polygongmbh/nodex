@@ -17,10 +17,7 @@
       "sold": "Listing unavailable"
     },
     "event": {
-      "label": "Event",
-      "fromTime": "from {{time}}",
-      "untilTime": "until {{time}}",
-      "allDay": "All day"
+      "label": "Event"
     },
     "tags": "Tags",
     "less": "less",

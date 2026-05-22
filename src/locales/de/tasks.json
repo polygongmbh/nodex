@@ -17,10 +17,7 @@
       "sold": "Inserat vergeben"
     },
     "event": {
-      "label": "Termin",
-      "fromTime": "ab {{time}}",
-      "untilTime": "bis {{time}}",
-      "allDay": "Ganztägig"
+      "label": "Termin"
     },
     "tags": "Tags",
     "less": "weniger",
