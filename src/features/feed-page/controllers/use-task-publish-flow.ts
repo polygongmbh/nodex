@@ -1,4 +1,13 @@
-import { getTaskPrimaryDate, isListingPost, isTaskPost, getTaskAssigneePubkeys, getTaskPriority } from "@/types";
+import {
+  getTaskPrimaryDate,
+  isCalendarEventPost,
+  isDateBasedEventPost,
+  isListingPost,
+  isTaskPost,
+  isTimeBasedEventPost,
+  getTaskAssigneePubkeys,
+  getTaskPriority,
+} from "@/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
@@ -71,6 +80,17 @@ import type {
 import type { Person } from "@/types/person";
 
 const PUBLISH_UNDO_DELAY_MS = 5000;
+
+function formatLocalHourMinute(date: Date): string {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function parseIsoDateLocalForRecompose(iso: string): Date | undefined {
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return undefined;
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
 
 interface PublishResult {
   success: boolean;
@@ -1071,10 +1091,45 @@ export function useTaskPublishFlow({
 
     const messageType: PostType = isListingKind(existingTask.kind)
       ? "listing"
-      : isCommentKind(existingTask.kind)
-        ? "comment"
-        : "task";
-    const taskTypeForComposer: TaskEntryType = messageType === "listing" ? "task" : (messageType as TaskEntryType);
+      : isCalendarEventPost(existingTask)
+        ? "event"
+        : isCommentKind(existingTask.kind)
+          ? "comment"
+          : "task";
+    const taskTypeForComposer: TaskEntryType =
+      messageType === "listing" || messageType === "event"
+        ? "task"
+        : (messageType as TaskEntryType);
+
+    let restoreStartDate: Date | undefined;
+    let restoreStartTime: string | undefined;
+    let restoreEndDate: Date | undefined;
+    let restoreEndTime: string | undefined;
+    if (isTimeBasedEventPost(existingTask)) {
+      restoreStartDate = existingTask.start;
+      restoreStartTime = formatLocalHourMinute(existingTask.start);
+      if (existingTask.end) {
+        restoreEndDate = existingTask.end;
+        restoreEndTime = formatLocalHourMinute(existingTask.end);
+      }
+    } else if (isDateBasedEventPost(existingTask)) {
+      restoreStartDate = parseIsoDateLocalForRecompose(existingTask.startDate);
+      if (existingTask.endDate) {
+        restoreEndDate = parseIsoDateLocalForRecompose(existingTask.endDate);
+      }
+    } else {
+      restoreStartDate = getTaskPrimaryDate(existingTask)?.date;
+      restoreStartTime = getTaskPrimaryDate(existingTask)?.time;
+    }
+
+    let restoreTitle: string | undefined;
+    let restoreSummary: string | undefined;
+    let restoreLocation: string | undefined;
+    if (isCalendarEventPost(existingTask) || isListingPost(existingTask)) {
+      restoreTitle = existingTask.title;
+      restoreSummary = existingTask.summary;
+      restoreLocation = existingTask.location;
+    }
 
     const inlineHashtags = new Set(extractHashtagsFromContent(existingTask.content).map((tag) => tag.toLowerCase()));
     const explicitTagNames = (existingTask.tags || [])
@@ -1093,9 +1148,14 @@ export function useTaskPublishFlow({
       content: existingTask.content,
       taskType: taskTypeForComposer,
       messageType,
-      dueDate: getTaskPrimaryDate(existingTask)?.date,
-      dueTime: getTaskPrimaryDate(existingTask)?.time,
+      dueDate: restoreStartDate,
+      dueTime: restoreStartTime,
       dateType: getTaskPrimaryDate(existingTask)?.type,
+      endDate: restoreEndDate,
+      endTime: restoreEndTime,
+      eventTitle: restoreTitle,
+      eventSummary: restoreSummary,
+      eventLocation: restoreLocation,
       explicitTagNames,
       explicitMentionPubkeys,
       selectedRelays: existingTask.relays,

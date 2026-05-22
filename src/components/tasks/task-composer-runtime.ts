@@ -18,6 +18,17 @@ import type {
 } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
 
+/**
+ * Title/summary/location fields shared by listing and event modes. Stored
+ * under one draft key so toggling between listing and event preserves them
+ * without per-mode duplicates.
+ */
+export interface TitledPostDraftFields {
+  title?: string;
+  summary?: string;
+  location?: string;
+}
+
 export interface TaskComposerDraftState {
   content?: string;
   taskType?: PostType;
@@ -35,6 +46,9 @@ export interface TaskComposerDraftState {
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   recomposeOf?: ComposeRecomposeOf;
+  titledPost?: TitledPostDraftFields;
+  endDate?: string;
+  endTime?: string;
 }
 
 export interface TaskComposerInitialState {
@@ -50,6 +64,9 @@ export interface TaskComposerInitialState {
   nip99: Nip99Metadata;
   locationGeohash?: string;
   recomposeOf?: ComposeRecomposeOf;
+  titledPost: TitledPostDraftFields;
+  endDate?: Date;
+  endTime: string;
 }
 
 export interface ResolvedTaskComposerEnvironment {
@@ -313,6 +330,9 @@ export function resolveTaskComposerInitialState({
     nip99: { ...(draftState?.nip99 || {}) },
     recomposeOf: isStaleDraft ? undefined : draftState?.recomposeOf,
     locationGeohash: isStaleDraft ? undefined : draftState?.locationGeohash,
+    titledPost: isStaleDraft ? {} : { ...(draftState?.titledPost || {}) },
+    endDate: isStaleDraft ? undefined : parseDraftDueDate(draftState?.endDate),
+    endTime: isStaleDraft ? "" : (draftState?.endTime || ""),
   };
 }
 
@@ -347,6 +367,10 @@ export interface PersistableComposerSnapshot {
   /** Already-persistable attachments (uploaded with url). */
   attachments: PublishedAttachment[];
   recomposeOf?: ComposeRecomposeOf;
+  /** Shared title/summary/location preserved across listing↔event toggles. */
+  titledPost?: TitledPostDraftFields;
+  endDate?: Date;
+  endTime?: string;
 }
 
 /**
@@ -386,6 +410,9 @@ export function persistTaskComposerDraft(
     locationGeohash: snapshot.locationGeohash,
     attachments: snapshot.attachments,
     recomposeOf: snapshot.recomposeOf,
+    titledPost: snapshot.titledPost,
+    endDate: snapshot.endDate ? snapshot.endDate.toISOString() : undefined,
+    endTime: snapshot.endTime,
   });
 }
 
@@ -410,7 +437,7 @@ export function getTaskComposerRestoreMessageType(
   allowFeedMessageTypes: boolean
 ): PostType {
   const requestedMessageType = request?.state.messageType;
-  if (allowFeedMessageTypes && requestedMessageType === "listing") {
+  if (allowFeedMessageTypes && (requestedMessageType === "listing" || requestedMessageType === "event")) {
     return requestedMessageType;
   }
   return allowComment && request?.state.taskType === "comment" ? "comment" : "task";

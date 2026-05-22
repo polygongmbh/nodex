@@ -254,12 +254,25 @@ export function TaskComposer({
       ...attachment,
     }));
   });
-  const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...initialComposerState.nip99 }));
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [endTime, setEndTime] = useState<string>("");
-  const [eventTitle, setEventTitle] = useState<string>("");
-  const [eventSummary, setEventSummary] = useState<string>("");
-  const [eventLocation, setEventLocation] = useState<string>("");
+  const [nip99, setNip99] = useState<Nip99Metadata>(() => {
+    const merged: Nip99Metadata = { ...initialComposerState.nip99 };
+    const shared = initialComposerState.titledPost;
+    if (shared.title && !merged.title) merged.title = shared.title;
+    if (shared.summary && !merged.summary) merged.summary = shared.summary;
+    if (shared.location && !merged.location) merged.location = shared.location;
+    return merged;
+  });
+  const [endDate, setEndDate] = useState<Date | undefined>(initialComposerState.endDate);
+  const [endTime, setEndTime] = useState<string>(initialComposerState.endTime);
+  const [eventTitle, setEventTitle] = useState<string>(
+    () => initialComposerState.titledPost.title ?? initialComposerState.nip99.title ?? ""
+  );
+  const [eventSummary, setEventSummary] = useState<string>(
+    () => initialComposerState.titledPost.summary ?? initialComposerState.nip99.summary ?? ""
+  );
+  const [eventLocation, setEventLocation] = useState<string>(
+    () => initialComposerState.titledPost.location ?? initialComposerState.nip99.location ?? ""
+  );
   const [locationGeohash, setLocationGeohash] = useState<string | undefined>(() => normalizeGeohash(initialComposerState.locationGeohash));
   const [showLocationControls, setShowLocationControls] = useState<boolean>(
     () => Boolean(normalizeGeohash(initialComposerState.locationGeohash))
@@ -267,7 +280,9 @@ export function TaskComposer({
   const [isNip99TitleTouched, setIsNip99TitleTouched] = useState(
     () => Boolean(initialComposerState.nip99.title?.trim())
   );
-  const [isEventTitleTouched, setIsEventTitleTouched] = useState(false);
+  const [isEventTitleTouched, setIsEventTitleTouched] = useState(
+    () => Boolean(initialComposerState.titledPost.title?.trim())
+  );
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialComposerState.content.trim().length > 0
   );
@@ -478,11 +493,27 @@ export function TaskComposer({
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
     setPriority(displayPriorityFromStored(restoreState.priority));
-    setNip99({ ...(restoreState.nip99 || {}) });
+    const restoredNip99: Nip99Metadata = { ...(restoreState.nip99 || {}) };
+    // Shared title/summary/location across listing & event modes: restore from
+    // explicit event fields, falling back to the nip99 fields when re-composing
+    // a listing. Listings keep nip99-specific extras (price, currency, etc.).
+    const restoredTitle = restoreState.eventTitle ?? restoredNip99.title ?? "";
+    const restoredSummary = restoreState.eventSummary ?? restoredNip99.summary ?? "";
+    const restoredLocation = restoreState.eventLocation ?? restoredNip99.location ?? "";
+    if (restoredTitle) restoredNip99.title = restoredTitle;
+    if (restoredSummary) restoredNip99.summary = restoredSummary;
+    if (restoredLocation) restoredNip99.location = restoredLocation;
+    setNip99(restoredNip99);
+    setEventTitle(restoredTitle);
+    setEventSummary(restoredSummary);
+    setEventLocation(restoredLocation);
+    setIsEventTitleTouched(Boolean(restoredTitle));
+    setEndDate(restoreState.endDate);
+    setEndTime(restoreState.endTime || "");
     const restoredGeohash = normalizeGeohash(restoreState.locationGeohash);
     setLocationGeohash(restoredGeohash);
     setShowLocationControls(Boolean(restoredGeohash));
-    setIsNip99TitleTouched(Boolean(restoreState.nip99?.title?.trim()));
+    setIsNip99TitleTouched(Boolean(restoredNip99.title?.trim()));
     setAttachments(
       (restoreState.attachments || []).map((attachment, index) => ({
         id: `restore-${composeRestoreRequest.id}-${index}`,
@@ -522,6 +553,15 @@ export function TaskComposer({
         alt: attachment.alt,
         name: attachment.name || attachment.fileName,
       })) as PublishedAttachment[];
+    // Unified title/summary/location pulled from whichever mode is active:
+    // events surface them via eventTitle/Summary/Location, listings via nip99.
+    // Either way they round-trip through the shared `titledPost` draft slot
+    // so switching modes (or reloading) preserves the user's input.
+    const titledPost = {
+      title: (taskType === "event" ? eventTitle : nip99.title) || undefined,
+      summary: (taskType === "event" ? eventSummary : nip99.summary) || undefined,
+      location: (taskType === "event" ? eventLocation : nip99.location) || undefined,
+    };
     persistTaskComposerDraft(
       draftStorageKey,
       {
@@ -537,10 +577,13 @@ export function TaskComposer({
         locationGeohash,
         attachments: persistableAttachments,
         recomposeOf: activeRecomposeOf,
+        titledPost,
+        endDate,
+        endTime: endTime || undefined,
       },
       storedPriorityFromDisplay
     );
-  }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey, eventTitle, eventSummary, eventLocation, endDate, endTime]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -2086,9 +2129,17 @@ export function TaskComposer({
             onTitleChange={(value) => {
               setIsNip99TitleTouched(true);
               updateNip99({ title: value });
+              setEventTitle(value);
+              if (value.trim()) setIsEventTitleTouched(true);
             }}
-            onLocationChange={(value) => updateNip99({ location: value })}
-            onSummaryChange={(value) => updateNip99({ summary: value })}
+            onLocationChange={(value) => {
+              updateNip99({ location: value });
+              setEventLocation(value);
+            }}
+            onSummaryChange={(value) => {
+              updateNip99({ summary: value });
+              setEventSummary(value);
+            }}
             titleLabel={t("composer.nip99.title")}
             locationLabel={t("composer.nip99.location")}
             summaryLabel={t("composer.nip99.summary")}
@@ -2149,9 +2200,17 @@ export function TaskComposer({
               onTitleChange={(value) => {
                 setIsEventTitleTouched(true);
                 setEventTitle(value);
+                updateNip99({ title: value });
+                if (value.trim()) setIsNip99TitleTouched(true);
               }}
-              onLocationChange={setEventLocation}
-              onSummaryChange={setEventSummary}
+              onLocationChange={(value) => {
+                setEventLocation(value);
+                updateNip99({ location: value });
+              }}
+              onSummaryChange={(value) => {
+                setEventSummary(value);
+                updateNip99({ summary: value });
+              }}
               titleLabel={t("composer.event.title")}
               locationLabel={t("composer.event.location")}
               summaryLabel={t("composer.event.summary")}
