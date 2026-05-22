@@ -1,8 +1,8 @@
 import type { Relay, Post, TaskEntryType } from "@/types";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
-export const RELAY_SELECTION_ERROR_KEY = "toasts.errors.selectRelayOrParent";
-export const RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY = "toasts.errors.selectedSpacesNotWritable";
+export const RELAY_SELECTION_ERROR_KEY = "composer:toasts.errors.selectRelayOrParent";
+export const RELAY_SELECTION_NOT_WRITABLE_ERROR_KEY = "composer:toasts.errors.selectedSpacesNotWritable";
 
 function dedupeRelayIds(relayIds: string[]): string[] {
   return Array.from(new Set(relayIds.filter(Boolean)));
