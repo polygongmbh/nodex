@@ -13,6 +13,10 @@
         "listing": {
           "withContext": "Erstelle ein Inserat unter {{title}}",
           "withoutContext": "Erstelle ein Inserat"
+        },
+        "event": {
+          "withContext": "Erstelle einen Termin unter {{title}}",
+          "withoutContext": "Erstelle einen Termin"
         }
       },
       "parts": {

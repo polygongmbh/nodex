@@ -13,6 +13,10 @@
         "listing": {
           "withContext": "Publica un anuncio bajo {{title}}",
           "withoutContext": "Publica un anuncio"
+        },
+        "event": {
+          "withContext": "Crea un evento bajo {{title}}",
+          "withoutContext": "Crea un evento"
         }
       },
       "parts": {

@@ -13,6 +13,10 @@
         "listing": {
           "withContext": "Post a listing under {{title}}",
           "withoutContext": "Post a listing"
+        },
+        "event": {
+          "withContext": "Create an event under {{title}}",
+          "withoutContext": "Create an event"
         }
       },
       "parts": {
