@@ -612,7 +612,7 @@ export function UnifiedBottomBar({
         content: sharedText,
         tags: submitChannels,
         relays: effectiveWritableRelayIds,
-        taskType: submitType,
+        postType: submitType,
         dueDate,
         dueTime: dueTime || undefined,
         dateType,

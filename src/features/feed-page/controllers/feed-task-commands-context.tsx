@@ -17,7 +17,7 @@ export interface FeedTaskCommands {
     content: string,
     tags: string[],
     relays: string[],
-    taskType: PostType,
+    postType: PostType,
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,

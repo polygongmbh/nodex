@@ -46,7 +46,7 @@ import {
 } from "@/domain/content/task-priority";
 import {
   clearTaskComposerDraft,
-  getTaskComposerRestoreMessageType,
+  getTaskComposerRestorePostType,
   persistTaskComposerDraft,
   resolveTaskComposerInitialState,
   resolveTaskComposerMention,
@@ -93,7 +93,6 @@ interface TaskComposerProps {
   inheritedMentionPubkeys?: string[];
 }
 
-type ComposerMessageType = PostType;
 
 export interface TaskComposerEventMetadata {
   title?: string;
@@ -106,7 +105,7 @@ export interface TaskComposerEventMetadata {
 export interface TaskComposerFormData {
   content: string;
   tags: string[];
-  taskType: ComposerMessageType;
+  postType: PostType;
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
@@ -226,7 +225,7 @@ export function TaskComposer({
   const shouldFocusOnMount = focusOnMount;
 
   const [content, setContent] = useState(initialComposerState.content);
-  const [taskType, setTaskType] = useState<ComposerMessageType>(initialComposerState.taskType);
+  const [postType, setPostType] = useState<PostType>(initialComposerState.postType);
   const [dueDate, setDueDate] = useState<Date | undefined>(initialComposerState.dueDate);
   const [dueTime, setDueTime] = useState(initialComposerState.dueTime);
   const [dateType, setDateType] = useState<TaskDateType>(initialComposerState.dateType);
@@ -470,10 +469,10 @@ export function TaskComposer({
     // Only override "comment" — the calendar's Add Event button passes
     // allowComment=false but explicitly chose "event", and clobbering that
     // back to "task" silently produced tasks instead of events.
-    if (!allowComment && taskType === "comment") {
-      setTaskType("task");
+    if (!allowComment && postType === "comment") {
+      setPostType("task");
     }
-  }, [allowComment, taskType]);
+  }, [allowComment, postType]);
 
   useEffect(() => {
     if (!composeRestoreRequest) return;
@@ -482,8 +481,8 @@ export function TaskComposer({
     const restoreState = composeRestoreRequest.state;
     setActiveRecomposeOf(restoreState.recomposeOf);
     setContent(restoreState.content || "");
-    setTaskType(
-      getTaskComposerRestoreMessageType(
+    setPostType(
+      getTaskComposerRestorePostType(
         composeRestoreRequest,
         allowComment,
         allowFeedMessageTypes
@@ -558,15 +557,15 @@ export function TaskComposer({
     // Either way they round-trip through the shared `titledPost` draft slot
     // so switching modes (or reloading) preserves the user's input.
     const titledPost = {
-      title: (taskType === "event" ? eventTitle : nip99.title) || undefined,
-      summary: (taskType === "event" ? eventSummary : nip99.summary) || undefined,
-      location: (taskType === "event" ? eventLocation : nip99.location) || undefined,
+      title: (postType === "event" ? eventTitle : nip99.title) || undefined,
+      summary: (postType === "event" ? eventSummary : nip99.summary) || undefined,
+      location: (postType === "event" ? eventLocation : nip99.location) || undefined,
     };
     persistTaskComposerDraft(
       draftStorageKey,
       {
         content,
-        taskType,
+        postType,
         dueDate,
         dueTime,
         dateType,
@@ -583,7 +582,7 @@ export function TaskComposer({
       },
       storedPriorityFromDisplay
     );
-  }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey, eventTitle, eventSummary, eventLocation, endDate, endTime]);
+  }, [content, postType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey, eventTitle, eventSummary, eventLocation, endDate, endTime]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -910,7 +909,7 @@ export function TaskComposer({
     prevInheritedMentionPubkeysRef.current = [...inheritedMentionPubkeys];
   }, [inheritedMentionPubkeys, filterMentionPubkeys]);
 
-  const resolveSubmitType = (value: unknown): ComposerMessageType => {
+  const resolveSubmitType = (value: unknown): PostType => {
     if (
       value === "task" ||
       value === "comment" ||
@@ -918,7 +917,7 @@ export function TaskComposer({
     ) {
       return value;
     }
-    return taskType;
+    return postType;
   };
 
   const composerPlaceholder = useMemo(() => {
@@ -926,7 +925,7 @@ export function TaskComposer({
       .map((pubkey) => mentionOptionByPubkey.get(pubkey.trim().toLowerCase())?.mentionDisplay ?? "")
       .filter(Boolean);
     return buildComposerPlaceholder({
-      postType: taskType,
+      postType,
       contextTaskTitle,
       channelNames: filterTagNames ?? [],
       mentionLabels,
@@ -941,7 +940,7 @@ export function TaskComposer({
     i18n.resolvedLanguage,
     mentionOptionByPubkey,
     t,
-    taskType,
+    postType,
   ]);
 
   const updateNip99 = (patch: Partial<Nip99Metadata>) => {
@@ -967,16 +966,16 @@ export function TaskComposer({
   };
 
   useEffect(() => {
-    if (taskType !== "listing" && taskType !== "event") return;
+    if (postType !== "listing" && postType !== "event") return;
     const nextTitle = deriveTitledPostTitleFromContent(content);
-    if (taskType === "listing" && !isNip99TitleTouched) {
+    if (postType === "listing" && !isNip99TitleTouched) {
       setNip99((previous) =>
         previous.title === nextTitle ? previous : { ...previous, title: nextTitle }
       );
-    } else if (taskType === "event" && !isEventTitleTouched) {
+    } else if (postType === "event" && !isEventTitleTouched) {
       setEventTitle((previous) => (previous === (nextTitle ?? "") ? previous : nextTitle ?? ""));
     }
-  }, [content, isEventTitleTouched, isNip99TitleTouched, taskType]);
+  }, [content, isEventTitleTouched, isNip99TitleTouched, postType]);
 
   const resetComposerState = () => {
     setContent("");
@@ -1027,12 +1026,12 @@ export function TaskComposer({
     }
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
-    const effectiveTaskType = resolveSubmitType(submitType);
-    const carriesStartDate = effectiveTaskType === "task" || effectiveTaskType === "event";
+    const effectivePostType = resolveSubmitType(submitType);
+    const carriesStartDate = effectivePostType === "task" || effectivePostType === "event";
     const submissionDueDate = carriesStartDate ? dueDate : undefined;
     const submissionDueTime = carriesStartDate ? (dueTime || undefined) : undefined;
-    const submissionDateType = effectiveTaskType === "task" ? dateType : undefined;
-    if (effectiveTaskType === "event") {
+    const submissionDateType = effectivePostType === "task" ? dateType : undefined;
+    if (effectivePostType === "event") {
       if (!dueDate) {
         toast.error(t("composer.event.missingStart"));
         return;
@@ -1060,7 +1059,7 @@ export function TaskComposer({
       return;
     }
     const listingMetadata =
-      effectiveTaskType === "listing"
+      effectivePostType === "listing"
         ? {
             identifier: nip99.identifier?.trim() || undefined,
             title: nip99.title?.trim() || deriveTitledPostTitleFromContent(content),
@@ -1091,7 +1090,7 @@ export function TaskComposer({
     const submittedRecomposeOf = activeRecomposeOf;
     setActiveRecomposeOf(undefined);
     const eventMetadata: TaskComposerEventMetadata | undefined =
-      effectiveTaskType === "event"
+      effectivePostType === "event"
         ? {
             title: eventTitle.trim() || undefined,
             summary: eventSummary.trim() || undefined,
@@ -1103,7 +1102,7 @@ export function TaskComposer({
     onSubmit({
       content,
       tags: submitTags,
-      taskType: effectiveTaskType,
+      postType: effectivePostType,
       dueDate: submissionDueDate,
       dueTime: submissionDueTime,
       dateType: submissionDateType,
@@ -1250,8 +1249,8 @@ export function TaskComposer({
     hasAtLeastOneCoreTag,
     coreChannels: Array.from(coreChannels),
     canInheritParentTags: allowEmptyTags,
-    hasInvalidRootTaskRelaySelection: taskType === "task" && hasInvalidRootTaskRelaySelection,
-    hasInvalidRootCommentRelaySelection: taskType !== "task" && hasInvalidRootCommentRelaySelection,
+    hasInvalidRootTaskRelaySelection: postType === "task" && hasInvalidRootTaskRelaySelection,
+    hasInvalidRootCommentRelaySelection: postType !== "task" && hasInvalidRootCommentRelaySelection,
     hasNoWritableSelectedRelays,
     hasPendingAttachmentUploads,
     hasFailedAttachmentUploads,
@@ -1401,8 +1400,8 @@ export function TaskComposer({
 
     if (isAlternateSubmitKey(e) && !showHashtagSuggestions && !showMentionSuggestions) {
       e.preventDefault();
-      const alternateType: ComposerMessageType = allowComment
-        ? taskType === "task"
+      const alternateType: PostType = allowComment
+        ? postType === "task"
           ? "comment"
           : "task"
         : "task";
@@ -2069,7 +2068,7 @@ export function TaskComposer({
       )}
 
       {/* Due date for tasks */}
-      {showExpandedControls && taskType === "task" && (
+      {showExpandedControls && postType === "task" && (
         <div className={cn("order-6 flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <div className="inline-flex min-w-[5.5rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Flag className="h-4 w-4 text-muted-foreground" />
@@ -2120,7 +2119,7 @@ export function TaskComposer({
         </div>
       )}
 
-      {showExpandedControls && taskType === "listing" && (
+      {showExpandedControls && postType === "listing" && (
         <div className={cn("order-6 flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <TitledPostFields
             title={nip99.title || ""}
@@ -2190,7 +2189,7 @@ export function TaskComposer({
         </div>
       )}
 
-      {showExpandedControls && taskType === "event" && (
+      {showExpandedControls && postType === "event" && (
         <div className={cn("order-6 flex flex-col gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <div className="flex flex-wrap items-end gap-2">
             <TitledPostFields
@@ -2337,8 +2336,8 @@ export function TaskComposer({
               >
                 <select
                   aria-label={t("composer.labels.kind")}
-                  value={taskType}
-                  onChange={(event) => setTaskType(event.target.value as ComposerMessageType)}
+                  value={postType}
+                  onChange={(event) => setPostType(event.target.value as PostType)}
                   tabIndex={-1}
                   className="sr-only"
                 >
@@ -2349,11 +2348,11 @@ export function TaskComposer({
                 </select>
                 <button
                   type="button"
-                  onClick={() => setTaskType("task")}
+                  onClick={() => setPostType("task")}
                   aria-label={t("composer.labels.task")}
                   className={cn(
                     "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                    taskType === "task"
+                    postType === "task"
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
@@ -2363,11 +2362,11 @@ export function TaskComposer({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTaskType("comment")}
+                  onClick={() => setPostType("comment")}
                   aria-label={t("composer.labels.comment")}
                   className={cn(
                     "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                    taskType === "comment"
+                    postType === "comment"
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
@@ -2378,11 +2377,11 @@ export function TaskComposer({
                 {allowFeedMessageTypes && (
                   <button
                     type="button"
-                    onClick={() => setTaskType("listing")}
+                    onClick={() => setPostType("listing")}
                     aria-label={t("composer.labels.listing")}
                     className={cn(
                       "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                      taskType === "listing"
+                      postType === "listing"
                         ? "bg-background text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
@@ -2394,11 +2393,11 @@ export function TaskComposer({
                 {allowFeedMessageTypes && (
                   <button
                     type="button"
-                    onClick={() => setTaskType("event")}
+                    onClick={() => setPostType("event")}
                     aria-label={t("composer.labels.event")}
                     className={cn(
                       "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                      taskType === "event"
+                      postType === "event"
                         ? "bg-background text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
@@ -2411,19 +2410,19 @@ export function TaskComposer({
             )}
             {(() => {
               const submitActionLabel =
-                taskType === "task"
+                postType === "task"
                   ? t("composer.actions.createTask")
-                  : taskType === "listing"
+                  : postType === "listing"
                     ? t("composer.actions.postListing")
-                    : taskType === "event"
+                    : postType === "event"
                       ? t("composer.actions.createEvent")
                       : t("composer.actions.addComment");
               const submitActionIcon =
-                taskType === "task"
+                postType === "task"
                   ? <CheckSquare className="w-4 h-4" />
-                  : taskType === "listing"
+                  : postType === "listing"
                     ? <Package className="w-4 h-4" />
-                    : taskType === "event"
+                    : postType === "event"
                       ? <Calendar className="w-4 h-4" />
                       : <MessageSquare className="w-4 h-4" />;
               const submitButtonTitle = submitBlock?.reason || submitActionLabel;

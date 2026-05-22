@@ -169,7 +169,7 @@ function FeedInteractionBusFromContexts({
           intent.content,
           intent.tags,
           intent.relays,
-          intent.taskType,
+          intent.postType,
           intent.dueDate,
           intent.dueTime,
           intent.dateType,

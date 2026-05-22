@@ -30,10 +30,9 @@ export interface TitledPostDraftFields {
 }
 
 export interface TaskComposerDraftState {
-  content?: string;
-  taskType?: PostType;
-  messageType?: PostType;
-  savedAt?: string;
+  content: string;
+  postType: PostType;
+  savedAt: string;
   taskDate?: {
     dueDate?: string;
     dueTime?: string;
@@ -53,7 +52,7 @@ export interface TaskComposerDraftState {
 
 export interface TaskComposerInitialState {
   content: string;
-  taskType: PostType;
+  postType: PostType;
   dueDate?: Date;
   dueTime: string;
   dateType: TaskDateType;
@@ -255,7 +254,7 @@ function isTaskComposerDraftStale(draftState: TaskComposerDraftState | null): bo
   return Date.now() - savedAtMs > TASK_COMPOSER_STALE_DRAFT_MAX_AGE_MS;
 }
 
-function resolveInitialTaskType(
+function resolveInitialPostType(
   draftState: TaskComposerDraftState | null,
   allowFeedMessageTypes: boolean,
   defaultPostType?: PostType
@@ -267,14 +266,11 @@ function resolveInitialTaskType(
     if (defaultPostType === "task" || defaultPostType === "comment") return defaultPostType;
     if (allowFeedMessageTypes) return defaultPostType;
   }
-  const draftMessageType = draftState?.messageType;
-  if (draftMessageType === "task" || draftMessageType === "comment") {
-    return draftMessageType;
+  const draftPostType = draftState?.postType;
+  if (draftPostType === "task" || draftPostType === "comment") return draftPostType;
+  if (allowFeedMessageTypes && (draftPostType === "listing" || draftPostType === "event")) {
+    return draftPostType;
   }
-  if (allowFeedMessageTypes && (draftMessageType === "listing" || draftMessageType === "event")) {
-    return draftMessageType;
-  }
-  if (draftState?.taskType === "comment") return "comment";
   return "task";
 }
 
@@ -309,7 +305,7 @@ export function resolveTaskComposerInitialState({
 
   return {
     content: draftState?.content ?? defaultContent,
-    taskType: resolveInitialTaskType(draftState, allowFeedMessageTypes, defaultPostType),
+    postType: resolveInitialPostType(draftState, allowFeedMessageTypes, defaultPostType),
     dueDate: isStaleDraft ? defaultDueDate : (parseDraftDueDate(draftState?.taskDate?.dueDate) ?? defaultDueDate),
     dueTime: isStaleDraft ? "" : (draftState?.taskDate?.dueTime || ""),
     dateType: isStaleDraft ? "due" : (draftState?.taskDate?.dateType || "due"),
@@ -354,7 +350,7 @@ export function clearTaskComposerDraft(key: string) {
 
 export interface PersistableComposerSnapshot {
   content: string;
-  taskType?: PostType;
+  postType: PostType;
   dueDate?: Date;
   dueTime: string;
   dateType: TaskDateType;
@@ -395,8 +391,7 @@ export function persistTaskComposerDraft(
   }
   writeTaskComposerDraft(key, {
     content: snapshot.content,
-    taskType: snapshot.taskType,
-    messageType: snapshot.taskType,
+    postType: snapshot.postType,
     savedAt: new Date().toISOString(),
     taskDate: {
       dueDate: snapshot.dueDate ? snapshot.dueDate.toISOString() : undefined,
@@ -431,14 +426,14 @@ export function isWritableRelay(relay: { connectionStatus?: string } | undefined
   return relay?.connectionStatus === undefined || relay.connectionStatus === "connected";
 }
 
-export function getTaskComposerRestoreMessageType(
+export function getTaskComposerRestorePostType(
   request: ComposeRestoreRequest | null,
   allowComment: boolean,
   allowFeedMessageTypes: boolean
 ): PostType {
-  const requestedMessageType = request?.state.messageType;
-  if (allowFeedMessageTypes && (requestedMessageType === "listing" || requestedMessageType === "event")) {
-    return requestedMessageType;
+  const requested = request?.state.postType;
+  if (allowFeedMessageTypes && (requested === "listing" || requested === "event")) {
+    return requested;
   }
-  return allowComment && request?.state.taskType === "comment" ? "comment" : "task";
+  return allowComment && requested === "comment" ? "comment" : "task";
 }

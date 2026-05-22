@@ -203,7 +203,7 @@ describe("TaskCreateComposer", () => {
   it("restores the shared draft by default", () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "Persisted #backend",
-      messageType: "comment",
+      postType: "comment",
     }));
 
     renderCreateComposer();
@@ -260,7 +260,7 @@ describe("TaskCreateComposer", () => {
         type: "task.create",
         content: "Ship #backend",
         tags: ["backend"],
-        taskType: "task",
+        postType: "task",
         relays: ["relay-a"],
       }));
     });
@@ -279,7 +279,7 @@ describe("TaskCreateComposer", () => {
         type: "task.create",
         content: "Ship #backend",
         tags: ["backend"],
-        taskType: "task",
+        postType: "task",
         relays: ["relay-a"],
       }));
     });
@@ -394,7 +394,7 @@ describe("TaskCreateComposer", () => {
         type: "task.create",
         content: "Looks good #backend",
         tags: ["backend"],
-        taskType: "comment",
+        postType: "comment",
         relays: ["relay-a"],
       }));
     });
@@ -423,7 +423,7 @@ describe("TaskCreateComposer", () => {
       expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
         type: "task.create",
         content: "Great progress",
-        taskType: "comment",
+        postType: "comment",
         focusedTaskId: "parent-task",
       }));
     });

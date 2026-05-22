@@ -298,7 +298,7 @@ export function useTaskPublishFlow({
     content: string,
     extractedTags: string[],
     relayIds: string[],
-    taskType: PostType,
+    postType: PostType,
     dueDate?: Date,
     dueTime?: string,
     dateType: TaskDateType = "due",
@@ -319,13 +319,13 @@ export function useTaskPublishFlow({
       endTime?: string;
     },
   ): Promise<TaskCreateResult> => {
-    const normalizedMessageType = normalizeComposerMessageType(taskType);
-    if (normalizedMessageType !== taskType) {
-      console.warn("Unexpected taskType payload; defaulting to task", { taskType });
+    const normalizedPostType = normalizeComposerMessageType(postType);
+    if (normalizedPostType !== postType) {
+      console.warn("Unexpected postType payload; defaulting to task", { postType });
     }
 
-    const normalizedTaskType: TaskEntryType = normalizedMessageType === "task" ? "task" : "comment";
-    const isEventSubmission = normalizedMessageType === "event";
+    const normalizedTaskType: TaskEntryType = normalizedPostType === "task" ? "task" : "comment";
+    const isEventSubmission = normalizedPostType === "event";
     const eventStartDateTime: Date | undefined = (() => {
       if (!isEventSubmission || !dueDate) return undefined;
       if (!dueTime) return dueDate;
@@ -483,9 +483,9 @@ export function useTaskPublishFlow({
       : undefined;
     const publishKind: NostrEventKind =
       eventBuilt?.kind ??
-      (normalizedMessageType === "task"
+      (normalizedPostType === "task"
         ? NostrEventKind.Task
-        : normalizedMessageType === "listing"
+        : normalizedPostType === "listing"
           ? NostrEventKind.ClassifiedListing
           : NostrEventKind.TextNote);
     const validParentId = submissionParentId && /^[a-f0-9]{64}$/i.test(submissionParentId) ? submissionParentId : undefined;
@@ -509,7 +509,7 @@ export function useTaskPublishFlow({
                   normalizedAttachments,
                   normalizedLocationGeohash
                 )
-              : normalizedMessageType === "listing"
+              : normalizedPostType === "listing"
                 ? buildNip99PublishTags({
                     metadata: nip99,
                     hashtags: resolvedSubmissionTags,
@@ -644,7 +644,7 @@ export function useTaskPublishFlow({
         };
         return taskPost;
       }
-      if (normalizedMessageType === "listing") {
+      if (normalizedPostType === "listing") {
         const listingPost: ListingPost = {
           ...baseFields,
           id,
@@ -664,8 +664,7 @@ export function useTaskPublishFlow({
     const parsedHashtagsFromContent = new Set(extractHashtagsFromContent(content));
     const composeRestoreState: ComposeRestoreState = {
       content,
-      taskType: normalizedTaskType,
-      messageType: normalizedMessageType,
+      postType: normalizedPostType,
       dueDate: submissionDueDate,
       dueTime: submissionDueTime,
       dateType: submissionDateType,
@@ -1089,17 +1088,13 @@ export function useTaskPublishFlow({
       return;
     }
 
-    const messageType: PostType = isListingKind(existingTask.kind)
+    const postType: PostType = isListingKind(existingTask.kind)
       ? "listing"
       : isCalendarEventPost(existingTask)
         ? "event"
         : isCommentKind(existingTask.kind)
           ? "comment"
           : "task";
-    const taskTypeForComposer: TaskEntryType =
-      messageType === "listing" || messageType === "event"
-        ? "task"
-        : (messageType as TaskEntryType);
 
     let restoreStartDate: Date | undefined;
     let restoreStartTime: string | undefined;
@@ -1146,8 +1141,7 @@ export function useTaskPublishFlow({
 
     const restoreState: ComposeRestoreState = {
       content: existingTask.content,
-      taskType: taskTypeForComposer,
-      messageType,
+      postType,
       dueDate: restoreStartDate,
       dueTime: restoreStartTime,
       dateType: getTaskPrimaryDate(existingTask)?.type,

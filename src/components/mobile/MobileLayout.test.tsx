@@ -127,7 +127,7 @@ vi.mock("./UnifiedBottomBar", () => ({
                 content: value,
                 tags: ["general"],
                 relays: ["demo"],
-                taskType: "task",
+                postType: "task",
               });
             }}
           >
@@ -260,7 +260,7 @@ describe("MobileLayout auth wiring", () => {
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
     });
   });
 

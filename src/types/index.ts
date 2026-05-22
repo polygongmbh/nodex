@@ -140,8 +140,7 @@ export interface ComposeRecomposeOf {
 
 export interface ComposeRestoreState {
   content: string;
-  taskType: PostType;
-  messageType?: PostType;
+  postType: PostType;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   dueDate?: Date;

@@ -138,7 +138,7 @@ describe("TaskComposer", () => {
     expect(data).toMatchObject({
       content: "Ship #backend now",
       tags: ["backend"],
-      taskType: "task",
+      postType: "task",
       dateType: "due",
       explicitMentionPubkeys: [],
       mentionIdentifiers: [],
@@ -181,7 +181,7 @@ describe("TaskComposer", () => {
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
       content: "Need a designer #design",
       tags: ["design"],
-      taskType: "listing",
+      postType: "listing",
       nip99: expect.objectContaining({
         title: "Need designer for mobile UI",
         status: "active",
@@ -192,7 +192,7 @@ describe("TaskComposer", () => {
   it("restores draft content and kind from the shared draft key", () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "persisted hello #note",
-      messageType: "comment",
+      postType: "comment",
     }));
 
     renderComposer();
@@ -222,7 +222,7 @@ describe("TaskComposer", () => {
     const onSubmit = vi.fn();
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "ship restored task",
-      messageType: "task",
+      postType: "task",
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
@@ -282,7 +282,7 @@ describe("TaskComposer", () => {
   it("restores the recompose banner from the persisted draft on remount", () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "second pass at the post",
-      messageType: "task",
+      postType: "task",
       savedAt: new Date().toISOString(),
       recomposeOf: {
         eventId: "evt-1",
@@ -304,8 +304,7 @@ describe("TaskComposer", () => {
         id: 1,
         state: {
           content: "second pass at the post",
-          taskType: "task",
-          messageType: "task",
+          postType: "task",
           recomposeOf: {
             eventId: "evt-1",
             originalKind: 1,
@@ -335,7 +334,7 @@ describe("TaskComposer", () => {
     // fresh composer elsewhere.
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "",
-      messageType: "task",
+      postType: "task",
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
@@ -360,7 +359,7 @@ describe("TaskComposer", () => {
   it("clears the persisted draft when the composer is emptied", async () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "draft text",
-      messageType: "task",
+      postType: "task",
       savedAt: new Date().toISOString(),
     }));
 
@@ -380,7 +379,7 @@ describe("TaskComposer", () => {
     const onSubmit = vi.fn();
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "keep this text",
-      messageType: "task",
+      postType: "task",
       savedAt: "2026-04-01T10:00:00.000Z",
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
@@ -424,7 +423,7 @@ describe("TaskComposer", () => {
   it("restores listing metadata and attachments from the shared draft key", () => {
     localStorage.setItem(COMPOSE_DRAFT_STORAGE_KEY, JSON.stringify({
       content: "Need a designer #design",
-      messageType: "listing",
+      postType: "listing",
       savedAt: new Date().toISOString(),
       nip99: {
         title: "Need designer for mobile UI",

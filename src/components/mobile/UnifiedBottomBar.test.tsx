@@ -492,7 +492,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general",
       tags: ["general"],
       relays: ["relay-one"],
-      taskType: "task",
+      postType: "task",
     });
   });
 
@@ -522,7 +522,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general",
       tags: ["general"],
       relays: ["relay-one"],
-      taskType: "task",
+      postType: "task",
     });
   });
 
@@ -551,7 +551,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Follow-up details for parent task",
       tags: [],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
       focusedTaskId: "parent-task",
     });
   });
@@ -602,7 +602,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general now",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "comment",
+      postType: "comment",
     });
   });
 
@@ -627,7 +627,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
     });
 
     fireEvent.change(composeField, { target: { value: "Ship again #general" } });
@@ -637,7 +637,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship again #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
     });
   });
 
@@ -663,7 +663,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Reply #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "comment",
+      postType: "comment",
     });
   });
 
@@ -693,7 +693,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Need help #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "listing",
+      postType: "listing",
       nip99: {
         title: "Need help",
         status: "active",
@@ -1072,7 +1072,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general ",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
       explicitMentionPubkeys: ["e".repeat(64)],
     });
   });
@@ -1110,7 +1110,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general ",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
       explicitMentionPubkeys: ["e".repeat(64)],
     });
   });
@@ -1170,7 +1170,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship ",
       tags: ["brandnew"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
     });
   });
 
@@ -1207,7 +1207,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship ",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
     });
   });
 
@@ -1274,7 +1274,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
       locationGeohash: expectedGeohash,
     });
   });
@@ -1319,7 +1319,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
-      taskType: "task",
+      postType: "task",
       locationGeohash: undefined,
     });
   });
@@ -1352,7 +1352,7 @@ describe("UnifiedBottomBar auth gating", () => {
       type: "task.create",
       content: "Looks good #general",
       tags: ["general"],
-      taskType: "comment",
+      postType: "comment",
       focusedTaskId: "parent-task",
     });
   });
@@ -1452,7 +1452,7 @@ describe("UnifiedBottomBar auth gating", () => {
           id: 1,
           state: {
             content: "Restored #general",
-            taskType: "task",
+            postType: "task",
             explicitTagNames: [],
             explicitMentionPubkeys: [],
             attachments: [],
@@ -1481,7 +1481,7 @@ describe("UnifiedBottomBar auth gating", () => {
           id: 2,
           state: {
             content: "Restored #general",
-            taskType: "task",
+            postType: "task",
             dueDate,
             dueTime: "12:11",
             explicitTagNames: [],

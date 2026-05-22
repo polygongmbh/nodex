@@ -54,7 +54,7 @@ export function useComposerSubmitHandler({
             content: data.content,
             tags: data.tags,
             relays: relayIds,
-            taskType: data.taskType,
+            postType: data.postType,
             dueDate: data.dueDate,
             dueTime: data.dueTime,
             dateType: data.dateType,
