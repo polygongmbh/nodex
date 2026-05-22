@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect, type KeyboardEvent } from "react";
 import { hasTextSelection } from "@/lib/click-intent";
-import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
 import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefinition } from "@/domain/task-states/task-state-config";
 import {
@@ -10,7 +10,11 @@ import {
   type TaskState,
   getTaskPrimaryDate,
   isTaskPost,
+  isCalendarEventPost,
+  isDateBasedEventPost,
+  isTimeBasedEventPost,
 } from "@/types";
+import { parseIsoDateLocal } from "@/infrastructure/nostr/nip52-task-calendar-events";
 import type { Person } from "@/types/person";
 import {
   format,
@@ -237,7 +241,7 @@ export function CalendarView({
     const nextKey = selectedDate ? format(startOfDay(selectedDate), "yyyy-MM-dd") : null;
     if (previousSelectedDayKeyRef.current !== nextKey) {
       previousSelectedDayKeyRef.current = nextKey;
-      setIsComposingEvent(false);
+      setComposerMode(null);
     }
   }, [selectedDate]);
 
@@ -636,6 +640,7 @@ export function CalendarView({
                     </button>
                   </div>
                   <TaskCreateComposer
+                    key={composerMode}
                     onCancel={closeComposer}
                     onSubmit={handleComposerSubmit}
                     compact
@@ -719,6 +724,15 @@ export function CalendarView({
                           </div>
                         )}
                         <div className="flex items-start gap-2">
+                          {isCalendarEventPost(task) ? (
+                            <span
+                              title={t("tasks.event.label")}
+                              aria-label={t("tasks.event.label")}
+                              className="flex-shrink-0 inline-flex items-center justify-center p-0.5"
+                            >
+                              <CalendarIcon className="w-5 h-5 text-muted-foreground" />
+                            </span>
+                          ) : (
                           <DropdownMenu
                             open={Boolean(statusMenuOpenByTaskId[task.id])}
                             onOpenChange={(open) => {
@@ -831,6 +845,7 @@ export function CalendarView({
                               </DropdownMenuContent>
                             )}
                           </DropdownMenu>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div
                               className={cn(
@@ -872,20 +887,35 @@ export function CalendarView({
                               className="mt-1.5 space-y-1"
                               onMediaClick={(url) => openTaskMedia(task.id, url)}
                             />
-                            {getTaskPrimaryDate(task)?.time && (
-                              <div
-                                className="flex items-center gap-2 text-xs mt-1"
-                                title={`Due time: ${getTaskPrimaryDate(task)?.time}`}
-                              >
-                                <span
-                                  className="h-1.5 w-1.5 rounded-full"
-                                  style={{ backgroundColor: authorColor.accent }}
-                                  title={task.author?.displayName || task.author?.name || "Author"}
-                                />
-                                <Clock className="w-3 h-3" />
-                                <span>{getTaskPrimaryDate(task)?.time}</span>
-                              </div>
-                            )}
+                            {(() => {
+                              const primary = getTaskPrimaryDate(task);
+                              if (!primary) return null;
+                              let endLabel: string | null = null;
+                              if (isTimeBasedEventPost(task) && task.end) {
+                                endLabel = format(task.end, "HH:mm");
+                              } else if (isDateBasedEventPost(task) && task.endDate) {
+                                const end = parseIsoDateLocal(task.endDate);
+                                if (end && format(end, "yyyy-MM-dd") !== format(primary.date, "yyyy-MM-dd")) {
+                                  endLabel = format(end, "MMM d");
+                                }
+                              }
+                              if (!primary.time && !endLabel) return null;
+                              const startLabel = isCalendarEventPost(task) && isDateBasedEventPost(task) && endLabel
+                                ? format(primary.date, "MMM d")
+                                : primary.time;
+                              return (
+                                <div className="flex items-center gap-2 text-xs mt-1">
+                                  <span
+                                    className="h-1.5 w-1.5 rounded-full"
+                                    style={{ backgroundColor: authorColor.accent }}
+                                    title={task.author?.displayName || task.author?.name || "Author"}
+                                  />
+                                  <Clock className="w-3 h-3" />
+                                  {startLabel && <span>{startLabel}</span>}
+                                  {endLabel && <span>– {endLabel}</span>}
+                                </div>
+                              );
+                            })()}
                             {(typeof task.priority === "number" || hasTaskMetadataChips(task, activeRelays.length)) && (
                               <TaskTagChipRow
                                 task={task}

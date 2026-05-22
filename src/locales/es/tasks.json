@@ -16,6 +16,9 @@
       "clickToReactivate": "{{type}} inactiva — haz clic para reactivar",
       "sold": "Anuncio retirado"
     },
+    "event": {
+      "label": "Evento"
+    },
     "tags": "Etiquetas",
     "less": "menos",
     "readOnly": "Tarea de solo lectura",

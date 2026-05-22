@@ -16,6 +16,9 @@
       "clickToReactivate": "Inactive {{type}} — click to reactivate",
       "sold": "Listing unavailable"
     },
+    "event": {
+      "label": "Event"
+    },
     "tags": "Tags",
     "less": "less",
     "readOnly": "Read-only task",

@@ -243,6 +243,13 @@ function resolveInitialTaskType(
   allowFeedMessageTypes: boolean,
   defaultPostType?: PostType
 ): PostType {
+  // An explicit defaultPostType (e.g. from "Add Event" on the calendar) is a
+  // direct user gesture and wins over any persisted draft mode, so the button
+  // the user just clicked actually decides what they're composing.
+  if (defaultPostType) {
+    if (defaultPostType === "task" || defaultPostType === "comment") return defaultPostType;
+    if (allowFeedMessageTypes) return defaultPostType;
+  }
   const draftMessageType = draftState?.messageType;
   if (draftMessageType === "task" || draftMessageType === "comment") {
     return draftMessageType;
@@ -251,10 +258,6 @@ function resolveInitialTaskType(
     return draftMessageType;
   }
   if (draftState?.taskType === "comment") return "comment";
-  if (defaultPostType) {
-    if (defaultPostType === "task" || defaultPostType === "comment") return defaultPostType;
-    if (allowFeedMessageTypes) return defaultPostType;
-  }
   return "task";
 }
 

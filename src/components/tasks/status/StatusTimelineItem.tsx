@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { MessageSquare } from "lucide-react";
+import { Calendar as CalendarIcon, MessageSquare } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TaskAssigneeAvatars } from "@/components/tasks/TaskAssigneeAvatars";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
@@ -11,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminal } from "@/domain/content/task-state";
-import { isCommentPost } from "@/types";
+import { isCommentPost, isCalendarEventPost } from "@/types";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import type { Post } from "@/types";
@@ -24,12 +25,14 @@ interface StatusTimelineItemProps {
 }
 
 export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
+  const { t } = useTranslation("tasks");
   const { focusTask } = useTaskViewServices();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { peopleById } = useFeedPersonLookup();
   const { currentUser } = useFeedTaskViewModel();
   const resolvedAuthor = peopleById.get(task.author.pubkey.toLowerCase()) ?? task.author;
   const isComment = isCommentPost(task);
+  const isEvent = isCalendarEventPost(task);
   const isTerminal = isTaskTerminal(getTaskState(task));
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   // Collapse paragraph breaks so the preview renders as one inline block —
@@ -49,7 +52,12 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
         TASK_INTERACTION_STYLES.cardSurface
       )}
     >
-      {isComment ? (
+      {isEvent ? (
+        <CalendarIcon
+          className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-muted-foreground"
+          aria-label={t("tasks.event.label")}
+        />
+      ) : isComment ? (
         <MessageSquare className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-muted-foreground" />
       ) : (
         <TaskStatusToggle

@@ -16,6 +16,9 @@
       "clickToReactivate": "Inaktives {{type}} — zum Reaktivieren klicken",
       "sold": "Inserat vergeben"
     },
+    "event": {
+      "label": "Termin"
+    },
     "tags": "Tags",
     "less": "weniger",
     "readOnly": "Nur-Lese-Aufgabe",

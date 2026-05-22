@@ -100,7 +100,7 @@ function parseUnixDate(value: string): Date | undefined {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
-function parseIsoDateLocal(value: string): Date | undefined {
+export function parseIsoDateLocal(value: string): Date | undefined {
   if (!DATE_ONLY_RE.test(value)) return undefined;
   const [y, m, d] = value.split("-").map(Number);
   const parsed = new Date(y, m - 1, d);
