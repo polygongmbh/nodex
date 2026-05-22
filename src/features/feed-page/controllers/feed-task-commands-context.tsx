@@ -1,43 +1,17 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
 import type {
-  ComposeRecomposeOf,
   PostType,
   TaskDateType,
   TaskState,
-  PublishedAttachment,
-  Nip99Metadata,
   Nip99ListingStatus,
   TaskCreateResult,
+  TaskCreatePayload,
 } from "@/types";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 export interface FeedTaskCommands {
   focusTask(taskId: string | null, view?: ViewType): void;
-  createTask(
-    content: string,
-    tags: string[],
-    relays: string[],
-    postType: PostType,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    focusedTaskId?: string | null,
-    initialState?: TaskState,
-    explicitMentionPubkeys?: string[],
-    mentionIdentifiers?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata,
-    locationGeohash?: string,
-    recomposeOf?: ComposeRecomposeOf,
-    eventMetadata?: {
-      title?: string;
-      summary?: string;
-      location?: string;
-      endDate?: Date;
-      endTime?: string;
-    },
-  ): Promise<TaskCreateResult>;
+  createTask(payload: TaskCreatePayload): Promise<TaskCreateResult>;
   toggleComplete(taskId: string): void;
   changeStatus(taskId: string, status: TaskState): void;
   updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;

@@ -182,10 +182,8 @@ describe("TaskComposer", () => {
       content: "Need a designer #design",
       tags: ["design"],
       postType: "listing",
-      nip99: expect.objectContaining({
-        title: "Need designer for mobile UI",
-        status: "active",
-      }),
+      nip99: expect.objectContaining({ status: "active" }),
+      titledPost: expect.objectContaining({ title: "Need designer for mobile UI" }),
     }));
   });
 
@@ -428,10 +426,10 @@ describe("TaskComposer", () => {
       content: "Need a designer #design",
       postType: "listing",
       savedAt: new Date().toISOString(),
-      nip99: {
+      nip99: { status: "active" },
+      titledPost: {
         title: "Need designer for mobile UI",
         summary: "Short summary",
-        status: "active",
       },
       attachments: [
         {

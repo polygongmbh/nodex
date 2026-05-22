@@ -6,7 +6,7 @@ import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-
 import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Relay, Post } from "@/types";
+import type { Relay, Post, TaskCreatePayload } from "@/types";
 import { getTaskAssigneePubkeys, getTaskPriority, getTaskPrimaryDate } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
@@ -117,103 +117,57 @@ function Harness({
     publishTaskCreateFollowUps: vi.fn(async () => undefined),
   });
 
+  // Centralized helper for triggering handleNewTask from a fixture button. Every
+  // submit-driver button below differs only in 1-3 fields; spelling out the
+  // whole 8-field payload at each call drowns the per-test intent in noise.
+  const submitButton = (label: string, overrides: Partial<TaskCreatePayload>) => (
+    <button
+      onClick={async () => {
+        window.__TEST_RESULT__ = await hook.handleNewTask({
+          content: "",
+          tags: [],
+          relays: ["relay-one"],
+          postType: "task",
+          ...overrides,
+        });
+      }}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask("New task #general", ["general"], ["relay-one"], "task");
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        Submit
-      </button>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask("Need support #general", ["general"], [], "listing");
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        SubmitRootOfferNoRelay
-      </button>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask(
-            "Need support #general",
-            ["general"],
-            ["relay-one", "relay-two"],
-            "listing"
-          );
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        SubmitRootOfferMixedRelays
-      </button>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask(
-            "Need support",
-            [],
-            ["relay-one"],
-            "listing",
-            new Date("2026-04-01T10:00:00.000Z"),
-            "10:00",
-            "start",
-            "a".repeat(64)
-          );
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        SubmitChildOfferWithDate
-      </button>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask(
-            "Need support #general",
-            ["general"],
-            ["relay-one"],
-            "listing",
-            new Date("2026-04-01T10:00:00.000Z"),
-            "10:00",
-            "start"
-          );
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        SubmitRootOfferWithDate
-      </button>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask(
-            "Assign @alice #general",
-            ["general"],
-            ["relay-one"],
-            "task",
-            undefined,
-            undefined,
-            "due",
-            undefined,
-            undefined,
-            [],
-            [],
-          );
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        SubmitAuthoritativeMentions
-      </button>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask(
-            "Assign(@alice) (#general) and @alice #general",
-            ["general"],
-            ["relay-one"],
-            "task"
-          );
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        SubmitWhitespaceDelimitedTokens
-      </button>
+      {submitButton("Submit", { content: "New task #general", tags: ["general"] })}
+      {submitButton("SubmitRootOfferNoRelay", { content: "Need support #general", tags: ["general"], relays: [], postType: "listing" })}
+      {submitButton("SubmitRootOfferMixedRelays", { content: "Need support #general", tags: ["general"], relays: ["relay-one", "relay-two"], postType: "listing" })}
+      {submitButton("SubmitChildOfferWithDate", {
+        content: "Need support",
+        postType: "listing",
+        dueDate: new Date("2026-04-01T10:00:00.000Z"),
+        dueTime: "10:00",
+        dateType: "start",
+        focusedTaskId: "a".repeat(64),
+      })}
+      {submitButton("SubmitRootOfferWithDate", {
+        content: "Need support #general",
+        tags: ["general"],
+        postType: "listing",
+        dueDate: new Date("2026-04-01T10:00:00.000Z"),
+        dueTime: "10:00",
+        dateType: "start",
+      })}
+      {submitButton("SubmitAuthoritativeMentions", {
+        content: "Assign @alice #general",
+        tags: ["general"],
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        mentionIdentifiers: [],
+      })}
+      {submitButton("SubmitWhitespaceDelimitedTokens", {
+        content: "Assign(@alice) (#general) and @alice #general",
+        tags: ["general"],
+      })}
       <button onClick={() => hook.handleRetryFailedPublish(failedPublishDrafts[0]?.id || "")}>Retry</button>
       <button onClick={() => hook.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due")}>
         Due
@@ -236,56 +190,19 @@ function Harness({
       >
         ConsumeRestoreRequest
       </button>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask(
-            "Edited",
-            ["general"],
-            ["relay-one"],
-            "comment",
-            undefined,
-            undefined,
-            undefined,
-            null,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId: "b".repeat(64) }
-          );
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        RecomposeWithParentSubmit
-      </button>
-      <button
-        onClick={async () => {
-          const result = await hook.handleNewTask(
-            "Edited #general",
-            ["general"],
-            ["relay-one"],
-            "task",
-            undefined,
-            undefined,
-            undefined,
-            null,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            { eventId: "task-1", originalKind: 1621, relayIds: ["relay-one"] }
-          );
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        RecomposeSubmit
-      </button>
+      {submitButton("RecomposeWithParentSubmit", {
+        content: "Edited",
+        tags: ["general"],
+        postType: "comment",
+        focusedTaskId: null,
+        recomposeOf: { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId: "b".repeat(64) },
+      })}
+      {submitButton("RecomposeSubmit", {
+        content: "Edited #general",
+        tags: ["general"],
+        focusedTaskId: null,
+        recomposeOf: { eventId: "task-1", originalKind: 1621, relayIds: ["relay-one"] },
+      })}
       <output data-testid="restore-id">{String(hook.composeRestoreRequest?.id ?? "")}</output>
       <output data-testid="restore-content">{hook.composeRestoreRequest?.state.content ?? ""}</output>
       <output data-testid="restore-recompose">{hook.composeRestoreRequest?.state.recomposeOf?.eventId ?? ""}</output>

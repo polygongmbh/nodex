@@ -14,9 +14,6 @@ describe("nip99 metadata", () => {
 
     expect(parsed).toEqual({
       identifier: "listing-1",
-      title: "Bike",
-      summary: "Great commuter bike",
-      location: undefined,
       status: "sold",
       publishedAt: "1700000000",
       price: "150",
@@ -31,12 +28,14 @@ describe("nip99 metadata", () => {
       mentionPubkeys: [],
       metadata: {
         identifier: "listing-2",
-        title: "Road bike",
-        summary: "Lightweight aluminum frame",
         price: "500",
         currency: "USD",
         frequency: "month",
         publishedAt: "1700000123",
+      },
+      titledPost: {
+        title: "Road bike",
+        summary: "Lightweight aluminum frame",
       },
     });
 
@@ -51,11 +50,8 @@ describe("nip99 metadata", () => {
     const tags = buildNip99PublishTags({
       hashtags: [],
       mentionPubkeys: [],
-      metadata: {
-        identifier: "listing-3",
-        title: "Desk lamp",
-        price: "30",
-      },
+      metadata: { identifier: "listing-3", price: "30" },
+      titledPost: { title: "Desk lamp" },
     });
 
     expect(tags).toContainEqual(["price", "30"]);
@@ -65,10 +61,8 @@ describe("nip99 metadata", () => {
     const tags = buildNip99PublishTags({
       hashtags: [],
       mentionPubkeys: [],
-      metadata: {
-        identifier: "listing-4",
-        title: "Chair",
-      },
+      metadata: { identifier: "listing-4" },
+      titledPost: { title: "Chair" },
       locationGeohash: "U4PRUYD",
     });
 

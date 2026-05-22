@@ -6,7 +6,7 @@ import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-con
 import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
-import type { Channel, Relay } from "@/types";
+import type { Channel, Relay, TaskCreatePayload, TaskCreateResult } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { getComposerPrimaryAction, getTaskComposerInput } from "@/test/ui";
 import { TaskCreateComposer } from "./TaskCreateComposer";
@@ -31,9 +31,16 @@ const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => (
   envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
   outcome: { status: "handled" as const, result: { ok: true as const, mode: "local" as const } },
 }));
+const createTaskMock = vi.fn(
+  async (_payload: TaskCreatePayload): Promise<TaskCreateResult> => ({ ok: true, mode: "local" })
+);
 
 vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
+vi.mock("@/features/feed-page/controllers/feed-task-commands-context", () => ({
+  useFeedTaskCommands: () => ({ createTask: createTaskMock }),
 }));
 
 const relays: Relay[] = [{
@@ -117,6 +124,8 @@ function renderCreateComposer({
 describe("TaskCreateComposer", () => {
   beforeEach(() => {
     dispatchFeedInteraction.mockClear();
+    createTaskMock.mockClear();
+    createTaskMock.mockImplementation(async () => ({ ok: true, mode: "local" }));
     localStorage.clear();
   });
 
@@ -161,9 +170,8 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {
-        expect(dispatchFeedInteraction).toHaveBeenCalledWith(
+        expect(createTaskMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: "task.create",
           content: "Ship #backend",
           focusedTaskId: "parent-task",
           initialState: { status: "active" },
@@ -234,7 +242,7 @@ describe("TaskCreateComposer", () => {
     });
 
     expect(container).toBeEmptyDOMElement();
-    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
+    expect(createTaskMock).not.toHaveBeenCalled();
   });
 
   it("blocks root task creation when more than one writable relay is active", () => {
@@ -245,7 +253,7 @@ describe("TaskCreateComposer", () => {
     });
     fireEvent.click(getComposerPrimaryAction());
 
-    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
+    expect(createTaskMock).not.toHaveBeenCalled();
   });
 
   it("allows root task creation when exactly one writable relay is active", async () => {
@@ -257,8 +265,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {
-      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
-        type: "task.create",
+      expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({
         content: "Ship #backend",
         tags: ["backend"],
         postType: "task",
@@ -276,8 +283,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {
-      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
-        type: "task.create",
+      expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({
         content: "Ship #backend",
         tags: ["backend"],
         postType: "task",
@@ -311,8 +317,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {
-      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
-        type: "task.create",
+      expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({
         content: "Follow-up update for this thread",
         tags: ["general"],
         focusedTaskId: "parent-task",
@@ -340,10 +345,9 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {
-      const lastCall = dispatchFeedInteraction.mock.calls.at(-1)?.[0] as FeedInteractionIntent;
-      expect(lastCall.type).toBe("task.create");
-      const tags = (lastCall as { tags?: string[] }).tags ?? [];
-      expect(tags).toEqual(expect.arrayContaining(["general", "backend"]));
+      const payload = createTaskMock.mock.calls.at(-1)?.[0];
+      expect(payload).toBeDefined();
+      expect(payload?.tags).toEqual(expect.arrayContaining(["general", "backend"]));
     });
   });
 
@@ -370,8 +374,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {
-      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
-        type: "task.create",
+      expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({
         content: "Follow-up update for this thread",
         tags: [],
         focusedTaskId: "parent-task",
@@ -391,8 +394,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
 
     await waitFor(() => {
-      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
-        type: "task.create",
+      expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({
         content: "Looks good #backend",
         tags: ["backend"],
         postType: "comment",
@@ -421,8 +423,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
 
     await waitFor(() => {
-      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
-        type: "task.create",
+      expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({
         content: "Great progress",
         postType: "comment",
         focusedTaskId: "parent-task",
@@ -470,8 +471,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {
-      expect(dispatchFeedInteraction).toHaveBeenCalledWith(expect.objectContaining({
-        type: "task.create",
+      expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({
         relays: ["relay-b"],
       }));
     });

@@ -45,6 +45,7 @@ import {
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
@@ -122,6 +123,7 @@ export function UnifiedBottomBar({
   const { t, i18n } = useTranslation("composer");
   const { coreChannels, isCore } = useCoreChannels();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const taskCommands = useFeedTaskCommands();
   const surface = useFeedSurfaceState();
   const { allTasks } = useFeedTaskViewModel();
   const relays = relaysProp ?? surface.relays;
@@ -597,10 +599,13 @@ export function UnifiedBottomBar({
         name: attachment.name || attachment.fileName,
       }));
     const listingMetadata: Nip99Metadata | undefined =
+      submitType === "listing" ? { status: "active" } : undefined;
+    const listingTitledPost =
       submitType === "listing"
         ? {
-            title: truncateWordSafe(normalizeListingTextFromContent(sharedText), NIP99_TITLE_MAX_LENGTH) || t("composer.nip99.defaultTitle"),
-            status: "active",
+            title:
+              truncateWordSafe(normalizeListingTextFromContent(sharedText), NIP99_TITLE_MAX_LENGTH) ||
+              t("composer.nip99.defaultTitle"),
           }
         : undefined;
 
@@ -608,8 +613,7 @@ export function UnifiedBottomBar({
     const submittedPriority = storedPriorityFromDisplay(priority);
     try {
       const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-      const event = await dispatchFeedInteraction({
-        type: "task.create",
+      result = await taskCommands.createTask({
         content: sharedText,
         tags: submitChannels,
         relays: effectiveWritableRelayIds,
@@ -622,9 +626,9 @@ export function UnifiedBottomBar({
         priority: submittedPriority,
         attachments: uploadedAttachments,
         nip99: listingMetadata,
+        titledPost: listingTitledPost,
         locationGeohash: normalizedLocationGeohash,
       });
-      result = (event.outcome.result as TaskCreateResult | undefined) ?? { ok: false, reason: "unexpected-error" };
     } catch (error) {
       console.error("Mobile task submit failed", error);
       notifyTaskCreationFailed();

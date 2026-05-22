@@ -58,10 +58,10 @@ describe("hasNip99Content", () => {
     expect(hasNip99Content({ title: "   ", summary: "" })).toBe(false);
   });
 
-  it("returns true when any user-entered field has content", () => {
-    expect(hasNip99Content({ title: "Need designer" })).toBe(true);
-    expect(hasNip99Content({ summary: "details" })).toBe(true);
+  it("returns true when any user-entered listing-specific field has content", () => {
     expect(hasNip99Content({ price: "10", currency: "EUR" })).toBe(true);
+    expect(hasNip99Content({ identifier: "listing-1" })).toBe(true);
+    expect(hasNip99Content({ frequency: "month" })).toBe(true);
   });
 });
 
@@ -90,8 +90,12 @@ describe("hasComposerSubstance", () => {
     expect(hasComposerSubstance({ attachments: [{ url: "" }] })).toBe(false);
   });
 
-  it("returns true when NIP-99 metadata has user content", () => {
-    expect(hasComposerSubstance({ nip99: { title: "Listing" } })).toBe(true);
+  it("returns true when NIP-99 listing fields have user content", () => {
+    expect(hasComposerSubstance({ nip99: { price: "10" } })).toBe(true);
+  });
+
+  it("returns true when titledPost has user content", () => {
+    expect(hasComposerSubstance({ titledPost: { title: "Listing" } })).toBe(true);
   });
 
   it("does not treat ambient state alone as substance", () => {

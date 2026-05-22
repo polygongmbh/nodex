@@ -76,7 +76,9 @@ import type {
   TaskDateType,
   TaskEntryType,
   TaskState,
+  TaskCreatePayload,
   TimeBasedEventPost,
+  TitledPostFields,
 } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -296,30 +298,28 @@ export function useTaskPublishFlow({
   }, [notifyIfPartialPublish, publishEvent, resolveRelayUrlsFromIds, suppressFailedPublishEvent]);
 
   const handleNewTask = useCallback(async (
-    content: string,
-    extractedTags: string[],
-    relayIds: string[],
-    postType: PostType,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType: TaskDateType = "due",
-    focusedTaskId: string | null = null,
-    initialState?: TaskState,
-    explicitMentionPubkeys: string[] = [],
-    mentionIdentifiers?: string[],
-    priority?: number,
-    attachments: PublishedAttachment[] = [],
-    nip99?: Nip99Metadata,
-    locationGeohash?: string,
-    recomposeOf?: ComposeRecomposeOf,
-    eventMetadata?: {
-      title?: string;
-      summary?: string;
-      location?: string;
-      endDate?: Date;
-      endTime?: string;
-    },
+    payload: TaskCreatePayload,
   ): Promise<TaskCreateResult> => {
+    const {
+      content,
+      tags: extractedTags,
+      relays: relayIds,
+      postType,
+      dueDate,
+      dueTime,
+      dateType = "due",
+      focusedTaskId = null,
+      initialState,
+      explicitMentionPubkeys = [],
+      mentionIdentifiers,
+      priority,
+      attachments = [],
+      titledPost,
+      nip99,
+      locationGeohash,
+      recomposeOf,
+      eventMetadata,
+    } = payload;
     const normalizedPostType = normalizeComposerMessageType(postType);
     if (normalizedPostType !== postType) {
       console.warn("Unexpected postType payload; defaulting to task", { postType });
@@ -472,13 +472,13 @@ export function useTaskPublishFlow({
 
     const eventBuilt = isEventSubmission && eventStartDateTime
       ? buildStandaloneCalendarEvent({
-          title: eventMetadata?.title?.trim() || content.slice(0, 200),
+          title: titledPost?.title?.trim() || content.slice(0, 200),
           content,
           start: eventStartDateTime,
           end: eventEndDateTime,
           isAllDay: eventIsAllDay,
-          summary: eventMetadata?.summary?.trim() || undefined,
-          location: eventMetadata?.location?.trim() || undefined,
+          summary: titledPost?.summary?.trim() || undefined,
+          location: titledPost?.location?.trim() || undefined,
           mentions: undefined,
         })
       : undefined;
@@ -513,6 +513,7 @@ export function useTaskPublishFlow({
               : normalizedPostType === "listing"
                 ? buildNip99PublishTags({
                     metadata: nip99,
+                    titledPost,
                     hashtags: resolvedSubmissionTags,
                     mentionPubkeys,
                     attachmentTags: normalizedAttachments
@@ -671,17 +672,7 @@ export function useTaskPublishFlow({
       dateType: submissionDateType ?? "due",
       endTime: eventMetadata?.endTime ?? "",
       endDate: eventMetadata?.endDate,
-      titledPost: isEventSubmission
-        ? {
-            title: eventMetadata?.title,
-            summary: eventMetadata?.summary,
-            location: eventMetadata?.location,
-          }
-        : {
-            title: nip99?.title,
-            summary: nip99?.summary,
-            location: nip99?.location,
-          },
+      titledPost: { ...(titledPost ?? {}) },
       nip99: nip99 ?? {},
       attachments: normalizedAttachments,
       explicitTagNames: normalizedExtractedTags.filter((tag) => !parsedHashtagsFromContent.has(tag)),

@@ -41,11 +41,13 @@ export type PostType = TaskEntryType | FeedMessageType | CalendarEntryType;
 // Legacy alias for compatibility with older task/comment-only call sites.
 export type TaskType = TaskEntryType;
 export type Nip99ListingStatus = "active" | "sold";
+/**
+ * Listing-specific NIP-99 metadata. Title/summary/location are NOT here —
+ * those are post-shared concerns on {@link TitledPost}. NIP-99 still emits
+ * them as tags on the wire; the split is purely about in-memory modeling.
+ */
 export interface Nip99Metadata {
   identifier?: string;
-  title?: string;
-  summary?: string;
-  location?: string;
   price?: string;
   currency?: string;
   frequency?: string;
@@ -123,6 +125,33 @@ export interface ComposeAttachment extends PublishedAttachment {
   progress?: number;
   error?: string;
   source: "upload" | "url";
+}
+
+/**
+ * Single canonical payload for "create a post" actions. Consumed by
+ * FeedTaskCommands.createTask and handleNewTask; produced by the composer
+ * submit handler (which enriches TaskComposerFormData with routing context:
+ * relays, focusedTaskId, initialState).
+ */
+export interface TaskCreatePayload {
+  content: string;
+  tags: string[];
+  relays: string[];
+  postType: PostType;
+  focusedTaskId?: string | null;
+  initialState?: TaskState;
+  dueDate?: Date;
+  dueTime?: string;
+  dateType?: TaskDateType;
+  explicitMentionPubkeys?: string[];
+  mentionIdentifiers?: string[];
+  priority?: number;
+  attachments?: PublishedAttachment[];
+  titledPost?: TitledPostFields;
+  nip99?: Nip99Metadata;
+  locationGeohash?: string;
+  recomposeOf?: ComposeRecomposeOf;
+  eventMetadata?: { endDate?: Date; endTime?: string };
 }
 
 export interface ComposeRecomposeOf {

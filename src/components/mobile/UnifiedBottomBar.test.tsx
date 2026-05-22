@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
-import type { Channel, Relay, TaskCreateResult } from "@/types";
+import type { Channel, Relay, TaskCreatePayload, TaskCreateResult } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
@@ -36,9 +36,14 @@ const buildDispatchEvent = (intent: FeedInteractionIntent, result: TaskCreateRes
 });
 
 const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
+const createTaskMock = vi.fn(async (_payload: TaskCreatePayload): Promise<TaskCreateResult> => successResult);
 
 vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
+vi.mock("@/features/feed-page/controllers/feed-task-commands-context", () => ({
+  useFeedTaskCommands: () => ({ createTask: createTaskMock }),
 }));
 
 const relays: Relay[] = [
@@ -68,15 +73,11 @@ const people: SelectablePerson[] = [
 
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
 const originalGeolocation = navigator.geolocation;
-type TaskCreateIntent = Extract<FeedInteractionIntent, { type: "task.create" }>;
-
-function getTaskCreateCalls() {
-  return dispatchFeedInteraction.mock.calls
-    .map(([intent]) => intent as FeedInteractionIntent)
-    .filter((intent): intent is Extract<FeedInteractionIntent, { type: "task.create" }> => intent.type === "task.create");
+function getTaskCreateCalls(): TaskCreatePayload[] {
+  return createTaskMock.mock.calls.map(([payload]) => payload);
 }
 
-function expectLatestTaskCreateCall(expected: Partial<TaskCreateIntent>) {
+function expectLatestTaskCreateCall(expected: Partial<TaskCreatePayload>) {
   expect(getTaskCreateCalls().at(-1)).toEqual(expect.objectContaining(expected));
 }
 
@@ -99,6 +100,8 @@ describe("UnifiedBottomBar auth gating", () => {
   beforeEach(() => {
     dispatchFeedInteraction.mockReset();
     dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
+    createTaskMock.mockReset();
+    createTaskMock.mockImplementation(async () => successResult);
     attachmentUploadEnabledSpy.mockReturnValue(true);
     window.localStorage.removeItem(COMPOSE_DRAFT_STORAGE_KEY);
     Object.defineProperty(navigator, "geolocation", {
@@ -488,7 +491,6 @@ describe("UnifiedBottomBar auth gating", () => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship #general",
       tags: ["general"],
       relays: ["relay-one"],
@@ -518,7 +520,6 @@ describe("UnifiedBottomBar auth gating", () => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship #general",
       tags: ["general"],
       relays: ["relay-one"],
@@ -547,7 +548,6 @@ describe("UnifiedBottomBar auth gating", () => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Follow-up details for parent task",
       tags: [],
       relays: ["demo"],
@@ -557,9 +557,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("keeps compose text when submit returns a failure result", async () => {
-    dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) =>
-      buildDispatchEvent(intent, { ok: false as const, reason: "relay-selection" as const })
-    );
+    createTaskMock.mockImplementation(async () => ({ ok: false as const, reason: "relay-selection" as const }));
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -598,7 +596,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.keyDown(composeField, { key: "Enter", altKey: true });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship #general now",
       tags: ["general"],
       relays: ["demo"],
@@ -623,7 +620,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.keyDown(composeField, { key: "Enter", ctrlKey: true });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
@@ -633,7 +629,6 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(composeField, { target: { value: "Ship again #general" } });
     fireEvent.keyDown(composeField, { key: "Enter", metaKey: true });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship again #general",
       tags: ["general"],
       relays: ["demo"],
@@ -659,7 +654,6 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.click(getMobileCommentAction());
 
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Reply #general",
       tags: ["general"],
       relays: ["demo"],
@@ -689,15 +683,12 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => expect(getTaskCreateCalls()).toHaveLength(1));
 
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Need help #general",
       tags: ["general"],
       relays: ["demo"],
       postType: "listing",
-      nip99: {
-        title: "Need help",
-        status: "active",
-      },
+      nip99: { status: "active" },
+      titledPost: { title: "Need help" },
     });
   });
 
@@ -1068,7 +1059,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship #general ",
       tags: ["general"],
       relays: ["demo"],
@@ -1106,7 +1096,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship #general ",
       tags: ["general"],
       relays: ["demo"],
@@ -1166,7 +1155,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship ",
       tags: ["brandnew"],
       relays: ["demo"],
@@ -1203,7 +1191,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship ",
       tags: ["general"],
       relays: ["demo"],
@@ -1270,7 +1257,6 @@ describe("UnifiedBottomBar auth gating", () => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
@@ -1315,7 +1301,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
@@ -1349,7 +1334,6 @@ describe("UnifiedBottomBar auth gating", () => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
     expectLatestTaskCreateCall({
-      type: "task.create",
       content: "Looks good #general",
       tags: ["general"],
       postType: "comment",

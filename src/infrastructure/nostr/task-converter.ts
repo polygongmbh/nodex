@@ -94,7 +94,15 @@ export function nostrEventToTask(event: NostrEventWithRelay): Post {
     .map((tag) => tag[1].toLowerCase());
   const allTags = [...new Set([...eventTags, ...contentTags])];
   const isTask = isTaskKind(event.kind);
-  const nip99 = isListingKind(event.kind) ? parseNip99MetadataFromTags(event.tags) : undefined;
+  const isListing = isListingKind(event.kind);
+  const nip99 = isListing ? parseNip99MetadataFromTags(event.tags) : undefined;
+  const listingTitledPost = isListing
+    ? {
+        title: event.tags.find((tag) => tag[0] === "title")?.[1]?.trim() || undefined,
+        summary: event.tags.find((tag) => tag[0] === "summary")?.[1]?.trim() || undefined,
+        location: event.tags.find((tag) => tag[0] === "location")?.[1]?.trim() || undefined,
+      }
+    : null;
   const locationGeohash = parseFirstGeohashTag(event.tags);
 
   const parentTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "parent");
@@ -176,11 +184,12 @@ export function nostrEventToTask(event: NostrEventWithRelay): Post {
     };
   }
 
-  if (isListingKind(event.kind)) {
+  if (isListing) {
     return {
       ...base,
       kind: NostrEventKind.ClassifiedListing,
       nip99: nip99 ?? { identifier: event.id, status: "active" },
+      ...(listingTitledPost ?? {}),
     };
   }
 

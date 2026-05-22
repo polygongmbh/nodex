@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
-import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { notifyTaskCreationFailed } from "@/lib/notifications";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ export function useComposerSubmitHandler({
   const relaysRef = useRef(relays);
   relaysRef.current = relays;
 
-  const dispatch = useFeedInteractionDispatch();
+  const taskCommands = useFeedTaskCommands();
   const { t } = useTranslation("composer");
 
   return useCallback(
@@ -49,30 +49,12 @@ export function useComposerSubmitHandler({
       void (async () => {
         let result: TaskCreateResult;
         try {
-          const event = await dispatch({
-            type: "task.create",
-            content: data.content,
-            tags: data.tags,
+          result = await taskCommands.createTask({
+            ...data,
             relays: relayIds,
-            postType: data.postType,
-            dueDate: data.dueDate,
-            dueTime: data.dueTime,
-            dateType: data.dateType,
             focusedTaskId,
             initialState,
-            explicitMentionPubkeys: data.explicitMentionPubkeys,
-            mentionIdentifiers: data.mentionIdentifiers,
-            priority: data.priority,
-            attachments: data.attachments,
-            nip99: data.nip99,
-            locationGeohash: data.locationGeohash,
-            recomposeOf: data.recomposeOf,
-            eventMetadata: data.eventMetadata,
           });
-          result = (event.outcome.result as TaskCreateResult | undefined) ?? {
-            ok: false,
-            reason: "unexpected-error",
-          };
         } catch (error) {
           console.error("Task submit failed", error);
           notifyTaskCreationFailed();
@@ -85,6 +67,6 @@ export function useComposerSubmitHandler({
         }
       })();
     },
-    [closeOnSuccess, dispatch, focusedTaskId, initialState, onCancel, t]
+    [closeOnSuccess, focusedTaskId, initialState, onCancel, t, taskCommands]
   );
 }

@@ -1,9 +1,10 @@
-import type { Nip99ListingStatus, Nip99Metadata } from "@/types";
+import type { Nip99ListingStatus, Nip99Metadata, TitledPostFields } from "@/types";
 import { buildGeohashTag } from "@/infrastructure/nostr/geohash-location";
 import i18n from "@/lib/i18n/config";
 
 export interface Nip99PublishTagParams {
   metadata?: Nip99Metadata;
+  titledPost?: TitledPostFields;
   hashtags: string[];
   mentionPubkeys: string[];
   attachmentTags?: string[][];
@@ -30,9 +31,6 @@ export function parseNip99MetadataFromTags(tags: string[][]): Nip99Metadata | un
 
   const metadata: Nip99Metadata = {
     identifier: clean(getFirst("d")),
-    title: clean(getFirst("title")),
-    summary: clean(getFirst("summary")),
-    location: clean(getFirst("location")),
     status: parseStatus(getFirst("status")),
     publishedAt: clean(getFirst("published_at")),
     price: clean(priceTag?.[1]),
@@ -46,6 +44,7 @@ export function parseNip99MetadataFromTags(tags: string[][]): Nip99Metadata | un
 
 export function buildNip99PublishTags({
   metadata,
+  titledPost,
   hashtags,
   mentionPubkeys,
   attachmentTags = [],
@@ -59,9 +58,9 @@ export function buildNip99PublishTags({
     clean(identifierSeed) ||
     `listing-${Date.now().toString(36)}`;
   const status = statusOverride || parseStatus(metadata?.status) || "active";
-  const title = clean(metadata?.title) || clean(fallbackTitle) || i18n.t("composer:composer.nip99.defaultTitle");
-  const summary = clean(metadata?.summary);
-  const location = clean(metadata?.location);
+  const title = clean(titledPost?.title) || clean(fallbackTitle) || i18n.t("composer:composer.nip99.defaultTitle");
+  const summary = clean(titledPost?.summary);
+  const location = clean(titledPost?.location);
   const price = clean(metadata?.price);
   const currency = clean(metadata?.currency);
   const frequency = clean(metadata?.frequency);

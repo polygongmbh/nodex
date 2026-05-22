@@ -109,7 +109,7 @@ export interface TaskComposerFormData {
   priority?: number;
   attachments: PublishedAttachment[];
   /** Title/summary/location — populated for listing and event modes. */
-  titledPost?: TitledPostFields;
+  titledPost?: TitledPostFieldsType;
   /** Listing-specific NIP-99 fields (price/currency/frequency/status/etc.). */
   nip99?: Nip99Metadata;
   locationGeohash?: string;
@@ -249,33 +249,17 @@ export function TaskComposer({
       ...attachment,
     }));
   });
-  const [nip99, setNip99] = useState<Nip99Metadata>(() => {
-    const merged: Nip99Metadata = { ...initialComposerState.nip99 };
-    const shared = initialComposerState.titledPost;
-    if (shared.title && !merged.title) merged.title = shared.title;
-    if (shared.summary && !merged.summary) merged.summary = shared.summary;
-    if (shared.location && !merged.location) merged.location = shared.location;
-    return merged;
-  });
+  const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...initialComposerState.nip99 }));
   const [endDate, setEndDate] = useState<Date | undefined>(initialComposerState.endDate);
   const [endTime, setEndTime] = useState<string>(initialComposerState.endTime);
-  const [eventTitle, setEventTitle] = useState<string>(
-    () => initialComposerState.titledPost.title ?? initialComposerState.nip99.title ?? ""
-  );
-  const [eventSummary, setEventSummary] = useState<string>(
-    () => initialComposerState.titledPost.summary ?? initialComposerState.nip99.summary ?? ""
-  );
-  const [eventLocation, setEventLocation] = useState<string>(
-    () => initialComposerState.titledPost.location ?? initialComposerState.nip99.location ?? ""
+  const [titledPost, setTitledPost] = useState<TitledPostFieldsType>(
+    () => ({ ...initialComposerState.titledPost })
   );
   const [locationGeohash, setLocationGeohash] = useState<string | undefined>(() => normalizeGeohash(initialComposerState.locationGeohash));
   const [showLocationControls, setShowLocationControls] = useState<boolean>(
     () => Boolean(normalizeGeohash(initialComposerState.locationGeohash))
   );
-  const [isNip99TitleTouched, setIsNip99TitleTouched] = useState(
-    () => Boolean(initialComposerState.nip99.title?.trim())
-  );
-  const [isEventTitleTouched, setIsEventTitleTouched] = useState(
+  const [isTitleTouched, setIsTitleTouched] = useState(
     () => Boolean(initialComposerState.titledPost.title?.trim())
   );
   const [isExpanded, setIsExpanded] = useState(
@@ -488,27 +472,14 @@ export function TaskComposer({
     setDueTime(restoreState.dueTime);
     setDateType(restoreState.dateType);
     setPriority(restoreState.priority);
-    // Shared title/summary/location across listing & event modes: prefer the
-    // unified titledPost slot, falling back to nip99 fields for older drafts.
-    // Listings keep nip99-specific extras (price, currency, etc.).
-    const restoredNip99: Nip99Metadata = { ...restoreState.nip99 };
-    const restoredTitle = restoreState.titledPost.title ?? restoredNip99.title ?? "";
-    const restoredSummary = restoreState.titledPost.summary ?? restoredNip99.summary ?? "";
-    const restoredLocation = restoreState.titledPost.location ?? restoredNip99.location ?? "";
-    if (restoredTitle) restoredNip99.title = restoredTitle;
-    if (restoredSummary) restoredNip99.summary = restoredSummary;
-    if (restoredLocation) restoredNip99.location = restoredLocation;
-    setNip99(restoredNip99);
-    setEventTitle(restoredTitle);
-    setEventSummary(restoredSummary);
-    setEventLocation(restoredLocation);
-    setIsEventTitleTouched(Boolean(restoredTitle));
+    setNip99({ ...restoreState.nip99 });
+    setTitledPost({ ...restoreState.titledPost });
+    setIsTitleTouched(Boolean(restoreState.titledPost.title?.trim()));
     setEndDate(restoreState.endDate);
     setEndTime(restoreState.endTime);
     const restoredGeohash = normalizeGeohash(restoreState.locationGeohash);
     setLocationGeohash(restoredGeohash);
     setShowLocationControls(Boolean(restoredGeohash));
-    setIsNip99TitleTouched(Boolean(restoredNip99.title?.trim()));
     setAttachments(
       (restoreState.attachments || []).map((attachment, index) => ({
         id: `restore-${composeRestoreRequest.id}-${index}`,
@@ -548,15 +519,6 @@ export function TaskComposer({
         alt: attachment.alt,
         name: attachment.name || attachment.fileName,
       })) as PublishedAttachment[];
-    // Unified title/summary/location pulled from whichever mode is active:
-    // events surface them via eventTitle/Summary/Location, listings via nip99.
-    // Either way they round-trip through the shared `titledPost` draft slot
-    // so switching modes (or reloading) preserves the user's input.
-    const titledPost = {
-      title: (postType === "event" ? eventTitle : nip99.title) || undefined,
-      summary: (postType === "event" ? eventSummary : nip99.summary) || undefined,
-      location: (postType === "event" ? eventLocation : nip99.location) || undefined,
-    };
     persistTaskComposerDraft(
       draftStorageKey,
       {
@@ -578,7 +540,7 @@ export function TaskComposer({
       },
       storedPriorityFromDisplay
     );
-  }, [content, postType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey, eventTitle, eventSummary, eventLocation, endDate, endTime]);
+  }, [content, postType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey, titledPost, endDate, endTime]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -963,15 +925,12 @@ export function TaskComposer({
 
   useEffect(() => {
     if (postType !== "listing" && postType !== "event") return;
+    if (isTitleTouched) return;
     const nextTitle = deriveTitledPostTitleFromContent(content);
-    if (postType === "listing" && !isNip99TitleTouched) {
-      setNip99((previous) =>
-        previous.title === nextTitle ? previous : { ...previous, title: nextTitle }
-      );
-    } else if (postType === "event" && !isEventTitleTouched) {
-      setEventTitle((previous) => (previous === (nextTitle ?? "") ? previous : nextTitle ?? ""));
-    }
-  }, [content, isEventTitleTouched, isNip99TitleTouched, postType]);
+    setTitledPost((previous) =>
+      previous.title === nextTitle ? previous : { ...previous, title: nextTitle }
+    );
+  }, [content, isTitleTouched, postType]);
 
   const resetComposerState = () => {
     setContent("");
@@ -992,13 +951,10 @@ export function TaskComposer({
     setLocationGeohash(undefined);
     setShowLocationControls(false);
     setNip99({});
-    setIsNip99TitleTouched(false);
-    setIsEventTitleTouched(false);
+    setTitledPost({});
+    setIsTitleTouched(false);
     setEndDate(undefined);
     setEndTime("");
-    setEventTitle("");
-    setEventSummary("");
-    setEventLocation("");
     setAttachments([]);
     attachmentFileRef.current = {};
     if (draftStorageKey) {
@@ -1032,7 +988,7 @@ export function TaskComposer({
         toast.error(t("composer.event.missingStart"));
         return;
       }
-      if (!eventTitle.trim()) {
+      if (!titledPost.title?.trim()) {
         toast.error(t("composer.event.missingTitle"));
         return;
       }
@@ -1054,18 +1010,23 @@ export function TaskComposer({
       notifySpamRejected();
       return;
     }
-    const listingMetadata =
+    const listingMetadata: Nip99Metadata | undefined =
       effectivePostType === "listing"
         ? {
             identifier: nip99.identifier?.trim() || undefined,
-            title: nip99.title?.trim() || deriveTitledPostTitleFromContent(content),
-            summary: nip99.summary?.trim() || undefined,
-            location: nip99.location?.trim() || undefined,
             price: nip99.price?.trim() || undefined,
             currency: nip99.currency?.trim() || undefined,
             frequency: nip99.frequency?.trim() || undefined,
             status: "active",
             publishedAt: nip99.publishedAt,
+          }
+        : undefined;
+    const submittedTitledPost: TitledPostFieldsType | undefined =
+      effectivePostType === "listing" || effectivePostType === "event"
+        ? {
+            title: titledPost.title?.trim() || (effectivePostType === "listing" ? deriveTitledPostTitleFromContent(content) : undefined),
+            summary: titledPost.summary?.trim() || undefined,
+            location: titledPost.location?.trim() || undefined,
           }
         : undefined;
     const uploadedAttachments: PublishedAttachment[] = attachments
@@ -1088,9 +1049,6 @@ export function TaskComposer({
     const eventMetadata: TaskComposerEventMetadata | undefined =
       effectivePostType === "event"
         ? {
-            title: eventTitle.trim() || undefined,
-            summary: eventSummary.trim() || undefined,
-            location: eventLocation.trim() || undefined,
             endDate,
             endTime: endTime.trim() || undefined,
           }
@@ -1107,6 +1065,7 @@ export function TaskComposer({
       priority: submittedPriority,
       attachments: uploadedAttachments,
       nip99: listingMetadata,
+      titledPost: submittedTitledPost,
       ...(normalizedLocationGeohash ? { locationGeohash: normalizedLocationGeohash } : {}),
       ...(submittedRecomposeOf ? { recomposeOf: submittedRecomposeOf } : {}),
       ...(eventMetadata ? { eventMetadata } : {}),
@@ -1138,13 +1097,10 @@ export function TaskComposer({
     setLocationGeohash(undefined);
     setShowLocationControls(false);
     setNip99({});
-    setIsNip99TitleTouched(false);
-    setIsEventTitleTouched(false);
+    setTitledPost({});
+    setIsTitleTouched(false);
     setEndDate(undefined);
     setEndTime("");
-    setEventTitle("");
-    setEventSummary("");
-    setEventLocation("");
     setAttachments([]);
     attachmentFileRef.current = {};
     if (collapseOnSuccess && adaptiveSize) {
@@ -2118,23 +2074,9 @@ export function TaskComposer({
       {showExpandedControls && postType === "listing" && (
         <div className={cn("order-6 flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <TitledPostFields
-            title={nip99.title || ""}
-            location={nip99.location || ""}
-            summary={nip99.summary || ""}
-            onTitleChange={(value) => {
-              setIsNip99TitleTouched(true);
-              updateNip99({ title: value });
-              setEventTitle(value);
-              if (value.trim()) setIsEventTitleTouched(true);
-            }}
-            onLocationChange={(value) => {
-              updateNip99({ location: value });
-              setEventLocation(value);
-            }}
-            onSummaryChange={(value) => {
-              updateNip99({ summary: value });
-              setEventSummary(value);
-            }}
+            value={titledPost}
+            onChange={(patch) => setTitledPost((previous) => ({ ...previous, ...patch }))}
+            onTitleTouched={() => setIsTitleTouched(true)}
             titleLabel={t("composer.nip99.title")}
             locationLabel={t("composer.nip99.location")}
             summaryLabel={t("composer.nip99.summary")}
@@ -2180,23 +2122,9 @@ export function TaskComposer({
         <div className={cn("order-6 flex flex-col gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <div className="flex flex-wrap items-end gap-2">
             <TitledPostFields
-              title={eventTitle}
-              location={eventLocation}
-              summary={eventSummary}
-              onTitleChange={(value) => {
-                setIsEventTitleTouched(true);
-                setEventTitle(value);
-                updateNip99({ title: value });
-                if (value.trim()) setIsNip99TitleTouched(true);
-              }}
-              onLocationChange={(value) => {
-                setEventLocation(value);
-                updateNip99({ location: value });
-              }}
-              onSummaryChange={(value) => {
-                setEventSummary(value);
-                updateNip99({ summary: value });
-              }}
+              value={titledPost}
+              onChange={(patch) => setTitledPost((previous) => ({ ...previous, ...patch }))}
+              onTitleTouched={() => setIsTitleTouched(true)}
               titleLabel={t("composer.event.title")}
               locationLabel={t("composer.event.location")}
               summaryLabel={t("composer.event.summary")}

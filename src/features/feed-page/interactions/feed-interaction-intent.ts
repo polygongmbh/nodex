@@ -1,10 +1,6 @@
 import type {
   ChannelMatchMode,
-  ComposeRecomposeOf,
   Nip99ListingStatus,
-  PublishedAttachment,
-  Nip99Metadata,
-  PostType,
   TaskState,
   TaskDateType,
 } from "@/types";
@@ -61,32 +57,6 @@ export type FeedInteractionIntent =
   | { type: "sidebar.quickFilter.minPriority.change"; priority: number }
   | { type: "sidebar.quickFilter.priorityEnabled.change"; enabled: boolean }
   | { type: "task.focus.change"; taskId: string | null; view?: ViewType }
-  | {
-      type: "task.create";
-      content: string;
-      tags: string[];
-      relays: string[];
-      postType: PostType;
-      dueDate?: Date;
-      dueTime?: string;
-      dateType?: TaskDateType;
-      focusedTaskId: string | null;
-      initialState?: TaskState;
-      explicitMentionPubkeys?: string[];
-      mentionIdentifiers?: string[];
-      priority?: number;
-      attachments?: PublishedAttachment[];
-      nip99?: Nip99Metadata;
-      locationGeohash?: string;
-      recomposeOf?: ComposeRecomposeOf;
-      eventMetadata?: {
-        title?: string;
-        summary?: string;
-        location?: string;
-        endDate?: Date;
-        endTime?: string;
-      };
-    }
   | { type: "task.toggleComplete"; taskId: string }
   | { type: "task.changeStatus"; taskId: string; state: TaskState }
   | { type: "task.updateDueDate"; taskId: string; dueDate?: Date; dueTime?: string; dateType?: TaskDateType }

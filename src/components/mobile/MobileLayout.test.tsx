@@ -101,6 +101,7 @@ vi.mock("./SwipeIndicator", () => ({
   SwipeIndicator: () => <div data-testid="swipe-indicator" />,
 }));
 
+const signInCreateClick = vi.fn();
 vi.mock("./UnifiedBottomBar", () => ({
   UnifiedBottomBar: ({
     canCreateContent,
@@ -121,15 +122,7 @@ vi.mock("./UnifiedBottomBar", () => ({
         {!canCreateContent ? (
           <button
             type="button"
-            onClick={() => {
-              void dispatchFeedInteraction({
-                type: "task.create",
-                content: value,
-                tags: ["general"],
-                relays: ["demo"],
-                postType: "task",
-              });
-            }}
+            onClick={() => signInCreateClick({ content: value, postType: "task" })}
           >
             Sign in to create
           </button>
@@ -255,11 +248,8 @@ describe("MobileLayout auth wiring", () => {
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "task.create",
+    expect(signInCreateClick).toHaveBeenCalledWith({
       content: "Ship #general",
-      tags: ["general"],
-      relays: ["demo"],
       postType: "task",
     });
   });

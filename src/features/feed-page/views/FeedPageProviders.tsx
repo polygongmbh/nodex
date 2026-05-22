@@ -164,27 +164,6 @@ function FeedInteractionBusFromContexts({
       "task.focus.change": (intent) => {
         taskCommands.focusTask(intent.taskId, intent.view);
       },
-      "task.create": (intent) => {
-        return taskCommands.createTask(
-          intent.content,
-          intent.tags,
-          intent.relays,
-          intent.postType,
-          intent.dueDate,
-          intent.dueTime,
-          intent.dateType,
-          intent.focusedTaskId,
-          intent.initialState,
-          intent.explicitMentionPubkeys,
-          intent.mentionIdentifiers,
-          intent.priority,
-          intent.attachments,
-          intent.nip99,
-          intent.locationGeohash,
-          intent.recomposeOf,
-          intent.eventMetadata,
-        );
-      },
       "task.toggleComplete": (intent) => {
         taskCommands.toggleComplete(intent.taskId);
       },
