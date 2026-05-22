@@ -110,20 +110,15 @@
       "price": "Preis",
       "currency": "Währung",
       "frequency": "Preisintervall",
-      "status": "Listing-Status",
       "summary": "Zusammenfassung",
       "defaultTitle": "Listing",
       "frequencyOptions": {
         "oneTime": "Einmalig",
-        "hour": "Stunde",
-        "day": "Tag",
-        "week": "Woche",
-        "month": "Monat",
-        "year": "Jahr"
-      },
-      "statusOptions": {
-        "active": "Aktiv",
-        "sold": "Verkauft"
+        "hour": "Stündlich",
+        "day": "Täglich",
+        "week": "Wöchentlich",
+        "month": "Monatlich",
+        "year": "Jährlich"
       }
     },
     "labels": {

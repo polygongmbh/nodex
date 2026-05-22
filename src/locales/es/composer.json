@@ -110,20 +110,15 @@
       "price": "Precio",
       "currency": "Moneda",
       "frequency": "Frecuencia del precio",
-      "status": "Estado del anuncio",
       "summary": "Resumen",
       "defaultTitle": "Anuncio",
       "frequencyOptions": {
         "oneTime": "Una vez",
-        "hour": "hora",
-        "day": "día",
-        "week": "semana",
-        "month": "mes",
-        "year": "año"
-      },
-      "statusOptions": {
-        "active": "Activo",
-        "sold": "Vendido"
+        "hour": "Cada hora",
+        "day": "Diario",
+        "week": "Semanal",
+        "month": "Mensual",
+        "year": "Anual"
       }
     },
     "labels": {

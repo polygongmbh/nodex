@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, RefreshCcw, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
-import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment } from "@/types";
+import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment, TitledPostFields as TitledPostFieldsType } from "@/types";
 import type { ComposerFilterSync } from "./use-composer-filter-sync";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -93,9 +93,6 @@ interface TaskComposerProps {
 
 
 export interface TaskComposerEventMetadata {
-  title?: string;
-  summary?: string;
-  location?: string;
   endDate?: Date;
   endTime?: string;
 }
@@ -111,6 +108,9 @@ export interface TaskComposerFormData {
   mentionIdentifiers: string[];
   priority?: number;
   attachments: PublishedAttachment[];
+  /** Title/summary/location — populated for listing and event modes. */
+  titledPost?: TitledPostFields;
+  /** Listing-specific NIP-99 fields (price/currency/frequency/status/etc.). */
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   recomposeOf?: ComposeRecomposeOf;
@@ -1064,7 +1064,7 @@ export function TaskComposer({
             price: nip99.price?.trim() || undefined,
             currency: nip99.currency?.trim() || undefined,
             frequency: nip99.frequency?.trim() || undefined,
-            status: nip99.status || "active",
+            status: "active",
             publishedAt: nip99.publishedAt,
           }
         : undefined;
@@ -2172,15 +2172,6 @@ export function TaskComposer({
             <option value="week">{t("composer.nip99.frequencyOptions.week")}</option>
             <option value="month">{t("composer.nip99.frequencyOptions.month")}</option>
             <option value="year">{t("composer.nip99.frequencyOptions.year")}</option>
-          </select>
-          <select
-            value={nip99.status || "active"}
-            onChange={(event) => updateNip99({ status: event.target.value as Nip99Metadata["status"] })}
-            aria-label={t("composer.nip99.status")}
-            className="h-8 min-w-[6rem] rounded-md border border-border/50 bg-background px-2 text-xs"
-          >
-            <option value="active">{t("composer.nip99.statusOptions.active")}</option>
-            <option value="sold">{t("composer.nip99.statusOptions.sold")}</option>
           </select>
         </div>
       )}
