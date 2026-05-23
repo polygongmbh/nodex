@@ -147,6 +147,44 @@ describe("TaskComposer", () => {
     expect(data).not.toHaveProperty("relays");
   });
 
+  it("keeps the draft intact when the publish is rejected", async () => {
+    let resolveSubmit: (value: { ok: boolean }) => void = () => {};
+    const onSubmit = vi.fn(
+      () => new Promise<{ ok: boolean }>((resolve) => { resolveSubmit = resolve; })
+    );
+    renderComposer({ onSubmit });
+
+    const textarea = getComposerInput() as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "Important draft #backend" } });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    // Content stays visible while the publish is in flight.
+    expect(getComposerInput().value).toBe("Important draft #backend");
+    // Submit button is disabled to prevent double-submit.
+    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+
+    resolveSubmit({ ok: false });
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /create task/i })).not.toBeDisabled();
+    });
+    // Content is still there after the failure resolves.
+    expect(getComposerInput().value).toBe("Important draft #backend");
+  });
+
+  it("clears the composer after a successful publish", async () => {
+    const onSubmit = vi.fn(async () => ({ ok: true }));
+    renderComposer({ onSubmit });
+
+    const textarea = getComposerInput() as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "Will succeed #backend" } });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(getComposerInput().value).toBe("");
+    });
+  });
+
   it("submits the visible mention chips as the authoritative mention set", () => {
     const onSubmit = vi.fn();
     renderComposer({ onSubmit });

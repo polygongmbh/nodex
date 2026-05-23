@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { resolveEffectiveWritableRelayIds } from "@/lib/nostr/task-relay-routing";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
-import type { TaskComposerFormData } from "./TaskComposer";
+import type { TaskComposerFormData, TaskComposerSubmitResult } from "./TaskComposer";
 import type { TaskCreateResult, TaskState } from "@/types";
 
 interface UseComposerSubmitHandlerOptions {
@@ -21,7 +21,7 @@ export function useComposerSubmitHandler({
   initialState,
   closeOnSuccess = false,
   onCancel,
-}: UseComposerSubmitHandlerOptions): (data: TaskComposerFormData) => void {
+}: UseComposerSubmitHandlerOptions): (data: TaskComposerFormData) => Promise<TaskComposerSubmitResult> {
   const { relays } = useFeedSurfaceState();
   const relaysRef = useRef(relays);
   relaysRef.current = relays;
@@ -46,7 +46,7 @@ export function useComposerSubmitHandler({
         toast.loading(t("composer.blocked.publishing"), { id: publishingToastId });
       }
 
-      void (async () => {
+      return (async () => {
         let result: TaskCreateResult;
         try {
           result = await taskCommands.createTask({
@@ -59,12 +59,13 @@ export function useComposerSubmitHandler({
           console.error("Task submit failed", error);
           notifyTaskCreationFailed();
           if (!skipLoadingToast) toast.dismiss(publishingToastId);
-          return;
+          return { ok: false };
         }
         toast.dismiss(publishingToastId);
         if (result.ok && closeOnSuccess) {
           onCancel();
         }
+        return { ok: result.ok };
       })();
     },
     [closeOnSuccess, focusedTaskId, initialState, onCancel, t, taskCommands]

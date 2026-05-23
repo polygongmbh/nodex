@@ -55,8 +55,12 @@ import {
 } from "./task-composer-runtime";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
 
+export interface TaskComposerSubmitResult {
+  ok: boolean;
+}
+
 interface TaskComposerProps {
-  onSubmit: (data: TaskComposerFormData) => void;
+  onSubmit: (data: TaskComposerFormData) => void | Promise<TaskComposerSubmitResult | void>;
   onCancel: () => void;
   hasInvalidRootTaskRelaySelection?: boolean;
   hasInvalidRootCommentRelaySelection?: boolean;
@@ -293,6 +297,14 @@ export function TaskComposer({
   const [activeRecomposeOf, setActiveRecomposeOf] = useState<ComposeRecomposeOf | undefined>(initialComposerState.recomposeOf);
   const lastAppliedMentionRequestIdRef = useRef<number | null>(null);
   const dragDepthRef = useRef(0);
+  const isMountedRef = useRef(true);
+  const isSubmittingRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
   const [isDraggingFilesOverComposer, setIsDraggingFilesOverComposer] = useState(false);
 
@@ -1053,7 +1065,20 @@ export function TaskComposer({
             endTime: endTime.trim() || undefined,
           }
         : undefined;
-    onSubmit({
+
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    setIsSendLaunching(true);
+    if (sendLaunchTimeoutRef.current !== null) {
+      window.clearTimeout(sendLaunchTimeoutRef.current);
+    }
+    sendLaunchTimeoutRef.current = window.setTimeout(() => {
+      setIsSendLaunching(false);
+      sendLaunchTimeoutRef.current = null;
+    }, 260);
+
+    const submitResult = onSubmit({
       content,
       tags: submitTags,
       postType: effectivePostType,
@@ -1071,48 +1096,59 @@ export function TaskComposer({
       ...(eventMetadata ? { eventMetadata } : {}),
     });
 
-    setIsSendLaunching(true);
-    if (sendLaunchTimeoutRef.current !== null) {
-      window.clearTimeout(sendLaunchTimeoutRef.current);
-    }
-    sendLaunchTimeoutRef.current = window.setTimeout(() => {
-      setIsSendLaunching(false);
-      sendLaunchTimeoutRef.current = null;
-    }, 260);
-    setContent("");
-    const nextFilterTags = filterTagNames ?? [];
-    const nextFilterMentions = filterMentionPubkeys ?? [];
-    const nextInheritedTags = inheritedTagNames ?? [];
-    const nextInheritedMentions = inheritedMentionPubkeys ?? [];
-    prevFilterTagNamesRef.current = [...nextFilterTags];
-    prevFilterMentionPubkeysRef.current = [...nextFilterMentions];
-    autoManagedFilterTagNamesRef.current = new Set(nextFilterTags);
-    autoManagedFilterMentionPubkeysRef.current = new Set(nextFilterMentions);
-    prevInheritedTagNamesRef.current = [...nextInheritedTags];
-    prevInheritedMentionPubkeysRef.current = [...nextInheritedMentions];
-    autoManagedInheritedTagsRef.current = new Set(nextInheritedTags);
-    autoManagedInheritedMentionsRef.current = new Set(nextInheritedMentions);
-    setExplicitTagNames(Array.from(new Set([...nextFilterTags, ...nextInheritedTags])));
-    setExplicitMentionPubkeys(Array.from(new Set([...nextFilterMentions, ...nextInheritedMentions])));
-    setLocationGeohash(undefined);
-    setShowLocationControls(false);
-    setNip99({});
-    setTitledPost({});
-    setIsTitleTouched(false);
-    setEndDate(undefined);
-    setEndTime("");
-    setAttachments([]);
-    attachmentFileRef.current = {};
-    if (collapseOnSuccess && adaptiveSize) {
-      setIsExpanded(false);
-    } else if (adaptiveSize) {
-      setIsExpanded(true);
-    }
-    window.setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 0);
-    if (draftStorageKey) {
-      clearTaskComposerDraft(draftStorageKey);
+    const finishSubmitting = () => {
+      isSubmittingRef.current = false;
+      if (isMountedRef.current) setIsSubmitting(false);
+    };
+
+    const applyClear = () => {
+      if (!isMountedRef.current) return;
+      setActiveRecomposeOf(undefined);
+      setContent("");
+      const nextFilterTags = filterTagNames ?? [];
+      const nextFilterMentions = filterMentionPubkeys ?? [];
+      const nextInheritedTags = inheritedTagNames ?? [];
+      const nextInheritedMentions = inheritedMentionPubkeys ?? [];
+      prevFilterTagNamesRef.current = [...nextFilterTags];
+      prevFilterMentionPubkeysRef.current = [...nextFilterMentions];
+      autoManagedFilterTagNamesRef.current = new Set(nextFilterTags);
+      autoManagedFilterMentionPubkeysRef.current = new Set(nextFilterMentions);
+      prevInheritedTagNamesRef.current = [...nextInheritedTags];
+      prevInheritedMentionPubkeysRef.current = [...nextInheritedMentions];
+      autoManagedInheritedTagsRef.current = new Set(nextInheritedTags);
+      autoManagedInheritedMentionsRef.current = new Set(nextInheritedMentions);
+      setExplicitTagNames(Array.from(new Set([...nextFilterTags, ...nextInheritedTags])));
+      setExplicitMentionPubkeys(Array.from(new Set([...nextFilterMentions, ...nextInheritedMentions])));
+      setLocationGeohash(undefined);
+      setShowLocationControls(false);
+      setNip99({});
+      setTitledPost({});
+      setIsTitleTouched(false);
+      setEndDate(undefined);
+      setEndTime("");
+      setAttachments([]);
+      attachmentFileRef.current = {};
+      if (collapseOnSuccess && adaptiveSize) {
+        setIsExpanded(false);
+      } else if (adaptiveSize) {
+        setIsExpanded(true);
+      }
+      window.setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
+      if (draftStorageKey) {
+        clearTaskComposerDraft(draftStorageKey);
+      }
+    };
+
+    if (submitResult && typeof (submitResult as Promise<unknown>).then === "function") {
+      void (submitResult as Promise<TaskComposerSubmitResult | void>).then((outcome) => {
+        if (!outcome || outcome.ok) applyClear();
+        finishSubmitting();
+      });
+    } else {
+      applyClear();
+      finishSubmitting();
     }
   };
 
@@ -2364,7 +2400,7 @@ export function TaskComposer({
                 }
                 handleSubmit();
               }}
-              disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled}
+              disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled || isSubmitting}
               aria-label={submitActionLabel}
               title={submitButtonTitle}
               className={cn(
