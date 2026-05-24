@@ -22,7 +22,7 @@ export const basicNostrEvents: NostrEventWithRelay[] = [
     pubkey: BASIC_FIXTURE_TASK_PUBKEY,
     created_at: 1704067260, // 2024-01-01 00:01:00 UTC
     kind: NostrEventKind.Task,
-    tags: [["t", "demo"], ["status", "todo"]],
+    tags: [["t", "demo"]],
     content: "Nameless fixture task #demo",
     sig: "c6a8b2eab38b44adc99d10c985ad0bfc999cd881045f4d1784e781902dcdbb988f39e7e9fb659f0dc1020e788444cff776322436cdf280c202ad92245462d86b",
     relayUrls: [DEMO_RELAY_URL],

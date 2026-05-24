@@ -19,10 +19,9 @@ function clean(value: string | undefined): string | undefined {
   return trimmed ? trimmed : undefined;
 }
 
-function parseStatus(value: string | undefined): Nip99ListingStatus | undefined {
+function parseStatus(value: string | undefined): Nip99ListingStatus {
   const normalized = clean(value);
-  if (normalized === "active" || normalized === "sold") return normalized;
-  return undefined;
+  return normalized === "sold" ? "sold" : "active";
 }
 
 export function parseNip99MetadataFromTags(tags: string[][]): Nip99Metadata | undefined {
@@ -57,7 +56,7 @@ export function buildNip99PublishTags({
     clean(metadata?.identifier) ||
     clean(identifierSeed) ||
     `listing-${Date.now().toString(36)}`;
-  const status = statusOverride || parseStatus(metadata?.status) || "active";
+  const status = statusOverride || metadata?.status || "active";
   const title = clean(titledPost?.title) || clean(fallbackTitle) || i18n.t("composer:composer.nip99.defaultTitle");
   const summary = clean(titledPost?.summary);
   const location = clean(titledPost?.location);

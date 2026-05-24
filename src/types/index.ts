@@ -51,7 +51,7 @@ export interface Nip99Metadata {
   price?: string;
   currency?: string;
   frequency?: string;
-  status?: Nip99ListingStatus;
+  status: Nip99ListingStatus;
   publishedAt?: string;
 }
 export type TaskDateType = "due" | "scheduled" | "start" | "end" | "milestone";
