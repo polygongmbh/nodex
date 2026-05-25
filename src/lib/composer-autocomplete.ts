@@ -45,11 +45,13 @@ export function filterChannelsForAutocomplete(channels: Channel[], hashtagFilter
       const bPrefix = bName.startsWith(normalizedHashtagFilter) ? 1 : 0;
       if (aPrefix !== bPrefix) return bPrefix - aPrefix;
 
-      if (aName.length !== bName.length) return aName.length - bName.length;
+      const aPersonal = a.personalScore ?? 0;
+      const bPersonal = b.personalScore ?? 0;
+      if (aPersonal !== bPersonal) return bPersonal - aPersonal;
 
-      const aIndex = aName.indexOf(normalizedHashtagFilter);
-      const bIndex = bName.indexOf(normalizedHashtagFilter);
-      if (aIndex !== bIndex) return aIndex - bIndex;
+      const aUsage = a.usageCount ?? 0;
+      const bUsage = b.usageCount ?? 0;
+      if (aUsage !== bUsage) return bUsage - aUsage;
 
       return aName.localeCompare(bName);
     });
