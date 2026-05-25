@@ -15,7 +15,6 @@ import {
   applyTaskSortOverlays,
   dedupeMergedTasks,
 } from "@/domain/content/task-collections";
-import { mergeTasks } from "@/domain/content/task-merge";
 import { deriveChannels } from "@/domain/content/channels";
 import { useCoreChannels } from "@/lib/use-core-channels";
 import {
@@ -30,6 +29,8 @@ import { resolveCurrentUser } from "@/lib/current-user";
 import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
+
+const EMPTY_POSTS: Post[] = [];
 
 export interface UseIndexDerivedDataOptions {
   demoTasks: Post[];
@@ -94,19 +95,23 @@ export function useIndexDerivedData({
   const nostrTasks: Post[] = usePosts();
 
   const cachedPosts = useCachedPosts({
-    activeRelayIds: effectiveActiveRelayIds,
     postsToPersist: nostrTasks,
     canPersist: hasLiveHydratedScope,
   });
 
   const allTasks = useMemo(() => {
-    // Cached posts hydrate the timeline before live events arrive; mergeTasks
-    // dedupes by id and prefers the freshest version, so a stale cached entry
-    // gets overwritten as soon as the live event comes back from the relay.
-    const cachedAndLive = dedupeMergedTasks(mergeTasks(cachedPosts, nostrTasks));
-    const fixtureAndNostrTasks = dedupeMergedTasks(mergeTasks(demoTasks, cachedAndLive));
-    return dedupeMergedTasks(mergeTasks(localTasks, fixtureAndNostrTasks));
-  }, [cachedPosts, demoTasks, localTasks, nostrTasks]);
+    // Cached posts only hydrate the cold-start view. Once the live subscription
+    // has replayed, nostrTasks is authoritative — including for deletions and
+    // suppressions that the cache layer doesn't know about, so we drop cached
+    // posts from the merge to avoid resurrecting removed ids.
+    const hydrationPosts = hasLiveHydratedScope ? EMPTY_POSTS : cachedPosts;
+    return dedupeMergedTasks([
+      ...localTasks,
+      ...demoTasks,
+      ...hydrationPosts,
+      ...nostrTasks,
+    ]);
+  }, [cachedPosts, demoTasks, localTasks, nostrTasks, hasLiveHydratedScope]);
 
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),

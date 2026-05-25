@@ -49,8 +49,7 @@ function getRelayIdsFromEvent(event: NostrEventWithRelay): string[] {
   if (relayUrls.length === 0) {
     // Every event NDK hands us should arrive with relay attribution. Reaching
     // here means an upstream subscription path lost it — log loudly instead of
-    // fabricating a synthetic bucket that would poison every Post it merges
-    // with via mergeTasks.
+    // fabricating a synthetic bucket that would poison downstream merges.
     console.error("[task-converter] event has no relay attribution", {
       id: event.id,
       kind: event.kind,
