@@ -14,7 +14,7 @@ npx vitest --reporter=verbose  # Run tests with detailed output
 
 ## Architecture
 
-**Nodex** is a Nostr-native task and discussion app. It publishes tasks and comments as Nostr events to WebSocket relays, supporting offline queuing, multiple views, and channel/person filtering.
+**Nodex** is a Nostr-native task and discussion app. It publishes tasks and comments as Nostr events to WebSocket relays with multiple views and context-oriented filtering.
 
 ### Provider Layer (`src/lib/nostr/provider/`)
 The `NDKProvider` (wrapped as `<NDKProvider>` in `App.tsx`) is the central hub. It manages:
@@ -57,15 +57,14 @@ The user's **context** is the full current slice of content: sidebar filters (ac
 `@/` maps to `src/`. All imports use this alias.
 
 ### Testing
-Tests use Vitest + jsdom + `@testing-library/react`. Setup file is `src/test/setup.ts` (mocks `localStorage`, `matchMedia`, `WebSocket`). Test fixtures are in `src/test/fixtures.ts`. Tests live alongside source files as `*.test.ts(x)`.
+Tests use Vitest + jsdom + `@testing-library/react`.
+Setup file is `src/test/setup.ts` (mocks `localStorage`, `matchMedia`, `WebSocket`).
+Test fixtures are in `src/test/fixtures.ts`.
+Tests live alongside source files as `*.test.ts(x)`.
 
-Write tests for behavior change. Prefer behavior/outcome tests over implementation-detail tests. Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
-
-High-impact areas that require test coverage:
-- Compose parsing and submission behavior
-- Channel/tag include/exclude filtering
-- Nostr event conversion, mapping, and publishing tags
-- Permission and status transition rules
+Write tests for behavior change. 
+Prefer behavior/outcome tests over implementation-detail tests.
+Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
 
 ## Shell Commands
 
@@ -81,7 +80,8 @@ High-impact areas that require test coverage:
 
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash` and warn if there are multiple unrelated changed files.
 - Use Conventional Commits: `feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`
-- After each self-contained change, commit — for multi-step tasks, commit incrementally as you go rather than batching everything into a single end-of-task commit
+- After each self-contained change, commit — for multi-step tasks **and especially big refactors**, commit incrementally at each natural checkpoint (e.g. "store field added", "consumers switched", "Index unwound", "tests updated") rather than batching everything into a single end-of-task commit
+- Prefer `git commit -m "..." <explicit file list>` over `git add ...` + `git commit`
 - After finishing work, concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
 - Amend the immediately previous local commit when the change is a direct fixup of it; use a new commit otherwise.
 
@@ -98,10 +98,10 @@ When the user says `squash`, inspect recent unpushed commits and suggest sensibl
 - Use toasts for significant user-facing outcomes; avoid duplicate/spammy toasts for the same event
 
 ## Code Standards & Refactor Policy
-
 - Max 300 lines per file — split at natural boundaries if exceeded
 - One component per file; index files export only, no logic
 - Before making substantial changes to a file, clean it up appropriately
 - Never replicate patterns from legacy files without flagging them
 - Do NOT touch files outside the current task scope
 - localStorage holds caches the live subscription rebuilds. When changing a cache's schema, don't write migration code or default-fill missing fields — reject malformed entries and let the next ingest backfill. Bump the storage key prefix if you want a clean cut.
+- when touching tests, check if they might be simplified by dropping overly specific or complex assertions
