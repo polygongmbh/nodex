@@ -34,6 +34,27 @@ describe("DateTimeControl", () => {
     expect(screen.getByRole("button", { name: /clear date/i })).toBeInTheDocument();
   });
 
+  it("closes the popover after a date is selected", () => {
+    const onDateChange = vi.fn();
+    render(
+      <DateTimeControl
+        date={undefined}
+        onDateChange={onDateChange}
+        time=""
+        onTimeChange={() => {}}
+        placeholder="Pick a date"
+        clearLabel="Clear date"
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Pick a date" }));
+    const dayButtons = screen.getAllByRole("gridcell").map((cell) => cell.querySelector("button")).filter(Boolean) as HTMLButtonElement[];
+    const enabledDay = dayButtons.find((btn) => !btn.disabled);
+    expect(enabledDay).toBeDefined();
+    fireEvent.click(enabledDay!);
+    expect(onDateChange).toHaveBeenCalled();
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+  });
+
   it("clears both date and time when clear button is pressed", () => {
     const onDateChange = vi.fn();
     const onTimeChange = vi.fn();

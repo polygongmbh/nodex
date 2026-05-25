@@ -1,4 +1,4 @@
-import { useRef, type ReactNode, type RefObject } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
 import { Clock, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -35,11 +35,12 @@ export function DateTimeControl({
 }: DateTimeControlProps) {
   const fallbackRef = useRef<HTMLDivElement>(null);
   const contentRef = popoverContentRef ?? fallbackRef;
+  const [open, setOpen] = useState(false);
 
   return (
     <>
       {leading}
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
             type="button"
@@ -56,7 +57,10 @@ export function DateTimeControl({
           <CalendarComponent
             mode="single"
             selected={date}
-            onSelect={(next) => onDateChange(next ?? undefined)}
+            onSelect={(next) => {
+              onDateChange(next ?? undefined);
+              if (next) setOpen(false);
+            }}
             initialFocus
             className="p-3 pointer-events-auto"
           />
