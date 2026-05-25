@@ -103,7 +103,7 @@ export function FilteredEmptyState() {
               variant="outline"
               onClick={handleClearFilters}
             >
-              {t("tasks.empty.filtered.clearAll")}
+              {t("tasks.empty.filtered.clearFilters")}
             </Button>
           </div>
         ) : null}

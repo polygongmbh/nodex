@@ -96,7 +96,7 @@
         "mobileFallback": "Aún no hay nada en el alcance actual; se muestra todo.",
         "mobileFallbackScoped": "Aún no hay nada {{scope}}; se muestra todo.",
         "action": "Amplía el alcance o rompe el silencio.",
-        "clearAll": "Borrar todos los filtros"
+        "clearFilters": "Borrar Filtros"
       },
       "loading": {
         "scopeOnly": "Cargando publicaciones {{scope}}.",

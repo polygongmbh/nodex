@@ -96,7 +96,7 @@
         "mobileFallback": "Nothing yet in the current scope, showing everything.",
         "mobileFallbackScoped": "Nothing yet {{scope}}, showing everything.",
         "action": "Broaden the scope or break the silence.",
-        "clearAll": "Clear all filters"
+        "clearFilters": "Clear Filters"
       },
       "loading": {
         "scopeOnly": "Loading posts {{scope}}.",
