@@ -2181,6 +2181,7 @@ export function TaskComposer({
                 placeholder={t("composer.event.startDate")}
                 clearLabel={t("composer.event.clearStart")}
                 timeLabel={t("composer.event.startTime")}
+                clearable={false}
               />
             </div>
             <div className="inline-flex w-auto items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">

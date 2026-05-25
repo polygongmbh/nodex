@@ -19,6 +19,7 @@ export interface DateTimeControlProps {
   buttonClassName?: string;
   leading?: ReactNode;
   minDate?: Date;
+  clearable?: boolean;
 }
 
 export function DateTimeControl({
@@ -34,6 +35,7 @@ export function DateTimeControl({
   buttonClassName,
   leading,
   minDate,
+  clearable = true,
 }: DateTimeControlProps) {
   const fallbackRef = useRef<HTMLDivElement>(null);
   const contentRef = popoverContentRef ?? fallbackRef;
@@ -77,18 +79,20 @@ export function DateTimeControl({
         <>
           <Clock className="h-4 w-4 text-muted-foreground" />
           <TaskTimeInput aria-label={timeLabel} value={time} onChange={onTimeChange} />
-          <button
-            type="button"
-            aria-label={clearLabel}
-            title={clearTitle ?? clearLabel}
-            onClick={() => {
-              onDateChange(undefined);
-              onTimeChange("");
-            }}
-            className="rounded-md p-1.5 hover:bg-muted"
-          >
-            <X className="h-3 w-3" />
-          </button>
+          {clearable && (
+            <button
+              type="button"
+              aria-label={clearLabel}
+              title={clearTitle ?? clearLabel}
+              onClick={() => {
+                onDateChange(undefined);
+                onTimeChange("");
+              }}
+              className="rounded-md p-1.5 hover:bg-muted"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </>
       )}
     </>
