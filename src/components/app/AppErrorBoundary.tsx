@@ -1,7 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AppErrorScreen } from "@/components/app/AppErrorScreen";
 import {
-  consumeReloadSearchParam,
   markChunkErrorReloadAttempted,
   reloadAppWithCacheBypass,
   shouldRetryChunkErrorOnce,
@@ -52,10 +51,6 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     console.warn("Chunk import failed, reloading once with cache bypass", { message: error.message });
     reloadAppWithCacheBypass();
   };
-
-  componentDidMount(): void {
-    consumeReloadSearchParam();
-  }
 
   render() {
     if (!this.state.hasError) {

@@ -2,10 +2,15 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { AppErrorBoundary } from "@/components/app/AppErrorBoundary";
 import { AppErrorScreen } from "@/components/app/AppErrorScreen";
-import { getAppErrorMessage } from "@/lib/app-fatal-error";
+import { consumeReloadSearchParam, getAppErrorMessage } from "@/lib/app-fatal-error";
 import "@/lib/runtime-storage-guard";
 import "@/lib/i18n/config";
 import "./index.css";
+
+// Strip the cache-bypass ?reload= param (set by reloadAppWithCacheBypass) before
+// BrowserRouter captures window.location — otherwise router state retains it and
+// later setSearchParams calls keep merging it back into the URL.
+consumeReloadSearchParam();
 
 const rootElement = document.getElementById("root");
 
