@@ -23,38 +23,56 @@ but render paths still need to override stale task-embedded labels.
 
 ## Current Repo State Check
 
-Checked against the repository on 2026-05-06.
+Checked against the repository on 2026-05-24.
 
 Confirmed current state:
 
-- `src/types/index.ts` still defines `Task.author: Person`.
+- `src/types/index.ts` now models feed items as `Post` variants.
+- `src/types/index.ts` defines `BasePost.author: Person`;
+  task author metadata is still embedded, but the field has moved from the old `Task` shape into shared post state.
+- `src/types/index.ts` defines `TaskPost extends BasePost`;
+  the author refactor should target `BasePost.author` / post author identity, not only task-specific fields.
 - `src/types/index.ts` already uses `TaskStateUpdate.authorPubkey: string`;
   state updates are already identifier-based and should remain so.
 - `src/infrastructure/preferences/failed-publish-drafts-storage.ts` still stores `FailedPublishDraft.author: Person`.
 - No `normalizeNostrPubkey`, `resolvePersonForPubkey`, or `resolvePersonLabelForPubkey` helper exists yet.
 - Production call sites still reading task author objects include:
+  `src/domain/content/channels.ts`,
   `src/domain/content/sidebar-people.ts`,
   `src/domain/content/person-filter.ts`,
   `src/domain/content/task-collections.ts`,
+  `src/domain/content/task-edit-window.ts`,
+  `src/domain/content/task-identity.ts`,
   `src/domain/content/task-permissions.ts`,
   `src/domain/content/task-search-document.ts`,
+  `src/domain/content/task-state.ts`,
   `src/domain/listings/listing-identity.ts`,
   `src/data/mockData.ts`,
   `src/infrastructure/nostr/task-converter.ts`,
+  `src/infrastructure/nostr/nip52-task-calendar-events.ts`,
   `src/features/feed-page/controllers/use-task-publish-flow.ts`,
   `src/features/feed-page/controllers/use-pinned-sidebar-people.ts`,
   `src/features/feed-page/controllers/use-focused-task-collapsed-sidebar-preview.ts`,
   `src/features/feed-page/controllers/use-listing-status-publish.ts`,
+  `src/features/feed-page/stores/posts-store.ts`,
   `src/features/feed-page/interactions/feed-interaction-intent.ts`,
   `src/components/tasks/FeedView.tsx`,
   `src/components/tasks/feed/FeedTaskCard.tsx`,
   `src/components/tasks/TreeTaskItem.tsx`,
   `src/components/tasks/TaskAssigneeAvatars.tsx`,
   `src/components/tasks/CalendarView.tsx`,
+  `src/components/tasks/UpcomingView.tsx`,
+  `src/components/tasks/status/status-filters.ts`,
+  `src/components/tasks/status/StatusTimelineItem.tsx`,
   `src/components/tasks/task-author-profiles-context.tsx`,
+  `src/lib/person-presence-context.tsx`,
   `src/lib/author-color.ts`.
 - `src/domain/content/depth-mode-filter.ts` has no author/person dependency and does not need to be touched for this refactor.
-- Current working tree has an unrelated `package-lock.json` modification only.
+- Current working tree has unrelated unstaged changes in `.env`, `.gitignore`,
+  `src/data/basic-nostr-events.ts`,
+  `src/infrastructure/nostr/nip99-metadata.ts`,
+  and `src/types/index.ts`,
+  plus untracked plan/script files.
 
 ## Persistence Compatibility Policy
 
