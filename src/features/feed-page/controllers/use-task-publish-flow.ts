@@ -745,7 +745,7 @@ export function useTaskPublishFlow({
         notifyPublishSavedForRetry({
           relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
         });
-        return { ok: true, mode: "queued" };
+        return { ok: true };
       }
       const eventId = signedEvent.id;
       setLocalTasks((prev) => [buildPost(eventId), ...prev]);
@@ -823,7 +823,7 @@ export function useTaskPublishFlow({
         delayMs: PUBLISH_UNDO_DELAY_MS,
         relayUrls: selectedRelayUrls,
       });
-      return { ok: true, mode: "published" };
+      return { ok: true };
     }
 
     const publishResult = await publishWithMetadata();
@@ -835,7 +835,7 @@ export function useTaskPublishFlow({
         relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
         reason: publishResult.rejectionReason,
       });
-      return { ok: true, mode: "queued" };
+      return { ok: true };
     }
 
     await publishTaskCreateFollowUps({
@@ -857,7 +857,7 @@ export function useTaskPublishFlow({
     if (recomposeOf) {
       await publishRecomposeDeletion(recomposeOf);
     }
-    return { ok: true, mode: "published" };
+    return { ok: true };
   }, [
     allTasks,
     canCreateContent,

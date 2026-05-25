@@ -267,7 +267,7 @@ describe("useTaskPublishFlow", () => {
 
     expect(screen.getByTestId("suppressed-count")).toHaveTextContent("1");
     expect(screen.getByTestId("posted-tags")).toHaveTextContent("general:relay-one");
-    expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "queued" });
+    expect(window.__TEST_RESULT__).toEqual({ ok: true });
   });
 
   it("dispatches channel frecency intents for submitted tags", async () => {
@@ -542,7 +542,7 @@ describe("useTaskPublishFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "SubmitAuthoritativeMentions" }));
 
     await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+      expect(window.__TEST_RESULT__).toEqual({ ok: true });
     });
 
     const [, , publishTags] = publishEvent.mock.calls[0] as unknown as [
@@ -570,7 +570,7 @@ describe("useTaskPublishFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "SubmitWhitespaceDelimitedTokens" }));
 
     await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+      expect(window.__TEST_RESULT__).toEqual({ ok: true });
     });
 
     const [, , publishTags] = publishEvent.mock.calls[0] as unknown as [
@@ -592,7 +592,7 @@ describe("useTaskPublishFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferNoRelay" }));
 
     await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+      expect(window.__TEST_RESULT__).toEqual({ ok: true });
     });
     expect(publishEvent).toHaveBeenCalledTimes(1);
     const [, , , , relayUrls] = publishEvent.mock.calls[0] as unknown as [
@@ -623,7 +623,7 @@ describe("useTaskPublishFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferMixedRelays" }));
 
     await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+      expect(window.__TEST_RESULT__).toEqual({ ok: true });
     });
     expect(publishEvent).toHaveBeenCalledTimes(1);
     const [, , , , relayUrls] = publishEvent.mock.calls[0] as unknown as [
@@ -652,7 +652,7 @@ describe("useTaskPublishFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "SubmitChildOfferWithDate" }));
 
     await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+      expect(window.__TEST_RESULT__).toEqual({ ok: true });
     });
     expect(publishEvent).toHaveBeenCalledTimes(1);
     const [, , publishTags, publishParentId, relayUrls] = publishEvent.mock.calls[0] as unknown as [
@@ -686,7 +686,7 @@ describe("useTaskPublishFlow", () => {
     expect(publishEvent).not.toHaveBeenCalled();
     expect(broadcastSignedEvent).not.toHaveBeenCalled();
     expect(useTaskMutationStore.getState().localTasks[0]?.id).toBe(signedEventId);
-    expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+    expect(window.__TEST_RESULT__).toEqual({ ok: true });
   });
 
   it("queues a failed publish draft when signing fails in the delay path", async () => {
@@ -702,7 +702,7 @@ describe("useTaskPublishFlow", () => {
     });
 
     expect(broadcastSignedEvent).not.toHaveBeenCalled();
-    expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "queued" });
+    expect(window.__TEST_RESULT__).toEqual({ ok: true });
   });
 
 });

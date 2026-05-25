@@ -74,7 +74,7 @@ export type TaskCreateFailureReason =
   | "relay-selection"
   | "unexpected-error";
 export type TaskCreateResult =
-  | { ok: true; mode: "published" | "queued" }
+  | { ok: true }
   | { ok: false; reason: TaskCreateFailureReason };
 export type TaskStatus = "open" | "active" | "done" | "closed";
 export interface TaskState {

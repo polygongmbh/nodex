@@ -22,7 +22,7 @@ import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
-const successResult: TaskCreateResult = { ok: true, mode: "local" };
+const successResult: TaskCreateResult = { ok: true };
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({

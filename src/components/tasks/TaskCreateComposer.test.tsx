@@ -29,10 +29,10 @@ vi.mock("sonner", () => ({
 
 const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => ({
   envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
-  outcome: { status: "handled" as const, result: { ok: true as const, mode: "local" as const } },
+  outcome: { status: "handled" as const, result: { ok: true as const } },
 }));
 const createTaskMock = vi.fn(
-  async (_payload: TaskCreatePayload): Promise<TaskCreateResult> => ({ ok: true, mode: "local" })
+  async (_payload: TaskCreatePayload): Promise<TaskCreateResult> => ({ ok: true })
 );
 
 vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
@@ -125,7 +125,7 @@ describe("TaskCreateComposer", () => {
   beforeEach(() => {
     dispatchFeedInteraction.mockClear();
     createTaskMock.mockClear();
-    createTaskMock.mockImplementation(async () => ({ ok: true, mode: "local" }));
+    createTaskMock.mockImplementation(async () => ({ ok: true }));
     localStorage.clear();
   });
 
