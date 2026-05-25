@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - The calendar view's selected-day panel now has both "Create Task" and "Create Event" buttons, each opening the composer pre-set to the right mode with the day as the start/due date.
 
 ### Changed
+- The kanban board's horizontal scrollbar is now always visible while there's overflow, instead of fading out on macOS when the pointer is idle. The board uses a custom (non-overlay) scrollbar so Safari and Firefox no longer honor the system "show scrollbars when scrolling" preference.
 - The composer's title auto-fill (used by both Listings and Events) now pulls only the first non-empty line of the content, so a post written as `Title\n\nbody...` gets a clean title instead of a truncated paragraph. Summary is no longer auto-filled — it stays manual on both surfaces.
 - Calendar events surfaced in the feed, the calendar's selected-day panel, and the status timeline now show a calendar icon (mirroring how comments show a speech-bubble icon) instead of a task-style checkbox, and the calendar selected-day card now renders the start–end range (e.g. `May 13 – 15`) for multi-day events.
 - Task attachments now group by type and render same-type items in a single horizontally-scrollable row instead of stacking vertically. Images and videos are also capped at 35% of the viewport height rather than a fixed pixel size, so a post with several media attachments no longer overflows the screen, especially on mobile.

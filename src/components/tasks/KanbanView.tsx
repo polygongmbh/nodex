@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
+import "overlayscrollbars/overlayscrollbars.css";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { Plus, X } from "lucide-react";
 import { TaskStateDefIcon, getTaskStateToneClass } from "@/components/tasks/task-state-ui";
@@ -266,7 +268,7 @@ export function KanbanView({
   );
 
   // Scroll container ref — declared early so edge-scroll callbacks can close over it
-  const columnsContainerRef = useRef<HTMLDivElement>(null);
+  const columnsContainerRef = useRef<HTMLElement | null>(null);
 
   // Edge-scroll during drag: scroll the board when the pointer nears the horizontal edges.
   // Safe with @dnd-kit/core because DragOverlay renders in a viewport-fixed portal and
@@ -480,10 +482,19 @@ export function KanbanView({
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Kanban Columns */}
-      <div
-        ref={columnsContainerRef}
-        className="scrollbar-auto relative flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4"
+      <OverlayScrollbarsComponent
+        className="relative flex-1 px-4 pt-4"
         data-onboarding="kanban-board"
+        options={{
+          overflow: { x: "scroll", y: "hidden" },
+          scrollbars: { autoHide: "never", theme: "os-theme-dark" },
+        }}
+        events={{
+          initialized: (instance) => {
+            columnsContainerRef.current = instance.elements().viewport;
+          },
+        }}
+        defer
       >
         <DndContext
           sensors={sensors}
@@ -604,7 +615,7 @@ export function KanbanView({
             ) : null}
           </DragOverlay>
         </DndContext>
-      </div>
+      </OverlayScrollbarsComponent>
     </main>
   );
 }

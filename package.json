@@ -61,6 +61,8 @@
     "linkify-it": "^5.0.0",
     "lucide-react": "^1.14.0",
     "nostr-tools": "^2.23.3",
+    "overlayscrollbars": "^2.16.0",
+    "overlayscrollbars-react": "^0.5.6",
     "react": "^19.2.5",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.5",

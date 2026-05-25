@@ -18,6 +18,34 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
 }));
 
+vi.mock("overlayscrollbars-react", () => ({
+  OverlayScrollbarsComponent: ({
+    children,
+    className,
+    events,
+    ...rest
+  }: {
+    children: ReactNode;
+    className?: string;
+    events?: { initialized?: (instance: { elements: () => { viewport: HTMLElement } }) => void };
+    [key: string]: unknown;
+  }) => (
+    <div
+      className={className}
+      ref={(el) => {
+        if (el && events?.initialized) {
+          events.initialized({ elements: () => ({ viewport: el }) });
+        }
+      }}
+      {...rest}
+    >
+      {children}
+    </div>
+  ),
+}));
+
+vi.mock("overlayscrollbars/overlayscrollbars.css", () => ({}));
+
 vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
