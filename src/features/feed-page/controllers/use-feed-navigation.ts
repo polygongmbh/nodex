@@ -6,21 +6,7 @@ import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { isTaskOutsideSelectedRelayScope } from "@/domain/relays/relay-scope";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import type { Post, Relay } from "@/types";
-
-interface LocationStateWithSearch {
-  search?: string;
-  [key: string]: unknown;
-}
-
-function readSearchFromState(state: unknown): string | undefined {
-  if (state && typeof state === "object" && "search" in state) {
-    const value = (state as LocationStateWithSearch).search;
-    return typeof value === "string" ? value : undefined;
-  }
-  return undefined;
-}
 
 const VALID_VIEWS: readonly ViewType[] = VIEW_ORDER;
 const MOBILE_MANAGE_ROUTE = "manage";
@@ -72,31 +58,6 @@ export function useFeedNavigation({
     [allTasks, focusedTaskId]
   );
 
-  // Track the latest search query in a ref so navigation callbacks can read it
-  // without re-binding (and without resubscribing to the store on every keystroke).
-  const searchQueryRef = useRef(usePreferencesStore.getState().searchQuery);
-  useEffect(() => {
-    const unsubscribe = usePreferencesStore.subscribe((state) => {
-      searchQueryRef.current = state.searchQuery;
-    });
-    return unsubscribe;
-  }, []);
-
-  // Restore the search query whenever we land on a history entry that carries
-  // one in its state (back/forward, or the pushes we make below). Entries
-  // without a `search` key (fresh page loads, view changes, unrelated navigates)
-  // leave the store untouched.
-  useEffect(() => {
-    const stored = readSearchFromState(location.state);
-    if (stored === undefined) return;
-    const { searchQuery, setSearchQuery } = usePreferencesStore.getState();
-    if (searchQuery !== stored) {
-      setSearchQuery(stored);
-    }
-    // location.key changes on every push/replace/pop, which is exactly when
-    // we want to consider applying the entry's stored search.
-  }, [location.key, location.state]);
-
   // Captures the initial URL state for onboarding autostart suppression.
   const openedWithFocusedTaskRef = useRef(Boolean(urlTaskId));
 
@@ -122,39 +83,9 @@ export function useFeedNavigation({
     (taskId: string | null, view?: ViewType) => {
       const targetView = view ?? currentView;
       const pathname = taskId ? `/${targetView}/${taskId}` : `/${targetView}`;
-      if (pathname === location.pathname) return;
-
-      const currentSearch = searchQueryRef.current;
-      // "Up" navigation (to parent) or "out" navigation (to unfocused global view)
-      // preserve the search. Any other focus change discards it but stashes the
-      // current value on the outgoing entry so browser-back can restore it.
-      const preservesSearch =
-        taskId === null || (focusedTask !== null && taskId === focusedTask.parentId);
-
-      if (!preservesSearch && currentSearch !== "") {
-        navigate(
-          { pathname: location.pathname, search: location.search, hash: location.hash },
-          {
-            replace: true,
-            state: { ...(location.state as object | null), search: currentSearch },
-          }
-        );
-      }
-
-      navigate(
-        { pathname, search: location.search, hash: location.hash },
-        { state: { search: preservesSearch ? currentSearch : "" } }
-      );
+      navigateToPath(pathname);
     },
-    [
-      navigate,
-      currentView,
-      focusedTask,
-      location.pathname,
-      location.search,
-      location.hash,
-      location.state,
-    ]
+    [navigateToPath, currentView]
   );
 
   const setManageRouteActive = useCallback(
