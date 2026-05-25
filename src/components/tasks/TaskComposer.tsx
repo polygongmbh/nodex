@@ -2172,7 +2172,10 @@ export function TaskComposer({
               <span className="text-xs text-muted-foreground">{t("composer.event.startDate")}</span>
               <DateTimeControl
                 date={dueDate}
-                onDateChange={setDueDate}
+                onDateChange={(next) => {
+                  setDueDate(next);
+                  if (next && !endDate) setEndDate(next);
+                }}
                 time={dueTime}
                 onTimeChange={setDueTime}
                 placeholder={t("composer.event.startDate")}
@@ -2191,6 +2194,7 @@ export function TaskComposer({
                 placeholder={t("composer.event.endDate")}
                 clearLabel={t("composer.event.clearEnd")}
                 timeLabel={t("composer.event.endTime")}
+                minDate={dueDate}
               />
             </div>
           </div>

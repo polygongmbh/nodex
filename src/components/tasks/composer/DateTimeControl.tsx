@@ -18,6 +18,7 @@ export interface DateTimeControlProps {
   popoverContentRef?: RefObject<HTMLDivElement>;
   buttonClassName?: string;
   leading?: ReactNode;
+  minDate?: Date;
 }
 
 export function DateTimeControl({
@@ -32,6 +33,7 @@ export function DateTimeControl({
   popoverContentRef,
   buttonClassName,
   leading,
+  minDate,
 }: DateTimeControlProps) {
   const fallbackRef = useRef<HTMLDivElement>(null);
   const contentRef = popoverContentRef ?? fallbackRef;
@@ -61,6 +63,7 @@ export function DateTimeControl({
               onDateChange(next ?? undefined);
               if (next) setOpen(false);
             }}
+            disabled={minDate ? { before: minDate } : undefined}
             initialFocus
             className="p-3 pointer-events-auto"
           />
