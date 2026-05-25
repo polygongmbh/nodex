@@ -140,13 +140,12 @@ export function useIndexDerivedData({
       effectiveActiveRelayIds,
       relays.map((relay) => relay.id)
     );
-    return deriveChannels(scopedPostsForChannels, scopedPostedTags, {
-      minCount: 2,
+    const derived = deriveChannels(scopedPostsForChannels, scopedPostedTags, {
       personalizeScores: personalizedChannelScores,
-      sortVisibleAlphabetically: true,
       coreChannels,
       userPubkey: user?.pubkey,
     });
+    return [...derived].sort((a, b) => a.name.localeCompare(b.name));
   }, [
     scopedPostsForChannels,
     postedTags,
@@ -164,7 +163,6 @@ export function useIndexDerivedData({
       relays.map((relay) => relay.id)
     );
     return deriveChannels(scopedPostsForChannels, scopedPostedTags, {
-      minCount: 1,
       coreChannels,
       userPubkey: user?.pubkey,
     });
