@@ -159,6 +159,11 @@ export interface ComposeRecomposeOf {
   eventId: string;
   /** Original event kind, used when publishing the replacing deletion event. */
   originalKind: number;
+  /**
+   * NIP-01 `d` identifier of the original event — required for `a`-tag
+   * deletions on parameterized-replaceable kinds (calendar, listings).
+   */
+  dTag?: string;
   /** Relay ids the original post lived on; used to route the deletion. */
   relayIds: string[];
   /** Parent event id of the original post, if it was a reply. */
@@ -252,6 +257,12 @@ export interface TitledPost extends BasePost {
   summary?: string;
   /** Free-form location string (NIP-52 `location` tag, NIP-99 `location` tag). */
   location?: string;
+  /**
+   * NIP-01 `d` tag — present on parameterized-replaceable posts (NIP-52 calendar
+   * events, NIP-99 listings). Needed when publishing the address-based
+   * deletion / re-publish operations these kinds require.
+   */
+  dTag?: string;
 }
 
 export interface TaskPost extends BasePost {

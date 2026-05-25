@@ -100,6 +100,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Post {
         title: event.tags.find((tag) => tag[0] === "title")?.[1]?.trim() || undefined,
         summary: event.tags.find((tag) => tag[0] === "summary")?.[1]?.trim() || undefined,
         location: event.tags.find((tag) => tag[0] === "location")?.[1]?.trim() || undefined,
+        dTag: event.tags.find((tag) => tag[0] === "d")?.[1]?.trim() || undefined,
       }
     : null;
   const locationGeohash = parseFirstGeohashTag(event.tags);

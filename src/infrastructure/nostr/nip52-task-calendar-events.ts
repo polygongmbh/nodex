@@ -259,6 +259,7 @@ export function parseStandaloneCalendarEvent(
   const summary = firstTagValue(event.tags, "summary");
   const location = firstTagValue(event.tags, "location");
   const geohash = firstTagValue(event.tags, "g");
+  const dTag = firstTagValue(event.tags, "d");
   const mentions = collectPubkeyMentions(event.tags);
   const allTags = collectHashtags(event.tags, event.content);
   const parentTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "parent");
@@ -277,6 +278,7 @@ export function parseStandaloneCalendarEvent(
     location,
     title,
     summary,
+    dTag,
   };
 
   if (parsed.kind === NostrEventKind.CalendarDateBased) {

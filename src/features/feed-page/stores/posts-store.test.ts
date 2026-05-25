@@ -9,6 +9,7 @@ import {
   applyStateUpdate,
   ingestPost,
   getPosts,
+  getPostIdByReplaceableKey,
   setPostsSuppression,
   __resetPostsStoreForTests,
 } from "./posts-store";
@@ -103,6 +104,29 @@ describe("posts-store", () => {
 
     setPostsSuppression(new Set());
     expect(getPosts().map((p) => p.id).sort()).toEqual(["drop", "keep"]);
+  });
+
+  it("clears the replaceable-key mapping when a Post is deleted, allowing a fresh re-publish", () => {
+    const author = makePerson({ pubkey: "a".repeat(64) });
+    const key = "31923:author:slug";
+    ingestPost({
+      post: makeTaskPost({ id: "cal-1", author, timestamp: new Date("2026-04-01") }),
+      replaceableKey: key,
+    });
+    expect(getPostIdByReplaceableKey(key)).toBe("cal-1");
+
+    applyDeletion({ targetIds: ["cal-1"], byPubkey: author.pubkey });
+    expect(getPostIdByReplaceableKey(key)).toBeUndefined();
+
+    // Fresh re-publish with same address, different id and newer timestamp
+    // — must be accepted (no stale id pinning the address).
+    const accepted = ingestPost({
+      post: makeTaskPost({ id: "cal-2", author, timestamp: new Date("2026-05-01") }),
+      replaceableKey: key,
+    });
+    expect(accepted).toBe(true);
+    expect(getPosts().map((p) => p.id)).toEqual(["cal-2"]);
+    expect(getPostIdByReplaceableKey(key)).toBe("cal-2");
   });
 
   it("replaces a replaceable Post when a newer one with the same key arrives", () => {

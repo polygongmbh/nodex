@@ -298,7 +298,12 @@ export function useTaskPublishFlow({
 
   const publishRecomposeDeletion = useCallback(async (target: ComposeRecomposeOf): Promise<void> => {
     const targetRelayUrls = resolveRelayUrlsFromIds(target.relayIds);
-    const deletionTags = buildDeletionTags({ id: target.eventId, kind: target.originalKind });
+    const deletionTags = buildDeletionTags({
+      id: target.eventId,
+      kind: target.originalKind,
+      pubkey: currentUser?.pubkey,
+      dTag: target.dTag,
+    });
     suppressFailedPublishEvent(target.eventId);
     try {
       const result = await publishEvent(NostrEventKind.EventDeletion, "", deletionTags, undefined, targetRelayUrls);
@@ -311,7 +316,7 @@ export function useTaskPublishFlow({
       console.warn("[recompose] deletion publish failed", { eventId: target.eventId, error });
       notifyPostDeleteFailed();
     }
-  }, [notifyIfPartialPublish, publishEvent, resolveRelayUrlsFromIds, suppressFailedPublishEvent]);
+  }, [currentUser?.pubkey, notifyIfPartialPublish, publishEvent, resolveRelayUrlsFromIds, suppressFailedPublishEvent]);
 
   const handleNewTask = useCallback(async (
     payload: TaskCreatePayload,
@@ -997,7 +1002,12 @@ export function useTaskPublishFlow({
       return false;
     }
     const targetRelayUrls = resolveRelayUrlsFromIds(existingTask.relays);
-    const deletionTags = buildDeletionTags({ id: taskId, kind: existingTask.kind });
+    const deletionTags = buildDeletionTags({
+      id: taskId,
+      kind: existingTask.kind,
+      pubkey: existingTask.author.pubkey,
+      dTag: (existingTask as { dTag?: string }).dTag,
+    });
     suppressFailedPublishEvent(taskId);
     setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
     try {
@@ -1110,6 +1120,7 @@ export function useTaskPublishFlow({
       recomposeOf: {
         eventId: existingTask.id,
         originalKind: existingTask.kind,
+        dTag: (existingTask as { dTag?: string }).dTag,
         relayIds: existingTask.relays,
         parentId: existingTask.parentId,
         contentPreview: existingTask.content.slice(0, 120),

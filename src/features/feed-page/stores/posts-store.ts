@@ -30,6 +30,11 @@ function releaseSideStoresForPost(postId: string): void {
 
 const postsById = new Map<string, Post>();
 const replaceableKeyToPostId = new Map<string, string>();
+// Reverse of `replaceableKeyToPostId`: lets `applyDeletion` evict the
+// address mapping in O(1) when its target post leaves the store, instead of
+// scanning every entry. Kept in lockstep — only mutated alongside the
+// forward map.
+const postIdToReplaceableKey = new Map<string, string>();
 
 // Tombstone: a deletion event from author A targeting id X is recorded as
 // (A, X). When a post arrives with author A and id X, it is rejected. Other
@@ -157,9 +162,11 @@ export function ingestPost({ post, replaceableKey }: IngestPostInput): boolean {
       postsById.delete(existingId);
       datesByPostId.delete(existingId);
       priorityTimestampByPostId.delete(existingId);
+      postIdToReplaceableKey.delete(existingId);
       releaseSideStoresForPost(existingId);
     }
     replaceableKeyToPostId.set(replaceableKey, post.id);
+    postIdToReplaceableKey.set(post.id, replaceableKey);
   }
 
   const withFolds = applyPendingFolds(post);
@@ -232,6 +239,11 @@ export function applyDeletion(deletion: PostDeletionRequest): void {
       postsById.delete(targetId);
       datesByPostId.delete(targetId);
       priorityTimestampByPostId.delete(targetId);
+      const replaceableKey = postIdToReplaceableKey.get(targetId);
+      if (replaceableKey) {
+        replaceableKeyToPostId.delete(replaceableKey);
+        postIdToReplaceableKey.delete(targetId);
+      }
       releaseSideStoresForPost(targetId);
       removedAny = true;
     }
@@ -297,6 +309,15 @@ export function getPostsVersion(): number {
   return version;
 }
 
+/**
+ * Resolve the current post id stored at a parameterized-replaceable address
+ * (`<kind>:<pubkey>:<d>`). Used by the deletion path to translate `a`-tag
+ * deletions into the id-keyed deletion the store understands.
+ */
+export function getPostIdByReplaceableKey(address: string): string | undefined {
+  return replaceableKeyToPostId.get(address);
+}
+
 export function subscribeToPosts(callback: () => void): () => void {
   subscribers.add(callback);
   return () => {
@@ -312,6 +333,7 @@ export function usePosts(): Post[] {
 export function __resetPostsStoreForTests(): void {
   postsById.clear();
   replaceableKeyToPostId.clear();
+  postIdToReplaceableKey.clear();
   deletionsByAuthor.clear();
   datesByPostId.clear();
   priorityTimestampByPostId.clear();

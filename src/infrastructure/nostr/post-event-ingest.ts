@@ -3,7 +3,11 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 import { isTaskStateEventKind, mapTaskStateEventToTaskStatus, extractTaskStateTargetId } from "@/infrastructure/nostr/task-state-events";
 import { isPriorityPropertyEvent, parsePriorityTag, extractPriorityTargetTaskId } from "@/infrastructure/nostr/task-property-events";
-import { isDeletionEvent, extractDeletionTargetIds } from "@/infrastructure/nostr/deletion-events";
+import {
+  isDeletionEvent,
+  extractDeletionTargetIds,
+  extractDeletionAddresses,
+} from "@/infrastructure/nostr/deletion-events";
 import {
   hasLinkedTaskRef,
   parseLinkedTaskDueFromCalendarEvent,
@@ -20,6 +24,7 @@ import {
   applyDeletion,
   applyPriorityUpdate,
   applyStateUpdate,
+  getPostIdByReplaceableKey,
   ingestPost,
 } from "@/features/feed-page/stores/posts-store";
 
@@ -110,9 +115,16 @@ function ingestPriorityFold(event: NostrEventWithRelay): void {
 }
 
 function ingestDeletion(event: NostrEventWithRelay): void {
-  const targetIds = extractDeletionTargetIds(event.tags);
-  if (targetIds.length === 0) return;
-  applyDeletion({ targetIds, byPubkey: event.pubkey });
+  const targetIds = new Set(extractDeletionTargetIds(event.tags));
+  for (const address of extractDeletionAddresses(event.tags)) {
+    // Address-based deletions (NIP-09 + NIP-01) target parameterized-replaceable
+    // events that the store keys by id. Translate the live address → current
+    // post id so applyDeletion's id-based path can do its pubkey check.
+    const postId = getPostIdByReplaceableKey(address);
+    if (postId) targetIds.add(postId);
+  }
+  if (targetIds.size === 0) return;
+  applyDeletion({ targetIds: Array.from(targetIds), byPubkey: event.pubkey });
 }
 
 /**
