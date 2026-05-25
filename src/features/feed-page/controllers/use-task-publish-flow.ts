@@ -19,12 +19,13 @@ import {
   normalizeMentionIdentifiers,
   resolveMentionIdentifiersToPubkeysAsync,
 } from "@/lib/mentions";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { useCoreChannels } from "@/lib/use-core-channels";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { normalizeComposerMessageType } from "@/domain/content/task-type";
-import { isCalendarEventKind, isCommentKind, isListingKind, isTaskKind } from "@/domain/content/task-kind";
+import { isCommentKind, isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import {   resolveRelaySelectionForSubmission, } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -40,7 +41,6 @@ import { canUserUpdateTask } from "@/domain/content/task-permissions";
 import { displayPriorityFromStored } from "@/domain/content/task-priority";
 import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
 import {
-  notifyLocalSaved,
   notifyNeedCoreTag,
   notifyNeedTag,
   notifyPartialPublish,
@@ -54,6 +54,7 @@ import {
   notifyPublishUndone,
   notifyRetryRelayMissing,
   notifyRetryRejectedByRelay,
+  notifyTaskCreationFailed,
 } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
@@ -211,6 +212,21 @@ export function useTaskPublishFlow({
       pendingPublishState.clear();
     };
   }, []);
+
+  // The only producer of localTasks now is the publish-undo window (event is
+  // signed but broadcast is deferred). Once the broadcast lands and the live
+  // round-trip ingests the event into the posts-store, drop the placeholder
+  // so dedupeMergedTasks can't keep showing the stale snapshot.
+  const livePosts = usePosts();
+  useEffect(() => {
+    if (livePosts.length === 0) return;
+    const liveIds = new Set(livePosts.map((post) => post.id));
+    setLocalTasks((prev) => {
+      if (prev.length === 0) return prev;
+      const next = prev.filter((task) => !liveIds.has(task.id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [livePosts, setLocalTasks]);
 
   const resolveMentionPubkeys = useCallback(async (mentionIdentifiers: string[]): Promise<string[]> => {
     return resolveMentionIdentifiersToPubkeysAsync(mentionIdentifiers, people, {
@@ -683,9 +699,8 @@ export function useTaskPublishFlow({
     };
 
     if (!shouldPublish) {
-      setLocalTasks((prev) => [buildPost(Date.now().toString()), ...prev]);
-      notifyLocalSaved(publishKind);
-      return { ok: true, mode: "local" };
+      notifyTaskCreationFailed();
+      return { ok: false, reason: "relay-selection" };
     }
 
     const publishWithMetadata = async () => {
@@ -835,14 +850,6 @@ export function useTaskPublishFlow({
       fallbackRelayUrls: selectedRelayUrls,
     });
 
-    setLocalTasks((prev) => {
-      const post = buildPost(publishResult.eventId || Date.now().toString());
-      const withResolvedRelays: Post = {
-        ...post,
-        relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
-      };
-      return [withResolvedRelays, ...prev];
-    });
     notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
     notifyPublished(publishKind, {
       relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
@@ -915,87 +922,13 @@ export function useTaskPublishFlow({
     }
 
     notifyIfPartialPublish(relayUrls, result.publishedRelayUrls);
-    const effectiveRelayIds = (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
-      ? result.publishedRelayUrls
-      : relayUrls
-    ).map((url) => getRelayIdFromUrl(url));
-    const dueDate = parseStoredDate(draft.dueDate);
-    const restoredTimestamp = parseStoredDate(draft.createdAt) || new Date();
-    const restoredId = result.eventId || Date.now().toString();
-    const restoredBase = {
-      id: restoredId,
-      author: draft.author,
-      content: draft.content,
-      tags: draft.tags,
-      relays: effectiveRelayIds.length > 0
-        ? effectiveRelayIds
-        : (demoFeedActive ? [demoRelayId] : []),
-      timestamp: restoredTimestamp,
-      parentId: draft.parentId,
-      mentions: draft.mentionPubkeys,
-      locationGeohash: draft.locationGeohash,
-      attachments: draft.attachments,
-    };
-    let restoredTask: Post;
-    if (isTaskKind(draft.publishKind)) {
-      restoredTask = {
-        ...restoredBase,
-        kind: NostrEventKind.Task,
-        stateUpdates: draft.initialState && draft.initialState.status !== "open"
-          ? [{
-              id: `local-init-${restoredTimestamp.getTime()}`,
-              state: draft.initialState,
-              timestamp: restoredTimestamp,
-              authorPubkey: draft.author.pubkey,
-            }]
-          : [],
-        dates: dueDate
-          ? [{ date: dueDate, time: draft.dueTime, type: draft.dateType ?? "due" }]
-          : [],
-        assigneePubkeys: draft.assigneePubkeys ?? [],
-        priority: draft.priority,
-      };
-    } else if (isListingKind(draft.publishKind)) {
-      restoredTask = {
-        ...restoredBase,
-        kind: NostrEventKind.ClassifiedListing,
-        nip99: { identifier: restoredId, status: "active" },
-      };
-    } else if (isCalendarEventKind(draft.publishKind)) {
-      if (draft.publishKind === NostrEventKind.CalendarTimeBased && dueDate) {
-        const start = new Date(dueDate);
-        const timeMatch = draft.dueTime?.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-        if (timeMatch) start.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
-        restoredTask = {
-          ...restoredBase,
-          kind: NostrEventKind.CalendarTimeBased,
-          start,
-        };
-      } else if (draft.publishKind === NostrEventKind.CalendarDateBased && dueDate) {
-        const yyyy = dueDate.getFullYear();
-        const mm = String(dueDate.getMonth() + 1).padStart(2, "0");
-        const dd = String(dueDate.getDate()).padStart(2, "0");
-        restoredTask = {
-          ...restoredBase,
-          kind: NostrEventKind.CalendarDateBased,
-          startDate: `${yyyy}-${mm}-${dd}`,
-        };
-      } else {
-        // Missing date is unexpected for an event; fall back to a comment so
-        // the failed draft entry is at least dismissable.
-        restoredTask = { ...restoredBase, kind: NostrEventKind.TextNote };
-      }
-    } else {
-      restoredTask = { ...restoredBase, kind: NostrEventKind.TextNote };
-    }
-    setLocalTasks((prev) => [restoredTask, ...prev]);
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
 
     await publishTaskCreateFollowUps({
       publishedEventId: result.eventId,
       kind: draft.publishKind,
       initialState: draft.initialState,
-      dueDate,
+      dueDate: parseStoredDate(draft.dueDate),
       content: draft.content,
       dueTime: draft.dueTime,
       dateType: draft.dateType,
@@ -1007,8 +940,6 @@ export function useTaskPublishFlow({
       relayUrls: result.publishedRelayUrls?.length ? result.publishedRelayUrls : relayUrls,
     });
   }, [
-    demoFeedActive,
-    demoRelayId,
     failedPublishDrafts,
     guardInteraction,
     notifyIfPartialPublish,
@@ -1016,7 +947,6 @@ export function useTaskPublishFlow({
     publishEvent,
     publishTaskCreateFollowUps,
     setFailedPublishDrafts,
-    setLocalTasks,
     suppressFailedPublishEvent,
   ]);
 
@@ -1053,19 +983,8 @@ export function useTaskPublishFlow({
       notifyStatusRestricted();
       return;
     }
-    setLocalTasks((prev) =>
-      prev.map((task) => {
-        if (task.id !== taskId || !isTaskPost(task)) return task;
-        const otherDates = task.dates.filter((entry) => entry.type !== dateType);
-        return {
-          ...task,
-          dates: [{ date: dueDate, time: dueTime, type: dateType }, ...otherDates],
-          lastEditedAt: new Date(),
-        };
-      })
-    );
     void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
-  }, [allTasks, currentUser, guardInteraction, publishTaskDueUpdate, setLocalTasks]);
+  }, [allTasks, currentUser, guardInteraction, publishTaskDueUpdate]);
 
   const handlePostDelete = useCallback(async (taskId: string): Promise<boolean> => {
     if (guardInteraction("modify")) return false;

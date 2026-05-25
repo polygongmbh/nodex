@@ -28,7 +28,6 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/lib/notifications", () => ({
-  notifyLocalSaved: vi.fn(),
   notifyNeedTag: vi.fn(),
   notifyPartialPublish: vi.fn(),
   notifyPostDeleted: vi.fn(),
@@ -41,6 +40,7 @@ vi.mock("@/lib/notifications", () => ({
   notifyPublishUndone: vi.fn(),
   notifyRetryRelayMissing: vi.fn(),
   notifyRetryRejectedByRelay: vi.fn(),
+  notifyTaskCreationFailed: vi.fn(),
 }));
 
 vi.mock("@/lib/user-preferences", () => ({
@@ -285,7 +285,7 @@ describe("useTaskPublishFlow", () => {
     });
   });
 
-  it("retries a failed draft and restores it into local tasks", async () => {
+  it("clears the failed draft after a successful retry", async () => {
     const publishEvent = vi
       .fn()
       .mockResolvedValueOnce({
@@ -312,20 +312,32 @@ describe("useTaskPublishFlow", () => {
     await waitFor(() => {
       expect(screen.getByTestId("draft-count")).toHaveTextContent("0");
     });
-    expect(screen.getByTestId("local-count")).toHaveTextContent("1");
+    expect(publishEvent).toHaveBeenCalledTimes(2);
   });
 
   it("updates due date and priority through the extracted handlers", async () => {
     const initialTask = makeTask({ id: "task-1", relays: ["relay-one"] });
+    const publishTaskDueUpdate = vi.fn(async () => true);
+    const publishTaskPriorityUpdate = vi.fn(async () => true);
 
-    renderHarness({ initialTasks: [initialTask] });
+    renderHarness({
+      initialTasks: [initialTask],
+      publishTaskDueUpdate,
+      publishTaskPriorityUpdate,
+    });
     fireEvent.click(screen.getByRole("button", { name: "Due" }));
     fireEvent.click(screen.getByRole("button", { name: "Priority" }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("first-priority")).toHaveTextContent("60");
+      expect(publishTaskPriorityUpdate).toHaveBeenCalledWith("task-1", 60);
     });
-    expect(screen.getByTestId("first-due-date")).toHaveTextContent("2026-04-01T10:00:00.000Z");
+    expect(publishTaskDueUpdate).toHaveBeenCalledWith(
+      "task-1",
+      expect.any(String),
+      new Date("2026-04-01T10:00:00.000Z"),
+      "10:00",
+      "due",
+    );
   });
 
   it("publishes a NIP-09 deletion and removes the local task on success", async () => {
@@ -516,16 +528,6 @@ describe("useTaskPublishFlow", () => {
     expect(publishTaskPriorityUpdate).not.toHaveBeenCalled();
   });
 
-  it("does not assign the creator when publishing an untagged task locally", async () => {
-    renderHarness({ forceLocalMode: true });
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("local-count")).toHaveTextContent("1");
-    });
-    expect(screen.getByTestId("first-assignees")).toBeEmptyDOMElement();
-  });
-
   it("uses provided mention identifiers as the authoritative mention set", async () => {
     const publishEvent = vi.fn(async () => ({
       success: true,
@@ -578,8 +580,6 @@ describe("useTaskPublishFlow", () => {
     ];
     expect(publishTags).toEqual(expect.arrayContaining([["t", "general"], ["p", "a".repeat(64)]]));
     expect(publishTags).not.toEqual(expect.arrayContaining([["t", "(#general)"]]));
-    expect(screen.getByTestId("first-assignees")).toHaveTextContent("a".repeat(64));
-    expect(screen.getByTestId("first-mentions")).toHaveTextContent(`alice,${"a".repeat(64)}`);
   });
 
   it("defaults root offer submissions to the only active relay when none is explicitly selected", async () => {
@@ -705,13 +705,4 @@ describe("useTaskPublishFlow", () => {
     expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "queued" });
   });
 
-  it("drops offer date fields when storing local-only submissions", async () => {
-    renderHarness({ forceLocalMode: true });
-    fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferWithDate" }));
-
-    await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "local" });
-    });
-    expect(screen.getByTestId("first-due-date")).toBeEmptyDOMElement();
-  });
 });

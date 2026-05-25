@@ -245,10 +245,6 @@ export function notifyPublished(
   toast.success(isTaskKind(kind) ? i18n.t("composer:toasts.success.publishedTask") : i18n.t("composer:toasts.success.publishedComment"));
 }
 
-export function notifyLocalSaved(kind: NostrEventKind): void {
-  toast.success(isTaskKind(kind) ? i18n.t("composer:toasts.success.localTask") : i18n.t("composer:toasts.success.localComment"));
-}
-
 interface PublishRetryToastOptions {
   relayUrl?: string;
   reason?: string;
