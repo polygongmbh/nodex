@@ -181,9 +181,9 @@
     "back": "Zurück",
     "goBack": "Zurück gehen",
     "up": "Hoch",
-    "goToParent": "Zur übergeordneten Aufgabe wechseln",
+    "goToParent": "Zum übergeordneten Beitrag wechseln",
     "allTasks": "Alle",
-    "showAllTasks": "Alle Aufgaben anzeigen"
+    "showAllTasks": "Alle Beiträge anzeigen"
   },
   "hints": {
     "statusToggle": {

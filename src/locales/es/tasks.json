@@ -181,9 +181,9 @@
     "back": "Atrás",
     "goBack": "Volver atrás",
     "up": "Subir",
-    "goToParent": "Ir a la tarea padre",
+    "goToParent": "Ir al elemento padre",
     "allTasks": "Todas",
-    "showAllTasks": "Mostrar todas las tareas"
+    "showAllTasks": "Mostrar todas las publicaciones"
   },
   "hints": {
     "statusToggle": {
