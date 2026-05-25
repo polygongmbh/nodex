@@ -2174,7 +2174,7 @@ export function TaskComposer({
                 date={dueDate}
                 onDateChange={(next) => {
                   setDueDate(next);
-                  if (next && !endDate) setEndDate(next);
+                  if (next && (!endDate || endDate < next)) setEndDate(next);
                 }}
                 time={dueTime}
                 onTimeChange={setDueTime}
