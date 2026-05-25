@@ -37,7 +37,6 @@ function renderPane(currentView: ViewType, value: FeedTaskViewModel) {
       value={{
         relays: [{ id: "demo", name: "Demo", isActive: true, connectionStatus: "connected", url: "wss://demo.test" }],
         channels: [],
-        composeChannels: [],
         people: [],
         mentionablePeople: [],
         searchQuery: "",

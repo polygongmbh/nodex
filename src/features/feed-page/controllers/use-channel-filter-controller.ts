@@ -33,7 +33,6 @@ import type { Dispatch, SetStateAction } from "react";
 interface UseChannelFilterControllerOptions {
   relays: Relay[];
   channels: Channel[];
-  composeChannels: Channel[];
   people: SelectablePerson[];
   setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
   sidebarPeople: SidebarPerson[];
@@ -44,7 +43,6 @@ interface UseChannelFilterControllerOptions {
 export function useChannelFilterController({
   relays,
   channels,
-  composeChannels,
   people,
   setPeople,
   sidebarPeople,
@@ -90,25 +88,11 @@ export function useChannelFilterController({
     [channelFilterStates, channels]
   );
 
-  const composeChannelsWithState = useMemo(
-    () =>
-      composeChannels.map((channel) => ({
-        ...channel,
-        filterState: channelFilterStates.get(channel.id) || "neutral",
-      })),
-    [channelFilterStates, composeChannels]
-  );
-
   const isFilterPruneReady = hasLiveHydratedScope || !isHydrating;
 
   useEffect(() => {
     if (!isFilterPruneReady) return;
-    const availableChannelIds = new Set([
-      ...channels.map((channel) => channel.id),
-      ...composeChannels
-        .filter((channel) => channel.usageCount !== 0)
-        .map((channel) => channel.id),
-    ]);
+    const availableChannelIds = new Set(channels.map((channel) => channel.id));
     setChannelFilterStates((prev) => {
       let changed = false;
       const next = new Map(prev);
@@ -122,7 +106,7 @@ export function useChannelFilterController({
 
       return changed ? next : prev;
     });
-  }, [channels, composeChannels, isFilterPruneReady, setChannelFilterStates]);
+  }, [channels, isFilterPruneReady, setChannelFilterStates]);
 
   useEffect(() => {
     if (!isFilterPruneReady) return;
@@ -404,7 +388,7 @@ export function useChannelFilterController({
     setChannelFilterStates,
     channelMatchMode,
     setChannelMatchMode,
-    composeChannelsWithState,
+    channelsWithState,
     quickFilters,
     setQuickFilters,
     handlers: filterHandlers,

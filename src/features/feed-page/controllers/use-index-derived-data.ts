@@ -48,7 +48,6 @@ export interface UseIndexDerivedDataOptions {
 export interface UseIndexDerivedDataResult {
   allTasks: Post[];
   channels: Channel[];
-  composeChannels: Channel[];
   mentionAutocompletePeople: SelectablePerson[];
   sidebarPeople: SidebarPerson[];
   currentUser: Person | undefined;
@@ -156,18 +155,6 @@ export function useIndexDerivedData({
     user?.pubkey,
   ]);
 
-  const composeChannels: Channel[] = useMemo(() => {
-    const scopedPostedTags = getPostedTagsForRelayScope(
-      postedTags,
-      effectiveActiveRelayIds,
-      relays.map((relay) => relay.id)
-    );
-    return deriveChannels(scopedPostsForChannels, scopedPostedTags, {
-      coreChannels,
-      userPubkey: user?.pubkey,
-    });
-  }, [postedTags, scopedPostsForChannels, effectiveActiveRelayIds, relays, coreChannels, user?.pubkey]);
-
   const mentionAutocompletePeople = useMentionAutocompletePeople({
     scopedPosts: scopedPostsForChannels,
     cachedKind0Events,
@@ -207,7 +194,6 @@ export function useIndexDerivedData({
   return {
     allTasks,
     channels,
-    composeChannels,
     mentionAutocompletePeople,
     sidebarPeople,
     currentUser,

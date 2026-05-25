@@ -60,9 +60,6 @@ function Harness({
 }) {
   const [people, setPeople] = useState<SelectablePerson[]>(startWithEmptyPeople ? [] : peopleSeed);
   const [visibleChannels, setVisibleChannels] = useState<Channel[]>(startWithEmptyScope ? [] : channels);
-  const [visibleComposeChannels, setVisibleComposeChannels] = useState<Channel[]>(
-    startWithEmptyScope ? [] : channels
-  );
   const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<SidebarPerson[]>(
     startWithEmptyScope ? [] : peopleSeed
   );
@@ -78,7 +75,6 @@ function Harness({
   const filters = useChannelFilterController({
     relays: relaysWithActiveState,
     channels: visibleChannels,
-    composeChannels: visibleComposeChannels,
     people,
     setPeople,
     sidebarPeople: visibleSidebarPeople,
@@ -96,25 +92,7 @@ function Harness({
       <button onClick={() => filters.showOnlyPerson("alice")}>PersonExclusive</button>
       <button onClick={() => filters.toggleAllPeople()}>PersonClearAll</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagInclude", tag: "urgent" })}>HashtagInclude</button>
-      <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralSidebarChannel</button>
-      <button onClick={() => {
-        setVisibleChannels([channels[1]]);
-        setVisibleComposeChannels([channels[1]]);
-      }}>HideGeneralEverywhere</button>
-      <button onClick={() => {
-        setVisibleChannels([channels[1]]);
-        setVisibleComposeChannels([
-          makeChannel({ id: "general", name: "general", usageCount: 3 }),
-          channels[1],
-        ]);
-      }}>KeepGeneralComposeRealOnly</button>
-      <button onClick={() => {
-        setVisibleChannels([channels[1]]);
-        setVisibleComposeChannels([
-          makeChannel({ id: "general", name: "general", usageCount: 0 }),
-          channels[1],
-        ]);
-      }}>KeepGeneralComposeForcedOnly</button>
+      <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralEverywhere</button>
       <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAliceSidebarPerson</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", author: makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }) })}>
         AuthorClick
@@ -203,23 +181,16 @@ describe("useChannelFilterController", () => {
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
   });
 
-  it.each([
-    ["KeepGeneralComposeRealOnly", "included"],
-    ["HideGeneralEverywhere", "included"],
-    ["KeepGeneralComposeForcedOnly", "included"],
-  ] as const)(
-    "resolves selected channel state for scoped availability source %s",
-    (scopeActionButtonName, expectedState) => {
-      renderHarness();
+  it("preserves non-neutral channel state even when the channel leaves the scope", () => {
+    renderHarness();
 
-      fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
-      expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+    fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
 
-      fireEvent.click(screen.getByRole("button", { name: scopeActionButtonName }));
+    fireEvent.click(screen.getByRole("button", { name: "HideGeneralEverywhere" }));
 
-      expect(screen.getByTestId("channel-state-general")).toHaveTextContent(expectedState);
-    }
-  );
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+  });
 
   it("does not discard URL-hydrated channel params when a scoped feed hides that channel", () => {
     renderHarness({

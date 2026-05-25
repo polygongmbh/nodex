@@ -8,7 +8,6 @@ export interface FeedSurfaceState {
   channels: Channel[];
   visibleChannels?: Channel[];
   primaryChannels?: Channel[];
-  composeChannels?: Channel[];
   people: SelectablePerson[];
   visiblePeople?: SidebarPerson[];
   mentionablePeople?: SelectablePerson[];
@@ -20,7 +19,6 @@ const defaultFeedSurfaceState: FeedSurfaceState = {
   channels: [],
   visibleChannels: [],
   primaryChannels: [],
-  composeChannels: [],
   people: [],
   visiblePeople: [],
   mentionablePeople: [],
@@ -42,15 +40,15 @@ export function useFeedSurfaceState(): FeedSurfaceState {
 }
 
 export function useFeedComposerOptions() {
-  const { relays, channels, composeChannels, people, mentionablePeople } = useFeedSurfaceState();
+  const { relays, channels, people, mentionablePeople } = useFeedSurfaceState();
   return useMemo(
     () => ({
       relays,
-      channels: composeChannels || channels,
+      channels,
       people,
       mentionablePeople: mentionablePeople || people,
     }),
-    [channels, composeChannels, mentionablePeople, people, relays]
+    [channels, mentionablePeople, people, relays]
   );
 }
 

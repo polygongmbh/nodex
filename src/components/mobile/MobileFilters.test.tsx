@@ -113,7 +113,6 @@ describe("MobileFilters management view", () => {
           relays,
           channels: [{ id: "broad-channel", name: "broad-channel", filterState: "neutral" }],
           visibleChannels: [{ id: "visible-channel", name: "visible-channel", filterState: "neutral" }],
-          composeChannels: channels,
           people: [
             { pubkey: "broad-person", name: "Broad Person", displayName: "Broad Person", avatar: "", isSelected: false },
           ],

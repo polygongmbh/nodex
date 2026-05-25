@@ -69,7 +69,6 @@ function renderTaskTree(
   const surfaceState: FeedSurfaceState = {
     relays,
     channels,
-    composeChannels: channels,
     people,
     mentionablePeople: people,
     searchQuery: "",

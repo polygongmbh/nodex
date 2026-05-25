@@ -92,13 +92,12 @@ function Harness() {
   const filters = useChannelFilterController({
     relays: relaysWithActiveState,
     channels: derived.channels,
-    composeChannels: derived.composeChannels,
     people,
     setPeople,
     sidebarPeople: [],
   });
 
-  const composeIncludedChannels = filters.composeChannelsWithState
+  const includedChannels = filters.channelsWithState
     .filter((channel) => channel.filterState === "included")
     .map((channel) => channel.name)
     .join(",");
@@ -110,9 +109,9 @@ function Harness() {
       <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagInclude", tag: "urgent" })}>HashtagInclude</button>
       <output data-testid="compose-channel-names">
-        {filters.composeChannelsWithState.map((channel) => channel.name).join(",")}
+        {filters.channelsWithState.map((channel) => channel.name).join(",")}
       </output>
-      <output data-testid="compose-included-channel-names">{composeIncludedChannels}</output>
+      <output data-testid="compose-included-channel-names">{includedChannels}</output>
     </>
   );
 }

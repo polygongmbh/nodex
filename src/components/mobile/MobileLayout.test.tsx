@@ -185,7 +185,6 @@ const baseTaskViewModel: FeedTaskViewModel = {
 const baseSurfaceState: FeedSurfaceState = {
   relays,
   channels,
-  composeChannels: channels,
   people,
   quickFilters: makeQuickFilterState(),
 };
@@ -390,7 +389,6 @@ describe("MobileLayout auth wiring", () => {
     renderMobileLayout({
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
-        composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
       },
       taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
       searchQuery: "nomatchquery",
@@ -549,7 +547,6 @@ describe("MobileLayout auth wiring", () => {
     renderMobileLayout({
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
-        composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
         people: [selectedPerson, otherPerson],
       },
       taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },

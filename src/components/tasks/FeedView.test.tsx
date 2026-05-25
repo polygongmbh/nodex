@@ -66,7 +66,6 @@ function renderFeedView(
   const surfaceState: FeedSurfaceState = {
     relays,
     channels,
-    composeChannels: channels,
     people: [author],
     mentionablePeople: [author],
     searchQuery: "",
@@ -195,7 +194,6 @@ describe("FeedView", () => {
         value={{
           relays,
           channels,
-          composeChannels: channels,
           people: [author],
           mentionablePeople: [author],
           searchQuery: "",
@@ -219,7 +217,6 @@ describe("FeedView", () => {
         value={{
           relays,
           channels,
-          composeChannels: channels,
           people: [author],
           mentionablePeople: [author],
           searchQuery: "",
@@ -355,7 +352,6 @@ describe("FeedView", () => {
       },
       {
         channels: [includedChannel],
-        composeChannels: [includedChannel],
       }
     );
 
@@ -366,7 +362,6 @@ describe("FeedView", () => {
         value={{
           relays,
           channels: [neutralChannel],
-          composeChannels: [neutralChannel],
           people: [author],
           mentionablePeople: [author],
           searchQuery: "",
@@ -431,7 +426,6 @@ describe("FeedView", () => {
         value={{
           relays: [relayOne, { ...relayTwo, isActive: false }],
           channels,
-          composeChannels: channels,
           people: [author],
           mentionablePeople: [author],
           searchQuery: "",
@@ -491,7 +485,6 @@ describe("FeedView", () => {
         value={{
           relays,
           channels,
-          composeChannels: channels,
           people: [author],
           mentionablePeople: [author],
           searchQuery: "",
@@ -1171,7 +1164,6 @@ describe("FeedView", () => {
       },
       {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
-        composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
         people: [selectedAuthor, otherAuthor],
         mentionablePeople: [selectedAuthor, otherAuthor],
       }

@@ -201,7 +201,6 @@ function FeedIndexContent() {
   const {
     allTasks: baseAllTasks,
     channels,
-    composeChannels,
     mentionAutocompletePeople,
     sidebarPeople,
     currentUser,
@@ -232,7 +231,6 @@ function FeedIndexContent() {
     setChannelFilterStates,
     channelMatchMode,
     setChannelMatchMode,
-    composeChannelsWithState,
     quickFilters,
     setQuickFilters,
     handlers: filterHandlers,
@@ -246,7 +244,6 @@ function FeedIndexContent() {
   } = useChannelFilterController({
     relays,
     channels,
-    composeChannels,
     people,
     setPeople,
     sidebarPeople: sidebarPeopleWithSelected,
@@ -400,23 +397,7 @@ function FeedIndexContent() {
     resetFiltersToDefault,
   });
 
-  const sidebarChannels = useMemo(() => {
-    const activeChannelIds = new Set(
-      Array.from(channelFilterStates.entries())
-        .filter(([, state]) => state !== "neutral")
-        .map(([id]) => id)
-    );
-    if (activeChannelIds.size === 0) return channels;
-
-    const existingIds = new Set(channels.map((channel) => channel.id));
-    const selectedComposeChannels = composeChannels.filter(
-      (channel) =>
-        channel.usageCount !== 0 &&
-        activeChannelIds.has(channel.id) &&
-        !existingIds.has(channel.id)
-    );
-    return [...selectedComposeChannels, ...channels];
-  }, [channelFilterStates, channels, composeChannels]);
+  const sidebarChannels = channels;
 
   const {
     commands: sidebarCommands,
@@ -764,7 +745,6 @@ function FeedIndexContent() {
       channels: expandedBandChannels,
       visibleChannels: expandedBandChannels,
       primaryChannels: primaryBandChannels,
-      composeChannels: composeChannelsWithState,
       people,
       visiblePeople: peopleWithState,
       mentionablePeople: mentionAutocompletePeople,
@@ -774,7 +754,6 @@ function FeedIndexContent() {
       relaysWithActiveState,
       expandedBandChannels,
       primaryBandChannels,
-      composeChannelsWithState,
       people,
       peopleWithState,
       mentionAutocompletePeople,
