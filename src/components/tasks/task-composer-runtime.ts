@@ -54,12 +54,6 @@ export interface ResolvedTaskComposerEnvironment {
   selectedPeoplePubkeys: string[];
 }
 
-export interface TaskComposerChannelOption {
-  id: string;
-  name: string;
-  isIncluded: boolean;
-}
-
 export interface TaskComposerMentionOption {
   pubkey: string;
   identifier: string;
@@ -71,7 +65,7 @@ export interface TaskComposerMentionOption {
 }
 
 export interface TaskComposerModel {
-  channelOptions: TaskComposerChannelOption[];
+  channelOptions: Channel[];
   mentionOptions: TaskComposerMentionOption[];
   includedChannels: string[];
   selectedPeoplePubkeys: string[];
@@ -153,11 +147,7 @@ export function useTaskComposerModel(): TaskComposerModel {
   const environment = useTaskComposerEnvironment();
 
   return useMemo(() => {
-    const channelOptions = environment.channels.map((channel) => ({
-      id: channel.id,
-      name: channel.name,
-      isIncluded: channel.filterState === "included",
-    }));
+    const channelOptions = environment.channels;
 
     const mentionOptions = environment.people.map((person) => {
       const identifier = getPreferredMentionIdentifier(person);

@@ -41,10 +41,6 @@ export function filterChannelsForAutocomplete(channels: Channel[], hashtagFilter
       const bExact = bName === normalizedHashtagFilter ? 1 : 0;
       if (aExact !== bExact) return bExact - aExact;
 
-      const aPrefix = aName.startsWith(normalizedHashtagFilter) ? 1 : 0;
-      const bPrefix = bName.startsWith(normalizedHashtagFilter) ? 1 : 0;
-      if (aPrefix !== bPrefix) return bPrefix - aPrefix;
-
       const aPersonal = a.personalScore ?? 0;
       const bPersonal = b.personalScore ?? 0;
       if (aPersonal !== bPersonal) return bPersonal - aPersonal;
@@ -52,6 +48,10 @@ export function filterChannelsForAutocomplete(channels: Channel[], hashtagFilter
       const aUsage = a.usageCount ?? 0;
       const bUsage = b.usageCount ?? 0;
       if (aUsage !== bUsage) return bUsage - aUsage;
+
+      const aPrefix = aName.startsWith(normalizedHashtagFilter) ? 1 : 0;
+      const bPrefix = bName.startsWith(normalizedHashtagFilter) ? 1 : 0;
+      if (aPrefix !== bPrefix) return bPrefix - aPrefix;
 
       return aName.localeCompare(bName);
     });

@@ -23,7 +23,7 @@ describe("composer autocomplete helpers", () => {
     expect(hasMentionQueryAtCursor("Ping @alice ")).toBe(false);
   });
 
-  it("orders channel suggestions by exact match, then prefix, then alphabetically", () => {
+  it("puts exact match first, then falls back to prefix and alphabetical when there is no frecency signal", () => {
     expect(filterChannelsForAutocomplete(channels, "ba").map((channel) => channel.name)).toEqual([
       "ba",
       "backend",
@@ -35,6 +35,28 @@ describe("composer autocomplete helpers", () => {
     expect(filterChannelsForAutocomplete(channels, "b", 2).map((channel) => channel.name)).toEqual([
       "ba",
       "backend",
+    ]);
+  });
+
+  it("lets a frecent substring match beat a prefix match without frecency", () => {
+    const mixed: Channel[] = [
+      { id: "platform", name: "platform", filterState: "neutral" },
+      { id: "myproject", name: "myproject", filterState: "neutral", personalScore: 5 },
+    ];
+    expect(filterChannelsForAutocomplete(mixed, "p").map((channel) => channel.name)).toEqual([
+      "myproject",
+      "platform",
+    ]);
+  });
+
+  it("still honors exact match over a frecent substring match", () => {
+    const mixed: Channel[] = [
+      { id: "p", name: "p", filterState: "neutral" },
+      { id: "myproject", name: "myproject", filterState: "neutral", personalScore: 99 },
+    ];
+    expect(filterChannelsForAutocomplete(mixed, "p").map((channel) => channel.name)).toEqual([
+      "p",
+      "myproject",
     ]);
   });
 

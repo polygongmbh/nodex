@@ -1152,14 +1152,7 @@ export function TaskComposer({
     }
   };
 
-  const filteredChannels = filterChannelsForAutocomplete(
-    channelOptions.map((channel) => ({
-      id: channel.id,
-      name: channel.name,
-      filterState: channel.isIncluded ? "included" : "neutral" as const,
-    })),
-    hashtagFilter
-  );
+  const filteredChannels = filterChannelsForAutocomplete(channelOptions, hashtagFilter);
   const normalizedMentionFilter = mentionFilter.trim().toLowerCase();
   const filteredPeople = mentionOptions.filter((person) =>
     normalizedMentionFilter.length === 0
