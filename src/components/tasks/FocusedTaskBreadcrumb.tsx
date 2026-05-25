@@ -51,11 +51,14 @@ export function FocusedTaskBreadcrumb({
     return focusedTask?.parentId || null;
   }, [allTasks, focusedTaskId]);
 
+  const buttonClass = "inline-flex items-center rounded-md px-2.5 py-1.5 transition-colors hover:text-foreground hover:bg-background/70";
+
   return (
     <div
       data-onboarding="focused-breadcrumb"
       className={cn(
         "w-full h-12 border-b border-border/80 bg-muted/60 px-2 sm:px-3 flex items-center gap-3 shadow-sm",
+        "text-sm font-medium text-foreground/85 whitespace-nowrap",
         className
       )}
     >
@@ -64,46 +67,28 @@ export function FocusedTaskBreadcrumb({
         onClick={() => navigate(-1)}
         aria-label={t("breadcrumbs.back")}
         title={t("breadcrumbs.goBack")}
-        className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium text-foreground/85 transition-colors hover:text-foreground hover:bg-background/70"
+        className={cn(buttonClass, "gap-1")}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         <span>{t("breadcrumbs.back")}</span>
       </button>
-      <button
-        type="button"
-        onClick={() => focusTask(parentFocusId)}
-        disabled={!focusedTaskId}
-        aria-label={t("breadcrumbs.up")}
-        title={t("breadcrumbs.goToParent")}
-        className={cn(
-          "inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
-          focusedTaskId
-            ? "text-foreground/85 hover:text-foreground hover:bg-background/70"
-            : "text-muted-foreground/60 cursor-not-allowed"
-        )}
-      >
-        <ChevronUp className="w-3.5 h-3.5" />
-        <span>{t("breadcrumbs.up")}</span>
-      </button>
-      <div className="min-w-0 flex flex-1 items-center gap-1.5 overflow-hidden text-sm text-foreground/80 whitespace-nowrap">
+      <div className="min-w-0 flex flex-1 items-center overflow-hidden">
         <button
           onClick={() => focusTask(null)}
-          className={cn(
-            "shrink-0 rounded px-1.5 py-0.5 text-left transition-colors hover:text-foreground hover:bg-background/70",
-            path.length === 0 && "text-foreground font-semibold"
-          )}
+          className={cn(buttonClass, "shrink-0", path.length === 0 && "text-foreground font-semibold")}
           type="button"
           title={t("breadcrumbs.showAllTasks")}
         >
           {t("breadcrumbs.allTasks")}
         </button>
         {path.map((task, index) => (
-          <span key={task.id} className="flex max-w-[50%] shrink-0 items-center gap-1">
+          <span key={task.id} className="flex max-w-[50%] shrink-0 items-center">
             <span className="shrink-0 text-foreground/50">/</span>
             <button
               onClick={() => focusTask(task.id)}
               className={cn(
-                "max-w-full shrink-0 truncate rounded px-1.5 py-0.5 text-left transition-colors hover:text-foreground hover:bg-background/70",
+                buttonClass,
+                "max-w-full shrink-0 truncate text-left",
                 index === path.length - 1 && "text-foreground font-semibold"
               )}
               type="button"
@@ -114,7 +99,17 @@ export function FocusedTaskBreadcrumb({
           </span>
         ))}
       </div>
-      {rightSlot && <div className="ml-auto flex items-center gap-2 text-foreground/80">{rightSlot}</div>}
+      {rightSlot && <div className="ml-auto flex items-center">{rightSlot}</div>}
+      <button
+        type="button"
+        onClick={() => focusTask(parentFocusId)}
+        aria-label={t("breadcrumbs.up")}
+        title={t("breadcrumbs.goToParent")}
+        className={cn(buttonClass, "gap-1")}
+      >
+        <ChevronUp className="w-3.5 h-3.5" />
+        <span>{t("breadcrumbs.up")}</span>
+      </button>
     </div>
   );
 }

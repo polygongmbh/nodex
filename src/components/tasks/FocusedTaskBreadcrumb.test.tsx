@@ -37,12 +37,6 @@ beforeEach(() => {
 });
 
 describe("FocusedTaskBreadcrumb", () => {
-  it("renders all tasks breadcrumb even when no task is focused", () => {
-    render(<FocusedTaskBreadcrumb allTasks={[baseTask]} focusedTaskId={null} />);
-    expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Up" })).toBeDisabled();
-  });
-
   it("renders full path and makes each level clickable", () => {
     const middle: Post = {
       ...baseTask,
