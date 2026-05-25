@@ -14,6 +14,7 @@ import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-conte
 import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
 import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-context";
 import { ScrollCaptureProvider, type ScrollCaptureRef } from "./scroll-capture-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { ProfileCompletionDialog } from "@/components/auth/ProfileCompletionDialog";
 import { dismissRetryInProgress, notifyRetryInProgress } from "@/lib/notifications";
 
@@ -83,7 +84,7 @@ function FeedInteractionBusFromContexts({
         viewCommands.setCurrentView(intent.view);
       },
       "ui.search.change": (intent) => {
-        viewCommands.setSearchQuery(intent.query);
+        useFilterStore.getState().setSearchQuery(intent.query);
       },
       "ui.displayDepth.change": (intent) => {
         viewCommands.setDisplayDepthMode(intent.mode);

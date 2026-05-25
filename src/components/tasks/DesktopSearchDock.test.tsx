@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DesktopSearchDock } from "./DesktopSearchDock";
 import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import type { FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { makeTask } from "@/test/fixtures";
 
 const mockDispatch = vi.fn();
@@ -15,10 +16,14 @@ vi.mock("@/features/feed-page/views/feed-view-state-context", () => ({
   useFeedViewState: () => ({ currentView: "feed", displayDepthMode: "leaves" }),
 }));
 
-const mockUseFeedSurfaceState = vi.fn(() => ({ searchQuery: "" })) as ReturnType<typeof vi.fn<() => Partial<FeedSurfaceState>>>;
+const mockUseFeedSurfaceState = vi.fn(() => ({})) as ReturnType<typeof vi.fn<() => Partial<FeedSurfaceState>>>;
 vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
   useFeedSurfaceState: () => mockUseFeedSurfaceState(),
 }));
+
+beforeEach(() => {
+  useFilterStore.getState().setSearchQuery("");
+});
 
 describe("DesktopSearchDock", () => {
   it("focuses the desktop search input on mount", () => {
@@ -32,7 +37,7 @@ describe("DesktopSearchDock", () => {
   });
 
   it("shows a clear button only when search has content and clears it on click", () => {
-    mockUseFeedSurfaceState.mockReturnValue({ searchQuery: "" });
+    mockUseFeedSurfaceState.mockReturnValue({});
     const { rerender } = render(
       <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
         <DesktopSearchDock />
@@ -41,7 +46,7 @@ describe("DesktopSearchDock", () => {
 
     expect(screen.queryByRole("button", { name: /clear search/i })).not.toBeInTheDocument();
 
-    mockUseFeedSurfaceState.mockReturnValue({ searchQuery: "meeting" });
+    useFilterStore.getState().setSearchQuery("meeting");
     rerender(
       <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
         <DesktopSearchDock />
@@ -55,7 +60,6 @@ describe("DesktopSearchDock", () => {
 
   it("builds a search-only placeholder with dynamic suffixes and no fallback guidance", () => {
     mockUseFeedSurfaceState.mockReturnValue({
-      searchQuery: "",
       channels: [{ id: "general", name: "general", filterState: "included" }],
       people: [{ pubkey: "p1", name: "alice", displayName: "Alice", avatar: "", isSelected: true }],
     });
@@ -79,7 +83,7 @@ describe("DesktopSearchDock", () => {
   });
 
   it("omits fallback guidance when no scope suffixes are active", () => {
-    mockUseFeedSurfaceState.mockReturnValue({ searchQuery: "", channels: [], people: [] });
+    mockUseFeedSurfaceState.mockReturnValue({ channels: [], people: [] });
 
     render(
       <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>

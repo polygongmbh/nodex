@@ -53,6 +53,7 @@ import {
   useFeedPersonLookup,
   useFeedSurfaceState,
 } from "@/features/feed-page/views/feed-surface-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -210,7 +211,8 @@ export function FeedView({
   const { t, i18n } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
-  const { relays, channels, people, quickFilters, channelMatchMode = "and" } = useFeedSurfaceState();
+  const { relays, channels, people, quickFilters } = useFeedSurfaceState();
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const { peopleById } = useFeedPersonLookup();
   const { forceShowComposer } = useFeedViewInteractionModel();
 

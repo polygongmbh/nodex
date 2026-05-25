@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "./use-mobile-toast-offset";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { Channel, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -186,9 +187,7 @@ const baseSurfaceState: FeedSurfaceState = {
   channels,
   composeChannels: channels,
   people,
-  searchQuery: "",
   quickFilters: makeQuickFilterState(),
-  channelMatchMode: "and",
 };
 
 type MobileLayoutOverrides = {
@@ -209,8 +208,10 @@ function setMocks(overrides: MobileLayoutOverrides = {}) {
   mockSurfaceState.mockReturnValue(surfaceState);
 }
 
-function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
-  setMocks(overrides);
+function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: string } = {}) {
+  const { searchQuery, ...rest } = overrides;
+  setMocks(rest);
+  useFilterStore.getState().setSearchQuery(searchQuery ?? "");
   return render(<MobileLayout />, { wrapper: MemoryRouter });
 }
 
@@ -368,7 +369,7 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout({
       taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
-      surfaceState: { searchQuery: "nomatchquery" },
+      searchQuery: "nomatchquery",
     });
 
     const status = screen.getByRole("status");
@@ -390,9 +391,9 @@ describe("MobileLayout auth wiring", () => {
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
         composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
-        searchQuery: "nomatchquery",
       },
       taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      searchQuery: "nomatchquery",
     });
 
     const status = screen.getByRole("status");
@@ -411,8 +412,9 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      surfaceState: { people: [alice], searchQuery: "nomatchquery" },
+      surfaceState: { people: [alice] },
       taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      searchQuery: "nomatchquery",
     });
 
     const status = screen.getByRole("status");
@@ -431,7 +433,7 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout({
       taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, isHydrating: true },
-      surfaceState: { searchQuery: "nomatchquery" },
+      searchQuery: "nomatchquery",
     });
 
     expect(screen.getByRole("status")).toHaveTextContent(/loading/i);
@@ -453,9 +455,9 @@ describe("MobileLayout auth wiring", () => {
           makeChannel({ id: "nostr", name: "nostr", filterState: "included" }),
           makeChannel({ id: "tech", name: "tech", filterState: "excluded" }),
         ],
-        searchQuery: "nomatchquery",
       },
       taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      searchQuery: "nomatchquery",
     });
 
     const status = screen.getByRole("status");
@@ -482,9 +484,9 @@ describe("MobileLayout auth wiring", () => {
       viewState: { currentView: "list" },
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
-        searchQuery: "nomatchquery",
       },
       taskViewModel: { tasks: datedTasks, allTasks: datedTasks },
+      searchQuery: "nomatchquery",
     });
 
     const status = screen.getByRole("status");

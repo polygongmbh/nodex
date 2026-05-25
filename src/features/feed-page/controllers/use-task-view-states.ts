@@ -17,6 +17,7 @@ import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { useEmptyScopeModel } from "./use-empty-scope-model";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
@@ -211,8 +212,9 @@ export function useTaskViewSource({
   focusedTaskId,
   searchQueryOverride,
 }: BaseViewStateInput): TaskViewSource {
-  const { relays, channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
-    useFeedSurfaceState();
+  const { relays, channels, people, quickFilters } = useFeedSurfaceState();
+  const surfaceSearchQuery = useFilterStore((s) => s.searchQuery);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const taskById = resolvePostsByIdFor(allTasks);
@@ -547,8 +549,9 @@ export function useFeedViewState({
   searchQueryOverride,
   isMobile = false,
 }: BaseViewStateInput & { isMobile?: boolean }): FeedViewState {
-  const { relays, channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
-    useFeedSurfaceState();
+  const { relays, channels, people, quickFilters } = useFeedSurfaceState();
+  const surfaceSearchQuery = useFilterStore((s) => s.searchQuery);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const deferredChannels = useDeferredValue(channels);
@@ -662,8 +665,9 @@ export function useListViewState({
   searchQueryOverride,
   depthMode = "leaves",
 }: BaseViewStateInput & { depthMode?: DisplayDepthMode }): ListViewState {
-  const { relays, channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
-    useFeedSurfaceState();
+  const { relays, channels, people, quickFilters } = useFeedSurfaceState();
+  const surfaceSearchQuery = useFilterStore((s) => s.searchQuery);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
@@ -718,7 +722,9 @@ export function useKanbanViewState({
   searchQueryOverride,
   depthMode,
 }: BaseViewStateInput & { depthMode: DisplayDepthMode }): KanbanViewState {
-  const { channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
+  const { channels, people, quickFilters } = useFeedSurfaceState();
+  const surfaceSearchQuery = useFilterStore((s) => s.searchQuery);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
@@ -791,7 +797,9 @@ export function useMobileFallbackNoticeState({
   isHydrating = false,
 }: MobileScopedViewStateInput): MobileFallbackNoticeState {
   const { t } = useTranslation("tasks");
-  const { relays, channels, people, quickFilters, searchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
+  const { relays, channels, people, quickFilters } = useFeedSurfaceState();
+  const searchQuery = useFilterStore((s) => s.searchQuery);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const hasSearchQuery = searchQuery.trim().length > 0;
   const taskById = resolvePostsByIdFor(allTasks);
   const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);

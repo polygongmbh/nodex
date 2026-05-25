@@ -28,6 +28,7 @@ import {
 } from "@/lib/composer-shortcuts";
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/nip96-attachment-upload";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
@@ -71,7 +72,6 @@ import {
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 interface UnifiedBottomBarProps {
-  searchQuery?: string;
   currentView: ViewType;
   focusedTaskId?: string | null;
   selectedCalendarDate?: Date | null;
@@ -109,7 +109,6 @@ function truncateWordSafe(value: string, maxLength: number): string {
 }
 
 export function UnifiedBottomBar({
-  searchQuery: searchQueryProp,
   currentView,
   focusedTaskId = null,
   selectedCalendarDate = null,
@@ -133,7 +132,7 @@ export function UnifiedBottomBar({
     : channels;
   const people = peopleProp ?? surface.people;
   const visiblePeople = peopleProp ?? surface.visiblePeople ?? surface.people;
-  const searchQuery = searchQueryProp ?? surface.searchQuery;
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const dispatchSearchChange = useCallback(
     (query: string) => {
       void dispatchFeedInteraction({ type: "ui.search.change", query });

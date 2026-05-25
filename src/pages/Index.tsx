@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
 import { useFocusedTaskCollapsedSidebarPreview } from "@/features/feed-page/controllers/use-focused-task-collapsed-sidebar-preview";
@@ -54,7 +54,7 @@ import { bandChannelsByActivity } from "@/lib/channel-banding";
 import { useCoreChannels } from "@/lib/use-core-channels";
 import { initializeDemoFeedData } from "@/data/demo-feed";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
-import { useSearchStore } from "@/features/feed-page/stores/search-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import {
   DesktopAppShell,
 } from "@/features/feed-page/views/DesktopAppShell";
@@ -190,36 +190,6 @@ function FeedIndexContent() {
     removeCachedRelayProfile,
   });
 
-  // The store owns the live search query — typing and filtering stay
-  // responsive via fine-grained Zustand subscriptions. The URL `?q=` is a
-  // debounced mirror so the URL is shareable and back/forward works.
-  const searchQuery = useSearchStore((s) => s.searchQuery);
-  const setSearchQuery = useSearchStore((s) => s.setSearchQuery);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const urlQ = searchParams.get("q") ?? "";
-  // URL → store on external URL changes (focus-change clear, back/forward,
-  // initial load with `?q=` in the address bar).
-  useEffect(() => {
-    if (useSearchStore.getState().searchQuery !== urlQ) {
-      useSearchStore.getState().setSearchQuery(urlQ);
-    }
-  }, [urlQ]);
-  // Store → URL, debounced and replace to avoid per-keystroke history writes.
-  useEffect(() => {
-    if (searchQuery === urlQ) return;
-    const id = setTimeout(() => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (searchQuery) next.set("q", searchQuery);
-          else next.delete("q");
-          return next;
-        },
-        { replace: true }
-      );
-    }, 200);
-    return () => clearTimeout(id);
-  }, [searchQuery, urlQ, setSearchParams]);
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const {
     channelFrecencyState,
@@ -533,7 +503,7 @@ function FeedIndexContent() {
         people: snapshotPeople,
       },
       criteria: {
-        searchQuery,
+        searchQuery: useFilterStore.getState().searchQuery,
         quickFilters: snapshot.quickFilters,
         channels: {
           included: includedChannels,
@@ -542,7 +512,7 @@ function FeedIndexContent() {
         },
       },
     }).length > 0;
-  }, [allTasks, people, relayScopedTasks, searchQuery]);
+  }, [allTasks, people, relayScopedTasks]);
 
   const scrollCaptureRef = useRef<ScrollCaptureRef["current"]>(null);
   const onCaptureScrollTop = useCallback(() => scrollCaptureRef.current?.getScrollTop(), []);
@@ -582,7 +552,6 @@ function FeedIndexContent() {
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,
-    setSearchQuery,
     setPeople,
   });
 
@@ -681,11 +650,10 @@ function FeedIndexContent() {
       focusSidebar: () => setIsSidebarFocused(true),
       focusTasks: () => setIsSidebarFocused(false),
       setCurrentView,
-      setSearchQuery,
       setDisplayDepthMode,
       setManageRouteActive,
     }),
-    [setCurrentView, setSearchQuery, setDisplayDepthMode, setManageRouteActive, setIsSidebarFocused]
+    [setCurrentView, setDisplayDepthMode, setManageRouteActive, setIsSidebarFocused]
   );
 
   const handleCopyPermalink = useCallback(async (taskId: string): Promise<boolean> => {
@@ -800,9 +768,7 @@ function FeedIndexContent() {
       people,
       visiblePeople: peopleWithState,
       mentionablePeople: mentionAutocompletePeople,
-      searchQuery,
       quickFilters,
-      channelMatchMode,
     }),
     [
       relaysWithActiveState,
@@ -812,9 +778,7 @@ function FeedIndexContent() {
       people,
       peopleWithState,
       mentionAutocompletePeople,
-      searchQuery,
       quickFilters,
-      channelMatchMode,
     ]
   );
 

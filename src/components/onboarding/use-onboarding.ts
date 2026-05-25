@@ -24,7 +24,6 @@ interface UseOnboardingOptions {
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
-  setSearchQuery: (query: string) => void;
   setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
 }
 
@@ -35,11 +34,10 @@ export function useOnboarding({
   onBeforeResetFocusedTaskScope,
   setCurrentView,
   setFocusedTaskId,
-  setSearchQuery,
   setPeople,
 }: UseOnboardingOptions) {
   const { t } = useTranslation("onboarding");
-  const { setActiveRelayIds, setChannelFilterStates } = useFilterStore();
+  const { setActiveRelayIds, setChannelFilterStates, setSearchQuery } = useFilterStore();
   const setIsAuthModalOpen = useAuthModalStore((s) => s.setIsOpen);
 
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);

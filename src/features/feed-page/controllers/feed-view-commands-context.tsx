@@ -6,7 +6,6 @@ export interface FeedViewCommands {
   focusSidebar(): void;
   focusTasks(): void;
   setCurrentView(view: ViewType): void;
-  setSearchQuery(query: string): void;
   setDisplayDepthMode(mode: DisplayDepthMode): void;
   setManageRouteActive(isActive: boolean): void;
 }
@@ -15,7 +14,6 @@ const defaultCommands: FeedViewCommands = {
   focusSidebar: () => {},
   focusTasks: () => {},
   setCurrentView: () => {},
-  setSearchQuery: () => {},
   setDisplayDepthMode: () => {},
   setManageRouteActive: () => {},
 };

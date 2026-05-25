@@ -1,9 +1,10 @@
 import { useTranslation } from "react-i18next";
-import { useDeferredValue, useMemo } from "react";
+import { useMemo } from "react";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { Button } from "@/components/ui/button";
 
 export function FilteredEmptyState() {
@@ -11,7 +12,7 @@ export function FilteredEmptyState() {
   const surface = useFeedSurfaceState();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { isHydrating = false, focusedTaskId, allTasks } = useFeedTaskViewModel();
-  const searchQuery = useDeferredValue(surface.searchQuery);
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const contextTaskTitle = focusedTaskId
     ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
     : "";
@@ -72,7 +73,7 @@ export function FilteredEmptyState() {
 
   const handleClearFilters = () => {
     void dispatchFeedInteraction({ type: "filter.resetAll" });
-    if (surface.searchQuery) {
+    if (searchQuery) {
       void dispatchFeedInteraction({ type: "ui.search.change", query: "" });
     }
     if (focusedTaskId) {

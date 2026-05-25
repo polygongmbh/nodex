@@ -1,10 +1,12 @@
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
 export function ScopeFooterHint() {
   const surface = useFeedSurfaceState();
   const { focusedTaskId, allTasks } = useFeedTaskViewModel();
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const contextTaskTitle = focusedTaskId
     ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
     : "";
@@ -13,7 +15,7 @@ export function ScopeFooterHint() {
     channels: surface.channels,
     people: surface.people,
     quickFilters: surface.quickFilters,
-    searchQuery: surface.searchQuery,
+    searchQuery,
     contextTaskTitle,
     focusedTaskId,
   });

@@ -24,10 +24,10 @@ function Harness({
   const [currentView, setCurrentView] = useState<ViewType>("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
   const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
-  const [searchQuery, setSearchQuery] = useState<string>("draft");
 
   const storeRelayIds = useFilterStore((s) => s.activeRelayIds);
   const storeChannelStates = useFilterStore((s) => s.channelFilterStates);
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const authOpen = useAuthModalStore((s) => s.isOpen);
 
   const onboarding = useOnboarding({
@@ -36,7 +36,6 @@ function Harness({
     currentView,
     setCurrentView,
     setFocusedTaskId,
-    setSearchQuery,
     setPeople,
   });
 
@@ -69,6 +68,7 @@ describe("useOnboarding", () => {
     useFilterStore.setState({
       activeRelayIds: new Set(["relay-one"]),
       channelFilterStates: new Map([["general", "included"]]),
+      searchQuery: "draft",
     });
     useAuthModalStore.setState({ isOpen: false });
   });

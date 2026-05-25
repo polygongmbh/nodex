@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
-import type { Channel, ChannelMatchMode, QuickFilterState, Relay } from "@/types";
+import type { Channel, QuickFilterState, Relay } from "@/types";
 import type { SelectablePerson, SidebarPerson } from "@/types/person";
 
 export interface FeedSurfaceState {
@@ -12,9 +12,7 @@ export interface FeedSurfaceState {
   people: SelectablePerson[];
   visiblePeople?: SidebarPerson[];
   mentionablePeople?: SelectablePerson[];
-  searchQuery: string;
   quickFilters: QuickFilterState;
-  channelMatchMode?: ChannelMatchMode;
 }
 
 const defaultFeedSurfaceState: FeedSurfaceState = {
@@ -26,9 +24,7 @@ const defaultFeedSurfaceState: FeedSurfaceState = {
   people: [],
   visiblePeople: [],
   mentionablePeople: [],
-  searchQuery: "",
   quickFilters: normalizeQuickFilterState(),
-  channelMatchMode: "and",
 };
 
 const FeedSurfaceContext = createContext<FeedSurfaceState>(defaultFeedSurfaceState);

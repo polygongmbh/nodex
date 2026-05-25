@@ -8,8 +8,9 @@ import {
   DialogScrollBody,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Relay, Channel, ChannelMatchMode } from "@/types";
+import type { Relay, Channel } from "@/types";
 import type { SidebarPerson } from "@/types/person";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -34,7 +35,6 @@ import type { TFunction } from "i18next";
 interface MobileFiltersProps {
   relays?: Relay[];
   channels?: Channel[];
-  channelMatchMode?: ChannelMatchMode;
   people?: SidebarPerson[];
   profileEditorOpenSignal?: number;
 }
@@ -42,7 +42,6 @@ interface MobileFiltersProps {
 export function MobileFilters({
   relays: relaysProp,
   channels: channelsProp,
-  channelMatchMode: channelMatchModeProp,
   people: peopleProp,
   profileEditorOpenSignal = 0,
 }: MobileFiltersProps) {
@@ -60,7 +59,7 @@ export function MobileFilters({
   const relays = relaysProp ?? surface.relays;
   const channels = channelsProp ?? surface.visibleChannels ?? surface.channels;
   const people = peopleProp ?? surface.visiblePeople ?? surface.people;
-  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
 
   const { ndk, user, authMethod, hasWritableRelayConnection, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();

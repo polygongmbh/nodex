@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { Channel } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
@@ -7,6 +8,7 @@ const RELAY_PARAM = "r";
 const CHANNEL_INCLUDE_PARAM = "ch";
 const CHANNEL_EXCLUDE_PARAM = "ex";
 const PEOPLE_PARAM = "p";
+const SEARCH_PARAM = "q";
 
 interface RelayFilterSnapshot {
   channelStates: Map<string, Channel["filterState"]>;
@@ -281,4 +283,31 @@ export function useFilterUrlSync({
 
     setSearchParams(mergedSearchParams, { replace: true });
   }, [activeRelayIds, channelFilterStates, people, searchParams, setSearchParams]);
+
+  // searchQuery ↔ ?q=
+  // URL → store on external URL changes (back/forward, focus-clear strip,
+  // fresh load with ?q= in the address bar). Store → URL is debounced so
+  // typing isn't a per-keystroke router-wide navigate.
+  const searchQuery = useFilterStore((s) => s.searchQuery);
+  const urlQ = searchParams.get(SEARCH_PARAM) ?? "";
+  useEffect(() => {
+    if (useFilterStore.getState().searchQuery !== urlQ) {
+      useFilterStore.getState().setSearchQuery(urlQ);
+    }
+  }, [urlQ]);
+  useEffect(() => {
+    if (searchQuery === urlQ) return;
+    const id = setTimeout(() => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (searchQuery) next.set(SEARCH_PARAM, searchQuery);
+          else next.delete(SEARCH_PARAM);
+          return next;
+        },
+        { replace: true }
+      );
+    }, 200);
+    return () => clearTimeout(id);
+  }, [searchQuery, urlQ, setSearchParams]);
 }
