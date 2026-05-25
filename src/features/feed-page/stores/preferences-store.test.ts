@@ -14,7 +14,6 @@ describe("preferencesStore", () => {
     usePreferencesStore.setState({
       compactTaskCardsEnabled: false,
       completionSoundEnabled: true,
-      searchQuery: "",
       displayDepthMode: "1",
     });
   });
@@ -23,7 +22,6 @@ describe("preferencesStore", () => {
     const state = usePreferencesStore.getState();
     expect(state.compactTaskCardsEnabled).toBe(false);
     expect(state.completionSoundEnabled).toBe(true);
-    expect(state.searchQuery).toBe("");
     expect(state.displayDepthMode).toBe("1");
   });
 
@@ -41,12 +39,6 @@ describe("preferencesStore", () => {
     usePreferencesStore.getState().toggleCompletionSound();
     expect(usePreferencesStore.getState().completionSoundEnabled).toBe(true);
     expect(getPersistedState().completionSoundEnabled).toBe(true);
-  });
-
-  it("setSearchQuery updates searchQuery but does not persist it", () => {
-    usePreferencesStore.getState().setSearchQuery("hello");
-    expect(usePreferencesStore.getState().searchQuery).toBe("hello");
-    expect(getPersistedState().searchQuery).toBeUndefined();
   });
 
   it("setDisplayDepthMode updates state and persists to localStorage", () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
 import { useFocusedTaskCollapsedSidebarPreview } from "@/features/feed-page/controllers/use-focused-task-collapsed-sidebar-preview";
@@ -189,8 +189,25 @@ function FeedIndexContent() {
     removeCachedRelayProfile,
   });
 
-  const searchQuery = usePreferencesStore((s) => s.searchQuery);
-  const setSearchQuery = usePreferencesStore((s) => s.setSearchQuery);
+  // Search query is owned by the URL (`?q=`) so it's shareable and survives
+  // back/forward without a separate store. Writes use replace to avoid
+  // per-keystroke history entries.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get("q") ?? "";
+  const setSearchQuery = useCallback(
+    (query: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (query) next.set("q", query);
+          else next.delete("q");
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const {
     channelFrecencyState,
@@ -553,6 +570,7 @@ function FeedIndexContent() {
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,
+    setSearchQuery,
     setPeople,
   });
 

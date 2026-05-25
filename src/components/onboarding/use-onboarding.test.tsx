@@ -5,7 +5,6 @@ import { useOnboarding } from "./use-onboarding";
 import { makePerson } from "@/test/fixtures";
 import type { SelectablePerson } from "@/types/person";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
-import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
@@ -25,10 +24,10 @@ function Harness({
   const [currentView, setCurrentView] = useState<ViewType>("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
   const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
+  const [searchQuery, setSearchQuery] = useState<string>("draft");
 
   const storeRelayIds = useFilterStore((s) => s.activeRelayIds);
   const storeChannelStates = useFilterStore((s) => s.channelFilterStates);
-  const storeSearchQuery = usePreferencesStore((s) => s.searchQuery);
   const authOpen = useAuthModalStore((s) => s.isOpen);
 
   const onboarding = useOnboarding({
@@ -37,6 +36,7 @@ function Harness({
     currentView,
     setCurrentView,
     setFocusedTaskId,
+    setSearchQuery,
     setPeople,
   });
 
@@ -51,7 +51,7 @@ function Harness({
       <button onClick={() => setUser(null)}>SignOut</button>
       <output data-testid="current-view">{currentView}</output>
       <output data-testid="focused-task">{focusedTaskId ?? ""}</output>
-      <output data-testid="search-query">{storeSearchQuery}</output>
+      <output data-testid="search-query">{searchQuery}</output>
       <output data-testid="relay-ids">{Array.from(storeRelayIds).sort().join(",")}</output>
       <output data-testid="channel-state">{storeChannelStates.get("general") || "neutral"}</output>
       <output data-testid="selected-people">
@@ -70,7 +70,6 @@ describe("useOnboarding", () => {
       activeRelayIds: new Set(["relay-one"]),
       channelFilterStates: new Map([["general", "included"]]),
     });
-    usePreferencesStore.setState({ searchQuery: "draft" });
     useAuthModalStore.setState({ isOpen: false });
   });
 

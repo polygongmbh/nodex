@@ -16,11 +16,8 @@ interface PersistedFeedPreferences {
 }
 
 interface PreferencesState extends PersistedFeedPreferences {
-  searchQuery: string;
-
   setCompactTaskCardsEnabled: (enabled: boolean) => void;
   toggleCompletionSound: () => void;
-  setSearchQuery: (query: string) => void;
   setDisplayDepthMode: (mode: DisplayDepthMode) => void;
   setPresencePublishingEnabled: (enabled: boolean) => void;
   setAutoCaptionEnabled: (enabled: boolean) => void;
@@ -33,7 +30,6 @@ export const usePreferencesStore = create<PreferencesState>()(
     (set) => ({
       compactTaskCardsEnabled: false,
       completionSoundEnabled: true,
-      searchQuery: "",
       displayDepthMode: "1" as DisplayDepthMode,
       presencePublishingEnabled: true,
       autoCaptionEnabled: false,
@@ -43,7 +39,6 @@ export const usePreferencesStore = create<PreferencesState>()(
       setCompactTaskCardsEnabled: (enabled) => set({ compactTaskCardsEnabled: enabled }),
       toggleCompletionSound: () =>
         set((state) => ({ completionSoundEnabled: !state.completionSoundEnabled })),
-      setSearchQuery: (query) => set({ searchQuery: query }),
       setDisplayDepthMode: (mode) => set({ displayDepthMode: mode }),
       setPresencePublishingEnabled: (enabled) => set({ presencePublishingEnabled: enabled }),
       setAutoCaptionEnabled: (enabled) => set({ autoCaptionEnabled: enabled }),

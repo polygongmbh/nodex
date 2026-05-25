@@ -6,7 +6,6 @@ import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { isTaskOutsideSelectedRelayScope } from "@/domain/relays/relay-scope";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import type { Post, Relay } from "@/types";
 
 const VALID_VIEWS: readonly ViewType[] = VIEW_ORDER;
@@ -71,28 +70,6 @@ export function useFeedNavigation({
   const locationRef = useRef(location);
   locationRef.current = location;
 
-  // Mirror `?q=` into the search store on every URL change (back/forward, our
-  // own pushes below, initial load).
-  useEffect(() => {
-    const q = new URLSearchParams(location.search).get(SEARCH_PARAM) ?? "";
-    if (usePreferencesStore.getState().searchQuery !== q) {
-      usePreferencesStore.getState().setSearchQuery(q);
-    }
-  }, [location.search]);
-
-  // Mirror typed query back into the URL (debounced, replace) so the URL stays
-  // shareable. Focus-change boundaries do their own stamping below.
-  const searchQuery = usePreferencesStore((s) => s.searchQuery);
-  useEffect(() => {
-    const loc = locationRef.current;
-    const urlQ = new URLSearchParams(loc.search).get(SEARCH_PARAM) ?? "";
-    if (urlQ === searchQuery) return;
-    const id = setTimeout(() => {
-      navigate(buildSearchUrl(locationRef.current, searchQuery), { replace: true });
-    }, 300);
-    return () => clearTimeout(id);
-  }, [searchQuery, navigate]);
-
   // Captures the initial URL state for onboarding autostart suppression.
   const openedWithFocusedTaskRef = useRef(Boolean(urlTaskId));
 
@@ -121,14 +98,11 @@ export function useFeedNavigation({
       const loc = locationRef.current;
       if (pathname === loc.pathname) return;
 
-      const q = usePreferencesStore.getState().searchQuery;
+      // The URL is the source of truth for `?q=` — read straight from it.
+      // Moving up or out preserves the search; other focus changes drop it.
+      const q = new URLSearchParams(loc.search).get(SEARCH_PARAM) ?? "";
       const preservesSearch =
         taskId === null || (focusedTask !== null && taskId === focusedTask.parentId);
-
-      // Stamp current entry with the typed query (replace) so browser-back
-      // can restore it; then push the new entry, dropping `?q=` unless we're
-      // moving up or out.
-      navigate(buildSearchUrl(loc, q), { replace: true });
       navigate(buildSearchUrl({ ...loc, pathname }, preservesSearch ? q : ""));
     },
     [navigate, currentView, focusedTask]

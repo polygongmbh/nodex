@@ -15,7 +15,6 @@ import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import type { SelectablePerson } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
-import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 
 interface UseOnboardingOptions {
@@ -25,6 +24,7 @@ interface UseOnboardingOptions {
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
+  setSearchQuery: (query: string) => void;
   setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
 }
 
@@ -35,11 +35,11 @@ export function useOnboarding({
   onBeforeResetFocusedTaskScope,
   setCurrentView,
   setFocusedTaskId,
+  setSearchQuery,
   setPeople,
 }: UseOnboardingOptions) {
   const { t } = useTranslation("onboarding");
   const { setActiveRelayIds, setChannelFilterStates } = useFilterStore();
-  const setSearchQuery = usePreferencesStore((s) => s.setSearchQuery);
   const setIsAuthModalOpen = useAuthModalStore((s) => s.setIsOpen);
 
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
