@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Search, Layers, Leaf, CircleDot, Workflow, Network, FolderOpen, X } from "lucide-react";
+import { Search, ListTree, Leaf, CircleDot, Workflow, Network, FolderOpen, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -84,7 +84,6 @@ export function DesktopSearchDock() {
         </div>
         {showDisplayDepthSelector && (
           <div className="flex items-center gap-1.5 flex-shrink-0" data-onboarding="kanban-levels">
-            <Layers className="w-4 h-4 text-muted-foreground" />
             <Select
               value={displayDepthMode}
               onValueChange={(v) => {
@@ -123,16 +122,16 @@ export function DesktopSearchDock() {
                     {t("search.kanban.levels", { count: 3 })}
                   </span>
                 </SelectItem>
-                <SelectItem value="all" title={t("search.kanban.allLevelsHint")}>
-                  <span className="flex items-center gap-1">
-                    <Layers className="w-3 h-3" />
-                    {t("search.kanban.allLevels")}
-                  </span>
-                </SelectItem>
                 <SelectItem value="leaves" title={t("search.kanban.leavesOnlyHint")}>
                   <span className="flex items-center gap-1">
                     <Leaf className="w-3 h-3" />
                     {t("search.kanban.leavesOnly")}
+                  </span>
+                </SelectItem>
+                <SelectItem value="all" title={t("search.kanban.allLevelsHint")}>
+                  <span className="flex items-center gap-1">
+                    <ListTree className="w-3 h-3" />
+                    {t("search.kanban.allLevels")}
                   </span>
                 </SelectItem>
               </SelectContent>
