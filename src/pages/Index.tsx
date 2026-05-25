@@ -742,7 +742,7 @@ function FeedIndexContent() {
         connectionStatus: relay.connectionStatus,
         url: relay.url,
       })),
-      channels: expandedBandChannels,
+      channels: channelsWithState,
       visibleChannels: expandedBandChannels,
       primaryChannels: primaryBandChannels,
       people,
@@ -752,6 +752,7 @@ function FeedIndexContent() {
     }),
     [
       relaysWithActiveState,
+      channelsWithState,
       expandedBandChannels,
       primaryBandChannels,
       people,
