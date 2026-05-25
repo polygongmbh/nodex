@@ -182,8 +182,8 @@
     "goBack": "Volver atrás",
     "up": "Subir",
     "goToParent": "Ir al elemento padre",
-    "allTasks": "Todas",
-    "showAllTasks": "Mostrar todas las publicaciones"
+    "all": "Todas",
+    "showAllPosts": "Mostrar todas las publicaciones"
   },
   "hints": {
     "statusToggle": {

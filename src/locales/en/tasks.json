@@ -182,8 +182,8 @@
     "goBack": "Go back",
     "up": "Up",
     "goToParent": "Go to parent",
-    "allTasks": "All",
-    "showAllTasks": "Show all posts"
+    "all": "All",
+    "showAllPosts": "Show all posts"
   },
   "hints": {
     "statusToggle": {

@@ -77,9 +77,9 @@ export function FocusedTaskBreadcrumb({
           onClick={() => focusTask(null)}
           className={cn(buttonClass, "shrink-0", path.length === 0 && "text-foreground font-semibold")}
           type="button"
-          title={t("breadcrumbs.showAllTasks")}
+          title={t("breadcrumbs.showAllPosts")}
         >
-          {t("breadcrumbs.allTasks")}
+          {t("breadcrumbs.all")}
         </button>
         {path.map((task, index) => (
           <span key={task.id} className="flex max-w-[50%] shrink-0 items-center">

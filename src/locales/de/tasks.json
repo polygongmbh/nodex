@@ -182,8 +182,8 @@
     "goBack": "Zurück gehen",
     "up": "Hoch",
     "goToParent": "Zum übergeordneten Beitrag wechseln",
-    "allTasks": "Alle",
-    "showAllTasks": "Alle Beiträge anzeigen"
+    "all": "Alle",
+    "showAllPosts": "Alle Beiträge anzeigen"
   },
   "hints": {
     "statusToggle": {
