@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
-import {   Hash, Calendar, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, RefreshCcw, } from "lucide-react";
+import {   Hash, Calendar, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, Pencil, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
 import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment, TitledPostFields as TitledPostFieldsType } from "@/types";
@@ -1675,7 +1675,7 @@ export function TaskComposer({
           data-testid="task-composer-recompose-banner"
         >
           <div className="flex min-w-0 items-center gap-2">
-            <RefreshCcw className="h-3.5 w-3.5 shrink-0 text-warning" />
+            <Pencil className="h-3.5 w-3.5 shrink-0 text-warning" />
             <div className="min-w-0 leading-snug">
               <span className="font-medium">{t("composer.recompose.bannerTitle")}</span>
               {activeRecomposeOf.contentPreview ? (

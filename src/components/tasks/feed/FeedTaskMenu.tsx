@@ -1,6 +1,6 @@
 import { getTaskPrimaryDate, getTaskPriority, isTaskPost } from "@/types";
 import { useEffect, useState, type MouseEvent } from "react";
-import { ArrowLeft, CalendarClock, ChevronDown, Flag, Link2, RefreshCcw, SmilePlus, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronDown, Flag, Link2, Pencil, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
@@ -213,7 +213,7 @@ export function FeedTaskMenu({
                     setConfirm("recompose");
                   }}
                 >
-                  <RefreshCcw className="mr-2 h-4 w-4" />
+                  <Pencil className="mr-2 h-4 w-4" />
                   {t("tasks.actions.recompose")}
                 </DropdownMenuItem>
               ) : null}
