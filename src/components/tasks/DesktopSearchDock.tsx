@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Search, Layers, Leaf, CircleDot, Workflow, Network, FolderOpen, X } from "lucide-react";
 import {
   Select,
@@ -22,18 +22,6 @@ export function DesktopSearchDock() {
   const { t, i18n } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { searchQuery, channels = [], people = [] } = useFeedSurfaceState();
-  // Local input state keeps typing responsive; URL write is debounced so each
-  // keystroke doesn't trigger a router-wide navigate. External URL changes
-  // (focus clear, back/forward) sync back into the draft.
-  const [draft, setDraft] = useState(searchQuery);
-  useEffect(() => setDraft(searchQuery), [searchQuery]);
-  useEffect(() => {
-    if (draft === searchQuery) return;
-    const id = setTimeout(() => {
-      void dispatchFeedInteraction({ type: "ui.search.change", query: draft });
-    }, 150);
-    return () => clearTimeout(id);
-  }, [draft, searchQuery, dispatchFeedInteraction]);
   const { allTasks, focusedTaskId } = useFeedTaskViewModel();
   const { currentView, displayDepthMode } = useFeedViewState();
   const showDisplayDepthSelector = currentView === "kanban" || currentView === "list";
@@ -71,16 +59,17 @@ export function DesktopSearchDock() {
             data-onboarding="search-bar"
             autoFocus
             type="text"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => {
+              void dispatchFeedInteraction({ type: "ui.search.change", query: e.target.value });
+            }}
             placeholder={searchPlaceholder}
             className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-10 py-2 text-sm placeholder:text-muted-foreground/65 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
           />
-          {draft.length > 0 && (
+          {searchQuery.length > 0 && (
             <button
               type="button"
               onClick={() => {
-                setDraft("");
                 void dispatchFeedInteraction({ type: "ui.search.change", query: "" });
               }}
               aria-label={t("search.desktop.clear")}

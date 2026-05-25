@@ -54,6 +54,7 @@ import { bandChannelsByActivity } from "@/lib/channel-banding";
 import { useCoreChannels } from "@/lib/use-core-channels";
 import { initializeDemoFeedData } from "@/data/demo-feed";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
+import { useSearchStore } from "@/features/feed-page/stores/search-store";
 import {
   DesktopAppShell,
 } from "@/features/feed-page/views/DesktopAppShell";
@@ -189,25 +190,36 @@ function FeedIndexContent() {
     removeCachedRelayProfile,
   });
 
-  // Search query is owned by the URL (`?q=`) so it's shareable and survives
-  // back/forward without a separate store. Writes use replace to avoid
-  // per-keystroke history entries.
+  // The store owns the live search query — typing and filtering stay
+  // responsive via fine-grained Zustand subscriptions. The URL `?q=` is a
+  // debounced mirror so the URL is shareable and back/forward works.
+  const searchQuery = useSearchStore((s) => s.searchQuery);
+  const setSearchQuery = useSearchStore((s) => s.setSearchQuery);
   const [searchParams, setSearchParams] = useSearchParams();
-  const searchQuery = searchParams.get("q") ?? "";
-  const setSearchQuery = useCallback(
-    (query: string) => {
+  const urlQ = searchParams.get("q") ?? "";
+  // URL → store on external URL changes (focus-change clear, back/forward,
+  // initial load with `?q=` in the address bar).
+  useEffect(() => {
+    if (useSearchStore.getState().searchQuery !== urlQ) {
+      useSearchStore.getState().setSearchQuery(urlQ);
+    }
+  }, [urlQ]);
+  // Store → URL, debounced and replace to avoid per-keystroke history writes.
+  useEffect(() => {
+    if (searchQuery === urlQ) return;
+    const id = setTimeout(() => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
-          if (query) next.set("q", query);
+          if (searchQuery) next.set("q", searchQuery);
           else next.delete("q");
           return next;
         },
         { replace: true }
       );
-    },
-    [setSearchParams]
-  );
+    }, 200);
+    return () => clearTimeout(id);
+  }, [searchQuery, urlQ, setSearchParams]);
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const {
     channelFrecencyState,
