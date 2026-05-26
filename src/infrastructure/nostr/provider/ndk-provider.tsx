@@ -365,6 +365,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     nostrDevLog("provider", "Initializing NDK provider", {
       configuredDefaultRelays: resolvedDefaultRelays,
     });
+    // The cache adapter handles only NIP-11 / NIP-05 metadata. Event caching
+    // lives in our own persisted posts cache (posts-cache.ts) because we want
+    // per-relay attribution preserved across hydration, which NDK's event
+    // cache adapters don't carry.
     const ndkInstance = new NDK({
       explicitRelayUrls: resolvedDefaultRelays,
       cacheAdapter: relayStatusCacheAdapter,

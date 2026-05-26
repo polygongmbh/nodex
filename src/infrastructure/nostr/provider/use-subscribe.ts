@@ -84,7 +84,14 @@ export function useSubscribe({
     }
 
     beginRelayOperation("read");
-    const subscription = ndk.subscribe(limitDecision.filters, { closeOnEose: options?.closeOnEose ?? false });
+    const subscription = ndk.subscribe(limitDecision.filters, {
+      closeOnEose: options?.closeOnEose ?? false,
+      // NDK fires an optimistic dispatch for every event.publish() with
+      // relay=undefined; without relay attribution the event is dropped by
+      // the ingest boundary. We do the optimistic echo ourselves at the
+      // publish site (use-publish.ts) with the relays that ack'd.
+      skipOptimisticPublishEvent: true,
+    });
 
     subscription.on("event", (event: NDKEvent) => {
       if (event.relay?.url) {

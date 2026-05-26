@@ -11,6 +11,7 @@ import {
 } from "@/lib/nostr/relay-write-targets";
 import { extractRelayErrorMessage, extractRelayRejectionReason } from "./relay-error";
 import { shouldMarkRelayReadOnlyAfterPublishReject } from "./relay-verification";
+import { ingestPostEvent } from "@/infrastructure/nostr/post-event-ingest";
 import type { NDKRelayStatus } from "./contracts";
 
 export type SignedNostrEvent = NDKEvent;
@@ -165,6 +166,23 @@ export function usePublish({
       publishedRelayUrls.forEach((relayUrl) => {
         updateRelayCapabilityStatus(relayUrl, "connected");
       });
+      // Optimistic local echo: feed the signed event straight into the typed
+      // ingest boundary with the relays that ack'd. NDK's own optimistic
+      // dispatch carries no relay attribution and is suppressed at the
+      // subscription level (see use-subscribe.ts), so this is the single
+      // source of the post-publish echo. ingestPostEvent self-filters by
+      // kind, so non-post kinds (reactions, presence, metadata) no-op here.
+      // Wrapped: a throw here must not flow into the outer catch, which would
+      // misclassify the successful publish as a relay write-rejection.
+      try {
+        ingestPostEvent({
+          ...event.rawEvent(),
+          kind: event.kind as NostrEventKind,
+          relayUrls: publishedRelayUrls,
+        });
+      } catch (ingestError) {
+        console.error("Failed to ingest published event into local store:", ingestError);
+      }
       nostrDevLog("publish", "Event published", {
         eventId: event.id,
         kind: event.kind,
