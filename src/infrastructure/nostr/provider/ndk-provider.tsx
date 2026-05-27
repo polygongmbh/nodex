@@ -25,6 +25,7 @@ import {
 } from "./use-relay-pool";
 import { reorderResolvedRelayStatuses } from "./relay-list";
 import { createRelayNip42AuthPolicy } from "@/infrastructure/nostr/nip42-relay-auth-policy";
+import { ndkMetadataCacheAdapter } from "@/infrastructure/nostr/ndk-metadata-cache-adapter";
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import { shouldReconnectRelayAfterSignIn } from "./relay-verification";
 import { useRelayNip11 } from "./use-relay-nip11";
@@ -140,7 +141,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const connectResolvedAuthRelayUrlsRef = useRef<(relayUrls: string[]) => void>(() => undefined);
   const {
     relayDocumentRef,
-    relayStatusCacheAdapter,
     probeRelayInfo,
     hydrateStartupCache,
     clearRelayInfo,
@@ -371,7 +371,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // cache adapters don't carry.
     const ndkInstance = new NDK({
       explicitRelayUrls: resolvedDefaultRelays,
-      cacheAdapter: relayStatusCacheAdapter,
+      cacheAdapter: ndkMetadataCacheAdapter,
       // NDK defaults to true: on signer set, it fetches the user's kind 3 / 10002 and
       // silently connects to every relay listed there, bypassing our relay-state tracking.
       autoConnectUserRelays: false,
@@ -429,7 +429,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       });
       inFlightKind0ProfileRequests.clear();
     };
-  }, [attachPoolHandlers, clearAllTrackedRelayTimeouts, createRestoreSession, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolvedDefaultRelays]);
+  }, [attachPoolHandlers, clearAllTrackedRelayTimeouts, createRestoreSession, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, resolvedDefaultRelays]);
 
   const addRelay = useCallback((url: string) => {
     if (!ndk) return;

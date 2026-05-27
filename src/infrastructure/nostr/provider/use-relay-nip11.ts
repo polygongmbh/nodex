@@ -1,10 +1,10 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useRef } from "react";
 import type { NDKRelayInformation } from "@nostr-dev-kit/ndk";
 import {
-  createNodexCacheAdapter,
+  forgetCachedRelayNip11,
   loadCachedRelayNip11,
   saveCachedRelayNip11,
-} from "@/infrastructure/cache/ndk-cache-adapter";
+} from "@/infrastructure/nostr/ndk-metadata-cache-adapter";
 import { fetchRelayInfo } from "@/infrastructure/nostr/relay-info";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -20,7 +20,6 @@ interface UseRelayNip11Args {
 
 export function useRelayNip11({ updateRelayEntry }: UseRelayNip11Args) {
   const relayDocumentRef = useRef<Map<string, NDKRelayInformation>>(new Map());
-  const relayStatusCacheAdapter = useMemo(() => createNodexCacheAdapter(), []);
 
   const applyDocument = useCallback((normalizedRelayUrl: string, document: NDKRelayInformation) => {
     relayDocumentRef.current.set(normalizedRelayUrl, document);
@@ -67,12 +66,11 @@ export function useRelayNip11({ updateRelayEntry }: UseRelayNip11Args) {
 
   const clearRelayInfo = useCallback((normalizedRelayUrl: string) => {
     relayDocumentRef.current.delete(normalizedRelayUrl);
-    void relayStatusCacheAdapter.updateRelayStatus?.(normalizedRelayUrl, {});
-  }, [relayStatusCacheAdapter]);
+    forgetCachedRelayNip11(normalizedRelayUrl);
+  }, []);
 
   return {
     relayDocumentRef,
-    relayStatusCacheAdapter,
     probeRelayInfo,
     hydrateStartupCache,
     clearRelayInfo,

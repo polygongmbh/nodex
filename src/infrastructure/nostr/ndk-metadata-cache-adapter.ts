@@ -130,7 +130,16 @@ export function saveCachedRelayNip11(relayUrl: string, document: NDKRelayInforma
   savePersistedRelayStatusCache(cache);
 }
 
-export function createNodexCacheAdapter(): NDKCacheAdapter {
+export function forgetCachedRelayNip11(relayUrl: string): void {
+  const normalized = normalizeRelayUrl(relayUrl);
+  if (!normalized) return;
+  const cache = loadPersistedRelayStatusCache();
+  if (!(normalized in cache)) return;
+  delete cache[normalized];
+  savePersistedRelayStatusCache(cache);
+}
+
+export function createNdkMetadataCacheAdapter(): NDKCacheAdapter {
   return {
     locking: false,
     ready: true,
@@ -195,3 +204,5 @@ export function createNodexCacheAdapter(): NDKCacheAdapter {
     },
   };
 }
+
+export const ndkMetadataCacheAdapter = createNdkMetadataCacheAdapter();

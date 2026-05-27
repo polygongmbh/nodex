@@ -1,19 +1,20 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  createNodexCacheAdapter,
+  createNdkMetadataCacheAdapter,
+  forgetCachedRelayNip11,
   loadCachedRelayNip11,
   saveCachedRelayNip11,
   RELAY_NIP11_CACHE_TTL_MS,
-} from "./ndk-cache-adapter";
+} from "./ndk-metadata-cache-adapter";
 import { RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
-describe("createNodexCacheAdapter", () => {
+describe("createNdkMetadataCacheAdapter", () => {
   beforeEach(() => {
     window.localStorage.clear();
   });
 
   it("persists and loads normalized relay NIP-11 status", async () => {
-    const adapter = createNodexCacheAdapter();
+    const adapter = createNdkMetadataCacheAdapter();
     const fetchedAt = 1234;
 
     await adapter.updateRelayStatus?.("wss://relay.one/", {
@@ -40,7 +41,7 @@ describe("createNodexCacheAdapter", () => {
   });
 
   it("keeps existing nip11 cache when ndk updates transport-only relay metadata", async () => {
-    const adapter = createNodexCacheAdapter();
+    const adapter = createNdkMetadataCacheAdapter();
     const fetchedAt = Date.now();
 
     await adapter.updateRelayStatus?.("wss://relay.one", {
@@ -63,7 +64,7 @@ describe("createNodexCacheAdapter", () => {
   });
 
   it("clears a relay cache entry when updateRelayStatus receives an empty payload", async () => {
-    const adapter = createNodexCacheAdapter();
+    const adapter = createNdkMetadataCacheAdapter();
 
     await adapter.updateRelayStatus?.("wss://relay.one", {
       nip11: {
@@ -106,5 +107,20 @@ describe("loadCachedRelayNip11", () => {
 
     const past = Date.now() + RELAY_NIP11_CACHE_TTL_MS + 1;
     expect(loadCachedRelayNip11("wss://relay.one", { now: past })).toBeNull();
+  });
+});
+
+describe("forgetCachedRelayNip11", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("drops the persisted entry for the relay", () => {
+    saveCachedRelayNip11("wss://relay.one", { name: "Relay One" });
+    expect(loadCachedRelayNip11("wss://relay.one")).not.toBeNull();
+
+    forgetCachedRelayNip11("wss://relay.one/");
+
+    expect(loadCachedRelayNip11("wss://relay.one")).toBeNull();
   });
 });
