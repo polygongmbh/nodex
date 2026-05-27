@@ -121,23 +121,29 @@ export function useIndexDerivedData({
     [personFrecencyState]
   );
 
+  // Stable across renders unless the relay list itself changes. Without this,
+  // each of the three useMemos below allocated its own fresh string[] from
+  // `relays`, and each of those allocations invalidated the downstream Set
+  // built by resolveChannelRelayScopeIds.
+  const allRelayIds = useMemo(() => relays.map((relay) => relay.id), [relays]);
+
   const scopedPostsForChannels = useMemo(() => {
     const channelRelayScopeIds = resolveChannelRelayScopeIds(
       effectiveActiveRelayIds,
-      relays.map((relay) => relay.id)
+      allRelayIds
     );
     return allTasks.filter(
       (task) =>
         task.relays.length === 0 ||
         task.relays.some((relayId) => channelRelayScopeIds.has(relayId))
     );
-  }, [allTasks, effectiveActiveRelayIds, relays]);
+  }, [allTasks, effectiveActiveRelayIds, allRelayIds]);
 
   const channels: Channel[] = useMemo(() => {
     const scopedPostedTags = getPostedTagsForRelayScope(
       postedTags,
       effectiveActiveRelayIds,
-      relays.map((relay) => relay.id)
+      allRelayIds
     );
     const derived = deriveChannels(scopedPostsForChannels, scopedPostedTags, {
       personalizeScores: personalizedChannelScores,
@@ -150,7 +156,7 @@ export function useIndexDerivedData({
     postedTags,
     effectiveActiveRelayIds,
     personalizedChannelScores,
-    relays,
+    allRelayIds,
     coreChannels,
     user?.pubkey,
   ]);
@@ -164,7 +170,7 @@ export function useIndexDerivedData({
   const scopedTasksForSidebarPeople = useMemo(() => {
     const sidebarRelayScopeIds = resolveChannelRelayScopeIds(
       effectiveActiveRelayIds,
-      relays.map((relay) => relay.id)
+      allRelayIds
     );
 
     return allTasks.filter(
@@ -172,7 +178,7 @@ export function useIndexDerivedData({
         task.relays.length === 0 ||
         task.relays.some((relayId) => sidebarRelayScopeIds.has(relayId))
     );
-  }, [allTasks, effectiveActiveRelayIds, relays]);
+  }, [allTasks, effectiveActiveRelayIds, allRelayIds]);
 
   const sidebarPeople = useMemo(() => {
     return deriveSidebarPeople(
