@@ -60,7 +60,7 @@ export function TaskAssigneeAvatars({
   return (
     <div
       className={cn("flex items-center -space-x-1.5", className)}
-      title={`Assigned to ${pubkeys.length} ${pubkeys.length === 1 ? "person" : "people"}`}
+      aria-label={`Assigned to ${pubkeys.length} ${pubkeys.length === 1 ? "person" : "people"}`}
     >
       {visible.map((pubkey) => {
         const profile = getProfile(pubkey);

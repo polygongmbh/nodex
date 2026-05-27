@@ -2026,6 +2026,7 @@ export function TaskComposer({
               value={locationGeohash || ""}
               onChange={(event) => setLocationGeohash(normalizeGeohash(event.target.value) || event.target.value.trim().toLowerCase())}
               placeholder={t("composer.placeholders.geohash")}
+              aria-label={t("composer.placeholders.geohash")}
               className="h-8 w-full bg-transparent text-xs focus:outline-none"
             />
             {locationGeohash && (
@@ -2271,7 +2272,7 @@ export function TaskComposer({
                 className="inline-flex items-center gap-1 bg-muted/40 border-r border-border/50 p-1"
               >
                 <select
-                  title={t("composer.labels.kind")}
+                  aria-label={t("composer.labels.kind")}
                   value={postType}
                   onChange={(event) => setPostType(event.target.value as PostType)}
                   tabIndex={-1}
@@ -2381,6 +2382,7 @@ export function TaskComposer({
                 handleSubmit();
               }}
               disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled || isSubmitting}
+              aria-label={submitActionLabel}
               title={submitButtonTitle}
               className={cn(
                 "min-w-[12.5rem] px-4 py-2 text-sm disabled:cursor-not-allowed flex items-center justify-center gap-2 outline-none focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary-foreground))]",

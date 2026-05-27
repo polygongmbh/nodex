@@ -54,6 +54,7 @@ export function LegalDialog({
               "text-xs text-muted-foreground/80 transition-colors hover:text-foreground",
               triggerClassName
             )}
+            aria-label={t("legal.hints.openImprintAndPrivacy")}
             title={t("legal.hints.openImprintAndPrivacy")}
           >
             <span className="inline-flex items-center justify-center gap-1.5">

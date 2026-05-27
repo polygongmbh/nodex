@@ -289,6 +289,7 @@ export function TreeTaskItem({
             handleSelect();
           }
         }}
+        aria-label={getFocusTaskTooltip(t, task)}
         title={getFocusTaskTooltip(t, task)}
       >
         {/* Expand/Collapse Toggle - three states */}

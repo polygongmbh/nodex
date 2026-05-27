@@ -121,6 +121,7 @@
       }
     },
     "labels": {
+      "dateType": "Tipo de fecha",
       "priority": "Prioridad",
       "kind": "Tipo",
       "task": "Tarea",

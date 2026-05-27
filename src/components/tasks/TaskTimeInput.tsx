@@ -30,6 +30,7 @@ function clamp(value: string, max: number): string {
  */
 export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
   function TaskTimeInput({ value, onChange, className, disabled, id, title }, ref) {
+    const hoursLabel = title ?? "Hours";
     const [hh, setHh] = useState(() => splitTime(value).hh);
     const [mm, setMm] = useState(() => splitTime(value).mm);
     const minutesRef = useRef<HTMLInputElement | null>(null);
@@ -130,6 +131,7 @@ export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
           id={id}
           type="text"
           inputMode="numeric"
+          aria-label={hoursLabel}
           title={title}
           disabled={disabled}
           placeholder="--"
@@ -148,6 +150,7 @@ export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
           ref={minutesRef}
           type="text"
           inputMode="numeric"
+          aria-label="Minutes"
           disabled={disabled}
           placeholder="--"
           maxLength={2}

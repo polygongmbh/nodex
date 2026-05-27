@@ -4,9 +4,11 @@
       "helper": "Elige un área resaltada para comenzar su guía.",
       "close": "Cerrar",
       "dismiss": "Cerrar selector de secciones de guía",
-      "chooseSection": "Elegir una sección de guía"
+      "chooseSection": "Elegir una sección de guía",
+      "startSectionAria": "Iniciar sección de onboarding {{title}}"
     },
     "dialog": {
+      "targetArrowIndicator": "Indicador de objetivo",
       "emptyTitle": "No hay pasos de onboarding disponibles",
       "stepLabel": "Paso {{current}} de {{total}}",
       "skip": "Omitir",

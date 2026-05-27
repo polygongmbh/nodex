@@ -58,6 +58,7 @@ export function TaskStatusToggle({
         <button
           {...triggerProps}
           disabled={!canCompleteTask}
+          aria-label={t("tasks.actions.setStatus")}
           title={statusButtonTitle}
           className={cn(
             "rounded transition-colors touch-manipulation",

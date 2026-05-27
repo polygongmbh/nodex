@@ -136,6 +136,7 @@ export function FailedPublishQueueBanner({
                     ? "hover:bg-destructive/15"
                     : "cursor-not-allowed opacity-50"
                 )}
+                aria-label={t("publishQueue.retryHint")}
                 title={canRetry ? t("publishQueue.retryHint") : t("publishQueue.retryUnavailable")}
               >
                 <span className="inline-flex items-center gap-1">
@@ -157,6 +158,7 @@ export function FailedPublishQueueBanner({
                     ? "hover:bg-destructive/15"
                     : "cursor-not-allowed opacity-50"
                 )}
+                aria-label={t("publishQueue.repostHint")}
                 title={canRepost ? t("publishQueue.repostHint") : t("publishQueue.repostUnavailable")}
               >
                 {pendingAction === "repost" ? (

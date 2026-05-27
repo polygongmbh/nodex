@@ -1,4 +1,5 @@
 import type { ComponentPropsWithoutRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { TaskDateType } from "@/types";
 import { TASK_DATE_TYPES, getTaskDateTypeLabel } from "@/lib/task-dates";
 import {
@@ -29,6 +30,7 @@ export function TaskDateTypeSelect({
   onOpenChange,
   onCloseAutoFocus,
 }: TaskDateTypeSelectProps) {
+  const { t } = useTranslation("composer");
   return (
     <Select
       value={value}
@@ -38,6 +40,7 @@ export function TaskDateTypeSelect({
     >
       <SelectTrigger
         id={id}
+        aria-label={t("composer.labels.dateType")}
         className={cn("h-8 w-auto gap-1 text-xs", className)}
       >
         <SelectValue>{getTaskDateTypeLabel(value)}</SelectValue>

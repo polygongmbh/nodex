@@ -121,6 +121,7 @@
       }
     },
     "labels": {
+      "dateType": "Date type",
       "priority": "Priority",
       "kind": "Kind",
       "task": "Task",
