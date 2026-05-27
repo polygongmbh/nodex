@@ -457,8 +457,8 @@ export function FeedView({
                       TASK_INTERACTION_STYLES.hoverLinkText,
                       "min-w-0 max-w-[60vw] shrink truncate text-left font-semibold text-foreground"
                     )}
-                    title={t("tasks.focusBreadcrumbTitle", { title: taskTooltipTitle })}
-                    aria-label={t("tasks.focusBreadcrumbTitle", { title: taskTooltipTitle })}
+                    title={t("tasks.focusStatusUpdateTaskTitle", { title: taskTooltipTitle })}
+                    aria-label={t("tasks.focusStatusUpdateTaskTitle", { title: taskTooltipTitle })}
                   >
                     {breadcrumbTaskSummary}
                   </button>
