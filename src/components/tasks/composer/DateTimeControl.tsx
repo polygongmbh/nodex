@@ -78,11 +78,10 @@ export function DateTimeControl({
       {date && (
         <>
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <TaskTimeInput aria-label={timeLabel} value={time} onChange={onTimeChange} />
+          <TaskTimeInput title={timeLabel} value={time} onChange={onTimeChange} />
           {clearable && (
             <button
               type="button"
-              aria-label={clearLabel}
               title={clearTitle ?? clearLabel}
               onClick={() => {
                 onDateChange(undefined);

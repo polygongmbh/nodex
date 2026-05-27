@@ -92,7 +92,7 @@ export function TaskDueDateEditorForm({
         </label>
         <TaskDateTypeSelect
           id={`${idPrefix}-date-type-${taskId}`}
-          aria-label={t("listView.dates.type")}
+          title={t("listView.dates.type")}
           value={localDateType}
           onChange={setLocalDateType}
           className="h-7 border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:ring-0"
@@ -120,7 +120,7 @@ export function TaskDueDateEditorForm({
       <div className="flex items-center gap-2">
         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
         <TaskTimeInput
-          aria-label="Hours"
+          title="Hours"
           value={localDueTime}
           onChange={setLocalDueTime}
           disabled={!localDueDate}
@@ -148,7 +148,6 @@ interface PrioritySelectProps {
    * full named priority via the title tooltip. Defaults to false (full named label).
    */
   compactLabel?: boolean;
-  "aria-label"?: string;
   title?: string;
 }
 
@@ -165,10 +164,8 @@ export function PrioritySelect({
   leadingIcon,
   compactLabel = false,
   title,
-  ...rest
 }: PrioritySelectProps) {
   const { t } = useTranslation(["app", "composer"]);
-  const ariaLabel = rest["aria-label"] ?? t("composer:composer.labels.priority");
   const value = typeof priority === "number" ? String(priority) : PRIORITY_NONE_VALUE;
   const placeholder = t("composer:composer.labels.priority");
   const namedLabel =
@@ -199,7 +196,6 @@ export function PrioritySelect({
         id={id}
         type="button"
         disabled
-        aria-label={ariaLabel}
         title={effectiveTitle}
         className={cn(
           "h-8 w-auto min-w-0 max-w-full flex items-center justify-start gap-1 overflow-hidden text-xs cursor-default",
@@ -228,7 +224,6 @@ export function PrioritySelect({
     >
       <SelectTrigger
         id={id}
-        aria-label={ariaLabel}
         title={effectiveTitle}
         hideIndicator
         className={cn(
@@ -272,7 +267,6 @@ interface TaskPrioritySelectProps {
    * (e.g. table rows, composers) where the named label should remain visible.
    */
   compactLabel?: boolean;
-  "aria-label"?: string;
   title?: string;
 }
 
@@ -283,7 +277,7 @@ export function TaskPrioritySelect({
   className,
   stopPropagation = false,
   compactLabel = true,
-  ...rest
+  title,
 }: TaskPrioritySelectProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
 
@@ -305,8 +299,7 @@ export function TaskPrioritySelect({
       disabled={!taskId}
       stopPropagation={stopPropagation}
       compactLabel={compactLabel}
-      aria-label={rest["aria-label"]}
-      title={rest.title}
+      title={title}
     />
   );
 }

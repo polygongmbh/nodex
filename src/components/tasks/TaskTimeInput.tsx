@@ -5,7 +5,7 @@ interface TaskTimeInputProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
-  "aria-label"?: string;
+  title?: string;
   id?: string;
   disabled?: boolean;
 }
@@ -29,8 +29,7 @@ function clamp(value: string, max: number): string {
  * segments for consistent styling between the composer and the editor form.
  */
 export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
-  function TaskTimeInput({ value, onChange, className, disabled, id, ...rest }, ref) {
-    const ariaLabel = rest["aria-label"] ?? "Time";
+  function TaskTimeInput({ value, onChange, className, disabled, id, title }, ref) {
     const [hh, setHh] = useState(() => splitTime(value).hh);
     const [mm, setMm] = useState(() => splitTime(value).mm);
     const minutesRef = useRef<HTMLInputElement | null>(null);
@@ -131,7 +130,7 @@ export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
           id={id}
           type="text"
           inputMode="numeric"
-          aria-label={ariaLabel}
+          title={title}
           disabled={disabled}
           placeholder="--"
           maxLength={2}
@@ -149,7 +148,6 @@ export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
           ref={minutesRef}
           type="text"
           inputMode="numeric"
-          aria-label="Minutes"
           disabled={disabled}
           placeholder="--"
           maxLength={2}

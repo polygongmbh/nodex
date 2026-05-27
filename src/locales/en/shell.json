@@ -25,10 +25,6 @@
     "dismiss": "Dismiss message"
   },
   "navigation": {
-    "aria": {
-      "viewSwitcher": "View switcher",
-      "views": "Navigation views"
-    },
     "views": {
       "manage": "Manage",
       "status": "Status",

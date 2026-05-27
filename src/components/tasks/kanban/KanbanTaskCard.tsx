@@ -219,7 +219,6 @@ export function KanbanTaskCard({
           <div
             className="rounded-full bg-muted/80 p-1 text-muted-foreground"
             title={t("tasks.readOnly")}
-            aria-label={t("tasks.readOnly")}
           >
             <Lock className="h-3 w-3" />
           </div>

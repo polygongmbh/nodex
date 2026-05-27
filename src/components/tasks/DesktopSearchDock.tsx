@@ -74,7 +74,6 @@ export function DesktopSearchDock() {
               onClick={() => {
                 void dispatchFeedInteraction({ type: "ui.search.change", query: "" });
               }}
-              aria-label={t("search.desktop.clear")}
               title={t("search.desktop.clear")}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
@@ -92,7 +91,6 @@ export function DesktopSearchDock() {
             >
               <SelectTrigger
                 className="w-[150px] h-8 rounded-md border-border/50 bg-transparent text-sm shadow-none focus:ring-1 focus:ring-primary/30"
-                aria-label={t("search.kanban.depthHint")}
                 title={t("search.kanban.depthHint")}
               >
                 <SelectValue />

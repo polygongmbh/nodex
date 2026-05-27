@@ -27,7 +27,6 @@ export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
     <div
       className="h-full flex items-stretch justify-center gap-2 lg:gap-3 xl:gap-4 2xl:gap-5 min-w-0 overflow-hidden"
       data-onboarding="view-switcher"
-      aria-label={t("navigation.aria.viewSwitcher")}
     >
       {views.map((view) => (
         <button
@@ -42,7 +41,6 @@ export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
               : "text-muted-foreground border-transparent hover:text-foreground hover:border-foreground/30"
           )}
           title={t("navigation.views.switchTo", { view: view.label })}
-          aria-label={t("navigation.views.switchTo", { view: view.label })}
           aria-current={currentView === view.id ? "page" : undefined}
         >
           {view.icon}

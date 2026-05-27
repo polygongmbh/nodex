@@ -1748,9 +1748,6 @@ export function TaskComposer({
             if (pendingOutsidePointerInteractionRef.current || shouldPreserveExpandedComposer()) return;
             setIsExpanded(false);
           }}
-          aria-label={
-            composerPlaceholder
-          }
           placeholder={
             composerPlaceholder
           }
@@ -1880,7 +1877,7 @@ export function TaskComposer({
                     type="button"
                     onClick={() => removeAttachment(attachment.id)}
                     className="rounded p-0.5 hover:bg-muted"
-                    aria-label={t("composer.attachments.remove")}
+                    title={t("composer.attachments.remove")}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1908,7 +1905,6 @@ export function TaskComposer({
                   }}
                   className="mt-1 h-7 w-full rounded border border-border/50 bg-background px-2 text-xs"
                   placeholder={t("composer.attachments.altPlaceholder")}
-                  aria-label={t("composer.attachments.altLabel")}
                 />
               )}
             </div>
@@ -2030,7 +2026,6 @@ export function TaskComposer({
               value={locationGeohash || ""}
               onChange={(event) => setLocationGeohash(normalizeGeohash(event.target.value) || event.target.value.trim().toLowerCase())}
               placeholder={t("composer.placeholders.geohash")}
-              aria-label={t("composer.placeholders.geohash")}
               className="h-8 w-full bg-transparent text-xs focus:outline-none"
             />
             {locationGeohash && (
@@ -2038,7 +2033,6 @@ export function TaskComposer({
                 type="button"
                 onClick={() => setLocationGeohash(undefined)}
                 className="rounded p-0.5 hover:bg-muted"
-                aria-label={t("composer.actions.clearLocation")}
                 title={t("composer.actions.clearLocation")}
               >
                 <X className="h-3 w-3" />
@@ -2071,7 +2065,7 @@ export function TaskComposer({
           <div className="inline-flex w-auto items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <TaskDateTypeSelect
-              aria-label={t("composer.labels.dateType")}
+              title={t("composer.labels.dateType")}
               value={dateType}
               onChange={setDateType}
               onOpenChange={handleComposerDropdownOpenChange}
@@ -2114,14 +2108,12 @@ export function TaskComposer({
             value={nip99.price || ""}
             onChange={(event) => updateNip99({ price: event.target.value })}
             placeholder={t("composer.nip99.price")}
-            aria-label={t("composer.nip99.price")}
             className="h-8 w-20 rounded-md border border-border/50 bg-background px-2 text-xs"
           />
           <input
             value={nip99.currency || "EUR"}
             onChange={(event) => updateNip99({ currency: event.target.value.toUpperCase() })}
             placeholder={t("composer.nip99.currency")}
-            aria-label={t("composer.nip99.currency")}
             list="nip99-currency-suggestions"
             className="h-8 w-20 rounded-md border border-border/50 bg-background px-2 text-xs"
             maxLength={8}
@@ -2134,7 +2126,7 @@ export function TaskComposer({
           <select
             value={nip99.frequency || ""}
             onChange={(event) => updateNip99({ frequency: event.target.value || undefined })}
-            aria-label={t("composer.nip99.frequency")}
+            title={t("composer.nip99.frequency")}
             className="h-8 min-w-[6.5rem] rounded-md border border-border/50 bg-background px-2 text-xs"
           >
             <option value="">{t("composer.nip99.frequencyOptions.oneTime")}</option>
@@ -2214,7 +2206,6 @@ export function TaskComposer({
               }, 10);
             }}
             className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-            aria-label={t("composer.hints.insertHashtag")}
             title={t("composer.hints.insertHashtagOpen")}
           >
             <Hash className="w-4 h-4 text-primary" />
@@ -2237,7 +2228,6 @@ export function TaskComposer({
               }, 10);
             }}
             className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-            aria-label={t("composer.hints.insertMention")}
             title={t("composer.hints.insertMentionOpen")}
           >
             <AtSign className="w-4 h-4 text-primary" />
@@ -2251,7 +2241,6 @@ export function TaskComposer({
                 ? "bg-primary/20 text-primary"
                 : "hover:bg-muted/70"
             )}
-            aria-label={t("composer.actions.location")}
             title={t("composer.actions.location")}
           >
             <MapPin className="w-4 h-4 text-primary" />
@@ -2262,7 +2251,6 @@ export function TaskComposer({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-                aria-label={t("composer.attachments.add")}
                 title={t("composer.attachments.add")}
               >
                 <Paperclip className="w-4 h-4 text-primary" />
@@ -2284,7 +2272,7 @@ export function TaskComposer({
                 className="inline-flex items-center gap-1 bg-muted/40 border-r border-border/50 p-1"
               >
                 <select
-                  aria-label={t("composer.labels.kind")}
+                  title={t("composer.labels.kind")}
                   value={postType}
                   onChange={(event) => setPostType(event.target.value as PostType)}
                   tabIndex={-1}
@@ -2298,7 +2286,6 @@ export function TaskComposer({
                 <button
                   type="button"
                   onClick={() => setPostType("task")}
-                  aria-label={t("composer.labels.task")}
                   className={cn(
                     "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
                     postType === "task"
@@ -2312,7 +2299,6 @@ export function TaskComposer({
                 <button
                   type="button"
                   onClick={() => setPostType("comment")}
-                  aria-label={t("composer.labels.comment")}
                   className={cn(
                     "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
                     postType === "comment"
@@ -2327,7 +2313,6 @@ export function TaskComposer({
                   <button
                     type="button"
                     onClick={() => setPostType("listing")}
-                    aria-label={t("composer.labels.listing")}
                     className={cn(
                       "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
                       postType === "listing"
@@ -2343,7 +2328,6 @@ export function TaskComposer({
                   <button
                     type="button"
                     onClick={() => setPostType("event")}
-                    aria-label={t("composer.labels.event")}
                     className={cn(
                       "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
                       postType === "event"
@@ -2381,7 +2365,6 @@ export function TaskComposer({
                     type="button"
                     onClick={handleSubmit}
                     className="min-w-[12.5rem] px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 flex items-center justify-center gap-2 outline-none focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary-foreground))]"
-                    aria-label={t("composer.actions.signin")}
                     title={t("composer.blocked.signin")}
                   >
                     <LogIn className="w-4 h-4" />
@@ -2399,7 +2382,6 @@ export function TaskComposer({
                 handleSubmit();
               }}
               disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled || isSubmitting}
-              aria-label={submitActionLabel}
               title={submitButtonTitle}
               className={cn(
                 "min-w-[12.5rem] px-4 py-2 text-sm disabled:cursor-not-allowed flex items-center justify-center gap-2 outline-none focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary-foreground))]",

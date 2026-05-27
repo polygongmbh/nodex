@@ -580,11 +580,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowPrivateKeyInput((current) => !current)}
-                      aria-label={
-                        showPrivateKeyInput
-                          ? t("auth.profile.hidePrivateKey")
-                          : t("auth.profile.showPrivateKey")
-                      }
                       title={
                         showPrivateKeyInput
                           ? t("auth.profile.hidePrivateKey")
@@ -939,7 +934,6 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             size="sm"
             className={cn(desktopTopbarControlClassName, "xl:px-3")}
             title={profileTriggerHint}
-            aria-label={profileTriggerHint}
           >
             <DropdownTriggerContent
               className="max-w-full"
@@ -976,7 +970,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <DropdownMenuItem
-                      aria-label={t("auth.menu.editProfile")}
+                      title={t("auth.menu.editProfile")}
                       aria-disabled={!hasWritableRelayConnection}
                       data-disabled={!hasWritableRelayConnection ? "" : undefined}
                       className={cn(
@@ -1020,7 +1014,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        aria-label={t("auth.menu.preferenceHelp", { setting: preference.label })}
+                        title={t("auth.menu.preferenceHelp", { setting: preference.label })}
                         onClick={(event) => event.preventDefault()}
                         onPointerDown={(event) => event.stopPropagation()}
                         className="inline-flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"

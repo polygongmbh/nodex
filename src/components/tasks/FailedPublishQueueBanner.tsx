@@ -71,7 +71,6 @@ export function FailedPublishQueueBanner({
             }}
             className="rounded px-2 py-0.5 text-[11px] font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
             title={t("publishQueue.discardAll")}
-            aria-label={t("publishQueue.discardAll")}
           >
             {t("publishQueue.discardAll")}
           </button>
@@ -138,7 +137,6 @@ export function FailedPublishQueueBanner({
                     : "cursor-not-allowed opacity-50"
                 )}
                 title={canRetry ? t("publishQueue.retryHint") : t("publishQueue.retryUnavailable")}
-                aria-label={t("publishQueue.retryHint")}
               >
                 <span className="inline-flex items-center gap-1">
                   {pendingAction === "retry" ? (
@@ -160,7 +158,6 @@ export function FailedPublishQueueBanner({
                     : "cursor-not-allowed opacity-50"
                 )}
                 title={canRepost ? t("publishQueue.repostHint") : t("publishQueue.repostUnavailable")}
-                aria-label={t("publishQueue.repostHint")}
               >
                 {pendingAction === "repost" ? (
                   <span className="inline-flex items-center gap-1">
@@ -179,7 +176,6 @@ export function FailedPublishQueueBanner({
                 disabled={isPending}
                 className="rounded p-1 text-destructive/80 transition-colors hover:bg-destructive/15 hover:text-destructive"
                 title={t("publishQueue.discard")}
-                aria-label={t("publishQueue.discard")}
               >
                 <XCircle className="h-3.5 w-3.5" />
               </button>

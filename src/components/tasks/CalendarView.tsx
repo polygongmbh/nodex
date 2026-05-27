@@ -486,7 +486,7 @@ export function CalendarView({
                 <button
                   onClick={() => navigateMonth("prev")}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
-                  aria-label={t("calendar.nav.previousMonth")}
+                  title={t("calendar.nav.previousMonth")}
                   data-onboarding="calendar-month-nav-prev"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -497,7 +497,7 @@ export function CalendarView({
                 <button
                   onClick={() => navigateMonth("next")}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
-                  aria-label={t("calendar.nav.nextMonth")}
+                  title={t("calendar.nav.nextMonth")}
                   data-onboarding="calendar-month-nav-next"
                 >
                   <ChevronRight className="w-4 h-4" />

@@ -90,7 +90,7 @@ function TaskTagChipContent({
         <span className={cn(TASK_CHIP_STYLES.muted, "gap-1")} title={relayChips.map((r) => r.name || r.url).join(", ")}>
           {relayChips.map((relay) => {
             const RelayIcon = resolveRelayIcon(relay.url || relay.id);
-            return <RelayIcon key={relay.id} className="w-3 h-3" aria-label={relay.name || relay.url} />;
+            return <RelayIcon key={relay.id} className="w-3 h-3" />;
           })}
         </span>
       ) : null}
@@ -120,7 +120,6 @@ function TaskTagChipContent({
             tagClassName
           )}
           data-onboarding="content-hashtag"
-          aria-label={t("tasks.actions.filterTag", { tag })}
           title={t("tasks.actions.filterTag", { tag })}
         >
           #{tag}

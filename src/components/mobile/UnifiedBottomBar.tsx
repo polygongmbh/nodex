@@ -1287,7 +1287,7 @@ export function UnifiedBottomBar({
                     {showStatusDot && (
                       <span
                         className={cn("inline-block h-2 w-2 rounded-full shrink-0", connectionDotClass)}
-                        aria-label={resolvedConnectionStatus}
+                        title={resolvedConnectionStatus}
                       />
                     )}
                   </button>
@@ -1432,7 +1432,6 @@ export function UnifiedBottomBar({
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               )}
-              aria-label={t("composer.attachments.add")}
               title={t("composer.attachments.add")}
             >
               <Paperclip className="w-3.5 h-3.5" />
@@ -1498,7 +1497,6 @@ export function UnifiedBottomBar({
                       : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                     isCapturingLocation && "opacity-60 cursor-wait animate-pulse"
                   )}
-                  aria-label={t("composer.actions.location")}
                   aria-busy={isCapturingLocation}
                   title={t("composer.actions.location")}
                 >
@@ -1508,7 +1506,7 @@ export function UnifiedBottomBar({
               {dueDate && (
                 <div className="flex items-center gap-1">
                   <TaskDateTypeSelect
-                    aria-label={t("composer.labels.dateType")}
+                    title={t("composer.labels.dateType")}
                     value={dateType}
                     onChange={setDateType}
                     className="h-8 w-[5.2rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
@@ -1516,7 +1514,7 @@ export function UnifiedBottomBar({
                   <div className="h-8 flex items-center gap-1 pl-2 pr-1 rounded-md border border-border bg-muted/30 text-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     <TaskTimeInput
-                      aria-label={t("composer.labels.time", { defaultValue: "Time" })}
+                      title={t("composer.labels.time", { defaultValue: "Time" })}
                       value={dueTime}
                       onChange={setDueTime}
                       className="border-0 bg-transparent px-0 h-7"
@@ -1526,7 +1524,7 @@ export function UnifiedBottomBar({
                         type="button"
                         onClick={() => setDueTime("")}
                         className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label={t("composer.hints.clearTime")}
+                        title={t("composer.hints.clearTime")}
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1538,7 +1536,7 @@ export function UnifiedBottomBar({
                       setDueTime("");
                     }}
                     className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted transition-colors"
-                    aria-label={t("composer.hints.clearDueDate")}
+                    title={t("composer.hints.clearDueDate")}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -1565,7 +1563,7 @@ export function UnifiedBottomBar({
             </button>
             <button
               onClick={() => toggleSelector("channel")}
-              aria-label={t("filters:filters.channels.title", { defaultValue: "Channels" })}
+              title={t("filters:filters.channels.title", { defaultValue: "Channels" })}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
@@ -1580,7 +1578,7 @@ export function UnifiedBottomBar({
             </button>
             <button
               onClick={() => toggleSelector("person")}
-              aria-label={t("filters:filters.people.title")}
+              title={t("filters:filters.people.title")}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
@@ -1634,7 +1632,7 @@ export function UnifiedBottomBar({
                     type="button"
                     onClick={() => removeAttachment(attachment.id)}
                     className="rounded p-0.5 hover:bg-muted"
-                    aria-label={t("composer.attachments.remove")}
+                    title={t("composer.attachments.remove")}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1662,7 +1660,6 @@ export function UnifiedBottomBar({
                   }}
                   className="mt-1 h-7 w-full rounded border border-border/50 bg-background px-2 text-xs"
                   placeholder={t("composer.attachments.altPlaceholder")}
-                  aria-label={t("composer.attachments.altLabel")}
                 />
               )}
             </div>
@@ -1679,7 +1676,6 @@ export function UnifiedBottomBar({
                 <button
                   onClick={handleCancel}
                   className="absolute left-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted z-10"
-                  aria-label={t("composer.hints.clearCompose")}
                   title={t("composer.hints.clearCompose")}
                 >
                   <X className="w-4 h-4" />
@@ -1900,7 +1896,6 @@ export function UnifiedBottomBar({
                           : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-100"
                       : "border-border text-foreground hover:bg-muted"
                   )}
-                  aria-label={canCreateContent ? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")) : t("composer.hints.signInToCreate")}
                   title={primarySendTitle}
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>
@@ -1929,7 +1924,6 @@ export function UnifiedBottomBar({
                             ? "border-primary/25 bg-primary/25 text-primary/75 disabled:opacity-100 hover:bg-primary/30"
                             : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-100"
                       )}
-                      aria-label={t("composer.actions.createTask")}
                       title={taskSubmitBlock?.reason || t("composer.actions.createTask")}
                     >
                       <CheckSquare className="w-4 h-4" />
@@ -1941,7 +1935,6 @@ export function UnifiedBottomBar({
                       }}
                       disabled={!canSendComment}
                     className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                      aria-label={t("composer.actions.addComment")}
                       title={t("composer.actions.addComment")}
                     >
                       <MessageSquare className="w-4 h-4" />
@@ -1954,7 +1947,6 @@ export function UnifiedBottomBar({
                         }}
                         disabled={!canSendListing}
                         className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                        aria-label={t("composer.actions.postListing")}
                         title={t("composer.actions.postListing")}
                       >
                         <Package className="w-4 h-4" />

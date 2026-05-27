@@ -25,10 +25,6 @@
     "dismiss": "Nachricht schließen"
   },
   "navigation": {
-    "aria": {
-      "viewSwitcher": "Ansichtsumschalter",
-      "views": "Navigationsansichten"
-    },
     "views": {
       "manage": "Verwalten",
       "status": "Status",

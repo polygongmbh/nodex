@@ -51,7 +51,6 @@ export function TaskLocationChip({ geohash, className }: TaskLocationChipProps) 
       type="button"
       onClick={openMap}
       className={className}
-      aria-label={`Open map near ${roughRegion}`}
       title={`Approx ${roughRegion} (${radiusLabel} area). Open in maps.`}
     >
       {`📍 ${roughRegion}`}

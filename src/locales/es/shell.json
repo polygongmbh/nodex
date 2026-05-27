@@ -25,10 +25,6 @@
     "dismiss": "Cerrar mensaje"
   },
   "navigation": {
-    "aria": {
-      "viewSwitcher": "Selector de vista",
-      "views": "Vistas de navegación"
-    },
     "views": {
       "manage": "Gestionar",
       "status": "Estado",

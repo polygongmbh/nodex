@@ -18,7 +18,6 @@ type TaskDateTypeSelectProps = {
   disabled?: boolean;
   onOpenChange?: (open: boolean) => void;
   onCloseAutoFocus?: ComponentPropsWithoutRef<typeof SelectContent>["onCloseAutoFocus"];
-  "aria-label"?: string;
 } & Pick<ComponentPropsWithoutRef<"button">, "title">;
 
 export function TaskDateTypeSelect({
@@ -30,9 +29,7 @@ export function TaskDateTypeSelect({
   onOpenChange,
   onCloseAutoFocus,
   title,
-  ...rest
 }: TaskDateTypeSelectProps) {
-  const ariaLabel = rest["aria-label"];
   return (
     <Select
       value={value}
@@ -42,7 +39,6 @@ export function TaskDateTypeSelect({
     >
       <SelectTrigger
         id={id}
-        aria-label={ariaLabel}
         title={title}
         className={cn("h-8 w-auto gap-1 text-xs", className)}
       >

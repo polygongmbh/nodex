@@ -87,7 +87,6 @@
       "add": "Añadir archivo",
       "remove": "Quitar archivo",
       "altPlaceholder": "Texto alternativo (opcional)",
-      "altLabel": "Texto alternativo del archivo",
       "uploading": "Subiendo...",
       "retry": "Reintentar",
       "failed": "Falló",
@@ -134,9 +133,7 @@
     },
     "hints": {
       "composeField": "Usa etiquetas #canal y @menciones en este campo",
-      "insertHashtag": "Insertar hashtag",
       "insertHashtagOpen": "Insertar hashtag y abrir sugerencias de canales",
-      "insertMention": "Insertar mención",
       "insertMentionOpen": "Insertar @mención y abrir sugerencias de personas",
       "clearCompose": "Borrar redacción",
       "createFromText": "Crear desde el texto actual",

@@ -64,8 +64,7 @@ export function InteractivePersonName({
             "group inline-flex max-w-full min-w-0 items-center gap-0.5 rounded text-left transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50",
             className,
           )}
-          aria-label={accessibleLabel}
-          title=""
+          title={accessibleLabel}
         >
           <span
             data-testid={testId}
@@ -76,7 +75,6 @@ export function InteractivePersonName({
           {verified && (
             <BadgeCheck
               className="h-3.5 w-3.5 shrink-0 text-blue-500"
-              aria-label={t("people.nip05Verified")}
             />
           )}
           {withHandle && secondary && (

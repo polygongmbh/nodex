@@ -70,7 +70,7 @@ function ReactionPickerButton({ open, setOpen, onPick }: ReactionPickerButtonPro
           type="button"
           onClick={(event) => event.stopPropagation()}
           className="inline-flex items-center justify-center rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Add reaction"
+          title="Add reaction"
         >
           <SmilePlus className="h-3.5 w-3.5" />
         </button>

@@ -87,7 +87,6 @@
       "add": "Anhang hinzufügen",
       "remove": "Anhang entfernen",
       "altPlaceholder": "Alternativtext (optional)",
-      "altLabel": "Alternativtext für Anhang",
       "uploading": "Lädt hoch...",
       "retry": "Erneut versuchen",
       "failed": "Fehlgeschlagen",
@@ -134,9 +133,7 @@
     },
     "hints": {
       "composeField": "#channel-Tags und @Erwähnungen in diesem Feld verwenden",
-      "insertHashtag": "Hashtag einfügen",
       "insertHashtagOpen": "Hashtag einfügen und Kanalvorschläge öffnen",
-      "insertMention": "Erwähnung einfügen",
       "insertMentionOpen": "@Erwähnung einfügen und Personenvorschläge öffnen",
       "clearCompose": "Eingabe leeren",
       "createFromText": "Aus aktuellem Text erstellen",

@@ -229,7 +229,7 @@ export function RelayManagement({
                     role="button"
                     tabIndex={0}
                     aria-expanded={isExpanded}
-                    aria-label={isExpanded ? t("relay.details.hide") : t("relay.details.show")}
+                    title={isExpanded ? t("relay.details.hide") : t("relay.details.show")}
                     onClick={() => toggleExpandedRelay(relay.url)}
                     onKeyDown={(event) => handleRelayCardKeyDown(event, relay.url)}
                   >
@@ -244,7 +244,6 @@ export function RelayManagement({
                           stopRelayCardToggle(event);
                           handleRelayReorder(index, index - 1);
                         }}
-                        aria-label={t("relay.moveUp", { relay: relayName })}
                         title={t("relay.moveUp", { relay: relayName })}
                         disabled={index === 0}
                       >
@@ -259,7 +258,6 @@ export function RelayManagement({
                           stopRelayCardToggle(event);
                           handleRelayReorder(index, index + 1);
                         }}
-                        aria-label={t("relay.moveDown", { relay: relayName })}
                         title={t("relay.moveDown", { relay: relayName })}
                         disabled={index === relays.length - 1}
                       >
@@ -300,7 +298,7 @@ export function RelayManagement({
                                 type="button"
                                 className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
                                 onClick={stopRelayCardToggle}
-                                aria-label={t("relay.statusHints.readOnly")}
+                                title={t("relay.statusHints.readOnly")}
                               >
                                 <Info className="h-3.5 w-3.5" />
                               </button>
@@ -327,7 +325,7 @@ export function RelayManagement({
                         stopRelayCardToggle(event);
                         toggleExpandedRelay(relay.url);
                       }}
-                      aria-label={
+                      title={
                         isExpanded
                           ? t("relay.details.hide")
                           : t("relay.details.show")
@@ -355,7 +353,6 @@ export function RelayManagement({
                             forceNewSocket: true,
                           });
                         }}
-                        aria-label={t("relay.reconnect")}
                         title={t("relay.reconnect")}
                       >
                         <RotateCcw className="w-4 h-4" />
@@ -371,7 +368,6 @@ export function RelayManagement({
                         stopRelayCardToggle(event);
                         void dispatchFeedInteraction({ type: "sidebar.relay.remove", url: relay.url });
                       }}
-                      aria-label={t("relay.remove")}
                       title={t("relay.remove")}
                     >
                       <X className="w-4 h-4" />

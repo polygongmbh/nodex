@@ -289,7 +289,6 @@ export function TreeTaskItem({
             handleSelect();
           }
         }}
-        aria-label={getFocusTaskTooltip(t, task, { noPreviewKey: "tasks.focusTaskAria" })}
         title={getFocusTaskTooltip(t, task)}
       >
         {/* Expand/Collapse Toggle - three states */}
@@ -301,7 +300,6 @@ export function TreeTaskItem({
             data-fold-state={foldState}
             className="flex-shrink-0 p-0.5 rounded hover:bg-muted touch-manipulation"
             title={foldToggleLabel}
-            aria-label={foldToggleLabel}
           >
             {foldState === "matchingOnly" ? (
               <ChevronDown className="w-6 h-6 md:w-4 md:h-4 text-muted-foreground" />

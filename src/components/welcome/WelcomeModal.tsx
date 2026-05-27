@@ -78,7 +78,6 @@ export function WelcomeModal({
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={t("welcome.ariaLabel")}
           className="relative mx-2 w-full max-w-lg rounded-xl border border-border bg-card/95 p-6 text-card-foreground shadow-xl backdrop-blur-md transition-all pointer-events-auto"
           data-state={state}
           style={dialogStyle}

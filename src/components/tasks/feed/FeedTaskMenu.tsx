@@ -82,7 +82,7 @@ export function FeedTaskMenu({
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            aria-label={t("tasks.actions.openMenu")}
+            title={t("tasks.actions.openMenu")}
             data-testid={`feed-task-menu-trigger-${task.id}`}
             onClick={stop}
             className={cn(
@@ -275,7 +275,7 @@ function BackButton({ onClick, label }: { onClick: () => void; label: string }) 
     <button
       type="button"
       onClick={onClick}
-      aria-label={label}
+      title={label}
       className="inline-flex items-center gap-1.5 self-start rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
     >
       <ArrowLeft className="h-3 w-3" />

@@ -39,7 +39,6 @@ export function TaskBreadcrumbRow({
             }}
             className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "min-w-0 truncate")}
             title={t("tasks.focusBreadcrumbTitle", { title: breadcrumb.text })}
-            aria-label={t("tasks.focusBreadcrumbTitle", { title: breadcrumb.text })}
           >
             {breadcrumb.text}
           </button>

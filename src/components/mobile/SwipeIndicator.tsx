@@ -18,7 +18,7 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
       className="flex items-center justify-center gap-1.5 py-1"
       role="status"
       aria-live="polite"
-      aria-label={t("navigation.mobile.currentViewPosition")}
+      title={t("navigation.mobile.currentViewPosition")}
     >
       {/* Management dot */}
       <div

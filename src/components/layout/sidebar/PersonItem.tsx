@@ -70,9 +70,6 @@ export function PersonItem({
         title={isPinned
           ? t("sidebar.filters.unpinPersonFromView", { name: personName })
           : t("sidebar.filters.pinPersonToView", { name: personName })}
-        ariaLabel={isPinned
-          ? t("sidebar.filters.unpinPersonFromView", { name: personName })
-          : t("sidebar.filters.pinPersonToView", { name: personName })}
       />
       <PersonHoverCard
         person={person}
@@ -87,7 +84,7 @@ export function PersonItem({
               event.stopPropagation();
               handlePersonShortcut(event, "toggle");
             }}
-            aria-label={t("sidebar.filters.togglePerson", { name: personName })}
+            title={t("sidebar.filters.togglePerson", { name: personName })}
             className={cn(
               "relative w-7 h-7 rounded-full transition-colors hover:ring-2 hover:ring-primary/50",
               person.isSelected
@@ -107,7 +104,7 @@ export function PersonItem({
               handlePersonShortcut(event, "exclusive");
             }}
             className="flex w-full min-w-0 items-center gap-2 text-left"
-            aria-label={t("sidebar.filters.showOnlyPerson", { name: personName })}
+            title={t("sidebar.filters.showOnlyPerson", { name: personName })}
           >
             <span
               className={cn(
@@ -128,7 +125,6 @@ export function PersonItem({
           type="button"
           data-testid={`person-item-actions-${person.pubkey}`}
           className="rounded p-1 text-sidebar-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-accent/70 hover:text-foreground"
-          aria-label={t("tasks:people.actions.openMenu", { name: personName })}
           title={t("tasks:people.actions.openMenu", { name: personName })}
         >
           <MoreHorizontal className="h-3.5 w-3.5" />

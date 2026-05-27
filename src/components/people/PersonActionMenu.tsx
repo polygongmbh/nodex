@@ -340,7 +340,7 @@ export function PersonActionMenuContent({
           <span className="flex-1 truncate text-foreground">{t("people.actions.copyPubkey")}</span>
           <button
             type="button"
-            aria-label={t("people.actions.copyPubkeyNpubAria")}
+            title={t("people.actions.copyPubkeyNpubAria")}
             disabled={!npubValue}
             onClick={(event) => {
               event.stopPropagation();
@@ -355,7 +355,7 @@ export function PersonActionMenuContent({
           </button>
           <button
             type="button"
-            aria-label={t("people.actions.copyPubkeyHexAria")}
+            title={t("people.actions.copyPubkeyHexAria")}
             disabled={!hexValue}
             onClick={(event) => {
               event.stopPropagation();
@@ -423,7 +423,7 @@ export function PersonActionMenuContent({
         <span className="flex-1 truncate text-foreground">{t("people.actions.copyPubkey")}</span>
         <button
           type="button"
-          aria-label={t("people.actions.copyPubkeyNpubAria")}
+          title={t("people.actions.copyPubkeyNpubAria")}
           disabled={!npubValue}
           onClick={(event) => {
             event.stopPropagation();
@@ -438,7 +438,7 @@ export function PersonActionMenuContent({
         </button>
         <button
           type="button"
-          aria-label={t("people.actions.copyPubkeyHexAria")}
+          title={t("people.actions.copyPubkeyHexAria")}
           disabled={!hexValue}
           onClick={(event) => {
             event.stopPropagation();

@@ -51,7 +51,7 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
         <button
           onClick={handleAddRelay}
           className="px-3 h-10 rounded-lg border border-border text-sm flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
-          aria-label={t("filters.feeds.addAria")}
+          title={t("filters.feeds.addAria")}
         >
           <Plus className="w-4 h-4" />
           {t("filters.feeds.add")}
@@ -96,11 +96,6 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
                         ? t("relay:relay.statusHints.readOnly")
                         : resolvedConnectionStatus
                     }
-                    aria-label={
-                      resolvedConnectionStatus === "read-only"
-                        ? t("relay:relay.statusHints.readOnly")
-                        : resolvedConnectionStatus
-                    }
                   />
                 )}
                 {relay.isActive && isUsable && (
@@ -119,7 +114,6 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
                         });
                       }}
                       className="p-1.5 rounded text-muted-foreground hover:text-foreground active:bg-muted inline-flex items-center touch-target-sm"
-                      aria-label={t("relay:relay.reconnect")}
                       title={t("relay:relay.reconnect")}
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -134,7 +128,7 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
                         });
                       }}
                       className="p-1.5 rounded text-muted-foreground hover:text-destructive active:bg-destructive/10 inline-flex items-center touch-target-sm"
-                      aria-label={t("filters.feeds.removeAria", { name: relayDisplayName })}
+                      title={t("filters.feeds.removeAria", { name: relayDisplayName })}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

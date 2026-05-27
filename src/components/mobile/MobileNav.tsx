@@ -250,7 +250,6 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     <nav
       className="mx-2 mt-2 mb-1 safe-area-top"
       role="tablist"
-      aria-label={t("navigation.aria.views")}
       data-onboarding="mobile-nav"
     >
       <div className="flex items-center gap-1.5">
@@ -258,7 +257,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
         <button
           type="button"
           data-onboarding="mobile-nav-manage"
-          aria-label={t("navigation.views.switchTo", { view: t("navigation.views.manage") })}
+          title={t("navigation.views.switchTo", { view: t("navigation.views.manage") })}
           className={cn(
             "flex items-center justify-center w-11 h-9 sm:w-12 sm:h-10 rounded-lg shrink-0 transition-colors duration-150",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
@@ -311,7 +310,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               data-segment-index={i}
               role="tab"
               aria-selected={currentView === seg && !isManageActive}
-              aria-label={t("navigation.views.switchTo", { view: segmentLabels[seg] })}
+              title={t("navigation.views.switchTo", { view: segmentLabels[seg] })}
               className={cn(
                 "relative z-10 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 sm:py-2 text-[13px] sm:text-[15px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",

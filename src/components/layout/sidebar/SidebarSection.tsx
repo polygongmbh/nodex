@@ -83,7 +83,6 @@ export function SidebarSection({
             }}
             className="hover:ring-2 hover:ring-primary/50 rounded p-0.5 focus:outline-none focus:ring-2 focus:ring-primary/50"
             title={resolvedIconLabel}
-            aria-label={resolvedIconLabel}
           >
             <Icon className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
           </button>
@@ -92,7 +91,6 @@ export function SidebarSection({
             className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left focus:outline-none"
             onClick={onToggle}
             aria-expanded={isExpanded}
-            aria-label={resolvedToggleLabel}
             title={resolvedToggleLabel}
           >
             <span className="flex min-w-0 items-center gap-2">

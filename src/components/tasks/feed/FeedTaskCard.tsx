@@ -183,7 +183,6 @@ export const FeedTaskCard = memo(function FeedTaskCard({
           {isEvent ? (
             <span
               title={t("tasks.event.label")}
-              aria-label={t("tasks.event.label")}
               className={cn("flex-shrink-0 mt-0.5 inline-flex items-center justify-center", isMobile ? "p-1" : "p-0.5")}
             >
               <CalendarIcon className={cn("text-muted-foreground", "w-5 h-5")} />
@@ -218,7 +217,6 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                     ? listingSoldLabel
                     : feedMessageLabel
               }
-              aria-label={listingStatus === "sold" ? listingSoldLabel : feedMessageLabel}
               className={cn(
                 "flex-shrink-0 mt-0.5 rounded transition-colors",
                 isMobile ? "p-1" : "p-0.5",

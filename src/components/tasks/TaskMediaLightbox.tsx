@@ -180,7 +180,7 @@ export function TaskMediaLightbox({
                 type="button"
                 onClick={() => onOpenChange(false)}
                 className="rounded-md bg-background/90 p-2 text-foreground hover:bg-background"
-                aria-label={t("mediaLightbox.close")}
+                title={t("mediaLightbox.close")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -219,7 +219,7 @@ export function TaskMediaLightbox({
                   disabled={!canGoPrevious}
                   className="absolute left-0 z-10 flex w-[24%] min-w-[6rem] items-center justify-start pl-4 text-foreground transition-colors hover:bg-black/10 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
                   style={hasOverlayBounds ? { top: `${overlayBounds.top}px`, height: `${overlayBounds.height}px` } : undefined}
-                  aria-label={t("mediaLightbox.previous")}
+                  title={t("mediaLightbox.previous")}
                 >
                   <ChevronLeft className="h-7 w-7" />
                 </button>
@@ -229,7 +229,7 @@ export function TaskMediaLightbox({
                   disabled={!canGoNext}
                   className="absolute right-0 z-10 flex w-[24%] min-w-[6rem] items-center justify-end pr-4 text-foreground transition-colors hover:bg-black/10 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
                   style={hasOverlayBounds ? { top: `${overlayBounds.top}px`, height: `${overlayBounds.height}px` } : undefined}
-                  aria-label={t("mediaLightbox.next")}
+                  title={t("mediaLightbox.next")}
                 >
                   <ChevronRight className="h-7 w-7" />
                 </button>

@@ -187,7 +187,6 @@ export function MobileFilters({
                 void dispatchFeedInteraction({ type: "ui.openGuide" });
               }}
               className="flex-1 rounded-lg border border-border px-3 py-2.5 text-sm text-left hover:bg-muted/50 active:bg-muted transition-colors inline-flex items-center gap-2 touch-target-sm"
-              aria-label={t("shell:sidebar.actions.openGuide")}
               title={t("shell:sidebar.actions.openGuide")}
             >
               <Sparkles className="w-4 h-4 text-primary" />
@@ -214,7 +213,6 @@ export function MobileFilters({
             <a
               href={`mailto:${legalContactEmail}`}
               className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2 text-xs text-center text-muted-foreground hover:bg-muted/50 active:bg-muted hover:text-foreground touch-target-sm"
-              aria-label={t("shell:legal.hints.contactByEmail")}
               title={t("shell:legal.hints.contactByEmail")}
             >
               <Mail className="h-3.5 w-3.5" />
@@ -260,9 +258,8 @@ export function MobileFilters({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleOpenProfileEditor}
-                    aria-label={t("auth:auth.profile.edit")}
                     aria-disabled={profileEditBlocked || undefined}
-                    title={profileEditBlocked ? t("auth:auth.profile.noRelayConnected") : undefined}
+                    title={profileEditBlocked ? t("auth:auth.profile.noRelayConnected") : t("auth:auth.profile.edit")}
                     className={cn(
                       "px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors",
                       profileEditBlocked && "opacity-60 cursor-not-allowed"

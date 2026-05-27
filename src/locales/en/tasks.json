@@ -22,7 +22,6 @@
     "tags": "Tags",
     "less": "less",
     "readOnly": "Read-only task",
-    "focusTaskAria": "{{type}}: {{title}}",
     "focusTaskTitle": "Focus {{type}}",
     "focusTaskWithPreview": "Focus {{type}}: {{preview}}",
     "focusBreadcrumbTitle": "Focus post: {{title}}",

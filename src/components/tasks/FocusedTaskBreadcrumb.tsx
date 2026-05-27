@@ -65,7 +65,6 @@ export function FocusedTaskBreadcrumb({
       <button
         type="button"
         onClick={() => navigate(-1)}
-        aria-label={t("breadcrumbs.back")}
         title={t("breadcrumbs.goBack")}
         className={cn(buttonClass, "gap-1")}
       >
@@ -103,7 +102,6 @@ export function FocusedTaskBreadcrumb({
       <button
         type="button"
         onClick={() => focusTask(parentFocusId)}
-        aria-label={t("breadcrumbs.up")}
         title={t("breadcrumbs.goToParent")}
         className={cn(buttonClass, "gap-1")}
       >

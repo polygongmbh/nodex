@@ -14,18 +14,9 @@ export function getFocusTooltipTypeLabel(t: TFunction, post: Post): string {
   return t("tasks.task").toLowerCase();
 }
 
-export interface FocusTooltipOptions {
-  noPreviewKey?: "tasks.focusTaskTitle" | "tasks.focusTaskAria";
-}
-
-export function getFocusTaskTooltip(
-  t: TFunction,
-  post: Post,
-  options?: FocusTooltipOptions
-): string {
+export function getFocusTaskTooltip(t: TFunction, post: Post): string {
   const typeLabel = getFocusTooltipTypeLabel(t, post);
   const preview = getTaskTooltipPreview(post.content);
   if (preview) return t("tasks.focusTaskWithPreview", { type: typeLabel, preview });
-  const fallbackKey = options?.noPreviewKey ?? "tasks.focusTaskTitle";
-  return t(fallbackKey, { type: typeLabel, title: "" });
+  return t("tasks.focusTaskTitle", { type: typeLabel, title: "" });
 }

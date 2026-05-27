@@ -1020,7 +1020,7 @@ export function OnboardingGuide({
         <button
           type="button"
           className="absolute inset-0 z-[121] pointer-events-auto"
-          aria-label={t("onboarding.picker.dismiss")}
+          title={t("onboarding.picker.dismiss")}
           onClick={onClose}
         />
       )}
@@ -1030,7 +1030,6 @@ export function OnboardingGuide({
             <div
               role="dialog"
               aria-modal="true"
-              aria-label={t("onboarding.picker.chooseSection")}
               className="absolute left-2 right-2 bottom-20 z-[130] pointer-events-auto rounded-xl border border-border bg-card/90 backdrop-blur-md text-card-foreground shadow-xl p-4"
             >
               <div className="space-y-3">
@@ -1041,7 +1040,7 @@ export function OnboardingGuide({
                       key={section.id}
                       onClick={() => handleSectionStart(section.id)}
                       className="w-full flex items-start gap-2 rounded-lg border border-border bg-background/60 hover:bg-primary/10 px-3 py-2 text-left transition-colors"
-                      aria-label={t("onboarding.picker.startSectionAria", { title: section.title })}
+                      title={`${section.title}: ${section.description}`}
                     >
                       {getSectionIcon(section.id)}
                       <span className="min-w-0">
@@ -1063,7 +1062,6 @@ export function OnboardingGuide({
                   onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
                   className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-2 shadow-[0_0_0_1px_hsl(var(--primary)/0.16),0_0.375rem_0.875rem_hsl(var(--background)/0.36)]"
-                  aria-label={t("onboarding.picker.startSectionAria", { title: section.title })}
                   title={`${section.title}: ${section.description}`}
                 >
                   <span className="inline-flex items-start gap-2 rounded-xl bg-card/80 backdrop-blur-md px-3 py-2 border border-border shadow-sm">
@@ -1089,7 +1087,6 @@ export function OnboardingGuide({
           {currentStep?.target && anchoredTargetRect && (
             <div
               role="img"
-              aria-label={t("onboarding.dialog.targetArrowIndicator")}
               className="absolute z-[129] pointer-events-none"
               style={getTargetArrowStyle()}
             >
@@ -1101,7 +1098,6 @@ export function OnboardingGuide({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={t("onboarding.dialog.ariaLabel")}
             data-testid="onboarding-guide-dialog"
             ref={guideCardRef}
             className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"

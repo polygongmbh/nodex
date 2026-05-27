@@ -109,7 +109,6 @@ export function SavedFilterPresetRow({
         type="button"
         onClick={promptAndSaveCurrent}
         title={saveTooltip}
-        aria-label={saveTooltip}
         className={cn(
           "inline-flex h-8 shrink-0 items-center rounded-full border border-dashed border-primary/40 bg-primary/5 text-xs font-medium text-primary transition-colors hover:bg-primary/10",
           hasConfigurations ? "w-8 justify-center px-0" : "gap-1.5 px-3"
@@ -141,7 +140,6 @@ export function SavedFilterPresetRow({
               }}
               className="inline-flex items-center rounded-full px-2 text-xs font-medium hover:text-foreground"
               title={tooltip}
-              aria-label={tooltip}
             >
               {configuration.name}
             </button>
@@ -149,7 +147,7 @@ export function SavedFilterPresetRow({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  aria-label={t("filters.savedFilters.actions.menu")}
+                  title={t("filters.savedFilters.actions.menu")}
                   className="ml-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full hover:bg-black/10"
                 >
                   <EllipsisVertical className="h-3.5 w-3.5" />

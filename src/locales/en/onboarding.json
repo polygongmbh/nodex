@@ -4,12 +4,9 @@
       "helper": "Pick one highlighted area to begin its guide.",
       "close": "Close",
       "dismiss": "Dismiss guide section picker",
-      "chooseSection": "Choose a guide section",
-      "startSectionAria": "Start {{title}} onboarding section"
+      "chooseSection": "Choose a guide section"
     },
     "dialog": {
-      "ariaLabel": "Onboarding guide",
-      "targetArrowIndicator": "Target indicator",
       "emptyTitle": "No onboarding steps available",
       "stepLabel": "Step {{current}} of {{total}}",
       "skip": "Skip",

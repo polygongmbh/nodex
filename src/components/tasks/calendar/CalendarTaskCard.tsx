@@ -116,7 +116,6 @@ export function CalendarTaskCard({
         {isEvent ? (
           <span
             title={t("tasks.event.label")}
-            aria-label={t("tasks.event.label")}
             className="flex-shrink-0 inline-flex items-center justify-center p-0.5"
           >
             <CalendarIcon className="w-5 h-5 text-muted-foreground" />
@@ -127,7 +126,6 @@ export function CalendarTaskCard({
               <button
                 {...triggerProps}
                 disabled={!canCompleteTask}
-                aria-label={t("tasks.actions.setStatus")}
                 title={statusButtonTitle}
                 className={cn(
                   "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",

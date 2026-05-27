@@ -55,7 +55,6 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
       {isEvent ? (
         <CalendarIcon
           className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-muted-foreground"
-          aria-label={t("tasks.event.label")}
         />
       ) : isComment ? (
         <MessageSquare className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-muted-foreground" />

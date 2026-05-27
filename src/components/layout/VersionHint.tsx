@@ -38,7 +38,6 @@ export function VersionHint({ className, showChangelogLabel = false, triggerIcon
             className
           )}
           title={openChangelogLabel}
-          aria-label={openChangelogLabel}
         >
           <span className="inline-flex items-center justify-center gap-1.5">
             {triggerIcon}

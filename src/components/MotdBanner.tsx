@@ -113,7 +113,6 @@ export function MotdBanner() {
           className="h-9 w-9 shrink-0 justify-self-end rounded-full text-amber-900 hover:bg-amber-200/70 hover:text-amber-950 dark:text-amber-100 dark:hover:bg-amber-700/30"
           data-motd-dismiss="true"
           onClick={dismissBanner}
-          aria-label={t("motd.dismiss")}
           title={t("motd.dismiss")}
         >
           <X className="h-4 w-4" />

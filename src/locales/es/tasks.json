@@ -22,7 +22,6 @@
     "tags": "Etiquetas",
     "less": "menos",
     "readOnly": "Tarea de solo lectura",
-    "focusTaskAria": "{{type}}: {{title}}",
     "focusTaskTitle": "Enfocar {{type}}",
     "focusTaskWithPreview": "Enfocar {{type}}: {{preview}}",
     "focusBreadcrumbTitle": "Enfocar publicación: {{title}}",

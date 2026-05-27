@@ -40,7 +40,6 @@ export function ThemeModeToggle({ className }: ThemeModeToggleProps) {
       size="icon"
       className={cn("h-9 w-9 hover:bg-muted hover:text-foreground xl:h-10 xl:w-10", className)}
       onClick={() => setMode(nextMode)}
-      aria-label={`${label}. ${switchLabel}`}
       title={`${label} (${switchLabel})`}
     >
       {icon}

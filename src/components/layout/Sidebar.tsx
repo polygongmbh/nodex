@@ -52,7 +52,6 @@ export function SidebarHeader({ className }: SidebarHeaderProps) {
           <a
             href="/"
             title={appVersionHint}
-            aria-label="Nodex"
             className="inline-flex items-center font-heading font-semibold text-foreground truncate text-sm xl:text-lg hover:text-primary transition-colors"
           >
             Nodex
@@ -340,7 +339,6 @@ export function Sidebar({
                         variant="ghost"
                         size="icon"
                         className="h-5 w-5 text-muted-foreground hover:text-foreground"
-                        aria-label={t("sidebar.actions.addRelay")}
                         title={t("sidebar.actions.addRelay")}
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -456,7 +454,7 @@ export function Sidebar({
               void dispatchFeedInteraction({ type: "ui.openShortcutsHelp" });
             }}
             className="hidden h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:inline-flex lg:w-auto lg:flex-1"
-            aria-label={t("sidebar.actions.openShortcuts")}
+            title={t("sidebar.actions.openShortcuts")}
           >
             <Keyboard className="w-4 h-4" />
             <span className="text-xs font-medium">{t("sidebar.actions.shortcuts")}</span>
@@ -467,7 +465,7 @@ export function Sidebar({
               void dispatchFeedInteraction({ type: "ui.openGuide" });
             }}
             className="inline-flex h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:w-auto lg:flex-1"
-            aria-label={t("sidebar.actions.openGuide")}
+            title={t("sidebar.actions.openGuide")}
           >
             <BookOpen className="w-4 h-4" />
             <span className="text-xs font-medium">{t("sidebar.actions.guide")}</span>

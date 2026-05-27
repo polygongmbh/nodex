@@ -306,7 +306,6 @@ export function NoasSignUpForm({
                 size="sm"
                 onClick={() => setShowPrivateKey((current) => !current)}
                 disabled={isLoading}
-                aria-label={showPrivateKey ? t("auth.profile.hidePrivateKey") : t("auth.profile.showPrivateKey")}
                 title={showPrivateKey ? t("auth.profile.hidePrivateKey") : t("auth.profile.showPrivateKey")}
               >
                 {showPrivateKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

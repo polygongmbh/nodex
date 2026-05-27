@@ -292,7 +292,6 @@ export function UpcomingView({
                                 statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                               }}
                               disabled={!canCompleteTask(task)}
-                              aria-label={t("tasks.actions.setStatus")}
                               title={getStatusButtonTitle(task)}
                               className={cn(
                                 "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",

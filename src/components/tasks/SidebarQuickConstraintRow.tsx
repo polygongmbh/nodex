@@ -49,7 +49,6 @@ export function SidebarQuickConstraintRow({
               quickFilters.recentEnabled ? "text-primary" : "text-muted-foreground"
             )}
             aria-pressed={quickFilters.recentEnabled}
-            aria-label={t("sidebar.quickFilters.actions.toggleRecent", { days: quickFilters.recentDays })}
             title={t("sidebar.quickFilters.actions.toggleRecent", { days: quickFilters.recentDays })}
           >
             <Clock3 className="h-3 w-3 shrink-0" />
@@ -68,7 +67,6 @@ export function SidebarQuickConstraintRow({
             }}
             className="h-6 px-1.5 text-[11px]"
             style={{ width: sharedNumericInputWidth }}
-            aria-label={t("sidebar.quickFilters.labels.recentDays")}
             title={t("sidebar.quickFilters.labels.recentDays")}
           />
         </div>
@@ -96,7 +94,6 @@ export function SidebarQuickConstraintRow({
               quickFilters.priorityEnabled ? "text-primary" : "text-muted-foreground"
             )}
             aria-pressed={quickFilters.priorityEnabled}
-            aria-label={t("sidebar.quickFilters.actions.togglePriority")}
             title={t("sidebar.quickFilters.actions.togglePriority")}
           >
             <Flag className="h-3 w-3 shrink-0" />
@@ -117,7 +114,6 @@ export function SidebarQuickConstraintRow({
             }}
             className="h-6 px-1.5 text-[11px]"
             style={{ width: sharedNumericInputWidth }}
-            aria-label={t("sidebar.quickFilters.labels.minPriority")}
             title={t("sidebar.quickFilters.labels.minPriority")}
           />
         </div>

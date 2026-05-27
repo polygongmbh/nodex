@@ -482,7 +482,6 @@ export function ListView({
       <div ref={tableContainerRef} className="scrollbar-main-view flex-1 overflow-x-auto">
         <div
           role="table"
-          aria-label={t("listView.sort.task")}
           className={cn("min-w-full", LIST_GRID_TEMPLATE_CLASS)}
         >
           <div role="rowgroup" className="contents">

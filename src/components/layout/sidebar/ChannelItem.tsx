@@ -51,9 +51,6 @@ export function ChannelItem({
         title={isPinned
           ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
           : t("sidebar.filters.pinChannelToView", { name: channel.name })}
-        ariaLabel={isPinned
-          ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
-          : t("sidebar.filters.pinChannelToView", { name: channel.name })}
       />
 
       {/* Icon - click for toggle */}
@@ -64,7 +61,6 @@ export function ChannelItem({
           void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
         }}
         title={t("sidebar.filters.toggleChannelTo", { name: channel.name, nextState: nextFilterStateLabel })}
-        aria-label={t("sidebar.filters.toggleChannelFilter", { name: channel.name })}
         className="rounded transition-colors hover:ring-2 hover:ring-primary/50"
       >
         <Hash
@@ -84,7 +80,6 @@ export function ChannelItem({
           void dispatchFeedInteraction({ type: "sidebar.channel.exclusive", channelId: channel.id });
         }}
         className="flex flex-1 min-w-0 items-center text-left"
-        aria-label={t("sidebar.filters.showOnlyChannel", { name: channel.name })}
         title={t("sidebar.filters.showOnlyChannel", { name: channel.name })}
       >
         <span

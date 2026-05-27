@@ -5,14 +5,14 @@ import { TaskDateTypeSelect } from "./TaskDateTypeSelect";
 
 describe("TaskDateTypeSelect", () => {
   it("renders the current date type label on the trigger", () => {
-    render(<TaskDateTypeSelect aria-label="Date type" value="due" onChange={() => undefined} />);
+    render(<TaskDateTypeSelect title="Date type" value="due" onChange={() => undefined} />);
 
     const trigger = screen.getByRole("combobox", { name: "Date type" });
     expect(trigger).toHaveTextContent(getTaskDateTypeLabel("due"));
   });
 
   it("opens a listbox with one option per supported task date type", () => {
-    render(<TaskDateTypeSelect aria-label="Date type" value="due" onChange={() => undefined} />);
+    render(<TaskDateTypeSelect title="Date type" value="due" onChange={() => undefined} />);
 
     const trigger = screen.getByRole("combobox", { name: "Date type" });
     fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
@@ -28,7 +28,7 @@ describe("TaskDateTypeSelect", () => {
 
   it("emits the selected task date type value when an option is chosen", () => {
     const onChange = vi.fn();
-    render(<TaskDateTypeSelect aria-label="Date type" value="due" onChange={onChange} />);
+    render(<TaskDateTypeSelect title="Date type" value="due" onChange={onChange} />);
 
     const trigger = screen.getByRole("combobox", { name: "Date type" });
     fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
