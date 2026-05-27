@@ -11,21 +11,19 @@ import { registerMemdiagStore } from "@/lib/memdiag";
 //
 // Events arrive on separate microtasks from NDK, so naive per-event flushing
 // causes one React render per backfill event. The router coalesces them
-// behind a short debounce so the burst that follows EOSE / scope change
-// turns into a small handful of synchronous flush batches — within each
-// batch React batches the resulting state updates into one render.
+// behind a short debounce so each burst becomes one synchronous drain — a
+// single React commit covers however many events landed since the last tick.
+//
+// We deliberately do NOT cap the per-tick batch size: posts-store folds are
+// O(1) per event so the ingest itself stays cheap even for 1000+ events,
+// while the React render that follows is roughly O(total posts) regardless
+// of batch size. Splitting one burst into ten smaller batches just multiplies
+// the render cost by ten. One burst → one render is the cheapest cadence.
 
 // Fallback cap on how long to wait for a relay's stored-events backfill
 // (EOSE/close) before flipping out of hydration. No local event cache is
 // consulted here — the timeout governs the relay's server-side flush.
 const BOOTSTRAP_EOSE_TIMEOUT_MS = 8000;
-// 200 events fit easily inside a 16ms frame budget with the typed
-// posts-store's O(1) folds, so we drain that many synchronously per tick
-// and keep the inter-batch delay at the cross-microtask coalesce window.
-// The previous release tier'd up to 500ms once pending exceeded a
-// threshold; that was needed for the old O(N) per-batch upsert path and
-// is now pure latency.
-const HYDRATION_FLUSH_BATCH_SIZE = 200;
 const HYDRATION_FLUSH_DELAY_MS = 64;
 // EOSE is unreliable across many relays: a single slow relay drags the
 // global EOSE out for seconds while the feed is already visually filled.
@@ -133,13 +131,13 @@ export function useNostrEventRouter({
       window.clearTimeout(flushTimerRef.current);
       flushTimerRef.current = null;
     }
-    const pending = pendingEventsRef.current;
-    if (pending.length === 0) return;
-    const batchSize = Math.min(pending.length, HYDRATION_FLUSH_BATCH_SIZE);
-    // Splice out the batch synchronously so the onEvent loop below — which
-    // mutates downstream stores — completes within a single tick. React then
-    // batches the resulting state updates into a single render.
-    const batch = pending.splice(0, batchSize);
+    if (pendingEventsRef.current.length === 0) return;
+    // Drain everything pending into downstream stores in one synchronous
+    // pass. Swap the array out first so events arriving during the loop
+    // (e.g. NDK callbacks triggered by store mutations) accumulate into a
+    // fresh queue and don't get mid-drained.
+    const batch = pendingEventsRef.current;
+    pendingEventsRef.current = [];
     for (const ingestable of batch) {
       onEventRef.current(ingestable);
     }
@@ -158,15 +156,8 @@ export function useNostrEventRouter({
         }
       }
     }
-    if (pending.length > 0 && typeof window !== "undefined") {
-      flushTimerRef.current = window.setTimeout(() => {
-        flushTimerRef.current = null;
-        flushPending();
-      }, HYDRATION_FLUSH_DELAY_MS);
-    } else {
-      // Drained — start quiescence countdown. New events will reset it.
-      scheduleQuiescenceFinalize();
-    }
+    // Drained — start quiescence countdown. New events will reset it.
+    scheduleQuiescenceFinalize();
   }, [scheduleQuiescenceFinalize]);
 
   const schedulePendingFlush = useCallback(() => {
