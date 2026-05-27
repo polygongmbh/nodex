@@ -29,14 +29,14 @@ function buildTask(
 }
 
 describe("dedupeMergedTasks", () => {
-  it("keeps one task per id while merging relay ids", () => {
+  it("keeps the newer task per id without merging relay ids", () => {
     const older = buildTask("same-id", "2026-03-16T09:00:00.000Z", { relays: ["relay-a"] });
     const newer = buildTask("same-id", "2026-03-16T10:00:00.000Z", { relays: ["relay-b"] });
 
     const deduped = dedupeMergedTasks([older, newer]);
 
     expect(deduped).toHaveLength(1);
-    expect(deduped[0]?.relays).toEqual(["relay-a", "relay-b"]);
+    expect(deduped[0]?.relays).toEqual(["relay-b"]);
     expect(deduped[0]?.timestamp.toISOString()).toBe("2026-03-16T10:00:00.000Z");
   });
 
