@@ -23,7 +23,8 @@ import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/cont
 
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { TASK_CHIP_STYLES, TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
+import { getTaskDateTypeLabel } from "@/lib/task-dates";
+import { getTaskDisabledClasses } from "@/lib/task-style";
 import { useTranslation } from "react-i18next";
 import {
   Popover,
@@ -204,7 +205,6 @@ export function TreeTaskItem({
     [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, getTaskState(task)]
   );
   const isComment = isCommentPost(task);
-  const isLockedUntilStart = isTaskLockedUntilStart(task);
   const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task), getTaskPrimaryDate(task)?.type);
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
@@ -274,8 +274,7 @@ export function TreeTaskItem({
           isComment 
             ? "bg-muted/30"
             : "",
-          isTaskTerminal(getTaskState(task)) && "opacity-60",
-          isLockedUntilStart && "opacity-50 grayscale",
+          getTaskDisabledClasses(task),
           depth > 0 && "border-l-2 border-muted ml-1.5 pl-4",
           isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background bg-primary/5"
         )}

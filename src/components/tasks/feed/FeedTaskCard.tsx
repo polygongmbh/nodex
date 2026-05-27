@@ -19,7 +19,7 @@ import { isTaskTerminal } from "@/domain/content/task-state";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { getCompactPersonLabel } from "@/types/person";
-import { isTaskLockedUntilStart } from "@/lib/task-dates";
+import { getTaskDisabledClasses } from "@/lib/task-style";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { useTranslation } from "react-i18next";
 import {
@@ -108,7 +108,6 @@ export const FeedTaskCard = memo(function FeedTaskCard({
     isListingPost(task) && task.nip99.status === "sold" ? "sold" : "active";
   const isSoldListing = isListing && listingStatus === "sold";
   const isCompletedVisual = isTaskTerminal(getTaskState(task)) || isSoldListing;
-  const isLockedUntilStart = isTaskLockedUntilStart(task);
   const feedMessageLabel = isListing ? t("tasks.listing.label") : t("tasks.comment");
   const listingSoldLabel = t("tasks.listing.sold");
   const authorCompactLabel = getCompactPersonLabel(resolvedAuthor);
@@ -187,8 +186,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
       className={cn(
         `group/feed-card border-b border-border transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
         isMobile ? "py-3" : breadcrumb.length > 0 ? "pb-4 pt-2.5" : "py-4",
-        isCompletedVisual && "opacity-60",
-        isLockedUntilStart && "opacity-50 grayscale",
+        getTaskDisabledClasses(task, { completedOverride: isCompletedVisual }),
         isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
       )}
     >

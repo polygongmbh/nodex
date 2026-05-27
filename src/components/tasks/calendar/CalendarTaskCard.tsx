@@ -5,7 +5,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getAuthorColor } from "@/lib/author-color";
-import { isTaskLockedUntilStart } from "@/lib/task-dates";
+import { getTaskDisabledClasses } from "@/lib/task-style";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { getStandaloneEmbeddableUrls, renderTaskContentWithProjectHeading } from "@/lib/linkify";
@@ -80,7 +80,6 @@ export function CalendarTaskCard({
   });
 
   const authorColor = getAuthorColor(task.author);
-  const isLockedUntilStart = isTaskLockedUntilStart(task);
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
   const taskState = getTaskState(task);
   const isEvent = isCalendarEventPost(task);
@@ -119,8 +118,7 @@ export function CalendarTaskCard({
       title={cardTooltip}
       className={cn(
         `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-        isTaskTerminal(taskState) && "opacity-60",
-        isLockedUntilStart && "opacity-50 grayscale"
+        getTaskDisabledClasses(task)
       )}
       style={{ borderLeftColor: authorColor.accent }}
     >

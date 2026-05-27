@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminal } from "@/domain/content/task-state";
-import { isTaskLockedUntilStart } from "@/lib/task-dates";
+import { getTaskDisabledClasses } from "@/lib/task-style";
 import { useTranslation } from "react-i18next";
 import type { TaskPost } from "@/types";
 import { getTaskState } from "@/types";
@@ -49,7 +49,6 @@ export function ListTaskRow({
   renderTagsCell,
 }: ListTaskRowProps) {
   const { t } = useTranslation("tasks");
-  const isLockedUntilStart = isTaskLockedUntilStart(task);
   const { focusTask } = useTaskViewServices();
   const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
 
@@ -60,8 +59,7 @@ export function ListTaskRow({
       className={cn(
         rowClassName,
         "items-start border-b border-border hover:bg-muted/30 transition-colors",
-        isTaskTerminal(getTaskState(task)) && "opacity-60",
-        isLockedUntilStart && "opacity-50 grayscale",
+        getTaskDisabledClasses(task),
         isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
       )}
     >
