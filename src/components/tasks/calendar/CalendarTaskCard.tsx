@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { hasTextSelection } from "@/lib/click-intent";
@@ -8,7 +8,8 @@ import { getAuthorColor } from "@/lib/author-color";
 import { getTaskDisabledClasses } from "@/lib/task-style";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
-import { getStandaloneEmbeddableUrls, renderTaskContentWithProjectHeading } from "@/lib/linkify";
+import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
+import { useTaskMediaAttachments } from "@/lib/use-task-media-attachments";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,26 +85,7 @@ export function CalendarTaskCard({
   const taskState = getTaskState(task);
   const isEvent = isCalendarEventPost(task);
 
-  const mediaCaptionByUrl = useMemo(() => {
-    return new Map(
-      (task.attachments || [])
-        .filter((attachment) => Boolean(attachment.url))
-        .map((attachment) => [
-          attachment.url.trim().toLowerCase(),
-          attachment.alt || attachment.name || attachment.url,
-        ])
-    );
-  }, [task.attachments]);
-
-  const attachmentsWithoutInlineEmbeds = useMemo(() => {
-    const standaloneEmbedUrls = new Set(
-      getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
-    );
-    return (task.attachments || []).filter((attachment) => {
-      const normalizedUrl = attachment.url?.trim().toLowerCase();
-      return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
-    });
-  }, [task.attachments, task.content]);
+  const { mediaCaptionByUrl, attachmentsWithoutInlineEmbeds } = useTaskMediaAttachments(task);
 
   const cardTooltip = getFocusTaskTooltip(t, task);
 

@@ -10,7 +10,8 @@ import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { getStandaloneEmbeddableUrls, renderTaskContentWithProjectHeading } from "@/lib/linkify";
+import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
+import { useTaskMediaAttachments } from "@/lib/use-task-media-attachments";
 import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
@@ -117,29 +118,8 @@ export const FeedTaskCard = memo(function FeedTaskCard({
     !isInteractionBlocked &&
     isListing &&
     Boolean(currentUser?.pubkey && currentUser.pubkey.toLowerCase() === task.author.pubkey.toLowerCase());
-  const standaloneEmbedUrls = useMemo(
-    () => new Set(getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())),
-    [task.content]
-  );
-  const mediaCaptionByUrl = useMemo(() => {
-    const captionByUrl = new Map<string, string>();
-    for (const attachment of task.attachments || []) {
-      const normalizedUrl = attachment.url?.trim().toLowerCase();
-      const caption = attachment.alt?.trim() || attachment.name?.trim();
-      if (normalizedUrl && caption) {
-        captionByUrl.set(normalizedUrl, caption);
-      }
-    }
-    return captionByUrl;
-  }, [task.attachments]);
-  const attachmentsWithoutInlineEmbeds = useMemo(
-    () =>
-      (task.attachments || []).filter((attachment) => {
-        const normalizedUrl = attachment.url?.trim().toLowerCase();
-        return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
-      }),
-    [standaloneEmbedUrls, task.attachments]
-  );
+  const { standaloneEmbedUrls, mediaCaptionByUrl, attachmentsWithoutInlineEmbeds } =
+    useTaskMediaAttachments(task);
   const linkedContent = useMemo(
     () =>
       renderTaskContentWithProjectHeading(task.content, isProject, (tag) => {
