@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useCachedPosts } from "@/features/feed-page/controllers/use-cached-posts";
 import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
@@ -98,7 +98,7 @@ export function useIndexDerivedData({
     canPersist: hasLiveHydratedScope,
   });
 
-  const allTasksLive = useMemo(() => {
+  const allTasks = useMemo(() => {
     // Cached posts only hydrate the cold-start view. Once the live subscription
     // has replayed, nostrTasks is authoritative — including for deletions and
     // suppressions that the cache layer doesn't know about, so we drop cached
@@ -111,11 +111,6 @@ export function useIndexDerivedData({
       ...nostrTasks,
     ]);
   }, [cachedPosts, demoTasks, localTasks, nostrTasks, hasLiveHydratedScope]);
-  // Defer the derived task set so the heavy downstream chain (channels,
-  // sidebar people, view filterings, body render) runs at deferred priority.
-  // User input (clicks, route changes, focus) commits urgently against the
-  // previous snapshot while React interrupts the deferred render mid-flight.
-  const allTasks = useDeferredValue(allTasksLive);
 
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),
