@@ -16,7 +16,8 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminal } from "@/domain/content/task-state";
-import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { getCompactPersonLabel } from "@/types/person";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
@@ -166,11 +167,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
     ]
   );
 
-  const tooltipPreview = getTaskTooltipPreview(task.content);
-  const tooltipTypeLabel = isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase();
-  const surfaceTitle = tooltipPreview
-    ? t("tasks.focusTaskWithPreview", { type: tooltipTypeLabel, preview: tooltipPreview })
-    : t("tasks.focusTaskTitle", { type: tooltipTypeLabel });
+  const surfaceTitle = getFocusTaskTooltip(t, task);
 
   const surface = (
     <TaskSurface

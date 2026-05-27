@@ -19,7 +19,7 @@ import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTranslation } from "react-i18next";
-import { getTaskTooltipPreview } from "@/lib/task-content-preview";
+import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { format } from "date-fns";
 import { notifyTaskActionBlocked } from "@/lib/notifications";
 import type { TaskPost, TaskState } from "@/types";
@@ -76,11 +76,7 @@ export function KanbanTaskCard({
   const hasMetadataChips =
     !compactTaskCardsEnabled && hasTaskMetadataChips(task, activeRelayCount);
 
-  const tooltipPreview = getTaskTooltipPreview(task.content);
-  const tooltipTypeLabel = t("tasks.task").toLowerCase();
-  const surfaceTitle = tooltipPreview
-    ? t("tasks.focusTaskWithPreview", { type: tooltipTypeLabel, preview: tooltipPreview })
-    : t("tasks.focusTaskTitle", { type: tooltipTypeLabel });
+  const surfaceTitle = getFocusTaskTooltip(t, task);
 
   return (
     <TaskSurface

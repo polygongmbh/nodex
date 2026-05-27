@@ -14,7 +14,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
-import { getTaskTooltipPreview } from "@/lib/task-content-preview";
+import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 
 import {
   getTaskState,
@@ -353,13 +353,7 @@ export function UpcomingView({
                               `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`,
                               typeof task.priority === "number" && "pr-14"
                             )}
-                            title={(() => {
-                              const typeLabel = t("tasks.task").toLowerCase();
-                              const preview = getTaskTooltipPreview(task.content);
-                              return preview
-                                ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-                                : t("tasks.focusTaskTitle", { type: typeLabel });
-                            })()}
+                            title={getFocusTaskTooltip(t, task)}
                           >
                             {renderTaskContentWithProjectHeading(
                               task.content,

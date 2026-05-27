@@ -12,7 +12,7 @@ import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import type { TaskPost } from "@/types";
 import { getTaskState } from "@/types";
-import { getTaskTooltipPreview } from "@/lib/task-content-preview";
+import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import type { Person } from "@/types/person";
 
 interface ListTaskRowProps {
@@ -86,13 +86,7 @@ export function ListTaskRow({
               isProject && "font-bold",
               isTaskTerminal(getTaskState(task)) && "line-through text-muted-foreground"
             )}
-            title={(() => {
-              const typeLabel = t("tasks.task").toLowerCase();
-              const preview = getTaskTooltipPreview(task.content);
-              return preview
-                ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-                : t("tasks.focusTaskTitle", { type: typeLabel });
-            })()}
+            title={getFocusTaskTooltip(t, task)}
           >
             {contentPreview}
           </div>

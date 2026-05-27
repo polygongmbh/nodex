@@ -36,7 +36,8 @@ import { isTaskCompleted, isTaskTerminal } from "@/domain/content/task-state";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
-import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
@@ -288,20 +289,8 @@ export function TreeTaskItem({
             handleSelect();
           }
         }}
-        aria-label={(() => {
-          const typeLabel = isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase();
-          const preview = getTaskTooltipPreview(task.content);
-          return preview
-            ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-            : t("tasks.focusTaskAria", { type: typeLabel, title: "" });
-        })()}
-        title={(() => {
-          const typeLabel = isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase();
-          const preview = getTaskTooltipPreview(task.content);
-          return preview
-            ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-            : t("tasks.focusTaskTitle", { type: typeLabel });
-        })()}
+        aria-label={getFocusTaskTooltip(t, task, { noPreviewKey: "tasks.focusTaskAria" })}
+        title={getFocusTaskTooltip(t, task)}
       >
         {/* Expand/Collapse Toggle - three states */}
         {hasChildren && !isComment ? (

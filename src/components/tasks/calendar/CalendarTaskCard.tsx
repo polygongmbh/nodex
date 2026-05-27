@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getAuthorColor } from "@/lib/author-color";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
-import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { getStandaloneEmbeddableUrls, renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import {
   DropdownMenu,
@@ -109,13 +110,7 @@ export function CalendarTaskCard({
     });
   }, [task.attachments, task.content]);
 
-  const cardTooltip = (() => {
-    const typeLabel = t("tasks.task").toLowerCase();
-    const preview = getTaskTooltipPreview(task.content);
-    return preview
-      ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-      : t("tasks.focusTaskTitle", { type: typeLabel });
-  })();
+  const cardTooltip = getFocusTaskTooltip(t, task);
 
   return (
     <div
