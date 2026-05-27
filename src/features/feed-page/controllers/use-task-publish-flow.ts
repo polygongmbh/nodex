@@ -462,9 +462,9 @@ export function useTaskPublishFlow({
       ? Array.from(new Set(mentionPubkeys))
       : undefined;
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-    const submissionDueDate = normalizedTaskType === "task" ? dueDate : undefined;
-    const submissionDueTime = normalizedTaskType === "task" ? dueTime : undefined;
-    const submissionDateType = normalizedTaskType === "task" ? dateType : undefined;
+    const submissionDueDate = dueDate;
+    const submissionDueTime = dueTime;
+    const submissionDateType = dateType;
     const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
     const normalizedAttachments = normalizePublishedAttachments([
       ...attachments,

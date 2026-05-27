@@ -168,6 +168,26 @@ function Harness({
         content: "Assign(@alice) (#general) and @alice #general",
         tags: ["general"],
       })}
+      {submitButton("SubmitEvent", {
+        content: "Standup #general",
+        tags: ["general"],
+        postType: "event",
+        dueDate: new Date("2026-04-01T10:00:00.000Z"),
+        dueTime: "10:00",
+        titledPost: { title: "Standup" },
+        eventMetadata: {
+          endDate: new Date("2026-04-01T12:00:00.000Z"),
+          endTime: "12:00",
+        },
+      })}
+      <button
+        onClick={() => {
+          const id = localTasks[0]?.id;
+          if (id) hook.handleUndoPendingPublish(id);
+        }}
+      >
+        UndoPending
+      </button>
       <button onClick={() => hook.handleRetryFailedPublish(failedPublishDrafts[0]?.id || "")}>Retry</button>
       <button onClick={() => hook.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due")}>
         Due
@@ -205,6 +225,11 @@ function Harness({
       })}
       <output data-testid="restore-id">{String(hook.composeRestoreRequest?.id ?? "")}</output>
       <output data-testid="restore-content">{hook.composeRestoreRequest?.state.content ?? ""}</output>
+      <output data-testid="restore-post-type">{hook.composeRestoreRequest?.state.postType ?? ""}</output>
+      <output data-testid="restore-due-date">{hook.composeRestoreRequest?.state.dueDate?.toISOString() ?? ""}</output>
+      <output data-testid="restore-due-time">{hook.composeRestoreRequest?.state.dueTime ?? ""}</output>
+      <output data-testid="restore-end-date">{hook.composeRestoreRequest?.state.endDate?.toISOString() ?? ""}</output>
+      <output data-testid="restore-end-time">{hook.composeRestoreRequest?.state.endTime ?? ""}</output>
       <output data-testid="restore-recompose">{hook.composeRestoreRequest?.state.recomposeOf?.eventId ?? ""}</output>
       <output data-testid="restore-recompose-parent">{hook.composeRestoreRequest?.state.recomposeOf?.parentId ?? ""}</output>
       <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
@@ -268,6 +293,28 @@ describe("useTaskPublishFlow", () => {
     expect(screen.getByTestId("suppressed-count")).toHaveTextContent("1");
     expect(screen.getByTestId("posted-tags")).toHaveTextContent("general:relay-one");
     expect(window.__TEST_RESULT__).toEqual({ ok: true });
+  });
+
+  it("restores the event start and end fields when undoing a pending publish", async () => {
+    usePreferencesStore.setState({ publishDelayEnabled: true });
+
+    renderHarness({});
+    fireEvent.click(screen.getByRole("button", { name: "SubmitEvent" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("local-count")).toHaveTextContent("1");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "UndoPending" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-post-type")).toHaveTextContent("event");
+    });
+    expect(screen.getByTestId("restore-due-date")).toHaveTextContent("2026-04-01T10:00:00.000Z");
+    expect(screen.getByTestId("restore-due-time")).toHaveTextContent("10:00");
+    expect(screen.getByTestId("restore-end-date")).toHaveTextContent("2026-04-01T12:00:00.000Z");
+    expect(screen.getByTestId("restore-end-time")).toHaveTextContent("12:00");
+    expect(screen.getByTestId("local-count")).toHaveTextContent("0");
   });
 
   it("dispatches channel frecency intents for submitted tags", async () => {
