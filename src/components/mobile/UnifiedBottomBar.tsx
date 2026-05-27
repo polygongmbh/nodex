@@ -1506,7 +1506,6 @@ export function UnifiedBottomBar({
               {dueDate && (
                 <div className="flex items-center gap-1">
                   <TaskDateTypeSelect
-                    title={t("composer.labels.dateType")}
                     value={dateType}
                     onChange={setDateType}
                     className="h-8 w-[5.2rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"

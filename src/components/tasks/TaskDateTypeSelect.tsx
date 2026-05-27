@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type TaskDateTypeSelectProps = {
+interface TaskDateTypeSelectProps {
   id?: string;
   value: TaskDateType;
   onChange: (value: TaskDateType) => void;
@@ -18,7 +18,7 @@ type TaskDateTypeSelectProps = {
   disabled?: boolean;
   onOpenChange?: (open: boolean) => void;
   onCloseAutoFocus?: ComponentPropsWithoutRef<typeof SelectContent>["onCloseAutoFocus"];
-} & Pick<ComponentPropsWithoutRef<"button">, "title">;
+}
 
 export function TaskDateTypeSelect({
   id,
@@ -28,7 +28,6 @@ export function TaskDateTypeSelect({
   disabled,
   onOpenChange,
   onCloseAutoFocus,
-  title,
 }: TaskDateTypeSelectProps) {
   return (
     <Select
@@ -39,7 +38,6 @@ export function TaskDateTypeSelect({
     >
       <SelectTrigger
         id={id}
-        title={title}
         className={cn("h-8 w-auto gap-1 text-xs", className)}
       >
         <SelectValue>{getTaskDateTypeLabel(value)}</SelectValue>

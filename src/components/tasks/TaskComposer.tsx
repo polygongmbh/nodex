@@ -2065,7 +2065,6 @@ export function TaskComposer({
           <div className="inline-flex w-auto items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <TaskDateTypeSelect
-              title={t("composer.labels.dateType")}
               value={dateType}
               onChange={setDateType}
               onOpenChange={handleComposerDropdownOpenChange}

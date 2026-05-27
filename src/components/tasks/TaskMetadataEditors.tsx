@@ -92,7 +92,6 @@ export function TaskDueDateEditorForm({
         </label>
         <TaskDateTypeSelect
           id={`${idPrefix}-date-type-${taskId}`}
-          title={t("listView.dates.type")}
           value={localDateType}
           onChange={setLocalDateType}
           className="h-7 border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:ring-0"
