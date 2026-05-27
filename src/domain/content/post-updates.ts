@@ -73,11 +73,15 @@ interface PostDateSlot {
 // the Post so consumers don't see it.
 export type PostDateLatestMap = Map<TaskDateType, PostDateSlot>;
 
+// Mutates `perType` in place (or returns a fresh map when undefined). Both
+// callers in posts-store immediately replace the previous bucket with the
+// result, so the prior defensive `new Map(perType)` shallow-copy was pure
+// per-event allocation churn during hydration with no observable benefit.
 export function foldDateUpdateIntoMap(
   perType: PostDateLatestMap | undefined,
   update: PostDateUpdateRequest
 ): PostDateLatestMap {
-  const next: PostDateLatestMap = perType ? new Map(perType) : new Map();
+  const next: PostDateLatestMap = perType ?? new Map();
   const previous = next.get(update.type);
   if (previous && update.timestampMs < previous.timestampMs) return next;
   next.set(update.type, {
