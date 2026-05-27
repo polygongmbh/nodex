@@ -37,18 +37,30 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
+// Mutates the JSON.parse output in place — the caller owns it and discards
+// any stale references after this returns. Avoids rebuilding the whole tree
+// (one fresh array + one fresh object per nested level) just to revive Dates,
+// which dominated cold-start allocations.
 function deserialize(value: unknown): unknown {
   if (isSerializedDate(value)) {
     const parsed = new Date(value.__date);
     return Number.isNaN(parsed.getTime()) ? undefined : parsed;
   }
-  if (Array.isArray(value)) return value.map(deserialize);
-  if (value && typeof value === "object") {
-    const out: Record<string, unknown> = {};
-    for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
-      out[key] = deserialize(inner);
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const next = deserialize(value[i]);
+      if (next !== value[i]) value[i] = next;
     }
-    return out;
+    return value;
+  }
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    for (const key in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+      const next = deserialize(obj[key]);
+      if (next !== obj[key]) obj[key] = next;
+    }
+    return obj;
   }
   return value;
 }
@@ -83,8 +95,10 @@ export function loadCachedPosts(): Post[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    const revived = parsed.map(deserialize);
-    const posts = revived.filter(hasMinimalPostShape) as Post[];
+    for (let i = 0; i < parsed.length; i++) {
+      parsed[i] = deserialize(parsed[i]);
+    }
+    const posts = parsed.filter(hasMinimalPostShape) as Post[];
     const sanitized = posts.filter((post) => {
       if (!isTaskPost(post)) return true;
       return post.stateUpdates.every((update) => update.timestamp instanceof Date)
