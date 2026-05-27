@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
@@ -222,10 +222,6 @@ describe("getTaskStatusChangeBlockedReason", () => {
       )
     ).toBeUndefined();
   });
-});
-
-beforeEach(() => {
-  vi.unstubAllEnvs();
 });
 
 afterEach(() => {

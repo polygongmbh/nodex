@@ -1,9 +1,17 @@
 import "@testing-library/jest-dom";
 import "@/lib/i18n/config";
 import { cleanup } from "@testing-library/react";
-import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 
-vi.stubEnv("VITE_CORE_CHANNELS", "");
+// Isolate tests from local `.env` values. Re-applied in beforeEach because
+// some suites call `vi.unstubAllEnvs()` in their own afterEach.
+function applyTestEnvDefaults(): void {
+  vi.stubEnv("VITE_CORE_CHANNELS", "");
+  vi.stubEnv("VITE_TASK_EDIT_MODE", "");
+}
+
+applyTestEnvDefaults();
+beforeEach(applyTestEnvDefaults);
 
 function installStorageFallbackIfNeeded(): void {
   const candidate = (window as Window & { localStorage?: unknown }).localStorage as Partial<Storage> | undefined;
