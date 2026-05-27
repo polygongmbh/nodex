@@ -53,4 +53,5 @@ export function __resetSeenPubkeysForTests(): void {
   cachedSnapshot = [];
   cachedSnapshotAtVersion = -1;
   version = 0;
+  subscribers.clear();
 }

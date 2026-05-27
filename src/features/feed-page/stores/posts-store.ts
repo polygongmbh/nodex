@@ -343,4 +343,5 @@ export function __resetPostsStoreForTests(): void {
   cachedSnapshotAtVersion = -1;
   version = 0;
   suppressedIds = new Set();
+  subscribers.clear();
 }
