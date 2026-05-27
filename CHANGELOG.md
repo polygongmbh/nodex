@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - The calendar view's selected-day panel now has both "Create Task" and "Create Event" buttons, each opening the composer pre-set to the right mode with the day as the start/due date.
 
 ### Changed
+- Breadcrumb crumb tooltips now read "Focus post" instead of "Focus task" (en/de/es), matching the broader "post" terminology. The status-update title button in the feed still says "Focus task" since status updates always reference a task.
 - The sidebar search query is now part of the URL as `?q=`, so a filtered view is shareable and browser back/forward restores it. Focusing into a sibling/child/unrelated task automatically clears the search (the previous query stays in the URL of the entry you came from, so back brings it back); focusing the parent (up) or unfocusing back to the global view keeps the search active.
 - The kanban board's horizontal scrollbar is now always visible while there's overflow, instead of fading out on macOS when the pointer is idle. The board uses a custom (non-overlay) scrollbar so Safari and Firefox no longer honor the system "show scrollbars when scrolling" preference.
 - The composer's title auto-fill (used by both Listings and Events) now pulls only the first non-empty line of the content, so a post written as `Title\n\nbody...` gets a clean title instead of a truncated paragraph. Summary is no longer auto-filled — it stays manual on both surfaces.
