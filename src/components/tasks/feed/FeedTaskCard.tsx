@@ -17,7 +17,8 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminal } from "@/domain/content/task-state";
-import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent, TASK_CONTENT_COLLAPSED_CLASS } from "@/lib/task-content-preview";
+import { TaskShowMoreToggle } from "@/components/tasks/task-card/TaskShowMoreToggle";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { getCompactPersonLabel } from "@/types/person";
 import { getTaskDisabledClasses } from "@/lib/task-style";
@@ -316,7 +317,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
               className={cn(
                 `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
                 hasCollapsibleContent && !expandedContent && !isActiveTask
-                  ? "whitespace-pre-line line-clamp-3 overflow-hidden"
+                  ? TASK_CONTENT_COLLAPSED_CLASS
                   : "whitespace-pre-wrap",
                 isCompletedVisual && "line-through text-muted-foreground"
               )}
@@ -324,16 +325,10 @@ export const FeedTaskCard = memo(function FeedTaskCard({
               {linkedContent}
             </div>
             {hasCollapsibleContent && !isActiveTask ? (
-              <button
-                type="button"
-                className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleExpandedContent(task.id);
-                }}
-              >
-                {expandedContent ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
-              </button>
+              <TaskShowMoreToggle
+                isExpanded={expandedContent}
+                onToggle={() => onToggleExpandedContent(task.id)}
+              />
             ) : null}
             <TaskAttachmentList
               attachments={attachmentsWithoutInlineEmbeds}

@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getAuthorColor } from "@/lib/author-color";
 import { getTaskDisabledClasses } from "@/lib/task-style";
-import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent, TASK_CONTENT_COLLAPSED_CLASS } from "@/lib/task-content-preview";
+import { TaskShowMoreToggle } from "@/components/tasks/task-card/TaskShowMoreToggle";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { useTaskMediaAttachments } from "@/lib/use-task-media-attachments";
@@ -164,7 +165,7 @@ export function CalendarTaskCard({
             className={cn(
               "text-sm",
               hasCollapsibleContent && !isContentExpanded
-                ? "whitespace-pre-line line-clamp-3 overflow-hidden"
+                ? TASK_CONTENT_COLLAPSED_CLASS
                 : "whitespace-pre-wrap",
               isTaskTerminal(taskState) && "line-through text-muted-foreground"
             )}
@@ -186,16 +187,10 @@ export function CalendarTaskCard({
             )}
           </div>
           {hasCollapsibleContent && (
-            <button
-              type="button"
-              className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-              onClick={(event) => {
-                event.stopPropagation();
-                setIsContentExpanded((prev) => !prev);
-              }}
-            >
-              {isContentExpanded ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
-            </button>
+            <TaskShowMoreToggle
+              isExpanded={isContentExpanded}
+              onToggle={() => setIsContentExpanded((prev) => !prev)}
+            />
           )}
           <TaskAttachmentList
             attachments={attachmentsWithoutInlineEmbeds}

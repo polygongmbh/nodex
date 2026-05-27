@@ -12,6 +12,9 @@ const DEFAULT_COLLAPSE_CHARACTER_COUNT = 500;
 
 export const TASK_TOOLTIP_PREVIEW_MAX = 160;
 
+/** Tailwind classes that clip task content to ~3 lines when collapsed. Pair with `whitespace-pre-wrap` for the expanded state. */
+export const TASK_CONTENT_COLLAPSED_CLASS = "whitespace-pre-line line-clamp-3 overflow-hidden";
+
 export function getTaskTooltipPreview(
   content: string | null | undefined,
   max: number = TASK_TOOLTIP_PREVIEW_MAX

@@ -37,7 +37,8 @@ import { isTaskCompleted, isTaskTerminal } from "@/domain/content/task-state";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
-import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent, TASK_CONTENT_COLLAPSED_CLASS } from "@/lib/task-content-preview";
+import { TaskShowMoreToggle } from "@/components/tasks/task-card/TaskShowMoreToggle";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
@@ -383,7 +384,7 @@ export function TreeTaskItem({
             compactView
               ? "whitespace-pre-line line-clamp-2 overflow-hidden"
               : hasCollapsibleContent && !isContentExpanded
-                ? "whitespace-pre-line line-clamp-3 overflow-hidden"
+                ? TASK_CONTENT_COLLAPSED_CLASS
                 : "whitespace-pre-wrap",
             isTaskTerminal(getTaskState(task)) && "line-through text-muted-foreground"
           )}>
@@ -394,16 +395,10 @@ export function TreeTaskItem({
             })}
           </div>
           {!compactView && hasCollapsibleContent && (
-            <button
-              type="button"
-              className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-              onClick={(event) => {
-                event.stopPropagation();
-                setIsContentExpanded((prev) => !prev);
-              }}
-            >
-              {isContentExpanded ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
-            </button>
+            <TaskShowMoreToggle
+              isExpanded={isContentExpanded}
+              onToggle={() => setIsContentExpanded((prev) => !prev)}
+            />
           )}
 
           {/* Due date */}
