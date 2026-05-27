@@ -39,7 +39,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus task: root task general/i }));
+    fireEvent.click(screen.getByRole("button", { name: /focus post: root task general/i }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
@@ -68,8 +68,8 @@ describe("ListView priority control", () => {
       />
     );
 
-    expect(screen.queryByRole("button", { name: /focus task: root task general/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /focus task: middle task general/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /focus post: root task general/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /focus post: middle task general/i })).not.toBeInTheDocument();
   });
 
   it("keeps priority select focused across unrelated parent rerenders", () => {

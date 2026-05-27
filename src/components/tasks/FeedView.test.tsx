@@ -130,7 +130,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus task: root task general/i }));
+    fireEvent.click(screen.getByRole("button", { name: /focus post: root task general/i }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
@@ -526,7 +526,7 @@ describe("FeedView", () => {
       />
     );
 
-    const breadcrumbButton = screen.getByRole("button", { name: /focus task: root breadcrumb label that should not wrap/i });
+    const breadcrumbButton = screen.getByRole("button", { name: /focus post: root breadcrumb label that should not wrap/i });
     expect(breadcrumbButton).toBeInTheDocument();
   });
 
@@ -561,8 +561,8 @@ describe("FeedView", () => {
       />
     );
 
-    const rootButton = screen.getByRole("button", { name: /focus task: root breadcrumb/i });
-    const middleButton = screen.getByRole("button", { name: /focus task: middle breadcrumb/i });
+    const rootButton = screen.getByRole("button", { name: /focus post: root breadcrumb/i });
+    const middleButton = screen.getByRole("button", { name: /focus post: middle breadcrumb/i });
     expect(rootButton).toBeInTheDocument();
     expect(middleButton).toBeInTheDocument();
   });
@@ -598,8 +598,8 @@ describe("FeedView", () => {
       />
     );
 
-    expect(screen.queryByRole("button", { name: /focus task: root breadcrumb/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /focus task: middle breadcrumb/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /focus post: root breadcrumb/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /focus post: middle breadcrumb/i })).not.toBeInTheDocument();
   });
 
   it("renders the npub as the primary label when no display name is set", async () => {

@@ -1,20 +1,12 @@
-import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect, type KeyboardEvent } from "react";
-import { hasTextSelection } from "@/lib/click-intent";
-import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus, Calendar as CalendarIcon, Clock } from "lucide-react";
-import { TaskStateIcon, TaskStateDefIcon } from "@/components/tasks/task-state-ui";
-import { getTaskStateRegistry, resolveTaskStateFromStatus, toTaskStateFromDefinition } from "@/domain/task-states/task-state-config";
+import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
+import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus } from "lucide-react";
 import {
   getTaskState,
   getTaskStatus,
   type Post,
   type TaskState,
-  getTaskPrimaryDate,
   isTaskPost,
-  isCalendarEventPost,
-  isDateBasedEventPost,
-  isTimeBasedEventPost,
 } from "@/types";
-import { parseIsoDateLocal } from "@/infrastructure/nostr/nip52-task-calendar-events";
 import type { Person } from "@/types/person";
 import {
   format,
@@ -33,41 +25,21 @@ import {
   getISOWeek,
 } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getStandaloneEmbeddableUrls, renderTaskContentWithProjectHeading } from "@/lib/linkify";
-import { TaskTagChipRow, hasTaskMetadataChips } from "./TaskTagChipRow";
-import { TaskPrioritySelect } from "./TaskMetadataEditors";
 import { getAuthorColor } from "@/lib/author-color";
-
-import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { makeIsProject } from "@/domain/content/task-projects";
-import { TASK_INTERACTION_STYLES, TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
-import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
-import { TaskAttachmentList } from "./TaskAttachmentList";
-import { TaskAssigneeAvatars } from "./TaskAssigneeAvatars";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { isTaskTerminal } from "@/domain/content/task-state";
-import {
-  handleTaskStatusToggleClick,
-  shouldOpenStatusMenuForDirectSelection,
-} from "@/lib/task-status-toggle";
-import { getTaskTooltipPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import {
   createCalendarSelectors,
   useTaskViewSource,
 } from "@/features/feed-page/controllers/use-task-view-states";
-import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useTaskViewServices } from "./use-task-view-services";
+import { CalendarTaskCard } from "./calendar/CalendarTaskCard";
 
 interface CalendarViewProps {
   tasks: Post[];
@@ -94,7 +66,6 @@ export function CalendarView({
   isMobile = false,
 }: CalendarViewProps) {
   const { t } = useTranslation(["tasks", "composer"]);
-  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();
   const activeRelays = relays.filter((relay) => relay.isActive);
@@ -120,12 +91,6 @@ export function CalendarView({
     closeOnSuccess: true,
     onCancel: closeComposer,
   });
-  const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
-  const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
-  const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
-  const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
-  const statusMenuOpenedFromKeyboardTaskIdsRef = useRef<Set<string>>(new Set());
-  const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
   const desktopScrollerRef = useRef<HTMLDivElement | null>(null);
   const desktopMonthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -332,53 +297,6 @@ export function CalendarView({
       }
     };
   }, [desktopMonthSections]);
-
-  const canCompleteTask = (task: Post) => {
-    return canUserChangeTaskStatus(task, currentUser);
-  };
-  const dispatchStatusChange = (taskId: string, stateId: string) => {
-    const state = getTaskStateRegistry().find((entry) => entry.id === stateId);
-    if (!state) return;
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state: toTaskStateFromDefinition(state) });
-  };
-  const dispatchToggleComplete = (taskId: string) => {
-    void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
-  };
-  const getStatusButtonTitle = (task: Post) => {
-    if (canCompleteTask(task)) return getStatusToggleHint(getTaskState(task));
-    return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(getTaskState(task));
-  };
-
-  const openStatusMenu = (taskId: string) => {
-    setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
-  };
-
-  const closeStatusMenu = (taskId: string) => {
-    setStatusMenuOpenByTaskId((prev) => {
-      if (!prev[taskId]) return prev;
-      const next = { ...prev };
-      delete next[taskId];
-      return next;
-    });
-  };
-
-  const allowStatusMenuOpen = (taskId: string) => {
-    allowStatusMenuOpenTaskIdsRef.current.add(taskId);
-  };
-
-  const clearStatusMenuOpenIntent = (taskId: string) => {
-    allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
-  };
-
-  const handleStatusTriggerKeyDown = (event: KeyboardEvent<HTMLElement>, task: Post) => {
-    if (!canCompleteTask(task)) return;
-    if (event.key !== "Enter" && event.key !== " " && event.key !== "ArrowDown") return;
-    event.preventDefault();
-    event.stopPropagation();
-    allowStatusMenuOpen(task.id);
-    statusMenuOpenedFromKeyboardTaskIdsRef.current.add(task.id);
-    openStatusMenu(task.id);
-  };
 
   const navigateMonth = (direction: "prev" | "next") => {
     const targetMonth =
@@ -657,317 +575,21 @@ export function CalendarView({
                 <p className="text-sm text-muted-foreground">{t("tasks.empty.noneScheduledForDay")}</p>
               ) : (
                 <div className="space-y-2">
-                  {selectedDayTasks.map((task) => {
-                    const ancestorChain = getAncestorChain(task.id);
-                    const authorColor = getAuthorColor(task.author);
-                    const isLockedUntilStart = isTaskLockedUntilStart(task);
-                    const mediaCaptionByUrl = new Map(
-                      (task.attachments || [])
-                        .filter((attachment) => Boolean(attachment.url))
-                        .map((attachment) => [
-                          attachment.url.trim().toLowerCase(),
-                          attachment.alt || attachment.name || attachment.url,
-                        ])
-                    );
-                    const standaloneEmbedUrls = new Set(
-                      getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
-                    );
-                    const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
-                      const normalizedUrl = attachment.url?.trim().toLowerCase();
-                      return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
-                    });
-                    const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
-                    const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
-                   
-                    return (
-                      <div
+                  {selectedDayTasks.map((task) => (
+                    <CalendarTaskCard
                       key={task.id}
-                      data-task-id={task.id}
-                      onClick={() => {
-                        if (!hasTextSelection() && hasChildren(task.id)) {
-                          focusTask(task.id);
-                        }
-                      }}
-                      title={(() => {
-                        const typeLabel = t("tasks.task").toLowerCase();
-                        const preview = getTaskTooltipPreview(task.content);
-                        return preview
-                          ? t("tasks.focusTaskWithPreview", { type: typeLabel, preview })
-                          : t("tasks.focusTaskTitle", { type: typeLabel });
-                      })()}
-                      className={cn(
-                        `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-                        isTaskTerminal(getTaskState(task)) && "opacity-60",
-                        isLockedUntilStart && "opacity-50 grayscale"
-                      )}
-                      style={{ borderLeftColor: authorColor.accent }}
-                    >
-                        {/* Parent context */}
-                        {ancestorChain.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-2">
-                            {ancestorChain.map((ancestor, i) => (
-                              <span key={ancestor.id} className="flex max-w-[50%] items-center gap-1">
-                                {i > 0 && <span className="text-muted-foreground/50">›</span>}
-                                <button
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    focusTask(ancestor.id);
-                                  }}
-                                  className={`${TASK_INTERACTION_STYLES.hoverLinkText} max-w-full truncate`}
-                                  title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
-                                  aria-label={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
-                                >
-                                  {ancestor.text}
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex items-start gap-2">
-                          {isCalendarEventPost(task) ? (
-                            <span
-                              title={t("tasks.event.label")}
-                              aria-label={t("tasks.event.label")}
-                              className="flex-shrink-0 inline-flex items-center justify-center p-0.5"
-                            >
-                              <CalendarIcon className="w-5 h-5 text-muted-foreground" />
-                            </span>
-                          ) : (
-                          <DropdownMenu
-                            open={Boolean(statusMenuOpenByTaskId[task.id])}
-                            onOpenChange={(open) => {
-                              if (!open) {
-                                closeStatusMenu(task.id);
-                                clearStatusMenuOpenIntent(task.id);
-                                statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                return;
-                              }
-                              if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
-                                openStatusMenu(task.id);
-                              } else {
-                                closeStatusMenu(task.id);
-                              }
-                              clearStatusMenuOpenIntent(task.id);
-                              statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                            }}
-                          >
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                onKeyDown={(event) => handleStatusTriggerKeyDown(event, task)}
-                                onClick={(e) => {
-                                  if (!canCompleteTask(task)) return;
-                                  if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
-                                    e.stopPropagation();
-                                    return;
-                                  }
-                                      if (statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id)) {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        return;
-                                      }
-                                  handleTaskStatusToggleClick(e, {
-                                    status: getTaskState(task),
-                                    hasStatusChangeHandler: canCompleteTask(task),
-                                    isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
-                                    openMenu: () => openStatusMenu(task.id),
-                                    closeMenu: () => closeStatusMenu(task.id),
-                                    allowMenuOpen: () => allowStatusMenuOpen(task.id),
-                                    clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                                    toggleStatus: () => dispatchToggleComplete(task.id),
-                                    focusTask: () => focusTask(task.id),
-                                    focusOnQuickToggle: hasChildren(task.id),
-                                  });
-                                }}
-                                 onFocus={() => {
-                                   // Tab focus must not auto-open the status menu.
-                                   statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                                 }}
-                                onPointerDown={() => {
-                                  statusTriggerPointerDownTaskIdsRef.current.add(task.id);
-                                  clearStatusMenuOpenIntent(task.id);
-                                  statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                }}
-                                onPointerDownCapture={(e) => {
-                                  if (!canCompleteTask(task)) return;
-                                  if (
-                                    shouldOpenStatusMenuForDirectSelection({
-                                      status: getTaskState(task),
-                                      altKey: e.altKey,
-                                      hasStatusChangeHandler: canCompleteTask(task),
-                                    })
-                                  ) {
-                                    e.preventDefault();
-                                    allowStatusMenuOpen(task.id);
-                                    statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
-                                    openStatusMenu(task.id);
-                                  }
-                                }}
-                                onBlur={() => {
-                                  statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                                  clearStatusMenuOpenIntent(task.id);
-                                   statusMenuOpenedFromKeyboardTaskIdsRef.current.delete(task.id);
-                                  statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                                }}
-                                disabled={!canCompleteTask(task)}
-                                aria-label={t("tasks.actions.setStatus")}
-                                title={getStatusButtonTitle(task)}
-                                className={cn(
-                                  "flex-shrink-0 p-0.5 rounded transition-colors touch-manipulation",
-                                  canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
-                                )}
-                              >
-                                <TaskStateIcon status={getTaskState(task)} />
-                              </button>
-                            </DropdownMenuTrigger>
-                            {canCompleteTask(task) && (
-                              <DropdownMenuContent align="start">
-                                {getTaskStateRegistry().map((state) => {
-                                  const isCurrent = resolveTaskStateFromStatus(getTaskState(task)).id === state.id;
-                                  return (
-                                    <DropdownMenuItem
-                                      key={state.id}
-                                      ref={isCurrent ? (node) => {
-                                        if (node && statusMenuOpenByTaskId[task.id]) {
-                                          requestAnimationFrame(() => node.focus());
-                                        }
-                                      } : undefined}
-                                      onClick={(event) => {
-                                        event.stopPropagation();
-                                        dispatchStatusChange(task.id, state.id);
-                                      }}
-                                      className={cn(isCurrent && "bg-muted")}
-                                    >
-                                      <TaskStateDefIcon state={state} className="mr-2" />
-                                      {state.label}
-                                    </DropdownMenuItem>
-                                  );
-                                })}
-                              </DropdownMenuContent>
-                            )}
-                          </DropdownMenu>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div
-                              className={cn(
-                                "text-sm",
-                                hasCollapsibleContent && !isContentExpanded
-                                  ? "whitespace-pre-line line-clamp-3 overflow-hidden"
-                                  : "whitespace-pre-wrap",
-                                isTaskTerminal(getTaskState(task)) && "line-through text-muted-foreground"
-                              )}
-                            >
-                              {renderTaskContentWithProjectHeading(task.content, isProject(task.id), (tag) => {
-                                void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
-                              }, {
-                                plainHashtags: isTaskTerminal(getTaskState(task)),
-                                people,
-                                disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
-                                onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
-                                getStandaloneMediaCaption: (url) =>
-                                  mediaCaptionByUrl.get(url.trim().toLowerCase()),
-                              })}
-                            </div>
-                            {hasCollapsibleContent && (
-                              <button
-                                type="button"
-                                className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setExpandedContentByTaskId((prev) => ({
-                                    ...prev,
-                                    [task.id]: !isContentExpanded,
-                                  }));
-                                }}
-                              >
-                                {isContentExpanded ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
-                              </button>
-                            )}
-                            <TaskAttachmentList
-                              attachments={attachmentsWithoutInlineEmbeds}
-                              className="mt-1.5 space-y-1"
-                              onMediaClick={(url) => openTaskMedia(task.id, url)}
-                            />
-                            {(() => {
-                              const primary = getTaskPrimaryDate(task);
-                              if (!primary) return null;
-                              const dayKey = selectedDate ? format(startOfDay(selectedDate), "yyyy-MM-dd") : null;
-                              // Multi-day time-based event: bound each day to its
-                              // role in the range (start day, middle day, end day)
-                              // instead of repeating the same time range on every
-                              // expanded copy.
-                              if (isTimeBasedEventPost(task) && task.start && task.end && dayKey) {
-                                const startDayKey = format(startOfDay(task.start), "yyyy-MM-dd");
-                                const endDayKey = format(startOfDay(task.end), "yyyy-MM-dd");
-                                if (startDayKey !== endDayKey) {
-                                  // Per-day bounds: anchor whichever side falls
-                                  // on today (the start time on the first day,
-                                  // the end time on the last day) and show the
-                                  // opposite end of the range as a date.
-                                  const startSide = dayKey === startDayKey
-                                    ? format(task.start, "HH:mm")
-                                    : format(task.start, "MMM d");
-                                  const endSide = dayKey === endDayKey
-                                    ? format(task.end, "HH:mm")
-                                    : format(task.end, "MMM d");
-                                  return (
-                                    <div className="flex items-center gap-2 text-xs mt-1">
-                                      <span
-                                        className="h-1.5 w-1.5 rounded-full"
-                                        style={{ backgroundColor: authorColor.accent }}
-                                        title={task.author?.displayName || task.author?.name || "Author"}
-                                      />
-                                      <Clock className="w-3 h-3" />
-                                      <span>{startSide}</span>
-                                      <span>– {endSide}</span>
-                                    </div>
-                                  );
-                                }
-                              }
-                              let endLabel: string | null = null;
-                              if (isTimeBasedEventPost(task) && task.end) {
-                                endLabel = format(task.end, "HH:mm");
-                              } else if (isDateBasedEventPost(task) && task.endDate) {
-                                const end = parseIsoDateLocal(task.endDate);
-                                if (end && format(end, "yyyy-MM-dd") !== format(primary.date, "yyyy-MM-dd")) {
-                                  endLabel = format(end, "MMM d");
-                                }
-                              }
-                              if (!primary.time && !endLabel) return null;
-                              const startLabel = isCalendarEventPost(task) && isDateBasedEventPost(task) && endLabel
-                                ? format(primary.date, "MMM d")
-                                : primary.time;
-                              return (
-                                <div className="flex items-center gap-2 text-xs mt-1">
-                                  <span
-                                    className="h-1.5 w-1.5 rounded-full"
-                                    style={{ backgroundColor: authorColor.accent }}
-                                    title={task.author?.displayName || task.author?.name || "Author"}
-                                  />
-                                  <Clock className="w-3 h-3" />
-                                  {startLabel && <span>{startLabel}</span>}
-                                  {endLabel && <span>– {endLabel}</span>}
-                                </div>
-                              );
-                            })()}
-                            {(typeof task.priority === "number" || hasTaskMetadataChips(task, activeRelays.length)) && (
-                              <TaskTagChipRow
-                                task={task}
-                                priority={task.priority}
-                                className="mt-1"
-                                tagClassName="px-1 py-0.5 rounded text-xs"
-                                showEmptyPlaceholder={false}
-                                testId={`calendar-chip-row-${task.id}`}
-                              />
-                            )}
-                          </div>
-                          {/* Assignee avatars - bottom right of card without growing it */}
-                          <div className="flex-shrink-0 self-end">
-                            <TaskAssigneeAvatars task={task} />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      task={task}
+                      selectedDate={selectedDate}
+                      ancestorChain={getAncestorChain(task.id)}
+                      isProject={isProject(task.id)}
+                      hasChildren={hasChildren(task.id)}
+                      currentUser={currentUser}
+                      people={people}
+                      activeRelayCount={activeRelays.length}
+                      getStatusToggleHint={getStatusToggleHint}
+                      onOpenMedia={openTaskMedia}
+                    />
+                  ))}
                 </div>
               )}
             </>

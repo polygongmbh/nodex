@@ -88,7 +88,7 @@ describe("CalendarView responsiveness", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus task: root/i }));
+    fireEvent.click(screen.getByRole("button", { name: /focus post: root/i }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   }, 10000);

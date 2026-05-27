@@ -16,10 +16,10 @@ describe("TaskBreadcrumbRow", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus task: root task/i }));
+    fireEvent.click(screen.getByRole("button", { name: /focus post: root task/i }));
 
     expect(onFocusTask).toHaveBeenCalledWith("root");
-    expect(screen.getByRole("button", { name: /focus task: child task/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /focus post: child task/i })).toBeInTheDocument();
   });
 
   it("renders nothing when there are no breadcrumbs", () => {
