@@ -82,9 +82,8 @@ export function TaskMentionChips({
           <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
             <button
               type="button"
-              aria-label={`Person actions for ${label}`}
-              title=""
               className={cn(TASK_CHIP_STYLES.mention, "transition-colors hover:bg-primary/15", className)}
+              title={`Person actions for ${label}`}
             >
               @{label}
             </button>

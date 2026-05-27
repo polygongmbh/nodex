@@ -392,7 +392,6 @@ function renderMarkdownBlock(
           }}
           className={options?.plainHashtags ? "inline whitespace-normal break-all align-baseline" : INLINE_TOKEN_CLASS}
           data-onboarding="content-hashtag"
-          aria-label={`Filter by #${hashtag}`}
           title={`Filter to #${hashtag}`}
         >
           #{hashtag}
@@ -417,8 +416,8 @@ function renderMarkdownBlock(
               <span
                 role="button"
                 tabIndex={0}
-                aria-label={`Person actions for ${mentionLabel}`}
                 className={`${INLINE_TOKEN_CLASS} text-left`}
+                title={`Person actions for ${mentionLabel}`}
               >
                 @{mentionLabel}
               </span>

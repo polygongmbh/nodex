@@ -1570,7 +1570,7 @@ export function UnifiedBottomBar({
             >
               <Hash className="w-4 h-4" />
               {activeChannelsCount > 0 && (
-                <span aria-hidden="true" className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeChannelsCount}
                 </span>
               )}
@@ -1585,7 +1585,7 @@ export function UnifiedBottomBar({
             >
               <Users className="w-4 h-4" />
               {activePeopleCount > 0 && (
-                <span aria-hidden="true" className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activePeopleCount}
                 </span>
               )}
@@ -1895,7 +1895,6 @@ export function UnifiedBottomBar({
                           : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-100"
                       : "border-border text-foreground hover:bg-muted"
                   )}
-                  aria-label={canCreateContent ? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")) : t("composer.hints.signInToCreate")}
                   title={primarySendTitle}
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>

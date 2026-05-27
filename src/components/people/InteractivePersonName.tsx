@@ -60,12 +60,11 @@ export function InteractivePersonName({
       <PersonActionMenu person={person} enableModifierShortcuts>
         <button
           type="button"
-          aria-label={accessibleLabel}
-          title=""
           className={cn(
             "group inline-flex max-w-full min-w-0 items-center gap-0.5 rounded text-left transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50",
             className,
           )}
+          title={accessibleLabel}
         >
           <span
             data-testid={testId}

@@ -65,7 +65,6 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           e.stopPropagation();
           void dispatchFeedInteraction({ type: "sidebar.relay.select", relayId: relay.id, mode: "toggle" });
         }}
-        aria-label={t("shell:sidebar.filters.toggleRelay", { name: relayTooltipName })}
         title={suppressInteractionTitles ? undefined : t("shell:sidebar.filters.toggleRelay", { name: relayTooltipName })}
       >
         <div
@@ -95,7 +94,6 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           void dispatchFeedInteraction({ type: "sidebar.relay.select", relayId: relay.id, mode: "exclusive" });
         }}
         className="flex-1 min-w-0 text-left"
-        aria-label={t("shell:sidebar.filters.showOnlyRelay", { name: relayTooltipName })}
         title={suppressInteractionTitles ? undefined : t("shell:sidebar.filters.showOnlyRelay", { name: relayTooltipName })}
       >
         <span
@@ -114,7 +112,6 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
                       "relative -m-2 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                     )}
-                    aria-label={t("relay.status.readOnly")}
                     title={t("relay.status.readOnly")}
                   >
                     <span

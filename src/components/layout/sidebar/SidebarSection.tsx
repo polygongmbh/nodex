@@ -91,7 +91,6 @@ export function SidebarSection({
             className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left focus:outline-none"
             onClick={onToggle}
             aria-expanded={isExpanded}
-            aria-label={resolvedToggleLabel}
             title={resolvedToggleLabel}
           >
             <span className="flex min-w-0 items-center gap-2">

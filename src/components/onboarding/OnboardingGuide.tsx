@@ -1040,7 +1040,6 @@ export function OnboardingGuide({
                       key={section.id}
                       onClick={() => handleSectionStart(section.id)}
                       className="w-full flex items-start gap-2 rounded-lg border border-border bg-background/60 hover:bg-primary/10 px-3 py-2 text-left transition-colors"
-                      aria-label={t("onboarding.picker.startSectionAria", { title: section.title })}
                       title={`${section.title}: ${section.description}`}
                     >
                       {getSectionIcon(section.id)}
@@ -1063,7 +1062,6 @@ export function OnboardingGuide({
                   onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
                   className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-2 shadow-[0_0_0_1px_hsl(var(--primary)/0.16),0_0.375rem_0.875rem_hsl(var(--background)/0.36)]"
-                  aria-label={t("onboarding.picker.startSectionAria", { title: section.title })}
                   title={`${section.title}: ${section.description}`}
                 >
                   <span className="inline-flex items-start gap-2 rounded-xl bg-card/80 backdrop-blur-md px-3 py-2 border border-border shadow-sm">
@@ -1089,7 +1087,6 @@ export function OnboardingGuide({
           {currentStep?.target && anchoredTargetRect && (
             <div
               role="img"
-              aria-label={t("onboarding.dialog.targetArrowIndicator")}
               className="absolute z-[129] pointer-events-none"
               style={getTargetArrowStyle()}
             >

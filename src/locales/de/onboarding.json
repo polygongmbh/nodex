@@ -4,11 +4,9 @@
       "helper": "Wähle einen markierten Bereich, um dessen Guide zu starten.",
       "close": "Schließen",
       "dismiss": "Guide-Bereichsauswahl schließen",
-      "chooseSection": "Guide-Bereich auswählen",
-      "startSectionAria": "{{title}}-Guide-Bereich starten"
+      "chooseSection": "Guide-Bereich auswählen"
     },
     "dialog": {
-      "targetArrowIndicator": "Zielindikator",
       "emptyTitle": "Keine Onboarding-Schritte verfügbar",
       "stepLabel": "Schritt {{current}} von {{total}}",
       "skip": "Überspringen",

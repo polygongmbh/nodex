@@ -120,7 +120,6 @@ function TaskTagChipContent({
             tagClassName
           )}
           data-onboarding="content-hashtag"
-          aria-label={t("tasks.actions.filterTag", { tag })}
           title={t("tasks.actions.filterTag", { tag })}
         >
           #{tag}

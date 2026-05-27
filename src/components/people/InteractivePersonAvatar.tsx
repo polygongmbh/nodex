@@ -53,12 +53,12 @@ export function InteractivePersonAvatar({
       >
         <button
           type="button"
-          aria-label={label}
           className={cn(
             "shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 hover:ring-2 hover:ring-primary/40 transition-shadow",
             sizeClassName,
             className,
           )}
+          title={label}
         >
           <UserAvatar pubkey={person.pubkey} />
         </button>

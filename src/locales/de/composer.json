@@ -121,7 +121,6 @@
       }
     },
     "labels": {
-      "dateType": "Datumstyp",
       "priority": "Priorität",
       "kind": "Typ",
       "task": "Aufgabe",
