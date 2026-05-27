@@ -218,7 +218,7 @@ describe("TaskCreateComposer", () => {
     renderCreateComposer();
 
     expect(screen.getByRole("textbox")).toHaveValue("Persisted #backend");
-    expect(screen.getByRole("button", { name: /add comment/i })).toBeInTheDocument();
+    expect(screen.getByTestId("composer-primary-action")).toBeInTheDocument();
   });
 
   it("does not render the composer when the parent only lives on read-only relays", () => {
@@ -391,7 +391,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Looks good #backend" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     await waitFor(() => {
       expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({
@@ -420,7 +420,7 @@ describe("TaskCreateComposer", () => {
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Great progress" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     await waitFor(() => {
       expect(createTaskMock).toHaveBeenCalledWith(expect.objectContaining({

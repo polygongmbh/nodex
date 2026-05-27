@@ -100,8 +100,8 @@ function makeFeedTasks(
 }
 
 describe("FeedView", () => {
-  const chooseComboboxOptionByIndex = (name: string | RegExp, optionIndex: number) => {
-    const trigger = screen.getByRole("combobox", { name });
+  const chooseComboboxOptionByIndex = (testId: string, optionIndex: number) => {
+    const trigger = screen.getByTestId(testId);
     fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
     fireEvent.click(trigger);
     const option = within(screen.getByRole("listbox")).getAllByRole("option")[optionIndex];
@@ -130,7 +130,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus post: root task general/i }));
+    fireEvent.click(screen.getByRole("button", { name: new RegExp("\\broot task general\\b", "i") }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
@@ -526,7 +526,7 @@ describe("FeedView", () => {
       />
     );
 
-    const breadcrumbButton = screen.getByRole("button", { name: /focus post: root breadcrumb label that should not wrap/i });
+    const breadcrumbButton = screen.getByRole("button", { name: new RegExp("\\broot breadcrumb label that should not wrap\\b", "i") });
     expect(breadcrumbButton).toBeInTheDocument();
   });
 
@@ -561,8 +561,8 @@ describe("FeedView", () => {
       />
     );
 
-    const rootButton = screen.getByRole("button", { name: /focus post: root breadcrumb/i });
-    const middleButton = screen.getByRole("button", { name: /focus post: middle breadcrumb/i });
+    const rootButton = screen.getByRole("button", { name: new RegExp("\\broot breadcrumb\\b", "i") });
+    const middleButton = screen.getByRole("button", { name: new RegExp("\\bmiddle breadcrumb\\b", "i") });
     expect(rootButton).toBeInTheDocument();
     expect(middleButton).toBeInTheDocument();
   });
@@ -598,8 +598,8 @@ describe("FeedView", () => {
       />
     );
 
-    expect(screen.queryByRole("button", { name: /focus post: root breadcrumb/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /focus post: middle breadcrumb/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp("\\broot breadcrumb\\b", "i") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp("\\bmiddle breadcrumb\\b", "i") })).not.toBeInTheDocument();
   });
 
   it("renders the npub as the primary label when no display name is set", async () => {
@@ -626,7 +626,6 @@ describe("FeedView", () => {
     });
     const fallbackAuthorLabel = screen.getByTestId("feed-author-primary-task-pubkey");
     expect(fallbackAuthorLabel.textContent).toContain("npub1");
-    expect(fallbackAuthorLabel.closest("button")).toHaveAttribute("title", "");
   });
 
   it("shows the author display name and parenthesized handle inline on desktop", () => {
@@ -724,7 +723,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: /person actions for/i })[0], { ctrlKey: true });
+    fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0], { ctrlKey: true });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
@@ -741,7 +740,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: /person actions for/i })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0]);
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
       type: "task.focus.change",
@@ -761,7 +760,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: /person actions for/i })[0], {
+    fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0], {
       ctrlKey: true,
       altKey: true,
     });
@@ -789,7 +788,7 @@ describe("FeedView", () => {
       searchQueryOverride: "",
     });
 
-    const mention = screen.getByRole("button", { name: "Person actions for alice" });
+    const mention = screen.getByRole("button", { name: "@alice" });
     expect(mention).toHaveTextContent("@alice");
 
     fireEvent.click(mention, { ctrlKey: true });
@@ -822,7 +821,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /person actions for npub1/i }), { altKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.compose.mention",
       person: expect.objectContaining({
@@ -853,7 +852,7 @@ describe("FeedView", () => {
       searchQueryOverride: "",
     });
 
-    expect(screen.getByRole("button", { name: "Person actions for alice" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "@alice" })).toBeInTheDocument();
   });
 
   it("labels generic state updates using the registry's configured state label, not the i18n alias", () => {
@@ -928,7 +927,7 @@ describe("FeedView", () => {
     expect(screen.getAllByTestId(/feed-state-entry-/)).toHaveLength(2);
     expect(screen.getAllByTitle(/status updated at/i)).toHaveLength(2);
     expect(
-      screen.getAllByRole("button", { name: /focus task: reconnect relays after resume #infra/i })
+      screen.getAllByRole("button", { name: /reconnect relays after resume infra/i })
     ).toHaveLength(2);
   });
 
@@ -959,16 +958,11 @@ describe("FeedView", () => {
     );
 
     const titleButton = screen.getByRole("button", {
-      name: /^focus task: reconnect relays after resume infra and verify mobile queue drain #general$/i,
+      name: /reconnect relays after resume infra and verify mobile queue drain/i,
     });
     const stateRow = screen.getByTestId("feed-state-entry-state-title-tooltip");
-    const actorButton = within(stateRow).getByRole("button", {
-      name: /person actions for alice doe/i,
-    });
+    const actorButton = within(stateRow).getByRole("button", { name: "Alice Doe" });
 
-    expect(titleButton).toHaveAttribute("title");
-    expect(titleButton).not.toHaveAttribute("title", expect.stringContaining("Second line"));
-    expect(titleButton).not.toHaveAttribute("title", expect.stringContaining("..."));
     expect(
       actorButton.compareDocumentPosition(titleButton) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
@@ -1191,7 +1185,7 @@ describe("FeedView", () => {
       />
     );
 
-    chooseComboboxOptionByIndex(/priority/i, 4);
+    chooseComboboxOptionByIndex("priority-select", 4);
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "task.updatePriority",

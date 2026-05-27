@@ -39,7 +39,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus post: root task general/i }));
+    fireEvent.click(screen.getByRole("button", { name: new RegExp("\\broot task general\\b", "i") }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
@@ -68,8 +68,8 @@ describe("ListView priority control", () => {
       />
     );
 
-    expect(screen.queryByRole("button", { name: /focus post: root task general/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /focus post: middle task general/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp("\\broot task general\\b", "i") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: new RegExp("\\bmiddle task general\\b", "i") })).not.toBeInTheDocument();
   });
 
   it("keeps priority select focused across unrelated parent rerenders", () => {
@@ -132,7 +132,7 @@ describe("ListView priority control", () => {
     );
 
     const taskRow = container.querySelector('[data-task-id="task-locked"]') as HTMLElement;
-    expect(within(taskRow).getByRole("button", { name: /priority/i })).toBeDisabled();
+    expect(within(taskRow).getByTestId("priority-select")).toBeDisabled();
     expect(screen.getByRole("button", { name: /set date/i })).toBeDisabled();
   });
 
@@ -157,7 +157,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    const statusButton = screen.getByLabelText("Set status");
+    const statusButton = screen.getByTestId("task-status-toggle");
     fireEvent.pointerDown(statusButton);
     fireEvent.click(statusButton, { detail: 1 });
 
@@ -190,7 +190,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
+    fireEvent.click(screen.getByTestId("task-status-toggle"), { altKey: true });
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-option" });
   });
@@ -216,7 +216,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    fireEvent.click(screen.getByLabelText("Set status"));
+    fireEvent.click(screen.getByTestId("task-status-toggle"));
     fireEvent.click(screen.getByText("In Progress"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
@@ -248,7 +248,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    fireEvent.pointerDown(screen.getByLabelText("Set status"));
+    fireEvent.pointerDown(screen.getByTestId("task-status-toggle"));
 
     expect(screen.getByText("In Progress")).toBeInTheDocument();
   });

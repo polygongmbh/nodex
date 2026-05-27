@@ -23,9 +23,9 @@ describe("TitledPostFields", () => {
 
   it("fires onChange with the patched field per input", () => {
     const { onChange, onTitleTouched } = renderFields();
-    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "T" } });
-    fireEvent.change(screen.getByLabelText("Location"), { target: { value: "L" } });
-    fireEvent.change(screen.getByLabelText("Summary"), { target: { value: "S" } });
+    fireEvent.change(screen.getByTestId("titled-post-title"), { target: { value: "T" } });
+    fireEvent.change(screen.getByTestId("titled-post-location"), { target: { value: "L" } });
+    fireEvent.change(screen.getByTestId("titled-post-summary"), { target: { value: "S" } });
     expect(onChange).toHaveBeenNthCalledWith(1, { title: "T" });
     expect(onChange).toHaveBeenNthCalledWith(2, { location: "L" });
     expect(onChange).toHaveBeenNthCalledWith(3, { summary: "S" });
@@ -35,8 +35,8 @@ describe("TitledPostFields", () => {
   it("renders the provided values", () => {
     const value: TitledPostFieldsType = { title: "Alpha", location: "Beta", summary: "Gamma" };
     renderFields({ value });
-    expect(screen.getByLabelText("Title")).toHaveValue("Alpha");
-    expect(screen.getByLabelText("Location")).toHaveValue("Beta");
-    expect(screen.getByLabelText("Summary")).toHaveValue("Gamma");
+    expect(screen.getByTestId("titled-post-title")).toHaveValue("Alpha");
+    expect(screen.getByTestId("titled-post-location")).toHaveValue("Beta");
+    expect(screen.getByTestId("titled-post-summary")).toHaveValue("Gamma");
   });
 });

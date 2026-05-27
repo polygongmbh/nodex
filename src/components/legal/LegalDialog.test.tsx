@@ -6,7 +6,7 @@ describe("LegalDialog", () => {
   it("opens imprint dialog", () => {
     render(<LegalDialog triggerLabel="Impressum" />);
 
-    fireEvent.click(screen.getByRole("button", { name: /open imprint and privacy policy/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Impressum" }));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });

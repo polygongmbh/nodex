@@ -51,7 +51,7 @@ describe("TaskMentionChips", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Person actions for alice" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "@alice" })).toBeInTheDocument();
   });
 
   it("applies an exclusive person filter on Ctrl/Cmd+click", () => {
@@ -62,7 +62,7 @@ describe("TaskMentionChips", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Person actions for alice" }), { ctrlKey: true });
+    fireEvent.click(screen.getByRole("button", { name: "@alice" }), { ctrlKey: true });
     expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", person: alice });
   });
 
@@ -78,7 +78,7 @@ describe("TaskMentionChips", () => {
       </div>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Person actions for alice" }));
+    fireEvent.click(screen.getByRole("button", { name: "@alice" }));
 
     expect(parentClick).not.toHaveBeenCalled();
   });
@@ -93,9 +93,8 @@ describe("TaskMentionChips", () => {
       />
     );
 
-    const mentionChip = screen.getByRole("button", { name: /person actions for npub1/i });
+    const mentionChip = screen.getByRole("button", { name: /^@npub1/ });
     expect(mentionChip).toBeInTheDocument();
-    expect(mentionChip).toHaveAttribute("title", "");
   });
 
   it("uses fallback person data for modifier actions when mention has no matched person", () => {
@@ -107,7 +106,7 @@ describe("TaskMentionChips", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /person actions for npub1/i }), { altKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.compose.mention",
       person: expect.objectContaining({

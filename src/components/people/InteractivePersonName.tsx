@@ -1,9 +1,7 @@
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { BadgeCheck } from "lucide-react";
 import {
   formatAuthorMetaParts,
-  getCompactPersonLabel,
   type Person,
 } from "@/types/person";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
@@ -34,8 +32,6 @@ export function InteractivePersonName({
   testId,
   className,
 }: InteractivePersonNameProps) {
-  const { t } = useTranslation("tasks");
-
   const peopleList = useMemo(() => [person], [person]);
   const verifiedPubkeys = useNip05VerifiedPubkeys(peopleList);
   const verified = verifiedPubkeys.has(person.pubkey);
@@ -51,10 +47,6 @@ export function InteractivePersonName({
     [person],
   );
 
-  const accessibleLabel = t("people.actions.openMenu", {
-    name: getCompactPersonLabel(person),
-  });
-
   return (
     <PersonHoverCard person={person}>
       <PersonActionMenu person={person} enableModifierShortcuts>
@@ -64,7 +56,6 @@ export function InteractivePersonName({
             "group inline-flex max-w-full min-w-0 items-center gap-0.5 rounded text-left transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50",
             className,
           )}
-          title={accessibleLabel}
         >
           <span
             data-testid={testId}

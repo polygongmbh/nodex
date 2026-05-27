@@ -29,7 +29,7 @@ describe("MobileRelaysSection", () => {
     fireEvent.change(screen.getByPlaceholderText(/wss:\/\/relay\.example\.com/i), {
       target: { value: "wss://relay.example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /add space/i }));
+    fireEvent.click(screen.getByTestId("mobile-add-relay"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "sidebar.relay.add",

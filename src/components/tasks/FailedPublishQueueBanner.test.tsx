@@ -119,8 +119,8 @@ describe("FailedPublishQueueBanner", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Repost to currently selected space relays" })).toBeDisabled();
+    expect(screen.getByTestId("failed-publish-retry")).toBeEnabled();
+    expect(screen.getByTestId("failed-publish-repost")).toBeDisabled();
 
     view.rerender(
       <FailedPublishQueueBanner
@@ -130,8 +130,8 @@ describe("FailedPublishQueueBanner", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Repost to currently selected space relays" })).toBeEnabled();
+    expect(screen.getByTestId("failed-publish-retry")).toBeDisabled();
+    expect(screen.getByTestId("failed-publish-repost")).toBeEnabled();
   });
 
   it("shows retry progress state while retry is in flight", () => {
@@ -152,9 +152,9 @@ describe("FailedPublishQueueBanner", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Retry on original relay targets" }));
+    fireEvent.click(screen.getByTestId("failed-publish-retry"));
 
-    expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeDisabled();
+    expect(screen.getByTestId("failed-publish-retry")).toBeDisabled();
 
     resolveRetry?.();
   });

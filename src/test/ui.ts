@@ -12,16 +12,10 @@ export const getOfferComposerInput = () =>
 export const getRequestComposerInput = () =>
   screen.getByRole("textbox");
 
-export const getComposerPrimaryAction = () =>
-  screen.getByRole("button", {
-    name: /create task|post offer|post request/i,
-  });
-export const getComposerCommentAction = () =>
-  screen.getByRole("button", { name: /add comment/i });
+export const getComposerPrimaryAction = () => screen.getByTestId("composer-primary-action");
+export const getComposerCommentAction = () => screen.getByTestId("composer-comment-action");
 
-export const getMobilePrimaryAction = () =>
-  screen.getByRole("button", { name: /create task( \/ add comment)?|sign in to create/i });
-export const getMobileCommentAction = () =>
-  screen.getByRole("button", { name: /^add comment$/i });
+export const getMobilePrimaryAction = () => screen.getByTestId("mobile-primary-action");
+export const getMobileCommentAction = () => screen.getByTestId("mobile-comment-action");
 export const getMobileSubmitBlockPanel = () => screen.getByRole("alert");
 export const openMobileComposeOptions = () => fireEvent.click(getMobilePrimaryAction());

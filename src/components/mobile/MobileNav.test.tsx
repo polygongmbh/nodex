@@ -58,7 +58,7 @@ describe("MobileNav", () => {
 
     render(<MobileNav currentView="tree" onViewChange={onViewChange} />);
 
-    const feedButton = screen.getByRole("tab", { name: "Switch to Timeline view" });
+    const feedButton = document.querySelector('[data-segment-index="1"]') as HTMLElement;
 
     fireEvent.click(feedButton);
     expect(onViewChange).toHaveBeenCalledWith("feed");
@@ -134,7 +134,7 @@ describe("MobileNav", () => {
 
     render(<MobileNav currentView="feed" onViewChange={vi.fn()} onManageOpen={onManageOpen} />);
 
-    const menuButton = screen.getByLabelText("Switch to Manage view");
+    const menuButton = document.querySelector('[data-onboarding="mobile-nav-manage"]') as HTMLElement;
 
     fireEvent.click(menuButton);
     expect(onManageOpen).toHaveBeenCalledOnce();

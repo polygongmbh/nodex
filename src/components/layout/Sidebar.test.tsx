@@ -56,7 +56,8 @@ describe("Sidebar", () => {
       expect(element?.style.height).toBe("0px");
     };
 
-    fireEvent.click(screen.getByRole("button", { name: /collapse spaces/i }));
+    const spacesSection = document.querySelector('[data-onboarding="relays-section"]') as HTMLElement;
+    fireEvent.click(within(spacesSection).getByRole("button", { expanded: true }));
     expectCollapsed(relayOneRow.parentElement?.parentElement as HTMLElement);
 
     firstRender.unmount();

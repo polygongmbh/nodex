@@ -32,8 +32,8 @@ describe("RelayItem", () => {
       </FeedInteractionProvider>
     );
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
-    const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
+    const exclusiveButton = screen.getByTestId("relay-item-exclusive");
+    const toggleButton = screen.getByTestId("relay-item-toggle");
 
     fireEvent.click(exclusiveButton);
     fireEvent.click(toggleButton);
@@ -59,8 +59,8 @@ describe("RelayItem", () => {
       </FeedInteractionProvider>
     );
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
-    const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
+    const exclusiveButton = screen.getByTestId("relay-item-exclusive");
+    const toggleButton = screen.getByTestId("relay-item-toggle");
     const rowTrigger = exclusiveButton.closest("[data-sidebar-item]")?.parentElement as HTMLElement;
 
     expect(exclusiveButton).not.toHaveAttribute("title");
@@ -85,7 +85,7 @@ describe("RelayItem", () => {
       </FeedInteractionProvider>
     );
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
+    const exclusiveButton = screen.getByTestId("relay-item-exclusive");
     const rowTrigger = exclusiveButton.closest("[data-sidebar-item]")?.parentElement as HTMLElement;
 
     fireEvent.mouseEnter(rowTrigger);
@@ -106,9 +106,9 @@ describe("RelayItem", () => {
       </FeedInteractionProvider>
     );
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
-    const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
-    const readOnlyTrigger = screen.getByLabelText("Read Only");
+    const exclusiveButton = screen.getByTestId("relay-item-exclusive");
+    const toggleButton = screen.getByTestId("relay-item-toggle");
+    const readOnlyTrigger = screen.getByTitle("Read Only");
     const sidebarRow = exclusiveButton.closest("[data-sidebar-item]") as HTMLElement;
 
     expect(exclusiveButton).toHaveAttribute("title");

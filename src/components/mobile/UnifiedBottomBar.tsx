@@ -1562,6 +1562,7 @@ export function UnifiedBottomBar({
             </button>
             <button
               onClick={() => toggleSelector("channel")}
+              data-testid="mobile-channel-filter"
               title={t("filters:filters.channels.title", { defaultValue: "Channels" })}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
@@ -1570,13 +1571,14 @@ export function UnifiedBottomBar({
             >
               <Hash className="w-4 h-4" />
               {activeChannelsCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span aria-hidden="true" className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeChannelsCount}
                 </span>
               )}
             </button>
             <button
               onClick={() => toggleSelector("person")}
+              data-testid="mobile-person-filter"
               title={t("filters:filters.people.title")}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
@@ -1585,7 +1587,7 @@ export function UnifiedBottomBar({
             >
               <Users className="w-4 h-4" />
               {activePeopleCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span aria-hidden="true" className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activePeopleCount}
                 </span>
               )}
@@ -1895,6 +1897,7 @@ export function UnifiedBottomBar({
                           : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-100"
                       : "border-border text-foreground hover:bg-muted"
                   )}
+                  data-testid="mobile-primary-action"
                   title={primarySendTitle}
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>
@@ -1934,6 +1937,7 @@ export function UnifiedBottomBar({
                       }}
                       disabled={!canSendComment}
                     className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      data-testid="mobile-comment-action"
                       title={t("composer.actions.addComment")}
                     >
                       <MessageSquare className="w-4 h-4" />

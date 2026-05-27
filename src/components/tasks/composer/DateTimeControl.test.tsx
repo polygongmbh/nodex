@@ -30,7 +30,7 @@ describe("DateTimeControl", () => {
         timeLabel="Start time"
       />
     );
-    expect(screen.getByLabelText("Start time")).toBeInTheDocument();
+    expect(screen.getByTestId("task-time-input-hours")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /clear date/i })).toBeInTheDocument();
   });
 

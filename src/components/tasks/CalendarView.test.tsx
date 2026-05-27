@@ -51,8 +51,8 @@ describe("CalendarView responsiveness", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create event/i })).toBeInTheDocument();
+    expect(screen.getByTestId("calendar-create-task")).toBeInTheDocument();
+    expect(screen.getByTestId("calendar-create-event")).toBeInTheDocument();
   });
 
   it("focuses ancestor from day-card breadcrumb without selecting current card task", () => {
@@ -88,7 +88,7 @@ describe("CalendarView responsiveness", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus post: root/i }));
+    fireEvent.click(screen.getByRole("button", { name: new RegExp("\\broot\\b", "i") }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   }, 10000);
@@ -213,7 +213,7 @@ describe("CalendarView responsiveness", () => {
 
     const chipRow = screen.getByTestId("calendar-chip-row-calendar-priority-task");
     expect(chipRow).toHaveTextContent("P4");
-    expect(screen.getByRole("button", { name: /filter to #general/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "#general" }).length).toBeGreaterThan(0);
   });
 
   it("focuses branch tasks from selected-day cards", () => {

@@ -114,6 +114,7 @@ export function SidebarQuickConstraintRow({
             }}
             className="h-6 px-1.5 text-[11px]"
             style={{ width: sharedNumericInputWidth }}
+            data-testid="sidebar-min-priority-input"
             title={t("sidebar.quickFilters.labels.minPriority")}
           />
         </div>

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanView } from "./KanbanView";
@@ -234,8 +234,8 @@ describe("KanbanView", () => {
       />
     );
 
-    expect(screen.getByRole("combobox", { name: /priority/i })).toBeInTheDocument();
-    expect(screen.getAllByRole("combobox", { name: /priority/i })).toHaveLength(1);
+    expect(screen.getByTestId("priority-select")).toBeInTheDocument();
+    expect(screen.getAllByTestId("priority-select")).toHaveLength(1);
   });
 
   it("keeps priority pinned outside the metadata chip row", () => {
@@ -261,8 +261,8 @@ describe("KanbanView", () => {
     );
 
     const chipRow = screen.getByTestId("kanban-chip-row-priority-and-tag-task");
-    const hashtagChip = screen.getByRole("button", { name: /filter to #general/i });
-    expect(screen.getByRole("combobox", { name: /priority/i })).toBeInTheDocument();
+    const hashtagChip = within(chipRow).getByRole("button", { name: "#general" });
+    expect(screen.getByTestId("priority-select")).toBeInTheDocument();
     expect(chipRow).not.toHaveTextContent("P4");
     expect(chipRow).toContainElement(hashtagChip);
   });

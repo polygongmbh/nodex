@@ -128,7 +128,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         content: null,
       });
 
-      expect(screen.queryByRole("img", { name: /target indicator/i })).not.toBeInTheDocument();
+      expect(screen.queryByTestId("onboarding-target-indicator")).not.toBeInTheDocument();
 
       rerender(
         <div>
@@ -144,7 +144,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByRole("img", { name: /target indicator/i })).toBeInTheDocument();
+        expect(screen.getByTestId("onboarding-target-indicator")).toBeInTheDocument();
       });
     });
   });
@@ -449,7 +449,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       content: <div data-onboarding="task-list">Task list</div>,
     });
 
-    expect(screen.getByRole("img", { name: /target indicator/i })).toBeInTheDocument();
+    expect(screen.getByTestId("onboarding-target-indicator")).toBeInTheDocument();
   });
 
   it("keeps skip disabled for a few seconds on first step", () => {
@@ -1006,7 +1006,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Start Compose onboarding section" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Compose/ }));
 
     expect(screen.getByText("Compose 1")).toBeInTheDocument();
     expect(screen.getByText("Step 4 of 5")).toBeInTheDocument();
@@ -1044,7 +1044,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       </div>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Start Navigation onboarding section" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Navigation/ }));
 
     expect(screen.getByRole("button", { name: "Skip" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
@@ -1135,7 +1135,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Start Compose onboarding section" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Compose/ }));
 
     expect(onActiveSectionChange).toHaveBeenLastCalledWith("compose");
   });
@@ -1159,7 +1159,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Start Compose onboarding section" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Compose/ }));
 
     await waitFor(() => {
       expect(onActiveSectionChange).toHaveBeenLastCalledWith("compose");

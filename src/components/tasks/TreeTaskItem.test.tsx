@@ -124,7 +124,7 @@ describe("TreeTaskItem status actions", () => {
   it("cycles status on plain click even when status menu exists", () => {
     renderTreeTaskItem();
 
-    fireEvent.click(screen.getByLabelText("Set status"), { detail: 1 });
+    fireEvent.click(screen.getByTestId("task-status-toggle"), { detail: 1 });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
@@ -133,7 +133,7 @@ describe("TreeTaskItem status actions", () => {
   it("does not enter the task when toggling from in progress to done", () => {
     renderTreeTaskItem({ task: withTaskState(baseTask, "active") });
 
-    fireEvent.click(screen.getByLabelText("Set status"), { detail: 1 });
+    fireEvent.click(screen.getByTestId("task-status-toggle"), { detail: 1 });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
@@ -142,7 +142,7 @@ describe("TreeTaskItem status actions", () => {
   it("does not enter the task on option-click", () => {
     renderTreeTaskItem();
 
-    fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
+    fireEvent.click(screen.getByTestId("task-status-toggle"), { altKey: true });
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
@@ -161,7 +161,7 @@ describe("TreeTaskItem status actions", () => {
 
     renderTreeTaskItem({ task: taskWithRawEvent });
 
-    fireEvent.click(screen.getByRole("button", { name: /task: ship feature #frontend/i }), {
+    fireEvent.click(screen.getByRole("button", { name: /ship feature.*#frontend/i }), {
       shiftKey: true,
       altKey: true,
       button: 0,
@@ -175,7 +175,7 @@ describe("TreeTaskItem status actions", () => {
   it("does not enter the task when selecting a status from the dropdown", () => {
     renderTreeTaskItem({ task: withTaskState(baseTask, "done") });
 
-    fireEvent.click(screen.getByLabelText("Set status"));
+    fireEvent.click(screen.getByTestId("task-status-toggle"));
     fireEvent.click(screen.getByText("In Progress"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
@@ -210,7 +210,7 @@ describe("TreeTaskItem status actions", () => {
   it("does not cycle done tasks on click when status menu is available", () => {
     renderTreeTaskItem({ task: withTaskState(baseTask, "done") });
 
-    fireEvent.click(screen.getByLabelText("Set status"));
+    fireEvent.click(screen.getByTestId("task-status-toggle"));
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
@@ -218,7 +218,7 @@ describe("TreeTaskItem status actions", () => {
   it("does not cycle closed tasks on click when status menu is available", () => {
     renderTreeTaskItem({ task: withTaskState(baseTask, "closed") });
 
-    fireEvent.click(screen.getByLabelText("Set status"));
+    fireEvent.click(screen.getByTestId("task-status-toggle"));
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
@@ -232,7 +232,7 @@ describe("TreeTaskItem status actions", () => {
       },
     });
 
-    const statusButton = screen.getByLabelText("Set status");
+    const statusButton = screen.getByTestId("task-status-toggle");
     fireEvent.click(statusButton);
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "task.toggleComplete" })
@@ -250,7 +250,7 @@ describe("TreeTaskItem status actions", () => {
       },
     });
 
-    const statusButton = screen.getByLabelText("Set status");
+    const statusButton = screen.getByTestId("task-status-toggle");
     expect(statusButton).not.toBeDisabled();
     fireEvent.click(statusButton, { detail: 1 });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
@@ -278,7 +278,7 @@ describe("TreeTaskItem status actions", () => {
       people: [knownPerson],
     });
 
-    const statusButton = screen.getByLabelText("Set status");
+    const statusButton = screen.getByTestId("task-status-toggle");
     fireEvent.click(statusButton);
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "task.toggleComplete" })
@@ -303,7 +303,7 @@ describe("TreeTaskItem status actions", () => {
 
     renderTreeTaskItem({ task: commentTask });
 
-    fireEvent.click(screen.getAllByRole("button", { name: /person actions for alice/i })[0], { ctrlKey: true });
+    fireEvent.click(screen.getByRole("button", { name: "Alice" }), { ctrlKey: true });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
@@ -326,7 +326,7 @@ describe("TreeTaskItem status actions", () => {
 
     renderTreeTaskItem({ task: commentTask });
 
-    fireEvent.click(screen.getAllByRole("button", { name: /person actions for alice/i })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Alice" }));
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
       type: "task.focus.change",
@@ -348,7 +348,7 @@ describe("TreeTaskItem status actions", () => {
     renderTreeTaskItem({ task: commentTask });
 
     expect(screen.queryByTestId("task-item-beam-c-right-avatar-only")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Assigned to 1 person")).toBeInTheDocument();
+    expect(screen.getByTestId("task-assignee-avatars")).toBeInTheDocument();
   });
 
   it("does not render attachment previews in tree cards", () => {

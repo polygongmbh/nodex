@@ -38,6 +38,7 @@ export function TaskDateTypeSelect({
     >
       <SelectTrigger
         id={id}
+        data-testid="task-date-type-select"
         className={cn("h-8 w-auto gap-1 text-xs", className)}
       >
         <SelectValue>{getTaskDateTypeLabel(value)}</SelectValue>

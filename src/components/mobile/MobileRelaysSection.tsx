@@ -51,6 +51,7 @@ export function MobileRelaysSection({ relays }: MobileRelaysSectionProps) {
         <button
           onClick={handleAddRelay}
           className="px-3 h-10 rounded-lg border border-border text-sm flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
+          data-testid="mobile-add-relay"
           title={t("filters.feeds.addAria")}
         >
           <Plus className="w-4 h-4" />

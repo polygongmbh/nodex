@@ -31,7 +31,7 @@ describe("linkifyContent interaction styles", () => {
 
     render(<div>{linkifyContent("Ship #frontend https://example.com", onHashtagClick)}</div>);
 
-    const hashtag = screen.getByRole("button", { name: "Filter by #frontend" });
+    const hashtag = screen.getByRole("button", { name: "#frontend" });
     const url = screen.getByRole("link", { name: "https://example.com" });
 
     expect(url).toHaveAttribute("href", "https://example.com");
@@ -44,7 +44,7 @@ describe("linkifyContent interaction styles", () => {
   it("renders plain hashtags when plainHashtags is enabled", () => {
     render(<div>{linkifyContent("Ship #frontend", vi.fn(), { plainHashtags: true })}</div>);
 
-    const hashtag = screen.getByRole("button", { name: "Filter by #frontend" });
+    const hashtag = screen.getByRole("button", { name: "#frontend" });
     expect(hashtag).toBeInTheDocument();
   });
 
@@ -57,8 +57,8 @@ describe("linkifyContent interaction styles", () => {
       </div>
     );
 
-    expect(screen.queryByRole("button", { name: "Filter by #frontend" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Person actions for alice" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "#frontend" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "@alice" })).toHaveLength(1);
     expect(screen.getByText((value) => value.includes("Ship(#frontend)"))).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "email@alice.test" })).toHaveAttribute("href", "mailto:email@alice.test");
   });
@@ -77,8 +77,8 @@ describe("linkifyContent interaction styles", () => {
       </div>
     );
 
-    const mention = screen.getByRole("button", { name: "Person actions for averyveryveryverylongusername" });
-    const hashtag = screen.getByRole("button", { name: "Filter by #averyveryveryverylongtag" });
+    const mention = screen.getByRole("button", { name: "@averyveryveryverylongusername" });
+    const hashtag = screen.getByRole("button", { name: "#averyveryveryverylongtag" });
 
     expect(mention.className).toContain("break-all");
     expect(mention.className).toContain("inline");
@@ -93,7 +93,7 @@ describe("linkifyContent interaction styles", () => {
       })
     );
 
-    const mention = screen.getByRole("button", { name: "Person actions for alice" });
+    const mention = screen.getByRole("button", { name: "@alice" });
     expect(mention).toHaveTextContent("@alice");
 
     fireEvent.click(mention, { ctrlKey: true });
@@ -104,7 +104,7 @@ describe("linkifyContent interaction styles", () => {
     const unresolvedPubkey = "b".repeat(64);
     const dispatch = renderWithDispatch(linkifyContent(`Assign to @${unresolvedPubkey}`));
 
-    fireEvent.click(screen.getByRole("button", { name: /person actions for npub1/i }), { altKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.compose.mention",
       person: expect.objectContaining({
@@ -120,7 +120,7 @@ describe("linkifyContent interaction styles", () => {
       })
     );
 
-    fireEvent.mouseDown(screen.getByRole("button", { name: "Person actions for alice" }), {
+    fireEvent.mouseDown(screen.getByRole("button", { name: "@alice" }), {
       button: 0,
       ctrlKey: true,
       altKey: true,
@@ -133,7 +133,7 @@ describe("linkifyContent interaction styles", () => {
     const npub = "npub1hwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwasxw04hu";
     const dispatch = renderWithDispatch(linkifyContent(`Assign to nostr:${npub}`));
 
-    fireEvent.click(screen.getByRole("button", { name: /person actions for npub1/i }), { ctrlKey: true });
+    fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { ctrlKey: true });
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
       person: expect.objectContaining({

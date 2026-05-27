@@ -131,7 +131,7 @@ describe("TaskComposer", () => {
     fireEvent.change(getComposerInput(), {
       target: { value: "Ship #backend now" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const data = onSubmit.mock.calls[0][0] as TaskComposerFormData;
@@ -156,17 +156,17 @@ describe("TaskComposer", () => {
 
     const textarea = getComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: "Important draft #backend" } });
-    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     // Content stays visible while the publish is in flight.
     expect(getComposerInput().value).toBe("Important draft #backend");
     // Submit button is disabled to prevent double-submit.
-    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+    expect(screen.getByTestId("composer-primary-action")).toBeDisabled();
 
     resolveSubmit({ ok: false });
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /create task/i })).not.toBeDisabled();
+      expect(screen.getByTestId("composer-primary-action")).not.toBeDisabled();
     });
     // Content is still there after the failure resolves.
     expect(getComposerInput().value).toBe("Important draft #backend");
@@ -178,7 +178,7 @@ describe("TaskComposer", () => {
 
     const textarea = getComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: "Will succeed #backend" } });
-    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     await waitFor(() => {
       expect(getComposerInput().value).toBe("");
@@ -194,7 +194,7 @@ describe("TaskComposer", () => {
       target: { value: "Check with @ali #backend", selectionStart: 15 },
     });
     fireEvent.keyDown(textarea, { key: "Enter" });
-    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
     const data = onSubmit.mock.calls[0][0] as TaskComposerFormData;
@@ -211,10 +211,10 @@ describe("TaskComposer", () => {
     fireEvent.change(getComposerInput("listing"), {
       target: { value: "Need a designer #design" },
     });
-    fireEvent.change(screen.getByLabelText("Listing title"), {
+    fireEvent.change(screen.getByTestId("titled-post-title"), {
       target: { value: "Need designer for mobile UI" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
       content: "Need a designer #design",
@@ -235,7 +235,7 @@ describe("TaskComposer", () => {
     renderComposer();
 
     expect(getComposerInput("comment")).toHaveValue("persisted hello #note");
-    expect(screen.getByRole("button", { name: /add comment/i })).toBeInTheDocument();
+    expect(screen.getByTestId("composer-primary-action")).toBeInTheDocument();
   });
 
   it("focuses the composer on mount by default in non-adaptive mode", () => {
@@ -273,13 +273,13 @@ describe("TaskComposer", () => {
     renderComposer({ onSubmit });
 
     expect(getComposerInput()).toHaveValue("ship restored task");
-    expect(screen.getByLabelText(/hours/i)).toHaveValue("10");
-    expect(screen.getByLabelText(/minutes/i)).toHaveValue("00");
-    expect(screen.getByLabelText(/geohash/i)).toHaveValue("u33db");
+    expect(screen.getByTestId("task-time-input-hours")).toHaveValue("10");
+    expect(screen.getByTestId("task-time-input-minutes")).toHaveValue("00");
+    expect(screen.getByTestId("task-composer-geohash")).toHaveValue("u33db");
     expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).not.toBeNull();
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
@@ -311,7 +311,7 @@ describe("TaskComposer", () => {
   it("keeps the hidden desktop kind select out of the sequential tab order", () => {
     renderComposer();
 
-    expect(screen.getByLabelText(/kind/i)).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByTestId("task-composer-kind")).toHaveAttribute("tabindex", "-1");
   });
 
   it("restores the recompose banner from the persisted draft on remount", () => {
@@ -442,7 +442,7 @@ describe("TaskComposer", () => {
     fireEvent.change(getComposerInput(), {
       target: { value: "keep this text #design" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
@@ -484,7 +484,7 @@ describe("TaskComposer", () => {
     renderComposer({ allowFeedMessageTypes: true });
 
     expect(getComposerInput("listing")).toHaveValue("Need a designer #design");
-    expect(screen.getByLabelText("Listing title")).toHaveValue("Need designer for mobile UI");
+    expect(screen.getByTestId("titled-post-title")).toHaveValue("Need designer for mobile UI");
     expect(screen.getByDisplayValue("Short summary")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Restored attachment")).toBeInTheDocument();
     expect(screen.getByText("restored.png")).toBeInTheDocument();
@@ -533,7 +533,7 @@ describe("TaskComposer", () => {
     });
 
     fireEvent.change(getComposerInput(), { target: { value: "Ship #backend now" } });
-    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+    fireEvent.click(screen.getByTestId("composer-primary-action"));
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
@@ -572,7 +572,7 @@ describe("TaskComposer", () => {
     renderComposer({ canCreateContent: false });
 
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /create task/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("composer-primary-action")).not.toBeInTheDocument();
   });
 
   it("keeps inherited tags that were previously sidebar-active when scope focus clears the filter", () => {
@@ -670,9 +670,9 @@ describe("TaskComposer auto-fill", () => {
       target: { value: "First line title\n\nBody text continues here." },
     });
     await waitFor(() => {
-      expect(screen.getByLabelText("Listing title")).toHaveValue("First line title");
+      expect(screen.getByTestId("titled-post-title")).toHaveValue("First line title");
     });
-    expect(screen.getByLabelText("Summary")).toHaveValue("");
+    expect(screen.getByTestId("titled-post-summary")).toHaveValue("");
   });
 
   it("preserves a manually-edited listing title across content changes", async () => {
@@ -682,16 +682,16 @@ describe("TaskComposer auto-fill", () => {
       target: { value: "Initial title\n\nBody" },
     });
     await waitFor(() => {
-      expect(screen.getByLabelText("Listing title")).toHaveValue("Initial title");
+      expect(screen.getByTestId("titled-post-title")).toHaveValue("Initial title");
     });
-    fireEvent.change(screen.getByLabelText("Listing title"), {
+    fireEvent.change(screen.getByTestId("titled-post-title"), {
       target: { value: "User-curated title" },
     });
     fireEvent.change(getComposerInput("listing"), {
       target: { value: "Different first line\n\nBody" },
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(screen.getByLabelText("Listing title")).toHaveValue("User-curated title");
+    expect(screen.getByTestId("titled-post-title")).toHaveValue("User-curated title");
   });
 
   it("auto-fills event title from the first line of content", async () => {
@@ -701,7 +701,7 @@ describe("TaskComposer auto-fill", () => {
       target: { value: "Team standup\n\nNotes" },
     });
     await waitFor(() => {
-      expect(screen.getByLabelText("Event title")).toHaveValue("Team standup");
+      expect(screen.getByTestId("titled-post-title")).toHaveValue("Team standup");
     });
   });
 
@@ -712,16 +712,16 @@ describe("TaskComposer auto-fill", () => {
       target: { value: "Initial title\n\nBody" },
     });
     await waitFor(() => {
-      expect(screen.getByLabelText("Event title")).toHaveValue("Initial title");
+      expect(screen.getByTestId("titled-post-title")).toHaveValue("Initial title");
     });
-    fireEvent.change(screen.getByLabelText("Event title"), {
+    fireEvent.change(screen.getByTestId("titled-post-title"), {
       target: { value: "User-curated event" },
     });
     fireEvent.change(getComposerInput(), {
       target: { value: "Different first line\n\nBody" },
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(screen.getByLabelText("Event title")).toHaveValue("User-curated event");
+    expect(screen.getByTestId("titled-post-title")).toHaveValue("User-curated event");
   });
 });
 
@@ -744,7 +744,7 @@ describe("TaskComposer Event mode", () => {
 
   it("initializes in Task mode when defaultPostType=task", () => {
     renderComposer({ allowFeedMessageTypes: true, defaultPostType: "task" });
-    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
+    expect(screen.getByTestId("composer-primary-action")).toBeInTheDocument();
   });
 
   // Regression: the calendar's Add Event button passes allowComment=false and

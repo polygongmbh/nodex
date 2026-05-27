@@ -58,6 +58,7 @@ export function TaskStatusToggle({
         <button
           {...triggerProps}
           disabled={!canCompleteTask}
+          data-testid="task-status-toggle"
           title={statusButtonTitle}
           className={cn(
             "rounded transition-colors touch-manipulation",

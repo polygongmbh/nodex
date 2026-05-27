@@ -1087,6 +1087,7 @@ export function OnboardingGuide({
           {currentStep?.target && anchoredTargetRect && (
             <div
               role="img"
+              data-testid="onboarding-target-indicator"
               className="absolute z-[129] pointer-events-none"
               style={getTargetArrowStyle()}
             >

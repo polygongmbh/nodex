@@ -27,7 +27,7 @@ describe("SidebarQuickConstraintRow", () => {
   it("shows display-scale priority values and submits canonical priority values", () => {
     const dispatch = renderRow();
 
-    const minPriorityInput = screen.getByLabelText("Minimum priority") as HTMLInputElement;
+    const minPriorityInput = screen.getByTestId("sidebar-min-priority-input") as HTMLInputElement;
     expect(minPriorityInput).toHaveValue(3);
 
     fireEvent.change(minPriorityInput, { target: { value: "4" } });

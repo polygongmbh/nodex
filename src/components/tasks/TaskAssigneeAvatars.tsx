@@ -60,6 +60,7 @@ export function TaskAssigneeAvatars({
   return (
     <div
       className={cn("flex items-center -space-x-1.5", className)}
+      data-testid="task-assignee-avatars"
       title={`Assigned to ${pubkeys.length} ${pubkeys.length === 1 ? "person" : "people"}`}
     >
       {visible.map((pubkey) => {

@@ -511,6 +511,7 @@ export function CalendarView({
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setComposerMode("task")}
+                      data-testid="calendar-create-task"
                       className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
                     >
                       <Plus className="w-3 h-3" />
@@ -518,6 +519,7 @@ export function CalendarView({
                     </button>
                     <button
                       onClick={() => setComposerMode("event")}
+                      data-testid="calendar-create-event"
                       className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
                     >
                       <Plus className="w-3 h-3" />

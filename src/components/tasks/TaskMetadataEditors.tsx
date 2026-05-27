@@ -195,6 +195,7 @@ export function PrioritySelect({
         id={id}
         type="button"
         disabled
+        data-testid="priority-select"
         title={effectiveTitle}
         className={cn(
           "h-8 w-auto min-w-0 max-w-full flex items-center justify-start gap-1 overflow-hidden text-xs cursor-default",
@@ -223,6 +224,7 @@ export function PrioritySelect({
     >
       <SelectTrigger
         id={id}
+        data-testid="priority-select"
         title={effectiveTitle}
         hideIndicator
         className={cn(

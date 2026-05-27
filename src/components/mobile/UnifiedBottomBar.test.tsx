@@ -381,8 +381,8 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.focus(field);
-    fireEvent.change(screen.getByLabelText("Priority"), { target: { value: "2" } });
-    fireEvent.click(screen.getByRole("button", { name: /^create task$/i }));
+    fireEvent.change(screen.getByTestId("priority-select"), { target: { value: "2" } });
+    fireEvent.click(screen.getByTestId("mobile-primary-action"));
 
     await waitFor(() => {
       expect(getTaskCreateCalls()).toHaveLength(1);
@@ -390,7 +390,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     expect(field).toHaveFocus();
     expect(screen.getByText(format(dueDate, "MMM d"))).toBeInTheDocument();
-    expect(screen.getByLabelText("Priority")).toHaveValue("2");
+    expect(screen.getByTestId("priority-select")).toHaveValue("2");
   });
 
   it("opens relay selection when task posting is blocked by multiple active feeds", () => {
@@ -731,7 +731,7 @@ describe("UnifiedBottomBar auth gating", () => {
     openMobileComposeOptions();
     expect(getMobileCommentAction()).toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: /^create task$/i })).toBeInTheDocument();
+    expect(screen.getByTestId("mobile-primary-action")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^add comment$/i })).toBeInTheDocument();
   });
 
@@ -747,8 +747,8 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /add comment/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId("mobile-primary-action")).toBeInTheDocument();
+    expect(screen.queryByTestId("mobile-comment-action")).not.toBeInTheDocument();
   });
 
   it("prefills due date with today in calendar view once the composer is focused", async () => {
@@ -770,7 +770,7 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(screen.getByText(format(new Date(), "MMM d"))).toBeInTheDocument();
     });
-    expect(screen.getByLabelText(/date type/i)).toBeInTheDocument();
+    expect(screen.getByTestId("task-date-type-select")).toBeInTheDocument();
   });
 
   it("updates due date when selected calendar date changes while composing", async () => {
@@ -1526,7 +1526,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
         />
       </FeedSurfaceProvider>
     );
-    fireEvent.click(screen.getByRole("button", { name: "Channels" }));
+    fireEvent.click(screen.getByTestId("mobile-channel-filter"));
   }
 
   const allChannels: Channel[] = [

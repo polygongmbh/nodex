@@ -65,6 +65,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           e.stopPropagation();
           void dispatchFeedInteraction({ type: "sidebar.relay.select", relayId: relay.id, mode: "toggle" });
         }}
+        data-testid="relay-item-toggle"
         title={suppressInteractionTitles ? undefined : t("shell:sidebar.filters.toggleRelay", { name: relayTooltipName })}
       >
         <div
@@ -94,6 +95,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           void dispatchFeedInteraction({ type: "sidebar.relay.select", relayId: relay.id, mode: "exclusive" });
         }}
         className="flex-1 min-w-0 text-left"
+        data-testid="relay-item-exclusive"
         title={suppressInteractionTitles ? undefined : t("shell:sidebar.filters.showOnlyRelay", { name: relayTooltipName })}
       >
         <span

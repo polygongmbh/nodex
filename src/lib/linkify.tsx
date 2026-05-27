@@ -417,7 +417,6 @@ function renderMarkdownBlock(
                 role="button"
                 tabIndex={0}
                 className={`${INLINE_TOKEN_CLASS} text-left`}
-                title={`Person actions for ${mentionLabel}`}
               >
                 @{mentionLabel}
               </span>

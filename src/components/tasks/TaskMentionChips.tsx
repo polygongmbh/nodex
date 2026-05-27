@@ -83,7 +83,6 @@ export function TaskMentionChips({
             <button
               type="button"
               className={cn(TASK_CHIP_STYLES.mention, "transition-colors hover:bg-primary/15", className)}
-              title={`Person actions for ${label}`}
             >
               @{label}
             </button>
