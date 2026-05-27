@@ -9,21 +9,19 @@ import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { getAuthorColor } from "@/lib/author-color";
 import { TASK_INTERACTION_STYLES, TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
-import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
+import { getStatusToggleHint } from "@/lib/task-status-hint";
 
 import {
   getTaskState,
-  getTaskStatus,
   getTaskPrimaryDate,
   isTaskPost,
   type Post,
   type TaskPost,
-  type TaskState,
 } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -143,17 +141,9 @@ export function UpcomingView({
   const dispatchToggleComplete = (taskId: string) => {
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
   };
-  const getStatusToggleHint = (status?: TaskState): string => {
-    const alternateKey = getAlternateModifierLabel();
-    const statusType = getTaskStatus(status);
-    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (statusType === "done") return t("hints.statusToggle.done");
-    if (statusType === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.open", { alternateKey });
-  };
   const getStatusButtonTitle = (task: Post) => {
-    if (canCompleteTask(task)) return getStatusToggleHint(getTaskState(task));
-    return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(getTaskState(task));
+    if (canCompleteTask(task)) return getStatusToggleHint(t, getTaskState(task));
+    return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(t, getTaskState(task));
   };
 
   const openStatusMenu = (taskId: string) => {

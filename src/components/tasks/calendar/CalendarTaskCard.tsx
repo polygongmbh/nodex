@@ -19,7 +19,6 @@ import {
   getTaskState,
   isCalendarEventPost,
   type Post,
-  type TaskState,
 } from "@/types";
 import type { Person } from "@/types/person";
 import { isTaskTerminal } from "@/domain/content/task-state";
@@ -46,7 +45,6 @@ interface CalendarTaskCardProps {
   currentUser?: Person;
   people: Person[];
   activeRelayCount: number;
-  getStatusToggleHint: (status?: TaskState) => string;
   onOpenMedia: (taskId: string, url: string) => void;
 }
 
@@ -59,7 +57,6 @@ export function CalendarTaskCard({
   currentUser,
   people,
   activeRelayCount,
-  getStatusToggleHint,
   onOpenMedia,
 }: CalendarTaskCardProps) {
   const { t } = useTranslation("tasks");
@@ -79,7 +76,6 @@ export function CalendarTaskCard({
     task,
     currentUser,
     people,
-    getStatusToggleHint,
     focusOnQuickToggle: hasChildren,
   });
 

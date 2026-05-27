@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
 import { resolveTaskStateDefinition } from "@/domain/task-states/task-state-config";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { notifyTaskActionBlocked } from "@/lib/notifications";
-import type { Post, TaskState } from "@/types";
+import { getStatusToggleHint } from "@/lib/task-status-hint";
+import type { Post } from "@/types";
 import { getTaskState } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -21,7 +23,6 @@ interface UseTaskStatusMenuOptions {
    * permission reason via a toast.
    */
   onBlockedInteractionAttempt?: () => void;
-  getStatusToggleHint: (status?: TaskState) => string;
   focusOnQuickToggle?: boolean;
 }
 
@@ -31,9 +32,9 @@ export function useTaskStatusMenu({
   people,
   isInteractionBlocked = false,
   onBlockedInteractionAttempt,
-  getStatusToggleHint,
   focusOnQuickToggle = true,
 }: UseTaskStatusMenuOptions) {
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -57,8 +58,8 @@ export function useTaskStatusMenu({
   const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   const blockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
   const statusButtonTitle = canCompleteTask
-    ? getStatusToggleHint(getTaskState(task))
-    : blockedReason || getStatusToggleHint(getTaskState(task));
+    ? getStatusToggleHint(t, getTaskState(task))
+    : blockedReason || getStatusToggleHint(t, getTaskState(task));
 
   const surfaceBlockedFeedback = useCallback(() => {
     if (isInteractionBlocked && onBlockedInteractionAttempt) {

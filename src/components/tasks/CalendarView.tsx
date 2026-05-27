@@ -4,7 +4,6 @@ import {
   getTaskState,
   getTaskStatus,
   type Post,
-  type TaskState,
   isTaskPost,
 } from "@/types";
 import type { Person } from "@/types/person";
@@ -28,7 +27,6 @@ import { cn } from "@/lib/utils";
 import { getAuthorColor } from "@/lib/author-color";
 import { makeIsProject } from "@/domain/content/task-projects";
 import { useTranslation } from "react-i18next";
-import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { isTaskTerminal } from "@/domain/content/task-state";
 import {
   createCalendarSelectors,
@@ -69,15 +67,6 @@ export function CalendarView({
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();
   const activeRelays = relays.filter((relay) => relay.isActive);
-  const getStatusToggleHint = (status?: TaskState): string => {
-    const alternateKey = getAlternateModifierLabel();
-    const statusType = getTaskStatus(status);
-    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (statusType === "done") return t("hints.statusToggle.done");
-    if (statusType === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.open", { alternateKey });
-  };
-
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [desktopMonths, setDesktopMonths] = useState<Date[]>(() => {
     const now = startOfMonth(new Date());
@@ -586,7 +575,6 @@ export function CalendarView({
                       currentUser={currentUser}
                       people={people}
                       activeRelayCount={activeRelays.length}
-                      getStatusToggleHint={getStatusToggleHint}
                       onOpenMedia={openTaskMedia}
                     />
                   ))}

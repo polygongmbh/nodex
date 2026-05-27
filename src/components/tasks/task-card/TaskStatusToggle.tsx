@@ -13,9 +13,8 @@ import {
   getTaskStateRegistry,
   resolveTaskStateFromStatus,
 } from "@/domain/task-states/task-state-config";
-import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { cn } from "@/lib/utils";
-import { getTaskState, getTaskStatus, type Post, type TaskState } from "@/types";
+import { getTaskState, type Post } from "@/types";
 import type { Person } from "@/types/person";
 
 interface TaskStatusToggleProps {
@@ -37,14 +36,6 @@ export function TaskStatusToggle({
 }: TaskStatusToggleProps) {
   const { t } = useTranslation("tasks");
   const { isInteractionBlocked = false, onBlockedInteractionAttempt } = useFeedTaskViewModel();
-  const getStatusToggleHint = (status?: TaskState): string => {
-    const alternateKey = getAlternateModifierLabel();
-    const statusType = getTaskStatus(status);
-    if (statusType === "active") return t("hints.statusToggle.active", { alternateKey });
-    if (statusType === "done") return t("hints.statusToggle.done");
-    if (statusType === "closed") return t("hints.statusToggle.closed");
-    return t("hints.statusToggle.open", { alternateKey });
-  };
   const {
     canCompleteTask,
     statusMenuOpen,
@@ -59,7 +50,6 @@ export function TaskStatusToggle({
     people,
     isInteractionBlocked,
     onBlockedInteractionAttempt,
-    getStatusToggleHint,
     focusOnQuickToggle,
   });
   return (
