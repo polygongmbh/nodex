@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import type { TaskReactions } from "@/types";
 import {
   extractReactionTargetId,
@@ -42,7 +42,13 @@ const eventIdsByTarget = new Map<string, Set<string>>();
 let viewerPubkey: string | undefined;
 
 const reactionsByTargetId = new Map<string, TaskReactions>();
-const subscribers = new Set<() => void>();
+// Subscribers are tracked per target id rather than as a single global Set.
+// With one TaskCard subscription per visible post, a list of N posts adds N
+// entries; a global notify path would wake all N on every reaction event
+// (only one of which would actually re-render). Per-target dispatch wakes
+// exactly the cards whose target changed.
+const subscribersByTarget = new Map<string, Set<() => void>>();
+let subscriberCount = 0;
 
 if (import.meta.env.DEV) {
   registerMemdiagStore("reactions", () => {
@@ -54,26 +60,39 @@ if (import.meta.env.DEV) {
         targets: eventIdsByTarget.size,
         eventIdSetTotal,
         publishedTargets: reactionsByTargetId.size,
-        subscribers: subscribers.size,
+        subscribers: subscriberCount,
+        subscribedTargets: subscribersByTarget.size,
       },
     };
   });
 }
 
-let batchedNotifyPending = false;
+// Pending wake-ups while the router drain has batching enabled. Drained by
+// the store-batch flusher below.
+let dirtyTargets = new Set<string>();
+
 registerStoreFlusher(() => {
-  if (!batchedNotifyPending) return false;
-  batchedNotifyPending = false;
-  for (const notify of subscribers) notify();
+  if (dirtyTargets.size === 0) return false;
+  const targets = dirtyTargets;
+  dirtyTargets = new Set();
+  for (const id of targets) {
+    const subs = subscribersByTarget.get(id);
+    if (!subs) continue;
+    for (const cb of subs) cb();
+  }
   return true;
 });
 
-function notifySubscribers(): void {
+function notifyTargets(targetIds: Iterable<string>): void {
   if (isBatchingNotifications()) {
-    batchedNotifyPending = true;
+    for (const id of targetIds) dirtyTargets.add(id);
     return;
   }
-  for (const notify of subscribers) notify();
+  for (const id of targetIds) {
+    const subs = subscribersByTarget.get(id);
+    if (!subs) continue;
+    for (const cb of subs) cb();
+  }
 }
 
 function rebuildPublishedForTarget(targetId: string): boolean {
@@ -155,11 +174,11 @@ export function mergeReactionEvents(events: ReactionEventLike[]): void {
       if (targetId) affected.add(targetId);
     }
   }
-  let changed = false;
+  const actuallyChanged = new Set<string>();
   for (const targetId of affected) {
-    if (rebuildPublishedForTarget(targetId)) changed = true;
+    if (rebuildPublishedForTarget(targetId)) actuallyChanged.add(targetId);
   }
-  if (changed) notifySubscribers();
+  if (actuallyChanged.size > 0) notifyTargets(actuallyChanged);
 }
 
 /**
@@ -168,15 +187,20 @@ export function mergeReactionEvents(events: ReactionEventLike[]): void {
  * pubkey changes and a clean rebuild is simpler than per-target recomputation.
  */
 export function bootstrapReactions(events: ReactionEventLike[], nextViewerPubkey: string | undefined): void {
-  const hadEntries = reactionsByTargetId.size > 0;
+  // Snapshot previously-published targets BEFORE the clear so their
+  // subscribers learn that the entry dropped (mergeReactionEvents only fires
+  // for the new targets it actually folds).
+  const previouslyPublished = new Set(reactionsByTargetId.keys());
   reactionsByEventId.clear();
   eventIdsByTarget.clear();
   reactionsByTargetId.clear();
   viewerPubkey = nextViewerPubkey;
   mergeReactionEvents(events);
-  // mergeReactionEvents only notifies when published snapshots change; if we
-  // cleared a non-empty state, callers still need to learn about the drop.
-  if (hadEntries && reactionsByTargetId.size === 0) notifySubscribers();
+  const dropped = new Set<string>();
+  for (const targetId of previouslyPublished) {
+    if (!reactionsByTargetId.has(targetId)) dropped.add(targetId);
+  }
+  if (dropped.size > 0) notifyTargets(dropped);
 }
 
 /**
@@ -187,11 +211,11 @@ export function bootstrapReactions(events: ReactionEventLike[], nextViewerPubkey
 export function setReactionsViewerPubkey(nextViewerPubkey: string | undefined): void {
   if (viewerPubkey === nextViewerPubkey) return;
   viewerPubkey = nextViewerPubkey;
-  let changed = false;
+  const changed = new Set<string>();
   for (const targetId of eventIdsByTarget.keys()) {
-    if (rebuildPublishedForTarget(targetId)) changed = true;
+    if (rebuildPublishedForTarget(targetId)) changed.add(targetId);
   }
-  if (changed) notifySubscribers();
+  if (changed.size > 0) notifyTargets(changed);
 }
 
 function areReactionsEqual(a: TaskReactions | undefined, b: TaskReactions | undefined): boolean {
@@ -223,17 +247,38 @@ function areReactionsEqual(a: TaskReactions | undefined, b: TaskReactions | unde
   return true;
 }
 
-function subscribe(callback: () => void): () => void {
-  subscribers.add(callback);
-  return () => { subscribers.delete(callback); };
+function subscribeForTarget(targetId: string, callback: () => void): () => void {
+  let set = subscribersByTarget.get(targetId);
+  if (!set) {
+    set = new Set();
+    subscribersByTarget.set(targetId, set);
+  }
+  set.add(callback);
+  subscriberCount += 1;
+  return () => {
+    set!.delete(callback);
+    subscriberCount -= 1;
+    if (set!.size === 0) subscribersByTarget.delete(targetId);
+  };
 }
 
+// Used by useReactionsFor when targetId is undefined — the hook always has to
+// call useSyncExternalStore unconditionally, but with no target there's
+// nothing to subscribe to, so this is a no-op subscription that never fires.
+const noopSubscribe = () => () => {};
+
 export function useReactionsFor(targetId: string | undefined): TaskReactions | undefined {
-  return useSyncExternalStore(
-    subscribe,
-    () => (targetId ? reactionsByTargetId.get(targetId) : undefined),
-    () => undefined,
+  // Memoize subscribe per targetId so useSyncExternalStore doesn't
+  // re-subscribe on every render.
+  const subscribe = useCallback(
+    (cb: () => void) => (targetId ? subscribeForTarget(targetId, cb) : noopSubscribe()),
+    [targetId],
   );
+  const getSnapshot = useCallback(
+    () => (targetId ? reactionsByTargetId.get(targetId) : undefined),
+    [targetId],
+  );
+  return useSyncExternalStore(subscribe, getSnapshot, () => undefined);
 }
 
 /** Non-hook read for imperative call sites (e.g. unreact lookup). */
@@ -250,13 +295,13 @@ export function getReactionsForTarget(targetId: string | undefined): TaskReactio
 export function clearReactionsForTarget(targetId: string): void {
   const eventIds = eventIdsByTarget.get(targetId);
   if (!eventIds) {
-    if (reactionsByTargetId.delete(targetId)) notifySubscribers();
+    if (reactionsByTargetId.delete(targetId)) notifyTargets([targetId]);
     return;
   }
   for (const eventId of eventIds) reactionsByEventId.delete(eventId);
   eventIdsByTarget.delete(targetId);
   const hadPublished = reactionsByTargetId.delete(targetId);
-  if (eventIds.size > 0 || hadPublished) notifySubscribers();
+  if (eventIds.size > 0 || hadPublished) notifyTargets([targetId]);
 }
 
 /** Test helper: reset registry between cases. */
@@ -265,6 +310,7 @@ export function __resetReactionsRegistryForTests(): void {
   eventIdsByTarget.clear();
   reactionsByTargetId.clear();
   viewerPubkey = undefined;
-  subscribers.clear();
-  batchedNotifyPending = false;
+  subscribersByTarget.clear();
+  subscriberCount = 0;
+  dirtyTargets = new Set();
 }
