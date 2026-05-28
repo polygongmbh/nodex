@@ -3,6 +3,10 @@ import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import type { NostrEventKind, NostrEventWithRelay } from "@/lib/nostr/types";
 import { registerMemdiagStore } from "@/lib/memdiag";
+import {
+  flushBatchedNotify,
+  setBatchedNotifyEnabled,
+} from "@/features/feed-page/stores/posts-store";
 
 // Subscription manager for the NDK live feed. Validates each incoming event's
 // relay attribution at the wire boundary and hands it off to a per-concern
@@ -34,13 +38,43 @@ const DRAIN_BUDGET_MS = 32;
 // Power-of-two so the check collapses to a cheap bitmask.
 const YIELD_CHECK_INTERVAL = 32;
 
-function shouldYieldDrain(startMs: number): boolean {
-  const scheduling = typeof navigator !== "undefined"
+function getScheduling(): { isInputPending?: () => boolean } | undefined {
+  return typeof navigator !== "undefined"
     ? (navigator as { scheduling?: { isInputPending?: () => boolean } }).scheduling
     : undefined;
-  if (scheduling?.isInputPending?.()) return true;
+}
+
+function isInputPendingNow(): boolean {
+  return getScheduling()?.isInputPending?.() ?? false;
+}
+
+function shouldYieldDrain(startMs: number): boolean {
+  if (isInputPendingNow()) return true;
   if (typeof performance === "undefined") return false;
   return performance.now() - startMs > DRAIN_BUDGET_MS;
+}
+
+// Yield to the event loop via MessageChannel — ~0.1ms vs setTimeout(0)'s
+// clamped ~4ms. Lets the browser handle paint / input between chunks while
+// still resuming the drain as soon as possible.
+let yieldChannel: MessageChannel | null = null;
+let yieldCallback: (() => void) | null = null;
+
+function yieldThenRun(fn: () => void): void {
+  if (typeof MessageChannel === "undefined") {
+    setTimeout(fn, 0);
+    return;
+  }
+  if (yieldChannel === null) {
+    yieldChannel = new MessageChannel();
+    yieldChannel.port1.onmessage = () => {
+      const cb = yieldCallback;
+      yieldCallback = null;
+      cb?.();
+    };
+  }
+  yieldCallback = fn;
+  yieldChannel.port2.postMessage(null);
 }
 // EOSE is unreliable across many relays: a single slow relay drags the
 // global EOSE out for seconds while the feed is already visually filled.
@@ -99,9 +133,11 @@ export function useNostrEventRouter({
   const pendingEventsRef = useRef<NostrEventWithRelay[]>([]);
   const flushTimerRef = useRef<number | null>(null);
   const quiescenceTimerRef = useRef<number | null>(null);
-  // Forward ref — flushPending needs to re-arm via schedulePendingFlush, but
-  // schedulePendingFlush is defined after it and depends on it.
+  // Forward refs — flushPending needs to re-arm via schedulePendingFlush
+  // and call itself after the MessageChannel yield, but both depend on
+  // flushPending's identity.
   const schedulePendingFlushRef = useRef<() => void>(() => {});
+  const flushPendingRef = useRef<() => void>(() => {});
   const ingestedTotalRef = useRef(0);
   const ingestedByKindRef = useRef<Map<number, number>>(new Map());
   const tagsArraysSeenRef = useRef(0);
@@ -157,6 +193,15 @@ export function useNostrEventRouter({
     if (batch.length === 0) return;
     pendingEventsRef.current = [];
 
+    // Suppress posts-store subscriber notifications for the duration of
+    // the chunk. Without this, every ingestPost/applyXxx call inside the
+    // loop wakes React; with a 5000-event burst that's 25 mid-hydration
+    // re-renders of the full derive-channels / sidebar-people / view-filter
+    // chain. With batching, we wake React only when we're about to yield to
+    // input or when the drain finishes — at most a couple of renders during
+    // hydration instead of 25.
+    setBatchedNotifyEnabled(true);
+
     const start = typeof performance !== "undefined" ? performance.now() : 0;
     const callOnEvent = onEventRef.current;
     let processed = 0;
@@ -185,19 +230,40 @@ export function useNostrEventRouter({
       }
     }
 
-    if (processed < batch.length) {
-      // Yielded mid-drain. Stitch the unprocessed tail in front of anything
-      // that arrived while we were running, then re-arm the debounced flush
-      // so the next macrotask handles it after input gets a turn.
+    const moreInBatch = processed < batch.length;
+    if (moreInBatch) {
+      // Stitch the unprocessed tail back in front of anything that arrived
+      // while we were running.
       const tail = batch.slice(processed);
       const arrivedDuringDrain = pendingEventsRef.current;
       pendingEventsRef.current = arrivedDuringDrain.length === 0
         ? tail
         : tail.concat(arrivedDuringDrain);
+    }
+    const moreEventsRemain = pendingEventsRef.current.length > 0;
+    const inputPending = isInputPendingNow();
+
+    if (moreEventsRemain && !inputPending) {
+      // Budget yield with no input contending. Keep batching enabled so the
+      // next chunk continues without rendering between them, and resume
+      // immediately via the MessageChannel yield (much faster than the 64ms
+      // debounced flush — that's only needed to coalesce cross-microtask
+      // event arrivals from NDK, not mid-drain resumes).
+      yieldThenRun(() => flushPendingRef.current());
+      return;
+    }
+
+    // Drained completely, or input is contending — wake React with the
+    // latest state and let normal scheduling resume.
+    setBatchedNotifyEnabled(false);
+    flushBatchedNotify();
+
+    if (moreEventsRemain) {
+      // Input yield with more events queued — re-arm via the debounced
+      // flush so the click commits first.
       schedulePendingFlushRef.current();
       return;
     }
-    // Drained — start quiescence countdown. New events will reset it.
     scheduleQuiescenceFinalize();
   }, [scheduleQuiescenceFinalize]);
 
@@ -215,6 +281,9 @@ export function useNostrEventRouter({
   useEffect(() => {
     schedulePendingFlushRef.current = schedulePendingFlush;
   }, [schedulePendingFlush]);
+  useEffect(() => {
+    flushPendingRef.current = flushPending;
+  }, [flushPending]);
 
   const pushEvent = useCallback((event: NDKEvent, relayOverride?: NDKRelay | null) => {
     pendingEventsRef.current.push(toIngestable(event, relayOverride));

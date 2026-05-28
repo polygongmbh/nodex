@@ -81,8 +81,31 @@ if (import.meta.env.DEV) {
   }));
 }
 
+// Batch toggle for callers (e.g. the event-router drain loop) that mutate
+// the store many times in a row and only want subscribers to wake once at
+// the end. While `batchedNotifyEnabled` is true, `notifyChange` still bumps
+// `version` (so any concurrent read sees the latest projection) but defers
+// the subscriber fan-out to `flushBatchedNotify`. Default off — single-event
+// ingests notify immediately as before.
+let batchedNotifyEnabled = false;
+let batchedNotifyPending = false;
+
+export function setBatchedNotifyEnabled(enabled: boolean): void {
+  batchedNotifyEnabled = enabled;
+}
+
+export function flushBatchedNotify(): void {
+  if (!batchedNotifyPending) return;
+  batchedNotifyPending = false;
+  for (const subscriber of subscribers) subscriber();
+}
+
 function notifyChange(): void {
   version += 1;
+  if (batchedNotifyEnabled) {
+    batchedNotifyPending = true;
+    return;
+  }
   for (const subscriber of subscribers) subscriber();
 }
 
@@ -344,4 +367,6 @@ export function __resetPostsStoreForTests(): void {
   version = 0;
   suppressedIds = new Set();
   subscribers.clear();
+  batchedNotifyEnabled = false;
+  batchedNotifyPending = false;
 }
