@@ -26,7 +26,6 @@ export const SAVED_FILTER_CONFIGS_STORAGE_KEY = "nodex.saved-filter-configuratio
 export const PINNED_CHANNELS_STORAGE_KEY_PREFIX = "nodex.pinned-channels";
 
 // ── State ────────────────────────────────────────────────────────────────────
-export const LOGIN_HISTORY_STORAGE_KEY = "nodex.identity.login-history.v1";
 export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts";
 /** Per-user key: append `.${pubkey}`. Marks that the profile completion prompt was already shown for this identity. */
 export const PROFILE_COMPLETION_PROMPTED_STORAGE_KEY_PREFIX = "nodex.profile-completion-prompted.v1";

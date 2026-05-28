@@ -5,8 +5,6 @@ import {
   getKind0CacheVersion,
   loadCachedKind0Events,
   loadCachedKind0EventsForRelayUrls,
-  loadLoggedInIdentityPriority,
-  rememberLoggedInIdentity,
   removeCachedKind0EventsByRelayUrl,
   subscribeToKind0Cache,
 } from "@/infrastructure/nostr/people-from-kind0";
@@ -67,7 +65,6 @@ export function useKind0People(
   );
   const selectedRelayScopeKey = normalizedSelectedRelayUrls.join("|");
   const [people, setPeople] = useState<SelectablePerson[]>([]);
-  const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
 
   // The cache's version counter is monotone — it bumps whenever the cache
   // changes — so we re-derive scope-filtered events on every change. The
@@ -95,11 +92,6 @@ export function useKind0People(
   useSyncExternalStore(subscribeToPresenceChanges, getPresenceMapVersion, getPresenceMapVersion);
   const latestPresenceByAuthor = getLatestPresenceByAuthor();
 
-  useEffect(() => {
-    if (!user?.pubkey) return;
-    setLoggedInIdentityPriority(rememberLoggedInIdentity(user.pubkey));
-  }, [user?.pubkey]);
-
   const visiblePubkeys = useMemo(
     () =>
       Array.from(
@@ -113,23 +105,8 @@ export function useKind0People(
   );
 
   useEffect(() => {
-    const priorityLookup = new Map(
-      loggedInIdentityPriority.map((pubkey, index) => [pubkey.toLowerCase(), index] as const)
-    );
-    const sortPeopleByPriority = (value: SelectablePerson[]): SelectablePerson[] =>
-      [...value].sort((a, b) => {
-        const aPriority = priorityLookup.get(a.pubkey.toLowerCase());
-        const bPriority = priorityLookup.get(b.pubkey.toLowerCase());
-        if (aPriority !== undefined && bPriority !== undefined) return aPriority - bPriority;
-        if (aPriority !== undefined) return -1;
-        if (bPriority !== undefined) return 1;
-        return a.displayName.localeCompare(b.displayName);
-      });
-
     setPeople((prev) => {
-      let next = derivePeopleFromKind0Events(visiblePubkeys, cachedKind0Events, fallbackKind0Events, prev, {
-        prioritizedPubkeys: loggedInIdentityPriority,
-      });
+      let next = derivePeopleFromKind0Events(visiblePubkeys, cachedKind0Events, fallbackKind0Events, prev);
 
       if (user?.pubkey && !next.some((person) => person.pubkey === user.pubkey)) {
         next = [
@@ -142,13 +119,12 @@ export function useKind0People(
             avatar: user.profile?.picture,
             isSelected: prev.find((person) => person.pubkey === user.pubkey)?.isSelected || false,
           },
-        ];
+        ].sort((a, b) => a.displayName.localeCompare(b.displayName));
       }
 
-      const sortedPeople = sortPeopleByPriority(next);
-      return arePeopleListsEqual(prev, sortedPeople) ? prev : sortedPeople;
+      return arePeopleListsEqual(prev, next) ? prev : next;
     });
-  }, [cachedKind0Events, fallbackKind0Events, loggedInIdentityPriority, user, visiblePubkeys]);
+  }, [cachedKind0Events, fallbackKind0Events, user, visiblePubkeys]);
 
   const removeCachedRelayProfile = useCallback((relayUrl: string) => {
     // removeCachedKind0EventsByRelayUrl notifies subscribers internally; the

@@ -3,9 +3,7 @@ import type { SelectablePerson } from "@/types/person";
 import {
   Kind0Cache,
   derivePeopleFromKind0Events,
-  loadLoggedInIdentityPriority,
   mergeKind0EventsWithCache,
-  rememberLoggedInIdentity,
 } from "./people-from-kind0";
 import { NostrEventKind } from "@/lib/nostr/types";
 
@@ -51,17 +49,6 @@ describe("derivePeopleFromKind0Events", () => {
   it("falls back to a pubkey placeholder when no metadata exists", () => {
     const people = derivePeopleFromKind0Events([ALICE], [], [], []);
     expect(people[0].name.startsWith("npub1")).toBe(true);
-  });
-
-  it("prioritizes locally remembered identities before alphabetical order", () => {
-    const people = derivePeopleFromKind0Events(
-      [ALICE, BOB],
-      [metadataEvent(ALICE, { name: "alice" }), metadataEvent(BOB, { name: "bob" })],
-      [],
-      [],
-      { prioritizedPubkeys: [BOB] },
-    );
-    expect(people.map((p) => p.pubkey)).toEqual([BOB, ALICE]);
   });
 });
 
@@ -128,14 +115,3 @@ describe("Kind0Cache", () => {
   });
 });
 
-describe("login history", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-  });
-
-  it("tracks remembered login identities in recency order", () => {
-    rememberLoggedInIdentity(ALICE);
-    rememberLoggedInIdentity(BOB);
-    expect(loadLoggedInIdentityPriority().slice(0, 2)).toEqual([BOB, ALICE]);
-  });
-});
