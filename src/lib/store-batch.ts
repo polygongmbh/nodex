@@ -9,9 +9,20 @@
 // fan-out until the router flushes — typically once per chunk if input
 // is contending, or once at the end of the drain otherwise.
 //
+// The drain-flush also runs inside React.startTransition so the resulting
+// commits are scheduled at transition priority instead of urgent. React 19
+// gives urgent useSyncExternalStore wake-ups strict precedence over
+// transitions — and React Router 7 routes its navigations through
+// startTransition — so without this, a steady stream of urgent hydration
+// commits starves the pending route change and the click "doesn't take
+// effect" until quiescence. By marking the consumer side as transitional
+// too, navigation regains parity and the new view renders promptly.
+//
 // Stores opt in by registering a flusher and consulting isBatchingNotifications()
 // inside their notify path. Default off — single-event ingests and store
-// mutations outside the drain notify immediately as before.
+// mutations outside the drain notify immediately at urgent priority.
+
+import { startTransition } from "react";
 
 let batchingEnabled = false;
 // Flushers return true when they actually had pending notifications to fan
@@ -36,9 +47,11 @@ export function flushBatchedNotifications(): void {
     ? performance.now()
     : 0;
   let dirty = 0;
-  for (const flush of flushers) {
-    if (flush()) dirty += 1;
-  }
+  startTransition(() => {
+    for (const flush of flushers) {
+      if (flush()) dirty += 1;
+    }
+  });
   if (import.meta.env.DEV && typeof performance !== "undefined") {
     const elapsed = performance.now() - start;
     console.debug(`[hydration-perf] flushBatchedNotifications: dirty=${dirty}/${flushers.size} ms=${elapsed.toFixed(1)}`);
