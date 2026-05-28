@@ -4,6 +4,10 @@ import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind, type NostrEvent, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
 import { registerMemdiagStore } from "@/lib/memdiag";
+import {
+  isBatchingNotifications,
+  registerStoreFlusher,
+} from "@/lib/store-batch";
 
 const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache";
 const KIND0_CACHE_RELAY_PREFIX = `${KIND0_CACHE_STORAGE_PREFIX}:relay:`;
@@ -37,6 +41,10 @@ export class Kind0Cache {
   private readonly subscribers = new Set<() => void>();
   private pendingFlushTimer: number | null = null;
   private pendingNotifyTimer: number | null = null;
+  // Set when scheduleNotify was called while store-batch is active; cleared
+  // by flushBatchedNotify (registered as a store-batch flusher) which then
+  // fans the notification out together with the other batched stores.
+  private batchedNotifyPending = false;
   /** Monotonically-incrementing change counter. Consumers can read this via
    * useSyncExternalStore to re-derive scope-filtered projections on any
    * cache change without keeping a parallel state copy. */
@@ -147,6 +155,13 @@ export class Kind0Cache {
   }
 
   private scheduleNotify(): void {
+    // While the router drain is in flight, defer to the shared store-batch
+    // flush so kind-0 wake-ups don't bypass the suppression and re-render
+    // useKind0People every ~64 ms during heavy hydration.
+    if (isBatchingNotifications()) {
+      this.batchedNotifyPending = true;
+      return;
+    }
     if (typeof window === "undefined") {
       this.notifySubscribers();
       return;
@@ -156,6 +171,14 @@ export class Kind0Cache {
       this.pendingNotifyTimer = null;
       this.notifySubscribers();
     }, NOTIFY_DEBOUNCE_MS);
+  }
+
+  /** Called by store-batch's flusher registration on the default instance. */
+  flushBatchedNotify(): boolean {
+    if (!this.batchedNotifyPending) return false;
+    this.batchedNotifyPending = false;
+    this.notifySubscribers();
+    return true;
   }
 
   private notifySubscribers(): void {
@@ -288,6 +311,7 @@ export class Kind0Cache {
 }
 
 export const defaultKind0Cache = new Kind0Cache();
+registerStoreFlusher(() => defaultKind0Cache.flushBatchedNotify());
 
 if (typeof window !== "undefined") {
   window.addEventListener("beforeunload", () => defaultKind0Cache.flushDirtyToStorage());
