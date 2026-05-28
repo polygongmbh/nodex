@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, Pencil, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
-import { Nip99Metadata, PostType, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment, TitledPostFields as TitledPostFieldsType } from "@/types";
+import { Nip99Metadata, PostType, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment, TitledPostFields as TitledPostFieldsType, ComposerContent, SubmitTagging } from "@/types";
 import type { ComposerFilterSync } from "./use-composer-filter-sync";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -96,22 +96,7 @@ interface TaskComposerProps {
 }
 
 
-export interface TaskComposerFormData {
-  content: string;
-  tags: string[];
-  postType: PostType;
-  dates: TaskDate[];
-  explicitMentionPubkeys: string[];
-  mentionIdentifiers: string[];
-  priority?: number;
-  attachments: PublishedAttachment[];
-  /** Title/summary/location — populated for listing and event modes. */
-  titledPost?: TitledPostFieldsType;
-  /** Listing-specific NIP-99 fields (price/currency/frequency/status/etc.). */
-  nip99?: Nip99Metadata;
-  locationGeohash?: string;
-  recomposeOf?: ComposeRecomposeOf;
-}
+export type TaskComposerFormData = ComposerContent & SubmitTagging;
 
 const TITLED_POST_TITLE_MAX_LENGTH = 80;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
