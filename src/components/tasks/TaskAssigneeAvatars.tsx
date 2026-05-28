@@ -42,12 +42,14 @@ export function TaskAssigneeAvatars({
   maxVisible = 3,
 }: TaskAssigneeAvatarsProps) {
   const isMobile = useIsMobile();
+  const assigneePubkeys = getTaskAssigneePubkeys(task);
+  const authorPubkey = task.author?.pubkey;
   const pubkeys = useMemo(() => {
-    const list = (getTaskAssigneePubkeys(task) ?? []).filter((p) => PUBKEY_PATTERN.test(p));
+    const list = (assigneePubkeys ?? []).filter((p) => PUBKEY_PATTERN.test(p));
     if (list.length > 0) return list;
-    if (task.author?.pubkey && PUBKEY_PATTERN.test(task.author.pubkey)) return [task.author.pubkey];
+    if (authorPubkey && PUBKEY_PATTERN.test(authorPubkey)) return [authorPubkey];
     return [];
-  }, [getTaskAssigneePubkeys(task), task.author?.pubkey]);
+  }, [assigneePubkeys, authorPubkey]);
 
   const { getProfile } = useNostrProfiles(pubkeys);
   const { getPersonById } = useFeedPersonLookup();

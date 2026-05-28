@@ -92,7 +92,7 @@ export function useProfileSync(
 
     nostrDevLog("provider", "Profile updated", { profile });
     return true;
-  }, [publishEvent, relays, setUser, setNeedsProfileSetup, user?.pubkey]);
+  }, [publishEvent, relays, setUser, setNeedsProfileSetup]);
 
   useEffect(() => {
     const pubkey = user?.pubkey ?? null;

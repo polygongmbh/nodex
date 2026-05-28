@@ -339,6 +339,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     nostrDevLog("relay", "Refreshing relay auth state after sign in", {
       hasReconnectRelay,
     });
+    // Intentionally omits stable refs and setters; adding callbacks here would
+    // recreate this handler whenever upstream identities churn.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge]);
 
   // Sync pool-hook deps every render so attach-time handlers see latest callbacks.
@@ -429,6 +432,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       });
       inFlightKind0ProfileRequests.clear();
     };
+    // Init-only effect: omits refs and setRelays intentionally — they are stable
+    // and re-running this would tear down NDK and reconnect every relay.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachPoolHandlers, clearAllTrackedRelayTimeouts, createRestoreSession, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, resolvedDefaultRelays]);
 
   const addRelay = useCallback((url: string) => {
@@ -491,6 +497,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     if (ndk.signer) {
       primeRelayAuthChallenge(ndk, normalized);
     }
+    // Stable refs and setRelays intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectManagedRelay, markRelayPendingSubscriptionReplay, ndk, primeRelayAuthChallenge, probeRelayInfo]);
 
   const connectResolvedAuthRelayUrls = useCallback((relayUrls: string[]) => {
@@ -524,6 +532,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       nostrDevLog("relay", "Relay order updated", { relayUrls: nextRelayUrls });
       return next;
     });
+    // setRelays is stable; intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ndk]);
 
   const {
@@ -615,6 +625,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     }
 
     disconnectTrackedRelayInstance(ndk, normalized);
+    // Stable refs and setRelays intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clearRelayInfo, disconnectTrackedRelayInstance, ndk]);
 
   const reconnectRelay = useCallback((url: string, options?: { forceNewSocket?: boolean }) => {
@@ -656,6 +668,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         : mappedStatus;
       return relayEntry.status === nextStatus ? relayEntry : { ...relayEntry, status: nextStatus };
     });
+    // Stable refs intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus, updateRelayEntry]);
 
   // After tab/computer sleep, the WebSocket gets closed but NDK's disconnect-triggered

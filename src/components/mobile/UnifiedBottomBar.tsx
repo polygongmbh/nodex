@@ -459,6 +459,9 @@ export function UnifiedBottomBar({
     if (currentView !== "calendar") return;
     if (!isComposeFocused) return;
     setDueDate(selectedCalendarDate || new Date());
+    // setDueDate closes over setDates (stable); identity changes per render
+    // but the effect should only react to view/date/focus transitions.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentView, selectedCalendarDate, isComposeFocused]);
 
   useEffect(() => {

@@ -152,17 +152,18 @@ export function TreeTaskItem({
   // The dep array also includes filter/match state, so we gate on a real
   // status TYPE transition — otherwise filter toggles would clobber the
   // user's fold state with the default for the new match context.
+  const taskState = getTaskState(task);
   useEffect(() => {
-    const currentStatusType = getTaskStatus(getTaskState(task));
+    const currentStatusType = getTaskStatus(taskState);
     if (prevStatusTypeRef.current === currentStatusType) return;
 
     if (currentStatusType === "active") {
       setLocalFoldState(getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren));
       setHasLocalFoldOverride(false);
-    } else if (isTaskTerminal(getTaskState(task))) {
+    } else if (isTaskTerminal(taskState)) {
       setLocalFoldState("collapsed");
       setHasLocalFoldOverride(false);
-      if (isTaskCompleted(getTaskState(task))) {
+      if (isTaskCompleted(taskState)) {
         setIsCheering(true);
         if (cheerTimeoutRef.current !== null) {
           window.clearTimeout(cheerTimeoutRef.current);
@@ -175,7 +176,7 @@ export function TreeTaskItem({
       }
     }
     prevStatusTypeRef.current = currentStatusType;
-  }, [depth, hasMatchingChildren, hasMatchingFilters, getTaskState(task)]);
+  }, [depth, hasMatchingChildren, hasMatchingFilters, taskState]);
 
   useEffect(() => {
     return () => {
@@ -205,9 +206,9 @@ export function TreeTaskItem({
         matchingChildren,
         hasMatchingFilters,
         currentTaskIsDirectMatch,
-        parentIsTerminal: isTaskTerminal(getTaskState(task)),
+        parentIsTerminal: isTaskTerminal(taskState),
       }),
-    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, getTaskState(task)]
+    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, taskState]
   );
   const isComment = isCommentPost(task);
   const primaryDate = getTaskPrimaryDate(task);
@@ -215,7 +216,7 @@ export function TreeTaskItem({
   const primaryTime = primaryDate ? getTaskTimeOfDay(primaryDate) : undefined;
   const dueDateColor = getDueDateColorClass(
     primaryMoment,
-    getTaskState(task),
+    taskState,
     primaryDate?.type,
     isCalendarEventPost(task) && primaryMoment
       ? { start: primaryMoment, end: getEventEndDate(task) }

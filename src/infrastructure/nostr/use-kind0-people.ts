@@ -82,6 +82,7 @@ export function useKind0People(
   );
   const fallbackKind0Events = useMemo(
     () => loadCachedKind0Events(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [kind0CacheVersion],
   );
 
