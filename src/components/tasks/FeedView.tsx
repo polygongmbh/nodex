@@ -9,8 +9,8 @@ import {
   getTaskPrimaryDate,
   getTaskPriority,
   isCalendarEventPost,
-  isDateBasedEventPost,
   isTimeBasedEventPost,
+  getEventEndDate,
 } from "@/types";
 import { resolveTaskStateFromStatus } from "@/domain/task-states/task-state-config";
 import type { Person } from "@/types/person";
@@ -81,13 +81,6 @@ interface FeedDueDateChipProps {
   dueDateColor: string;
 }
 
-function parseIsoDateLocal(value: string): Date | undefined {
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return undefined;
-  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
-
 function FeedDueDateChip({
   task,
   editable,
@@ -104,12 +97,7 @@ function FeedDueDateChip({
   // start time and end-time hint.
   const multiDayDateLabel = (() => {
     if (!isEvent) return null;
-    let endDate: Date | undefined;
-    if (isTimeBasedEventPost(task) && task.end) {
-      endDate = task.end;
-    } else if (isDateBasedEventPost(task) && task.endDate) {
-      endDate = parseIsoDateLocal(task.endDate);
-    }
+    const endDate = getEventEndDate(task);
     if (!endDate) return null;
     if (format(endDate, "yyyy-MM-dd") === format(primaryDate.date, "yyyy-MM-dd")) return null;
     const startFmt = "MMM d, yyyy";
@@ -403,13 +391,19 @@ export function FeedView({
       editable={canCompleteTask(task) && !isTaskTerminal(getTaskState(task))}
     />
   ), [canCompleteTask]);
-  const renderDueDateChip = useCallback((task: Post) => (
-    <FeedDueDateChip
-      task={task}
-      editable={canCompleteTask(task)}
-      dueDateColor={getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task), getTaskPrimaryDate(task)?.type)}
-    />
-  ), [canCompleteTask]);
+  const renderDueDateChip = useCallback((task: Post) => {
+    const primary = getTaskPrimaryDate(task);
+    const eventInterval = isCalendarEventPost(task) && primary
+      ? { start: primary.date, end: getEventEndDate(task) }
+      : undefined;
+    return (
+      <FeedDueDateChip
+        task={task}
+        editable={canCompleteTask(task)}
+        dueDateColor={getDueDateColorClass(primary?.date, getTaskState(task), primary?.type, eventInterval)}
+      />
+    );
+  }, [canCompleteTask]);
 
   const renderFeedEntry = (entry: FeedEntry) => {
     if (entry.type === "state-update" && entry.update) {

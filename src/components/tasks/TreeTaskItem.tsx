@@ -10,6 +10,8 @@ import {
   getTaskPrimaryDate,
   getTaskPriority,
   isCommentPost,
+  isCalendarEventPost,
+  getEventEndDate,
 } from "@/types";
 import { getRawEvent } from "@/stores/raw-events";
 import type { Person } from "@/types/person";
@@ -206,7 +208,15 @@ export function TreeTaskItem({
     [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren, getTaskState(task)]
   );
   const isComment = isCommentPost(task);
-  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task), getTaskPrimaryDate(task)?.type);
+  const primaryDate = getTaskPrimaryDate(task);
+  const dueDateColor = getDueDateColorClass(
+    primaryDate?.date,
+    getTaskState(task),
+    primaryDate?.type,
+    isCalendarEventPost(task) && primaryDate
+      ? { start: primaryDate.date, end: getEventEndDate(task) }
+      : undefined,
+  );
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
 

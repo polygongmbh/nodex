@@ -22,6 +22,51 @@ describe("getDueDateColorClass", () => {
     expect(getDueDateColorClass(addDays(today, 14), "open")).toBe("text-due-far");
     expect(getDueDateColorClass(addDays(today, 21), "open")).toBe("text-due-distant");
   });
+
+  describe("calendar events", () => {
+    const now = new Date();
+
+    it("greys out events that have fully ended", () => {
+      const start = subDays(now, 2);
+      const end = subDays(now, 1);
+      expect(
+        getDueDateColorClass(start, "open", "start", { start, end }),
+      ).toBe("text-muted-foreground");
+    });
+
+    it("yellows events whose interval contains now", () => {
+      const start = new Date(now.getTime() - 60 * 60 * 1000);
+      const end = new Date(now.getTime() + 60 * 60 * 1000);
+      expect(
+        getDueDateColorClass(start, "open", "start", { start, end }),
+      ).toBe("text-warning");
+    });
+
+    it("blues events that have not started yet", () => {
+      const start = addDays(now, 1);
+      const end = addDays(now, 2);
+      expect(
+        getDueDateColorClass(start, "open", "start", { start, end }),
+      ).toBe("text-blue-500");
+    });
+
+    it("treats an event without explicit end as active through its start day", () => {
+      const startToday = new Date(now.getTime() - 60 * 60 * 1000);
+      expect(
+        getDueDateColorClass(startToday, "open", "start", { start: startToday }),
+      ).toBe("text-warning");
+
+      const startTomorrow = addDays(now, 1);
+      expect(
+        getDueDateColorClass(startTomorrow, "open", "start", { start: startTomorrow }),
+      ).toBe("text-blue-500");
+
+      const startYesterday = subDays(now, 1);
+      expect(
+        getDueDateColorClass(startYesterday, "open", "start", { start: startYesterday }),
+      ).toBe("text-muted-foreground");
+    });
+  });
 });
 
 describe("sortTasks", () => {

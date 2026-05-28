@@ -10,7 +10,7 @@ import {
 } from "@/types";
 import { isTaskTerminal } from "./task-state";
 import { getTaskStatusForStateId } from "@/domain/task-states/task-state-config";
-import { isToday, isPast, startOfDay, differenceInDays } from "date-fns";
+import { isToday, isPast, startOfDay, endOfDay, differenceInDays } from "date-fns";
 import { evaluateTaskPriorities, type PriorityScore } from "./task-priority-evaluation";
 
 /**
@@ -159,14 +159,25 @@ export function buildChildrenMap(allTasks: Post[]): Map<string | undefined, Post
 }
 
 // Get due date color class based on urgency.
-// Urgency colouring only applies to "due" and "scheduled" date types — calendar
-// events (start/end) and milestones get a neutral muted colour.
+// Urgency colouring only applies to "due" and "scheduled" date types — milestone
+// dates get a neutral muted colour. Calendar events use a separate past/active/
+// future palette when an `eventInterval` is supplied.
 export function getDueDateColorClass(
   dueDate: Date | undefined,
   status?: TaskState | TaskStatus,
   dateType?: TaskDateType,
+  eventInterval?: { start: Date; end?: Date },
 ): string {
   if (!dueDate || isTaskTerminal(status)) return "text-muted-foreground";
+
+  if (eventInterval) {
+    const now = new Date();
+    const activeEnd = eventInterval.end ?? endOfDay(eventInterval.start);
+    if (now > activeEnd) return "text-muted-foreground";
+    if (now < eventInterval.start) return "text-blue-500";
+    return "text-warning";
+  }
+
   if (dateType && dateType !== "due" && dateType !== "scheduled") {
     return "text-muted-foreground";
   }

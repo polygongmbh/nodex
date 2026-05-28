@@ -423,6 +423,20 @@ export function findTaskDate(
 }
 
 /**
+ * End instant for a calendar event, if one is set. For date-based events the
+ * NIP-52 `endDate` is exclusive — callers comparing against "now" should treat
+ * the start day as still active when no end is provided.
+ */
+export function getEventEndDate(post: Post | undefined): Date | undefined {
+  if (!post) return undefined;
+  if (isTimeBasedEventPost(post)) return post.end;
+  if (isDateBasedEventPost(post) && post.endDate) {
+    return parseIsoDateLocal(post.endDate);
+  }
+  return undefined;
+}
+
+/**
  * Polymorphic accessor for all dates carried by a post — TaskPost's tagged
  * `dates`, plus the synthetic `start` / `end` entries derived from a calendar
  * event variant. Lets calendar/feed selectors treat tasks and events uniformly
