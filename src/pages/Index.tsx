@@ -704,7 +704,13 @@ function FeedIndexContent() {
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
     () => ({
       tasks: relayScopedTasks,
-      allTasks,
+      // Views derive over the relay-scoped subset only — the global
+      // `allTasks` lives at the Index level (focused-task lookup, scope
+      // filter source, breadcrumb ancestor chain) but downstream
+      // useTaskViewSource / buildChildrenMap / evaluateTaskPriorities /
+      // buildTaskViewFilterIndex run O(N) and don't need cross-relay
+      // posts for what the user is browsing in the active scope.
+      allTasks: relayScopedTasks,
       currentUser,
       focusedTaskId,
       isPendingPublishTask,
@@ -720,7 +726,6 @@ function FeedIndexContent() {
     }),
     [
       relayScopedTasks,
-      allTasks,
       currentUser,
       focusedTaskId,
       isPendingPublishTask,
