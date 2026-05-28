@@ -1,0 +1,85 @@
+import type {
+  ComposeRecomposeOf,
+  Nip99Metadata,
+  PostType,
+  PublishedAttachment,
+  TaskDate,
+  TaskDateType,
+  TitledPostFields,
+} from "@/types";
+
+/**
+ * Serialized shape of a single {@link TaskDate}. ISO date strings instead
+ * of `Date` instances so the value round-trips through `JSON.stringify`.
+ * Mirrors `PersistedTaskDate` in failed-publish-drafts-storage; kept here
+ * to avoid an import cycle.
+ */
+export interface SerializedTaskDate {
+  date: string;
+  time?: string;
+  type: TaskDateType;
+}
+
+/**
+ * Universal post content — identical across every stage of the composer
+ * pipeline (in-memory draft, submit form, publish payload, persisted draft,
+ * failed-publish queue entry). Only fields with no naming or shape
+ * differences across those stages belong here.
+ *
+ * `priority` is the display tier (1-5). The storage layer rescales to 0-100;
+ * the field name and type are unchanged.
+ */
+export interface ComposerContent {
+  content: string;
+  postType: PostType;
+  dates: TaskDate[];
+  priority?: number;
+  attachments: PublishedAttachment[];
+  titledPost?: TitledPostFields;
+  nip99?: Nip99Metadata;
+  locationGeohash?: string;
+  recomposeOf?: ComposeRecomposeOf;
+}
+
+/**
+ * Serialized variant of {@link ComposerContent}: dates become ISO strings.
+ * Everything else is preserved as-is.
+ */
+export type SerializedComposerContent = Omit<ComposerContent, "dates"> & {
+  dates: SerializedTaskDate[];
+};
+
+/**
+ * Tagging shape for in-memory draft state — what the user is currently
+ * editing. Channel/hashtag names are kept separate from the post body and
+ * are merged into the wire-ready `tags` array at submit time.
+ */
+export interface DraftTagging {
+  explicitTagNames: string[];
+  explicitMentionPubkeys: string[];
+}
+
+/**
+ * Tagging shape at form-submit and publish-payload stages. `tags` is the
+ * already-resolved string array (channel names + extracted hashtags);
+ * mentions are still carried alongside as both pubkeys and display
+ * identifiers because resolution to a single canonical identifier happens
+ * inside the publish flow.
+ */
+export interface SubmitTagging {
+  tags: string[];
+  explicitMentionPubkeys: string[];
+  mentionIdentifiers: string[];
+}
+
+/**
+ * Wire-ready tagging — only stored on failed-publish entries that have
+ * already gone through the publish flow. Mentions are flat pubkey lists
+ * (no display identifiers); `assigneePubkeys` is broken out separately so
+ * the retry path can re-emit the assignee tags verbatim.
+ */
+export interface WireTagging {
+  tags: string[];
+  mentionPubkeys: string[];
+  assigneePubkeys?: string[];
+}
