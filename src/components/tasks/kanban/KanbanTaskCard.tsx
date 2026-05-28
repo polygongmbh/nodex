@@ -7,7 +7,7 @@ import { TaskAssigneeAvatars } from "@/components/tasks/TaskAssigneeAvatars";
 import { TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { AttachmentCountIndicator } from "@/components/tasks/task-card/AttachmentCountIndicator";
-import { getPostRealAttachmentCount } from "@/lib/use-task-media-attachments";
+import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-attachments";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
@@ -80,7 +80,7 @@ export function KanbanTaskCard({
   };
   const hasMetadataChips =
     !compactTaskCardsEnabled && hasTaskMetadataChips(task, activeRelayCount);
-  const attachmentCount = getPostRealAttachmentCount(task);
+  const attachmentCount = getPostAttachmentsWithoutInlineEmbeds(task).length;
 
   const surfaceTitle = getFocusTaskTooltip(t, task);
 

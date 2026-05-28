@@ -42,7 +42,7 @@ import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { shouldCollapseTaskContent, TASK_CONTENT_COLLAPSED_CLASS } from "@/lib/task-content-preview";
 import { TaskShowMoreToggle } from "@/components/tasks/task-card/TaskShowMoreToggle";
 import { AttachmentCountIndicator } from "@/components/tasks/task-card/AttachmentCountIndicator";
-import { getPostRealAttachmentCount } from "@/lib/use-task-media-attachments";
+import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-attachments";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
@@ -223,7 +223,7 @@ export function TreeTaskItem({
   );
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
-  const attachmentCount = getPostRealAttachmentCount(task);
+  const attachmentCount = getPostAttachmentsWithoutInlineEmbeds(task).length;
 
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {

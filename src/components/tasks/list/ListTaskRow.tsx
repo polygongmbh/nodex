@@ -3,7 +3,7 @@ import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRo
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { AttachmentCountIndicator } from "@/components/tasks/task-card/AttachmentCountIndicator";
-import { getPostRealAttachmentCount } from "@/lib/use-task-media-attachments";
+import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-attachments";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { cn } from "@/lib/utils";
@@ -53,7 +53,7 @@ export function ListTaskRow({
   const { t } = useTranslation("tasks");
   const { focusTask } = useTaskViewServices();
   const canCompleteTask = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
-  const attachmentCount = getPostRealAttachmentCount(task);
+  const attachmentCount = getPostAttachmentsWithoutInlineEmbeds(task).length;
 
   return (
     <TaskSurface

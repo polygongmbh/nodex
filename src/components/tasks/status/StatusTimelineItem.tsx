@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { TaskAssigneeAvatars } from "@/components/tasks/TaskAssigneeAvatars";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
 import { AttachmentCountIndicator } from "@/components/tasks/task-card/AttachmentCountIndicator";
-import { getPostRealAttachmentCount } from "@/lib/use-task-media-attachments";
+import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-attachments";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
@@ -44,7 +44,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
     () => task.content.replace(/\s*\n\s*/g, " ").trim(),
     [task.content]
   );
-  const attachmentCount = getPostRealAttachmentCount(task);
+  const attachmentCount = getPostAttachmentsWithoutInlineEmbeds(task).length;
 
   return (
     <article

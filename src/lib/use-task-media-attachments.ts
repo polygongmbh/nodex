@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { getStandaloneEmbeddableUrls } from "@/lib/linkify";
-import { extractUrlsFromContent } from "@/lib/attachments";
-import type { Post } from "@/types";
+import type { Post, PublishedAttachment } from "@/types";
 
 export interface TaskMediaAttachments {
   /** URLs that linkify will render as inline embeds — caller should skip them when listing attachments. */
@@ -40,22 +39,18 @@ export function useTaskMediaAttachments(task: Post): TaskMediaAttachments {
 }
 
 /**
- * Count attachments that didn't originate from a bare URL in the body — i.e.
- * real uploads carried by imeta/nip-94 tags, not URLs the converter scraped
- * out of content text. Used by the paperclip indicator on cards that don't
- * render the attachment list inline.
+ * Same filter as {@link useTaskMediaAttachments}'s `attachmentsWithoutInlineEmbeds`,
+ * but as a plain function over an immutable Post. Used by the paperclip
+ * indicator on cards that don't render the attachment list inline.
  */
-export function getPostRealAttachmentCount(post: Post): number {
+export function getPostAttachmentsWithoutInlineEmbeds(post: Post): PublishedAttachment[] {
   const attachments = post.attachments ?? [];
-  if (attachments.length === 0) return 0;
-  const contentUrls = new Set(
-    extractUrlsFromContent(post.content).map((url) => url.trim().toLowerCase())
+  if (attachments.length === 0) return [];
+  const standaloneEmbedUrls = new Set(
+    getStandaloneEmbeddableUrls(post.content).map((url) => url.trim().toLowerCase())
   );
-  let count = 0;
-  for (const attachment of attachments) {
-    const url = attachment.url?.trim().toLowerCase();
-    if (url && contentUrls.has(url)) continue;
-    count += 1;
-  }
-  return count;
+  return attachments.filter((attachment) => {
+    const normalizedUrl = attachment.url?.trim().toLowerCase();
+    return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
+  });
 }
