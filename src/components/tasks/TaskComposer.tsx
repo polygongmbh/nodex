@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, Pencil, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
-import { Nip99Metadata, PostType, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment, TitledPostFields as TitledPostFieldsType, ComposerContent, SubmitTagging } from "@/types";
+import { Nip99Metadata, PostType, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment, TitledPostFields as TitledPostFieldsType, ComposerContent, SubmitTagging, formatLocalIsoDate } from "@/types";
+import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import type { ComposerFilterSync } from "./use-composer-filter-sync";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -207,38 +208,74 @@ export function TaskComposer({
   const [content, setContent] = useState(initialComposerState.content);
   const [postType, setPostType] = useState<PostType>(initialComposerState.postType);
   const [dates, setDates] = useState<TaskDate[]>(initialComposerState.dates);
-  const primaryDate = dates.find((d) => d.type !== "end");
+  const primaryEntry = dates.find((d) => d.type !== "end");
   const endEntry = dates.find((d) => d.type === "end");
-  const dueDate = primaryDate?.date;
-  const dueTime = primaryDate?.time ?? "";
-  const dateType: TaskDateType = primaryDate?.type ?? "due";
-  const endDate = endEntry?.date;
-  const endTime = endEntry?.time ?? "";
+  const dueDate = primaryEntry ? getTaskLocalDate(primaryEntry) : undefined;
+  const dueTime = primaryEntry ? getTaskTimeOfDay(primaryEntry) ?? "" : "";
+  const dateType: TaskDateType = primaryEntry?.type ?? "due";
+  const endDate = endEntry ? getTaskLocalDate(endEntry) : undefined;
+  const endTime = endEntry ? getTaskTimeOfDay(endEntry) ?? "" : "";
+  // Build a TaskDate from a Date + optional time string. The composer's pickers
+  // emit Date objects; this is the only place that decides whether to record a
+  // calendar-date entry (no time) or a datetime entry (with time).
+  const buildEntry = (
+    next: Date,
+    time: string | undefined,
+    type: TaskDateType
+  ): TaskDate => {
+    if (!time) return { date: formatLocalIsoDate(next), type };
+    const match = time.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (!match) return { date: formatLocalIsoDate(next), type };
+    const datetime = new Date(next);
+    datetime.setHours(Number(match[1]), Number(match[2]), 0, 0);
+    return { datetime, type };
+  };
   const setDueDate = (next: Date | undefined) => {
     setDates((prev) => {
       const others = prev.filter((d) => d.type === "end");
       if (!next) return others;
       const existing = prev.find((d) => d.type !== "end");
+      const existingTime = existing ? getTaskTimeOfDay(existing) : undefined;
       const nextType: TaskDateType = postType === "event" ? "start" : existing?.type ?? "due";
-      return [{ date: next, time: existing?.time, type: nextType }, ...others];
+      return [buildEntry(next, existingTime, nextType), ...others];
     });
   };
   const setDueTime = (next: string) => {
-    setDates((prev) => prev.map((d) => (d.type === "end" ? d : { ...d, time: next || undefined })));
+    setDates((prev) => {
+      const primary = prev.find((d) => d.type !== "end");
+      if (!primary) return prev;
+      const primaryDate = getTaskLocalDate(primary);
+      if (!primaryDate) return prev;
+      const rebuilt = buildEntry(primaryDate, next || undefined, primary.type);
+      return prev.map((d) => (d.type === "end" ? d : rebuilt));
+    });
   };
   const setDateType = (next: TaskDateType) => {
-    setDates((prev) => prev.map((d) => (d.type === "end" ? d : { ...d, type: next })));
+    setDates((prev) =>
+      prev.map((d) => {
+        if (d.type === "end") return d;
+        return "datetime" in d ? { datetime: d.datetime, type: next } : { date: d.date, type: next };
+      })
+    );
   };
   const setEndDate = (next: Date | undefined) => {
     setDates((prev) => {
       const others = prev.filter((d) => d.type !== "end");
       if (!next) return others;
       const existing = prev.find((d) => d.type === "end");
-      return [...others, { date: next, time: existing?.time, type: "end" }];
+      const existingTime = existing ? getTaskTimeOfDay(existing) : undefined;
+      return [...others, buildEntry(next, existingTime, "end")];
     });
   };
   const setEndTime = (next: string) => {
-    setDates((prev) => prev.map((d) => (d.type === "end" ? { ...d, time: next || undefined } : d)));
+    setDates((prev) => {
+      const end = prev.find((d) => d.type === "end");
+      if (!end) return prev;
+      const endMoment = getTaskLocalDate(end);
+      if (!endMoment) return prev;
+      const rebuilt = buildEntry(endMoment, next || undefined, "end");
+      return prev.map((d) => (d.type === "end" ? rebuilt : d));
+    });
   };
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
@@ -1005,8 +1042,8 @@ export function TaskComposer({
         toast.error(t("composer.event.missingTitle"));
         return;
       }
-      const startHasTime = !!primaryDate?.time;
-      const endHasTime = !!endEntry?.time;
+      const startHasTime = !!primaryEntry && "datetime" in primaryEntry;
+      const endHasTime = !!endEntry && "datetime" in endEntry;
       if (endEntry && startHasTime !== endHasTime) {
         toast.warning(t("composer.event.timeInferred"));
       }

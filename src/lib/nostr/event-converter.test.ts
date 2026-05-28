@@ -559,8 +559,15 @@ describe("nostrEventsToTasks", () => {
 
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
-    expect((isTaskPost(tasks[0]) ? tasks[0].dates : [])?.[0]?.date.getTime()).toBe(expectedDate.getTime());
-    expect((isTaskPost(tasks[0]) ? tasks[0].dates : [])?.[0]?.time).toBe(expectedDueTime);
+    {
+      const firstDate = (isTaskPost(tasks[0]) ? tasks[0].dates : [])?.[0];
+      const dt = firstDate && "datetime" in firstDate ? firstDate.datetime : undefined;
+      const time = dt
+        ? `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`
+        : undefined;
+      expect(dt?.getTime()).toBe(expectedDate.getTime());
+      expect(time).toBe(expectedDueTime);
+    }
   });
 
   it("emits a standalone CalendarEventPost for a 31923 event with no task ref", () => {

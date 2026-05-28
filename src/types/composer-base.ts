@@ -9,16 +9,14 @@ import type {
 } from "@/types";
 
 /**
- * Serialized shape of a single {@link TaskDate}. ISO date strings instead
- * of `Date` instances so the value round-trips through `JSON.stringify`.
- * Mirrors `PersistedTaskDate` in failed-publish-drafts-storage; kept here
- * to avoid an import cycle.
+ * Serialized shape of a single {@link TaskDate}. Mirrors the in-memory
+ * discriminated union — calendar-date entries persist as `YYYY-MM-DD`
+ * strings (already what they are in memory), datetime entries persist
+ * via `toISOString()` so the moment is preserved.
  */
-export interface SerializedTaskDate {
-  date: string;
-  time?: string;
-  type: TaskDateType;
-}
+export type SerializedTaskDate =
+  | { date: string; type: TaskDateType }
+  | { datetime: string; type: TaskDateType };
 
 /**
  * Universal post content — identical across every stage of the composer

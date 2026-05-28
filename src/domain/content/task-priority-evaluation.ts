@@ -8,6 +8,7 @@ import {
   getTaskStateUpdates,
   isTaskPost,
 } from "@/types";
+import { getTaskLocalDate } from "@/lib/task-dates";
 
 const EPSILON = 0.001;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -62,7 +63,15 @@ function isEvaluable(task: Post): boolean {
 }
 
 function daysUntil(target: Date, now: number): number {
-  return (target.getTime() - now) / MS_PER_DAY;
+  // Snap to day granularity so calendar-date entries (local-midnight) and
+  // datetime entries within the same day both register as "due today" =
+  // urgency 1. Without this, a datetime due at 18:00 vs a now of 10:00 would
+  // give a 0.33-day delta and skew the urgency curve.
+  const targetDay = new Date(target);
+  targetDay.setHours(0, 0, 0, 0);
+  const nowDay = new Date(now);
+  nowDay.setHours(0, 0, 0, 0);
+  return (targetDay.getTime() - nowDay.getTime()) / MS_PER_DAY;
 }
 
 function minutesSince(target: Date, now: number): number {
@@ -82,7 +91,8 @@ export function calculateLocalUrgency(
   now: number,
   params: PriorityEvaluationParams = DEFAULT_PRIORITY_PARAMS,
 ): number {
-  const due = getTaskPrimaryDate(task)?.date;
+  const primary = getTaskPrimaryDate(task);
+  const due = primary ? getTaskLocalDate(primary) : undefined;
   if (!due) return params.noDueBaseline;
   const remaining = daysUntil(due, now);
   if (remaining < 0) {

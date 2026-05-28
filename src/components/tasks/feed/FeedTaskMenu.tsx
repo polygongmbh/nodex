@@ -1,4 +1,5 @@
 import { getTaskPrimaryDate, getTaskPriority, isTaskPost } from "@/types";
+import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import { useEffect, useState, type MouseEvent } from "react";
 import { ArrowLeft, CalendarClock, ChevronDown, Flag, Link2, Pencil, SmilePlus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -125,8 +126,14 @@ export function FeedTaskMenu({
               </div>
               <TaskDueDateEditorForm
                 taskId={task.id}
-                dueDate={getTaskPrimaryDate(task)?.date}
-                dueTime={getTaskPrimaryDate(task)?.time}
+                dueDate={(() => {
+                  const p = getTaskPrimaryDate(task);
+                  return p ? getTaskLocalDate(p) : undefined;
+                })()}
+                dueTime={(() => {
+                  const p = getTaskPrimaryDate(task);
+                  return p ? getTaskTimeOfDay(p) : undefined;
+                })()}
                 dateType={getTaskPrimaryDate(task)?.type}
                 idPrefix="feed-menu"
                 onClose={() => setMenuOpen(false)}
@@ -185,7 +192,7 @@ export function FeedTaskMenu({
                     }}
                   >
                     <CalendarClock className="mr-2 h-4 w-4" />
-                    {getTaskPrimaryDate(task)?.date
+                    {getTaskPrimaryDate(task)
                       ? t("tasks.actions.editDueDate")
                       : t("tasks.actions.setDueDate")}
                   </DropdownMenuItem>

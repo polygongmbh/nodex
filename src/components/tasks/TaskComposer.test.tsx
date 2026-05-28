@@ -263,7 +263,7 @@ describe("TaskComposer", () => {
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
-      dates: [{ date: "2026-04-01T10:00:00.000Z", time: "10:00", type: "start" }],
+      dates: [{ datetime: "2026-04-01T10:00:00.000Z", type: "start" }],
       priority: 80,
       locationGeohash: "u33db",
     }));
@@ -271,8 +271,9 @@ describe("TaskComposer", () => {
     renderComposer({ onSubmit });
 
     expect(getComposerInput()).toHaveValue("ship restored task");
-    expect(screen.getByTestId("task-time-input-hours")).toHaveValue("10");
-    expect(screen.getByTestId("task-time-input-minutes")).toHaveValue("00");
+    const persistedMoment = new Date("2026-04-01T10:00:00.000Z");
+    expect(screen.getByTestId("task-time-input-hours")).toHaveValue(String(persistedMoment.getHours()).padStart(2, "0"));
+    expect(screen.getByTestId("task-time-input-minutes")).toHaveValue(String(persistedMoment.getMinutes()).padStart(2, "0"));
     expect(screen.getByTestId("task-composer-geohash")).toHaveValue("u33db");
     expect(document.querySelector('[data-chip-kind="hashtag"][data-chip-value="backend"]')).not.toBeNull();
     expect(document.querySelector(`[data-chip-kind="mention"][data-chip-value="${alicePubkey}"]`)).not.toBeNull();
@@ -282,7 +283,7 @@ describe("TaskComposer", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
         priority: 80,
-        dates: [{ date: new Date("2026-04-01T10:00:00.000Z"), time: "10:00", type: "start" }],
+        dates: [{ datetime: new Date("2026-04-01T10:00:00.000Z"), type: "start" }],
         locationGeohash: "u33db",
         tags: expect.arrayContaining(["backend"]),
         explicitMentionPubkeys: [alicePubkey],
@@ -376,7 +377,7 @@ describe("TaskComposer", () => {
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
-      dates: [{ date: "2026-04-01T10:00:00.000Z", time: "10:00", type: "start" }],
+      dates: [{ datetime: "2026-04-01T10:00:00.000Z", type: "start" }],
       priority: 80,
       locationGeohash: "u33db",
     }));

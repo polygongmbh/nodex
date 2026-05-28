@@ -70,12 +70,50 @@ export type TaskDateType = "due" | "scheduled" | "start" | "end" | "milestone";
  * A single date attached to a task — sourced from a NIP-52 calendar event
  * (kinds 31922/31923). A task can hold any number of these (start, end,
  * milestones, due, scheduled), each independent.
+ *
+ * The variant is discriminated by which field is present:
+ * - `{ date: "YYYY-MM-DD" }` is a calendar date (NIP-52 kind 31922). It is
+ *   a string end-to-end; no `Date` instance, no timezone surface. The day
+ *   the user picked is the day every viewer sees.
+ * - `{ datetime: Date }` is a moment in time (NIP-52 kind 31923). Stored as
+ *   a JS `Date`; serialized via `toISOString()`. The instant is preserved
+ *   across timezones; viewers see the instant in their local time.
  */
-export interface TaskDate {
-  date: Date;
-  /** "HH:mm" if the calendar event is time-based; absent for date-only. */
-  time?: string;
-  type: TaskDateType;
+export type TaskDate =
+  | { date: string; type: TaskDateType }
+  | { datetime: Date; type: TaskDateType };
+
+/** Type guard: `true` for the calendar-date variant of {@link TaskDate}. */
+export function isDateOnlyTaskDate(value: TaskDate): value is { date: string; type: TaskDateType } {
+  return "date" in value;
+}
+
+/** Type guard: `true` for the moment-in-time variant of {@link TaskDate}. */
+export function isDateTimeTaskDate(value: TaskDate): value is { datetime: Date; type: TaskDateType } {
+  return "datetime" in value;
+}
+
+/**
+ * Parse a `YYYY-MM-DD` string into a local-midnight `Date`. The only safe
+ * way to produce a `Date` from a calendar-date string: `new Date(iso)`
+ * would parse as UTC midnight and shift the day for any non-UTC viewer.
+ */
+export function parseIsoDateLocal(iso: string): Date | undefined {
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return undefined;
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+/**
+ * Format a `Date` as `YYYY-MM-DD` using local-timezone getters, so the day
+ * the user picked is the day stored. The inverse of {@link parseIsoDateLocal}.
+ */
+export function formatLocalIsoDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 export type TaskCreateFailureReason =
   | "not-authenticated"
@@ -382,17 +420,6 @@ export function isCalendarEntryPost<T extends { kind: NostrEventKind }>(
   return isTaskPost(post) || isCalendarEventPost(post);
 }
 
-function parseIsoDateLocal(iso: string): Date | undefined {
-  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return undefined;
-  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
-
-function formatHourMinute(date: Date): string {
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-}
-
 /**
  * Returns the highest-priority date attached to a post, or undefined for
  * variants that don't carry dates. Calendar events expose their start as the
@@ -401,13 +428,8 @@ function formatHourMinute(date: Date): string {
 export function getTaskPrimaryDate(post: Post | undefined): TaskDate | undefined {
   if (!post) return undefined;
   if (isTaskPost(post)) return post.dates[0];
-  if (isDateBasedEventPost(post)) {
-    const date = parseIsoDateLocal(post.startDate);
-    return date ? { date, type: "start" } : undefined;
-  }
-  if (isTimeBasedEventPost(post)) {
-    return { date: post.start, time: formatHourMinute(post.start), type: "start" };
-  }
+  if (isDateBasedEventPost(post)) return { date: post.startDate, type: "start" };
+  if (isTimeBasedEventPost(post)) return { datetime: post.start, type: "start" };
   return undefined;
 }
 
@@ -421,7 +443,8 @@ export function findTaskDate(
 /**
  * End instant for a calendar event, if one is set. For date-based events the
  * NIP-52 `endDate` is exclusive — callers comparing against "now" should treat
- * the start day as still active when no end is provided.
+ * the start day as still active when no end is provided. Returns a `Date`
+ * (local-midnight for date-based) for ergonomic comparison with `Date.now()`.
  */
 export function getEventEndDate(post: Post | undefined): Date | undefined {
   if (!post) return undefined;
@@ -442,22 +465,13 @@ export function getPostDateEntries(post: Post | undefined): TaskDate[] {
   if (!post) return [];
   if (isTaskPost(post)) return post.dates;
   if (isDateBasedEventPost(post)) {
-    const start = parseIsoDateLocal(post.startDate);
-    if (!start) return [];
-    const entries: TaskDate[] = [{ date: start, type: "start" }];
-    if (post.endDate) {
-      const end = parseIsoDateLocal(post.endDate);
-      if (end) entries.push({ date: end, type: "end" });
-    }
+    const entries: TaskDate[] = [{ date: post.startDate, type: "start" }];
+    if (post.endDate) entries.push({ date: post.endDate, type: "end" });
     return entries;
   }
   if (isTimeBasedEventPost(post)) {
-    const entries: TaskDate[] = [
-      { date: post.start, time: formatHourMinute(post.start), type: "start" },
-    ];
-    if (post.end) {
-      entries.push({ date: post.end, time: formatHourMinute(post.end), type: "end" });
-    }
+    const entries: TaskDate[] = [{ datetime: post.start, type: "start" }];
+    if (post.end) entries.push({ datetime: post.end, type: "end" });
     return entries;
   }
   return [];

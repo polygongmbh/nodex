@@ -58,8 +58,14 @@ function areTaskDateListsEqual(
     const left = a![i];
     const right = b![i];
     if (left.type !== right.type) return false;
-    if (left.time !== right.time) return false;
-    if (left.date.getTime() !== right.date.getTime()) return false;
+    const leftIsDatetime = "datetime" in left;
+    const rightIsDatetime = "datetime" in right;
+    if (leftIsDatetime !== rightIsDatetime) return false;
+    if (leftIsDatetime && rightIsDatetime) {
+      if (left.datetime.getTime() !== right.datetime.getTime()) return false;
+    } else if (!leftIsDatetime && !rightIsDatetime) {
+      if (left.date !== right.date) return false;
+    }
   }
   return true;
 }

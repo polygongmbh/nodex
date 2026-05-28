@@ -1440,6 +1440,8 @@ describe("UnifiedBottomBar auth gating", () => {
             explicitTagNames: [],
             explicitMentionPubkeys: [],
             attachments: [],
+            titledPost: {},
+            nip99: { status: "active" },
           },
         }}
       />
@@ -1466,10 +1468,16 @@ describe("UnifiedBottomBar auth gating", () => {
           state: {
             content: "Restored #general",
             postType: "task",
-            dates: [{ date: dueDate, time: "12:11", type: "due" }],
+            dates: [{ datetime: (() => {
+              const dt = new Date(dueDate);
+              dt.setHours(12, 11, 0, 0);
+              return dt;
+            })(), type: "due" }],
             explicitTagNames: [],
             explicitMentionPubkeys: [],
             attachments: [],
+            titledPost: {},
+            nip99: { status: "active" },
           },
         }}
       />

@@ -97,7 +97,7 @@ describe("task calendar event helpers", () => {
         ["end", "2026-04-03"],
         ["date_type", "scheduled"],
       ]);
-      expect(parsed.kind).toBe(NostrEventKind.CalendarDateBased);
+      if (parsed.kind !== NostrEventKind.CalendarDateBased) throw new Error("expected date-based");
       expect(parsed.startDate).toBe("2026-04-01");
       expect(parsed.endDate).toBe("2026-04-03");
       expect(parsed.dateType).toBe("scheduled");

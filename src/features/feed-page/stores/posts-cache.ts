@@ -102,7 +102,11 @@ export function loadCachedPosts(): Post[] {
     const sanitized = posts.filter((post) => {
       if (!isTaskPost(post)) return true;
       return post.stateUpdates.every((update) => update.timestamp instanceof Date)
-        && post.dates.every((date) => date.date instanceof Date);
+        && post.dates.every((entry) =>
+          "datetime" in entry
+            ? entry.datetime instanceof Date
+            : typeof entry.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date)
+        );
     });
     return applyRetentionLimits(sanitized);
   } catch {

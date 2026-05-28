@@ -23,7 +23,7 @@ import { useScrollCapture } from "@/features/feed-page/views/scroll-capture-cont
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { makeIsProject } from "@/domain/content/task-projects";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { getTaskDateTypeLabel } from "@/lib/task-dates";
+import { getTaskLocalDate, getTaskTimeOfDay, getTaskDateTypeLabel } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
@@ -91,6 +91,9 @@ function FeedDueDateChip({
   const isEvent = isCalendarEventPost(task);
 
   if (!primaryDate) return null;
+  const primaryMoment = getTaskLocalDate(primaryDate);
+  if (!primaryMoment) return null;
+  const primaryTime = getTaskTimeOfDay(primaryDate);
 
   // For multi-day events the time-of-day is misleading (it applies only to
   // the first/last day), so show just a date range. Same-day events keep the
@@ -99,10 +102,10 @@ function FeedDueDateChip({
     if (!isEvent) return null;
     const endDate = getEventEndDate(task);
     if (!endDate) return null;
-    if (format(endDate, "yyyy-MM-dd") === format(primaryDate.date, "yyyy-MM-dd")) return null;
+    if (format(endDate, "yyyy-MM-dd") === format(primaryMoment, "yyyy-MM-dd")) return null;
     const startFmt = "MMM d, yyyy";
-    const endFmt = endDate.getFullYear() === primaryDate.date.getFullYear() ? "MMM d" : "MMM d, yyyy";
-    return `${format(primaryDate.date, startFmt)} – ${format(endDate, endFmt)}`;
+    const endFmt = endDate.getFullYear() === primaryMoment.getFullYear() ? "MMM d" : "MMM d, yyyy";
+    return `${format(primaryMoment, startFmt)} – ${format(endDate, endFmt)}`;
   })();
 
   const eventEndLabel = (() => {
@@ -132,11 +135,11 @@ function FeedDueDateChip({
           ) : (
             <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
           )}
-          <span>{multiDayDateLabel ?? format(primaryDate.date, "MMM d, yyyy")}</span>
-          {!multiDayDateLabel && primaryDate.time && (
+          <span>{multiDayDateLabel ?? format(primaryMoment, "MMM d, yyyy")}</span>
+          {!multiDayDateLabel && primaryTime && (
             <>
               <Clock className="w-3 h-3 ml-1" />
-              <span>{primaryDate.time}</span>
+              <span>{primaryTime}</span>
             </>
           )}
           {eventEndLabel && <span>– {eventEndLabel}</span>}
@@ -150,8 +153,8 @@ function FeedDueDateChip({
         >
           <TaskDueDateEditorForm
             taskId={task.id}
-            dueDate={getTaskPrimaryDate(task)?.date}
-            dueTime={getTaskPrimaryDate(task)?.time}
+            dueDate={primaryMoment}
+            dueTime={primaryTime}
             dateType={getTaskPrimaryDate(task)?.type}
             idPrefix="feed"
             onClose={() => setOpen(false)}
@@ -393,14 +396,15 @@ export function FeedView({
   ), [canCompleteTask]);
   const renderDueDateChip = useCallback((task: Post) => {
     const primary = getTaskPrimaryDate(task);
-    const eventInterval = isCalendarEventPost(task) && primary
-      ? { start: primary.date, end: getEventEndDate(task) }
+    const primaryMoment = primary ? getTaskLocalDate(primary) : undefined;
+    const eventInterval = isCalendarEventPost(task) && primaryMoment
+      ? { start: primaryMoment, end: getEventEndDate(task) }
       : undefined;
     return (
       <FeedDueDateChip
         task={task}
         editable={canCompleteTask(task)}
-        dueDateColor={getDueDateColorClass(primary?.date, getTaskState(task), primary?.type, eventInterval)}
+        dueDateColor={getDueDateColorClass(primaryMoment, getTaskState(task), primary?.type, eventInterval)}
       />
     );
   }, [canCompleteTask]);

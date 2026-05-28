@@ -187,13 +187,13 @@ describe("createCalendarSelectors", () => {
       id: "milestones",
       content: "Multi-date #general",
       dates: [
-        { date: new Date("2026-06-01T00:00:00.000Z"), type: "milestone" },
-        { date: new Date("2026-06-15T00:00:00.000Z"), type: "milestone" },
+        { date: "2026-06-01", type: "milestone" },
+        { date: "2026-06-15", type: "milestone" },
       ],
     });
     const selectors = createCalendarSelectors(makeCalendarSource([task]));
-    expect(selectors.getTasksForDay(new Date("2026-06-01T12:00:00.000Z")).map((t: TaskPost) => t.id)).toEqual(["milestones"]);
-    expect(selectors.getTasksForDay(new Date("2026-06-15T12:00:00.000Z")).map((t: TaskPost) => t.id)).toEqual(["milestones"]);
+    expect(selectors.getTasksForDay(new Date("2026-06-01T12:00:00.000Z")).map((t) => t.id)).toEqual(["milestones"]);
+    expect(selectors.getTasksForDay(new Date("2026-06-15T12:00:00.000Z")).map((t) => t.id)).toEqual(["milestones"]);
     expect(selectors.getTasksForDay(new Date("2026-06-08T12:00:00.000Z"))).toEqual([]);
   });
 
@@ -202,14 +202,14 @@ describe("createCalendarSelectors", () => {
       id: "ranged",
       content: "Range #general",
       dates: [
-        { date: new Date("2026-06-01T09:00:00.000Z"), time: "09:00", type: "start" },
-        { date: new Date("2026-06-03T17:00:00.000Z"), time: "17:00", type: "end" },
+        { datetime: new Date("2026-06-01T09:00:00.000Z"), type: "start" },
+        { datetime: new Date("2026-06-03T17:00:00.000Z"), type: "end" },
       ],
     });
     const selectors = createCalendarSelectors(makeCalendarSource([task]));
     for (const day of ["2026-06-01", "2026-06-02", "2026-06-03"]) {
       expect(
-        selectors.getTasksForDay(new Date(`${day}T12:00:00.000Z`)).map((t: TaskPost) => t.id)
+        selectors.getTasksForDay(new Date(`${day}T12:00:00.000Z`)).map((t) => t.id)
       ).toEqual(["ranged"]);
     }
     expect(selectors.getTasksForDay(new Date("2026-06-04T12:00:00.000Z"))).toEqual([]);
@@ -220,13 +220,13 @@ describe("createCalendarSelectors", () => {
       id: "overlap",
       content: "Overlap #general",
       dates: [
-        { date: new Date("2026-06-01T00:00:00.000Z"), type: "start" },
-        { date: new Date("2026-06-03T00:00:00.000Z"), type: "end" },
-        { date: new Date("2026-06-02T00:00:00.000Z"), type: "milestone" },
+        { date: "2026-06-01", type: "start" },
+        { date: "2026-06-03", type: "end" },
+        { date: "2026-06-02", type: "milestone" },
       ],
     });
     const selectors = createCalendarSelectors(makeCalendarSource([task]));
-    expect(selectors.getTasksForDay(new Date("2026-06-02T12:00:00.000Z")).map((t: TaskPost) => t.id)).toEqual([
+    expect(selectors.getTasksForDay(new Date("2026-06-02T12:00:00.000Z")).map((t) => t.id)).toEqual([
       "overlap",
     ]);
   });

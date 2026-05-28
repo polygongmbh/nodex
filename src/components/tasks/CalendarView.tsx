@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus } from "lucide-react";
 import {
+  formatLocalIsoDate,
   getTaskState,
   getTaskStatus,
   type Post,
@@ -557,7 +558,7 @@ export function CalendarView({
                     allowFeedMessageTypes={composerMode === "event"}
                     defaultPostType={composerMode}
                     defaultDates={[
-                      { date: selectedDate, type: composerMode === "event" ? "start" : "due" },
+                      { date: formatLocalIsoDate(selectedDate), type: composerMode === "event" ? "start" : "due" },
                     ]}
                   />
                 </div>

@@ -1,4 +1,4 @@
-import { type TaskStatus, type TaskDate, type TaskDateType, Post, getLastEditedAt, isTaskPost } from "@/types";
+import { type TaskStatus, type TaskDate, type TaskDateType, Post, formatLocalIsoDate, getLastEditedAt, isTaskPost } from "@/types";
 import { setRawEvent } from "@/stores/raw-events";
 import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import type { Person } from "@/types/person";
@@ -339,11 +339,9 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Post[] {
     if (!task) continue;
     if (!canPubkeyUpdateTask(task, calendarEvent.pubkey)) continue;
     const type: TaskDateType = parsed.dateType ?? "due";
-    const entry: TaskDate = {
-      date: parsed.dueDate,
-      time: parsed.dueTime,
-      type,
-    };
+    const entry: TaskDate = parsed.dueTime
+      ? { datetime: parsed.dueDate, type }
+      : { date: formatLocalIsoDate(parsed.dueDate), type };
     let perType = datesByTaskId.get(parsed.taskId);
     if (!perType) {
       perType = new Map();

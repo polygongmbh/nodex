@@ -87,11 +87,10 @@ const failedPublishDraftSchema = z.object({
   postType: postTypeSchema,
   createdAt: z.string(),
   dates: z.array(
-    z.object({
-      date: z.string(),
-      time: z.string().optional(),
-      type: taskDateTypeSchema,
-    })
+    z.union([
+      z.object({ date: z.string(), type: taskDateTypeSchema }),
+      z.object({ datetime: z.string(), type: taskDateTypeSchema }),
+    ])
   ),
   parentId: z.string().optional(),
   initialState: taskStateSchema.optional(),

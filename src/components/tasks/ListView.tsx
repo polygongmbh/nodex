@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
+import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
@@ -252,8 +253,10 @@ export function ListView({
           break;
         }
         case "dueDate": {
-          const aDue = getTaskPrimaryDate(a)?.date;
-          const bDue = getTaskPrimaryDate(b)?.date;
+          const aPrimary = getTaskPrimaryDate(a);
+          const bPrimary = getTaskPrimaryDate(b);
+          const aDue = aPrimary ? getTaskLocalDate(aPrimary) : undefined;
+          const bDue = bPrimary ? getTaskLocalDate(bPrimary) : undefined;
           if (!aDue && !bDue) comparison = 0;
           else if (!aDue) comparison = 1;
           else if (!bDue) comparison = -1;
@@ -400,7 +403,10 @@ export function ListView({
   // Editable due date cell
   const DueDateCell = ({ task }: { task: Post }) => {
     const [open, setOpen] = useState(false);
-    const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task), getTaskPrimaryDate(task)?.type);
+    const primaryDate = getTaskPrimaryDate(task);
+    const primaryMoment = primaryDate ? getTaskLocalDate(primaryDate) : undefined;
+    const primaryTime = primaryDate ? getTaskTimeOfDay(primaryDate) : undefined;
+    const dueDateColor = getDueDateColorClass(primaryMoment, getTaskState(task), primaryDate?.type);
     const editable = canCompleteTask(task);
     const trigger = (
       <button
@@ -416,8 +422,7 @@ export function ListView({
         )}
       >
         {(() => {
-          const primaryDate = getTaskPrimaryDate(task);
-          if (!primaryDate) {
+          if (!primaryDate || !primaryMoment) {
             return <span className="truncate text-muted-foreground">{t("listView.dates.setDate")}</span>;
           }
           return (
@@ -426,11 +431,11 @@ export function ListView({
               <span className="hidden 2xl:inline uppercase tracking-wide">
                 {t(`tasks.dates.${primaryDate.type || "due"}`)}
               </span>
-              <span className="truncate">{format(primaryDate.date, "MMM d, yyyy")}</span>
-              {primaryDate.time && (
+              <span className="truncate">{format(primaryMoment, "MMM d, yyyy")}</span>
+              {primaryTime && (
                 <span className="hidden 2xl:inline-flex shrink-0 items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5" />
-                  <span>{primaryDate.time}</span>
+                  <span>{primaryTime}</span>
                 </span>
               )}
             </>
@@ -442,16 +447,16 @@ export function ListView({
     if (!editable) {
       return trigger;
     }
-    
+
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <TaskDueDateEditorForm
             taskId={task.id}
-            dueDate={getTaskPrimaryDate(task)?.date}
-            dueTime={getTaskPrimaryDate(task)?.time}
-            dateType={getTaskPrimaryDate(task)?.type}
+            dueDate={primaryMoment}
+            dueTime={primaryTime}
+            dateType={primaryDate?.type}
             idPrefix="list"
             onClose={() => setOpen(false)}
           />

@@ -16,6 +16,7 @@ import { buildTaskPriorityUpdateEvent } from "@/infrastructure/nostr/task-proper
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 import type { Post, TaskDate, TaskDateType, TaskState, Relay } from "@/types";
+import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
 
@@ -249,11 +250,13 @@ export function useTaskPublishControls({
       await publishTaskStateUpdate(publishedEventId, effectiveInitialState, followUpRelayUrls);
     }
     for (const entry of dates) {
+      const moment = getTaskLocalDate(entry);
+      if (!moment) continue;
       await publishTaskDueUpdate(
         publishedEventId,
         content,
-        entry.date,
-        entry.time,
+        moment,
+        getTaskTimeOfDay(entry),
         entry.type,
         followUpRelayUrls
       );

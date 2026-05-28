@@ -10,7 +10,7 @@ import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
-import { getTaskDateTypeLabel } from "@/lib/task-dates";
+import { getTaskDateTypeLabel, getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { TaskPost } from "@/types";
 import { getTaskState, getTaskPrimaryDate } from "@/types";
@@ -35,7 +35,10 @@ export function StatusProjectCard({ task, people, isProject, subtaskCount }: Sta
   const { focusTask } = useTaskViewServices();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
-  const dueDateColor = getDueDateColorClass(getTaskPrimaryDate(task)?.date, getTaskState(task), getTaskPrimaryDate(task)?.type);
+  const primaryDate = getTaskPrimaryDate(task);
+  const primaryMoment = primaryDate ? getTaskLocalDate(primaryDate) : undefined;
+  const primaryTime = primaryDate ? getTaskTimeOfDay(primaryDate) : undefined;
+  const dueDateColor = getDueDateColorClass(primaryMoment, getTaskState(task), primaryDate?.type);
   const showChipRow = hasTaskMetadataChips(task, activeRelayCount);
 
   return (
@@ -55,23 +58,19 @@ export function StatusProjectCard({ task, people, isProject, subtaskCount }: Sta
           void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
         }, { people, disableStandaloneEmbeds: true })}
       </div>
-      {(() => {
-        const primaryDate = getTaskPrimaryDate(task);
-        if (!primaryDate) return null;
-        return (
-          <div className={cn("flex items-center gap-1.5 text-xs", dueDateColor)}>
-            <Calendar className="w-3 h-3" />
-            <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
-            <span>{format(primaryDate.date, "MMM d")}</span>
-            {primaryDate.time ? (
-              <>
-                <Clock className="w-3 h-3" />
-                <span>{primaryDate.time}</span>
-              </>
-            ) : null}
-          </div>
-        );
-      })()}
+      {primaryDate && primaryMoment && (
+        <div className={cn("flex items-center gap-1.5 text-xs", dueDateColor)}>
+          <Calendar className="w-3 h-3" />
+          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
+          <span>{format(primaryMoment, "MMM d")}</span>
+          {primaryTime ? (
+            <>
+              <Clock className="w-3 h-3" />
+              <span>{primaryTime}</span>
+            </>
+          ) : null}
+        </div>
+      )}
       <div className="mt-auto flex items-center justify-between gap-2 pt-1">
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <Layers className="w-3 h-3" />

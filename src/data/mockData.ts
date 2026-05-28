@@ -1,4 +1,4 @@
-import { Relay, Channel, Post, TaskStatus, normalizeTaskState } from "@/types";
+import { Relay, Channel, Post, TaskStatus, formatLocalIsoDate, normalizeTaskState } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
 import { addDays, subDays } from "date-fns";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -102,7 +102,19 @@ function createTask(
         ? [{ id, state: initialState, timestamp, authorPubkey: author.pubkey }]
         : [],
     dates: options.dueDate
-      ? [{ date: options.dueDate, time: options.dueTime, type: "due" }]
+      ? [
+          options.dueTime
+            ? {
+                datetime: (() => {
+                  const m = options.dueTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+                  const dt = new Date(options.dueDate);
+                  if (m) dt.setHours(Number(m[1]), Number(m[2]), 0, 0);
+                  return dt;
+                })(),
+                type: "due",
+              }
+            : { date: formatLocalIsoDate(options.dueDate), type: "due" },
+        ]
       : [],
     assigneePubkeys: [],
     parentId: options.parentId,

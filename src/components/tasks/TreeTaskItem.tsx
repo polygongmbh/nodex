@@ -25,7 +25,7 @@ import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/cont
 
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { TASK_CHIP_STYLES, TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { getTaskDateTypeLabel } from "@/lib/task-dates";
+import { getTaskDateTypeLabel, getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import { getTaskDisabledClasses } from "@/lib/task-style";
 import { useTranslation } from "react-i18next";
 import {
@@ -209,12 +209,14 @@ export function TreeTaskItem({
   );
   const isComment = isCommentPost(task);
   const primaryDate = getTaskPrimaryDate(task);
+  const primaryMoment = primaryDate ? getTaskLocalDate(primaryDate) : undefined;
+  const primaryTime = primaryDate ? getTaskTimeOfDay(primaryDate) : undefined;
   const dueDateColor = getDueDateColorClass(
-    primaryDate?.date,
+    primaryMoment,
     getTaskState(task),
     primaryDate?.type,
-    isCalendarEventPost(task) && primaryDate
-      ? { start: primaryDate.date, end: getEventEndDate(task) }
+    isCalendarEventPost(task) && primaryMoment
+      ? { start: primaryMoment, end: getEventEndDate(task) }
       : undefined,
   );
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
@@ -420,7 +422,7 @@ export function TreeTaskItem({
                     type="button"
                     disabled={!editableMetadata}
                     onClick={(event) => event.stopPropagation()}
-                    title={`${getTaskDateTypeLabel(primaryDate.type)}: ${format(primaryDate.date, "MMM d, yyyy")}${primaryDate.time ? ` ${primaryDate.time}` : ""}`}
+                    title={primaryMoment ? `${getTaskDateTypeLabel(primaryDate.type)}: ${format(primaryMoment, "MMM d, yyyy")}${primaryTime ? ` ${primaryTime}` : ""}` : ""}
                     className={cn(
                       "mt-1 flex items-center gap-2 rounded px-1 py-0.5 text-xs transition-colors",
                       dueDateColor,
@@ -429,11 +431,11 @@ export function TreeTaskItem({
                   >
                     <Calendar className="w-3 h-3" />
                     <span className="uppercase tracking-wide">{getTaskDateTypeLabel(primaryDate.type)}</span>
-                    <span>{format(primaryDate.date, "MMM d, yyyy")}</span>
-                    {primaryDate.time && (
+                    {primaryMoment && <span>{format(primaryMoment, "MMM d, yyyy")}</span>}
+                    {primaryTime && (
                       <>
                         <Clock className="w-3 h-3 ml-1" />
-                        <span>{primaryDate.time}</span>
+                        <span>{primaryTime}</span>
                       </>
                     )}
                   </button>
@@ -446,8 +448,8 @@ export function TreeTaskItem({
                   >
                     <TaskDueDateEditorForm
                       taskId={task.id}
-                      dueDate={primaryDate.date}
-                      dueTime={primaryDate.time}
+                      dueDate={primaryMoment}
+                      dueTime={primaryTime}
                       dateType={primaryDate.type}
                       idPrefix="task"
                       onClose={() => setIsDueDatePopoverOpen(false)}
@@ -459,7 +461,7 @@ export function TreeTaskItem({
           })()}
 
           {showCompactPriority && (
-            <div className={cn(getTaskPrimaryDate(task)?.date ? "mt-1.5" : "mt-1")}>
+            <div className={cn(getTaskPrimaryDate(task) ? "mt-1.5" : "mt-1")}>
               <TaskPrioritySelect
                 id={`task-priority-${task.id}`}
                 taskId={editablePriority ? task.id : undefined}
@@ -477,7 +479,7 @@ export function TreeTaskItem({
           )}
 
           {showFullMetadataChips && (
-            <div className={cn("flex flex-wrap gap-1", getTaskPrimaryDate(task)?.date ? "mt-1.5" : "mt-1.5")}>
+            <div className={cn("flex flex-wrap gap-1", getTaskPrimaryDate(task) ? "mt-1.5" : "mt-1.5")}>
               {typeof getTaskPriority(task) === "number" && !isComment && (
                 <TaskPrioritySelect
                   id={`task-priority-${task.id}`}

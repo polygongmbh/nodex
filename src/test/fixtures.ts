@@ -1,5 +1,5 @@
 import type { Channel, CommentPost, ListingPost, Nip99Metadata, Post, Relay, TaskDate, TaskDateType, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
-import { normalizeTaskState } from "@/types";
+import { formatLocalIsoDate, normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
 
@@ -113,7 +113,16 @@ export function makeTask(overrides: MakeTaskOverrides = {}): TaskPost {
         ]
       : stateUpdates ?? [];
   const resolvedDates: TaskDate[] = dueDate
-    ? [{ date: dueDate, time: dueTime, type: dateType ?? "due" }]
+    ? [
+        dueTime
+          ? (() => {
+              const m = dueTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+              const dt = new Date(dueDate);
+              if (m) dt.setHours(Number(m[1]), Number(m[2]), 0, 0);
+              return { datetime: dt, type: dateType ?? "due" };
+            })()
+          : { date: formatLocalIsoDate(dueDate), type: dateType ?? "due" },
+      ]
     : dates ?? [];
 
   return {

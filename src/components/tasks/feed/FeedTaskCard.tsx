@@ -265,7 +265,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}
-                {getTaskPrimaryDate(task)?.date ? (
+                {getTaskPrimaryDate(task) ? (
                   <>
                     {renderDueDateChip(task)}
                     <span className="shrink-0">·</span>

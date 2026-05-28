@@ -5,9 +5,10 @@ import {
   isCalendarEventPost,
   isDateBasedEventPost,
   isTimeBasedEventPost,
+  parseIsoDateLocal,
   type Post,
 } from "@/types";
-import { parseIsoDateLocal } from "@/infrastructure/nostr/nip52-task-calendar-events";
+import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 
 interface CalendarTaskTimeRowProps {
   task: Post;
@@ -46,19 +47,22 @@ export function CalendarTaskTimeRow({ task, selectedDate, accent }: CalendarTask
     }
   }
 
+  const primaryMoment = getTaskLocalDate(primary);
+  const primaryTime = getTaskTimeOfDay(primary);
+  if (!primaryMoment) return null;
   let endLabel: string | null = null;
   if (isTimeBasedEventPost(task) && task.end) {
     endLabel = format(task.end, "HH:mm");
   } else if (isDateBasedEventPost(task) && task.endDate) {
     const end = parseIsoDateLocal(task.endDate);
-    if (end && format(end, "yyyy-MM-dd") !== format(primary.date, "yyyy-MM-dd")) {
+    if (end && format(end, "yyyy-MM-dd") !== format(primaryMoment, "yyyy-MM-dd")) {
       endLabel = format(end, "MMM d");
     }
   }
-  if (!primary.time && !endLabel) return null;
+  if (!primaryTime && !endLabel) return null;
   const startLabel = isCalendarEventPost(task) && isDateBasedEventPost(task) && endLabel
-    ? format(primary.date, "MMM d")
-    : primary.time;
+    ? format(primaryMoment, "MMM d")
+    : primaryTime;
   return (
     <div className="flex items-center gap-2 text-xs mt-1">
       <span

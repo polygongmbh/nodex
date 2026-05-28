@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { getAuthorColor } from "@/lib/author-color";
 import { TASK_INTERACTION_STYLES, TASK_CHIP_STYLES } from "@/lib/task-interaction-styles";
-import { getTaskDateTypeLabel } from "@/lib/task-dates";
+import { getTaskDateTypeLabel, getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
@@ -17,9 +17,11 @@ import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { getStatusToggleHint } from "@/lib/task-status-hint";
 
 import {
+  getTaskPriority,
   getTaskState,
   getTaskPrimaryDate,
   isTaskPost,
+  type CalendarEntryPost,
   type Post,
   type TaskPost,
 } from "@/types";
@@ -93,17 +95,18 @@ export function UpcomingView({
   const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
 
   const groupedUpcoming = useMemo(() => {
-    const groups: { label: string; tasks: TaskPost[]; isOverdue?: boolean }[] = [];
+    const groups: { label: string; tasks: CalendarEntryPost[]; isOverdue?: boolean }[] = [];
     const today = startOfDay(new Date());
 
-    const overdue: TaskPost[] = [];
-    const todayTasks: TaskPost[] = [];
-    const tomorrowTasks: TaskPost[] = [];
-    const thisWeek: TaskPost[] = [];
-    const later: TaskPost[] = [];
+    const overdue: CalendarEntryPost[] = [];
+    const todayTasks: CalendarEntryPost[] = [];
+    const tomorrowTasks: CalendarEntryPost[] = [];
+    const thisWeek: CalendarEntryPost[] = [];
+    const later: CalendarEntryPost[] = [];
 
     upcomingTasks.forEach((task) => {
-      const due = getTaskPrimaryDate(task)?.date;
+      const primary = getTaskPrimaryDate(task);
+      const due = primary ? getTaskLocalDate(primary) : undefined;
       if (!due) return;
       const dueDay = startOfDay(due);
 
@@ -201,12 +204,12 @@ export function UpcomingView({
                         data-task-id={task.id}
                         className="relative flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
                       >
-                        {typeof task.priority === "number" ? (
+                        {typeof getTaskPriority(task) === "number" ? (
                           <div className="absolute right-2 top-2 z-10">
                             <TaskPrioritySelect
                               id={`upcoming-priority-${task.id}`}
                               taskId={canEditPriority ? task.id : undefined}
-                              priority={task.priority}
+                              priority={getTaskPriority(task)}
                               stopPropagation
                               className={cn(
                                 "px-1.5 py-0.5 text-sm focus:outline-none",
@@ -340,7 +343,7 @@ export function UpcomingView({
                             }}
                             className={cn(
                               `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`,
-                              typeof task.priority === "number" && "pr-14"
+                              typeof getTaskPriority(task) === "number" && "pr-14"
                             )}
                             title={getFocusTaskTooltip(t, task)}
                           >
@@ -360,7 +363,9 @@ export function UpcomingView({
                           <div className="mt-1 flex items-end justify-between gap-2">
                             {(() => {
                               const primaryDate = getTaskPrimaryDate(task);
-                              if (!primaryDate) return null;
+                              const primaryMoment = primaryDate ? getTaskLocalDate(primaryDate) : undefined;
+                              const primaryTime = primaryDate ? getTaskTimeOfDay(primaryDate) : undefined;
+                              if (!primaryDate || !primaryMoment) return null;
                               return (
                                 <span className="text-xs flex items-center gap-2 min-w-0">
                                   <span
@@ -372,8 +377,8 @@ export function UpcomingView({
                                     {getTaskDateTypeLabel(primaryDate.type)}
                                   </span>
                                   <span className="truncate">
-                                    {format(primaryDate.date, "MMM d")}
-                                    {primaryDate.time && ` ${primaryDate.time}`}
+                                    {format(primaryMoment, "MMM d")}
+                                    {primaryTime && ` ${primaryTime}`}
                                   </span>
                                 </span>
                               );

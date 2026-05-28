@@ -43,7 +43,7 @@ describe("posts-cache", () => {
           authorPubkey: "author-pk",
         },
       ],
-      dates: [{ date: new Date(now.getTime() + 86_400_000), type: "due" }],
+      dates: [{ datetime: new Date(now.getTime() + 86_400_000), type: "due" }],
     });
     saveCachedPosts([post]);
 
@@ -54,7 +54,10 @@ describe("posts-cache", () => {
     if (revived.kind !== NostrEventKind.Task) throw new Error("expected task");
     expect(revived.lastEditedAt?.getTime()).toBe(post.lastEditedAt?.getTime());
     expect(revived.stateUpdates[0].timestamp.getTime()).toBe(post.stateUpdates[0].timestamp.getTime());
-    expect(revived.dates[0].date.getTime()).toBe(post.dates[0].date.getTime());
+    const revivedFirst = revived.dates[0];
+    const postFirst = post.dates[0];
+    if (!("datetime" in revivedFirst) || !("datetime" in postFirst)) throw new Error("expected datetime");
+    expect(revivedFirst.datetime.getTime()).toBe(postFirst.datetime.getTime());
   });
 
   it("returns the empty list when nothing is cached", () => {

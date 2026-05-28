@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { Search, X, Hash, Radio, Users, Check, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, MapPin, AlertTriangle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {   Relay, Channel, TaskCreateResult, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
+import {   Relay, Channel, TaskCreateResult, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType, formatLocalIsoDate } from "@/types";
+import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import type { SidebarPerson } from "@/types/person";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
@@ -190,22 +191,43 @@ export function UnifiedBottomBar({
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
   const [dates, setDates] = useState<TaskDate[]>(initialComposerState.dates);
   const primaryEntry = dates.find((d) => d.type !== "end");
-  const dueDate = primaryEntry?.date;
-  const dueTime = primaryEntry?.time ?? "";
+  const dueDate = primaryEntry ? getTaskLocalDate(primaryEntry) : undefined;
+  const dueTime = primaryEntry ? getTaskTimeOfDay(primaryEntry) ?? "" : "";
   const dateType: TaskDateType = primaryEntry?.type ?? "due";
+  const buildEntry = (next: Date, time: string | undefined, type: TaskDateType): TaskDate => {
+    if (!time) return { date: formatLocalIsoDate(next), type };
+    const match = time.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (!match) return { date: formatLocalIsoDate(next), type };
+    const datetime = new Date(next);
+    datetime.setHours(Number(match[1]), Number(match[2]), 0, 0);
+    return { datetime, type };
+  };
   const setDueDate = (next: Date | undefined) => {
     setDates((prev) => {
       const others = prev.filter((d) => d.type === "end");
       if (!next) return others;
       const existing = prev.find((d) => d.type !== "end");
-      return [{ date: next, time: existing?.time, type: existing?.type ?? "due" }, ...others];
+      const existingTime = existing ? getTaskTimeOfDay(existing) : undefined;
+      return [buildEntry(next, existingTime, existing?.type ?? "due"), ...others];
     });
   };
   const setDueTime = (next: string) => {
-    setDates((prev) => prev.map((d) => (d.type === "end" ? d : { ...d, time: next || undefined })));
+    setDates((prev) => {
+      const primary = prev.find((d) => d.type !== "end");
+      if (!primary) return prev;
+      const moment = getTaskLocalDate(primary);
+      if (!moment) return prev;
+      const rebuilt = buildEntry(moment, next || undefined, primary.type);
+      return prev.map((d) => (d.type === "end" ? d : rebuilt));
+    });
   };
   const setDateType = (next: TaskDateType) => {
-    setDates((prev) => prev.map((d) => (d.type === "end" ? d : { ...d, type: next })));
+    setDates((prev) =>
+      prev.map((d) => {
+        if (d.type === "end") return d;
+        return "datetime" in d ? { datetime: d.datetime, type: next } : { date: d.date, type: next };
+      })
+    );
   };
   const [priority, setPriority] = useState<number | undefined>(initialComposerState.priority);
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>(initialComposerState.explicitTagNames);

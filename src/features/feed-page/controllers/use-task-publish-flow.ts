@@ -1,11 +1,15 @@
 import {
   getPostDateEntries,
   isCalendarEventPost,
+  isDateOnlyTaskDate,
+  isDateTimeTaskDate,
   isListingPost,
   isTaskPost,
   getTaskAssigneePubkeys,
   getTaskPriority,
+  parseIsoDateLocal,
 } from "@/types";
+import { getTaskLocalDate } from "@/lib/task-dates";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
@@ -72,6 +76,7 @@ import type {
   ListingPost,
   TaskCreateResult,
   TaskDate,
+  TaskDateType,
   TaskEntryType,
   TaskState,
   TaskCreatePayload,
@@ -332,17 +337,10 @@ export function useTaskPublishFlow({
     const isEventSubmission = normalizedPostType === "event";
     const startEntry = dates.find((d) => d.type === "start");
     const endEntry = dates.find((d) => d.type === "end");
-    const mergeDateTime = (date: Date, time?: string): Date => {
-      if (!time) return date;
-      const match = time.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-      if (!match) return date;
-      const merged = new Date(date);
-      merged.setHours(Number(match[1]), Number(match[2]), 0, 0);
-      return merged;
-    };
-    const eventStartDateTime = startEntry ? mergeDateTime(startEntry.date, startEntry.time) : undefined;
-    const eventEndDateTime = endEntry ? mergeDateTime(endEntry.date, endEntry.time) : undefined;
-    const eventIsAllDay = isEventSubmission && !startEntry?.time && !endEntry?.time;
+    const eventStartDateTime = startEntry ? getTaskLocalDate(startEntry) : undefined;
+    const eventEndDateTime = endEntry ? getTaskLocalDate(endEntry) : undefined;
+    const eventIsAllDay =
+      isEventSubmission && (!startEntry || isDateOnlyTaskDate(startEntry)) && (!endEntry || isDateOnlyTaskDate(endEntry));
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
@@ -543,11 +541,11 @@ export function useTaskPublishFlow({
       relayUrls: selectedRelayUrls,
       postType: normalizedPostType,
       createdAt: createdAt.toISOString(),
-      dates: dates.map((entry) => ({
-        date: entry.date.toISOString(),
-        time: entry.time,
-        type: entry.type,
-      })),
+      dates: dates.map((entry) =>
+        isDateTimeTaskDate(entry)
+          ? { datetime: entry.datetime.toISOString(), type: entry.type }
+          : { date: entry.date, type: entry.type }
+      ),
       parentId: submissionParentId ?? undefined,
       initialState,
       mentionPubkeys,
@@ -666,7 +664,7 @@ export function useTaskPublishFlow({
       postType: normalizedPostType,
       dates,
       titledPost: { ...(titledPost ?? {}) },
-      nip99: nip99 ?? {},
+      nip99: nip99 ?? { status: "active" },
       attachments: normalizedAttachments,
       explicitTagNames: normalizedExtractedTags.filter((tag) => !parsedHashtagsFromContent.has(tag)),
       explicitMentionPubkeys: dedupedExplicitMentionPubkeys,
@@ -898,9 +896,12 @@ export function useTaskPublishFlow({
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
 
     const draftDates: TaskDate[] = draft.dates
-      .map((entry) => {
-        const date = parseStoredDate(entry.date);
-        return date ? { date, time: entry.time, type: entry.type } : null;
+      .map((entry): TaskDate | null => {
+        if ("datetime" in entry) {
+          const moment = parseStoredDate(entry.datetime);
+          return moment ? { datetime: moment, type: entry.type } : null;
+        }
+        return parseIsoDateLocal(entry.date) ? { date: entry.date, type: entry.type } : null;
       })
       .filter((entry): entry is TaskDate => entry !== null);
     await publishTaskCreateFollowUps({

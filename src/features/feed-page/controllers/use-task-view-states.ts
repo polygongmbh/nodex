@@ -13,6 +13,7 @@ import {
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { isTaskTerminal } from "@/domain/content/task-state";
+import { getTaskLocalDate } from "@/lib/task-dates";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
@@ -307,7 +308,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       scope: {
         focusedTaskId: source.focusedTaskId,
         hideClosedTasks: true,
-        taskPredicate: (task) => isCalendarEntryPost(task) && Boolean(getTaskPrimaryDate(task)?.date),
+        taskPredicate: (task) => isCalendarEntryPost(task) && Boolean(getTaskPrimaryDate(task)),
       },
       criteria: {
         searchQuery: source.searchQuery,
@@ -320,7 +321,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       },
     };
     tasksWithDueDatesCache = filterTasksForView(request).filter(
-      (task): task is CalendarEntryPost => isCalendarEntryPost(task) && Boolean(getTaskPrimaryDate(task)?.date)
+      (task): task is CalendarEntryPost => isCalendarEntryPost(task) && Boolean(getTaskPrimaryDate(task))
     );
     return tasksWithDueDatesCache;
   };
@@ -339,8 +340,10 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
     };
     for (const task of getTasksWithDueDates()) {
       const entries = getPostDateEntries(task);
-      const start = entries.find((d) => d.type === "start")?.date;
-      const end = entries.find((d) => d.type === "end")?.date;
+      const startEntry = entries.find((d) => d.type === "start");
+      const endEntry = entries.find((d) => d.type === "end");
+      const start = startEntry ? getTaskLocalDate(startEntry) : undefined;
+      const end = endEntry ? getTaskLocalDate(endEntry) : undefined;
       const rangeStart = start && end ? startOfDay(start <= end ? start : end) : null;
       const rangeEnd = start && end ? startOfDay(start <= end ? end : start) : null;
       if (rangeStart && rangeEnd) {
@@ -350,7 +353,8 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       }
       for (const entry of entries) {
         if (rangeStart && (entry.type === "start" || entry.type === "end")) continue;
-        addToDay(entry.date, task);
+        const entryDate = getTaskLocalDate(entry);
+        if (entryDate) addToDay(entryDate, task);
       }
     }
     const result = new Map<string, CalendarEntryPost[]>();
@@ -813,7 +817,7 @@ export function useMobileFallbackNoticeState({
     if (currentView !== "list" && currentView !== "calendar") {
       return undefined;
     }
-    return (task: Post) => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)?.date) && !isTaskTerminal(getTaskState(task));
+    return (task: Post) => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)) && !isTaskTerminal(getTaskState(task));
   }, [currentView]);
   const includeFocusedTaskForActiveView = currentView === "feed";
   const hideClosedForActiveView = currentView === "feed";

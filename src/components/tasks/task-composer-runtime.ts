@@ -261,10 +261,12 @@ function deserializeDraft(
   defaultDates: TaskDate[] = []
 ): ComposerDraft {
   const parsedDates: TaskDate[] = (persisted.dates || [])
-    .map((entry) => {
-      const date = parseDraftDate(entry.date);
-      if (!date) return null;
-      return { date, time: entry.time, type: entry.type };
+    .map((entry): TaskDate | null => {
+      if ("datetime" in entry) {
+        const moment = parseDraftDate(entry.datetime);
+        return moment ? { datetime: moment, type: entry.type } : null;
+      }
+      return /^\d{4}-\d{2}-\d{2}$/.test(entry.date) ? { date: entry.date, type: entry.type } : null;
     })
     .filter((entry): entry is TaskDate => entry !== null);
   return {
@@ -297,11 +299,11 @@ function serializeDraft(
     content: draft.content,
     postType: draft.postType,
     savedAt: new Date().toISOString(),
-    dates: draft.dates.map((entry) => ({
-      date: entry.date.toISOString(),
-      time: entry.time,
-      type: entry.type,
-    })),
+    dates: draft.dates.map((entry) =>
+      "datetime" in entry
+        ? { datetime: entry.datetime.toISOString(), type: entry.type }
+        : { date: entry.date, type: entry.type }
+    ),
     titledPost: draft.titledPost,
     nip99: draft.nip99,
     locationGeohash: draft.locationGeohash,
