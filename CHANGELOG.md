@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Calendar event date chips in the feed are now coloured by where the event sits relative to now: grey once it has fully ended, yellow while it is active (start ≤ now ≤ end), blue while it is still in the future. Events without an explicit end are treated as active for the whole start day.
 
 ### Added
+- Tree, Kanban, List, and Status views now show a paperclip indicator with the attachment count on tasks that have attachments. Feed and Calendar views are unchanged — they already render the attachments inline.
 - Calendar events (NIP-52, kinds 31922 and 31923) can now be posted directly from the composer via a new "Event" mode next to Task / Comment / Listing. Event mode exposes explicit Start Date / Start Time / End Date / End Time controls (times optional) built on the same date-time picker as the task due date, plus title / summary / location fields shared with NIP-99 listings. All-day events publish as kind 31922 (timezone-independent `YYYY-MM-DD`); timed events publish as kind 31923. Events show up in the feed and on the calendar grid alongside tasks, marked with an "EVENT" label and their start–end range. Calendar events that reference an unknown task are still surfaced (orphan recovery).
 - The calendar view's selected-day panel now has both "Create Task" and "Create Event" buttons, each opening the composer pre-set to the right mode with the day as the start/due date.
 

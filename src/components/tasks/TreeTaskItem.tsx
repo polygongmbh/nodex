@@ -41,6 +41,8 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { shouldCollapseTaskContent, TASK_CONTENT_COLLAPSED_CLASS } from "@/lib/task-content-preview";
 import { TaskShowMoreToggle } from "@/components/tasks/task-card/TaskShowMoreToggle";
+import { AttachmentCountIndicator } from "@/components/tasks/task-card/AttachmentCountIndicator";
+import { getPostRealAttachmentCount } from "@/lib/use-task-media-attachments";
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
@@ -221,6 +223,7 @@ export function TreeTaskItem({
   );
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
+  const attachmentCount = getPostRealAttachmentCount(task);
 
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -344,7 +347,7 @@ export function TreeTaskItem({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Meta info - author/time only for comments, counts only for tasks */}
-          {!compactView && (isComment || taskChildCount > 0 || commentChildCount > 0) && (
+          {!compactView && (isComment || taskChildCount > 0 || commentChildCount > 0 || attachmentCount > 0) && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               {isComment && (
                 <>
@@ -372,6 +375,7 @@ export function TreeTaskItem({
                   </span>
                 </>
               )}
+              <AttachmentCountIndicator count={attachmentCount} />
               {isPendingPublish && (
                 <button
                   type="button"

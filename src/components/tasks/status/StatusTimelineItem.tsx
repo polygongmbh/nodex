@@ -4,6 +4,8 @@ import { Calendar as CalendarIcon, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TaskAssigneeAvatars } from "@/components/tasks/TaskAssigneeAvatars";
 import { TaskStatusToggle } from "@/components/tasks/task-card/TaskStatusToggle";
+import { AttachmentCountIndicator } from "@/components/tasks/task-card/AttachmentCountIndicator";
+import { getPostRealAttachmentCount } from "@/lib/use-task-media-attachments";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
@@ -42,6 +44,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
     () => task.content.replace(/\s*\n\s*/g, " ").trim(),
     [task.content]
   );
+  const attachmentCount = getPostRealAttachmentCount(task);
 
   return (
     <article
@@ -70,6 +73,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <InteractivePersonName person={resolvedAuthor} />
+          <AttachmentCountIndicator count={attachmentCount} />
           <span className="ml-auto shrink-0" title={task.timestamp.toLocaleString()}>{timeAgo}</span>
         </div>
         <div
