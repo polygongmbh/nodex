@@ -16,16 +16,14 @@ export { FAILED_PUBLISH_DRAFTS_STORAGE_KEY };
 export type PersistedTaskDate = SerializedTaskDate;
 
 /**
- * Subset of {@link SerializedComposerContent} actually stored on the failed-
- * publish queue. `titledPost` / `nip99` / `recomposeOf` are intentionally
- * dropped — the retry path reconstructs them from `publishTags`. Adding a
- * new core composer field that should round-trip through retry requires
- * extending this Pick list (and the Zod schema below).
+ * A failed-publish draft is the full serialized composer content plus
+ * wire-resolved tagging and the publish metadata needed to retry. The
+ * `attachments` field is widened to optional here because pre-existing
+ * localStorage entries (written before this field was guaranteed) must
+ * still load — failed drafts are user state, not a cache the live
+ * subscription rebuilds.
  */
-type FailedPublishContent = Pick<
-  SerializedComposerContent,
-  "content" | "postType" | "dates" | "priority" | "locationGeohash"
-> & {
+type FailedPublishContent = Omit<SerializedComposerContent, "attachments"> & {
   attachments?: PublishedAttachment[];
 };
 
@@ -46,6 +44,7 @@ export type FailedPublishDraft = FailedPublishContent &
 const postTypeSchema = z.enum(["task", "comment", "listing", "event"] as const);
 const taskDateTypeSchema = z.enum(["due", "scheduled", "start", "end", "milestone"] as const);
 const taskStatusSchema = z.enum(["open", "active", "done", "closed"] as const);
+const nip99ListingStatusSchema = z.enum(["active", "sold"] as const);
 const taskStateSchema = z.object({
   status: taskStatusSchema,
   description: z.string().optional(),
@@ -56,6 +55,27 @@ const personSchema = z.object({
   displayName: z.string(),
   nip05: z.string().optional(),
   avatar: z.string().optional(),
+});
+const titledPostFieldsSchema = z.object({
+  title: z.string().optional(),
+  summary: z.string().optional(),
+  location: z.string().optional(),
+});
+const nip99MetadataSchema = z.object({
+  identifier: z.string().optional(),
+  price: z.string().optional(),
+  currency: z.string().optional(),
+  frequency: z.string().optional(),
+  status: nip99ListingStatusSchema,
+  publishedAt: z.string().optional(),
+});
+const composeRecomposeOfSchema = z.object({
+  eventId: z.string(),
+  originalKind: z.number().int(),
+  dTag: z.string().optional(),
+  relayIds: z.array(z.string()),
+  parentId: z.string().optional(),
+  contentPreview: z.string().optional(),
 });
 const failedPublishDraftSchema = z.object({
   id: z.string(),
@@ -91,6 +111,9 @@ const failedPublishDraftSchema = z.object({
       name: z.string().optional(),
     })
   ).optional(),
+  titledPost: titledPostFieldsSchema.optional(),
+  nip99: nip99MetadataSchema.optional(),
+  recomposeOf: composeRecomposeOfSchema.optional(),
   publishKind: z.number().int(),
   publishTags: z.array(z.array(z.string())),
   publishParentId: z.string().optional(),
