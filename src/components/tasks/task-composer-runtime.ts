@@ -11,36 +11,32 @@ import type {
   ComposeRecomposeOf,
   ComposeRestoreRequest,
   ComposerDraft,
-  Nip99Metadata,
+  DraftTagging,
   PostType,
   PublishedAttachment,
   Relay,
+  SerializedComposerContent,
   TaskDate,
-  TaskDateType,
-  TitledPostFields,
 } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
 
 /**
- * Serialized on-disk shape. Dates are ISO strings; `deserializeDraft` applies
- * defaults for genuinely-optional fields.
+ * Serialized on-disk shape. Dates are ISO strings; `deserializeDraft`
+ * applies defaults for genuinely-optional fields.
+ *
+ * Stored priority is on the 0-100 scale (ComposerContent's display tier is
+ * 1-5; serializeDraft / deserializeDraft do the conversion).
+ *
+ * `attachments` and the DraftTagging arrays are optional here so a legacy
+ * persisted blob without those keys still loads; deserializeDraft fills
+ * defaults.
  */
-interface PersistedComposerDraft {
-  content: string;
-  postType: PostType;
-  savedAt: string;
-  dates: Array<{ date: string; time?: string; type: TaskDateType }>;
-  titledPost?: TitledPostFields;
-  nip99?: Nip99Metadata;
-  locationGeohash?: string;
-  attachments?: PublishedAttachment[];
-  /** Stored priority (0-100 scale). */
-  priority?: number;
-  explicitTagNames?: string[];
-  explicitMentionPubkeys?: string[];
-  recomposeOf?: ComposeRecomposeOf;
-  selectedRelays?: string[];
-}
+type PersistedComposerDraft = Omit<SerializedComposerContent, "attachments"> &
+  Partial<DraftTagging> & {
+    savedAt: string;
+    attachments?: PublishedAttachment[];
+    selectedRelays?: string[];
+  };
 
 export interface ResolvedTaskComposerEnvironment {
   relays: Relay[];

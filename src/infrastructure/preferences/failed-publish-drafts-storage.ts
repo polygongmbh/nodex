@@ -1,38 +1,47 @@
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { PostType, PublishedAttachment, TaskDateType, TaskState } from "@/types";
+import type {
+  PublishedAttachment,
+  SerializedComposerContent,
+  SerializedTaskDate,
+  TaskState,
+  WireTagging,
+} from "@/types";
 import type { Person } from "@/types/person";
 import { z } from "zod";
 
 import { FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 export { FAILED_PUBLISH_DRAFTS_STORAGE_KEY };
 
-export interface PersistedTaskDate {
-  date: string;
-  time?: string;
-  type: TaskDateType;
-}
+/** Re-exported under the original name for callers outside this module. */
+export type PersistedTaskDate = SerializedTaskDate;
 
-export interface FailedPublishDraft {
-  id: string;
-  author: Person;
-  content: string;
-  tags: string[];
-  relayIds: string[];
-  relayUrls: string[];
-  postType: PostType;
-  createdAt: string;
-  dates: PersistedTaskDate[];
-  parentId?: string;
-  initialState?: TaskState;
-  mentionPubkeys: string[];
-  assigneePubkeys?: string[];
-  priority?: number;
-  locationGeohash?: string;
+/**
+ * Subset of {@link SerializedComposerContent} actually stored on the failed-
+ * publish queue. `titledPost` / `nip99` / `recomposeOf` are intentionally
+ * dropped — the retry path reconstructs them from `publishTags`. Adding a
+ * new core composer field that should round-trip through retry requires
+ * extending this Pick list (and the Zod schema below).
+ */
+type FailedPublishContent = Pick<
+  SerializedComposerContent,
+  "content" | "postType" | "dates" | "priority" | "locationGeohash"
+> & {
   attachments?: PublishedAttachment[];
-  publishKind: NostrEventKind;
-  publishTags: string[][];
-  publishParentId?: string;
-}
+};
+
+export type FailedPublishDraft = FailedPublishContent &
+  WireTagging & {
+    id: string;
+    author: Person;
+    createdAt: string;
+    relayIds: string[];
+    relayUrls: string[];
+    parentId?: string;
+    initialState?: TaskState;
+    publishKind: NostrEventKind;
+    publishTags: string[][];
+    publishParentId?: string;
+  };
 
 const postTypeSchema = z.enum(["task", "comment", "listing", "event"] as const);
 const taskDateTypeSchema = z.enum(["due", "scheduled", "start", "end", "milestone"] as const);
