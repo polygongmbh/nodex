@@ -14,6 +14,10 @@ import {
 import { registerMemdiagStore } from "@/lib/memdiag";
 import { deleteRawEvent } from "@/stores/raw-events";
 import { clearReactionsForTarget } from "./reactions-registry";
+import {
+  isBatchingNotifications,
+  registerStoreFlusher,
+} from "@/lib/store-batch";
 
 // Side-store cleanup: when a Post leaves postsById (deleted/superseded),
 // drop its raw-event entry and its reaction records too. The Post is the
@@ -81,28 +85,19 @@ if (import.meta.env.DEV) {
   }));
 }
 
-// Batch toggle for callers (e.g. the event-router drain loop) that mutate
-// the store many times in a row and only want subscribers to wake once at
-// the end. While `batchedNotifyEnabled` is true, `notifyChange` still bumps
-// `version` (so any concurrent read sees the latest projection) but defers
-// the subscriber fan-out to `flushBatchedNotify`. Default off — single-event
-// ingests notify immediately as before.
-let batchedNotifyEnabled = false;
+// Subscriber fan-out is batched via the shared store-batch module: while a
+// drain is in flight the router suppresses wake-ups so a 5000-event burst
+// produces ~1 React commit instead of one per event.
 let batchedNotifyPending = false;
-
-export function setBatchedNotifyEnabled(enabled: boolean): void {
-  batchedNotifyEnabled = enabled;
-}
-
-export function flushBatchedNotify(): void {
+registerStoreFlusher(() => {
   if (!batchedNotifyPending) return;
   batchedNotifyPending = false;
   for (const subscriber of subscribers) subscriber();
-}
+});
 
 function notifyChange(): void {
   version += 1;
-  if (batchedNotifyEnabled) {
+  if (isBatchingNotifications()) {
     batchedNotifyPending = true;
     return;
   }
@@ -367,6 +362,5 @@ export function __resetPostsStoreForTests(): void {
   version = 0;
   suppressedIds = new Set();
   subscribers.clear();
-  batchedNotifyEnabled = false;
   batchedNotifyPending = false;
 }

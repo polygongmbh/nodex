@@ -1,4 +1,8 @@
 import { useSyncExternalStore } from "react";
+import {
+  isBatchingNotifications,
+  registerStoreFlusher,
+} from "@/lib/store-batch";
 
 // Authors-we-have-seen-on-the-wire projection used by the people list.
 // Replaces the union over a raw-event array; the dispatcher calls
@@ -11,8 +15,19 @@ let version = 0;
 let cachedSnapshot: string[] = [];
 let cachedSnapshotAtVersion = -1;
 
+let batchedNotifyPending = false;
+registerStoreFlusher(() => {
+  if (!batchedNotifyPending) return;
+  batchedNotifyPending = false;
+  for (const subscriber of subscribers) subscriber();
+});
+
 function notifyChange(): void {
   version += 1;
+  if (isBatchingNotifications()) {
+    batchedNotifyPending = true;
+    return;
+  }
   for (const subscriber of subscribers) subscriber();
 }
 
@@ -54,4 +69,5 @@ export function __resetSeenPubkeysForTests(): void {
   cachedSnapshotAtVersion = -1;
   version = 0;
   subscribers.clear();
+  batchedNotifyPending = false;
 }

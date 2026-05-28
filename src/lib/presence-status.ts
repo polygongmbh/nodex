@@ -1,4 +1,8 @@
 import type { PersonPresenceSnapshot } from "@/types/person";
+import {
+  isBatchingNotifications,
+  registerStoreFlusher,
+} from "@/lib/store-batch";
 
 export const NIP38_PRESENCE_TAG = "nodex-presence";
 export const NODEX_PRESENCE_VIEW_TAG = "nodex-view";
@@ -91,8 +95,19 @@ const presenceMap = new Map<string, LatestPresenceSnapshot>();
 const presenceSubscribers = new Set<() => void>();
 let presenceMapVersion = 0;
 
+let batchedPresencePending = false;
+registerStoreFlusher(() => {
+  if (!batchedPresencePending) return;
+  batchedPresencePending = false;
+  for (const notify of presenceSubscribers) notify();
+});
+
 function notifyPresenceSubscribers(): void {
   presenceMapVersion += 1;
+  if (isBatchingNotifications()) {
+    batchedPresencePending = true;
+    return;
+  }
   for (const notify of presenceSubscribers) notify();
 }
 

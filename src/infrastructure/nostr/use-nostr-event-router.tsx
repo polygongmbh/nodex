@@ -4,9 +4,9 @@ import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import type { NostrEventKind, NostrEventWithRelay } from "@/lib/nostr/types";
 import { registerMemdiagStore } from "@/lib/memdiag";
 import {
-  flushBatchedNotify,
-  setBatchedNotifyEnabled,
-} from "@/features/feed-page/stores/posts-store";
+  flushBatchedNotifications,
+  setNotificationBatching,
+} from "@/lib/store-batch";
 
 // Subscription manager for the NDK live feed. Validates each incoming event's
 // relay attribution at the wire boundary and hands it off to a per-concern
@@ -193,14 +193,15 @@ export function useNostrEventRouter({
     if (batch.length === 0) return;
     pendingEventsRef.current = [];
 
-    // Suppress posts-store subscriber notifications for the duration of
-    // the chunk. Without this, every ingestPost/applyXxx call inside the
-    // loop wakes React; with a 5000-event burst that's 25 mid-hydration
-    // re-renders of the full derive-channels / sidebar-people / view-filter
-    // chain. With batching, we wake React only when we're about to yield to
-    // input or when the drain finishes — at most a couple of renders during
-    // hydration instead of 25.
-    setBatchedNotifyEnabled(true);
+    // Suppress per-store subscriber fan-out for the duration of the drain.
+    // posts-store, seen-pubkeys-store, reactions-registry, and presence-status
+    // all opt in via @/lib/store-batch — together they cover every wake-up
+    // the per-event ingestion would trigger. A 5000-event hydration burst
+    // would otherwise wake React thousands of times (seen-pubkeys fires per
+    // unique author, posts-store per ingest, etc.) interleaved with the
+    // drain loop; with batching, we wake React only when input contends or
+    // when the drain finishes.
+    setNotificationBatching(true);
 
     const start = typeof performance !== "undefined" ? performance.now() : 0;
     const callOnEvent = onEventRef.current;
@@ -255,8 +256,8 @@ export function useNostrEventRouter({
 
     // Drained completely, or input is contending — wake React with the
     // latest state and let normal scheduling resume.
-    setBatchedNotifyEnabled(false);
-    flushBatchedNotify();
+    setNotificationBatching(false);
+    flushBatchedNotifications();
 
     if (moreEventsRemain) {
       // Input yield with more events queued — re-arm via the debounced

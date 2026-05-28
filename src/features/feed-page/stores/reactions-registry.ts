@@ -10,6 +10,10 @@ import {
   isDeletionEvent,
 } from "@/infrastructure/nostr/deletion-events";
 import { registerMemdiagStore } from "@/lib/memdiag";
+import {
+  isBatchingNotifications,
+  registerStoreFlusher,
+} from "@/lib/store-batch";
 
 /**
  * Reaction bookkeeping is intentionally lossy: reactions are low-importance UX
@@ -56,7 +60,18 @@ if (import.meta.env.DEV) {
   });
 }
 
+let batchedNotifyPending = false;
+registerStoreFlusher(() => {
+  if (!batchedNotifyPending) return;
+  batchedNotifyPending = false;
+  for (const notify of subscribers) notify();
+});
+
 function notifySubscribers(): void {
+  if (isBatchingNotifications()) {
+    batchedNotifyPending = true;
+    return;
+  }
   for (const notify of subscribers) notify();
 }
 
@@ -250,4 +265,5 @@ export function __resetReactionsRegistryForTests(): void {
   reactionsByTargetId.clear();
   viewerPubkey = undefined;
   subscribers.clear();
+  batchedNotifyPending = false;
 }
