@@ -318,6 +318,30 @@ describe("nostrEventToTask", () => {
     });
   });
 
+  it("enriches blossom content URLs with NIP-94 hash metadata", () => {
+    const sha = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: `See https://cdn.blossom.example/${sha}`,
+      tags: [
+        ["x", sha],
+        ["m", "image/webp"],
+        ["size", "321"],
+      ],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.attachments).toEqual([
+      {
+        url: `https://cdn.blossom.example/${sha}`,
+        mimeType: "image/webp",
+        sha256: sha,
+        size: 321,
+      },
+    ]);
+  });
+
   it("resolves indexed person references from content into @pubkey mentions", () => {
     const personPubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const event: NostrEventWithRelay = {

@@ -29,6 +29,8 @@ import {
   isParameterizedReplaceableKind,
 } from "@/infrastructure/nostr/replaceable-events";
 import {
+  extractSha256FromUrl,
+  extractUrlsFromContent,
   normalizePublishedAttachments,
   parseImetaTag,
   parseNip94AttachmentMetadataTags,
@@ -143,11 +145,30 @@ export function nostrEventToTask(event: NostrEventWithRelay): Post {
     .map((tag) => parseImetaTag(tag))
     .filter((attachment): attachment is NonNullable<typeof attachment> => Boolean(attachment));
   const nip94LikeAttachments = parseNip94AttachmentMetadataTags(event.tags);
+  // Blossom convention: a body URL embeds the file's sha256 in its path while
+  // the top-level NIP-94 tags carry the matching `x`/`m`/`size` metadata
+  // without a `url` tag. Pair them up so the URL surfaces as a real attachment.
+  const blossomMatchedAttachments = (() => {
+    const nip94BySha = new Map<string, (typeof nip94LikeAttachments)[number]>();
+    for (const attachment of nip94LikeAttachments) {
+      if (attachment.url || !attachment.sha256) continue;
+      nip94BySha.set(attachment.sha256.toLowerCase(), attachment);
+    }
+    if (nip94BySha.size === 0) return [];
+    const matched: Array<{ url: string }> = [];
+    for (const url of extractUrlsFromContent(normalizedContent)) {
+      const sha = extractSha256FromUrl(url);
+      const nip94 = sha ? nip94BySha.get(sha) : undefined;
+      if (nip94) matched.push({ ...nip94, url });
+    }
+    return matched;
+  })();
   const attachments = normalizePublishedAttachments([
     ...imetaAttachments,
     ...nip94LikeAttachments.filter(
       (attachment): attachment is typeof attachment & { url: string } => Boolean(attachment.url)
     ),
+    ...blossomMatchedAttachments,
   ]);
 
   setRawEvent(event.id, {
