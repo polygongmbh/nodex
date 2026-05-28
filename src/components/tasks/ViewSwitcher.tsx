@@ -6,6 +6,9 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 export const VIEW_ORDER = ["status", "feed", "tree", "kanban", "list", "calendar"] as const;
 export type ViewType = (typeof VIEW_ORDER)[number];
 
+// Tree and list are reachable via direct URL but hidden from the desktop nav.
+const DESKTOP_NAV_VIEWS = VIEW_ORDER.filter((v) => v !== "tree" && v !== "list");
+
 interface ViewSwitcherProps {
   currentView: ViewType;
 }
@@ -21,7 +24,7 @@ export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
     list: { labelKey: "navigation.views.list", icon: <List className="w-4 h-4 xl:w-5 xl:h-5" /> },
     calendar: { labelKey: "navigation.views.calendar", icon: <Calendar className="w-4 h-4 xl:w-5 xl:h-5" /> },
   };
-  const views = VIEW_ORDER.map((id) => ({ id, label: t(viewMeta[id].labelKey), icon: viewMeta[id].icon }));
+  const views = DESKTOP_NAV_VIEWS.map((id) => ({ id, label: t(viewMeta[id].labelKey), icon: viewMeta[id].icon }));
 
   return (
     <div

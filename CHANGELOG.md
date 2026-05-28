@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 ### Changed
+- Tree and List (Table) views are hidden from the desktop top nav, and Tree is hidden from the mobile segmented nav. Both views remain reachable via direct URL (`/tree`, `/list`) and via the numeric keyboard view shortcuts.
 - The people sidebar now lists only authors for whom a kind-0 profile is known. Pubkeys that only appeared via reactions, presence, or task posts (with no profile ever published) no longer show up; the logged-in user still appears immediately.
 - Composer drafts and failed-publish drafts persisted before this release will be dropped once. Both localStorage stores switched to a `dates: TaskDate[]` array (matching the existing `TaskPost.dates` shape) instead of separate `dueDate`/`dueTime`/`dateType`/`endDate`/`endTime` fields, and old entries are rejected at load. Active in-flight publishes are unaffected; you'll only notice this if you had a half-written composer draft or a failed publish waiting to retry across the upgrade.
 - Calendar-date task dates (NIP-52 kind 31922, "all-day" entries) no longer shift by a day across timezone changes. The in-memory `TaskDate` type is now a discriminated union — calendar dates are stored as `YYYY-MM-DD` strings end-to-end (no JS `Date` object, no UTC round-trip), and only timed events carry a `Date`. Previously a draft picked at NYC at 23:00 local could reload as the next day in another timezone. Three duplicate `parseIsoDateLocal` copies collapsed to one canonical export.
