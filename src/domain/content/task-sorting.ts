@@ -152,8 +152,8 @@ export function sortTasks<T extends Post>(tasks: T[], context: SortContext): T[]
 //
 // Memoised by input-array identity via WeakMap: many sibling hooks
 // (useTaskViewSource in every view, useKanbanViewState, KanbanView, ListView)
-// all call this with the same `allTasks` reference flowing from
-// useIndexDerivedData, and switching views remounts the consuming hooks —
+// all call this with the same `allTasks` reference flowing from Index, and
+// switching views remounts the consuming hooks —
 // re-running the O(N) pass each time. With the cache, only the first hook
 // to call it per allTasks reference pays the cost; everyone else hits an
 // O(1) lookup. Garbage-collected automatically when the array is no longer

@@ -33,7 +33,12 @@ import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 import { useTaskPublishControls } from "@/features/feed-page/controllers/use-task-publish-controls";
 import { useTaskStatusController } from "@/features/feed-page/controllers/use-task-status-controller";
 import { useKind0People } from "@/infrastructure/nostr/use-kind0-people";
-import { useIndexDerivedData } from "@/features/feed-page/controllers/use-index-derived-data";
+import { useAllPosts } from "@/features/feed-page/controllers/use-all-posts";
+import { useChannels } from "@/features/feed-page/controllers/use-channels";
+import { useSidebarPeople } from "@/features/feed-page/controllers/use-sidebar-people";
+import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
+import { resolveCurrentUser } from "@/lib/current-user";
+import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
 import { useFeedSidebarCommandsController } from "@/features/feed-page/controllers/use-feed-sidebar-commands-controller";
 import type { FeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
 import type { FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
@@ -200,26 +205,52 @@ function FeedIndexContent() {
     interactionEffects: frecencyInteractionEffects,
   } = useFeedInteractionFrecency();
 
-  const {
-    allTasks: baseAllTasks,
-    channels,
-    mentionAutocompletePeople,
-    sidebarPeople,
-    currentUser,
-    hasCurrentUserProfileMetadata,
-  } = useIndexDerivedData({
+  const baseAllTasks = useAllPosts({
     demoTasks,
+    isHydrating,
+    hasLiveHydratedScope: hasLiveHydratedRelayScope,
+  });
+
+  const allRelayIds = useMemo(() => relays.map((relay) => relay.id), [relays]);
+
+  const channels = useChannels({
+    allTasks: baseAllTasks,
+    effectiveActiveRelayIds,
+    allRelayIds,
+    channelFrecencyState,
+    userPubkey: user?.pubkey,
+  });
+
+  const sidebarPeople = useSidebarPeople({
+    allTasks: baseAllTasks,
     people,
     latestPresenceByAuthor,
-    cachedKind0Events,
-    user,
     effectiveActiveRelayIds,
-    relays,
-    channelFrecencyState,
+    allRelayIds,
     personFrecencyState,
-    hasLiveHydratedScope: hasLiveHydratedRelayScope,
-    isHydrating,
   });
+
+  const scopedPostsForMentions = useMemo(() => {
+    const scopeIds = resolveChannelRelayScopeIds(effectiveActiveRelayIds, allRelayIds);
+    return baseAllTasks.filter(
+      (task) =>
+        task.relays.length === 0 ||
+        task.relays.some((relayId) => scopeIds.has(relayId))
+    );
+  }, [baseAllTasks, effectiveActiveRelayIds, allRelayIds]);
+
+  const mentionAutocompletePeople = useMentionAutocompletePeople({
+    scopedPosts: scopedPostsForMentions,
+    cachedKind0Events,
+    people,
+  });
+
+  const currentUser = resolveCurrentUser(people, user);
+
+  const hasCurrentUserProfileMetadata = useMemo(
+    () => resolveCurrentUserProfileMetadata(user, cachedKind0Events),
+    [cachedKind0Events, user]
+  );
 
   const sidebarPeopleWithSelected = useMemo(() => {
     const sidebarIds = new Set(sidebarPeople.map((person) => person.pubkey));
