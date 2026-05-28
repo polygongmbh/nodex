@@ -4,12 +4,10 @@ import { useKind0People } from "./use-kind0-people";
 import * as peopleFromKind0 from "./people-from-kind0";
 import { DEMO_RELAY_URL } from "@/data/basic-nostr-events";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { __resetSeenPubkeysForTests } from "@/features/feed-page/stores/seen-pubkeys-store";
 
 describe("useKind0People", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    __resetSeenPubkeysForTests();
   });
 
   it("derives people from selected relay kind0 cache without live task events", async () => {

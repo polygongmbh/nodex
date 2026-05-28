@@ -18,7 +18,6 @@ import {
   subscribeToPresenceChanges,
   type LatestPresenceSnapshot,
 } from "@/lib/presence-status";
-import { useSeenPubkeys } from "@/features/feed-page/stores/seen-pubkeys-store";
 
 interface UserProfileSnapshot {
   name?: string;
@@ -62,7 +61,6 @@ export function useKind0People(
   selectedRelayUrls: string[],
   user: NostrUserLike | null,
 ): UseKind0PeopleResult {
-  const seenPubkeys = useSeenPubkeys();
   const normalizedSelectedRelayUrls = useMemo(
     () => normalizeRelayUrlScope(selectedRelayUrls),
     [selectedRelayUrls]
@@ -106,14 +104,12 @@ export function useKind0People(
     () =>
       Array.from(
         new Set(
-          [
-            ...seenPubkeys,
-            ...cachedKind0Events.map((event) => event.pubkey?.trim().toLowerCase()),
-          ]
+          cachedKind0Events
+            .map((event) => event.pubkey?.trim().toLowerCase())
             .filter((pubkey): pubkey is string => Boolean(pubkey))
         )
       ),
-    [cachedKind0Events, seenPubkeys]
+    [cachedKind0Events]
   );
 
   useEffect(() => {

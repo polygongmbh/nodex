@@ -1,5 +1,5 @@
 // Shared subscriber-notification batching for the in-memory stores
-// (posts-store, seen-pubkeys-store, reactions-registry, etc.).
+// (posts-store, reactions-registry, etc.).
 //
 // During a heavy event-router drain, each store would otherwise wake its
 // React subscribers on every mutation — for a 5000-event hydration burst

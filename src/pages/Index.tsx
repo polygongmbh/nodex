@@ -17,7 +17,6 @@ import {
 import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
 import { ingestPresenceEvent } from "@/lib/presence-status";
 import { ingestPostEvent } from "@/infrastructure/nostr/post-event-ingest";
-import { noteSeenPubkey } from "@/features/feed-page/stores/seen-pubkeys-store";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useChannelFilterController } from "@/features/feed-page/controllers/use-channel-filter-controller";
@@ -127,7 +126,6 @@ function FeedIndexContent() {
   const isMobile = useIsMobile();
   const dispatchIncomingEvent = useCallback(
     (event: NostrEventWithRelay) => {
-      noteSeenPubkey(event.pubkey);
       if (event.kind === NostrEventKind.Reaction) {
         mergeReactionEvents([event]);
         return;

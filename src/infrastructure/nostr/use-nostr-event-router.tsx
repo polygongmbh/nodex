@@ -194,13 +194,13 @@ export function useNostrEventRouter({
     pendingEventsRef.current = [];
 
     // Suppress per-store subscriber fan-out for the duration of the drain.
-    // posts-store, seen-pubkeys-store, reactions-registry, and presence-status
-    // all opt in via @/lib/store-batch — together they cover every wake-up
-    // the per-event ingestion would trigger. A 5000-event hydration burst
-    // would otherwise wake React thousands of times (seen-pubkeys fires per
-    // unique author, posts-store per ingest, etc.) interleaved with the
-    // drain loop; with batching, we wake React only when input contends or
-    // when the drain finishes.
+    // posts-store, reactions-registry, and presence-status all opt in via
+    // @/lib/store-batch — together they cover every wake-up the per-event
+    // ingestion would trigger. A 5000-event hydration burst would otherwise
+    // wake React thousands of times (posts-store fires per ingest,
+    // reactions-registry per reaction, etc.) interleaved with the drain
+    // loop; with batching, we wake React only when input contends or when
+    // the drain finishes.
     setNotificationBatching(true);
 
     const start = typeof performance !== "undefined" ? performance.now() : 0;

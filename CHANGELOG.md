@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 ### Changed
+- The people sidebar now lists only authors for whom a kind-0 profile is known. Pubkeys that only appeared via reactions, presence, or task posts (with no profile ever published) no longer show up; the logged-in user still appears immediately.
 - Composer drafts and failed-publish drafts persisted before this release will be dropped once. Both localStorage stores switched to a `dates: TaskDate[]` array (matching the existing `TaskPost.dates` shape) instead of separate `dueDate`/`dueTime`/`dateType`/`endDate`/`endTime` fields, so the storage keys are bumped (`nodex.compose-draft.feed-tree` → `.v2`, `nodex.failed-publish-drafts.v1` → `.v2`) and old entries are rejected at load. Active in-flight publishes are unaffected; you'll only notice this if you had a half-written composer draft or a failed publish waiting to retry across the upgrade.
 - Calendar event date chips in the feed are now coloured by where the event sits relative to now: grey once it has fully ended, yellow while it is active (start ≤ now ≤ end), blue while it is still in the future. Events without an explicit end are treated as active for the whole start day.
 
