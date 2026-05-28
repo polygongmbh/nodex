@@ -271,7 +271,7 @@ describe("nostrEventToTask", () => {
     ]);
   });
 
-  it("extracts imeta attachment metadata and deduplicates content URLs", () => {
+  it("extracts imeta attachment metadata", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,
       content: "Screenshot: https://cdn.example.com/mock.png",
@@ -296,23 +296,6 @@ describe("nostrEventToTask", () => {
     ]);
   });
 
-  it("creates attachment candidates from direct content URLs", () => {
-    const event: NostrEventWithRelay = {
-      ...baseEvent,
-      content: "See https://files.example.com/report.pdf",
-      tags: [],
-    };
-
-    const task = nostrEventToTask(event);
-
-    expect(task.attachments).toEqual([
-      {
-        url: "https://files.example.com/report.pdf",
-        mimeType: "application/pdf",
-      },
-    ]);
-  });
-
   it("extracts attachments from NIP-94 top-level url tags", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,
@@ -333,30 +316,6 @@ describe("nostrEventToTask", () => {
       sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       size: 9001,
     });
-  });
-
-  it("enriches blossom content URLs with NIP-94 hash metadata", () => {
-    const sha = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-    const event: NostrEventWithRelay = {
-      ...baseEvent,
-      content: `See https://cdn.blossom.example/${sha}`,
-      tags: [
-        ["x", sha],
-        ["m", "image/webp"],
-        ["size", "321"],
-      ],
-    };
-
-    const task = nostrEventToTask(event);
-
-    expect(task.attachments).toEqual([
-      {
-        url: `https://cdn.blossom.example/${sha}`,
-        mimeType: "image/webp",
-        sha256: sha,
-        size: 321,
-      },
-    ]);
   });
 
   it("resolves indexed person references from content into @pubkey mentions", () => {

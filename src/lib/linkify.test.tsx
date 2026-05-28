@@ -54,7 +54,7 @@ describe("linkifyContent interaction styles", () => {
     expect(swatch).not.toBeNull();
     expect(swatch?.style.backgroundColor).toBe("rgb(255, 170, 0)");
 
-    expect(screen.getByRole("button", { name: "Filter by #fee" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "#fee" })).toBeInTheDocument();
   });
 
   it("renders plain hashtags when plainHashtags is enabled", () => {
