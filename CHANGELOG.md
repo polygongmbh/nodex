@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Composer drafts and failed-publish drafts persisted before this release will be dropped once. Both localStorage stores switched to a `dates: TaskDate[]` array (matching the existing `TaskPost.dates` shape) instead of separate `dueDate`/`dueTime`/`dateType`/`endDate`/`endTime` fields, so the storage keys are bumped (`nodex.compose-draft.feed-tree` → `.v2`, `nodex.failed-publish-drafts.v1` → `.v2`) and old entries are rejected at load. Active in-flight publishes are unaffected; you'll only notice this if you had a half-written composer draft or a failed publish waiting to retry across the upgrade.
+
 ### Added
 - Calendar events (NIP-52, kinds 31922 and 31923) can now be posted directly from the composer via a new "Event" mode next to Task / Comment / Listing. Event mode exposes explicit Start Date / Start Time / End Date / End Time controls (times optional) built on the same date-time picker as the task due date, plus title / summary / location fields shared with NIP-99 listings. All-day events publish as kind 31922 (timezone-independent `YYYY-MM-DD`); timed events publish as kind 31923. Events show up in the feed and on the calendar grid alongside tasks, marked with an "EVENT" label and their start–end range. Calendar events that reference an unknown task are still surfaced (orphan recovery).
 - The calendar view's selected-day panel now has both "Create Task" and "Create Event" buttons, each opening the composer pre-set to the right mode with the day as the start/due date.

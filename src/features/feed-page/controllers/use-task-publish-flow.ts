@@ -1,10 +1,8 @@
 import {
-  getTaskPrimaryDate,
+  getPostDateEntries,
   isCalendarEventPost,
-  isDateBasedEventPost,
   isListingPost,
   isTaskPost,
-  isTimeBasedEventPost,
   getTaskAssigneePubkeys,
   getTaskPriority,
 } from "@/types";
@@ -58,7 +56,6 @@ import {
 } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
-  CalendarEventPost,
   ComposeRecomposeOf,
   ComposeRestoreRequest,
   ComposerDraft,
@@ -74,7 +71,7 @@ import type {
   CommentPost,
   ListingPost,
   TaskCreateResult,
-  TaskDateType,
+  TaskDate,
   TaskEntryType,
   TaskState,
   TaskCreatePayload,
@@ -85,16 +82,6 @@ import type { Person } from "@/types/person";
 
 const PUBLISH_UNDO_DELAY_MS = 5000;
 
-function formatLocalHourMinute(date: Date): string {
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-}
-
-function parseIsoDateLocalForRecompose(iso: string): Date | undefined {
-  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return undefined;
-  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
 
 interface PublishResult {
   success: boolean;
@@ -158,10 +145,8 @@ interface UseTaskPublishFlowOptions {
     publishedEventId?: string;
     kind: NostrEventKind;
     initialState?: TaskState;
-    dueDate?: Date;
+    dates: TaskDate[];
     content: string;
-    dueTime?: string;
-    dateType?: TaskDateType;
     publishedRelayUrls?: string[];
     fallbackRelayUrls: string[];
   }) => Promise<void>;
@@ -326,9 +311,7 @@ export function useTaskPublishFlow({
       tags: extractedTags,
       relays: relayIds,
       postType,
-      dueDate,
-      dueTime,
-      dateType = "due",
+      dates,
       focusedTaskId = null,
       initialState,
       explicitMentionPubkeys = [],
@@ -339,7 +322,6 @@ export function useTaskPublishFlow({
       nip99,
       locationGeohash,
       recomposeOf,
-      eventMetadata,
     } = payload;
     const normalizedPostType = normalizeComposerMessageType(postType);
     if (normalizedPostType !== postType) {
@@ -348,25 +330,19 @@ export function useTaskPublishFlow({
 
     const normalizedTaskType: TaskEntryType = normalizedPostType === "task" ? "task" : "comment";
     const isEventSubmission = normalizedPostType === "event";
-    const eventStartDateTime: Date | undefined = (() => {
-      if (!isEventSubmission || !dueDate) return undefined;
-      if (!dueTime) return dueDate;
-      const match = dueTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-      if (!match) return dueDate;
-      const merged = new Date(dueDate);
+    const startEntry = dates.find((d) => d.type === "start");
+    const endEntry = dates.find((d) => d.type === "end");
+    const mergeDateTime = (date: Date, time?: string): Date => {
+      if (!time) return date;
+      const match = time.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+      if (!match) return date;
+      const merged = new Date(date);
       merged.setHours(Number(match[1]), Number(match[2]), 0, 0);
       return merged;
-    })();
-    const eventEndDateTime: Date | undefined = (() => {
-      if (!isEventSubmission || !eventMetadata?.endDate) return undefined;
-      if (!eventMetadata.endTime) return eventMetadata.endDate;
-      const match = eventMetadata.endTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-      if (!match) return eventMetadata.endDate;
-      const merged = new Date(eventMetadata.endDate);
-      merged.setHours(Number(match[1]), Number(match[2]), 0, 0);
-      return merged;
-    })();
-    const eventIsAllDay = isEventSubmission && !dueTime;
+    };
+    const eventStartDateTime = startEntry ? mergeDateTime(startEntry.date, startEntry.time) : undefined;
+    const eventEndDateTime = endEntry ? mergeDateTime(endEntry.date, endEntry.time) : undefined;
+    const eventIsAllDay = isEventSubmission && !startEntry?.time;
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
@@ -462,9 +438,6 @@ export function useTaskPublishFlow({
       ? Array.from(new Set(mentionPubkeys))
       : undefined;
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-    const submissionDueDate = dueDate;
-    const submissionDueTime = dueTime;
-    const submissionDateType = dateType;
     const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
     const normalizedAttachments = normalizePublishedAttachments([
       ...attachments,
@@ -570,9 +543,11 @@ export function useTaskPublishFlow({
       relayUrls: selectedRelayUrls,
       postType: normalizedPostType,
       createdAt: createdAt.toISOString(),
-      dueDate: submissionDueDate ? submissionDueDate.toISOString() : undefined,
-      dueTime: submissionDueTime,
-      dateType: submissionDateType,
+      dates: dates.map((entry) => ({
+        date: entry.date.toISOString(),
+        time: entry.time,
+        type: entry.type,
+      })),
       parentId: submissionParentId ?? undefined,
       initialState,
       mentionPubkeys,
@@ -619,9 +594,9 @@ export function useTaskPublishFlow({
         const titledBase = {
           ...baseFields,
           id,
-          title: eventMetadata?.title?.trim() || undefined,
-          summary: eventMetadata?.summary?.trim() || undefined,
-          location: eventMetadata?.location?.trim() || undefined,
+          title: titledPost?.title?.trim() || undefined,
+          summary: titledPost?.summary?.trim() || undefined,
+          location: titledPost?.location?.trim() || undefined,
         };
         if (eventIsAllDay) {
           const toIso = (date: Date): string => {
@@ -659,9 +634,7 @@ export function useTaskPublishFlow({
                 authorPubkey: taskAuthor.pubkey,
               }]
             : [],
-          dates: submissionDueDate
-            ? [{ date: submissionDueDate, time: submissionDueTime, type: submissionDateType ?? "due" }]
-            : [],
+          dates,
           assigneePubkeys: assigneePubkeys ?? [],
           priority,
         };
@@ -688,11 +661,7 @@ export function useTaskPublishFlow({
     const composeRestoreState: ComposerDraft = {
       content,
       postType: normalizedPostType,
-      dueDate: submissionDueDate,
-      dueTime: submissionDueTime ?? "",
-      dateType: submissionDateType ?? "due",
-      endTime: eventMetadata?.endTime ?? "",
-      endDate: eventMetadata?.endDate,
+      dates,
       titledPost: { ...(titledPost ?? {}) },
       nip99: nip99 ?? {},
       attachments: normalizedAttachments,
@@ -796,10 +765,8 @@ export function useTaskPublishFlow({
           publishedEventId: publishResult.eventId,
           kind: publishKind,
           initialState,
-          dueDate: submissionDueDate,
+          dates,
           content,
-          dueTime: submissionDueTime,
-          dateType: submissionDateType,
           publishedRelayUrls: publishResult.publishedRelayUrls,
           fallbackRelayUrls: selectedRelayUrls,
         });
@@ -847,10 +814,8 @@ export function useTaskPublishFlow({
       publishedEventId: publishResult.eventId,
       kind: publishKind,
       initialState,
-      dueDate: submissionDueDate,
+      dates,
       content,
-      dueTime: submissionDueTime,
-      dateType: submissionDateType,
       publishedRelayUrls: publishResult.publishedRelayUrls,
       fallbackRelayUrls: selectedRelayUrls,
     });
@@ -929,14 +894,18 @@ export function useTaskPublishFlow({
     notifyIfPartialPublish(relayUrls, result.publishedRelayUrls);
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
 
+    const draftDates: TaskDate[] = draft.dates
+      .map((entry) => {
+        const date = parseStoredDate(entry.date);
+        return date ? { date, time: entry.time, type: entry.type } : null;
+      })
+      .filter((entry): entry is TaskDate => entry !== null);
     await publishTaskCreateFollowUps({
       publishedEventId: result.eventId,
       kind: draft.publishKind,
       initialState: draft.initialState,
-      dueDate: parseStoredDate(draft.dueDate),
+      dates: draftDates,
       content: draft.content,
-      dueTime: draft.dueTime,
-      dateType: draft.dateType,
       publishedRelayUrls: result.publishedRelayUrls,
       fallbackRelayUrls: relayUrls,
     });
@@ -1054,27 +1023,6 @@ export function useTaskPublishFlow({
           ? "comment"
           : "task";
 
-    let restoreStartDate: Date | undefined;
-    let restoreStartTime: string | undefined;
-    let restoreEndDate: Date | undefined;
-    let restoreEndTime: string | undefined;
-    if (isTimeBasedEventPost(existingTask)) {
-      restoreStartDate = existingTask.start;
-      restoreStartTime = formatLocalHourMinute(existingTask.start);
-      if (existingTask.end) {
-        restoreEndDate = existingTask.end;
-        restoreEndTime = formatLocalHourMinute(existingTask.end);
-      }
-    } else if (isDateBasedEventPost(existingTask)) {
-      restoreStartDate = parseIsoDateLocalForRecompose(existingTask.startDate);
-      if (existingTask.endDate) {
-        restoreEndDate = parseIsoDateLocalForRecompose(existingTask.endDate);
-      }
-    } else {
-      restoreStartDate = getTaskPrimaryDate(existingTask)?.date;
-      restoreStartTime = getTaskPrimaryDate(existingTask)?.time;
-    }
-
     let restoreTitle: string | undefined;
     let restoreSummary: string | undefined;
     let restoreLocation: string | undefined;
@@ -1100,11 +1048,7 @@ export function useTaskPublishFlow({
     const restoreState: ComposerDraft = {
       content: existingTask.content,
       postType,
-      dueDate: restoreStartDate,
-      dueTime: restoreStartTime ?? "",
-      dateType: getTaskPrimaryDate(existingTask)?.type ?? "due",
-      endDate: restoreEndDate,
-      endTime: restoreEndTime ?? "",
+      dates: getPostDateEntries(existingTask),
       titledPost: {
         title: restoreTitle,
         summary: restoreSummary,

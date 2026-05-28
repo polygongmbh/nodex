@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, LocateFixed, MapPin, LogIn, Paperclip, Pencil, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { stripStandaloneMentionsAndHashtags } from "@/lib/content-tokens";
-import { Nip99Metadata, PostType, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment, TitledPostFields as TitledPostFieldsType } from "@/types";
+import { Nip99Metadata, PostType, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, ComposeRecomposeOf, PublishedAttachment, TitledPostFields as TitledPostFieldsType } from "@/types";
 import type { ComposerFilterSync } from "./use-composer-filter-sync";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -70,7 +70,7 @@ interface TaskComposerProps {
   getUploadAuthHeader?: (url: string, method: string) => Promise<string | null>;
   canCreateContent?: boolean;
   compact?: boolean;
-  defaultDueDate?: Date;
+  defaultDates?: TaskDate[];
   defaultContent?: string;
   allowEmptyTags?: boolean;
   adaptiveSize?: boolean;
@@ -96,18 +96,11 @@ interface TaskComposerProps {
 }
 
 
-export interface TaskComposerEventMetadata {
-  endDate?: Date;
-  endTime?: string;
-}
-
 export interface TaskComposerFormData {
   content: string;
   tags: string[];
   postType: PostType;
-  dueDate?: Date;
-  dueTime?: string;
-  dateType?: TaskDateType;
+  dates: TaskDate[];
   explicitMentionPubkeys: string[];
   mentionIdentifiers: string[];
   priority?: number;
@@ -118,7 +111,6 @@ export interface TaskComposerFormData {
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   recomposeOf?: ComposeRecomposeOf;
-  eventMetadata?: TaskComposerEventMetadata;
 }
 
 const TITLED_POST_TITLE_MAX_LENGTH = 80;
@@ -182,7 +174,7 @@ export function TaskComposer({
   getUploadAuthHeader,
   canCreateContent: canCreateContentProp = true,
   compact = false,
-  defaultDueDate,
+  defaultDates,
   defaultContent = "",
   allowEmptyTags = false,
   adaptiveSize = false,
@@ -218,20 +210,51 @@ export function TaskComposer({
       resolveTaskComposerInitialState({
         draftStorageKey,
         defaultContent,
-        defaultDueDate,
+        defaultDates,
         allowFeedMessageTypes,
         defaultPostType,
         displayPriorityFromStored,
       }),
-    [allowFeedMessageTypes, defaultContent, defaultDueDate, defaultPostType, draftStorageKey]
+    [allowFeedMessageTypes, defaultContent, defaultDates, defaultPostType, draftStorageKey]
   );
   const shouldFocusOnMount = focusOnMount;
 
   const [content, setContent] = useState(initialComposerState.content);
   const [postType, setPostType] = useState<PostType>(initialComposerState.postType);
-  const [dueDate, setDueDate] = useState<Date | undefined>(initialComposerState.dueDate);
-  const [dueTime, setDueTime] = useState(initialComposerState.dueTime);
-  const [dateType, setDateType] = useState<TaskDateType>(initialComposerState.dateType);
+  const [dates, setDates] = useState<TaskDate[]>(initialComposerState.dates);
+  const primaryDate = dates.find((d) => d.type !== "end");
+  const endEntry = dates.find((d) => d.type === "end");
+  const dueDate = primaryDate?.date;
+  const dueTime = primaryDate?.time ?? "";
+  const dateType: TaskDateType = primaryDate?.type ?? "due";
+  const endDate = endEntry?.date;
+  const endTime = endEntry?.time ?? "";
+  const setDueDate = (next: Date | undefined) => {
+    setDates((prev) => {
+      const others = prev.filter((d) => d.type === "end");
+      if (!next) return others;
+      const existing = prev.find((d) => d.type !== "end");
+      const nextType: TaskDateType = postType === "event" ? "start" : existing?.type ?? "due";
+      return [{ date: next, time: existing?.time, type: nextType }, ...others];
+    });
+  };
+  const setDueTime = (next: string) => {
+    setDates((prev) => prev.map((d) => (d.type === "end" ? d : { ...d, time: next || undefined })));
+  };
+  const setDateType = (next: TaskDateType) => {
+    setDates((prev) => prev.map((d) => (d.type === "end" ? d : { ...d, type: next })));
+  };
+  const setEndDate = (next: Date | undefined) => {
+    setDates((prev) => {
+      const others = prev.filter((d) => d.type !== "end");
+      if (!next) return others;
+      const existing = prev.find((d) => d.type === "end");
+      return [...others, { date: next, time: existing?.time, type: "end" }];
+    });
+  };
+  const setEndTime = (next: string) => {
+    setDates((prev) => prev.map((d) => (d.type === "end" ? { ...d, time: next || undefined } : d)));
+  };
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState("");
@@ -254,8 +277,6 @@ export function TaskComposer({
     }));
   });
   const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...initialComposerState.nip99 }));
-  const [endDate, setEndDate] = useState<Date | undefined>(initialComposerState.endDate);
-  const [endTime, setEndTime] = useState<string>(initialComposerState.endTime);
   const [titledPost, setTitledPost] = useState<TitledPostFieldsType>(
     () => ({ ...initialComposerState.titledPost })
   );
@@ -305,6 +326,13 @@ export function TaskComposer({
       isMountedRef.current = false;
     };
   }, []);
+  useEffect(() => {
+    if (postType !== "event") return;
+    setDates((prev) => {
+      if (prev.every((d) => d.type === "end" || d.type === "start")) return prev;
+      return prev.map((d) => (d.type === "end" ? d : { ...d, type: "start" }));
+    });
+  }, [postType]);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
   const [isDraggingFilesOverComposer, setIsDraggingFilesOverComposer] = useState(false);
 
@@ -480,15 +508,11 @@ export function TaskComposer({
         allowFeedMessageTypes
       )
     );
-    setDueDate(restoreState.dueDate);
-    setDueTime(restoreState.dueTime);
-    setDateType(restoreState.dateType);
+    setDates(restoreState.dates);
     setPriority(restoreState.priority);
     setNip99({ ...restoreState.nip99 });
     setTitledPost({ ...restoreState.titledPost });
     setIsTitleTouched(Boolean(restoreState.titledPost.title?.trim()));
-    setEndDate(restoreState.endDate);
-    setEndTime(restoreState.endTime);
     const restoredGeohash = normalizeGeohash(restoreState.locationGeohash);
     setLocationGeohash(restoredGeohash);
     setShowLocationControls(Boolean(restoredGeohash));
@@ -536,11 +560,7 @@ export function TaskComposer({
       {
         content,
         postType,
-        dueDate,
-        dueTime,
-        dateType,
-        endDate,
-        endTime,
+        dates,
         titledPost,
         nip99,
         locationGeohash,
@@ -552,7 +572,7 @@ export function TaskComposer({
       },
       storedPriorityFromDisplay
     );
-  }, [content, postType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey, titledPost, endDate, endTime]);
+  }, [content, postType, dates, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, activeRecomposeOf, draftStorageKey, titledPost]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -991,10 +1011,6 @@ export function TaskComposer({
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
     const effectivePostType = resolveSubmitType(submitType);
-    const carriesStartDate = effectivePostType === "task" || effectivePostType === "event";
-    const submissionDueDate = carriesStartDate ? dueDate : undefined;
-    const submissionDueTime = carriesStartDate ? (dueTime || undefined) : undefined;
-    const submissionDateType = effectivePostType === "task" ? dateType : undefined;
     if (effectivePostType === "event") {
       if (!dueDate) {
         toast.error(t("composer.event.missingStart"));
@@ -1058,13 +1074,6 @@ export function TaskComposer({
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
     const submittedRecomposeOf = activeRecomposeOf;
     setActiveRecomposeOf(undefined);
-    const eventMetadata: TaskComposerEventMetadata | undefined =
-      effectivePostType === "event"
-        ? {
-            endDate,
-            endTime: endTime.trim() || undefined,
-          }
-        : undefined;
 
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -1082,9 +1091,7 @@ export function TaskComposer({
       content,
       tags: submitTags,
       postType: effectivePostType,
-      dueDate: submissionDueDate,
-      dueTime: submissionDueTime,
-      dateType: submissionDateType,
+      dates,
       explicitMentionPubkeys,
       mentionIdentifiers: authoritativeMentionIdentifiers,
       priority: submittedPriority,
@@ -1093,7 +1100,6 @@ export function TaskComposer({
       titledPost: submittedTitledPost,
       ...(normalizedLocationGeohash ? { locationGeohash: normalizedLocationGeohash } : {}),
       ...(submittedRecomposeOf ? { recomposeOf: submittedRecomposeOf } : {}),
-      ...(eventMetadata ? { eventMetadata } : {}),
     });
 
     const finishSubmitting = () => {

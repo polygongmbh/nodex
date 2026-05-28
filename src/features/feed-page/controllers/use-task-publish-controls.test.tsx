@@ -48,6 +48,7 @@ function Harness({
             publishedEventId: "a".repeat(64),
             kind: NostrEventKind.Task,
             initialState: { status: "open" },
+            dates: [],
             content: "Task content",
             fallbackRelayUrls: ["wss://relay.one"],
           })

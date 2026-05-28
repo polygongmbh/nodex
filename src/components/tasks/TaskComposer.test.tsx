@@ -139,7 +139,7 @@ describe("TaskComposer", () => {
       content: "Ship #backend now",
       tags: ["backend"],
       postType: "task",
-      dateType: "due",
+      dates: [],
       explicitMentionPubkeys: [],
       mentionIdentifiers: [],
       attachments: [],
@@ -263,9 +263,7 @@ describe("TaskComposer", () => {
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
-      dueDate: "2026-04-01T10:00:00.000Z",
-      dueTime: "10:00",
-      dateType: "start",
+      dates: [{ date: "2026-04-01T10:00:00.000Z", time: "10:00", type: "start" }],
       priority: 80,
       locationGeohash: "u33db",
     }));
@@ -284,8 +282,7 @@ describe("TaskComposer", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
         priority: 80,
-        dateType: "start",
-        dueTime: "10:00",
+        dates: [{ date: new Date("2026-04-01T10:00:00.000Z"), time: "10:00", type: "start" }],
         locationGeohash: "u33db",
         tags: expect.arrayContaining(["backend"]),
         explicitMentionPubkeys: [alicePubkey],
@@ -340,9 +337,7 @@ describe("TaskComposer", () => {
         state: {
           content: "second pass at the post",
           postType: "task",
-          dueTime: "",
-          dateType: "due",
-          endTime: "",
+          dates: [],
           titledPost: {},
           nip99: {},
           attachments: [],
@@ -381,9 +376,7 @@ describe("TaskComposer", () => {
       savedAt: new Date().toISOString(),
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
-      dueDate: "2026-04-01T10:00:00.000Z",
-      dueTime: "10:00",
-      dateType: "start",
+      dates: [{ date: "2026-04-01T10:00:00.000Z", time: "10:00", type: "start" }],
       priority: 80,
       locationGeohash: "u33db",
     }));
@@ -424,9 +417,7 @@ describe("TaskComposer", () => {
       savedAt: "2026-04-01T10:00:00.000Z",
       explicitTagNames: ["backend"],
       explicitMentionPubkeys: [alicePubkey],
-      dueDate: "2026-04-06T10:00:00.000Z",
-      dueTime: "10:00",
-      dateType: "start",
+      dates: [{ date: "2026-04-06T10:00:00.000Z", time: "10:00", type: "start" }],
       locationGeohash: "u33db",
       priority: 80,
     }));
@@ -447,11 +438,10 @@ describe("TaskComposer", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
         priority: 80,
-        dateType: "due",
+        dates: [],
         tags: ["design"],
       }));
       expect(onSubmit).toHaveBeenCalledWith(expect.not.objectContaining({
-        dueTime: "10:00",
         locationGeohash: "u33db",
         tags: expect.arrayContaining(["backend"]),
         explicitMentionPubkeys: [alicePubkey],

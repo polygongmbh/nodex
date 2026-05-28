@@ -128,6 +128,7 @@ function Harness({
           tags: [],
           relays: ["relay-one"],
           postType: "task",
+          dates: [],
           ...overrides,
         });
       }}
@@ -144,23 +145,18 @@ function Harness({
       {submitButton("SubmitChildOfferWithDate", {
         content: "Need support",
         postType: "listing",
-        dueDate: new Date("2026-04-01T10:00:00.000Z"),
-        dueTime: "10:00",
-        dateType: "start",
+        dates: [{ date: new Date("2026-04-01T10:00:00.000Z"), time: "10:00", type: "start" }],
         focusedTaskId: "a".repeat(64),
       })}
       {submitButton("SubmitRootOfferWithDate", {
         content: "Need support #general",
         tags: ["general"],
         postType: "listing",
-        dueDate: new Date("2026-04-01T10:00:00.000Z"),
-        dueTime: "10:00",
-        dateType: "start",
+        dates: [{ date: new Date("2026-04-01T10:00:00.000Z"), time: "10:00", type: "start" }],
       })}
       {submitButton("SubmitAuthoritativeMentions", {
         content: "Assign @alice #general",
         tags: ["general"],
-        dateType: "due",
         explicitMentionPubkeys: [],
         mentionIdentifiers: [],
       })}
@@ -172,13 +168,11 @@ function Harness({
         content: "Standup #general",
         tags: ["general"],
         postType: "event",
-        dueDate: new Date("2026-04-01T10:00:00.000Z"),
-        dueTime: "10:00",
+        dates: [
+          { date: new Date("2026-04-01T10:00:00.000Z"), time: "10:00", type: "start" },
+          { date: new Date("2026-04-01T12:00:00.000Z"), time: "12:00", type: "end" },
+        ],
         titledPost: { title: "Standup" },
-        eventMetadata: {
-          endDate: new Date("2026-04-01T12:00:00.000Z"),
-          endTime: "12:00",
-        },
       })}
       <button
         onClick={() => {
@@ -226,10 +220,18 @@ function Harness({
       <output data-testid="restore-id">{String(hook.composeRestoreRequest?.id ?? "")}</output>
       <output data-testid="restore-content">{hook.composeRestoreRequest?.state.content ?? ""}</output>
       <output data-testid="restore-post-type">{hook.composeRestoreRequest?.state.postType ?? ""}</output>
-      <output data-testid="restore-due-date">{hook.composeRestoreRequest?.state.dueDate?.toISOString() ?? ""}</output>
-      <output data-testid="restore-due-time">{hook.composeRestoreRequest?.state.dueTime ?? ""}</output>
-      <output data-testid="restore-end-date">{hook.composeRestoreRequest?.state.endDate?.toISOString() ?? ""}</output>
-      <output data-testid="restore-end-time">{hook.composeRestoreRequest?.state.endTime ?? ""}</output>
+      <output data-testid="restore-start-date">{
+        hook.composeRestoreRequest?.state.dates.find((d) => d.type === "start")?.date.toISOString() ?? ""
+      }</output>
+      <output data-testid="restore-start-time">{
+        hook.composeRestoreRequest?.state.dates.find((d) => d.type === "start")?.time ?? ""
+      }</output>
+      <output data-testid="restore-end-date">{
+        hook.composeRestoreRequest?.state.dates.find((d) => d.type === "end")?.date.toISOString() ?? ""
+      }</output>
+      <output data-testid="restore-end-time">{
+        hook.composeRestoreRequest?.state.dates.find((d) => d.type === "end")?.time ?? ""
+      }</output>
       <output data-testid="restore-recompose">{hook.composeRestoreRequest?.state.recomposeOf?.eventId ?? ""}</output>
       <output data-testid="restore-recompose-parent">{hook.composeRestoreRequest?.state.recomposeOf?.parentId ?? ""}</output>
       <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
@@ -310,8 +312,8 @@ describe("useTaskPublishFlow", () => {
     await waitFor(() => {
       expect(screen.getByTestId("restore-post-type")).toHaveTextContent("event");
     });
-    expect(screen.getByTestId("restore-due-date")).toHaveTextContent("2026-04-01T10:00:00.000Z");
-    expect(screen.getByTestId("restore-due-time")).toHaveTextContent("10:00");
+    expect(screen.getByTestId("restore-start-date")).toHaveTextContent("2026-04-01T10:00:00.000Z");
+    expect(screen.getByTestId("restore-start-time")).toHaveTextContent("10:00");
     expect(screen.getByTestId("restore-end-date")).toHaveTextContent("2026-04-01T12:00:00.000Z");
     expect(screen.getByTestId("restore-end-time")).toHaveTextContent("12:00");
     expect(screen.getByTestId("local-count")).toHaveTextContent("0");

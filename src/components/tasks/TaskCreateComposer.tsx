@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { TaskComposer, type TaskComposerFormData } from "./TaskComposer";
-import type { PostType } from "@/types";
+import type { PostType, TaskDate } from "@/types";
 import { TaskComposerRuntimeProvider, useResolvedTaskComposerEnvironment } from "./task-composer-runtime";
 import { useComposerRelayBlock } from "./use-composer-relay-block";
 import { useComposerFilterSync } from "./use-composer-filter-sync";
@@ -14,7 +14,7 @@ import { getTaskAssigneePubkeys } from "@/types";
 interface TaskCreateComposerProps {
   onCancel: () => void;
   compact?: boolean;
-  defaultDueDate?: Date;
+  defaultDates?: TaskDate[];
   defaultContent?: string;
   focusedTaskId: string | null;
   adaptiveSize?: boolean;
@@ -30,7 +30,7 @@ interface TaskCreateComposerProps {
 export function TaskCreateComposer({
   onCancel,
   compact = false,
-  defaultDueDate,
+  defaultDates,
   defaultContent = "",
   focusedTaskId,
   adaptiveSize = false,
@@ -105,7 +105,7 @@ export function TaskCreateComposer({
         getUploadAuthHeader={async (url, method) => createHttpAuthHeader(url, method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE")}
         filterSync={filterSync}
         compact={compact}
-        defaultDueDate={defaultDueDate}
+        defaultDates={defaultDates}
         defaultContent={defaultContent}
         allowEmptyTags={Boolean(focusedTaskId)}
         adaptiveSize={adaptiveSize}

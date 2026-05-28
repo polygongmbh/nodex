@@ -15,7 +15,7 @@ import { buildLinkedTaskCalendarEvent } from "@/infrastructure/nostr/nip52-task-
 import { buildTaskPriorityUpdateEvent } from "@/infrastructure/nostr/task-property-events";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskKind } from "@/domain/content/task-kind";
-import type { Post, TaskDateType, TaskState, Relay } from "@/types";
+import type { Post, TaskDate, TaskDateType, TaskState, Relay } from "@/types";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
 
@@ -222,10 +222,8 @@ export function useTaskPublishControls({
     publishedEventId?: string;
     kind: NostrEventKind;
     initialState?: TaskState;
-    dueDate?: Date;
+    dates: TaskDate[];
     content: string;
-    dueTime?: string;
-    dateType?: TaskDateType;
     publishedRelayUrls?: string[];
     fallbackRelayUrls: string[];
   }) => {
@@ -233,10 +231,8 @@ export function useTaskPublishControls({
       publishedEventId,
       kind,
       initialState,
-      dueDate,
+      dates,
       content,
-      dueTime,
-      dateType,
       publishedRelayUrls,
       fallbackRelayUrls,
     } = params;
@@ -252,13 +248,13 @@ export function useTaskPublishControls({
     if (effectiveInitialState.status !== "open" || effectiveInitialState.description) {
       await publishTaskStateUpdate(publishedEventId, effectiveInitialState, followUpRelayUrls);
     }
-    if (dueDate) {
+    for (const entry of dates) {
       await publishTaskDueUpdate(
         publishedEventId,
         content,
-        dueDate,
-        dueTime,
-        dateType || "due",
+        entry.date,
+        entry.time,
+        entry.type,
         followUpRelayUrls
       );
     }

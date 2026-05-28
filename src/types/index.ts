@@ -140,9 +140,7 @@ export interface TaskCreatePayload {
   postType: PostType;
   focusedTaskId?: string | null;
   initialState?: TaskState;
-  dueDate?: Date;
-  dueTime?: string;
-  dateType?: TaskDateType;
+  dates: TaskDate[];
   explicitMentionPubkeys?: string[];
   mentionIdentifiers?: string[];
   priority?: number;
@@ -151,7 +149,6 @@ export interface TaskCreatePayload {
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   recomposeOf?: ComposeRecomposeOf;
-  eventMetadata?: { endDate?: Date; endTime?: string };
 }
 
 export interface ComposeRecomposeOf {
@@ -191,11 +188,7 @@ export interface TitledPostFields {
 export interface ComposerDraft {
   content: string;
   postType: PostType;
-  dueDate?: Date;
-  dueTime: string;
-  dateType: TaskDateType;
-  endDate?: Date;
-  endTime: string;
+  dates: TaskDate[];
   titledPost: TitledPostFields;
   nip99: Nip99Metadata;
   locationGeohash?: string;

@@ -556,7 +556,9 @@ export function CalendarView({
                     allowComment={false}
                     allowFeedMessageTypes={composerMode === "event"}
                     defaultPostType={composerMode}
-                    defaultDueDate={selectedDate}
+                    defaultDates={[
+                      { date: selectedDate, type: composerMode === "event" ? "start" : "due" },
+                    ]}
                   />
                 </div>
               )}

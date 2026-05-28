@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { Search, X, Hash, Radio, Users, Check, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, MapPin, AlertTriangle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {   Relay, Channel, TaskCreateResult, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
+import {   Relay, Channel, TaskCreateResult, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
 import type { SidebarPerson } from "@/types/person";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
@@ -188,9 +188,25 @@ export function UnifiedBottomBar({
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
-  const [dueDate, setDueDate] = useState<Date | undefined>(initialComposerState.dueDate);
-  const [dueTime, setDueTime] = useState(initialComposerState.dueTime);
-  const [dateType, setDateType] = useState<TaskDateType>(initialComposerState.dateType);
+  const [dates, setDates] = useState<TaskDate[]>(initialComposerState.dates);
+  const primaryEntry = dates.find((d) => d.type !== "end");
+  const dueDate = primaryEntry?.date;
+  const dueTime = primaryEntry?.time ?? "";
+  const dateType: TaskDateType = primaryEntry?.type ?? "due";
+  const setDueDate = (next: Date | undefined) => {
+    setDates((prev) => {
+      const others = prev.filter((d) => d.type === "end");
+      if (!next) return others;
+      const existing = prev.find((d) => d.type !== "end");
+      return [{ date: next, time: existing?.time, type: existing?.type ?? "due" }, ...others];
+    });
+  };
+  const setDueTime = (next: string) => {
+    setDates((prev) => prev.map((d) => (d.type === "end" ? d : { ...d, time: next || undefined })));
+  };
+  const setDateType = (next: TaskDateType) => {
+    setDates((prev) => prev.map((d) => (d.type === "end" ? d : { ...d, type: next })));
+  };
   const [priority, setPriority] = useState<number | undefined>(initialComposerState.priority);
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>(initialComposerState.explicitTagNames);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(
@@ -335,9 +351,7 @@ export function UnifiedBottomBar({
     const restoreState = composeRestoreRequest.state;
     setSharedText(restoreState.content || "");
     dispatchSearchChange(restoreState.content || "");
-    setDueDate(restoreState.dueDate);
-    setDueTime(restoreState.dueTime || "");
-    setDateType(restoreState.dateType || "due");
+    setDates(restoreState.dates);
     setPriority(displayPriorityFromStored(restoreState.priority));
     setAttachments(
       (restoreState.attachments || []).map((attachment, index) => ({
@@ -392,10 +406,7 @@ export function UnifiedBottomBar({
       {
         content: sharedText,
         postType: "task",
-        dueDate,
-        dueTime,
-        dateType,
-        endTime: "",
+        dates,
         titledPost: {},
         nip99: {},
         explicitTagNames,
@@ -408,9 +419,7 @@ export function UnifiedBottomBar({
     );
   }, [
     sharedText,
-    dueDate,
-    dueTime,
-    dateType,
+    dates,
     explicitTagNames,
     explicitMentionPubkeys,
     priority,
@@ -617,9 +626,7 @@ export function UnifiedBottomBar({
         tags: submitChannels,
         relays: effectiveWritableRelayIds,
         postType: submitType,
-        dueDate,
-        dueTime: dueTime || undefined,
-        dateType,
+        dates,
         focusedTaskId,
         explicitMentionPubkeys,
         priority: submittedPriority,

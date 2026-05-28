@@ -6,6 +6,12 @@ import { z } from "zod";
 import { FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 export { FAILED_PUBLISH_DRAFTS_STORAGE_KEY };
 
+export interface PersistedTaskDate {
+  date: string;
+  time?: string;
+  type: TaskDateType;
+}
+
 export interface FailedPublishDraft {
   id: string;
   author: Person;
@@ -15,9 +21,7 @@ export interface FailedPublishDraft {
   relayUrls: string[];
   postType: PostType;
   createdAt: string;
-  dateType?: TaskDateType;
-  dueDate?: string;
-  dueTime?: string;
+  dates: PersistedTaskDate[];
   parentId?: string;
   initialState?: TaskState;
   mentionPubkeys: string[];
@@ -53,9 +57,13 @@ const failedPublishDraftSchema = z.object({
   relayUrls: z.array(z.string()),
   postType: postTypeSchema,
   createdAt: z.string(),
-  dateType: taskDateTypeSchema.optional(),
-  dueDate: z.string().optional(),
-  dueTime: z.string().optional(),
+  dates: z.array(
+    z.object({
+      date: z.string(),
+      time: z.string().optional(),
+      type: taskDateTypeSchema,
+    })
+  ),
   parentId: z.string().optional(),
   initialState: taskStateSchema.optional(),
   mentionPubkeys: z.array(z.string()),

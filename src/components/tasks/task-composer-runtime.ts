@@ -15,24 +15,21 @@ import type {
   PostType,
   PublishedAttachment,
   Relay,
+  TaskDate,
   TaskDateType,
   TitledPostFields,
 } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
 
 /**
- * Serialized on-disk shape. Dates are ISO strings, optionals reflect "may be
- * absent from older drafts" — `deserializeDraft` applies defaults.
+ * Serialized on-disk shape. Dates are ISO strings; `deserializeDraft` applies
+ * defaults for genuinely-optional fields.
  */
 interface PersistedComposerDraft {
   content: string;
   postType: PostType;
   savedAt: string;
-  dueDate?: string;
-  dueTime?: string;
-  dateType?: TaskDateType;
-  endDate?: string;
-  endTime?: string;
+  dates: Array<{ date: string; time?: string; type: TaskDateType }>;
   titledPost?: TitledPostFields;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
@@ -243,15 +240,12 @@ function resolveInitialPostType(
 function emptyDraft(
   content: string,
   postType: PostType,
-  defaultDueDate?: Date
+  defaultDates: TaskDate[] = []
 ): ComposerDraft {
   return {
     content,
     postType,
-    dueDate: defaultDueDate,
-    dueTime: "",
-    dateType: "due",
-    endTime: "",
+    dates: defaultDates,
     titledPost: {},
     nip99: {},
     attachments: [],
@@ -268,16 +262,19 @@ function deserializeDraft(
   persisted: PersistedComposerDraft,
   postType: PostType,
   displayPriorityFromStored: (stored?: number) => number | undefined,
-  defaultDueDate?: Date
+  defaultDates: TaskDate[] = []
 ): ComposerDraft {
+  const parsedDates: TaskDate[] = (persisted.dates || [])
+    .map((entry) => {
+      const date = parseDraftDate(entry.date);
+      if (!date) return null;
+      return { date, time: entry.time, type: entry.type };
+    })
+    .filter((entry): entry is TaskDate => entry !== null);
   return {
     content: persisted.content,
     postType,
-    dueDate: parseDraftDate(persisted.dueDate) ?? defaultDueDate,
-    dueTime: persisted.dueTime || "",
-    dateType: persisted.dateType || "due",
-    endDate: parseDraftDate(persisted.endDate),
-    endTime: persisted.endTime || "",
+    dates: parsedDates.length > 0 ? parsedDates : defaultDates,
     titledPost: { ...(persisted.titledPost || {}) },
     nip99: { ...(persisted.nip99 || {}) },
     locationGeohash: persisted.locationGeohash,
@@ -304,11 +301,11 @@ function serializeDraft(
     content: draft.content,
     postType: draft.postType,
     savedAt: new Date().toISOString(),
-    dueDate: draft.dueDate?.toISOString(),
-    dueTime: draft.dueTime || undefined,
-    dateType: draft.dateType,
-    endDate: draft.endDate?.toISOString(),
-    endTime: draft.endTime || undefined,
+    dates: draft.dates.map((entry) => ({
+      date: entry.date.toISOString(),
+      time: entry.time,
+      type: entry.type,
+    })),
     titledPost: draft.titledPost,
     nip99: draft.nip99,
     locationGeohash: draft.locationGeohash,
@@ -324,14 +321,14 @@ function serializeDraft(
 export function resolveTaskComposerInitialState({
   draftStorageKey,
   defaultContent,
-  defaultDueDate,
+  defaultDates,
   allowFeedMessageTypes,
   defaultPostType,
   displayPriorityFromStored,
 }: {
   draftStorageKey?: string;
   defaultContent: string;
-  defaultDueDate?: Date;
+  defaultDates?: TaskDate[];
   allowFeedMessageTypes: boolean;
   defaultPostType?: PostType;
   displayPriorityFromStored: (stored?: number) => number | undefined;
@@ -351,18 +348,14 @@ export function resolveTaskComposerInitialState({
       ? persisted
       : null;
   const postType = resolveInitialPostType(substantive, allowFeedMessageTypes, defaultPostType);
-  if (!substantive) return emptyDraft(defaultContent, postType, defaultDueDate);
-  const restored = deserializeDraft(substantive, postType, displayPriorityFromStored, defaultDueDate);
+  if (!substantive) return emptyDraft(defaultContent, postType, defaultDates);
+  const restored = deserializeDraft(substantive, postType, displayPriorityFromStored, defaultDates);
   // For stale drafts, the user's text/attachments/listing details are still
   // worth keeping — those are the "core" content — but auxiliary state (date,
   // location, tags/mentions, recompose intent, selected relays) is dropped so
   // it can't leak across long gaps.
   if (isPersistedDraftStale(substantive)) {
-    restored.dueDate = defaultDueDate;
-    restored.dueTime = "";
-    restored.dateType = "due";
-    restored.endDate = undefined;
-    restored.endTime = "";
+    restored.dates = defaultDates ?? [];
     restored.titledPost = {};
     restored.locationGeohash = undefined;
     restored.explicitTagNames = [];

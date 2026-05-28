@@ -27,7 +27,7 @@ export const PINNED_CHANNELS_STORAGE_KEY_PREFIX = "nodex.pinned-channels";
 
 // ── State ────────────────────────────────────────────────────────────────────
 export const LOGIN_HISTORY_STORAGE_KEY = "nodex.identity.login-history.v1";
-export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts.v1";
+export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts.v2";
 /** Per-user key: append `.${pubkey}`. Marks that the profile completion prompt was already shown for this identity. */
 export const PROFILE_COMPLETION_PROMPTED_STORAGE_KEY_PREFIX = "nodex.profile-completion-prompted.v1";
 
@@ -38,6 +38,6 @@ export const NIP05_CACHE_STORAGE_KEY = "nodex.nip05-resolver.cache.v1";
 export const RELAY_STATUS_CACHE_STORAGE_KEY = "nodex.relay-status-cache.v1";
 export const CHANNEL_FRECENCY_STORAGE_KEY = "nodex.channel-frecency.v1";
 export const PERSON_FRECENCY_STORAGE_KEY = "nodex.person-frecency.v1";
-export const COMPOSE_DRAFT_STORAGE_KEY = "nodex.compose-draft.feed-tree";
+export const COMPOSE_DRAFT_STORAGE_KEY = "nodex.compose-draft.feed-tree.v2";
 /** Prefix for per-relay host fallback cache: append `.${hostname}` */
 export const DEFAULT_RELAY_FALLBACK_STORAGE_KEY_PREFIX = "nodex.default-relay-fallback.v1";

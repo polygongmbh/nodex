@@ -1436,6 +1436,7 @@ describe("UnifiedBottomBar auth gating", () => {
           state: {
             content: "Restored #general",
             postType: "task",
+            dates: [],
             explicitTagNames: [],
             explicitMentionPubkeys: [],
             attachments: [],
@@ -1465,8 +1466,7 @@ describe("UnifiedBottomBar auth gating", () => {
           state: {
             content: "Restored #general",
             postType: "task",
-            dueDate,
-            dueTime: "12:11",
+            dates: [{ date: dueDate, time: "12:11", type: "due" }],
             explicitTagNames: [],
             explicitMentionPubkeys: [],
             attachments: [],
