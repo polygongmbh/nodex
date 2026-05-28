@@ -29,8 +29,6 @@ import {
   isParameterizedReplaceableKind,
 } from "@/infrastructure/nostr/replaceable-events";
 import {
-  extractEmbeddableAttachmentsFromContent,
-  extractSha256FromUrl,
   normalizePublishedAttachments,
   parseImetaTag,
   parseNip94AttachmentMetadataTags,
@@ -145,40 +143,11 @@ export function nostrEventToTask(event: NostrEventWithRelay): Post {
     .map((tag) => parseImetaTag(tag))
     .filter((attachment): attachment is NonNullable<typeof attachment> => Boolean(attachment));
   const nip94LikeAttachments = parseNip94AttachmentMetadataTags(event.tags);
-  const embeddable = extractEmbeddableAttachmentsFromContent(normalizedContent);
-  // The two lookup Maps only matter when both nip94 metadata exists AND the
-  // content has embeddable URLs to look up against. Skip the allocations
-  // (two Maps + two .filter + two .map results) for the common case.
-  const contentAttachments =
-    embeddable.length === 0
-      ? []
-      : nip94LikeAttachments.length === 0
-        ? embeddable
-        : (() => {
-            const nip94ByUrl = new Map<string, (typeof nip94LikeAttachments)[number]>();
-            const nip94BySha = new Map<string, (typeof nip94LikeAttachments)[number]>();
-            for (const attachment of nip94LikeAttachments) {
-              if (attachment.url) nip94ByUrl.set(attachment.url.toLowerCase(), attachment);
-              if (attachment.sha256) nip94BySha.set(attachment.sha256.toLowerCase(), attachment);
-            }
-            return embeddable.map((attachment) => {
-              const byUrl = nip94ByUrl.get(attachment.url.toLowerCase());
-              const hashFromUrl = extractSha256FromUrl(attachment.url);
-              const bySha = hashFromUrl ? nip94BySha.get(hashFromUrl) : undefined;
-              return {
-                ...attachment,
-                ...bySha,
-                ...byUrl,
-                url: attachment.url,
-              };
-            });
-          })();
   const attachments = normalizePublishedAttachments([
     ...imetaAttachments,
     ...nip94LikeAttachments.filter(
       (attachment): attachment is typeof attachment & { url: string } => Boolean(attachment.url)
     ),
-    ...contentAttachments,
   ]);
 
   setRawEvent(event.id, {
