@@ -95,20 +95,24 @@ const presenceMap = new Map<string, LatestPresenceSnapshot>();
 const presenceSubscribers = new Set<() => void>();
 let presenceMapVersion = 0;
 
+// While batching, freeze the version so useSyncExternalStore consumers
+// don't see a moved snapshot on unrelated re-renders. See posts-store
+// for the full rationale.
 let batchedPresencePending = false;
 registerStoreFlusher(() => {
   if (!batchedPresencePending) return false;
   batchedPresencePending = false;
+  presenceMapVersion += 1;
   for (const notify of presenceSubscribers) notify();
   return true;
 });
 
 function notifyPresenceSubscribers(): void {
-  presenceMapVersion += 1;
   if (isBatchingNotifications()) {
     batchedPresencePending = true;
     return;
   }
+  presenceMapVersion += 1;
   for (const notify of presenceSubscribers) notify();
 }
 

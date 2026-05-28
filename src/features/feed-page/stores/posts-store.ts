@@ -88,20 +88,29 @@ if (import.meta.env.DEV) {
 // Subscriber fan-out is batched via the shared store-batch module: while a
 // drain is in flight the router suppresses wake-ups so a 5000-event burst
 // produces ~1 React commit instead of one per event.
+//
+// While batching is active we also FREEZE `version`: bumping it on every
+// in-flight mutation would leak the new snapshot identity to
+// useSyncExternalStore — React reads getSnapshot on every re-render (e.g. a
+// user click during hydration), and a moved version forces a synchronous
+// tearing-safety re-render with the latest data, dragging the heavy derive
+// chain with it. Freezing version means consumers see the same snapshot for
+// the entire drain; the flusher bumps once and wakes everyone together.
 let batchedNotifyPending = false;
 registerStoreFlusher(() => {
   if (!batchedNotifyPending) return false;
   batchedNotifyPending = false;
+  version += 1;
   for (const subscriber of subscribers) subscriber();
   return true;
 });
 
 function notifyChange(): void {
-  version += 1;
   if (isBatchingNotifications()) {
     batchedNotifyPending = true;
     return;
   }
+  version += 1;
   for (const subscriber of subscribers) subscriber();
 }
 

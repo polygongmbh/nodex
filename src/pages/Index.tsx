@@ -218,6 +218,7 @@ function FeedIndexContent() {
     channelFrecencyState,
     personFrecencyState,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
+    isHydrating,
   });
 
   const sidebarPeopleWithSelected = useMemo(() => {

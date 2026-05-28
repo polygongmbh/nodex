@@ -43,6 +43,13 @@ export interface UseIndexDerivedDataOptions {
   channelFrecencyState: ChannelFrecencyState;
   personFrecencyState: PersonFrecencyState;
   hasLiveHydratedScope: boolean;
+  /**
+   * True while the initial subscription backfill is still arriving. The merge
+   * keeps cached posts in the visible set during this window so the UI doesn't
+   * thrash on every chunk; once finalize fires we drop cached and switch to
+   * the now-complete live nostrTasks in a single render.
+   */
+  isHydrating: boolean;
 }
 
 export interface UseIndexDerivedDataResult {
@@ -78,6 +85,7 @@ export function useIndexDerivedData({
   channelFrecencyState,
   personFrecencyState,
   hasLiveHydratedScope,
+  isHydrating,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
   const renderStart = import.meta.env.DEV && typeof performance !== "undefined"
     ? performance.now()
@@ -103,18 +111,22 @@ export function useIndexDerivedData({
   });
 
   const allTasks = useMemo(() => {
-    // Cached posts only hydrate the cold-start view. Once the live subscription
-    // has replayed, nostrTasks is authoritative — including for deletions and
-    // suppressions that the cache layer doesn't know about, so we drop cached
-    // posts from the merge to avoid resurrecting removed ids.
-    const hydrationPosts = hasLiveHydratedScope ? EMPTY_POSTS : cachedPosts;
+    // Cached posts hydrate the visible set while live events are still
+    // arriving. The router holds posts-store's version frozen across the
+    // hydration window, so nostrTasks here is whatever empty/partial
+    // snapshot was committed before batching started — usually [] on a
+    // cold start, plus whatever was already loaded if we re-mount mid-
+    // session. At finalize, the router flushes once and isHydrating flips
+    // false in the same React commit; we drop cached and use the now-
+    // complete nostrTasks. The dedupe handles overlap if both are present.
+    const hydrationPosts = isHydrating ? cachedPosts : EMPTY_POSTS;
     return dedupeMergedTasks([
       ...localTasks,
       ...demoTasks,
       ...hydrationPosts,
       ...nostrTasks,
     ]);
-  }, [cachedPosts, demoTasks, localTasks, nostrTasks, hasLiveHydratedScope]);
+  }, [cachedPosts, demoTasks, localTasks, nostrTasks, isHydrating]);
 
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),

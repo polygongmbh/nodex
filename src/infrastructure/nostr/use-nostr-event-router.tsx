@@ -199,15 +199,14 @@ export function useNostrEventRouter({
     if (batch.length === 0) return;
     pendingEventsRef.current = [];
 
-    // Suppress per-store subscriber fan-out for the duration of the drain.
-    // posts-store, reactions-registry, and presence-status all opt in via
-    // @/lib/store-batch — together they cover every wake-up the per-event
-    // ingestion would trigger. A 5000-event hydration burst would otherwise
-    // wake React thousands of times (posts-store fires per ingest,
-    // reactions-registry per reaction, etc.) interleaved with the drain
-    // loop; with batching, we wake React only when input contends or when
-    // the drain finishes.
-    setNotificationBatching(true);
+    // Batching is enabled for the entire hydration window (see the
+    // useEffect that wires setNotificationBatching to isConnected), not
+    // toggled per chunk — every chunk renders the full Index tree
+    // (~80–100 ms for ~500 posts), so flushing between chunks accumulated
+    // to seconds of wall-clock during hydration even with the drain itself
+    // being cheap. Holding batching across the hydration window keeps the
+    // store snapshots frozen (version doesn't move; see posts-store)
+    // until finalizeBootstrapScope releases them in a single flush.
 
     const start = typeof performance !== "undefined" ? performance.now() : 0;
     const callOnEvent = onEventRef.current;
@@ -266,23 +265,17 @@ export function useNostrEventRouter({
     }
 
     if (moreEventsRemain && !inputPending) {
-      // Budget yield with no input contending. Keep batching enabled so the
-      // next chunk continues without rendering between them, and resume
-      // immediately via the MessageChannel yield (much faster than the 64ms
-      // debounced flush — that's only needed to coalesce cross-microtask
-      // event arrivals from NDK, not mid-drain resumes).
+      // Budget yield with no input contending. Resume immediately via the
+      // MessageChannel yield — much faster than the 64 ms debounced flush,
+      // which is only needed to coalesce cross-microtask NDK event arrivals.
       yieldThenRun(() => flushPendingRef.current());
       return;
     }
 
-    // Drained completely, or input is contending — wake React with the
-    // latest state and let normal scheduling resume.
-    setNotificationBatching(false);
-    flushBatchedNotifications();
-
     if (moreEventsRemain) {
-      // Input yield with more events queued — re-arm via the debounced
-      // flush so the click commits first.
+      // Input is pending — re-arm via the debounced flush so the click
+      // commits first; batching stays on, so the click sees the frozen
+      // snapshot (cheap render) until finalize releases.
       schedulePendingFlushRef.current();
       return;
     }
@@ -323,6 +316,11 @@ export function useNostrEventRouter({
     while (pendingEventsRef.current.length > 0) {
       flushPending();
     }
+    // Release the hydration-wide batch: flush every store at once so React
+    // renders the full Index tree exactly once with the live data, then
+    // disable batching so subsequent ingest updates fan out immediately.
+    flushBatchedNotifications();
+    setNotificationBatching(false);
     setIsHydrating(false);
     setHasLiveHydratedScope(true);
   }, [flushPending, clearQuiescenceTimer]);
@@ -343,6 +341,10 @@ export function useNostrEventRouter({
     if (!isConnected) return;
     if (subscriptionRef.current) return;
     setIsHydrating(true);
+    // Hold subscriber wake-ups across the whole hydration window so the
+    // Index tree renders once with cached state and once again with the
+    // full live data at finalize, instead of once per chunk in between.
+    setNotificationBatching(true);
     bootstrapTimeoutRef.current = window.setTimeout(() => {
       finalizeBootstrapScopeRef.current();
     }, BOOTSTRAP_EOSE_TIMEOUT_MS);
@@ -377,6 +379,9 @@ export function useNostrEventRouter({
         quiescenceTimerRef.current = null;
       }
       pendingEventsRef.current = [];
+      // Drop the hydration-wide batch on teardown so the next mount starts
+      // from a clean slate.
+      setNotificationBatching(false);
       setIsHydrating(false);
       subscriptionRef.current?.stop();
       subscriptionRef.current = null;
