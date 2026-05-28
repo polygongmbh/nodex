@@ -14,9 +14,11 @@
 // mutations outside the drain notify immediately as before.
 
 let batchingEnabled = false;
-const flushers = new Set<() => void>();
+// Flushers return true when they actually had pending notifications to fan
+// out. Used purely for instrumentation; semantics are unchanged.
+const flushers = new Set<() => boolean>();
 
-export function registerStoreFlusher(flush: () => void): () => void {
+export function registerStoreFlusher(flush: () => boolean): () => void {
   flushers.add(flush);
   return () => { flushers.delete(flush); };
 }
@@ -30,5 +32,15 @@ export function setNotificationBatching(enabled: boolean): void {
 }
 
 export function flushBatchedNotifications(): void {
-  for (const flush of flushers) flush();
+  const start = import.meta.env.DEV && typeof performance !== "undefined"
+    ? performance.now()
+    : 0;
+  let dirty = 0;
+  for (const flush of flushers) {
+    if (flush()) dirty += 1;
+  }
+  if (import.meta.env.DEV && typeof performance !== "undefined") {
+    const elapsed = performance.now() - start;
+    console.debug(`[hydration-perf] flushBatchedNotifications: dirty=${dirty}/${flushers.size} ms=${elapsed.toFixed(1)}`);
+  }
 }

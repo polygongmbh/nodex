@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useCachedPosts } from "@/features/feed-page/controllers/use-cached-posts";
 import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
@@ -79,6 +79,10 @@ export function useIndexDerivedData({
   personFrecencyState,
   hasLiveHydratedScope,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
+  const renderStart = import.meta.env.DEV && typeof performance !== "undefined"
+    ? performance.now()
+    : 0;
+  const renderCountRef = useRef(0);
   const localTasks = useTaskMutationStore((s) => s.localTasks);
   const postedTags = useTaskMutationStore((s) => s.postedTags);
   const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
@@ -196,6 +200,15 @@ export function useIndexDerivedData({
     () => resolveCurrentUserProfileMetadata(user, cachedKind0Events),
     [cachedKind0Events, user]
   );
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof performance === "undefined") return;
+    renderCountRef.current += 1;
+    const elapsed = performance.now() - renderStart;
+    console.debug(
+      `[hydration-perf] useIndexDerivedData render #${renderCountRef.current}: allTasks=${allTasks.length} channels=${channels.length} sidebarPeople=${sidebarPeople.length} mentionPeople=${mentionAutocompletePeople.length} ms=${elapsed.toFixed(1)}`,
+    );
+  });
 
   return {
     allTasks,

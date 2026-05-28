@@ -70,6 +70,10 @@ import { MotdBanner } from "@/components/MotdBanner";
 import { featureDebugLog } from "@/lib/feature-debug";
 
 function FeedIndexContent() {
+  const renderStart = import.meta.env.DEV && typeof performance !== "undefined"
+    ? performance.now()
+    : 0;
+  const renderCountRef = useRef(0);
   const navigate = useNavigate();
 
   const { publishEvent, signEvent, broadcastSignedEvent, setPresenceRelayUrls, user, defaultNoasHostUrl, isSessionLocked } = useNDK();
@@ -812,6 +816,15 @@ function FeedIndexContent() {
       profileCompletionPromptSignal,
     ]
   );
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof performance === "undefined") return;
+    renderCountRef.current += 1;
+    const elapsed = performance.now() - renderStart;
+    console.debug(
+      `[hydration-perf] FeedIndexContent render #${renderCountRef.current}: view=${currentView} focusedTask=${focusedTaskId ?? "-"} ms=${elapsed.toFixed(1)}`,
+    );
+  });
 
   const welcomeController = (
     <WelcomeController

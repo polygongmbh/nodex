@@ -90,9 +90,10 @@ if (import.meta.env.DEV) {
 // produces ~1 React commit instead of one per event.
 let batchedNotifyPending = false;
 registerStoreFlusher(() => {
-  if (!batchedNotifyPending) return;
+  if (!batchedNotifyPending) return false;
   batchedNotifyPending = false;
   for (const subscriber of subscribers) subscriber();
+  return true;
 });
 
 function notifyChange(): void {

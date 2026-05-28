@@ -62,9 +62,10 @@ if (import.meta.env.DEV) {
 
 let batchedNotifyPending = false;
 registerStoreFlusher(() => {
-  if (!batchedNotifyPending) return;
+  if (!batchedNotifyPending) return false;
   batchedNotifyPending = false;
   for (const notify of subscribers) notify();
+  return true;
 });
 
 function notifySubscribers(): void {

@@ -97,9 +97,10 @@ let presenceMapVersion = 0;
 
 let batchedPresencePending = false;
 registerStoreFlusher(() => {
-  if (!batchedPresencePending) return;
+  if (!batchedPresencePending) return false;
   batchedPresencePending = false;
   for (const notify of presenceSubscribers) notify();
+  return true;
 });
 
 function notifyPresenceSubscribers(): void {

@@ -145,6 +145,12 @@ export function useNostrEventRouter({
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
+    const supported = typeof getScheduling()?.isInputPending === "function";
+    console.debug("[hydration-perf] isInputPending supported:", supported);
+  }, []);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
     registerMemdiagStore("event-router", () => {
       const byKind: Record<string, number> = {};
       for (const [kind, count] of ingestedByKindRef.current) {
@@ -243,6 +249,21 @@ export function useNostrEventRouter({
     }
     const moreEventsRemain = pendingEventsRef.current.length > 0;
     const inputPending = isInputPendingNow();
+
+    const reason = !moreEventsRemain
+      ? "done"
+      : inputPending
+        ? "input-pending"
+        : "budget";
+    if (import.meta.env.DEV && typeof performance !== "undefined") {
+      const elapsed = performance.now() - start;
+      console.debug(
+        `[hydration-perf] drain chunk: processed=${processed} batchSize=${batch.length} pending=${pendingEventsRef.current.length} totalIngested=${ingestedTotalRef.current} ms=${elapsed.toFixed(1)} reason=${reason}`,
+      );
+      try {
+        performance.measure("router-drain-chunk", { start, end: start + elapsed });
+      } catch { /* performance.measure-with-options not supported */ }
+    }
 
     if (moreEventsRemain && !inputPending) {
       // Budget yield with no input contending. Keep batching enabled so the
