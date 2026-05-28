@@ -342,7 +342,7 @@ export function useTaskPublishFlow({
     };
     const eventStartDateTime = startEntry ? mergeDateTime(startEntry.date, startEntry.time) : undefined;
     const eventEndDateTime = endEntry ? mergeDateTime(endEntry.date, endEntry.time) : undefined;
-    const eventIsAllDay = isEventSubmission && !startEntry?.time;
+    const eventIsAllDay = isEventSubmission && !startEntry?.time && !endEntry?.time;
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);

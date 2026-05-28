@@ -1020,6 +1020,11 @@ export function TaskComposer({
         toast.error(t("composer.event.missingTitle"));
         return;
       }
+      const startHasTime = !!primaryDate?.time;
+      const endHasTime = !!endEntry?.time;
+      if (endEntry && startHasTime !== endHasTime) {
+        toast.warning(t("composer.event.timeInferred"));
+      }
     }
 
     const extractedTags = extractHashtagsFromContent(content);

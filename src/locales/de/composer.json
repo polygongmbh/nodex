@@ -81,7 +81,8 @@
       "clearStart": "Startdatum löschen",
       "clearEnd": "Enddatum löschen",
       "missingStart": "Startdatum auswählen",
-      "missingTitle": "Termin-Titel hinzufügen"
+      "missingTitle": "Termin-Titel hinzufügen",
+      "timeInferred": "Fehlende Uhrzeit wird mit 00:00 ergänzt"
     },
     "attachments": {
       "add": "Anhang hinzufügen",

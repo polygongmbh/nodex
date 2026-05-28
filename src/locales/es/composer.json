@@ -81,7 +81,8 @@
       "clearStart": "Borrar fecha de inicio",
       "clearEnd": "Borrar fecha de fin",
       "missingStart": "Selecciona una fecha de inicio",
-      "missingTitle": "Añade un título al evento"
+      "missingTitle": "Añade un título al evento",
+      "timeInferred": "Hora faltante completada con 00:00"
     },
     "attachments": {
       "add": "Añadir archivo",

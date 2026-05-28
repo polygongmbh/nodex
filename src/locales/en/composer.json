@@ -81,7 +81,8 @@
       "clearStart": "Clear start date",
       "clearEnd": "Clear end date",
       "missingStart": "Pick a start date",
-      "missingTitle": "Add an event title"
+      "missingTitle": "Add an event title",
+      "timeInferred": "Filling missing time with 00:00"
     },
     "attachments": {
       "add": "Add attachment",
