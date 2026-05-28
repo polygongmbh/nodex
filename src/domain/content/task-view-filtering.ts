@@ -26,9 +26,37 @@ export interface TaskViewFilterIndex {
   normalizedTagsByTaskId: Map<string, Set<string>>;
 }
 
+// Memoised by (allTasks, people) identity. Every view's useTaskViewSource
+// builds this index on mount; a view switch remounts and re-runs it from
+// scratch with the same upstream references. Nested WeakMap so both refs
+// are GC-tracked.
+const EMPTY_PEOPLE: readonly SelectablePerson[] = [];
+const filterIndexCache = new WeakMap<
+  readonly Post[],
+  WeakMap<readonly SelectablePerson[], TaskViewFilterIndex>
+>();
+
 export function buildTaskViewFilterIndex(
   allTasks: Post[],
   people: SelectablePerson[] = []
+): TaskViewFilterIndex {
+  const peopleKey = people.length === 0 ? EMPTY_PEOPLE : people;
+  let bucket = filterIndexCache.get(allTasks);
+  if (bucket) {
+    const cached = bucket.get(peopleKey);
+    if (cached) return cached;
+  } else {
+    bucket = new WeakMap();
+    filterIndexCache.set(allTasks, bucket);
+  }
+  const result = computeTaskViewFilterIndex(allTasks, people);
+  bucket.set(peopleKey, result);
+  return result;
+}
+
+function computeTaskViewFilterIndex(
+  allTasks: Post[],
+  people: SelectablePerson[]
 ): TaskViewFilterIndex {
   const childrenByParentId = new Map<string, string[]>();
   const searchableTextByTaskId = new Map<string, string>();

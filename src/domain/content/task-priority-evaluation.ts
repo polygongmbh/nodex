@@ -220,10 +220,33 @@ function depthOf(taskId: string, byId: Map<string, Post>, cache: Map<string, num
   return depth;
 }
 
+// Memoised by input-array identity for the default-args call path used by
+// every view's `useMemo(() => evaluateTaskPriorities(allTasks), [allTasks])`.
+// A view switch remounts the consuming hook with the same `allTasks`
+// reference; without this cache the full O(N) eval (childrenMap, depth
+// sorts, raise propagation) ran from scratch every time. Custom `now` or
+// `params` bypass the cache.
+const priorityCache = new WeakMap<readonly Post[], Map<string, PriorityScore>>();
+
 export function evaluateTaskPriorities(
   tasks: readonly Post[],
-  now: number = Date.now(),
-  params: PriorityEvaluationParams = DEFAULT_PRIORITY_PARAMS,
+  now?: number,
+  params?: PriorityEvaluationParams,
+): Map<string, PriorityScore> {
+  if (now === undefined && params === undefined) {
+    const cached = priorityCache.get(tasks);
+    if (cached) return cached;
+    const result = computeTaskPriorities(tasks, Date.now(), DEFAULT_PRIORITY_PARAMS);
+    priorityCache.set(tasks, result);
+    return result;
+  }
+  return computeTaskPriorities(tasks, now ?? Date.now(), params ?? DEFAULT_PRIORITY_PARAMS);
+}
+
+function computeTaskPriorities(
+  tasks: readonly Post[],
+  now: number,
+  params: PriorityEvaluationParams,
 ): Map<string, PriorityScore> {
   const byId = new Map<string, Post>(tasks.map((t) => [t.id, t]));
   const childrenMap = buildChildrenMap(tasks);
