@@ -1,5 +1,7 @@
 import type { NostrEventWithRelay } from "@/lib/nostr/types";
 import { NostrEventKind } from "@/lib/nostr/types";
+import type { TaskDate } from "@/types";
+import { formatLocalIsoDate } from "@/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 import { isTaskStateEventKind, mapTaskStateEventToTaskStatus, extractTaskStateTargetId } from "@/infrastructure/nostr/task-state-events";
 import { isPriorityPropertyEvent, parsePriorityTag, extractPriorityTargetTaskId } from "@/infrastructure/nostr/task-property-events";
@@ -92,12 +94,14 @@ function ingestStateEvent(event: NostrEventWithRelay): void {
 function ingestCalendarDateFold(event: NostrEventWithRelay): void {
   const parsed = parseLinkedTaskDueFromCalendarEvent(event.kind, event.tags);
   if (!parsed.taskId || !parsed.dueDate) return;
+  const type = parsed.dateType ?? "due";
+  const entry: TaskDate = parsed.dueTime
+    ? { datetime: parsed.dueDate, type }
+    : { date: formatLocalIsoDate(parsed.dueDate), type };
   applyDateUpdate({
     targetId: parsed.taskId,
     authorPubkey: event.pubkey,
-    type: parsed.dateType ?? "due",
-    date: parsed.dueDate,
-    time: parsed.dueTime,
+    entry,
     timestampMs: event.created_at * 1000,
   });
 }

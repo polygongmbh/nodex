@@ -165,8 +165,7 @@ describe("posts-store", () => {
     applyDateUpdate({
       targetId: "task-date",
       authorPubkey: author.pubkey,
-      type: "due",
-      date: new Date("2026-06-15T00:00:00Z"),
+      entry: { date: "2026-06-15", type: "due" },
       timestampMs: Date.now(),
     });
     const [post] = getPosts() as TaskPost[];

@@ -18,9 +18,7 @@ export interface PostStateUpdateRequest {
 export interface PostDateUpdateRequest {
   targetId: string;
   authorPubkey: string;
-  type: TaskDateType;
-  date: Date;
-  time?: string;
+  entry: TaskDate;
   timestampMs: number;
 }
 
@@ -82,11 +80,11 @@ export function foldDateUpdateIntoMap(
   update: PostDateUpdateRequest
 ): PostDateLatestMap {
   const next: PostDateLatestMap = perType ?? new Map();
-  const previous = next.get(update.type);
+  const previous = next.get(update.entry.type);
   if (previous && update.timestampMs < previous.timestampMs) return next;
-  next.set(update.type, {
+  next.set(update.entry.type, {
     timestampMs: update.timestampMs,
-    entry: { date: update.date, time: update.time, type: update.type },
+    entry: update.entry,
   });
   return next;
 }
