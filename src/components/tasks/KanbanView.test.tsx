@@ -549,6 +549,89 @@ describe("KanbanView", () => {
     expect(container.querySelector('[data-droppable-id="open"] [data-draggable-id="drag-task"]')).not.toBeInTheDocument();
   });
 
+  // Terminal-column cap + styling cleanup
+
+  it("caps a terminal column at 15 cards and reveals the rest via Show older", () => {
+    const tasks = Array.from({ length: 20 }, (_, i) =>
+      makeTask({
+        id: `done-${i}`,
+        author,
+        state: { status: "done" },
+        content: `Done ${i} #general`,
+        // Older lastEditedAt for higher i so #0 lands on top after latest-first sort.
+        lastEditedAt: new Date(2026, 0, 20 - i),
+      })
+    );
+
+    const { container } = render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={tasks}
+        allTasks={tasks}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    const visibleBefore = container.querySelectorAll('[data-droppable-id="done"] [data-draggable-id]');
+    expect(visibleBefore).toHaveLength(15);
+
+    const showOlder = screen.getByTestId("kanban-show-older-done");
+    expect(showOlder.textContent).toContain("5");
+
+    fireEvent.click(showOlder);
+
+    const visibleAfter = container.querySelectorAll('[data-droppable-id="done"] [data-draggable-id]');
+    expect(visibleAfter).toHaveLength(20);
+    expect(screen.queryByTestId("kanban-show-older-done")).not.toBeInTheDocument();
+  });
+
+  it("does not cap non-terminal columns", () => {
+    const tasks = Array.from({ length: 20 }, (_, i) =>
+      makeTask({ id: `open-${i}`, author, state: { status: "open" }, content: `Open ${i} #general` })
+    );
+
+    const { container } = render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={tasks}
+        allTasks={tasks}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    expect(container.querySelectorAll('[data-droppable-id="open"] [data-draggable-id]')).toHaveLength(20);
+    expect(screen.queryByTestId("kanban-show-older-open")).not.toBeInTheDocument();
+  });
+
+  it("renders done-column card content without strikethrough or muted styling", () => {
+    const doneTask = makeTask({
+      id: "done-task",
+      author,
+      state: { status: "done" },
+      content: "Done task #general",
+    });
+
+    const { container } = render(
+      <KanbanView
+        focusedTaskId={null}
+        tasks={[doneTask]}
+        allTasks={[doneTask]}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    const card = container.querySelector('[data-task-id="done-task"]') as HTMLElement;
+    expect(card).toBeTruthy();
+    expect(card.className).not.toMatch(/opacity-70/);
+    const contentNode = card.querySelector(".whitespace-pre-line") as HTMLElement;
+    expect(contentNode).toBeTruthy();
+    expect(contentNode.className).not.toMatch(/line-through/);
+    expect(contentNode.className).not.toMatch(/text-muted-foreground/);
+  });
+
   it("scrolls the board right when dragging near the right edge", () => {
     const rafCallbacks: FrameRequestCallback[] = [];
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {

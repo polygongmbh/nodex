@@ -39,6 +39,7 @@ import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
+import { isTaskTerminal } from "@/domain/content/task-state";
 import { makeIsProject } from "@/domain/content/task-projects";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useTranslation } from "react-i18next";
@@ -49,6 +50,8 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useTaskViewServices } from "./use-task-view-services";
 import { buildChildrenMap, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
+
+const KANBAN_TERMINAL_COLUMN_INITIAL = 15;
 
 interface KanbanViewProps {
   tasks: Post[];
@@ -165,6 +168,7 @@ export function KanbanView({
   const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskState>>({});
   const [composingColumnId, setComposingColumnId] = useState<string | null>(null);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [expandedTerminalColumns, setExpandedTerminalColumns] = useState<Set<string>>(() => new Set());
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     tasks,
     allTasks,
@@ -212,6 +216,42 @@ export function KanbanView({
     }
     return out;
   }, [columns, kanbanTasks, optimisticStatusByTaskId, sortContext]);
+
+  // Terminal columns (done/closed) grow monotonically; render only the most
+  // recent N until the user expands. Sorting for terminal columns is already
+  // latest-modified-first (see sortKanbanColumnTasks), so slice() returns the
+  // newest tasks.
+  const isTerminalColumn = useCallback(
+    (column: KanbanColumn) => isTaskTerminal(column.state.status),
+    []
+  );
+  const visibleIdsForColumn = useCallback(
+    (column: KanbanColumn): string[] => {
+      const ids = taskIdsByColumnId.get(column.id) ?? [];
+      if (!isTerminalColumn(column)) return ids;
+      if (expandedTerminalColumns.has(column.id)) return ids;
+      return ids.slice(0, KANBAN_TERMINAL_COLUMN_INITIAL);
+    },
+    [taskIdsByColumnId, isTerminalColumn, expandedTerminalColumns]
+  );
+
+  // Prune expansion entries for columns that no longer exist (e.g. filter
+  // change removed all done tasks). Don't reset entries for still-present
+  // columns — the user's choice should persist across unrelated re-renders.
+  useEffect(() => {
+    setExpandedTerminalColumns((previous) => {
+      if (previous.size === 0) return previous;
+      const columnIds = new Set(columns.map((column) => column.id));
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of previous) {
+        if (columnIds.has(id)) next.add(id);
+        else changed = true;
+      }
+      return changed ? next : previous;
+    });
+  }, [columns]);
+
   // Canonical store map. IDs put into taskIdsByColumnId all originate from
   // kanbanTasks (TaskPost[]); the render-site type guard re-narrows.
   const taskById = resolvePostsByIdFor(allTasks);
@@ -350,18 +390,15 @@ export function KanbanView({
     dispatchStatusChange(taskId, nextStatus);
   };
 
-  // Flatten all visible task IDs for keyboard navigation (across all columns).
-  // The id arrays in taskIdsByColumnId are already what we want; flatMap just
-  // glues them together — no per-column .map() copy.
-  const allVisibleTaskIds = useMemo(() => {
-    return columns.flatMap((column) => taskIdsByColumnId.get(column.id) ?? []);
-  }, [columns, taskIdsByColumnId]);
-
-  // Column-aware task IDs for Kanban navigation — references reused
-  // verbatim from taskIdsByColumnId; no per-column allocation.
+  // Keyboard navigation uses the same visible slice as the render so arrows
+  // never focus a hidden card sitting past a collapsed terminal column's cap.
   const columnTaskIds = useMemo(
-    () => columns.map((column) => taskIdsByColumnId.get(column.id) ?? []),
-    [columns, taskIdsByColumnId]
+    () => columns.map((column) => visibleIdsForColumn(column)),
+    [columns, visibleIdsForColumn]
+  );
+  const allVisibleTaskIds = useMemo(
+    () => columnTaskIds.flat(),
+    [columnTaskIds]
   );
 
   // Track keyboard focus state
@@ -556,38 +593,61 @@ export function KanbanView({
                   isDraggingOver={false}
                   className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2"
                 >
-                  <div className="flex h-full min-h-full min-w-0 flex-col gap-2">
-                    {(taskIdsByColumnId.get(column.id) ?? []).map((taskId) => {
-                      const task = taskById.get(taskId);
-                      if (!task || !isTaskPost(task)) return null;
-                      const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
-                      return (
-                        <DraggableCardWrapper
-                          key={task.id}
-                          id={task.id}
-                          disabled={!canChangeStatus}
-                        >
-                          <KanbanTaskCard
-                            task={task}
-                            currentUser={currentUser}
-                            people={people}
-                            displayStatus={getTaskEffectiveStatus(task)}
-                            ancestorChain={!compactTaskCardsEnabled && showContext ? getAncestorChain(task.id) : []}
-                            showContext={showContext}
-                            compactTaskCardsEnabled={compactTaskCardsEnabled}
-                            isKeyboardFocused={keyboardFocusedTaskId === task.id && activeTaskId === null}
-                            isInteractionBlocked={isInteractionBlocked}
-                            isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
-                            isProject={isProject(task.id)}
-                            subtaskCounts={subtaskCountsByParent.get(task.id)}
-                          />
-                        </DraggableCardWrapper>
-                      );
-                    })}
-                    {(taskIdsByColumnId.get(column.id) ?? []).length === 0 && <div className="flex-1 min-h-[96px]" />}
-                    {/* Bottom buffer so the last card isn't flush against the scroll edge */}
-                    <div className="h-6 shrink-0" />
-                  </div>
+                  {(() => {
+                    const fullIds = taskIdsByColumnId.get(column.id) ?? [];
+                    const visibleIds = visibleIdsForColumn(column);
+                    const hiddenCount = fullIds.length - visibleIds.length;
+                    return (
+                      <div className="flex h-full min-h-full min-w-0 flex-col gap-2">
+                        {visibleIds.map((taskId) => {
+                          const task = taskById.get(taskId);
+                          if (!task || !isTaskPost(task)) return null;
+                          const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+                          return (
+                            <DraggableCardWrapper
+                              key={task.id}
+                              id={task.id}
+                              disabled={!canChangeStatus}
+                            >
+                              <KanbanTaskCard
+                                task={task}
+                                currentUser={currentUser}
+                                people={people}
+                                displayStatus={getTaskEffectiveStatus(task)}
+                                ancestorChain={!compactTaskCardsEnabled && showContext ? getAncestorChain(task.id) : []}
+                                showContext={showContext}
+                                compactTaskCardsEnabled={compactTaskCardsEnabled}
+                                isKeyboardFocused={keyboardFocusedTaskId === task.id && activeTaskId === null}
+                                isInteractionBlocked={isInteractionBlocked}
+                                isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
+                                isProject={isProject(task.id)}
+                                subtaskCounts={subtaskCountsByParent.get(task.id)}
+                              />
+                            </DraggableCardWrapper>
+                          );
+                        })}
+                        {hiddenCount > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedTerminalColumns((previous) => {
+                                const next = new Set(previous);
+                                next.add(column.id);
+                                return next;
+                              })
+                            }
+                            className="text-xs text-muted-foreground hover:text-foreground py-1.5 self-stretch rounded hover:bg-muted/40 transition-colors"
+                            data-testid={`kanban-show-older-${column.id}`}
+                          >
+                            {t("kanban.showOlder", { count: hiddenCount, defaultValue: "Show {{count}} older" })}
+                          </button>
+                        ) : null}
+                        {fullIds.length === 0 && <div className="flex-1 min-h-[96px]" />}
+                        {/* Bottom buffer so the last card isn't flush against the scroll edge */}
+                        <div className="h-6 shrink-0" />
+                      </div>
+                    );
+                  })()}
                 </DroppableColumnContent>
               </div>
             ))}

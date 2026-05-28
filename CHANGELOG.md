@@ -6,6 +6,10 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Kanban's terminal-state columns (Done, Closed) now render only the 15 most-recent cards initially with a `Show N older` button to reveal the rest, so long-lived boards stay snappy as completed tasks pile up.
+- Kanban cards no longer dim, strike through, or mute their text when they sit in Done/Closed columns — the column header already carries that signal, so the per-card styling was redundant and made archived work look like dead weight.
+
 ## [4.0.0] - 2026-05-28
 Major release: NIP-52 calendar event composing, a typed in-memory ingest pipeline that replaces raw-event localStorage, a slimmer top nav, and broad composer/feed/calendar polish.
 

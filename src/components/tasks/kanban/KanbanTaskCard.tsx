@@ -13,7 +13,6 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
-import { isTaskTerminal } from "@/domain/content/task-state";
 import { cn } from "@/lib/utils";
 import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
@@ -68,9 +67,7 @@ export function KanbanTaskCard({
   const dueDateColor = getDueDateColorClass(primaryMoment, displayStatus, primaryDate?.type);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
-  // Priority editing is also disabled for tasks in terminal states (done/closed) — render as a
-  // disabled-looking chip to avoid the overhead of a select that can't change anything meaningful.
-  const canEditPriority = canChangeStatus && !isTaskTerminal(displayStatus);
+  const canEditPriority = canChangeStatus;
   const surfaceBlockedFeedback = () => {
     if (isInteractionBlocked && onBlockedInteractionAttempt) {
       onBlockedInteractionAttempt();
@@ -99,7 +96,6 @@ export function KanbanTaskCard({
         // When signed out, render normally — the card stays non-editable but
         // doesn't draw extra attention to its read-only state.
         authPolicy.isSignedIn && !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
-        isTaskTerminal(displayStatus) && "opacity-70",
         isLockedUntilStart && "opacity-50 grayscale",
         isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background"
       )}
@@ -144,14 +140,12 @@ export function KanbanTaskCard({
         className={cn(
           `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
           // Reserve space for the absolutely-positioned priority chip on the first line(s).
-          typeof task.priority === "number" && "pr-14",
-          isTaskTerminal(displayStatus) && "line-through text-muted-foreground"
+          typeof task.priority === "number" && "pr-14"
         )}
       >
         {renderTaskContentWithProjectHeading(task.content, isProject, (tag) => {
           void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
         }, {
-          plainHashtags: isTaskTerminal(displayStatus),
           people,
           disableStandaloneEmbeds: true,
         })}
