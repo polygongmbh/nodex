@@ -1,5 +1,15 @@
 import type { Person } from "./person";
 import { NostrEventKind } from "@/lib/nostr/types";
+import type { ComposerContent, DraftTagging, SubmitTagging } from "./composer-base";
+
+export type {
+  ComposerContent,
+  DraftTagging,
+  SerializedComposerContent,
+  SerializedTaskDate,
+  SubmitTagging,
+  WireTagging,
+} from "./composer-base";
 
 export interface Relay {
   id: string;
@@ -132,24 +142,17 @@ export interface ComposeAttachment extends PublishedAttachment {
  * FeedTaskCommands.createTask and handleNewTask; produced by the composer
  * submit handler (which enriches TaskComposerFormData with routing context:
  * relays, focusedTaskId, initialState).
+ *
+ * SubmitTagging carries `explicitMentionPubkeys` / `mentionIdentifiers` as
+ * required arrays. The payload still treats them as optional so legacy
+ * callers that omit them keep working.
  */
-export interface TaskCreatePayload {
-  content: string;
+export type TaskCreatePayload = ComposerContent & Partial<SubmitTagging> & {
   tags: string[];
   relays: string[];
-  postType: PostType;
   focusedTaskId?: string | null;
   initialState?: TaskState;
-  dates: TaskDate[];
-  explicitMentionPubkeys?: string[];
-  mentionIdentifiers?: string[];
-  priority?: number;
-  attachments?: PublishedAttachment[];
-  titledPost?: TitledPostFields;
-  nip99?: Nip99Metadata;
-  locationGeohash?: string;
-  recomposeOf?: ComposeRecomposeOf;
-}
+};
 
 export interface ComposeRecomposeOf {
   /** Event id of the original post being re-composed. */
@@ -184,24 +187,17 @@ export interface TitledPostFields {
  * mount, the recompose payload, and the input to the persistence function.
  * Required fields carry sensible defaults (`""`, `[]`, `{}`); genuine
  * unknowns stay optional.
+ *
+ * The `titledPost` and `nip99` fields are required here (always seeded to
+ * `{}` / status defaults) even though ComposerContent declares them
+ * optional — the draft maintains a stable shape for setState ergonomics.
  */
-export interface ComposerDraft {
-  content: string;
-  postType: PostType;
-  dates: TaskDate[];
+export type ComposerDraft = ComposerContent & DraftTagging & {
   titledPost: TitledPostFields;
   nip99: Nip99Metadata;
-  locationGeohash?: string;
-  attachments: PublishedAttachment[];
-  /** Display-tier priority (1-5); the persistence layer converts to stored 0-100. */
-  priority?: number;
-  explicitTagNames: string[];
-  explicitMentionPubkeys: string[];
-  /** When set, a successful submission must publish a deletion for the named event. */
-  recomposeOf?: ComposeRecomposeOf;
   /** Relay IDs captured with the draft (set on recompose; ignored for free-form drafts). */
   selectedRelays?: string[];
-}
+};
 
 export interface ComposeRestoreRequest {
   id: number;
