@@ -58,17 +58,12 @@ import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
-
-interface FeedViewProps {
-  posts: Post[];
-  currentUser?: Person;
-  focusedTaskId: string | null;
-  searchQueryOverride?: string;
-  isMobile?: boolean;
-  isPendingPublishTask?: (taskId: string) => boolean;
-  isInteractionBlocked?: boolean;
-  isHydrating?: boolean;
-}
+import { useParams } from "react-router-dom";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
+import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
+import { useIsPendingPublishTask } from "@/features/feed-page/stores/pending-publish-store";
+import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 2000;
 const FEED_REVEAL_SCROLL_THRESHOLD_VIEWPORT_RATIO = 0.75;
@@ -189,14 +184,23 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
 
 export function FeedView({
   posts,
-  currentUser,
-  focusedTaskId = null,
   searchQueryOverride,
-  isMobile = false,
-  isPendingPublishTask,
-  isInteractionBlocked = false,
-  isHydrating = false,
-}: FeedViewProps) {
+  focusedTaskId: focusedTaskIdOverride,
+  isMobile: isMobileOverride,
+}: {
+  posts: Post[];
+  searchQueryOverride?: string;
+  focusedTaskId?: string | null;
+  isMobile?: boolean;
+}) {
+  const isMobileFromHook = useIsMobile();
+  const isMobile = isMobileOverride ?? isMobileFromHook;
+  const currentUser = useCurrentUser();
+  const isInteractionBlocked = useIsInteractionBlocked();
+  const isPendingPublishTask = useIsPendingPublishTask();
+  const isHydrating = useIsHydrating();
+  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
+  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
   const { t, i18n } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();

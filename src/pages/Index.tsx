@@ -39,6 +39,10 @@ import { useSidebarPeople } from "@/features/feed-page/controllers/use-sidebar-p
 import { useMentionAutocompletePeople } from "@/features/feed-page/controllers/use-mention-autocomplete-people";
 import { resolveCurrentUser } from "@/lib/current-user";
 import { hasCurrentUserProfileMetadata as resolveCurrentUserProfileMetadata } from "@/domain/auth/profile-metadata";
+import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
+import { useInteractionBlockStore } from "@/features/feed-page/stores/interaction-block-store";
+import { usePendingPublishStore } from "@/features/feed-page/stores/pending-publish-store";
+import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 import { useFeedSidebarCommandsController } from "@/features/feed-page/controllers/use-feed-sidebar-commands-controller";
 import type { FeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
 import type { FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
@@ -168,6 +172,9 @@ function FeedIndexContent() {
     onEvent: dispatchIncomingEvent,
   });
   useEffect(() => {
+    useHydrationStatusStore.getState().setIsHydrating(isHydrating);
+  }, [isHydrating]);
+  useEffect(() => {
     setReactionsViewerPubkey(user?.pubkey);
   }, [user?.pubkey]);
 
@@ -246,6 +253,9 @@ function FeedIndexContent() {
   });
 
   const currentUser = resolveCurrentUser(people, user);
+  useEffect(() => {
+    useCurrentUserStore.getState().setCurrentUser(currentUser);
+  }, [currentUser]);
 
   const hasCurrentUserProfileMetadata = useMemo(
     () => resolveCurrentUserProfileMetadata(user, cachedKind0Events),
@@ -357,6 +367,12 @@ function FeedIndexContent() {
     handleOpenAuthModal,
     publishEvent,
   });
+  useEffect(() => {
+    useInteractionBlockStore.getState().setInteractionBlock({
+      isInteractionBlocked,
+      onBlockedInteractionAttempt: handleBlockedInteractionAttempt,
+    });
+  }, [isInteractionBlocked, handleBlockedInteractionAttempt]);
 
   const {
     handleToggleComplete,
@@ -613,6 +629,9 @@ function FeedIndexContent() {
     publishTaskPriorityUpdate,
     publishTaskCreateFollowUps,
   });
+  useEffect(() => {
+    usePendingPublishStore.getState().setPendingPublishPredicate(isPendingPublishTask);
+  }, [isPendingPublishTask]);
 
   const { publishOfflinePresenceNow } = useRelayScopedPresence({
     userPubkey: user?.pubkey,

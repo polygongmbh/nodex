@@ -39,29 +39,34 @@ import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useTaskViewServices } from "./use-task-view-services";
 import { CalendarTaskCard } from "./calendar/CalendarTaskCard";
+import { useParams } from "react-router-dom";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalendarViewProps {
   posts: Post[];
-  currentUser?: Person;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
   searchQueryOverride?: string;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
-  isHydrating?: boolean;
 }
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 
 export function CalendarView({
   posts,
-  currentUser,
   searchQueryOverride,
-  focusedTaskId = null,
+  focusedTaskId: focusedTaskIdOverride,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
-  isMobile = false,
+  isMobile: isMobileOverride,
 }: CalendarViewProps) {
+  const currentUser = useCurrentUser();
+  const isMobileFromHook = useIsMobile();
+  const isMobile = isMobileOverride ?? isMobileFromHook;
+  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
+  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
   const { t } = useTranslation(["tasks", "composer"]);
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();

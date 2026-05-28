@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ListView } from "./ListView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 
 let mockUser: { id: string } | null = { id: "me" };
 const dispatchFeedInteraction = vi.fn();
@@ -16,6 +17,8 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
+  // Tests pre-date depthMode being store-backed; restore the legacy default.
+  usePreferencesStore.getState().setDisplayDepthMode("leaves");
 });
 
 describe("ListView priority control", () => {

@@ -52,15 +52,18 @@ import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
+import { useParams } from "react-router-dom";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
+import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 
 interface ListViewProps {
   posts: Post[];
-  currentUser?: Person;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
   searchQueryOverride?: string;
   depthMode?: DisplayDepthMode;
-  isInteractionBlocked?: boolean;
-  isHydrating?: boolean;
+  /** Test-only escape hatch over the current-user store. */
+  currentUser?: Person;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -118,13 +121,18 @@ const PriorityCell = memo(function PriorityCell({
 
 export function ListView({
   posts,
-  currentUser,
   searchQueryOverride,
-  depthMode = "leaves",
-  focusedTaskId,
-  isInteractionBlocked = false,
-  isHydrating = false,
+  depthMode,
+  focusedTaskId: focusedTaskIdOverride,
+  currentUser: currentUserOverride,
 }: ListViewProps) {
+  const currentUserFromStore = useCurrentUser();
+  const currentUser = currentUserOverride ?? currentUserFromStore;
+  const isInteractionBlocked = useIsInteractionBlocked();
+  const displayDepthMode = usePreferencesStore((s) => s.displayDepthMode);
+  const resolvedDepthMode = depthMode ?? displayDepthMode;
+  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
+  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
@@ -144,7 +152,7 @@ export function ListView({
     posts,
     focusedTaskId,
     searchQueryOverride,
-    depthMode,
+    depthMode: resolvedDepthMode,
   });
   const prevTasksHashRef = useRef<number>(0);
   const prevSearchRef = useRef(searchQuery);
@@ -215,7 +223,7 @@ export function ListView({
   const sortListTasks = useCallback((taskCandidates: TaskPost[]): TaskPost[] => {
     let filtered = filterTasksByDepthMode({
       tasks: taskCandidates,
-      depthMode,
+      depthMode: resolvedDepthMode,
       focusedTaskId,
       getDepth,
       hasChildren,
@@ -271,7 +279,7 @@ export function ListView({
     return filtered;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    depthMode,
+    resolvedDepthMode,
     focusedTaskId,
     getDepth,
     hasChildren,

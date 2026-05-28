@@ -9,6 +9,13 @@ import { setRawEvent } from "@/stores/raw-events";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import * as linkify from "@/lib/linkify";
+import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
+import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
+
+const useIsMobileMock = vi.fn(() => false);
+vi.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => useIsMobileMock(),
+}));
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: (): { user: null } => ({ user: null }),
@@ -54,15 +61,23 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
+  useIsMobileMock.mockReturnValue(false);
+  useHydrationStatusStore.getState().setIsHydrating(false);
+  useCurrentUserStore.getState().setCurrentUser(undefined);
 });
 
 type FeedViewProps = ComponentProps<typeof FeedView>;
-type TestFeedViewProps = Omit<FeedViewProps, "focusedTaskId"> & { focusedTaskId?: string | null };
+type TestFeedViewProps = FeedViewProps & {
+  isHydrating?: boolean;
+};
 
 function renderFeedView(
-  { focusedTaskId = null, ...rest }: TestFeedViewProps,
+  { focusedTaskId = null, isHydrating, ...rest }: TestFeedViewProps,
   surfaceOverrides: Partial<FeedSurfaceState> = {}
 ) {
+  if (typeof isHydrating === "boolean") {
+    useHydrationStatusStore.getState().setIsHydrating(isHydrating);
+  }
   const surfaceState: FeedSurfaceState = {
     relays,
     channels,
@@ -1067,8 +1082,9 @@ describe("FeedView", () => {
       priority: 40,
     });
 
+    useCurrentUserStore.getState().setCurrentUser(author);
     render(
-      <FeedView focusedTaskId={null} posts={[taskWithPriority]} currentUser={author} />
+      <FeedView focusedTaskId={null} posts={[taskWithPriority]} />
     );
 
     chooseComboboxOptionByIndex("priority-select", 4);

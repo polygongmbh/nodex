@@ -1,7 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
+import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
+import { useIsPendingPublishTask } from "@/features/feed-page/stores/pending-publish-store";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Post, isTaskPost } from "@/types";
-import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
@@ -15,27 +19,24 @@ import {
 import { useTaskViewServices } from "./use-task-view-services";
 import { TaskAuthorProfilesProvider } from "./task-author-profiles-context";
 
-interface TaskTreeProps {
-  posts: Post[];
-  currentUser?: Person;
-  focusedTaskId: string | null;
-  searchQueryOverride?: string;
-  isMobile?: boolean;
-  isPendingPublishTask?: (taskId: string) => boolean;
-  isInteractionBlocked?: boolean;
-  isHydrating?: boolean;
-}
-
 export function TaskTree({
   posts,
-  currentUser,
   searchQueryOverride,
-  focusedTaskId,
-  isMobile = false,
-  isPendingPublishTask,
-  isInteractionBlocked = false,
-  isHydrating = false,
-}: TaskTreeProps) {
+  focusedTaskId: focusedTaskIdOverride,
+  isMobile: isMobileOverride,
+}: {
+  posts: Post[];
+  searchQueryOverride?: string;
+  focusedTaskId?: string | null;
+  isMobile?: boolean;
+}) {
+  const isMobileFromHook = useIsMobile();
+  const isMobile = isMobileOverride ?? isMobileFromHook;
+  const currentUser = useCurrentUser();
+  const isInteractionBlocked = useIsInteractionBlocked();
+  const isPendingPublishTask = useIsPendingPublishTask();
+  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
+  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
   const { forceShowComposer } = useFeedViewInteractionModel();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();

@@ -52,21 +52,23 @@ import {
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskViewServices } from "./use-task-view-services";
+import { useParams } from "react-router-dom";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 
 interface UpcomingViewProps {
   posts: Post[];
-  currentUser?: Person;
-  focusedTaskId: string | null;
+  focusedTaskId?: string | null;
   searchQueryOverride?: string;
-  isHydrating?: boolean;
 }
 
 export function UpcomingView({
   posts,
-  currentUser,
-  focusedTaskId,
+  focusedTaskId: focusedTaskIdOverride,
   searchQueryOverride,
 }: UpcomingViewProps) {
+  const currentUser = useCurrentUser();
+  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
+  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();

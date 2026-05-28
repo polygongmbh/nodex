@@ -160,19 +160,21 @@ export function MobileLayout() {
         <MobileFilters profileEditorOpenSignal={profileEditorOpenSignal} />
       );
     }
+    const viewPosts = effectiveTaskViewModel.allTasks;
+    const viewSearchOverride = effectiveTaskViewModel.searchQueryOverride;
     switch (activePrimaryView) {
       case "status":
-        return <StatusView />;
+        return <StatusView posts={viewPosts} />;
       case "tree":
-        return <TaskTree {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} isMobile />;
+        return <TaskTree posts={viewPosts} searchQueryOverride={viewSearchOverride} isMobile />;
       case "feed":
-        return <FeedView {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} isMobile />;
+        return <FeedView posts={viewPosts} searchQueryOverride={viewSearchOverride} isMobile />;
       case "list":
-        return <UpcomingView {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} />;
+        return <UpcomingView posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
       case "calendar":
-        return <CalendarView {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} searchQueryOverride="" isMobile selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView posts={viewPosts} searchQueryOverride="" isMobile selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
-        return <TaskTree {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} isMobile />;
+        return <TaskTree posts={viewPosts} searchQueryOverride={viewSearchOverride} isMobile />;
     }
   };
 

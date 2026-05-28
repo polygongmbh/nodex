@@ -7,18 +7,22 @@ import { resolveStatusConcernsScope, resolveStatusPeopleScope } from "./status-f
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
+import { useParams } from "react-router-dom";
+import type { Post } from "@/types";
 
-export function StatusView() {
+export function StatusView({ posts }: { posts: Post[] }) {
   const { t } = useTranslation("tasks");
   const isMobile = useIsMobile();
-  const viewModel = useFeedTaskViewModel();
+  const currentUser = useCurrentUser();
+  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
+  const focusedTaskId = focusedTaskIdParam ?? null;
   const surface = useFeedSurfaceState();
   const taskSource = useTaskViewSource({
-    posts: viewModel.allTasks,
-    focusedTaskId: viewModel.focusedTaskId,
+    posts,
+    focusedTaskId,
   });
   const { included, excluded } = useMemo(
     () => getIncludedExcludedChannelNames(taskSource.channels),
@@ -66,12 +70,12 @@ export function StatusView() {
   // in items that involve the current user OR any sidebar-selected people, in
   // addition to the top-level items everyone sees.
   const myTasksPeopleScope = useMemo(
-    () => resolveStatusPeopleScope(selectedPeoplePubkeys, viewModel.currentUser?.pubkey),
-    [selectedPeoplePubkeys, viewModel.currentUser?.pubkey]
+    () => resolveStatusPeopleScope(selectedPeoplePubkeys, currentUser?.pubkey),
+    [selectedPeoplePubkeys, currentUser?.pubkey]
   );
   const timelineConcernsScope = useMemo(
-    () => resolveStatusConcernsScope(selectedPeoplePubkeys, viewModel.currentUser?.pubkey),
-    [selectedPeoplePubkeys, viewModel.currentUser?.pubkey]
+    () => resolveStatusConcernsScope(selectedPeoplePubkeys, currentUser?.pubkey),
+    [selectedPeoplePubkeys, currentUser?.pubkey]
   );
   const pinnedChannelIds = useMemo(
     () =>

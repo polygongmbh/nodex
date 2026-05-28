@@ -25,7 +25,7 @@ const ListView = lazy(() =>
 );
 
 export function DesktopViewsPane() {
-  const { currentView, displayDepthMode } = useFeedViewState();
+  const { currentView } = useFeedViewState();
   const viewModel = useFeedTaskViewModel();
   const taskSource = useTaskViewSource({
     posts: viewModel.allTasks,
@@ -83,28 +83,29 @@ export function DesktopViewsPane() {
       : currentView === "feed"
         ? scopedTasks.length === 0
         : scopedTasks.every((task) => !isTaskPost(task));
+  const posts = viewModel.allTasks;
   let viewPane: ReactNode;
   switch (currentView) {
     case "status":
-      viewPane = <StatusView />;
+      viewPane = <StatusView posts={posts} />;
       break;
     case "tree":
-      viewPane = <TaskTree {...viewModel} posts={viewModel.allTasks} />;
+      viewPane = <TaskTree posts={posts} />;
       break;
     case "feed":
-      viewPane = <FeedView {...viewModel} posts={viewModel.allTasks} />;
+      viewPane = <FeedView posts={posts} />;
       break;
     case "kanban":
-      viewPane = <KanbanView {...viewModel} posts={viewModel.allTasks} depthMode={displayDepthMode} />;
+      viewPane = <KanbanView posts={posts} />;
       break;
     case "calendar":
-      viewPane = <CalendarView {...viewModel} posts={viewModel.allTasks} />;
+      viewPane = <CalendarView posts={posts} />;
       break;
     case "list":
-      viewPane = <ListView {...viewModel} posts={viewModel.allTasks} depthMode={displayDepthMode} />;
+      viewPane = <ListView posts={posts} />;
       break;
     default:
-      viewPane = <TaskTree {...viewModel} posts={viewModel.allTasks} />;
+      viewPane = <TaskTree posts={posts} />;
       break;
   }
 
