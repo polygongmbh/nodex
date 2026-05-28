@@ -31,12 +31,7 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: root.author.pubkey, name: root.author.name, displayName: root.author.displayName })];
     render(
-      <ListView
-        focusedTaskId={null}
-        tasks={[child]}
-        allTasks={[root, child]}
-        currentUser={people[0]}
-      />
+      <ListView focusedTaskId={null} posts={[root, child]} currentUser={people[0]} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp("\\broot task general\\b", "i") }));
@@ -62,10 +57,8 @@ describe("ListView priority control", () => {
     render(
       <ListView
         focusedTaskId="middle"
-        tasks={[leaf]}
-        allTasks={[root, middle, leaf]}
-        currentUser={people[0]}
-      />
+        posts={[root, middle, leaf]}
+        currentUser={people[0]} />
     );
 
     expect(screen.queryByRole("button", { name: new RegExp("\\broot task general\\b", "i") })).not.toBeInTheDocument();
@@ -86,12 +79,7 @@ describe("ListView priority control", () => {
     const onUpdatePriority = vi.fn();
 
     const { rerender } = render(
-      <ListView
-        focusedTaskId={null}
-        tasks={tasks}
-        allTasks={tasks}
-        currentUser={people[0]}
-      />
+      <ListView focusedTaskId={null} posts={tasks} currentUser={people[0]} />
     );
 
     const [prioritySelect] = screen.getAllByRole("combobox");
@@ -99,12 +87,7 @@ describe("ListView priority control", () => {
     expect(prioritySelect).toHaveFocus();
 
     rerender(
-      <ListView
-        focusedTaskId={null}
-        tasks={tasks}
-        allTasks={tasks}
-        currentUser={people[0]}
-      />
+      <ListView focusedTaskId={null} posts={tasks} currentUser={people[0]} />
     );
 
     const [prioritySelectAfter] = screen.getAllByRole("combobox");
@@ -124,11 +107,7 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     const { container } = render(
-      <ListView
-        focusedTaskId={null}
-        tasks={tasks}
-        allTasks={tasks}
-      />
+      <ListView focusedTaskId={null} posts={tasks} />
     );
 
     const taskRow = container.querySelector('[data-task-id="task-locked"]') as HTMLElement;
@@ -149,12 +128,7 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     render(
-      <ListView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={people[0]}
-      />
+      <ListView focusedTaskId={null} posts={[task]} currentUser={people[0]} />
     );
 
     const statusButton = screen.getByTestId("task-status-toggle");
@@ -182,12 +156,7 @@ describe("ListView priority control", () => {
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
 
     render(
-      <ListView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={people[0]}
-      />
+      <ListView focusedTaskId={null} posts={[task]} currentUser={people[0]} />
     );
 
     fireEvent.click(screen.getByTestId("task-status-toggle"), { altKey: true });
@@ -208,12 +177,7 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     render(
-      <ListView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={people[0]}
-      />
+      <ListView focusedTaskId={null} posts={[task]} currentUser={people[0]} />
     );
 
     fireEvent.click(screen.getByTestId("task-status-toggle"));
@@ -240,12 +204,7 @@ describe("ListView priority control", () => {
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
 
     render(
-      <ListView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={people[0]}
-      />
+      <ListView focusedTaskId={null} posts={[task]} currentUser={people[0]} />
     );
 
     fireEvent.pointerDown(screen.getByTestId("task-status-toggle"));
@@ -264,12 +223,7 @@ describe("ListView priority control", () => {
     });
 
     render(
-      <ListView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={task.author}
-      />
+      <ListView focusedTaskId={null} posts={[task]} currentUser={task.author} />
     );
 
     const preview = screen.getByText("Top line frontend bold https://example.com/image.png");
@@ -289,12 +243,7 @@ describe("ListView priority control", () => {
     });
 
     render(
-      <ListView
-        focusedTaskId={null}
-        tasks={[task]}
-        allTasks={[task]}
-        currentUser={task.author}
-      />
+      <ListView focusedTaskId={null} posts={[task]} currentUser={task.author} />
     );
 
     expect(screen.getByText("can you try implementing this")).toBeInTheDocument();

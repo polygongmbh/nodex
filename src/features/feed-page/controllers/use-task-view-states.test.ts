@@ -109,7 +109,7 @@ describe("createTreeSelectors", () => {
     ]);
     const taskById = new Map(tasks.map((task) => [task.id, task] as const));
     const selectors = createTreeSelectors({
-      allTasks: tasks,
+      posts: tasks,
       focusedTaskId: null,
       deferredSearchQuery: "",
       channels: [makeChannel()],
@@ -150,7 +150,7 @@ function makeCalendarSource(tasks: Post[]): TaskViewSource {
   const childrenMap = buildChildrenMap(tasks);
   const people = [makePerson()];
   return {
-    allTasks: tasks,
+    posts: tasks,
     focusedTaskId: null,
     searchQuery: "",
     deferredSearchQuery: "",

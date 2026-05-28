@@ -53,7 +53,7 @@ describe("FocusedTaskBreadcrumb", () => {
 
     render(
       <FocusedTaskBreadcrumb
-        allTasks={[baseTask, middle, leaf]}
+        posts={[baseTask, middle, leaf]}
         focusedTaskId="leaf"
       />
     );
@@ -72,7 +72,7 @@ describe("FocusedTaskBreadcrumb", () => {
   });
 
   it("navigates back in history when clicking back", () => {
-    render(<FocusedTaskBreadcrumb allTasks={[baseTask]} focusedTaskId={null} />);
+    render(<FocusedTaskBreadcrumb posts={[baseTask]} focusedTaskId={null} />);
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(navigate).toHaveBeenCalledWith(-1);
   });
@@ -88,7 +88,7 @@ describe("FocusedTaskBreadcrumb", () => {
 
     render(
       <FocusedTaskBreadcrumb
-        allTasks={[baseTask, longTask]}
+        posts={[baseTask, longTask]}
         focusedTaskId="long"
       />
     );

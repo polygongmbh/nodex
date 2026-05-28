@@ -74,7 +74,6 @@ const author = makePerson({ pubkey: "me", name: "me", displayName: "Me" });
 describe("DesktopViewsPane overlay", () => {
   it("renders the shared overlay above an empty tree surface", () => {
     renderPane("tree", {
-      tasks: [],
       allTasks: [],
       focusedTaskId: null,
     });
@@ -85,7 +84,6 @@ describe("DesktopViewsPane overlay", () => {
 
   it("renders the same shared overlay for kanban without view-specific gating", async () => {
     renderPane("kanban", {
-      tasks: [],
       allTasks: [],
       focusedTaskId: null,
     });
@@ -105,7 +103,6 @@ describe("DesktopViewsPane overlay", () => {
     });
 
     const { container } = renderPane("list", {
-      tasks: [task],
       allTasks: [task],
       focusedTaskId: null,
     });
@@ -125,7 +122,6 @@ describe("DesktopViewsPane overlay", () => {
     });
 
     renderPane("list", {
-      tasks: [leaf],
       allTasks: [leaf],
       focusedTaskId: "focused-leaf",
     });
@@ -145,7 +141,6 @@ describe("DesktopViewsPane overlay", () => {
     });
 
     const { container } = renderPane("feed", {
-      tasks: [leaf],
       allTasks: [leaf],
       focusedTaskId: "focused-feed-leaf",
     });

@@ -41,8 +41,7 @@ import { useTaskViewServices } from "./use-task-view-services";
 import { CalendarTaskCard } from "./calendar/CalendarTaskCard";
 
 interface CalendarViewProps {
-  tasks: Post[];
-  allTasks: Post[];
+  posts: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -55,8 +54,7 @@ interface CalendarViewProps {
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 
 export function CalendarView({
-  tasks,
-  allTasks,
+  posts,
   currentUser,
   searchQueryOverride,
   focusedTaskId = null,
@@ -94,8 +92,7 @@ export function CalendarView({
   // so the header doesn't briefly flash the previous month during smooth scrolls.
   const programmaticScrollUntilRef = useRef(0);
   const taskSource = useTaskViewSource({
-    tasks,
-    allTasks,
+    posts,
     focusedTaskId,
     searchQueryOverride,
   });
@@ -103,10 +100,10 @@ export function CalendarView({
   const getTasksForDay = calendarSelectors.getTasksForDay;
   const getAncestorChain = calendarSelectors.getAncestorChain;
   const hasChildren = useCallback(
-    (taskId: string): boolean => allTasks.some((task) => isTaskPost(task) && task.parentId === taskId),
-    [allTasks]
+    (taskId: string): boolean => posts.some((task) => isTaskPost(task) && task.parentId === taskId),
+    [posts]
   );
-  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
+  const isProject = useMemo(() => makeIsProject(posts), [posts]);
 
   const desktopMonthSections = useMemo(() => {
     return desktopMonths

@@ -54,8 +54,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useTaskViewServices } from "./use-task-view-services";
 
 interface UpcomingViewProps {
-  tasks: Post[];
-  allTasks: Post[];
+  posts: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -63,8 +62,7 @@ interface UpcomingViewProps {
 }
 
 export function UpcomingView({
-  tasks,
-  allTasks,
+  posts,
   currentUser,
   focusedTaskId,
   searchQueryOverride,
@@ -75,18 +73,17 @@ export function UpcomingView({
   const { people } = useFeedSurfaceState();
 
   const taskSource = useTaskViewSource({
-    tasks,
-    allTasks,
+    posts,
     focusedTaskId,
     searchQueryOverride,
   });
   const calendarSelectors = useMemo(() => createCalendarSelectors(taskSource), [taskSource]);
   const upcomingTasks = calendarSelectors.getUpcomingTasks();
   const hasChildren = useCallback(
-    (taskId: string): boolean => allTasks.some((task) => isTaskPost(task) && task.parentId === taskId),
-    [allTasks]
+    (taskId: string): boolean => posts.some((task) => isTaskPost(task) && task.parentId === taskId),
+    [posts]
   );
-  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
+  const isProject = useMemo(() => makeIsProject(posts), [posts]);
 
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());

@@ -6,17 +6,14 @@ import { isTaskPost } from "@/types";
 import type { Channel, Post } from "@/types";
 
 function Harness({
-  allTasks,
-  tasks,
+  posts,
   channels,
 }: {
-  allTasks: Post[];
-  tasks: Post[];
+  posts: Post[];
   channels: Channel[];
 }) {
   const filtered = useTaskViewFiltering({
-    allTasks,
-    tasks,
+    posts,
     focusedTaskId: null,
     searchQuery: "",
     people: [makePerson()],
@@ -29,14 +26,12 @@ function Harness({
 }
 
 describe("useTaskViewFiltering", () => {
-  it("keeps included channels active even when the relay-scoped task slice has no matching channel", () => {
+  it("returns empty when an included channel matches no post in scope", () => {
     const generalTask = makeTask({ id: "general-task", tags: ["general"], content: "General task #general" });
-    const opsTask = makeTask({ id: "ops-task", tags: ["ops"], content: "Ops task #ops" });
 
     render(
       <Harness
-        allTasks={[generalTask, opsTask]}
-        tasks={[generalTask]}
+        posts={[generalTask]}
         channels={[
           makeChannel({ id: "ops", name: "ops", filterState: "included" }),
           makeChannel({ id: "general", name: "general", filterState: "neutral" }),
@@ -44,6 +39,6 @@ describe("useTaskViewFiltering", () => {
       />
     );
 
-    expect(screen.getByTestId("filtered-task-ids")).toHaveTextContent("");
+    expect(screen.getByTestId("filtered-task-ids")).toBeEmptyDOMElement();
   });
 });

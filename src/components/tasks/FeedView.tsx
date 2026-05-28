@@ -60,8 +60,7 @@ import { InteractivePersonName } from "@/components/people/InteractivePersonName
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
 
 interface FeedViewProps {
-  tasks: Post[];
-  allTasks: Post[];
+  posts: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -189,8 +188,7 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
 }
 
 export function FeedView({
-  tasks,
-  allTasks,
+  posts,
   currentUser,
   focusedTaskId = null,
   searchQueryOverride,
@@ -220,8 +218,7 @@ export function FeedView({
     shouldShowMobileScopeFallback,
     shouldShowScopeFooterHint,
   } = useFeedViewState({
-    tasks,
-    allTasks,
+    posts,
     focusedTaskId,
     searchQueryOverride,
     isMobile,
@@ -251,14 +248,14 @@ export function FeedView({
   const mediaController = useTaskViewMedia(mediaPreviewTasks);
   const { openTaskMedia } = mediaController;
 
-  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
+  const isProject = useMemo(() => makeIsProject(posts), [posts]);
   const parentIdsWithChildren = useMemo(() => {
     const set = new Set<string>();
-    for (const task of allTasks) {
+    for (const task of posts) {
       if (task.parentId) set.add(task.parentId);
     }
     return set;
-  }, [allTasks]);
+  }, [posts]);
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);

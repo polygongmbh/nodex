@@ -734,7 +734,6 @@ function FeedIndexContent() {
   );
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
     () => ({
-      tasks: relayScopedTasks,
       // Views derive over the relay-scoped subset only — the global
       // `allTasks` lives at the Index level (focused-task lookup, scope
       // filter source, breadcrumb ancestor chain) but downstream

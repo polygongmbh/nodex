@@ -28,7 +28,7 @@ beforeEach(() => {
 describe("DesktopSearchDock", () => {
   it("focuses the desktop search input on mount", () => {
     render(
-      <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+      <FeedTaskViewModelProvider value={{ allTasks: [], focusedTaskId: null }}>
         <DesktopSearchDock />
       </FeedTaskViewModelProvider>
     );
@@ -39,7 +39,7 @@ describe("DesktopSearchDock", () => {
   it("shows a clear button only when search has content and clears it on click", () => {
     mockUseFeedSurfaceState.mockReturnValue({});
     const { rerender } = render(
-      <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+      <FeedTaskViewModelProvider value={{ allTasks: [], focusedTaskId: null }}>
         <DesktopSearchDock />
       </FeedTaskViewModelProvider>
     );
@@ -48,7 +48,7 @@ describe("DesktopSearchDock", () => {
 
     useFilterStore.getState().setSearchQuery("meeting");
     rerender(
-      <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+      <FeedTaskViewModelProvider value={{ allTasks: [], focusedTaskId: null }}>
         <DesktopSearchDock />
       </FeedTaskViewModelProvider>
     );
@@ -67,7 +67,6 @@ describe("DesktopSearchDock", () => {
     render(
       <FeedTaskViewModelProvider
         value={{
-          tasks: [],
           allTasks: [makeTask({ id: "focused-task", content: "Coordinate launch copy" })],
           focusedTaskId: "focused-task",
         }}
@@ -86,7 +85,7 @@ describe("DesktopSearchDock", () => {
     mockUseFeedSurfaceState.mockReturnValue({ channels: [], people: [] });
 
     render(
-      <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+      <FeedTaskViewModelProvider value={{ allTasks: [], focusedTaskId: null }}>
         <DesktopSearchDock />
       </FeedTaskViewModelProvider>
     );

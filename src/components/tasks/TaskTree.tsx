@@ -16,8 +16,7 @@ import { useTaskViewServices } from "./use-task-view-services";
 import { TaskAuthorProfilesProvider } from "./task-author-profiles-context";
 
 interface TaskTreeProps {
-  tasks: Post[];
-  allTasks: Post[];
+  posts: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -28,8 +27,7 @@ interface TaskTreeProps {
 }
 
 export function TaskTree({
-  tasks,
-  allTasks,
+  posts,
   currentUser,
   searchQueryOverride,
   focusedTaskId,
@@ -43,8 +41,7 @@ export function TaskTree({
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const taskSource = useTaskViewSource({
-    tasks,
-    allTasks,
+    posts,
     focusedTaskId,
     searchQueryOverride,
   });
@@ -232,7 +229,7 @@ export function TaskTree({
       )}
 
       {/* Task List */}
-      <TaskAuthorProfilesProvider tasks={allTasks}>
+      <TaskAuthorProfilesProvider tasks={posts}>
         <div ref={scrollContainerRef} className="scrollbar-main-view flex-1 px-2 sm:px-3 py-4 space-y-1" style={pendingScrollTop !== null ? { overflowAnchor: "none" } : undefined} data-onboarding="task-list">
           {displayedTasks.map((task) => (
             <TreeTaskItem

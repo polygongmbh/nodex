@@ -54,8 +54,7 @@ import { useTaskViewServices } from "./use-task-view-services";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface ListViewProps {
-  tasks: Post[];
-  allTasks: Post[];
+  posts: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -118,8 +117,7 @@ const PriorityCell = memo(function PriorityCell({
 );
 
 export function ListView({
-  tasks,
-  allTasks,
+  posts,
   currentUser,
   searchQueryOverride,
   depthMode = "leaves",
@@ -143,8 +141,7 @@ export function ListView({
     filteredTaskCandidates,
     hasSelectedScope,
   } = useListViewState({
-    tasks,
-    allTasks,
+    posts,
     focusedTaskId,
     searchQueryOverride,
     depthMode,
@@ -159,9 +156,9 @@ export function ListView({
   // next genuine change. Nostr event IDs are 64-char hex, so two
   // endpoints give enough discrimination for a filter-detect heuristic.
   useEffect(() => {
-    let hash = tasks.length;
-    for (let i = 0; i < tasks.length; i++) {
-      const id = tasks[i].id;
+    let hash = posts.length;
+    for (let i = 0; i < posts.length; i++) {
+      const id = posts[i].id;
       const last = id.length - 1;
       hash = (hash * 31 + id.charCodeAt(0)) | 0;
       if (last > 0) hash = (hash * 31 + id.charCodeAt(last)) | 0;
@@ -177,21 +174,21 @@ export function ListView({
       prevSearchRef.current = searchQuery;
       prevFocusedRef.current = focusedTaskId;
     }
-  }, [tasks, searchQuery, focusedTaskId]);
+  }, [posts, searchQuery, focusedTaskId]);
 
   // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
   const sortContextRef = useRef<SortContext | null>(null);
   // Canonical id → Post map from the store; stable reference, no per-render
-  // clone of allTasks. Falls back to a local map in tests that pass
-  // synthetic data without seeding the store.
-  const taskLookup = resolvePostsByIdFor(allTasks);
-  const priorityScores = useMemo(() => evaluateTaskPriorities(allTasks), [allTasks]);
-  
+  // clone. Falls back to a local map in tests that pass synthetic data
+  // without seeding the store.
+  const taskLookup = resolvePostsByIdFor(posts);
+  const priorityScores = useMemo(() => evaluateTaskPriorities(posts), [posts]);
+
   const sortContext: SortContext = useMemo(() => {
-    const childrenMap = buildChildrenMap(allTasks);
+    const childrenMap = buildChildrenMap(posts);
     sortContextRef.current = {
       childrenMap,
-      allTasks,
+      allTasks: posts,
       taskById: taskLookup,
       priorityScores,
     };
@@ -200,10 +197,10 @@ export function ListView({
   }, [sortVersion, priorityScores, taskLookup]);
 
   const hasChildren = useCallback((taskId: string): boolean => {
-    return allTasks.some((task) => isTaskPost(task) && task.parentId === taskId);
-  }, [allTasks]);
+    return posts.some((task) => isTaskPost(task) && task.parentId === taskId);
+  }, [posts]);
 
-  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
+  const isProject = useMemo(() => makeIsProject(posts), [posts]);
 
   const getDepth = useCallback((taskId: string): number => {
     const task = taskLookup.get(taskId);

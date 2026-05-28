@@ -114,7 +114,7 @@ function renderCreateComposer({
         channelMatchMode: "and",
       }}
     >
-      <FeedTaskViewModelProvider value={{ tasks, allTasks, focusedTaskId: null }}>
+      <FeedTaskViewModelProvider value={{ allTasks, focusedTaskId: null }}>
         <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} {...props} />
       </FeedTaskViewModelProvider>
     </FeedSurfaceProvider>
@@ -150,7 +150,7 @@ describe("TaskCreateComposer", () => {
             channelMatchMode: "and",
           }}
         >
-          <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: "parent-task" }}>
+          <FeedTaskViewModelProvider value={{ allTasks: [], focusedTaskId: "parent-task" }}>
             <TaskCreateComposer
               onCancel={onCancel}
               onSubmit={submit}
@@ -189,7 +189,6 @@ describe("TaskCreateComposer", () => {
 
     renderCreateComposer({
       focusedTaskId: "parent-task",
-      tasks: [parentTask],
       allTasks: [parentTask],
       allowComment: false,
     });
@@ -236,7 +235,6 @@ describe("TaskCreateComposer", () => {
 
     const { container } = renderCreateComposer({
       feedRelays: readOnlyRelays,
-      tasks: [parentTask],
       allTasks: [parentTask],
       focusedTaskId: "parent-task",
     });
@@ -301,7 +299,6 @@ describe("TaskCreateComposer", () => {
 
     renderCreateComposer({
       feedRelays: multiRelays,
-      tasks: [parentTask],
       allTasks: [parentTask],
       focusedTaskId: "parent-task",
     });
@@ -334,7 +331,6 @@ describe("TaskCreateComposer", () => {
 
     renderCreateComposer({
       feedRelays: multiRelays,
-      tasks: [parentTask],
       allTasks: [parentTask],
       focusedTaskId: "parent-task",
     });
@@ -360,7 +356,6 @@ describe("TaskCreateComposer", () => {
 
     renderCreateComposer({
       feedRelays: multiRelays,
-      tasks: [parentTask],
       allTasks: [parentTask],
       focusedTaskId: "parent-task",
     });
@@ -408,7 +403,6 @@ describe("TaskCreateComposer", () => {
 
     renderCreateComposer({
       feedRelays: multiRelays,
-      tasks: [parentTask],
       allTasks: [parentTask],
       focusedTaskId: "parent-task",
       allowComment: true,
@@ -452,7 +446,7 @@ describe("TaskCreateComposer", () => {
       ];
       return (
         <FeedSurfaceProvider value={{ relays: relaysWithSelection, channels, people, searchQuery: "", quickFilters: makeQuickFilterState(), channelMatchMode: "and" }}>
-          <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [], focusedTaskId: null }}>
+          <FeedTaskViewModelProvider value={{ allTasks: [], focusedTaskId: null }}>
             <button onClick={() => setActiveRelayId("relay-b")}>Switch to Relay B</button>
             <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} allowComment={false} />
           </FeedTaskViewModelProvider>

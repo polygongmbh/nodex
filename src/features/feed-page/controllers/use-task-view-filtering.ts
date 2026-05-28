@@ -9,8 +9,7 @@ import type { Channel, ChannelMatchMode, QuickFilterState, Post } from "@/types"
 import type { SelectablePerson } from "@/types/person";
 
 interface UseTaskViewFilteringParams<T extends Post = Post> {
-  allTasks: Post[];
-  tasks: Post[];
+  posts: Post[];
   focusedTaskId: string | null;
   includeFocusedTask?: boolean;
   hideClosedTasks?: boolean;
@@ -28,8 +27,7 @@ interface UseTaskViewFilteringParams<T extends Post = Post> {
 }
 
 export function useTaskViewFiltering<T extends Post = Post>({
-  allTasks,
-  tasks,
+  posts,
   focusedTaskId,
   includeFocusedTask = false,
   hideClosedTasks = false,
@@ -41,18 +39,18 @@ export function useTaskViewFiltering<T extends Post = Post>({
   taskPredicate,
 }: UseTaskViewFilteringParams<T>): T[] {
   const filterIndex = useMemo(
-    () => buildTaskViewFilterIndex(allTasks, people),
-    [allTasks, people]
+    () => buildTaskViewFilterIndex(posts, people),
+    [posts, people]
   );
   const { included, excluded } = useMemo(
     () => getIncludedExcludedChannelNames(channels),
     [channels]
   );
-  const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
+  const prefilteredTaskIds = useMemo(() => new Set(posts.map((task) => task.id)), [posts]);
   const request = useMemo<TaskViewFilterRequest>(
     () => ({
       source: {
-        allTasks,
+        allTasks: posts,
         filterIndex,
         prefilteredTaskIds,
         people,
@@ -74,7 +72,7 @@ export function useTaskViewFiltering<T extends Post = Post>({
       },
     }),
     [
-      allTasks,
+      posts,
       channelMatchMode,
       excluded,
       filterIndex,

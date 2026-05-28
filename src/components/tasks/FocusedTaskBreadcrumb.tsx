@@ -9,14 +9,14 @@ import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 
 interface FocusedTaskBreadcrumbProps {
-  allTasks: Post[];
+  posts: Post[];
   focusedTaskId: string | null;
   className?: string;
   rightSlot?: ReactNode;
 }
 
 export function FocusedTaskBreadcrumb({
-  allTasks,
+  posts,
   focusedTaskId,
   className,
   rightSlot,
@@ -29,9 +29,9 @@ export function FocusedTaskBreadcrumb({
   };
   const path = useMemo(() => {
     if (!focusedTaskId) return [] as Post[];
-    // allTasks is a dep so this re-runs on store changes; the lookup itself
+    // posts is a dep so this re-runs on store changes; the lookup itself
     // reads through the canonical id-map without cloning it.
-    const byId = resolvePostsByIdFor(allTasks);
+    const byId = resolvePostsByIdFor(posts);
     const chain: Post[] = [];
     const visited = new Set<string>();
     let current = byId.get(focusedTaskId);
@@ -44,12 +44,12 @@ export function FocusedTaskBreadcrumb({
     }
 
     return chain;
-  }, [allTasks, focusedTaskId]);
+  }, [posts, focusedTaskId]);
   const parentFocusId = useMemo(() => {
     if (!focusedTaskId) return null;
-    const focusedTask = allTasks.find((task) => task.id === focusedTaskId);
+    const focusedTask = posts.find((task) => task.id === focusedTaskId);
     return focusedTask?.parentId || null;
-  }, [allTasks, focusedTaskId]);
+  }, [posts, focusedTaskId]);
 
   const buttonClass = "inline-flex items-center rounded-md px-2.5 py-1.5 transition-colors hover:text-foreground hover:bg-background/70";
 

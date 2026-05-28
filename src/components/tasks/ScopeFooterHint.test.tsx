@@ -64,7 +64,7 @@ function renderHint(
       }}
     >
       <FeedTaskViewModelProvider
-        value={{ tasks: [], allTasks: viewModel.allTasks ?? [], focusedTaskId: viewModel.focusedTaskId ?? null }}
+        value={{ allTasks: viewModel.allTasks ?? [], focusedTaskId: viewModel.focusedTaskId ?? null }}
       >
         <ScopeFooterHint />
       </FeedTaskViewModelProvider>

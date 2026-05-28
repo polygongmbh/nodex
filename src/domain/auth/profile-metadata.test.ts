@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasCurrentUserProfileMetadata } from "./profile-metadata";
-import { NostrEventKind } from "@/lib/nostr/types";
+import { NostrEventKind, type NostrEvent } from "@/lib/nostr/types";
 import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
 
 describe("hasCurrentUserProfileMetadata", () => {
@@ -44,7 +44,7 @@ describe("hasCurrentUserProfileMetadata", () => {
           pubkey,
           created_at: 1,
           content: JSON.stringify({ name: "cached", displayName: "Cached User" }),
-        },
+        } as NostrEvent,
       ])
     ).toBe(true);
   });

@@ -54,8 +54,7 @@ import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluatio
 const KANBAN_TERMINAL_COLUMN_INITIAL = 15;
 
 interface KanbanViewProps {
-  tasks: Post[];
-  allTasks: Post[];
+  posts: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;
   searchQueryOverride?: string;
@@ -151,8 +150,7 @@ function DraggableCardWrapper({ id, disabled, isActiveOverlay, children }: Dragg
 }
 
 export function KanbanView({
-  tasks,
-  allTasks,
+  posts,
   currentUser,
   searchQueryOverride,
   depthMode,
@@ -170,22 +168,21 @@ export function KanbanView({
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [expandedTerminalColumns, setExpandedTerminalColumns] = useState<Set<string>>(() => new Set());
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
-    tasks,
-    allTasks,
+    posts,
     focusedTaskId,
     searchQueryOverride,
     depthMode,
   });
   const sortContext = useMemo<SortContext>(() => {
-    const childrenMap = buildChildrenMap(allTasks);
-    const priorityScores = evaluateTaskPriorities(allTasks);
+    const childrenMap = buildChildrenMap(posts);
+    const priorityScores = evaluateTaskPriorities(posts);
     return {
       childrenMap,
-      allTasks,
-      taskById: resolvePostsByIdFor(allTasks),
+      allTasks: posts,
+      taskById: resolvePostsByIdFor(posts),
       priorityScores,
     };
-  }, [allTasks]);
+  }, [posts]);
 
   const columns = useMemo(() => getColumns(kanbanTasks), [kanbanTasks]);
   // Group task IDs by column instead of replicating full task references.
@@ -254,7 +251,7 @@ export function KanbanView({
 
   // Canonical store map. IDs put into taskIdsByColumnId all originate from
   // kanbanTasks (TaskPost[]); the render-site type guard re-narrows.
-  const taskById = resolvePostsByIdFor(allTasks);
+  const taskById = resolvePostsByIdFor(posts);
   const canonicalStateIdByTaskId = useMemo(() => {
     const map = new Map<string, string>();
     for (const task of kanbanTasks) {
@@ -287,10 +284,10 @@ export function KanbanView({
     (task: Post): TaskState => optimisticStatusByTaskId[task.id] || getTaskState(task),
     [optimisticStatusByTaskId]
   );
-  const isProject = useMemo(() => makeIsProject(allTasks), [allTasks]);
+  const isProject = useMemo(() => makeIsProject(posts), [posts]);
   const subtaskCountsByParent = useMemo(() => {
     const map = new Map<string, { open: number; active: number; done: number }>();
-    for (const task of allTasks) {
+    for (const task of posts) {
       if (!isTaskPost(task) || !task.parentId) continue;
       const type = getTaskStatus(getTaskState(task));
       if (type !== "open" && type !== "active" && type !== "done") continue;
@@ -299,7 +296,7 @@ export function KanbanView({
       map.set(task.parentId, counts);
     }
     return map;
-  }, [allTasks]);
+  }, [posts]);
   const dispatchStatusChange = useCallback(
     (taskId: string, state: TaskState) => {
       void dispatchFeedInteraction({ type: "task.changeStatus", taskId, state });

@@ -28,8 +28,7 @@ export function DesktopViewsPane() {
   const { currentView, displayDepthMode } = useFeedViewState();
   const viewModel = useFeedTaskViewModel();
   const taskSource = useTaskViewSource({
-    tasks: viewModel.tasks,
-    allTasks: viewModel.allTasks,
+    posts: viewModel.allTasks,
     focusedTaskId: viewModel.focusedTaskId,
   });
   const { included, excluded } = useMemo(
@@ -40,7 +39,7 @@ export function DesktopViewsPane() {
     () =>
       filterTasksForView({
         source: {
-          allTasks: taskSource.allTasks,
+          allTasks: taskSource.posts,
           filterIndex: taskSource.filterIndex,
           prefilteredTaskIds: taskSource.prefilteredTaskIds,
           people: taskSource.people,
@@ -64,7 +63,7 @@ export function DesktopViewsPane() {
       excluded,
       included,
       currentView,
-      taskSource.allTasks,
+      taskSource.posts,
       taskSource.channelMatchMode,
       taskSource.filterIndex,
       taskSource.focusedTaskId,
@@ -90,29 +89,29 @@ export function DesktopViewsPane() {
       viewPane = <StatusView />;
       break;
     case "tree":
-      viewPane = <TaskTree {...viewModel} />;
+      viewPane = <TaskTree {...viewModel} posts={viewModel.allTasks} />;
       break;
     case "feed":
-      viewPane = <FeedView {...viewModel} />;
+      viewPane = <FeedView {...viewModel} posts={viewModel.allTasks} />;
       break;
     case "kanban":
-      viewPane = <KanbanView {...viewModel} depthMode={displayDepthMode} />;
+      viewPane = <KanbanView {...viewModel} posts={viewModel.allTasks} depthMode={displayDepthMode} />;
       break;
     case "calendar":
-      viewPane = <CalendarView {...viewModel} />;
+      viewPane = <CalendarView {...viewModel} posts={viewModel.allTasks} />;
       break;
     case "list":
-      viewPane = <ListView {...viewModel} depthMode={displayDepthMode} />;
+      viewPane = <ListView {...viewModel} posts={viewModel.allTasks} depthMode={displayDepthMode} />;
       break;
     default:
-      viewPane = <TaskTree {...viewModel} />;
+      viewPane = <TaskTree {...viewModel} posts={viewModel.allTasks} />;
       break;
   }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <TaskViewStatusRow
-        allTasks={viewModel.allTasks}
+        posts={viewModel.allTasks}
         focusedTaskId={viewModel.focusedTaskId}
         isHydrating={viewModel.isHydrating}
       />

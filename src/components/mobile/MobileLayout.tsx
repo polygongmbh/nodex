@@ -45,7 +45,6 @@ export function MobileLayout() {
 
   const feedTaskViewModel = useFeedTaskViewModel();
   const {
-    tasks,
     allTasks,
     focusedTaskId,
     composeRestoreRequest = null,
@@ -96,8 +95,7 @@ export function MobileLayout() {
     shouldShowMobileFallbackNotice,
     mobileShellFocusedTaskId,
   } = useMobileFallbackNoticeState({
-    tasks,
-    allTasks,
+    posts: allTasks,
     focusedTaskId,
     currentView: activePrimaryView,
     showFilters,
@@ -166,15 +164,15 @@ export function MobileLayout() {
       case "status":
         return <StatusView />;
       case "tree":
-        return <TaskTree {...effectiveTaskViewModel} isMobile />;
+        return <TaskTree {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} isMobile />;
       case "feed":
-        return <FeedView {...effectiveTaskViewModel} isMobile />;
+        return <FeedView {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} isMobile />;
       case "list":
-        return <UpcomingView {...effectiveTaskViewModel} />;
+        return <UpcomingView {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} />;
       case "calendar":
-        return <CalendarView {...effectiveTaskViewModel} searchQueryOverride="" isMobile selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} searchQueryOverride="" isMobile selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
-        return <TaskTree {...effectiveTaskViewModel} isMobile />;
+        return <TaskTree {...effectiveTaskViewModel} posts={effectiveTaskViewModel.allTasks} isMobile />;
     }
   };
 
@@ -189,7 +187,7 @@ export function MobileLayout() {
         <div className="h-full flex flex-col">
           <div>
             <TaskViewStatusRow
-              allTasks={allTasks}
+              posts={allTasks}
               focusedTaskId={mobileShellFocusedTaskId}
               isHydrating={isHydrating}
               className="h-10 px-3 text-xs"

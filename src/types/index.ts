@@ -494,7 +494,6 @@ export function getLastEditedAt(post: Post): Date {
 }
 
 export interface SharedTaskViewContext {
-  tasks: Post[];
   allTasks: Post[];
   currentUser?: Person;
   focusedTaskId: string | null;

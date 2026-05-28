@@ -64,7 +64,7 @@ function renderOverlay(
       }}
     >
       <FeedTaskViewModelProvider
-        value={{ tasks: [], allTasks: viewModel.allTasks ?? [], focusedTaskId: viewModel.focusedTaskId ?? null, isHydrating: viewModel.isHydrating }}
+        value={{ allTasks: viewModel.allTasks ?? [], focusedTaskId: viewModel.focusedTaskId ?? null, isHydrating: viewModel.isHydrating }}
       >
         <FilteredEmptyState />
       </FeedTaskViewModelProvider>

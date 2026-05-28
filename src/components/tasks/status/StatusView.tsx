@@ -17,8 +17,7 @@ export function StatusView() {
   const viewModel = useFeedTaskViewModel();
   const surface = useFeedSurfaceState();
   const taskSource = useTaskViewSource({
-    tasks: viewModel.tasks,
-    allTasks: viewModel.allTasks,
+    posts: viewModel.allTasks,
     focusedTaskId: viewModel.focusedTaskId,
   });
   const { included, excluded } = useMemo(
@@ -29,7 +28,7 @@ export function StatusView() {
     () =>
       filterTasksForView({
         source: {
-          allTasks: taskSource.allTasks,
+          allTasks: taskSource.posts,
           filterIndex: taskSource.filterIndex,
           prefilteredTaskIds: taskSource.prefilteredTaskIds,
           people: taskSource.people,
@@ -47,7 +46,7 @@ export function StatusView() {
     [
       excluded,
       included,
-      taskSource.allTasks,
+      taskSource.posts,
       taskSource.channelMatchMode,
       taskSource.filterIndex,
       taskSource.focusedTaskId,
@@ -88,7 +87,7 @@ export function StatusView() {
     <div className="flex h-full min-h-0 w-full flex-col">
       <StatusProjectsRow
         contextTasks={contextTasks}
-        allTasks={taskSource.allTasks}
+        allTasks={taskSource.posts}
         focusedTaskId={taskSource.focusedTaskId}
       />
       <div className={isMobile ? "flex flex-1 min-h-0 flex-col divide-y divide-border" : "flex flex-1 min-h-0 divide-x divide-border"}>
@@ -97,7 +96,7 @@ export function StatusView() {
           <div className="h-[calc(100%-2rem)]">
             <StatusMyTasksTree
               contextTasks={contextTasks}
-              allTasks={taskSource.allTasks}
+              allTasks={taskSource.posts}
               peopleScope={myTasksPeopleScope}
               focusedTaskId={taskSource.focusedTaskId}
             />
@@ -108,7 +107,7 @@ export function StatusView() {
           <div className="h-[calc(100%-2rem)]">
             <StatusTimeline
               contextTasks={contextTasks}
-              allTasks={taskSource.allTasks}
+              allTasks={taskSource.posts}
               focusedTaskId={taskSource.focusedTaskId}
               concernsScope={timelineConcernsScope}
               pinnedChannelIds={pinnedChannelIds}

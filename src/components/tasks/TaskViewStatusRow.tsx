@@ -3,7 +3,7 @@ import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 
 interface TaskViewStatusRowProps {
-  allTasks: Post[];
+  posts: Post[];
   focusedTaskId: string | null;
   isHydrating?: boolean;
   className?: string;
@@ -11,7 +11,7 @@ interface TaskViewStatusRowProps {
 }
 
 export function TaskViewStatusRow({
-  allTasks,
+  posts,
   focusedTaskId,
   isHydrating = false,
   className,
@@ -27,7 +27,7 @@ export function TaskViewStatusRow({
 
   return (
     <FocusedTaskBreadcrumb
-      allTasks={allTasks}
+      posts={posts}
       focusedTaskId={focusedTaskId}
       className={className}
     />

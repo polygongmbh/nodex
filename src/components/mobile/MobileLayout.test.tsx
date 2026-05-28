@@ -165,7 +165,6 @@ const baseFeedViewState: FeedViewState = {
 };
 
 const baseTaskViewModel: FeedTaskViewModel = {
-  tasks,
   allTasks: tasks,
   focusedTaskId: null,
   currentUser: people[0],
@@ -356,7 +355,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      taskViewModel: { allTasks: sampleTasks },
       searchQuery: "nomatchquery",
     });
 
@@ -379,7 +378,7 @@ describe("MobileLayout auth wiring", () => {
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
       },
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      taskViewModel: { allTasks: sampleTasks },
       searchQuery: "nomatchquery",
     });
 
@@ -400,7 +399,7 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout({
       surfaceState: { people: [alice] },
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      taskViewModel: { allTasks: sampleTasks },
       searchQuery: "nomatchquery",
     });
 
@@ -419,7 +418,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, isHydrating: true },
+      taskViewModel: { allTasks: sampleTasks, isHydrating: true },
       searchQuery: "nomatchquery",
     });
 
@@ -443,7 +442,7 @@ describe("MobileLayout auth wiring", () => {
           makeChannel({ id: "tech", name: "tech", filterState: "excluded" }),
         ],
       },
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      taskViewModel: { allTasks: sampleTasks },
       searchQuery: "nomatchquery",
     });
 
@@ -472,7 +471,7 @@ describe("MobileLayout auth wiring", () => {
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
       },
-      taskViewModel: { tasks: datedTasks, allTasks: datedTasks },
+      taskViewModel: { allTasks: datedTasks },
       searchQuery: "nomatchquery",
     });
 
@@ -492,7 +491,7 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout({
       viewState: { currentView: "list" },
-      taskViewModel: { tasks: [childTask], allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
+      taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
     });
 
     expect(screen.getByTestId("upcoming-view")).toBeInTheDocument();
@@ -511,7 +510,7 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout({
       viewState: { currentView: "calendar" },
-      taskViewModel: { tasks: [childTask], allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
+      taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
     });
 
     await waitFor(() => {
@@ -538,7 +537,7 @@ describe("MobileLayout auth wiring", () => {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
         people: [selectedPerson, otherPerson],
       },
-      taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks },
+      taskViewModel: { allTasks: sampleTasks },
     });
 
     const status = screen.getByRole("status");
@@ -622,14 +621,14 @@ describe("MobileLayout auth wiring", () => {
     const childTask = makeTask({ id: "child-task", content: "Child task #general", tags: ["general"], parentId: "root-task" });
 
     const { rerender, unmount } = renderMobileLayout({
-      taskViewModel: { tasks: [childTask], allTasks: [rootTask, childTask], focusedTaskId: null },
+      taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: null },
     });
 
     await waitFor(() => {
       expect(document.documentElement.style.getPropertyValue(MOBILE_TOAST_TOP_OFFSET_CSS_VAR)).toBe("56px");
     });
 
-    setMocks({ taskViewModel: { tasks: [childTask], allTasks: [rootTask, childTask], focusedTaskId: "child-task" } });
+    setMocks({ taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" } });
     rerender(<MobileLayout />);
 
     await waitFor(() => {

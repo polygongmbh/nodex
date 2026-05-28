@@ -8,7 +8,7 @@ import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-
 import { __resetPostsStoreForTests } from "@/features/feed-page/stores/posts-store";
 import { ingestPostEvent } from "@/infrastructure/nostr/post-event-ingest";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
-import { NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
+import { NostrEventKind, type NostrEvent, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { makePerson, makeRelay } from "@/test/fixtures";
 import type { Relay } from "@/types";
 
@@ -75,7 +75,7 @@ function MentionAutocompleteHarness() {
         pubkey: bobPubkey,
         created_at: 5,
         content: JSON.stringify({ name: "bob", displayName: "Bob", nip05: "bob@example.com" }),
-      },
+      } as NostrEvent,
     ],
     people: [alice, carol],
   });
