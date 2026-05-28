@@ -13,8 +13,6 @@ const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache";
 const KIND0_CACHE_RELAY_PREFIX = `${KIND0_CACHE_STORAGE_PREFIX}:relay:`;
 const KIND0_CACHE_LOCAL_STORAGE_KEY = `${KIND0_CACHE_STORAGE_PREFIX}:local`;
 const MAX_CACHED_KIND0_EVENTS = 500;
-const FLUSH_DEBOUNCE_MS = 750;
-const NOTIFY_DEBOUNCE_MS = 64;
 
 function normalizePubkey(value: string): string {
   return value.trim().toLowerCase();
@@ -39,11 +37,9 @@ export class Kind0Cache {
   private readonly bucketByStorageKey = new Map<string, Map<string, NostrEvent>>();
   private readonly dirtyStorageKeys = new Set<string>();
   private readonly subscribers = new Set<() => void>();
-  private pendingFlushTimer: number | null = null;
-  private pendingNotifyTimer: number | null = null;
-  // Set when scheduleNotify was called while store-batch is active; cleared
-  // by flushBatchedNotify (registered as a store-batch flusher) which then
-  // fans the notification out together with the other batched stores.
+  // Set when notifySubscribers was deferred while store-batch is active;
+  // cleared by flushBatchedNotify (registered as a store-batch flusher) which
+  // then fans the notification out together with the other batched stores.
   private batchedNotifyPending = false;
   /** Monotonically-incrementing change counter. Consumers can read this via
    * useSyncExternalStore to re-derive scope-filtered projections on any
@@ -117,29 +113,22 @@ export class Kind0Cache {
         keys.add(key);
       }
     }
-    // In-memory buckets may not have flushed yet (the flush is debounced),
-    // so include them too — otherwise loadAll() misses freshly-ingested
-    // events between ingest and flush.
+    // In-memory buckets may not be persisted yet (writes are deferred to
+    // tab-hide / pagehide), so include them too — otherwise loadAll()
+    // misses freshly-ingested events between ingest and shutdown.
     for (const key of this.bucketByStorageKey.keys()) {
       if (key.startsWith(KIND0_CACHE_RELAY_PREFIX)) keys.add(key);
     }
     return Array.from(keys);
   }
 
-  private scheduleFlush(): void {
-    if (!this.canUseStorage) return;
-    if (typeof window === "undefined") {
-      this.flushDirtyToStorage();
-      return;
-    }
-    if (this.pendingFlushTimer !== null) return;
-    this.pendingFlushTimer = window.setTimeout(() => {
-      this.pendingFlushTimer = null;
-      this.flushDirtyToStorage();
-    }, FLUSH_DEBOUNCE_MS);
-  }
-
-  /** Persist dirty buckets to localStorage now. Idempotent. */
+  /**
+   * Persist dirty buckets to localStorage now. Idempotent. Caller-driven —
+   * fired on tab-hide / pagehide / beforeunload only (see the listeners on
+   * `defaultKind0Cache` below). Same policy as `posts-cache`: keep the hot
+   * path allocation-free and don't compete with the router drain for
+   * main-thread time.
+   */
   flushDirtyToStorage(): void {
     if (this.dirtyStorageKeys.size === 0) return;
     for (const storageKey of this.dirtyStorageKeys) {
@@ -154,23 +143,17 @@ export class Kind0Cache {
     this.dirtyStorageKeys.clear();
   }
 
-  private scheduleNotify(): void {
+  private maybeNotify(): void {
     // While the router drain is in flight, defer to the shared store-batch
     // flush so kind-0 wake-ups don't bypass the suppression and re-render
-    // useKind0People every ~64 ms during heavy hydration.
+    // useKind0People mid-hydration. Outside the drain, fan out immediately —
+    // posts-cache and the other consumers do the same and there is no
+    // longer a per-cache debounce on this path.
     if (isBatchingNotifications()) {
       this.batchedNotifyPending = true;
       return;
     }
-    if (typeof window === "undefined") {
-      this.notifySubscribers();
-      return;
-    }
-    if (this.pendingNotifyTimer !== null) return;
-    this.pendingNotifyTimer = window.setTimeout(() => {
-      this.pendingNotifyTimer = null;
-      this.notifySubscribers();
-    }, NOTIFY_DEBOUNCE_MS);
+    this.notifySubscribers();
   }
 
   /** Called by store-batch's flusher registration on the default instance. */
@@ -261,8 +244,7 @@ export class Kind0Cache {
     }
     if (changed) {
       this.dirtyStorageKeys.add(storageKey);
-      this.scheduleFlush();
-      this.notifySubscribers();
+      this.maybeNotify();
     }
     return changed;
   }
@@ -284,9 +266,10 @@ export class Kind0Cache {
 
   /**
    * Fold a kind-0 event into each relay bucket it was seen on. Per-relay
-   * work is O(1) (a Map.set with a created_at comparison); subscriber
-   * notification is debounced so a backfill burst collapses into one
-   * render tick downstream.
+   * work is O(1) (a Map.set with a created_at comparison). Writes to
+   * localStorage are deferred to shutdown; subscriber notification routes
+   * through store-batch so a hydration burst collapses into a single
+   * downstream render at the end of each router drain chunk.
    */
   ingest(event: NostrEventWithRelay): boolean {
     if (event.kind !== NostrEventKind.Metadata) return false;
@@ -303,8 +286,7 @@ export class Kind0Cache {
       }
     }
     if (anyChanged) {
-      this.scheduleFlush();
-      this.scheduleNotify();
+      this.maybeNotify();
     }
     return anyChanged;
   }
@@ -314,8 +296,14 @@ export const defaultKind0Cache = new Kind0Cache();
 registerStoreFlusher(() => defaultKind0Cache.flushBatchedNotify());
 
 if (typeof window !== "undefined") {
-  window.addEventListener("beforeunload", () => defaultKind0Cache.flushDirtyToStorage());
+  // Match useCachedPosts' shutdown policy: flush on tab-hide as well as
+  // pagehide / unload so mobile tab-switches don't skip persistence.
+  const flushIfHidden = () => {
+    if (document.visibilityState === "hidden") defaultKind0Cache.flushDirtyToStorage();
+  };
+  document.addEventListener("visibilitychange", flushIfHidden);
   window.addEventListener("pagehide", () => defaultKind0Cache.flushDirtyToStorage());
+  window.addEventListener("beforeunload", () => defaultKind0Cache.flushDirtyToStorage());
 }
 
 if (import.meta.env.DEV) {

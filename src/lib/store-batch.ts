@@ -21,6 +21,19 @@
 // Stores opt in by registering a flusher and consulting isBatchingNotifications()
 // inside their notify path. Default off — single-event ingests and store
 // mutations outside the drain notify immediately at urgent priority.
+//
+// Two halves of cache lifecycle live by the same policy across the codebase:
+//   1. Writes to durable storage (localStorage) are caller-scheduled and fire
+//      only on tab-hide / pagehide / unload. See `posts-cache.ts` (driven
+//      from `useCachedPosts`) and `Kind0Cache` (driven from the window
+//      listeners on `defaultKind0Cache`). Per-event setTimeout debounces are
+//      a footgun during hydration — they compete with the router drain for
+//      main-thread time and JSON.stringify huge buckets while the user is
+//      trying to click.
+//   2. Reactive subscriber wake-ups (React re-renders) are batched through
+//      this module while the router drain is in flight; outside a drain
+//      they fan out immediately at urgent priority.
+// New caches should follow the same pattern.
 
 import { startTransition } from "react";
 
