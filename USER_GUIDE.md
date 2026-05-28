@@ -4,7 +4,7 @@
 - Sign in from the profile menu to post tasks/comments to feeds.
 - Guest sign-in starts with a deterministic placeholder username derived from your pubkey.
 - Compose a post with at least one `#channel` tag.
-- Desktop: choose Task or Comment from the compose kind control.
+- Desktop: choose Task, Comment, Listing, or Event from the compose kind control.
 - Mobile: use the dedicated send actions for task/comment in the bottom bar.
 - Optional: set task priority before posting.
 - Optional: switch UI language (`EN`/`DE`/`ES`) from the language dropdown in the desktop top-right controls.
@@ -15,7 +15,7 @@
 - Views share the current context: selected feeds, included/excluded channels, selected people, quick filters, search text, and the focused task when one is active.
 
 ## Navigation
-- Use the top view switcher to move between Status, Tree, Feed, Kanban, Table, and Calendar.
+- Use the top view switcher to move between Status, Feed, Kanban, and Calendar. Tree and Table are hidden from the top nav but remain reachable via direct URL (`/tree`, `/list`) and the numeric view shortcuts.
 - Status is the default landing view. It highlights active projects, your relevant tasks, and recent task/comment activity for the current context.
 - The Status projects row lists active top-level work. Project cards stay in the Status workflow, while clicking an active non-project task opens it in the Feed view.
 - Status activity includes task and comment updates. Task activity rows expose a status checkbox for quick state changes.
@@ -146,6 +146,9 @@
 - Task location chips now show an approximate coordinate region; tapping a location chip opens the location in your map app/browser.
 - When a task status control is disabled, hovering it explains why edits are blocked (for example assigned owner, task owner, sign-in required, or temporary interaction lock).
 - Date-typed tasks appear in Calendar view. Tasks with multiple dates appear on each date, and Start/End ranges span every day in the range.
+- The calendar's selected-day panel offers both `Create Task` and `Create Event` buttons; `Create Event` opens the composer in Event mode (NIP-52) with explicit Start Date / Start Time / End Date / End Time controls. Times are optional — leaving both sides timeless publishes an all-day event (kind 31922); adding any time promotes it to a timed event (kind 31923).
+- Calendar events appear in the feed and on the calendar grid alongside tasks, marked with an `EVENT` label. Their date chip is grey once ended, yellow while active, blue while upcoming.
+- Tree, Kanban, List, and Status cards show a paperclip and attachment count when a post has attachments; Feed and Calendar render attachments inline.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, use the task/comment send actions in the combined bottom bar to create.
 
@@ -192,6 +195,7 @@
   - task/comment text,
   - hashtag and mention chips,
   - posting user identity (username/display name), including resolved names from cached profile metadata.
+- The active search query is mirrored to the URL as `?q=`, so a filtered view is shareable and browser back/forward restore it. Focusing into a sibling/child/unrelated task clears the search; focusing up or unfocusing back to the global view preserves it.
 
 ## Notes
 - Nodex is in beta; behavior can evolve as Nostr integrations mature.
