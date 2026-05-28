@@ -90,7 +90,7 @@ export function SidebarSection({
             type="button"
             className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left focus:outline-none"
             onClick={onToggle}
-            aria-expanded={isExpanded}
+            data-section-toggle={isExpanded ? "expanded" : "collapsed"}
             title={resolvedToggleLabel}
           >
             <span className="flex min-w-0 items-center gap-2">
@@ -101,7 +101,7 @@ export function SidebarSection({
                 </span>
               )}
             </span>
-            <span aria-hidden="true" className="shrink-0">
+            <span className="shrink-0">
               {isExpanded ? (
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               ) : (

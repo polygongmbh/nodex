@@ -102,7 +102,7 @@ export function MotdBanner() {
         onPointerLeave={clearPointerGesture}
         onPointerUp={handlePointerUp}
       >
-        <div aria-hidden="true" className="h-9 w-9" />
+        <div className="h-9 w-9" />
         <p className="min-w-0 select-text whitespace-pre-wrap break-words text-center text-base font-medium leading-6">
           {motd}
         </p>

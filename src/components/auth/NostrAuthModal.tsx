@@ -449,7 +449,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                   <button
                     onClick={() => setStep("noas")}
                     disabled={isAuthenticating}
-                    aria-busy={pendingAuthMethod === "noas"}
                     className={cn(
                       authMethodOptionClassName,
                       "border-border p-4 hover:bg-muted hover:border-primary/50 sm:col-span-2 sm:p-4"
@@ -471,7 +470,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                   <button
                     onClick={handleExtensionLogin}
                     disabled={isAuthenticating || !hasExtension || isMobile}
-                    aria-busy={pendingAuthMethod === "extension"}
                     className={cn(
                       authMethodOptionClassName,
                       hasExtension && !isMobile
@@ -535,7 +533,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                     <button
                       onClick={handleGuestLogin}
                       disabled={isAuthenticating}
-                      aria-busy={pendingAuthMethod === "guest"}
                       className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
                     >
                       <div className={cn(authMethodOptionIconClassName, "bg-secondary")}>
@@ -971,7 +968,6 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   <TooltipTrigger asChild>
                     <DropdownMenuItem
                       title={t("auth.menu.editProfile")}
-                      aria-disabled={!hasWritableRelayConnection}
                       data-disabled={!hasWritableRelayConnection ? "" : undefined}
                       className={cn(
                         "h-8 w-8 shrink-0 justify-center rounded-md border border-border/70 p-0 text-muted-foreground",

@@ -28,12 +28,12 @@ function ProfileEditorHarness() {
   return (
     <div>
       <input
-        aria-label="Username"
+        data-testid="username-input"
         value={username}
         onChange={(event) => setUsername(event.target.value)}
       />
       <input
-        aria-label="Display name"
+        data-testid="display-name-input"
         value={displayName}
         onChange={(event) => setDisplayName(event.target.value)}
       />
@@ -45,34 +45,34 @@ describe("useProfileEditor", () => {
   it("auto-fills the username from display name while the username is empty", () => {
     render(<ProfileEditorHarness />);
 
-    fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Jörg Müller_test" } });
+    fireEvent.change(screen.getByTestId("display-name-input"), { target: { value: "Jörg Müller_test" } });
 
-    expect(screen.getByLabelText("Username")).toHaveValue("jorg-muller_test");
+    expect(screen.getByTestId("username-input")).toHaveValue("jorg-muller_test");
   });
 
   it("keeps auto-filled username in sync until the user edits the username manually", () => {
     render(<ProfileEditorHarness />);
 
-    fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Alice Example" } });
-    expect(screen.getByLabelText("Username")).toHaveValue("alice-example");
+    fireEvent.change(screen.getByTestId("display-name-input"), { target: { value: "Alice Example" } });
+    expect(screen.getByTestId("username-input")).toHaveValue("alice-example");
 
-    fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Alice Example Jr" } });
-    expect(screen.getByLabelText("Username")).toHaveValue("alice-example-jr");
+    fireEvent.change(screen.getByTestId("display-name-input"), { target: { value: "Alice Example Jr" } });
+    expect(screen.getByTestId("username-input")).toHaveValue("alice-example-jr");
 
-    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "custom-user" } });
-    fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Alice Example Sr" } });
+    fireEvent.change(screen.getByTestId("username-input"), { target: { value: "custom-user" } });
+    fireEvent.change(screen.getByTestId("display-name-input"), { target: { value: "Alice Example Sr" } });
 
-    expect(screen.getByLabelText("Username")).toHaveValue("custom-user");
+    expect(screen.getByTestId("username-input")).toHaveValue("custom-user");
   });
 
   it("re-populates the username after it is cleared and the display name changes again", () => {
     render(<ProfileEditorHarness />);
 
-    fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Alice Example" } });
-    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "" } });
-    fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Alice Example Two" } });
+    fireEvent.change(screen.getByTestId("display-name-input"), { target: { value: "Alice Example" } });
+    fireEvent.change(screen.getByTestId("username-input"), { target: { value: "" } });
+    fireEvent.change(screen.getByTestId("display-name-input"), { target: { value: "Alice Example Two" } });
 
-    expect(screen.getByLabelText("Username")).toHaveValue("alice-example-two");
+    expect(screen.getByTestId("username-input")).toHaveValue("alice-example-two");
   });
 
   it("exposes the validateNip05 error message when verification errors out", async () => {
@@ -94,7 +94,7 @@ describe("useProfileEditor", () => {
         });
         return (
           <div>
-            <input aria-label="Nip05" onChange={(e) => setNip05(e.target.value)} />
+            <input data-testid="nip05-input" onChange={(e) => setNip05(e.target.value)} />
             <span data-testid="status">{nip05VerifyStatus}</span>
             <span data-testid="detail">{nip05VerifyErrorDetail ?? ""}</span>
           </div>
@@ -102,7 +102,7 @@ describe("useProfileEditor", () => {
       }
 
       render(<VerifyHarness />);
-      fireEvent.change(screen.getByLabelText("Nip05"), { target: { value: "alice@example.com" } });
+      fireEvent.change(screen.getByTestId("nip05-input"), { target: { value: "alice@example.com" } });
 
       await act(async () => {
         await vi.runAllTimersAsync();

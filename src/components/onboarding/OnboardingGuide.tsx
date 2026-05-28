@@ -172,7 +172,6 @@ export function OnboardingGuide({
     const getClickableTaskTarget = (task: HTMLElement): HTMLElement | null => {
       const selectors = [
         '[title*="focus" i]',
-        '[aria-label*="focus" i]',
         '[role="button"][tabindex]',
         '[role="button"]',
         "p.cursor-pointer",
@@ -183,7 +182,6 @@ export function OnboardingGuide({
       for (const selector of selectors) {
         const match = getFirstVisibleTask(Array.from(task.querySelectorAll<HTMLElement>(selector)).filter((element) => {
           if (element.hasAttribute("disabled")) return false;
-          if (element.getAttribute("aria-disabled") === "true") return false;
           return true;
         }));
         if (match) return match;
@@ -979,7 +977,7 @@ export function OnboardingGuide({
 
   const renderGuideBackdrop = () => {
     if (showSectionPicker || !anchoredTargetRect) {
-      return <div className="absolute inset-0 bg-overlay-scrim" aria-hidden="true" />;
+      return <div className="absolute inset-0 bg-overlay-scrim" />;
     }
 
     const viewportWidth = window.innerWidth;
@@ -994,17 +992,17 @@ export function OnboardingGuide({
 
     return (
       <>
-        <div className="absolute left-0 top-0 bg-overlay-scrim" style={{ width: "100%", height: spotlightTop, transition: guideBackdropTransition }} aria-hidden="true" />
-        <div className="absolute left-0 bg-overlay-scrim" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight, transition: guideBackdropTransition }} aria-hidden="true" />
+        <div className="absolute left-0 top-0 bg-overlay-scrim" style={{ width: "100%", height: spotlightTop, transition: guideBackdropTransition }} />
+        <div className="absolute left-0 bg-overlay-scrim" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight, transition: guideBackdropTransition }} />
         <div
           className="absolute bg-overlay-scrim"
           style={{ top: spotlightTop, left: spotlightRight, width: Math.max(0, viewportWidth - spotlightRight), height: spotlightHeight, transition: guideBackdropTransition }}
-          aria-hidden="true"
+
         />
         <div
           className="absolute left-0 bg-overlay-scrim"
           style={{ top: spotlightBottom, width: "100%", height: Math.max(0, viewportHeight - spotlightBottom), transition: guideBackdropTransition }}
-          aria-hidden="true"
+
         />
       </>
     );
@@ -1013,7 +1011,7 @@ export function OnboardingGuide({
   return (
     <div
       className="fixed inset-0 z-[120] pointer-events-none"
-      aria-live="polite"
+
     >
       {renderGuideBackdrop()}
       {showSectionPicker && (
@@ -1029,7 +1027,7 @@ export function OnboardingGuide({
           {isMobile ? (
             <div
               role="dialog"
-              aria-modal="true"
+
               className="absolute left-2 right-2 bottom-20 z-[130] pointer-events-auto rounded-xl border border-border bg-card/90 backdrop-blur-md text-card-foreground shadow-xl p-4"
             >
               <div className="space-y-3">
@@ -1098,7 +1096,7 @@ export function OnboardingGuide({
           )}
           <div
             role="dialog"
-            aria-modal="true"
+
             data-testid="onboarding-guide-dialog"
             ref={guideCardRef}
             className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"

@@ -41,7 +41,6 @@ export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
               : "text-muted-foreground border-transparent hover:text-foreground hover:border-foreground/30"
           )}
           title={t("navigation.views.switchTo", { view: view.label })}
-          aria-current={currentView === view.id ? "page" : undefined}
         >
           {view.icon}
           <span className="inline truncate max-w-24 lg:max-w-none">{view.label}</span>

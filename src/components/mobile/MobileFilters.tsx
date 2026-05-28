@@ -258,7 +258,6 @@ export function MobileFilters({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleOpenProfileEditor}
-                    aria-disabled={profileEditBlocked || undefined}
                     title={profileEditBlocked ? t("auth:auth.profile.noRelayConnected") : t("auth:auth.profile.edit")}
                     className={cn(
                       "px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors",

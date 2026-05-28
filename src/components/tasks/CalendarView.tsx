@@ -389,7 +389,6 @@ export function CalendarView({
                                   ensureDesktopMonthRendered(day);
                                 }
                               }}
-                              aria-current={dayIsToday ? "date" : undefined}
                               className={cn(
                                 "transition-colors duration-150 text-left flex flex-col relative border border-transparent",
                                 isMobile ? "min-h-[4.4rem] p-1" : "min-h-[6.2rem] p-1",

@@ -44,7 +44,7 @@ describe("useKeyboardShortcuts", () => {
 
     render(
       <>
-        <input aria-label="search" />
+        <input />
         <Harness onViewChange={onViewChange} onToggleCompactView={onToggleCompactView} />
       </>
     );

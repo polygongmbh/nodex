@@ -93,7 +93,6 @@ export function TaskAssigneeAvatars({
             avatarSizeClassName,
             "ring-1 ring-background rounded-full bg-muted text-muted-foreground text-[10px] font-medium flex items-center justify-center flex-shrink-0"
           )}
-          aria-hidden="true"
         >
           +{overflow}
         </span>

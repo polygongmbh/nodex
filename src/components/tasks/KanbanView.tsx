@@ -584,9 +584,9 @@ export function KanbanView({
                         </DraggableCardWrapper>
                       );
                     })}
-                    {(taskIdsByColumnId.get(column.id) ?? []).length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
+                    {(taskIdsByColumnId.get(column.id) ?? []).length === 0 && <div className="flex-1 min-h-[96px]" />}
                     {/* Bottom buffer so the last card isn't flush against the scroll edge */}
-                    <div className="h-6 shrink-0" aria-hidden="true" />
+                    <div className="h-6 shrink-0" />
                   </div>
                 </DroppableColumnContent>
               </div>

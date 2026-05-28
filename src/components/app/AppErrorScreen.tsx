@@ -11,7 +11,7 @@ export function AppErrorScreen({ errorMessage }: AppErrorScreenProps) {
     <main className="min-h-screen bg-background text-foreground px-6 py-10 flex items-center justify-center">
       <section className="w-full max-w-xl border border-border rounded-2xl bg-card/80 backdrop-blur px-6 py-8 shadow-md">
         <div className="flex items-center gap-3 mb-4">
-          <AlertTriangle className="w-6 h-6 text-destructive" aria-hidden="true" />
+          <AlertTriangle className="w-6 h-6 text-destructive" />
           <h1 className="text-xl font-semibold">{i18n.t("app:appError.title")}</h1>
         </div>
         <p className="text-sm text-muted-foreground mb-5">

@@ -228,7 +228,6 @@ export function RelayManagement({
                     className="rounded-lg bg-muted/30 transition-colors space-y-2 hover:bg-muted/50"
                     role="button"
                     tabIndex={0}
-                    aria-expanded={isExpanded}
                     title={isExpanded ? t("relay.details.hide") : t("relay.details.show")}
                     onClick={() => toggleExpandedRelay(relay.url)}
                     onKeyDown={(event) => handleRelayCardKeyDown(event, relay.url)}

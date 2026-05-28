@@ -115,7 +115,7 @@ export function PersonItem({
               {personName}
             </span>
             {person.isSelected && (
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
             )}
           </button>
         </div>

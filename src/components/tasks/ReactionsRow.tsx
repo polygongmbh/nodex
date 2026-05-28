@@ -46,7 +46,7 @@ export function ReactionsRow({ targetId, reactions, onReact, onUnreact, classNam
             title={isMine ? `Remove your ${emoji} reaction` : `React with ${emoji}`}
             data-testid={`reaction-chip-${targetId}-${emoji}`}
           >
-            <span aria-hidden>{emoji}</span>
+            <span>{emoji}</span>
             <span>{count}</span>
           </button>
         );

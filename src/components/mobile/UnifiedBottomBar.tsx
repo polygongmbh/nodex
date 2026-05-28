@@ -1338,7 +1338,6 @@ export function UnifiedBottomBar({
                     type="button"
                     onClick={() => setShowDiscoveryChannels((prev) => !prev)}
                     className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border border-dashed border-border text-muted-foreground transition-colors hover:text-foreground active:scale-95"
-                    aria-expanded={showDiscoveryChannels}
                   >
                     {showDiscoveryChannels
                       ? t("composer.channelSelector.showLess", { defaultValue: "Show less" })
@@ -1497,7 +1496,6 @@ export function UnifiedBottomBar({
                       : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                     isCapturingLocation && "opacity-60 cursor-wait animate-pulse"
                   )}
-                  aria-busy={isCapturingLocation}
                   title={t("composer.actions.location")}
                 >
                   <MapPin className="w-3.5 h-3.5" />
@@ -1571,7 +1569,7 @@ export function UnifiedBottomBar({
             >
               <Hash className="w-4 h-4" />
               {activeChannelsCount > 0 && (
-                <span aria-hidden="true" className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeChannelsCount}
                 </span>
               )}
@@ -1587,7 +1585,7 @@ export function UnifiedBottomBar({
             >
               <Users className="w-4 h-4" />
               {activePeopleCount > 0 && (
-                <span aria-hidden="true" className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activePeopleCount}
                 </span>
               )}

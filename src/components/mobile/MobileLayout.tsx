@@ -199,7 +199,6 @@ export function MobileLayout() {
           {shouldShowMobileFallbackNotice && (
             <div
               role="status"
-              aria-live="polite"
               className="w-full px-3 pt-2 pb-1 text-center text-xs leading-none text-muted-foreground"
             >
               {mobileFallbackMessage}

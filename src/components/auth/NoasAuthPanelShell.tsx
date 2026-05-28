@@ -37,7 +37,6 @@ export function NoasAuthPanelShell({
           onClick={isSignIn ? undefined : onSignIn}
           disabled={isLoading || isSignIn}
           role="tab"
-          aria-selected={isSignIn}
           data-testid="noas-auth-tab-sign-in"
           className={
             isSignIn
@@ -52,7 +51,6 @@ export function NoasAuthPanelShell({
           onClick={isSignIn ? onSignUp : undefined}
           disabled={isLoading || !isSignIn}
           role="tab"
-          aria-selected={!isSignIn}
           data-testid="noas-auth-tab-create-account"
           className={
             isSignIn

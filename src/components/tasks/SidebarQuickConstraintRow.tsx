@@ -48,7 +48,6 @@ export function SidebarQuickConstraintRow({
               "inline-flex min-w-0 items-center gap-1 truncate rounded-sm text-[11px] font-medium",
               quickFilters.recentEnabled ? "text-primary" : "text-muted-foreground"
             )}
-            aria-pressed={quickFilters.recentEnabled}
             title={t("sidebar.quickFilters.actions.toggleRecent", { days: quickFilters.recentDays })}
           >
             <Clock3 className="h-3 w-3 shrink-0" />
@@ -93,7 +92,6 @@ export function SidebarQuickConstraintRow({
               "inline-flex min-w-0 items-center gap-1 truncate rounded-sm text-[11px] font-medium",
               quickFilters.priorityEnabled ? "text-primary" : "text-muted-foreground"
             )}
-            aria-pressed={quickFilters.priorityEnabled}
             title={t("sidebar.quickFilters.actions.togglePriority")}
           >
             <Flag className="h-3 w-3 shrink-0" />

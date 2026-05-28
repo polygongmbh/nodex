@@ -98,8 +98,6 @@ export function ProfileEditorFields({
           onChange={(e) => setUsername(e.target.value)}
           placeholder={t("auth.profile.namePlaceholder")}
           className="text-sm"
-          aria-invalid={isUsernameHintError}
-          aria-describedby={showUsernameHint ? nameErrorId : undefined}
         />
         {showUsernameHint && (
           <p id={nameErrorId} className={isUsernameHintError ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>

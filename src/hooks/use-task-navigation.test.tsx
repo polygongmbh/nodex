@@ -10,7 +10,7 @@ function Harness({ onSelectTask }: { onSelectTask: (taskId: string) => void }) {
 
   return (
     <div>
-      <select aria-label="Priority">
+      <select data-testid="priority-select">
         <option value="">-</option>
         <option value="20">P20</option>
       </select>
@@ -28,7 +28,7 @@ describe("useTaskNavigation", () => {
     fireEvent.keyDown(window, { key: "ArrowDown" });
     expect(screen.getByTestId("focused-task")).toHaveTextContent("task-1");
 
-    const prioritySelect = screen.getByRole("combobox", { name: "Priority" });
+    const prioritySelect = screen.getByTestId("priority-select");
     prioritySelect.focus();
 
     fireEvent.keyDown(prioritySelect, { key: "ArrowDown" });

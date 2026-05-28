@@ -37,7 +37,7 @@ export function LanguageToggle({ className, showLabelOnMobile = false }: Languag
       >
         <DropdownTriggerContent
           className={cn("w-full", showLabelOnMobile ? "justify-between" : "justify-center")}
-          leading={<span aria-hidden>{LANGUAGE_FLAGS[current]}</span>}
+          leading={<span>{LANGUAGE_FLAGS[current]}</span>}
           label={
             showLabelOnMobile ? (
               currentLabel
@@ -56,7 +56,7 @@ export function LanguageToggle({ className, showLabelOnMobile = false }: Languag
         {SUPPORTED_LANGUAGES.map((language) => (
           <SelectItem key={language} value={language}>
             <span className="inline-flex items-center gap-2">
-              <span aria-hidden>{LANGUAGE_FLAGS[language]}</span>
+              <span>{LANGUAGE_FLAGS[language]}</span>
               <span>{t(`language.${language}`)}</span>
             </span>
           </SelectItem>

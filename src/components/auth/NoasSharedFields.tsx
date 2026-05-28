@@ -83,7 +83,6 @@ export function NoasSharedFields({
           <div className="relative">
             {defaultHostSuffix ? (
               <div
-                aria-hidden="true"
                 className="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-3 text-base md:text-sm"
               >
                 <span className="invisible whitespace-pre">{usernameSuffixMeasureValue}</span>

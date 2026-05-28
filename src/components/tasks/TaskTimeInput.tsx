@@ -142,7 +142,7 @@ export const TaskTimeInput = forwardRef<HTMLInputElement, TaskTimeInputProps>(
           onMouseDown={handleMouseDown}
           className={baseField}
         />
-        <span className="text-muted-foreground/60 select-none" aria-hidden>
+        <span className="text-muted-foreground/60 select-none">
           :
         </span>
         <input

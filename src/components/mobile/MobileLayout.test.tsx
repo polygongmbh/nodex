@@ -78,21 +78,11 @@ vi.mock("./MobileNav", async (importOriginal) => {
       onManageOpen?: () => void;
     }) => (
       <div data-testid="mobile-nav">
-        <button onClick={() => onViewChange("status")} aria-label="Switch to status view">
-          Status
-        </button>
-        <button onClick={() => onViewChange("feed")} aria-label="Switch to feed view">
-          Feed
-        </button>
-        <button onClick={() => onViewChange("tree")} aria-label="Switch to tree view">
-          Tree
-        </button>
-        <button onClick={() => onViewChange("calendar")} aria-label="Switch to calendar view">
-          Calendar
-        </button>
-        <button onClick={onManageOpen} aria-label="Switch to Manage view">
-          Manage
-        </button>
+        <button onClick={() => onViewChange("status")}>Status</button>
+        <button onClick={() => onViewChange("feed")}>Feed</button>
+        <button onClick={() => onViewChange("tree")}>Tree</button>
+        <button onClick={() => onViewChange("calendar")}>Calendar</button>
+        <button onClick={onManageOpen}>Manage</button>
       </div>
     ),
   };
@@ -113,7 +103,6 @@ vi.mock("./UnifiedBottomBar", () => ({
     return (
       <div data-testid="unified-bottom-bar">
         <textarea
-          aria-label="Mobile compose"
           placeholder="Search or create task"
           value={value}
           onChange={(event) => {
@@ -298,7 +287,7 @@ describe("MobileLayout auth wiring", () => {
     renderMobileLayout();
 
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
     expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
   });
 
@@ -309,7 +298,7 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout();
 
-    fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.manageRoute.change", isActive: true });
   });
 
@@ -331,8 +320,8 @@ describe("MobileLayout auth wiring", () => {
 
     const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Draft with #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
-    fireEvent.click(screen.getByRole("button", { name: /switch to tree view/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tree" }));
 
     expect(screen.getByPlaceholderText(/search or create task/i)).toHaveValue("Draft with #general");
   });
@@ -344,8 +333,8 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout({ viewState: { currentView: "list" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
-    fireEvent.click(screen.getByRole("button", { name: /switch to calendar view/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
+    fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
 
     expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(1, {
       type: "ui.manageRoute.change",
@@ -597,7 +586,7 @@ describe("MobileLayout auth wiring", () => {
     const { rerender } = renderMobileLayout();
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Feed" }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
@@ -616,7 +605,7 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout();
 
-    fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Feed" }));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
     const manageRouteCalls = dispatchFeedInteraction.mock.calls.filter(

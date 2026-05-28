@@ -265,8 +265,6 @@ describe("Noas auth forms", () => {
     );
 
     expect(screen.queryByRole("button", { name: /more options/i })).not.toBeInTheDocument();
-    expect(screen.getByTestId("noas-auth-tab-sign-in")).toHaveAttribute("aria-selected", "false");
-    expect(screen.getByTestId("noas-auth-tab-create-account")).toHaveAttribute("aria-selected", "true");
 
     const privateKeyInput = screen.getByRole("textbox", { name: /^private key$/i });
     expect(privateKeyInput).toHaveAttribute("name", "nostrPrivateKey");

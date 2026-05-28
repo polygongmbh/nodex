@@ -22,7 +22,7 @@ describe("SidebarSection", () => {
       </SidebarSection>
     );
 
-    fireEvent.click(screen.getByRole("button", { expanded: true }));
+    fireEvent.click(document.querySelector("button[data-section-toggle]") as HTMLElement);
 
     expect(onToggle).toHaveBeenCalledTimes(1);
   });

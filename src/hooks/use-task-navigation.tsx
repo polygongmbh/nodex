@@ -128,7 +128,7 @@ export function useTaskNavigation({
       // keys would both navigate the open menu AND move the feed selection.
       if (
         document.querySelector(
-          '[role="dialog"][data-state="open"], [role="menu"][data-state="open"], [role="listbox"][data-state="open"], [role="combobox"][aria-expanded="true"]'
+          '[role="dialog"][data-state="open"], [role="menu"][data-state="open"], [role="listbox"][data-state="open"], [role="combobox"][data-state="open"]'
         )
       ) {
         return;

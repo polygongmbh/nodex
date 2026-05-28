@@ -115,7 +115,6 @@ export function TaskProgressiveImage({
     >
       {shouldShowPlaceholder && (
         <div
-          aria-hidden="true"
           className="absolute inset-0 bg-muted/30"
           style={placeholderStyle}
         />

@@ -82,7 +82,7 @@ export function TaskStatusToggle({
               >
                 <TaskStateDefIcon state={state} className="mr-2" />
                 <span>{state.label}</span>
-                {isCurrent && <Check className="ml-auto h-3.5 w-3.5 opacity-60" aria-hidden />}
+                {isCurrent && <Check className="ml-auto h-3.5 w-3.5 opacity-60" />}
               </DropdownMenuItem>
             );
           })}

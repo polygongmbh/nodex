@@ -291,7 +291,6 @@ export function FeedTaskSwipeActions({
     >
       {actionsMounted ? (
       <div
-        aria-hidden={!isOpen}
         className={cn(
           "absolute inset-y-0 right-0 z-0 flex items-stretch",
           !isOpen && "pointer-events-none",
@@ -332,7 +331,6 @@ export function FeedTaskSwipeActions({
           className="flex flex-col items-center justify-center gap-1 text-[11px] font-medium bg-muted"
           style={{ width: `${ACTION_WIDTH_PX}px` }}
           data-testid={`feed-task-swipe-react-${task.id}`}
-          aria-expanded={pickerOpen}
         >
           <SmilePlus className="h-4 w-4" />
           <span className="px-1 text-center leading-tight">{t("tasks.actions.react")}</span>

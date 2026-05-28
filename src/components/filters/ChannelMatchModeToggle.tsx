@@ -38,10 +38,8 @@ export function ChannelMatchModeToggle({
         className
       )}
       title={t("filters.channels.matchMode")}
-      aria-pressed={mode === "or"}
     >
       <span
-        aria-hidden="true"
         className={cn(
           "absolute rounded-full bg-primary ring-1 ring-primary/50 shadow-md transition-all duration-200",
           isSidebar

@@ -299,7 +299,6 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
                 ? '0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)'
                 : '0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)',
             }}
-            aria-hidden="true"
             data-testid="mobile-nav-pill"
           />
 
@@ -309,7 +308,6 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               type="button"
               data-segment-index={i}
               role="tab"
-              aria-selected={currentView === seg && !isManageActive}
               title={t("navigation.views.switchTo", { view: segmentLabels[seg] })}
               className={cn(
                 "relative z-10 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 sm:py-2 text-[13px] sm:text-[15px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",

@@ -45,7 +45,7 @@ function renderSidebar(relays: Relay[]) {
 function getSectionToggle(sectionLabel: "channels-section" | "people-section" | "relays-section") {
   const section = document.querySelector(`[data-onboarding="${sectionLabel}"]`);
   expect(section).toBeTruthy();
-  return (section as HTMLElement).querySelector('button[aria-expanded]') as HTMLButtonElement;
+  return (section as HTMLElement).querySelector('button[data-section-toggle]') as HTMLButtonElement;
 }
 
 describe("Sidebar", () => {
@@ -56,8 +56,7 @@ describe("Sidebar", () => {
       expect(element?.style.height).toBe("0px");
     };
 
-    const spacesSection = document.querySelector('[data-onboarding="relays-section"]') as HTMLElement;
-    fireEvent.click(within(spacesSection).getByRole("button", { expanded: true }));
+    fireEvent.click(getSectionToggle("relays-section"));
     expectCollapsed(relayOneRow.parentElement?.parentElement as HTMLElement);
 
     firstRender.unmount();
@@ -74,8 +73,8 @@ describe("Sidebar", () => {
   it("starts channels and people folded by default", () => {
     renderSidebar(baseRelays);
 
-    expect(getSectionToggle("channels-section")).toHaveAttribute("aria-expanded", "false");
-    expect(getSectionToggle("people-section")).toHaveAttribute("aria-expanded", "false");
+    expect(getSectionToggle("channels-section")).toHaveAttribute("data-section-toggle", "collapsed");
+    expect(getSectionToggle("people-section")).toHaveAttribute("data-section-toggle", "collapsed");
   });
 
   it("keeps pinned channels visible in folded mode", () => {

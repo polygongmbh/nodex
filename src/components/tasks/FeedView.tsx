@@ -532,7 +532,7 @@ export function FeedView({
             </p>
           </div>
         ) : null}
-        {hasMoreEntries ? <div ref={loadMoreSentinelRef} aria-hidden="true" className="h-px w-full" /> : null}
+        {hasMoreEntries ? <div ref={loadMoreSentinelRef} className="h-px w-full" /> : null}
         {shouldShowScopeFooterHint && !hasMoreEntries && !isHydrating ? (
           <ScopeFooterHint />
         ) : null}

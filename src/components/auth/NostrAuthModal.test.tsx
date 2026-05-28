@@ -156,8 +156,8 @@ describe("NostrAuthModal", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /browser extension/i }));
 
-    expect(screen.getByRole("button", { name: /browser extension/i })).toHaveAttribute("aria-busy", "true");
-    expect(screen.getByRole("button", { name: /guest identity/i })).toHaveAttribute("aria-busy", "false");
+    expect(screen.getByRole("button", { name: /browser extension/i }).querySelector(".animate-spin")).not.toBeNull();
+    expect(screen.getByRole("button", { name: /guest identity/i }).querySelector(".animate-spin")).toBeNull();
   });
 
   it("ignores outside click when auth form input is dirty", () => {
@@ -253,7 +253,6 @@ describe("NostrAuthModal", () => {
 
     openNoasEntryIfNeeded();
     switchToCreateAccount();
-    expect(screen.getByTestId("noas-auth-tab-create-account")).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
 
     ndkMock.defaultNoasHostUrl = "https://example.com";
@@ -364,7 +363,6 @@ describe("NostrAuthModal", () => {
     expect(toast.success).toHaveBeenCalledWith("Check your inbox to activate your account.");
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getAllByText("Check your inbox to activate your account.").length).toBeGreaterThan(0);
-    expect(screen.getByTestId("noas-auth-tab-sign-in")).toHaveAttribute("aria-selected", "true");
   });
 
   it("shows a private-key validation error during noas signup when the key cannot be derived", () => {
@@ -411,7 +409,6 @@ describe("NostrAuthModal", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId("noas-auth-tab-create-account")).toHaveAttribute("aria-selected", "true");
     expect(screen.getByLabelText(/^username$/i)).toBeInTheDocument();
   });
 });
