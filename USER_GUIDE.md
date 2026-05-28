@@ -129,6 +129,7 @@
 - Compose text must include meaningful message content; hashtags/mentions alone are not sufficient.
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
+- Uppercase hex color codes such as `#FEE`, `#123FEF`, and `#A1B2C3D4` render as inline color swatches and are not treated as channel tags.
 - Included channel filters are added to compose as metadata-only hashtag chips (without injecting `#channel` text).
 - Selected people filters are added to compose as metadata-only mention chips.
 - Filter/relay confirmation messages use neutral toasts; canceling a delayed publish shows an informational toast.

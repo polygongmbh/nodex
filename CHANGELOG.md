@@ -58,11 +58,18 @@ Major release for NIP-52 calendar event composing, a typed in-memory ingest pipe
 - Relays no longer stay stuck on "connecting" in the sidebar after initial page load when React state diverges from NDK's pool (e.g. a `relay:connect` event was missed because session restore replaced the relay instance mid-handshake). A startup reconciliation pass now compares React state against the pool for the first ~22 seconds after mount, fixes drift, and force-reconnects relays whose underlying handshake has genuinely stalled.
 - Undoing a calendar-event publish during the 5-second grace window now restores the start date, start time, and end date/time back into the composer. The publish flow was stripping those fields from the undo snapshot for any non-task post, so events came back date-less and the user had to re-enter them.
 
+## [3.5.1] - 2026-05-20
+Patch release for relay startup recovery and inline color swatch rendering.
+
+### Added
+Uppercase hex color codes in post content (e.g. `#FEE`, `#ABD`, `#123FEF`, `#A1B2C3D4`) now render as inline color swatches and are excluded from tag extraction, so they are no longer published as Nostr `t` tags.
+Lowercase tokens like `#fee` still behave as ordinary hashtags — switching to lowercase preserves the tag-creation path.
+
 ## [3.5.0] - 2026-05-15
 Minor release for channel filtering ergonomics, mobile channel selection, status activity scope, and person presence consistency.
 
 ### Added
-- Status view activity feed now also surfaces posts from pinned channels, even when those channels are not selected in the sidebar. Only applies when no task is focused — focused scope continues to narrow the timeline.
+Status view activity feed now also surfaces posts from pinned channels, even when those channels are not selected in the sidebar. Only applies when no task is focused — focused scope continues to narrow the timeline.
 
 ### Fixed
 - Person hover card no longer shows people as offline when the sidebar shows them as online (and vice versa). Both surfaces now read from the same shared presence source (NIP-38 presence events + recent activity), so they cannot disagree.
