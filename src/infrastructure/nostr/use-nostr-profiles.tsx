@@ -1,6 +1,11 @@
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
-import { useNDK } from "@/infrastructure/nostr/ndk-context";
-import { NDKEvent, NDKFilter, NDKKind } from "@nostr-dev-kit/ndk";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { NostrEventKind, type NostrEvent } from "@/lib/nostr/types";
+import {
+  defaultKind0Cache,
+  getKind0CacheVersion,
+  loadCachedKind0Events,
+  subscribeToKind0Cache,
+} from "@/infrastructure/nostr/people-from-kind0";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 export interface NostrProfile {
@@ -10,7 +15,6 @@ export interface NostrProfile {
   picture?: string;
   about?: string;
   nip05?: string;
-  nip05Verified?: boolean;
   banner?: string;
   website?: string;
   lud16?: string;
@@ -20,218 +24,179 @@ interface ProfileCache {
   [pubkey: string]: NostrProfile;
 }
 
-// Singleton cache to persist across component instances
-const profileCache: ProfileCache = {};
-const pendingRequests = new Set<string>();
-const subscribers = new Set<() => void>();
 const EMPTY_PUBKEYS: string[] = [];
+const EMPTY_PROFILES: ProfileCache = {};
 
-// Notify all subscribers when cache updates
-function notifySubscribers() {
-  subscribers.forEach(callback => callback());
+function normalizePubkey(pubkey: string): string {
+  return pubkey.trim().toLowerCase();
 }
 
-function buildPubkeysKey(pubkeys: string[]): string {
-  const seen = new Set<string>();
-  const normalized: string[] = [];
-  pubkeys.forEach((pubkey) => {
-    if (!pubkey || seen.has(pubkey)) return;
-    seen.add(pubkey);
-    normalized.push(pubkey);
-  });
-  return normalized.join(",");
+function stringOrUndefined(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function profileMapEquals(a: ProfileCache, b: ProfileCache): boolean {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  if (aKeys.length !== bKeys.length) return false;
-  for (const key of aKeys) {
-    if (!(key in b)) return false;
-    if (a[key] !== b[key]) return false;
+function parseEventToProfile(event: NostrEvent): NostrProfile {
+  let parsed: Record<string, unknown> = {};
+  try {
+    const raw = JSON.parse(event.content);
+    if (raw && typeof raw === "object") parsed = raw as Record<string, unknown>;
+  } catch {
+    // Malformed kind 0 content — fall through to a pubkey-only profile.
   }
-  return true;
+  return {
+    pubkey: event.pubkey,
+    name: stringOrUndefined(parsed.name),
+    // Some clients (and the published payload in profile-metadata.ts) use
+    // camelCase; the NIP-01 example uses snake_case. Accept both.
+    displayName:
+      stringOrUndefined(parsed.display_name) || stringOrUndefined(parsed.displayName),
+    picture: stringOrUndefined(parsed.picture),
+    about: stringOrUndefined(parsed.about),
+    nip05: stringOrUndefined(parsed.nip05),
+    banner: stringOrUndefined(parsed.banner),
+    website: stringOrUndefined(parsed.website),
+    lud16: stringOrUndefined(parsed.lud16),
+  };
 }
 
-export function useNostrProfiles(pubkeys: string[]) {
-  const { ndk, subscribe } = useNDK();
-  const [profiles, setProfiles] = useState<ProfileCache>({});
-  const [loading, setLoading] = useState(false);
-  const pubkeysKey = useMemo(() => buildPubkeysKey(pubkeys), [pubkeys]);
+// Memoize the parsed profile per event reference. Kind0Cache hands back stable
+// event objects until the next ingest for that (relay, pubkey), so the same
+// event reference always yields the same profile reference.
+const profileByEvent = new WeakMap<NostrEvent, NostrProfile>();
+function eventToProfile(event: NostrEvent | undefined): NostrProfile | null {
+  if (!event) return null;
+  const existing = profileByEvent.get(event);
+  if (existing) return existing;
+  const profile = parseEventToProfile(event);
+  profileByEvent.set(event, profile);
+  return profile;
+}
+
+// Lazy pubkey → event index, refreshed when the underlying Kind0Cache version
+// bumps. Keeps useCachedNostrProfile snapshots reference-stable so
+// useSyncExternalStore can bail out across renders.
+let cachedIndexVersion = -1;
+let cachedIndex: Map<string, NostrEvent> = new Map();
+function getCachedIndex(): Map<string, NostrEvent> {
+  const version = getKind0CacheVersion();
+  if (version !== cachedIndexVersion) {
+    const next = new Map<string, NostrEvent>();
+    for (const event of loadCachedKind0Events()) {
+      const pk = normalizePubkey(event.pubkey ?? "");
+      if (!pk) continue;
+      const prior = next.get(pk);
+      if (!prior || (event.created_at ?? 0) > (prior.created_at ?? 0)) {
+        next.set(pk, event);
+      }
+    }
+    cachedIndex = next;
+    cachedIndexVersion = version;
+  }
+  return cachedIndex;
+}
+
+function getProfileSnapshot(pubkey: string | null): NostrProfile | null {
+  if (!pubkey) return null;
+  return eventToProfile(getCachedIndex().get(normalizePubkey(pubkey)));
+}
+
+export function useNostrProfiles(pubkeys: string[]): {
+  profiles: ProfileCache;
+  loading: false;
+  getProfile: (pubkey: string) => NostrProfile | null;
+} {
+  const version = useSyncExternalStore(
+    subscribeToKind0Cache,
+    getKind0CacheVersion,
+    getKind0CacheVersion,
+  );
+
+  const pubkeysKey = useMemo(() => {
+    const seen = new Set<string>();
+    const list: string[] = [];
+    for (const pk of pubkeys) {
+      if (!pk || seen.has(pk)) continue;
+      seen.add(pk);
+      list.push(pk);
+    }
+    return list.join(",");
+  }, [pubkeys]);
+
   const normalizedPubkeys = useMemo(
     () => (pubkeysKey.length > 0 ? pubkeysKey.split(",") : EMPTY_PUBKEYS),
-    [pubkeysKey]
+    [pubkeysKey],
   );
-  
-  // Subscribe to cache updates
-  useEffect(() => {
-    const updateFromCache = () => {
-      const cached: ProfileCache = {};
-      normalizedPubkeys.forEach(pk => {
-        if (profileCache[pk]) {
-          cached[pk] = profileCache[pk];
-        }
-      });
-      setProfiles((previousProfiles) =>
-        profileMapEquals(previousProfiles, cached) ? previousProfiles : cached
-      );
-    };
-    
-    subscribers.add(updateFromCache);
-    updateFromCache(); // Initial load from cache
-    
-    return () => {
-      subscribers.delete(updateFromCache);
-    };
-  }, [pubkeysKey, normalizedPubkeys]);
 
-  // Fetch missing profiles
-  useEffect(() => {
-    if (!ndk || normalizedPubkeys.length === 0) return;
-
-    // Filter out already cached and pending profiles
-    const missingPubkeys = normalizedPubkeys.filter(pk =>
-      !profileCache[pk] && !pendingRequests.has(pk)
-    );
-
-    if (missingPubkeys.length === 0) return;
-    
-    // Mark as pending
-    missingPubkeys.forEach(pk => pendingRequests.add(pk));
-    setLoading(true);
-    
-    // Create subscription for profile events (kind 0)
-    const filter: NDKFilter = {
-      kinds: [0 as NDKKind],
-      authors: missingPubkeys,
-    };
-    
-    const onProfileEvent = (event: NDKEvent) => {
-      try {
-        const content = JSON.parse(event.content);
-        const profile: NostrProfile = {
-          pubkey: event.pubkey,
-          name: content.name,
-          displayName: content.display_name || content.displayName,
-          picture: content.picture,
-          about: content.about,
-          nip05: content.nip05,
-          banner: content.banner,
-          website: content.website,
-          lud16: content.lud16,
-        };
-
-        // Update cache
-        profileCache[event.pubkey] = profile;
-        pendingRequests.delete(event.pubkey);
-
-        // Notify subscribers
-        notifySubscribers();
-      } catch (e) {
-        console.error("Failed to parse profile event:", e);
-        pendingRequests.delete(event.pubkey);
-      }
-    };
-    const sub = subscribe([filter], onProfileEvent, { closeOnEose: true });
-    if (!sub) {
-      missingPubkeys.forEach(pk => pendingRequests.delete(pk));
-      setLoading(false);
-      return;
+  const profiles = useMemo<ProfileCache>(() => {
+    if (normalizedPubkeys.length === 0) return EMPTY_PROFILES;
+    const index = getCachedIndex();
+    const result: ProfileCache = {};
+    for (const pk of normalizedPubkeys) {
+      const profile = eventToProfile(index.get(normalizePubkey(pk)));
+      if (profile) result[pk] = profile;
     }
-    
-    sub.on("eose", () => {
-      // Mark remaining as not found (use default placeholder)
-      missingPubkeys.forEach(pk => {
-        pendingRequests.delete(pk);
-        if (!profileCache[pk]) {
-          // Create placeholder profile
-          profileCache[pk] = {
-            pubkey: pk,
-            name: formatUserFacingPubkey(pk),
-            displayName: formatUserFacingPubkey(pk),
-          };
-        }
-      });
-      setLoading(false);
-      notifySubscribers();
-    });
-    
-    return () => {
-      sub?.stop();
-    };
-  }, [ndk, normalizedPubkeys, subscribe]);
+    return result;
+    // version is what makes this re-derive when the cache changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version, normalizedPubkeys]);
 
-  // Get profile for a specific pubkey
-  const getProfile = useCallback((pubkey: string): NostrProfile | null => {
-    return profiles[pubkey] || profileCache[pubkey] || null;
-  }, [profiles]);
-
-  return { profiles, loading, getProfile };
-}
-
-// Hook for getting a single profile
-export function useNostrProfile(pubkey: string | null) {
-  const stablePubkeys = useMemo(
-    () => (pubkey ? [pubkey] : EMPTY_PUBKEYS),
-    [pubkey]
+  const getProfile = useCallback(
+    (pubkey: string): NostrProfile | null => profiles[pubkey] ?? getProfileSnapshot(pubkey),
+    [profiles],
   );
-  const { profiles, loading, getProfile } = useNostrProfiles(stablePubkeys);
-  return {
-    profile: pubkey ? getProfile(pubkey) : null,
-    loading,
-  };
+
+  return { profiles, loading: false, getProfile };
 }
 
-function subscribeToProfileCache(callback: () => void) {
-  subscribers.add(callback);
-  return () => {
-    subscribers.delete(callback);
-  };
+export function useNostrProfile(pubkey: string | null): {
+  profile: NostrProfile | null;
+  loading: false;
+} {
+  const profile = useCachedNostrProfile(pubkey);
+  return { profile, loading: false };
 }
 
 /**
- * Cache-only profile lookup. Does NOT trigger any subscription/fetch — it just
- * reads whatever the shared profile cache already knows. Safe to use in
+ * Cache-only profile lookup. Reads from the shared Kind 0 cache via
+ * `useSyncExternalStore`, so any new kind 0 event (live ingest or
+ * `seedNostrProfile`) re-renders consumers automatically. Safe to use in
  * components rendered outside of `NDKProvider` (e.g. unit tests, isolated UI),
  * and ideal for low-level primitives like `UserAvatar` that simply want to
  * upgrade to the live picture when one is already known.
  */
 export function useCachedNostrProfile(pubkey: string | null): NostrProfile | null {
-  const getSnapshot = useCallback(
-    () => (pubkey ? profileCache[pubkey] ?? null : null),
-    [pubkey],
-  );
-  return useSyncExternalStore(subscribeToProfileCache, getSnapshot, getSnapshot);
-}
-
-
-function profileEquals(a: NostrProfile | undefined, b: NostrProfile): boolean {
-  if (!a) return false;
-  return (
-    a.pubkey === b.pubkey &&
-    a.name === b.name &&
-    a.displayName === b.displayName &&
-    a.picture === b.picture &&
-    a.about === b.about &&
-    a.nip05 === b.nip05 &&
-    a.nip05Verified === b.nip05Verified &&
-    a.banner === b.banner &&
-    a.website === b.website &&
-    a.lud16 === b.lud16
-  );
+  const getSnapshot = useCallback(() => getProfileSnapshot(pubkey), [pubkey]);
+  return useSyncExternalStore(subscribeToKind0Cache, getSnapshot, getSnapshot);
 }
 
 /**
- * Seed/refresh an entry in the shared profile cache from any source (e.g. the
- * authenticated user's own NDK profile). Lets every UserAvatar across the app
- * resolve to the same picture and fall back uniformly without prop drilling.
+ * Seed a profile (e.g. the authenticated user's own NDK profile) into the
+ * shared Kind 0 cache. Synthesises a kind 0 event with a present-time
+ * timestamp so it wins over any older cached event for the same pubkey; a
+ * real signed event arriving later with a newer `created_at` will replace it.
  */
 export function seedNostrProfile(profile: NostrProfile): void {
   if (!profile.pubkey) return;
-  if (profileEquals(profileCache[profile.pubkey], profile)) return;
-  profileCache[profile.pubkey] = profile;
-  pendingRequests.delete(profile.pubkey);
-  notifySubscribers();
+  const metadata: Record<string, string> = {};
+  if (profile.name) metadata.name = profile.name;
+  if (profile.displayName) metadata.display_name = profile.displayName;
+  if (profile.picture) metadata.picture = profile.picture;
+  if (profile.about) metadata.about = profile.about;
+  if (profile.nip05) metadata.nip05 = profile.nip05;
+  if (profile.banner) metadata.banner = profile.banner;
+  if (profile.website) metadata.website = profile.website;
+  if (profile.lud16) metadata.lud16 = profile.lud16;
+
+  const synthetic: NostrEvent = {
+    id: "",
+    pubkey: normalizePubkey(profile.pubkey),
+    created_at: Math.floor(Date.now() / 1000),
+    kind: NostrEventKind.Metadata,
+    tags: [],
+    content: JSON.stringify(metadata),
+    sig: "",
+  };
+  defaultKind0Cache.save([synthetic]);
 }
 
 export function getDefaultAvatarUrl(pubkey: string): string {
