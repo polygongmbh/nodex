@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
+import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { usePersonPresence } from "@/lib/person-presence-context";
 
 interface PersonHoverCardProps {
@@ -81,9 +81,17 @@ export function PersonHoverCard({
   const { t, i18n } = useTranslation("tasks");
   const posts = usePosts();
   const isMobile = useIsMobile();
-  const personForVerification = useMemo(() => [person], [person]);
-  const nip05VerifiedPubkeys = useNip05VerifiedPubkeys(personForVerification);
-  const isNip05Verified = nip05VerifiedPubkeys.has(person.pubkey);
+  const [isNip05Verified, setIsNip05Verified] = useState(false);
+  useEffect(() => {
+    setIsNip05Verified(false);
+    if (!person.nip05) return;
+    let cancelled = false;
+    const expected = person.pubkey.trim().toLowerCase();
+    resolveNip05Identifier(person.nip05).then((resolved) => {
+      if (!cancelled && resolved === expected) setIsNip05Verified(true);
+    });
+    return () => { cancelled = true; };
+  }, [person.pubkey, person.nip05]);
   const hoverCardId = useId();
   const openSourceRef = useRef<HoverCardOpenSource>("focus");
   const activeId = useSyncExternalStore(

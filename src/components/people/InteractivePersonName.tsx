@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BadgeCheck } from "lucide-react";
 import {
   formatAuthorMetaParts,
@@ -6,7 +6,7 @@ import {
 } from "@/types/person";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
-import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
+import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { cn } from "@/lib/utils";
 
 interface InteractivePersonNameProps {
@@ -32,9 +32,17 @@ export function InteractivePersonName({
   testId,
   className,
 }: InteractivePersonNameProps) {
-  const peopleList = useMemo(() => [person], [person]);
-  const verifiedPubkeys = useNip05VerifiedPubkeys(peopleList);
-  const verified = verifiedPubkeys.has(person.pubkey);
+  const [verified, setVerified] = useState(false);
+  useEffect(() => {
+    setVerified(false);
+    if (!person.nip05) return;
+    let cancelled = false;
+    const expected = person.pubkey.trim().toLowerCase();
+    resolveNip05Identifier(person.nip05).then((resolved) => {
+      if (!cancelled && resolved === expected) setVerified(true);
+    });
+    return () => { cancelled = true; };
+  }, [person.pubkey, person.nip05]);
 
   const { primary, secondary } = useMemo(
     () =>
