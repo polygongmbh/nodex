@@ -43,6 +43,7 @@ import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-s
 import { useInteractionBlockStore } from "@/features/feed-page/stores/interaction-block-store";
 import { usePendingPublishStore } from "@/features/feed-page/stores/pending-publish-store";
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
+import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
 import { useFeedSidebarCommandsController } from "@/features/feed-page/controllers/use-feed-sidebar-commands-controller";
 import type { FeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
 import type { FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
@@ -294,6 +295,12 @@ function FeedIndexContent() {
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
     isHydrating,
   });
+  useEffect(() => {
+    useComposerSignalsStore.getState().setMentionRequest(mentionRequest ?? null);
+  }, [mentionRequest]);
+  useEffect(() => {
+    useComposerSignalsStore.getState().setMentionRequestAck(onMentionRequestConsumed);
+  }, [onMentionRequestConsumed]);
 
   const {
     authPolicy,
@@ -585,6 +592,12 @@ function FeedIndexContent() {
     setFocusedTaskId,
     setPeople,
   });
+  useEffect(() => {
+    useComposerSignalsStore.getState().setForceShowComposer(forceShowComposeForGuide);
+  }, [forceShowComposeForGuide]);
+  useEffect(() => {
+    useComposerSignalsStore.getState().setComposeGuideActivationSignal(composeGuideActivationSignal);
+  }, [composeGuideActivationSignal]);
 
   const { handleListingStatusChange } = useListingStatusPublish({
     allTasks,
@@ -632,6 +645,12 @@ function FeedIndexContent() {
   useEffect(() => {
     usePendingPublishStore.getState().setPendingPublishPredicate(isPendingPublishTask);
   }, [isPendingPublishTask]);
+  useEffect(() => {
+    useComposerSignalsStore.getState().setComposeRestoreRequest(composeRestoreRequest ?? null);
+  }, [composeRestoreRequest]);
+  useEffect(() => {
+    useComposerSignalsStore.getState().setComposeRestoreRequestAck(onComposeRestoreRequestConsumed);
+  }, [onComposeRestoreRequestConsumed]);
 
   const { publishOfflinePresenceNow } = useRelayScopedPresence({
     userPubkey: user?.pubkey,
