@@ -52,7 +52,7 @@ import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
-import { useParams } from "react-router-dom";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
@@ -122,8 +122,7 @@ export function ListView({
   const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
   const depthMode = usePreferencesStore((s) => s.displayDepthMode);
-  const { taskId } = useParams<{ taskId: string }>();
-  const focusedTaskId = taskId ?? null;
+  const focusedTaskId = useFocusedTaskId();
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();

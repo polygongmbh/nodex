@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
@@ -30,8 +30,7 @@ export function TaskTree({
   const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
   const isPendingPublishTask = useIsPendingPublishTask();
-  const { taskId } = useParams<{ taskId: string }>();
-  const focusedTaskId = taskId ?? null;
+  const focusedTaskId = useFocusedTaskId();
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
   const { forceShowComposer } = useFeedViewInteractionModel();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();

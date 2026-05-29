@@ -39,7 +39,7 @@ import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useTaskViewServices } from "./use-task-view-services";
 import { CalendarTaskCard } from "./calendar/CalendarTaskCard";
-import { useParams } from "react-router-dom";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -60,8 +60,7 @@ export function CalendarView({
 }: CalendarViewProps) {
   const currentUser = useCurrentUser();
   const isMobile = useIsMobile();
-  const { taskId } = useParams<{ taskId: string }>();
-  const focusedTaskId = taskId ?? null;
+  const focusedTaskId = useFocusedTaskId();
   const { t } = useTranslation(["tasks", "composer"]);
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();

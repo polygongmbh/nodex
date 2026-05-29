@@ -58,7 +58,7 @@ import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
-import { useParams } from "react-router-dom";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
 import { useIsPendingPublishTask } from "@/features/feed-page/stores/pending-publish-store";
@@ -194,8 +194,7 @@ export function FeedView({
   const isInteractionBlocked = useIsInteractionBlocked();
   const isPendingPublishTask = useIsPendingPublishTask();
   const isHydrating = useIsHydrating();
-  const { taskId } = useParams<{ taskId: string }>();
-  const focusedTaskId = taskId ?? null;
+  const focusedTaskId = useFocusedTaskId();
   const { t, i18n } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();

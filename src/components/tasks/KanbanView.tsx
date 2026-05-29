@@ -50,7 +50,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useTaskViewServices } from "./use-task-view-services";
 import { buildChildrenMap, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
-import { useParams } from "react-router-dom";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
 import { useIsPendingPublishTask } from "@/features/feed-page/stores/pending-publish-store";
@@ -155,8 +155,7 @@ export function KanbanView({
   const isInteractionBlocked = useIsInteractionBlocked();
   const isPendingPublishTask = useIsPendingPublishTask();
   const depthMode = usePreferencesStore((s) => s.displayDepthMode);
-  const { taskId } = useParams<{ taskId: string }>();
-  const focusedTaskId = taskId ?? null;
+  const focusedTaskId = useFocusedTaskId();
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
