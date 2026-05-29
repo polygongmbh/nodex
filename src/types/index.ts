@@ -493,12 +493,6 @@ export function getLastEditedAt(post: Post): Date {
   return post.lastEditedAt ?? post.timestamp;
 }
 
-export interface SharedTaskViewContext {
-  allTasks: Post[];
-  currentUser?: Person;
-  focusedTaskId: string | null;
-}
-
 export interface FilterState {
   activeRelays: string[];
   includedChannels: string[];

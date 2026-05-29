@@ -6,7 +6,6 @@ import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { isTaskOutsideSelectedRelayScope } from "@/domain/relays/relay-scope";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { useFocusedTaskId } from "./use-focused-task-id";
 import type { Post, Relay } from "@/types";
 
 const VALID_VIEWS: readonly ViewType[] = VIEW_ORDER;
@@ -45,7 +44,7 @@ export function useFeedNavigation({
   onToggleCompactView,
 }: UseFeedNavigationOptions) {
   const { t } = useTranslation("tasks");
-  const { view: urlView } = useParams<{ view: string }>();
+  const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const lastContentViewRef = useRef<ViewType>("status");
@@ -61,7 +60,7 @@ export function useFeedNavigation({
 
   const currentView: ViewType = resolvedUrlView ?? lastContentViewRef.current;
 
-  const focusedTaskId = useFocusedTaskId();
+  const focusedTaskId = urlTaskId ?? null;
 
   const focusedTask = useMemo(
     () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) ?? null : null),

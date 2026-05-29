@@ -70,9 +70,6 @@ import {
 import {
   FeedPageMobileShell,
 } from "@/features/feed-page/views/FeedPageMobileShell";
-import {
-  type FeedTaskViewModel,
-} from "@/features/feed-page/views/feed-task-view-model-context";
 import { FeedPageProviders } from "@/features/feed-page/views/FeedPageProviders";
 import { FeedRelayProvider, useFeedRelayState } from "@/features/feed-page/views/FeedRelayProvider";
 import { PersonPresenceProvider } from "@/lib/person-presence-context";
@@ -770,45 +767,6 @@ function FeedIndexContent() {
     }),
     [handleOpenAuthModal, shortcutsHelp.open, handleOpenGuide, guardInteraction, filterHandlers, frecencyInteractionEffects]
   );
-  const feedTaskViewModel: FeedTaskViewModel = useMemo(
-    () => ({
-      // Views derive over the relay-scoped subset only — the global
-      // `allTasks` lives at the Index level (focused-task lookup, scope
-      // filter source, breadcrumb ancestor chain) but downstream
-      // useTaskViewSource / buildChildrenMap / evaluateTaskPriorities /
-      // buildTaskViewFilterIndex run O(N) and don't need cross-relay
-      // posts for what the user is browsing in the active scope.
-      allTasks: relayScopedTasks,
-      currentUser,
-      focusedTaskId,
-      isPendingPublishTask,
-      composeRestoreRequest,
-      onComposeRestoreRequestConsumed,
-      mentionRequest,
-      onMentionRequestConsumed,
-      forceShowComposer: forceShowComposeForGuide,
-      composeGuideActivationSignal,
-      isInteractionBlocked,
-      onBlockedInteractionAttempt: handleBlockedInteractionAttempt,
-      isHydrating,
-    }),
-    [
-      relayScopedTasks,
-      currentUser,
-      focusedTaskId,
-      isPendingPublishTask,
-      composeRestoreRequest,
-      onComposeRestoreRequestConsumed,
-      mentionRequest,
-      onMentionRequestConsumed,
-      forceShowComposeForGuide,
-      composeGuideActivationSignal,
-      isInteractionBlocked,
-      handleBlockedInteractionAttempt,
-      isHydrating,
-    ]
-  );
-
   const feedSurfaceState = useMemo(
     () => ({
       relays: relaysWithActiveState.map((relay) => ({
@@ -935,7 +893,6 @@ function FeedIndexContent() {
     <FeedPageProviders
       coreHandlers={coreHandlers}
       surfaceState={feedSurfaceState}
-      taskViewModel={feedTaskViewModel}
       viewState={feedViewState}
       sidebarCommands={sidebarCommands}
       viewCommands={viewCommands}

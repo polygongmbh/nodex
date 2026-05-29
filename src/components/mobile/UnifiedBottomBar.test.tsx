@@ -1,5 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  ingestPost,
+  __resetPostsStoreForTests,
+} from "@/features/feed-page/stores/posts-store";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Relay, TaskCreatePayload, TaskCreateResult } from "@/types";
@@ -18,7 +22,6 @@ import {
 import { makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import * as coreModule from "@/lib/core-channels";
-import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
@@ -147,37 +150,31 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("builds the mobile placeholder from shared context and filters", () => {
+    ingestPost({ post: makeTask({ id: "focused-task", content: "Coordinate launch copy" }) });
     render(
-      <FeedTaskViewModelProvider
-        value={{
-          tasks: [],
-          allTasks: [makeTask({ id: "focused-task", content: "Coordinate launch copy" })],
-          focusedTaskId: "focused-task",
-        }}
-      >
-        <UnifiedBottomBar
-          searchQuery=""
-          currentView="tree"
-          focusedTaskId="focused-task"
-          relays={relays}
-          channels={[
-            { id: "general", name: "general", filterState: "included" },
-          ]}
-          people={[
-            {
-              ...people[0],
-              isSelected: true,
-            },
-          ]}
-          canCreateContent={true}
-        />
-      </FeedTaskViewModelProvider>
+      <UnifiedBottomBar
+        searchQuery=""
+        currentView="tree"
+        focusedTaskId="focused-task"
+        relays={relays}
+        channels={[
+          { id: "general", name: "general", filterState: "included" },
+        ]}
+        people={[
+          {
+            ...people[0],
+            isSelected: true,
+          },
+        ]}
+        canCreateContent={true}
+      />
     );
 
     expect(screen.getByRole("textbox")).toHaveAttribute(
       "placeholder",
       'Find and create posts under "Coordinate launch copy" in #general mentioning @Alice...'
     );
+    __resetPostsStoreForTests();
   });
 
   it("uses shared visible people in the selector and prefers display names over usernames", () => {

@@ -11,7 +11,6 @@ import {
   type FeedInteractionHandlerMap,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-context";
-import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
 import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-context";
 import { ScrollCaptureProvider, type ScrollCaptureRef } from "./scroll-capture-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
@@ -30,7 +29,6 @@ export interface FeedPageCoreHandlers {
 interface FeedPageProvidersProps extends PropsWithChildren {
   coreHandlers: FeedPageCoreHandlers;
   surfaceState: FeedSurfaceState;
-  taskViewModel: FeedTaskViewModel;
   viewState: FeedViewState;
   sidebarCommands: FeedSidebarCommands;
   viewCommands: FeedViewCommands;
@@ -229,7 +227,6 @@ function FeedInteractionBusFromContexts({
 export function FeedPageProviders({
   coreHandlers,
   surfaceState,
-  taskViewModel,
   viewState,
   sidebarCommands,
   viewCommands,
@@ -250,7 +247,7 @@ export function FeedPageProviders({
             <FeedSurfaceProvider value={surfaceState}>
               <FeedViewStateProvider value={viewState}>
                 <ScrollCaptureProvider value={scrollCaptureRef}>
-                  <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
+                  {content}
                   <ProfileCompletionDialog />
                 </ScrollCaptureProvider>
               </FeedViewStateProvider>
