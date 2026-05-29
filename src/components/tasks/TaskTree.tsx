@@ -11,7 +11,7 @@ import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { useScrollCapture } from "@/features/feed-page/views/scroll-capture-context";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
-import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
+import { useOnboardingComposerSignal } from "@/features/feed-page/stores/composer-signals-store";
 import {
   createTreeSelectors,
   useTaskViewSource,
@@ -32,7 +32,7 @@ export function TaskTree({
   const isPendingPublishTask = useIsPendingPublishTask();
   const focusedTaskId = useFocusedTaskId();
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
-  const { forceShowComposer } = useFeedViewInteractionModel();
+  const forceShowComposer = useOnboardingComposerSignal();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const taskSource = useTaskViewSource({

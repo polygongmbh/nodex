@@ -41,7 +41,7 @@ import {
 import { isTaskTerminal } from "@/domain/content/task-state";
 import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
-import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
+import { useOnboardingComposerSignal } from "@/features/feed-page/stores/composer-signals-store";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
   getAncestorChainFromSource,
@@ -127,7 +127,7 @@ export function ListView({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { channels, people } = useFeedSurfaceState();
-  const { forceShowComposer } = useFeedViewInteractionModel();
+  const forceShowComposer = useOnboardingComposerSignal();
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   

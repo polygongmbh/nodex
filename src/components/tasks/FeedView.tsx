@@ -39,7 +39,7 @@ import { ScopeFooterHint } from "@/components/tasks/ScopeFooterHint";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
-import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
+import { useOnboardingComposerSignal } from "@/features/feed-page/stores/composer-signals-store";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 import { formatTimelineTimestamp } from "@/lib/timeline-timestamp";
@@ -201,7 +201,7 @@ export function FeedView({
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const { peopleById } = useFeedPersonLookup();
-  const { forceShowComposer } = useFeedViewInteractionModel();
+  const forceShowComposer = useOnboardingComposerSignal();
 
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);

@@ -9,7 +9,7 @@ import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-atta
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
@@ -31,7 +31,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
   const { focusTask } = useTaskViewServices();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { peopleById } = useFeedPersonLookup();
-  const { currentUser } = useFeedTaskViewModel();
+  const currentUser = useCurrentUser();
   const resolvedAuthor = peopleById.get(task.author.pubkey.toLowerCase()) ?? task.author;
   const isComment = isCommentPost(task);
   const isEvent = isCalendarEventPost(task);

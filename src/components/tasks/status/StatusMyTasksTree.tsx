@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next";
 import { TreeTaskItem } from "@/components/tasks/TreeTaskItem";
 import { TaskAuthorProfilesProvider } from "@/components/tasks/task-author-profiles-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
+import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
+import { useIsPendingPublishTask } from "@/features/feed-page/stores/pending-publish-store";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
@@ -32,7 +34,9 @@ export function StatusMyTasksTree({ contextTasks, allTasks, peopleScope, focused
   const { t } = useTranslation("tasks");
   const { t: tShell } = useTranslation("shell");
   const { relays } = useFeedSurfaceState();
-  const { currentUser, isInteractionBlocked = false, isPendingPublishTask } = useFeedTaskViewModel();
+  const currentUser = useCurrentUser();
+  const isInteractionBlocked = useIsInteractionBlocked();
+  const isPendingPublishTask = useIsPendingPublishTask();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const activeRelays = useMemo(() => relays.filter((relay) => relay.isActive), [relays]);
 

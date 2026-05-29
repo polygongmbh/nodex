@@ -8,7 +8,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import {
+  useIsInteractionBlocked,
+  useBlockedInteractionAttemptHandler,
+} from "@/features/feed-page/stores/interaction-block-store";
 import {
   getTaskStateRegistry,
   resolveTaskStateFromStatus,
@@ -35,7 +38,8 @@ export function TaskStatusToggle({
   focusOnQuickToggle,
 }: TaskStatusToggleProps) {
   const { t } = useTranslation("tasks");
-  const { isInteractionBlocked = false, onBlockedInteractionAttempt } = useFeedTaskViewModel();
+  const isInteractionBlocked = useIsInteractionBlocked();
+  const onBlockedInteractionAttempt = useBlockedInteractionAttemptHandler();
   const {
     canCompleteTask,
     statusMenuOpen,

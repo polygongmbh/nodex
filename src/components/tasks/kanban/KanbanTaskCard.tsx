@@ -10,7 +10,7 @@ import { AttachmentCountIndicator } from "@/components/tasks/task-card/Attachmen
 import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-attachments";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useBlockedInteractionAttemptHandler } from "@/features/feed-page/stores/interaction-block-store";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { cn } from "@/lib/utils";
@@ -58,7 +58,7 @@ export function KanbanTaskCard({
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask, authPolicy } = useTaskViewServices();
-  const { onBlockedInteractionAttempt } = useFeedTaskViewModel();
+  const onBlockedInteractionAttempt = useBlockedInteractionAttemptHandler();
   const { relays } = useFeedSurfaceState();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
   const primaryDate = getTaskPrimaryDate(task);
