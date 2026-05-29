@@ -15,12 +15,14 @@ interface PersonPresenceProviderProps extends PropsWithChildren {
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   allTasks?: Post[];
   now?: Date;
+  currentUserPubkey?: string | null;
 }
 
 export function PersonPresenceProvider({
   latestPresenceByAuthor,
   allTasks,
   now,
+  currentUserPubkey,
   children,
 }: PersonPresenceProviderProps) {
   const presenceByPubkey = useMemo(() => {
@@ -52,8 +54,23 @@ export function PersonPresenceProvider({
         ),
       );
     }
+    // The self user's own kind 30315 is published only on view/task changes —
+    // no periodic heartbeat — so the 3-minute online window would mark us
+    // OFFLINE while the app is plainly open. Override to "online" locally;
+    // remote observers still see the real (possibly stale) presence event.
+    if (currentUserPubkey) {
+      const selfKey = currentUserPubkey.trim().toLowerCase();
+      const selfPresence = latestPresenceByAuthor.get(selfKey);
+      result.set(selfKey, {
+        state: "online",
+        reportedAtMs: selfPresence?.reportedAtMs ?? evaluatedAt.getTime(),
+        context: selfPresence?.state === "active"
+          ? { view: selfPresence.view, taskId: selfPresence.taskId ?? null }
+          : undefined,
+      });
+    }
     return result;
-  }, [latestPresenceByAuthor, allTasks, now]);
+  }, [latestPresenceByAuthor, allTasks, now, currentUserPubkey]);
 
   const value = useMemo(() => ({ presenceByPubkey }), [presenceByPubkey]);
 

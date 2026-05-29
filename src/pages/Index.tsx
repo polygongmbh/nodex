@@ -889,6 +889,7 @@ function FeedIndexContent() {
     <PersonPresenceProvider
       latestPresenceByAuthor={latestPresenceByAuthor}
       allTasks={allTasks}
+      currentUserPubkey={user?.pubkey}
     >
     <FeedPageProviders
       coreHandlers={coreHandlers}
