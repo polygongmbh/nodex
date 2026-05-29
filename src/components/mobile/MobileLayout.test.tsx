@@ -1,15 +1,21 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "./use-mobile-toast-offset";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import {
+  ingestPost,
+  __resetPostsStoreForTests,
+} from "@/features/feed-page/stores/posts-store";
+import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
+import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 import type { Channel, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
-import type { FeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import type { FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import type { FeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
@@ -47,15 +53,10 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", async () =
 });
 
 const mockViewState = vi.fn(() => baseFeedViewState as FeedViewState);
-const mockTaskViewModel = vi.fn(() => baseTaskViewModel as FeedTaskViewModel);
 const mockSurfaceState = vi.fn(() => baseSurfaceState as FeedSurfaceState);
 
 vi.mock("@/features/feed-page/views/feed-view-state-context", () => ({
   useFeedViewState: () => mockViewState(),
-}));
-
-vi.mock("@/features/feed-page/views/feed-task-view-model-context", () => ({
-  useFeedTaskViewModel: () => mockTaskViewModel(),
 }));
 
 vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
@@ -164,12 +165,6 @@ const baseFeedViewState: FeedViewState = {
   profileCompletionPromptSignal: 0,
 };
 
-const baseTaskViewModel: FeedTaskViewModel = {
-  allTasks: tasks,
-  focusedTaskId: null,
-  currentUser: people[0],
-};
-
 const baseSurfaceState: FeedSurfaceState = {
   relays,
   channels,
@@ -177,29 +172,55 @@ const baseSurfaceState: FeedSurfaceState = {
   quickFilters: makeQuickFilterState(),
 };
 
+interface TaskViewModelOverride {
+  allTasks?: Post[];
+  focusedTaskId?: string | null;
+  isHydrating?: boolean;
+  currentUser?: Person;
+}
+
 type MobileLayoutOverrides = {
   viewState?: Partial<FeedViewState>;
-  taskViewModel?: Partial<FeedTaskViewModel>;
+  taskViewModel?: TaskViewModelOverride;
   surfaceState?: Partial<FeedSurfaceState>;
 };
 
+function applyTaskViewModelOverride(override: TaskViewModelOverride = {}) {
+  __resetPostsStoreForTests();
+  for (const post of override.allTasks ?? []) {
+    ingestPost({ post });
+  }
+  useHydrationStatusStore.getState().setIsHydrating(override.isHydrating ?? false);
+  useCurrentUserStore
+    .getState()
+    .setCurrentUser(override.currentUser ?? people[0]);
+}
+
 function setMocks(overrides: MobileLayoutOverrides = {}) {
-  const taskViewModel: FeedTaskViewModel = { ...baseTaskViewModel, ...overrides.taskViewModel };
   const surfaceState: FeedSurfaceState = {
     ...baseSurfaceState,
     quickFilters: makeQuickFilterState(),
     ...overrides.surfaceState,
   };
   mockViewState.mockReturnValue({ ...baseFeedViewState, ...overrides.viewState });
-  mockTaskViewModel.mockReturnValue(taskViewModel);
   mockSurfaceState.mockReturnValue(surfaceState);
+  applyTaskViewModelOverride(overrides.taskViewModel);
 }
 
 function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: string } = {}) {
   const { searchQuery, ...rest } = overrides;
   setMocks(rest);
   useFilterStore.getState().setSearchQuery(searchQuery ?? "");
-  return render(<MobileLayout />, { wrapper: MemoryRouter });
+  const focusedTaskId = rest.taskViewModel?.focusedTaskId ?? null;
+  const view = rest.viewState?.currentView ?? "tree";
+  const path = focusedTaskId ? `/${view}/${focusedTaskId}` : `/${view}`;
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/:view/:taskId?" element={<MobileLayout />} />
+      </Routes>
+    </MemoryRouter>
+  );
 }
 
 function setSignedInUser() {
@@ -216,6 +237,8 @@ beforeEach(() => {
 
 afterEach(() => {
   document.documentElement.style.removeProperty(MOBILE_TOAST_TOP_OFFSET_CSS_VAR);
+  __resetPostsStoreForTests();
+  useHydrationStatusStore.getState().setIsHydrating(false);
 });
 
 describe("MobileLayout auth wiring", () => {
@@ -620,7 +643,7 @@ describe("MobileLayout auth wiring", () => {
     const rootTask = makeTask({ id: "root-task", content: "Root task #general", tags: ["general"] });
     const childTask = makeTask({ id: "child-task", content: "Child task #general", tags: ["general"], parentId: "root-task" });
 
-    const { rerender, unmount } = renderMobileLayout({
+    const { unmount } = renderMobileLayout({
       taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: null },
     });
 
@@ -628,14 +651,17 @@ describe("MobileLayout auth wiring", () => {
       expect(document.documentElement.style.getPropertyValue(MOBILE_TOAST_TOP_OFFSET_CSS_VAR)).toBe("56px");
     });
 
-    setMocks({ taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" } });
-    rerender(<MobileLayout />);
+    unmount();
+
+    const next = renderMobileLayout({
+      taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
+    });
 
     await waitFor(() => {
       expect(document.documentElement.style.getPropertyValue(MOBILE_TOAST_TOP_OFFSET_CSS_VAR)).toBe("96px");
     });
 
-    unmount();
+    next.unmount();
 
     expect(document.documentElement.style.getPropertyValue(MOBILE_TOAST_TOP_OFFSET_CSS_VAR)).toBe("");
   });

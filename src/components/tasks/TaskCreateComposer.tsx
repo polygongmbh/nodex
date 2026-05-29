@@ -6,7 +6,14 @@ import { TaskComposerRuntimeProvider, useResolvedTaskComposerEnvironment } from 
 import { useComposerRelayBlock } from "./use-composer-relay-block";
 import { useComposerFilterSync } from "./use-composer-filter-sync";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
+import {
+  useComposeGuideActivationSignal,
+  useComposeRestoreSignal,
+  useComposeRestoreRequestConsumedHandler,
+  useMentionSignal,
+  useMentionRequestConsumedHandler,
+} from "@/features/feed-page/stores/composer-signals-store";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getTaskAssigneePubkeys } from "@/types";
@@ -43,14 +50,12 @@ export function TaskCreateComposer({
   onSubmit,
 }: TaskCreateComposerProps) {
   const { createHttpAuthHeader } = useNDK();
-  const {
-    allTasks,
-    composeGuideActivationSignal,
-    mentionRequest = null,
-    onMentionRequestConsumed,
-    composeRestoreRequest = null,
-    onComposeRestoreRequestConsumed,
-  } = useFeedTaskViewModel();
+  const posts = usePosts();
+  const composeGuideActivationSignal = useComposeGuideActivationSignal();
+  const mentionRequest = useMentionSignal();
+  const onMentionRequestConsumed = useMentionRequestConsumedHandler();
+  const composeRestoreRequest = useComposeRestoreSignal();
+  const onComposeRestoreRequestConsumed = useComposeRestoreRequestConsumedHandler();
   const environment = useResolvedTaskComposerEnvironment({});
   const {
     shouldHideComposer,
@@ -62,7 +67,7 @@ export function TaskCreateComposer({
   const filterSync = useComposerFilterSync(environment);
   const isMobile = useIsMobile();
   const parentTask = focusedTaskId
-    ? allTasks.find((task) => task.id === focusedTaskId)
+    ? posts.find((post) => post.id === focusedTaskId)
     : undefined;
   const contextTaskTitle = parentTask?.content ?? "";
   const inheritedTagNames = useMemo(() => {

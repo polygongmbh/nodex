@@ -1,9 +1,12 @@
 import { render, fireEvent, screen, waitFor, act } from "@testing-library/react";
 import { useState } from "react";
 import type { ComponentProps } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
-import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
+import {
+  ingestPost,
+  __resetPostsStoreForTests,
+} from "@/features/feed-page/stores/posts-store";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import type { Channel, Relay, TaskCreatePayload, TaskCreateResult } from "@/types";
@@ -103,6 +106,9 @@ function renderCreateComposer({
   tasks?: ReturnType<typeof makeTask>[];
   allTasks?: ReturnType<typeof makeTask>[];
 } = {}) {
+  for (const post of allTasks) {
+    ingestPost({ post });
+  }
   return render(
     <FeedSurfaceProvider
       value={{
@@ -114,9 +120,7 @@ function renderCreateComposer({
         channelMatchMode: "and",
       }}
     >
-      <FeedTaskViewModelProvider value={{ allTasks, focusedTaskId: null }}>
-        <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} {...props} />
-      </FeedTaskViewModelProvider>
+      <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} {...props} />
     </FeedSurfaceProvider>
   );
 }
@@ -127,6 +131,10 @@ describe("TaskCreateComposer", () => {
     createTaskMock.mockClear();
     createTaskMock.mockImplementation(async () => ({ ok: true }));
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    __resetPostsStoreForTests();
   });
 
   it("dispatches task.create with caller-supplied onSubmit and closes on success", async () => {
@@ -150,14 +158,12 @@ describe("TaskCreateComposer", () => {
             channelMatchMode: "and",
           }}
         >
-          <FeedTaskViewModelProvider value={{ allTasks: [], focusedTaskId: "parent-task" }}>
-            <TaskCreateComposer
-              onCancel={onCancel}
-              onSubmit={submit}
-              focusedTaskId="parent-task"
-              allowComment={false}
-            />
-          </FeedTaskViewModelProvider>
+          <TaskCreateComposer
+            onCancel={onCancel}
+            onSubmit={submit}
+            focusedTaskId="parent-task"
+            allowComment={false}
+          />
         </FeedSurfaceProvider>
       );
     }
@@ -446,10 +452,8 @@ describe("TaskCreateComposer", () => {
       ];
       return (
         <FeedSurfaceProvider value={{ relays: relaysWithSelection, channels, people, searchQuery: "", quickFilters: makeQuickFilterState(), channelMatchMode: "and" }}>
-          <FeedTaskViewModelProvider value={{ allTasks: [], focusedTaskId: null }}>
-            <button onClick={() => setActiveRelayId("relay-b")}>Switch to Relay B</button>
-            <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} allowComment={false} />
-          </FeedTaskViewModelProvider>
+          <button onClick={() => setActiveRelayId("relay-b")}>Switch to Relay B</button>
+          <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} allowComment={false} />
         </FeedSurfaceProvider>
       );
     }

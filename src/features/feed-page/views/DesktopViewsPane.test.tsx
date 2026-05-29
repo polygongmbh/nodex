@@ -1,11 +1,16 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { makePerson, makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "./feed-surface-context";
-import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
 import { FeedViewStateProvider } from "./feed-view-state-context";
 import { DesktopViewsPane } from "./DesktopViewsPane";
+import {
+  ingestPost,
+  __resetPostsStoreForTests,
+} from "@/features/feed-page/stores/posts-store";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
+import type { Post } from "@/types";
 
 vi.mock("@/components/tasks/TaskTree", () => ({
   TaskTree: () => <div data-testid="tree-view" />,
@@ -31,41 +36,59 @@ vi.mock("@/components/tasks/ListView", () => ({
   ListView: () => <div data-testid="list-view" />,
 }));
 
-function renderPane(currentView: ViewType, value: FeedTaskViewModel) {
+afterEach(() => {
+  __resetPostsStoreForTests();
+});
+
+function renderPane(
+  currentView: ViewType,
+  { allTasks, focusedTaskId }: { allTasks: Post[]; focusedTaskId: string | null }
+) {
+  for (const post of allTasks) {
+    ingestPost({ post });
+  }
+  const path = focusedTaskId ? `/${currentView}/${focusedTaskId}` : `/${currentView}`;
   return render(
-    <FeedSurfaceProvider
-      value={{
-        relays: [{ id: "demo", name: "Demo", isActive: true, connectionStatus: "connected", url: "wss://demo.test" }],
-        channels: [],
-        people: [],
-        mentionablePeople: [],
-        searchQuery: "",
-        quickFilters: {
-          recentEnabled: false,
-          recentDays: 7,
-          priorityEnabled: false,
-          minPriority: 0,
-        },
-        channelMatchMode: "and",
-      }}
-    >
-      <FeedViewStateProvider
-        value={{
-          currentView,
-          displayDepthMode: "leaves",
-          isSidebarFocused: false,
-          isOnboardingOpen: false,
-          activeOnboardingStepId: null,
-          isManageRouteActive: false,
-          canCreateContent: true,
-          profileCompletionPromptSignal: 0,
-        }}
-      >
-        <FeedTaskViewModelProvider value={value}>
-          <DesktopViewsPane />
-        </FeedTaskViewModelProvider>
-      </FeedViewStateProvider>
-    </FeedSurfaceProvider>
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route
+          path="/:view/:taskId?"
+          element={
+            <FeedSurfaceProvider
+              value={{
+                relays: [{ id: "demo", name: "Demo", isActive: true, connectionStatus: "connected", url: "wss://demo.test" }],
+                channels: [],
+                people: [],
+                mentionablePeople: [],
+                searchQuery: "",
+                quickFilters: {
+                  recentEnabled: false,
+                  recentDays: 7,
+                  priorityEnabled: false,
+                  minPriority: 0,
+                },
+                channelMatchMode: "and",
+              }}
+            >
+              <FeedViewStateProvider
+                value={{
+                  currentView,
+                  displayDepthMode: "leaves",
+                  isSidebarFocused: false,
+                  isOnboardingOpen: false,
+                  activeOnboardingStepId: null,
+                  isManageRouteActive: false,
+                  canCreateContent: true,
+                  profileCompletionPromptSignal: 0,
+                }}
+              >
+                <DesktopViewsPane />
+              </FeedViewStateProvider>
+            </FeedSurfaceProvider>
+          }
+        />
+      </Routes>
+    </MemoryRouter>
   );
 }
 

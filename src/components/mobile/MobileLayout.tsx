@@ -8,12 +8,18 @@ import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { FailedPublishQueueBannerContainer } from "@/features/feed-page/views/FailedPublishQueueBannerContainer";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
+import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
+import {
+  useComposeRestoreSignal,
+  useOnboardingComposerSignal,
+} from "@/features/feed-page/stores/composer-signals-store";
 import { useMobileToastOffset } from "./use-mobile-toast-offset";
 
 const FeedView = lazy(() =>
@@ -43,16 +49,11 @@ export function MobileLayout() {
     void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
   }, [dispatchFeedInteraction]);
 
-  const feedTaskViewModel = useFeedTaskViewModel();
-  const {
-    allTasks,
-    focusedTaskId,
-    composeRestoreRequest = null,
-    mentionRequest = null,
-    forceShowComposer: forceComposeMode = false,
-    isPendingPublishTask,
-    isHydrating = false,
-  } = feedTaskViewModel;
+  const posts = usePosts();
+  const focusedTaskId = useFocusedTaskId();
+  const composeRestoreRequest = useComposeRestoreSignal();
+  const forceComposeMode = useOnboardingComposerSignal();
+  const isHydrating = useIsHydrating();
 
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
@@ -95,31 +96,13 @@ export function MobileLayout() {
     shouldShowMobileFallbackNotice,
     mobileShellFocusedTaskId,
   } = useMobileFallbackNoticeState({
-    posts: allTasks,
+    posts,
     focusedTaskId,
     currentView: activePrimaryView,
     showFilters,
     isHydrating,
   });
   const hasMobileBreadcrumbOffset = !showFilters && !isHydrating && Boolean(mobileShellFocusedTaskId);
-  const effectiveTaskViewModel = useMemo(
-    () => ({
-      ...feedTaskViewModel,
-      searchQueryOverride: effectiveSearchQuery,
-      composeRestoreRequest,
-      mentionRequest,
-      forceShowComposer: forceComposeMode,
-      isPendingPublishTask,
-    }),
-    [
-      feedTaskViewModel,
-      effectiveSearchQuery,
-      composeRestoreRequest,
-      mentionRequest,
-      forceComposeMode,
-      isPendingPublishTask,
-    ]
-  );
 
   useEffect(() => {
     if (isManageRouteActive) {
@@ -160,21 +143,19 @@ export function MobileLayout() {
         <MobileFilters profileEditorOpenSignal={profileEditorOpenSignal} />
       );
     }
-    const viewPosts = effectiveTaskViewModel.allTasks;
-    const viewSearchOverride = effectiveTaskViewModel.searchQueryOverride;
     switch (activePrimaryView) {
       case "status":
-        return <StatusView posts={viewPosts} />;
+        return <StatusView posts={posts} />;
       case "tree":
-        return <TaskTree posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
+        return <TaskTree posts={posts} searchQueryOverride={effectiveSearchQuery} />;
       case "feed":
-        return <FeedView posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
+        return <FeedView posts={posts} searchQueryOverride={effectiveSearchQuery} />;
       case "list":
-        return <UpcomingView posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
+        return <UpcomingView posts={posts} searchQueryOverride={effectiveSearchQuery} />;
       case "calendar":
-        return <CalendarView posts={viewPosts} searchQueryOverride="" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView posts={posts} searchQueryOverride="" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
-        return <TaskTree posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
+        return <TaskTree posts={posts} searchQueryOverride={effectiveSearchQuery} />;
     }
   };
 
@@ -189,7 +170,7 @@ export function MobileLayout() {
         <div className="h-full flex flex-col">
           <div>
             <TaskViewStatusRow
-              posts={allTasks}
+              posts={posts}
               focusedTaskId={mobileShellFocusedTaskId}
               isHydrating={isHydrating}
               className="h-10 px-3 text-xs"

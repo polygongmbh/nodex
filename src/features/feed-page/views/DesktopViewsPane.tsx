@@ -7,9 +7,11 @@ import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filter
 import { isTaskPost } from "@/types";
 import { filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
-import { useFeedTaskViewModel } from "./feed-task-view-model-context";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useFeedViewState } from "./feed-view-state-context";
 import { ViewLoadingFallback } from "./ViewLoadingFallback";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
+import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
 
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
@@ -26,10 +28,12 @@ const ListView = lazy(() =>
 
 export function DesktopViewsPane() {
   const { currentView } = useFeedViewState();
-  const viewModel = useFeedTaskViewModel();
+  const posts = usePosts();
+  const focusedTaskId = useFocusedTaskId();
+  const isHydrating = useIsHydrating();
   const taskSource = useTaskViewSource({
-    posts: viewModel.allTasks,
-    focusedTaskId: viewModel.focusedTaskId,
+    posts,
+    focusedTaskId,
   });
   const { included, excluded } = useMemo(
     () => getIncludedExcludedChannelNames(taskSource.channels),
@@ -83,7 +87,6 @@ export function DesktopViewsPane() {
       : currentView === "feed"
         ? scopedTasks.length === 0
         : scopedTasks.every((task) => !isTaskPost(task));
-  const posts = viewModel.allTasks;
   let viewPane: ReactNode;
   switch (currentView) {
     case "status":
@@ -112,9 +115,9 @@ export function DesktopViewsPane() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <TaskViewStatusRow
-        posts={viewModel.allTasks}
-        focusedTaskId={viewModel.focusedTaskId}
-        isHydrating={viewModel.isHydrating}
+        posts={posts}
+        focusedTaskId={focusedTaskId}
+        isHydrating={isHydrating}
       />
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <Suspense fallback={<ViewLoadingFallback />}>{viewPane}</Suspense>
