@@ -1,15 +1,27 @@
 import { act, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  seedNostrProfile,
   useCachedNostrProfile,
   useNostrProfile,
   useNostrProfiles,
 } from "./use-nostr-profiles";
 import { defaultKind0Cache } from "./people-from-kind0";
+import { NostrEventKind, type NostrEvent } from "@/lib/nostr/types";
 
 const pubkeyA = "a".repeat(64);
 const pubkeyB = "b".repeat(64);
+
+function kind0(pubkey: string, content: Record<string, string>, createdAt?: number): NostrEvent {
+  return {
+    id: "",
+    pubkey,
+    kind: NostrEventKind.Metadata,
+    tags: [],
+    sig: "",
+    created_at: createdAt ?? Math.floor(Date.now() / 1000),
+    content: JSON.stringify(content),
+  };
+}
 
 describe("useNostrProfile / useCachedNostrProfile", () => {
   beforeEach(() => {
@@ -21,7 +33,7 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
     localStorage.clear();
   });
 
-  it("returns null for unknown pubkeys without subscribing or fetching", () => {
+  it("returns null for unknown pubkeys", () => {
     let observed: unknown;
     function Probe() {
       const { profile } = useNostrProfile(pubkeyA);
@@ -32,7 +44,7 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
     expect(observed).toBeNull();
   });
 
-  it("re-renders when a kind 0 event is ingested via seedNostrProfile", () => {
+  it("re-renders when a real kind 0 event is ingested into the cache", () => {
     let observed: ReturnType<typeof useCachedNostrProfile> = null;
     function Probe() {
       observed = useCachedNostrProfile(pubkeyA);
@@ -42,12 +54,11 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
     expect(observed).toBeNull();
 
     act(() => {
-      seedNostrProfile({
-        pubkey: pubkeyA,
+      defaultKind0Cache.save([kind0(pubkeyA, {
         name: "alice",
-        displayName: "Alice",
+        display_name: "Alice",
         picture: "https://example.com/alice.png",
-      });
+      })]);
     });
 
     expect(observed).toMatchObject({
@@ -59,8 +70,10 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
   });
 
   it("useNostrProfiles returns a map keyed by pubkey", () => {
-    seedNostrProfile({ pubkey: pubkeyA, name: "alice", picture: "a.png" });
-    seedNostrProfile({ pubkey: pubkeyB, name: "bob" });
+    defaultKind0Cache.save([
+      kind0(pubkeyA, { name: "alice", picture: "a.png" }),
+      kind0(pubkeyB, { name: "bob" }),
+    ]);
 
     let observed: Record<string, unknown> = {};
     function Probe() {
@@ -75,17 +88,7 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
   });
 
   it("accepts both camelCase displayName and snake_case display_name", () => {
-    defaultKind0Cache.save([
-      {
-        id: "",
-        pubkey: pubkeyA,
-        kind: 0,
-        tags: [],
-        sig: "",
-        created_at: Math.floor(Date.now() / 1000),
-        content: JSON.stringify({ name: "snake", display_name: "Snake Case" }),
-      },
-    ]);
+    defaultKind0Cache.save([kind0(pubkeyA, { name: "snake", display_name: "Snake Case" })]);
 
     let observed: ReturnType<typeof useCachedNostrProfile> = null;
     function Probe() {

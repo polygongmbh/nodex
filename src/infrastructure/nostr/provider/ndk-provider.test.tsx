@@ -326,14 +326,6 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
   NDKSubscriptionCacheUsage: {
     ONLY_RELAY: "ONLY_RELAY",
   },
-  profileFromEvent: (event: { content: string }) => {
-    try {
-      const parsed = JSON.parse(event.content);
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch {
-      return {};
-    }
-  },
   NDKEvent: class {
     kind?: number;
     content = "";

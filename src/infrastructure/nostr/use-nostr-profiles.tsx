@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { NostrEventKind, type NostrEvent } from "@/lib/nostr/types";
+import type { NostrEvent } from "@/lib/nostr/types";
 import {
-  defaultKind0Cache,
   getKind0CacheVersion,
   loadCachedKind0Events,
   subscribeToKind0Cache,
@@ -59,9 +58,10 @@ function parseEventToProfile(event: NostrEvent): NostrProfile {
   };
 }
 
-// Memoize the parsed profile per event reference. Kind0Cache hands back stable
-// event objects until the next ingest for that (relay, pubkey), so the same
-// event reference always yields the same profile reference.
+// Memoize parsed profile per event reference. Kind0Cache hands back stable
+// event objects until the next ingest, so the same event reference always
+// yields the same profile reference — keeps useSyncExternalStore snapshots
+// reference-stable.
 const profileByEvent = new WeakMap<NostrEvent, NostrProfile>();
 function eventToProfile(event: NostrEvent | undefined): NostrProfile | null {
   if (!event) return null;
@@ -72,9 +72,7 @@ function eventToProfile(event: NostrEvent | undefined): NostrProfile | null {
   return profile;
 }
 
-// Lazy pubkey → event index, refreshed when the underlying Kind0Cache version
-// bumps. Keeps useCachedNostrProfile snapshots reference-stable so
-// useSyncExternalStore can bail out across renders.
+// Lazy pubkey → event index, refreshed when Kind0Cache version bumps.
 let cachedIndexVersion = -1;
 let cachedIndex: Map<string, NostrEvent> = new Map();
 function getCachedIndex(): Map<string, NostrEvent> {
@@ -129,10 +127,9 @@ export function useNostrProfiles(pubkeys: string[]): {
 
   const profiles = useMemo<ProfileCache>(() => {
     if (normalizedPubkeys.length === 0) return EMPTY_PROFILES;
-    const index = getCachedIndex();
     const result: ProfileCache = {};
     for (const pk of normalizedPubkeys) {
-      const profile = eventToProfile(index.get(normalizePubkey(pk)));
+      const profile = getProfileSnapshot(pk);
       if (profile) result[pk] = profile;
     }
     return result;
@@ -157,46 +154,12 @@ export function useNostrProfile(pubkey: string | null): {
 }
 
 /**
- * Cache-only profile lookup. Reads from the shared Kind 0 cache via
- * `useSyncExternalStore`, so any new kind 0 event (live ingest or
- * `seedNostrProfile`) re-renders consumers automatically. Safe to use in
- * components rendered outside of `NDKProvider` (e.g. unit tests, isolated UI),
- * and ideal for low-level primitives like `UserAvatar` that simply want to
- * upgrade to the live picture when one is already known.
+ * Cache-only profile lookup against the shared Kind 0 cache. The live kind 0
+ * subscription is what fills this cache; nothing else writes to it.
  */
 export function useCachedNostrProfile(pubkey: string | null): NostrProfile | null {
   const getSnapshot = useCallback(() => getProfileSnapshot(pubkey), [pubkey]);
   return useSyncExternalStore(subscribeToKind0Cache, getSnapshot, getSnapshot);
-}
-
-/**
- * Seed a profile (e.g. the authenticated user's own NDK profile) into the
- * shared Kind 0 cache. Synthesises a kind 0 event with a present-time
- * timestamp so it wins over any older cached event for the same pubkey; a
- * real signed event arriving later with a newer `created_at` will replace it.
- */
-export function seedNostrProfile(profile: NostrProfile): void {
-  if (!profile.pubkey) return;
-  const metadata: Record<string, string> = {};
-  if (profile.name) metadata.name = profile.name;
-  if (profile.displayName) metadata.display_name = profile.displayName;
-  if (profile.picture) metadata.picture = profile.picture;
-  if (profile.about) metadata.about = profile.about;
-  if (profile.nip05) metadata.nip05 = profile.nip05;
-  if (profile.banner) metadata.banner = profile.banner;
-  if (profile.website) metadata.website = profile.website;
-  if (profile.lud16) metadata.lud16 = profile.lud16;
-
-  const synthetic: NostrEvent = {
-    id: "",
-    pubkey: normalizePubkey(profile.pubkey),
-    created_at: Math.floor(Date.now() / 1000),
-    kind: NostrEventKind.Metadata,
-    tags: [],
-    content: JSON.stringify(metadata),
-    sig: "",
-  };
-  defaultKind0Cache.save([synthetic]);
 }
 
 export function getDefaultAvatarUrl(pubkey: string): string {
