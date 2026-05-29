@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { FilteredEmptyState } from "./FilteredEmptyState";
 import type { Channel, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
@@ -63,28 +62,18 @@ function renderOverlay(
   }
   useHydrationStatusStore.getState().setIsHydrating(viewModel.isHydrating ?? false);
   const focusedTaskId = viewModel.focusedTaskId ?? null;
-  const initialPath = focusedTaskId ? `/feed/${focusedTaskId}` : "/feed";
   return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <Routes>
-        <Route
-          path="/:view/:taskId?"
-          element={
-            <FeedSurfaceProvider
-              value={{
-                relays: surface.relays ?? relays,
-                channels: surface.channels ?? channels,
-                people: surface.people ?? people,
-                searchQuery: "",
-                quickFilters: surface.quickFilters ?? makeQuickFilterState(),
-              }}
-            >
-              <FilteredEmptyState />
-            </FeedSurfaceProvider>
-          }
-        />
-      </Routes>
-    </MemoryRouter>
+    <FeedSurfaceProvider
+      value={{
+        relays: surface.relays ?? relays,
+        channels: surface.channels ?? channels,
+        people: surface.people ?? people,
+        searchQuery: "",
+        quickFilters: surface.quickFilters ?? makeQuickFilterState(),
+      }}
+    >
+      <FilteredEmptyState focusedTaskId={focusedTaskId} />
+    </FeedSurfaceProvider>
   );
 }
 

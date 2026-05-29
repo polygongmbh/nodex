@@ -80,9 +80,10 @@ function withFocusedTask(taskId: string, ui: ReactElement): ReactElement {
 }
 
 function renderFeedView(
-  props: FeedViewProps,
+  props: Partial<FeedViewProps> & { posts: FeedViewProps["posts"] },
   surfaceOverrides: Partial<FeedSurfaceState> = {}
 ) {
+  const resolvedProps: FeedViewProps = { focusedTaskId: null, ...props };
   const surfaceState: FeedSurfaceState = {
     relays,
     channels,
@@ -96,7 +97,7 @@ function renderFeedView(
 
   return render(
     <FeedSurfaceProvider value={surfaceState}>
-      <FeedView {...props} />
+      <FeedView {...resolvedProps} />
     </FeedSurfaceProvider>
   );
 }
@@ -143,7 +144,7 @@ describe("FeedView", () => {
       },
     });
     render(
-      <FeedView posts={[root, child]} />
+      <FeedView posts={[root, child]} focusedTaskId={null} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp("\\broot task general\\b", "i") }));
@@ -170,7 +171,7 @@ describe("FeedView", () => {
     });
 
     const { container } = render(
-      <FeedView posts={[rawTask]} />
+      <FeedView posts={[rawTask]} focusedTaskId={null} />
     );
 
     const row = container.querySelector('[data-task-id="task-raw"]');
@@ -186,7 +187,7 @@ describe("FeedView", () => {
     const manyTasks = makeFeedTasks(41);
 
     const { container } = render(
-      <FeedView posts={manyTasks} />
+      <FeedView posts={manyTasks} focusedTaskId={null} />
     );
 
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
@@ -197,7 +198,7 @@ describe("FeedView", () => {
     const manyTasks = makeFeedTasks(71);
 
     const { container } = render(
-      <FeedView posts={manyTasks} searchQueryOverride="" />
+      <FeedView posts={manyTasks} focusedTaskId={null} searchQueryOverride="" />
     );
 
     const scroller = container.querySelector('[data-onboarding="task-list"]');
@@ -303,7 +304,7 @@ describe("FeedView", () => {
           channelMatchMode: "and",
         }}
       >
-        <FeedView posts={manyTasks} searchQueryOverride="" />
+        <FeedView posts={manyTasks} focusedTaskId={null} searchQueryOverride="" />
       </FeedSurfaceProvider>
     );
 
@@ -366,7 +367,7 @@ describe("FeedView", () => {
           channelMatchMode: "and",
         }}
       >
-        <FeedView posts={relayOneTasks} searchQueryOverride="" />
+        <FeedView posts={relayOneTasks} focusedTaskId={null} searchQueryOverride="" />
       </FeedSurfaceProvider>
     );
 
@@ -419,7 +420,7 @@ describe("FeedView", () => {
           channelMatchMode: "and",
         }}
       >
-        <FeedView posts={manyTasks} searchQueryOverride="" />
+        <FeedView posts={manyTasks} focusedTaskId={null} searchQueryOverride="" />
       </FeedSurfaceProvider>
     );
 
@@ -441,7 +442,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView posts={[root, child]} />
+      <FeedView posts={[root, child]} focusedTaskId={null} />
     );
 
     const breadcrumbButton = screen.getByRole("button", { name: new RegExp("\\broot breadcrumb label that should not wrap\\b", "i") });
@@ -472,7 +473,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView posts={[root, middle, leaf]} />
+      <FeedView posts={[root, middle, leaf]} focusedTaskId={null} />
     );
 
     // Multiple cards reference each ancestor (the leaf shows root + middle
@@ -509,7 +510,7 @@ describe("FeedView", () => {
       },
     });
 
-    render(withFocusedTask("middle", <FeedView posts={[root, middle, leaf]} />));
+    render(<FeedView posts={[root, middle, leaf]} focusedTaskId="middle" />);
 
     expect(screen.queryByRole("button", { name: new RegExp("\\broot breadcrumb\\b", "i") })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: new RegExp("\\bmiddle breadcrumb\\b", "i") })).not.toBeInTheDocument();
@@ -527,7 +528,7 @@ describe("FeedView", () => {
     } });
 
     render(
-      <FeedView posts={[pubkeyTask]} />
+      <FeedView posts={[pubkeyTask]} focusedTaskId={null} />
     );
 
     await waitFor(() => {
@@ -539,7 +540,7 @@ describe("FeedView", () => {
 
   it("shows the author display name and parenthesized handle inline on desktop", () => {
     render(
-      <FeedView posts={tasks} />
+      <FeedView posts={tasks} focusedTaskId={null} />
     );
 
     expect(screen.getByTestId("feed-author-primary-task-1")).toHaveTextContent("Alice Doe");
@@ -594,7 +595,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView posts={[taskWithStateUpdates]} />
+      <FeedView posts={[taskWithStateUpdates]} focusedTaskId={null} />
     );
 
     const taskTimestamp = screen.getByTitle(/task created at/i);
@@ -606,7 +607,7 @@ describe("FeedView", () => {
 
   it("hides secondary author metadata on mobile for a denser header row", () => {
     render(
-      <FeedView posts={tasks} />
+      <FeedView posts={tasks} focusedTaskId={null} />
     );
 
     expect(screen.queryByTestId("feed-author-secondary-task-1")).not.toBeInTheDocument();
@@ -614,7 +615,7 @@ describe("FeedView", () => {
 
   it("supports modifier-based author filtering from the author label", () => {
     render(
-      <FeedView posts={tasks} />
+      <FeedView posts={tasks} focusedTaskId={null} />
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0], { ctrlKey: true });
@@ -627,7 +628,7 @@ describe("FeedView", () => {
 
   it("does not focus the task on a plain author click", () => {
     render(
-      <FeedView posts={tasks} />
+      <FeedView posts={tasks} focusedTaskId={null} />
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0]);
@@ -643,7 +644,7 @@ describe("FeedView", () => {
 
   it("supports Ctrl/Cmd+Alt author shortcuts for filter and mention", () => {
     render(
-      <FeedView posts={tasks} />
+      <FeedView posts={tasks} focusedTaskId={null} />
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0], {
@@ -699,7 +700,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView posts={[mentionTask]} />
+      <FeedView posts={[mentionTask]} focusedTaskId={null} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
@@ -752,7 +753,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView posts={[task]} />
+      <FeedView posts={[task]} focusedTaskId={null} />
     );
 
     const entry = screen.getByTestId("feed-state-entry-state-active-no-desc");
@@ -785,7 +786,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView posts={[taskWithStateUpdates]} />
+      <FeedView posts={[taskWithStateUpdates]} focusedTaskId={null} />
     );
 
     const latestStateEntry = screen.getByTestId("feed-state-entry-state-2");
@@ -822,7 +823,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView posts={[taskWithLongMultilineTitle]} />
+      <FeedView posts={[taskWithLongMultilineTitle]} focusedTaskId={null} />
     );
 
     const titleButton = screen.getByRole("button", {
@@ -863,7 +864,7 @@ describe("FeedView", () => {
     });
 
     const { container } = render(
-      <FeedView posts={[openTask, doneTask, closedTask]} />
+      <FeedView posts={[openTask, doneTask, closedTask]} focusedTaskId={null} />
     );
 
     expect(container.querySelector('[data-task-id="task-open"]')).toBeInTheDocument();
@@ -882,7 +883,7 @@ describe("FeedView", () => {
     });
 
     const { container } = render(
-      withFocusedTask("task-closed-focused", <FeedView posts={[closedTask]} />)
+      <FeedView posts={[closedTask]} focusedTaskId="task-closed-focused" />
     );
 
     expect(container.querySelector('[data-task-id="task-closed-focused"]')).toBeInTheDocument();
@@ -912,7 +913,7 @@ describe("FeedView", () => {
     });
 
     const { container } = render(
-      <FeedView posts={[openTask, closedTask]} />
+      <FeedView posts={[openTask, closedTask]} focusedTaskId={null} />
     );
 
     expect(container.querySelector('[data-task-id="task-closed-with-updates"]')).not.toBeInTheDocument();
@@ -1029,7 +1030,7 @@ describe("FeedView", () => {
 
     useCurrentUserStore.getState().setCurrentUser(author);
     render(
-      <FeedView posts={[taskWithPriority]} />
+      <FeedView posts={[taskWithPriority]} focusedTaskId={null} />
     );
 
     chooseComboboxOptionByIndex("priority-select", 4);

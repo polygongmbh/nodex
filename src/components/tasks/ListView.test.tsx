@@ -41,7 +41,7 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: root.author.pubkey, name: root.author.name, displayName: root.author.displayName })];
     render(
-      <ListView posts={[root, child]} />
+      <ListView posts={[root, child]} focusedTaskId={null} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp("\\broot task general\\b", "i") }));
@@ -61,13 +61,7 @@ describe("ListView priority control", () => {
       status: "open"
     } });
 
-    render(
-      <MemoryRouter initialEntries={["/list/middle"]}>
-        <Routes>
-          <Route path="/:view/:taskId" element={<ListView posts={[root, middle, leaf]} />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    render(<ListView posts={[root, middle, leaf]} focusedTaskId="middle" />);
 
     expect(screen.queryByRole("button", { name: new RegExp("\\broot task general\\b", "i") })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: new RegExp("\\bmiddle task general\\b", "i") })).not.toBeInTheDocument();
@@ -87,7 +81,7 @@ describe("ListView priority control", () => {
     const onUpdatePriority = vi.fn();
 
     const { rerender } = render(
-      <ListView posts={tasks} />
+      <ListView posts={tasks} focusedTaskId={null} />
     );
 
     const [prioritySelect] = screen.getAllByRole("combobox");
@@ -95,7 +89,7 @@ describe("ListView priority control", () => {
     expect(prioritySelect).toHaveFocus();
 
     rerender(
-      <ListView posts={tasks} />
+      <ListView posts={tasks} focusedTaskId={null} />
     );
 
     const [prioritySelectAfter] = screen.getAllByRole("combobox");
@@ -116,7 +110,7 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     const { container } = render(
-      <ListView posts={tasks} />
+      <ListView posts={tasks} focusedTaskId={null} />
     );
 
     const taskRow = container.querySelector('[data-task-id="task-locked"]') as HTMLElement;
@@ -137,7 +131,7 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     render(
-      <ListView posts={[task]} />
+      <ListView posts={[task]} focusedTaskId={null} />
     );
 
     const statusButton = screen.getByTestId("task-status-toggle");
@@ -165,7 +159,7 @@ describe("ListView priority control", () => {
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
 
     render(
-      <ListView posts={[task]} />
+      <ListView posts={[task]} focusedTaskId={null} />
     );
 
     fireEvent.click(screen.getByTestId("task-status-toggle"), { altKey: true });
@@ -186,7 +180,7 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
     render(
-      <ListView posts={[task]} />
+      <ListView posts={[task]} focusedTaskId={null} />
     );
 
     fireEvent.click(screen.getByTestId("task-status-toggle"));
@@ -213,7 +207,7 @@ describe("ListView priority control", () => {
     const people = [makePerson({ pubkey: task.author.pubkey, name: task.author.name, displayName: task.author.displayName })];
 
     render(
-      <ListView posts={[task]} />
+      <ListView posts={[task]} focusedTaskId={null} />
     );
 
     fireEvent.pointerDown(screen.getByTestId("task-status-toggle"));
@@ -232,7 +226,7 @@ describe("ListView priority control", () => {
     });
 
     render(
-      <ListView posts={[task]} />
+      <ListView posts={[task]} focusedTaskId={null} />
     );
 
     const preview = screen.getByText("Top line frontend bold https://example.com/image.png");
@@ -252,7 +246,7 @@ describe("ListView priority control", () => {
     });
 
     render(
-      <ListView posts={[task]} />
+      <ListView posts={[task]} focusedTaskId={null} />
     );
 
     expect(screen.getByText("can you try implementing this")).toBeInTheDocument();

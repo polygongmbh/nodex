@@ -7,11 +7,10 @@ import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filter
 import { isTaskPost } from "@/types";
 import { filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useFeedViewState } from "./feed-view-state-context";
 import { ViewLoadingFallback } from "./ViewLoadingFallback";
-import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
+import type { Post } from "@/types";
 
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
@@ -26,10 +25,14 @@ const ListView = lazy(() =>
   import("@/components/tasks/ListView").then((module) => ({ default: module.ListView }))
 );
 
-export function DesktopViewsPane() {
+export function DesktopViewsPane({
+  posts,
+  focusedTaskId,
+}: {
+  posts: Post[];
+  focusedTaskId: string | null;
+}) {
   const { currentView } = useFeedViewState();
-  const posts = usePosts();
-  const focusedTaskId = useFocusedTaskId();
   const isHydrating = useIsHydrating();
   const taskSource = useTaskViewSource({
     posts,
@@ -90,25 +93,25 @@ export function DesktopViewsPane() {
   let viewPane: ReactNode;
   switch (currentView) {
     case "status":
-      viewPane = <StatusView posts={posts} />;
+      viewPane = <StatusView posts={posts} focusedTaskId={focusedTaskId} />;
       break;
     case "tree":
-      viewPane = <TaskTree posts={posts} />;
+      viewPane = <TaskTree posts={posts} focusedTaskId={focusedTaskId} />;
       break;
     case "feed":
-      viewPane = <FeedView posts={posts} />;
+      viewPane = <FeedView posts={posts} focusedTaskId={focusedTaskId} />;
       break;
     case "kanban":
-      viewPane = <KanbanView posts={posts} />;
+      viewPane = <KanbanView posts={posts} focusedTaskId={focusedTaskId} />;
       break;
     case "calendar":
-      viewPane = <CalendarView posts={posts} />;
+      viewPane = <CalendarView posts={posts} focusedTaskId={focusedTaskId} />;
       break;
     case "list":
-      viewPane = <ListView posts={posts} />;
+      viewPane = <ListView posts={posts} focusedTaskId={focusedTaskId} />;
       break;
     default:
-      viewPane = <TaskTree posts={posts} />;
+      viewPane = <TaskTree posts={posts} focusedTaskId={focusedTaskId} />;
       break;
   }
 
@@ -122,7 +125,7 @@ export function DesktopViewsPane() {
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <Suspense fallback={<ViewLoadingFallback />}>{viewPane}</Suspense>
         {shouldShowOverlay ? (
-          <FilteredEmptyState />
+          <FilteredEmptyState focusedTaskId={focusedTaskId} />
         ) : null}
       </div>
     </div>

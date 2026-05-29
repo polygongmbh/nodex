@@ -52,13 +52,13 @@ import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 
 interface ListViewProps {
   posts: Post[];
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
 }
 
@@ -117,12 +117,12 @@ const PriorityCell = memo(function PriorityCell({
 
 export function ListView({
   posts,
+  focusedTaskId,
   searchQueryOverride,
 }: ListViewProps) {
   const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
   const depthMode = usePreferencesStore((s) => s.displayDepthMode);
-  const focusedTaskId = useFocusedTaskId();
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
@@ -474,6 +474,7 @@ export function ListView({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {(authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
+          focusedTaskId={focusedTaskId}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
           allowComment={false}
         />
@@ -581,7 +582,7 @@ export function ListView({
               })}
               {shouldShowScopeFooterHint ? (
                 <div className="col-span-full p-0">
-                  <ScopeFooterHint />
+                  <ScopeFooterHint focusedTaskId={focusedTaskId} />
                 </div>
               ) : null}
             </>

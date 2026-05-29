@@ -100,7 +100,7 @@ describe("TaskTree focus sync", () => {
     renderTaskTree(
       <>
         <TaskViewStatusRow posts={[rootTask, childTask]} focusedTaskId="root" />
-        <TaskTree posts={[rootTask, childTask]} />
+        <TaskTree posts={[rootTask, childTask]} focusedTaskId="root" />
       </>,
       { focusedTaskId: "root" }
     );
@@ -115,7 +115,7 @@ describe("TaskTree focus sync", () => {
     renderTaskTree(
       <>
         <TaskViewStatusRow posts={[rootTask, childTask]} focusedTaskId="root" />
-        <TaskTree posts={[rootTask, childTask]} />
+        <TaskTree posts={[rootTask, childTask]} focusedTaskId="root" />
       </>,
       { focusedTaskId: "root" }
     );
@@ -137,7 +137,7 @@ describe("TaskTree focus sync", () => {
   it("keeps done subtasks behind the third fold state when only broader scope filters are active", () => {
     dispatchFeedInteraction.mockClear();
     renderTaskTree(
-      <TaskTree posts={[rootTask, childTask, doneGrandchildTask]} />,
+      <TaskTree posts={[rootTask, childTask, doneGrandchildTask]} focusedTaskId={null} />,
       {
         surfaceOverrides: {
           quickFilters: makeQuickFilterState({ recentEnabled: true, recentDays: 30 }),

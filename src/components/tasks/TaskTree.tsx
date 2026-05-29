@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
@@ -21,16 +20,17 @@ import { TaskAuthorProfilesProvider } from "./task-author-profiles-context";
 
 export function TaskTree({
   posts,
+  focusedTaskId,
   searchQueryOverride,
 }: {
   posts: Post[];
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
 }) {
   const isMobile = useIsMobile();
   const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
   const isPendingPublishTask = useIsPendingPublishTask();
-  const focusedTaskId = useFocusedTaskId();
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
   const forceShowComposer = useOnboardingComposerSignal();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
@@ -216,6 +216,7 @@ export function TaskTree({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {!isMobile && (authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
+          focusedTaskId={focusedTaskId}
           onExpandedChange={setIsComposerExpanded}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
           collapseOnSuccess
@@ -245,7 +246,7 @@ export function TaskTree({
               sortContext={sortContext}
             />
           ))}
-          {shouldShowScopeFooterHint ? <ScopeFooterHint /> : null}
+          {shouldShowScopeFooterHint ? <ScopeFooterHint focusedTaskId={focusedTaskId} /> : null}
         </div>
       </TaskAuthorProfilesProvider>
 

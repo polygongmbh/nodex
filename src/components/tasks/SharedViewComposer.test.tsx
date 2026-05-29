@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import {
   ingestPost,
@@ -35,33 +34,24 @@ vi.mock("sonner", () => ({
 function renderComposer(parentTask: Post, focusedTaskId: string) {
   ingestPost({ post: parentTask });
   return render(
-    <MemoryRouter initialEntries={[`/feed/${focusedTaskId}`]}>
-      <Routes>
-        <Route
-          path="/:view/:taskId"
-          element={
-            <FeedSurfaceProvider
-              value={{
-                relays: [
-                  makeRelay({
-                    id: "relay-a",
-                    name: "Relay A",
-                    connectionStatus: "read-only",
-                  }),
-                ],
-                channels: [makeChannel({ id: "backend", name: "backend" })],
-                people: [makePerson()],
-                searchQuery: "",
-                quickFilters: makeQuickFilterState(),
-                channelMatchMode: "and",
-              }}
-            >
-              <SharedViewComposer />
-            </FeedSurfaceProvider>
-          }
-        />
-      </Routes>
-    </MemoryRouter>
+    <FeedSurfaceProvider
+      value={{
+        relays: [
+          makeRelay({
+            id: "relay-a",
+            name: "Relay A",
+            connectionStatus: "read-only",
+          }),
+        ],
+        channels: [makeChannel({ id: "backend", name: "backend" })],
+        people: [makePerson()],
+        searchQuery: "",
+        quickFilters: makeQuickFilterState(),
+        channelMatchMode: "and",
+      }}
+    >
+      <SharedViewComposer focusedTaskId={focusedTaskId} />
+    </FeedSurfaceProvider>
   );
 }
 

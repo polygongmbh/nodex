@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ScopeFooterHint } from "./ScopeFooterHint";
 import type { Channel, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
@@ -65,28 +64,18 @@ function renderHint(
     ingestPost({ post });
   }
   const focusedTaskId = viewModel.focusedTaskId ?? null;
-  const initialPath = focusedTaskId ? `/feed/${focusedTaskId}` : "/feed";
   return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <Routes>
-        <Route
-          path="/:view/:taskId?"
-          element={
-            <FeedSurfaceProvider
-              value={{
-                relays: surface.relays ?? relays,
-                channels: surface.channels ?? channels,
-                people: surface.people ?? people,
-                searchQuery: "",
-                quickFilters: surface.quickFilters ?? makeQuickFilterState(),
-              }}
-            >
-              <ScopeFooterHint />
-            </FeedSurfaceProvider>
-          }
-        />
-      </Routes>
-    </MemoryRouter>
+    <FeedSurfaceProvider
+      value={{
+        relays: surface.relays ?? relays,
+        channels: surface.channels ?? channels,
+        people: surface.people ?? people,
+        searchQuery: "",
+        quickFilters: surface.quickFilters ?? makeQuickFilterState(),
+      }}
+    >
+      <ScopeFooterHint focusedTaskId={focusedTaskId} />
+    </FeedSurfaceProvider>
   );
 }
 

@@ -11,15 +11,20 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedViewState } from "./feed-view-state-context";
 import { FeedPageSidebar } from "./FeedPageSidebar";
 import { DesktopViewsPane } from "./DesktopViewsPane";
+import type { Post } from "@/types";
 
 interface DesktopAppShellProps {
   shortcutsHelpProps: ComponentProps<typeof KeyboardShortcutsHelp>;
   authModalProps: ComponentProps<typeof NostrAuthModal>;
+  posts: Post[];
+  focusedTaskId: string | null;
 }
 
 export function DesktopAppShell({
   shortcutsHelpProps,
   authModalProps,
+  posts,
+  focusedTaskId,
 }: DesktopAppShellProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { currentView } = useFeedViewState();
@@ -45,9 +50,9 @@ export function DesktopAppShell({
       <div className="min-w-0 overflow-hidden flex flex-col">
         <FailedPublishQueueBannerContainer />
         <div className="min-h-0 flex-1 overflow-hidden">
-          <DesktopViewsPane />
+          <DesktopViewsPane posts={posts} focusedTaskId={focusedTaskId} />
         </div>
-        <DesktopSearchDock />
+        <DesktopSearchDock focusedTaskId={focusedTaskId} />
       </div>
 
       <KeyboardShortcutsHelp {...shortcutsHelpProps} />

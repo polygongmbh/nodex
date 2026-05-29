@@ -114,7 +114,7 @@ describe("KanbanView", () => {
     }, content: "Closed task #general" });
 
     render(
-      <KanbanView posts={[todoTask, doneTask, closedTask]} />
+      <KanbanView posts={[todoTask, doneTask, closedTask]} focusedTaskId={null} />
     );
 
     const headings = screen
@@ -148,7 +148,7 @@ describe("KanbanView", () => {
     });
 
     const { container } = render(
-      <KanbanView posts={[newerNoPriority, olderHighPriority]} />
+      <KanbanView posts={[newerNoPriority, olderHighPriority]} focusedTaskId={null} />
     );
 
     const openCards = Array.from(
@@ -166,7 +166,7 @@ describe("KanbanView", () => {
     });
 
     render(
-      <KanbanView posts={[blockedTask]} />
+      <KanbanView posts={[blockedTask]} focusedTaskId={null} />
     );
 
     expect(screen.getByText("Blocked")).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe("KanbanView", () => {
   it("renders a droppable target for empty columns", () => {
 
     const { container } = render(
-      <KanbanView posts={[]} />
+      <KanbanView posts={[]} focusedTaskId={null} />
     );
 
     expect(container.querySelector('[data-droppable-id="open"]')).toBeInTheDocument();
@@ -203,7 +203,7 @@ describe("KanbanView", () => {
     });
 
     render(
-      <KanbanView posts={[prioritizedTask, nonPrioritizedTask]} />
+      <KanbanView posts={[prioritizedTask, nonPrioritizedTask]} focusedTaskId={null} />
     );
 
     expect(screen.getByTestId("priority-select")).toBeInTheDocument();
@@ -223,7 +223,7 @@ describe("KanbanView", () => {
     });
 
     render(
-      <KanbanView posts={[task]} />
+      <KanbanView posts={[task]} focusedTaskId={null} />
     );
 
     const chipRow = screen.getByTestId("kanban-chip-row-priority-and-tag-task");
@@ -251,7 +251,7 @@ describe("KanbanView", () => {
     });
 
     render(
-      <KanbanView posts={[task]} />
+      <KanbanView posts={[task]} focusedTaskId={null} />
     );
 
     expect(screen.queryByText("spec.pdf")).not.toBeInTheDocument();
@@ -274,7 +274,7 @@ describe("KanbanView", () => {
     });
 
     render(
-      <KanbanView posts={[parent, child]} />
+      <KanbanView posts={[parent, child]} focusedTaskId={null} />
     );
 
     fireEvent.click(document.querySelector('[data-task-id="parent-task"]')!);
@@ -287,7 +287,7 @@ describe("KanbanView", () => {
     }, content: "Leaf task #general" });
 
     render(
-      <KanbanView posts={[leaf]} />
+      <KanbanView posts={[leaf]} focusedTaskId={null} />
     );
 
     fireEvent.click(document.querySelector('[data-task-id="leaf-task"]')!);
@@ -319,7 +319,7 @@ describe("KanbanView", () => {
     });
 
     render(
-      <KanbanView posts={[parent, doneChild, closedChild]} />
+      <KanbanView posts={[parent, doneChild, closedChild]} focusedTaskId={null} />
     );
 
     fireEvent.click(document.querySelector('[data-task-id="parent-done"]')!);
@@ -341,7 +341,7 @@ describe("KanbanView", () => {
     });
 
     render(
-      <KanbanView posts={[parent, child]} />
+      <KanbanView posts={[parent, child]} focusedTaskId={null} />
     );
 
     fireEvent.click(document.querySelector('[data-task-id="parent-task"]')!);
@@ -379,7 +379,7 @@ describe("KanbanView", () => {
     }, content: "Leaf task #general" });
 
     render(
-      <KanbanView posts={[activeProject, activeChild, doneProject, doneChild, leaf]} />
+      <KanbanView posts={[activeProject, activeChild, doneProject, doneChild, leaf]} focusedTaskId={null} />
     );
 
     const findBold = (taskId: string) =>
@@ -428,7 +428,8 @@ describe("KanbanView", () => {
 
     render(
       <KanbanView
-        posts={[parent, open1, open2, active1, done1, done2, done3, restingParent, restingOpen, restingDone, leaf]} />
+        posts={[parent, open1, open2, active1, done1, done2, done3, restingParent, restingOpen, restingDone, leaf]}
+        focusedTaskId={null} />
     );
 
     const parentCard = document.querySelector('[data-task-id="parent"]')!;
@@ -447,7 +448,7 @@ describe("KanbanView", () => {
       status: "open"
     }, content: "Drag me #general" });
     const { container } = render(
-      <KanbanView posts={[task]} />
+      <KanbanView posts={[task]} focusedTaskId={null} />
     );
 
     expect(container.querySelector('[data-droppable-id="open"] [data-draggable-id="drag-task"]')).toBeInTheDocument();
@@ -483,7 +484,7 @@ describe("KanbanView", () => {
     );
 
     const { container } = render(
-      <KanbanView posts={tasks} />
+      <KanbanView posts={tasks} focusedTaskId={null} />
     );
 
     const visibleBefore = container.querySelectorAll('[data-droppable-id="done"] [data-draggable-id]');
@@ -505,7 +506,7 @@ describe("KanbanView", () => {
     );
 
     const { container } = render(
-      <KanbanView posts={tasks} />
+      <KanbanView posts={tasks} focusedTaskId={null} />
     );
 
     expect(container.querySelectorAll('[data-droppable-id="open"] [data-draggable-id]')).toHaveLength(20);
@@ -521,7 +522,7 @@ describe("KanbanView", () => {
     });
 
     const { container } = render(
-      <KanbanView posts={[doneTask]} />
+      <KanbanView posts={[doneTask]} focusedTaskId={null} />
     );
 
     const card = container.querySelector('[data-task-id="done-task"]') as HTMLElement;
@@ -547,7 +548,7 @@ describe("KanbanView", () => {
       }, content: "Task #general" });
 
       const { container } = render(
-        <KanbanView posts={[task]} />
+        <KanbanView posts={[task]} focusedTaskId={null} />
       );
 
       const board = container.querySelector('[data-onboarding="kanban-board"]') as HTMLElement;

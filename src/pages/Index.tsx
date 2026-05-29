@@ -946,6 +946,8 @@ function FeedIndexContent() {
       <MotdBanner />
       {isMobile ? (
         <FeedPageMobileShell
+          posts={relayScopedTasks}
+          focusedTaskId={focusedTaskId}
           authModalProps={{
             isOpen: isAuthModalOpen,
             onClose: handleCloseAuthModal,
@@ -954,6 +956,8 @@ function FeedIndexContent() {
         />
       ) : (
         <DesktopAppShell
+          posts={relayScopedTasks}
+          focusedTaskId={focusedTaskId}
           shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
           authModalProps={{
             isOpen: isAuthModalOpen,

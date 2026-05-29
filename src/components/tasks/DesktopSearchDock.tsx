@@ -15,17 +15,19 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { getCompactPersonLabel } from "@/types/person";
 
-export function DesktopSearchDock() {
+export function DesktopSearchDock({
+  focusedTaskId,
+}: {
+  focusedTaskId: string | null;
+}) {
   const { t, i18n } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { channels = [], people = [] } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
-  const focusedTaskId = useFocusedTaskId();
   const posts = usePosts();
   const { currentView, displayDepthMode } = useFeedViewState();
   const showDisplayDepthSelector = currentView === "kanban" || currentView === "list";

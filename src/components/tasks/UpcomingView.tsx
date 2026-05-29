@@ -52,20 +52,20 @@ import {
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskViewServices } from "./use-task-view-services";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 
 interface UpcomingViewProps {
   posts: Post[];
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
 }
 
 export function UpcomingView({
   posts,
+  focusedTaskId,
   searchQueryOverride,
 }: UpcomingViewProps) {
   const currentUser = useCurrentUser();
-  const focusedTaskId = useFocusedTaskId();
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();

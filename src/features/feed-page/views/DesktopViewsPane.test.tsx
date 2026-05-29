@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { makePerson, makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "./feed-surface-context";
 import { FeedViewStateProvider } from "./feed-view-state-context";
@@ -47,48 +46,36 @@ function renderPane(
   for (const post of allTasks) {
     ingestPost({ post });
   }
-  const path = focusedTaskId ? `/${currentView}/${focusedTaskId}` : `/${currentView}`;
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route
-          path="/:view/:taskId?"
-          element={
-            <FeedSurfaceProvider
-              value={{
-                relays: [{ id: "demo", name: "Demo", isActive: true, connectionStatus: "connected", url: "wss://demo.test" }],
-                channels: [],
-                people: [],
-                mentionablePeople: [],
-                searchQuery: "",
-                quickFilters: {
-                  recentEnabled: false,
-                  recentDays: 7,
-                  priorityEnabled: false,
-                  minPriority: 0,
-                },
-                channelMatchMode: "and",
-              }}
-            >
-              <FeedViewStateProvider
-                value={{
-                  currentView,
-                  displayDepthMode: "leaves",
-                  isSidebarFocused: false,
-                  isOnboardingOpen: false,
-                  activeOnboardingStepId: null,
-                  isManageRouteActive: false,
-                  canCreateContent: true,
-                  profileCompletionPromptSignal: 0,
-                }}
-              >
-                <DesktopViewsPane />
-              </FeedViewStateProvider>
-            </FeedSurfaceProvider>
-          }
-        />
-      </Routes>
-    </MemoryRouter>
+    <FeedSurfaceProvider
+      value={{
+        relays: [{ id: "demo", name: "Demo", isActive: true, connectionStatus: "connected", url: "wss://demo.test" }],
+        channels: [],
+        people: [],
+        mentionablePeople: [],
+        quickFilters: {
+          recentEnabled: false,
+          recentDays: 7,
+          priorityEnabled: false,
+          minPriority: 0,
+        },
+      }}
+    >
+      <FeedViewStateProvider
+        value={{
+          currentView,
+          displayDepthMode: "leaves",
+          isSidebarFocused: false,
+          isOnboardingOpen: false,
+          activeOnboardingStepId: null,
+          isManageRouteActive: false,
+          canCreateContent: true,
+          profileCompletionPromptSignal: 0,
+        }}
+      >
+        <DesktopViewsPane posts={allTasks} focusedTaskId={focusedTaskId} />
+      </FeedViewStateProvider>
+    </FeedSurfaceProvider>
   );
 }
 

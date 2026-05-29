@@ -10,12 +10,11 @@ import { FailedPublishQueueBannerContainer } from "@/features/feed-page/views/Fa
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
-import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
+import type { Post } from "@/types";
 import {
   useComposeRestoreSignal,
   useOnboardingComposerSignal,
@@ -32,7 +31,13 @@ const UpcomingView = lazy(() =>
   import("@/components/tasks/UpcomingView").then((module) => ({ default: module.UpcomingView }))
 );
 
-export function MobileLayout() {
+export function MobileLayout({
+  posts,
+  focusedTaskId,
+}: {
+  posts: Post[];
+  focusedTaskId: string | null;
+}) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const channels = surface.visibleChannels ?? surface.channels;
@@ -49,8 +54,6 @@ export function MobileLayout() {
     void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
   }, [dispatchFeedInteraction]);
 
-  const posts = usePosts();
-  const focusedTaskId = useFocusedTaskId();
   const composeRestoreRequest = useComposeRestoreSignal();
   const forceComposeMode = useOnboardingComposerSignal();
   const isHydrating = useIsHydrating();
@@ -145,17 +148,17 @@ export function MobileLayout() {
     }
     switch (activePrimaryView) {
       case "status":
-        return <StatusView posts={posts} />;
+        return <StatusView posts={posts} focusedTaskId={focusedTaskId} />;
       case "tree":
-        return <TaskTree posts={posts} searchQueryOverride={effectiveSearchQuery} />;
+        return <TaskTree posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride={effectiveSearchQuery} />;
       case "feed":
-        return <FeedView posts={posts} searchQueryOverride={effectiveSearchQuery} />;
+        return <FeedView posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride={effectiveSearchQuery} />;
       case "list":
-        return <UpcomingView posts={posts} searchQueryOverride={effectiveSearchQuery} />;
+        return <UpcomingView posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride={effectiveSearchQuery} />;
       case "calendar":
-        return <CalendarView posts={posts} searchQueryOverride="" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride="" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
-        return <TaskTree posts={posts} searchQueryOverride={effectiveSearchQuery} />;
+        return <TaskTree posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride={effectiveSearchQuery} />;
     }
   };
 

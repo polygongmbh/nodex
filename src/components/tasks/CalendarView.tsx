@@ -39,12 +39,12 @@ import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useTaskViewServices } from "./use-task-view-services";
 import { CalendarTaskCard } from "./calendar/CalendarTaskCard";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalendarViewProps {
   posts: Post[];
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
@@ -54,13 +54,13 @@ const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 
 export function CalendarView({
   posts,
+  focusedTaskId,
   searchQueryOverride,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
 }: CalendarViewProps) {
   const currentUser = useCurrentUser();
   const isMobile = useIsMobile();
-  const focusedTaskId = useFocusedTaskId();
   const { t } = useTranslation(["tasks", "composer"]);
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();

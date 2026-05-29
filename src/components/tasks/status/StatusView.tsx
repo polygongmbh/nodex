@@ -10,14 +10,18 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import type { Post } from "@/types";
 
-export function StatusView({ posts }: { posts: Post[] }) {
+export function StatusView({
+  posts,
+  focusedTaskId,
+}: {
+  posts: Post[];
+  focusedTaskId: string | null;
+}) {
   const { t } = useTranslation("tasks");
   const isMobile = useIsMobile();
   const currentUser = useCurrentUser();
-  const focusedTaskId = useFocusedTaskId();
   const surface = useFeedSurfaceState();
   const taskSource = useTaskViewSource({
     posts,

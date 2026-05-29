@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "./use-mobile-toast-offset";
@@ -212,13 +212,10 @@ function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: s
   setMocks(rest);
   useFilterStore.getState().setSearchQuery(searchQuery ?? "");
   const focusedTaskId = rest.taskViewModel?.focusedTaskId ?? null;
-  const view = rest.viewState?.currentView ?? "tree";
-  const path = focusedTaskId ? `/${view}/${focusedTaskId}` : `/${view}`;
+  const posts = rest.taskViewModel?.allTasks ?? [];
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/:view/:taskId?" element={<MobileLayout />} />
-      </Routes>
+    <MemoryRouter>
+      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} />
     </MemoryRouter>
   );
 }
@@ -280,7 +277,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     setMocks({ viewState: { canCreateContent: true, profileCompletionPromptSignal: 1 } });
-    rerender(<MobileLayout />);
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
 
     // Prompt no longer hijacks the route; the global ProfileCompletionDialog
     // (mounted in FeedPageProviders) handles displaying the editor instead.
@@ -592,7 +589,7 @@ describe("MobileLayout auth wiring", () => {
     });
 
     setMocks({ viewState: { currentView: "tree", isOnboardingOpen: true, activeOnboardingStepId: "mobile-compose-combobox" } });
-    rerender(<MobileLayout />);
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
 
     await waitFor(() => {
       expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
@@ -613,7 +610,7 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
     setMocks({ viewState: { currentView: "feed" } });
-    rerender(<MobileLayout />);
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("feed-view")).toBeInTheDocument();

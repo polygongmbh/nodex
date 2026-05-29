@@ -39,7 +39,7 @@ export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: Sta
 
   if (!hasProject) {
     if (!authPolicy.canOpenCompose) return null;
-    return <SharedViewComposer />;
+    return <SharedViewComposer focusedTaskId={focusedTaskId} />;
   }
 
   if (inProgressTopLevel.length === 0) return null;

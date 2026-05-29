@@ -58,7 +58,6 @@ import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
-import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
 import { useIsPendingPublishTask } from "@/features/feed-page/stores/pending-publish-store";
@@ -184,9 +183,11 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
 
 export function FeedView({
   posts,
+  focusedTaskId,
   searchQueryOverride,
 }: {
   posts: Post[];
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
 }) {
   const isMobile = useIsMobile();
@@ -194,7 +195,6 @@ export function FeedView({
   const isInteractionBlocked = useIsInteractionBlocked();
   const isPendingPublishTask = useIsPendingPublishTask();
   const isHydrating = useIsHydrating();
-  const focusedTaskId = useFocusedTaskId();
   const { t, i18n } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
@@ -504,6 +504,7 @@ export function FeedView({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {!isMobile && (authPolicy.canOpenCompose || forceShowComposer) && (
         <SharedViewComposer
+          focusedTaskId={focusedTaskId}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
           allowFeedMessageTypes
         />
@@ -527,7 +528,7 @@ export function FeedView({
         ) : null}
         {hasMoreEntries ? <div ref={loadMoreSentinelRef} className="h-px w-full" /> : null}
         {shouldShowScopeFooterHint && !hasMoreEntries && !isHydrating ? (
-          <ScopeFooterHint />
+          <ScopeFooterHint focusedTaskId={focusedTaskId} />
         ) : null}
       </div>
       {mediaController.activeMediaIndex !== null && (
