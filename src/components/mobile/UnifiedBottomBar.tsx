@@ -49,7 +49,7 @@ import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { PrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import { TaskDateTypeSelect } from "@/components/tasks/TaskDateTypeSelect";
 import { TaskTimeInput } from "@/components/tasks/TaskTimeInput";
@@ -125,7 +125,7 @@ export function UnifiedBottomBar({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const taskCommands = useFeedTaskCommands();
   const surface = useFeedSurfaceState();
-  const { allTasks } = useFeedTaskViewModel();
+  const posts = usePosts();
   const relays = relaysProp ?? surface.relays;
   const channels = channelsProp ?? surface.visibleChannels ?? surface.channels;
   const primaryChannels = surface.primaryChannels && surface.primaryChannels.length > 0
@@ -147,7 +147,7 @@ export function UnifiedBottomBar({
   );
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const contextTaskTitle = focusedTaskId
-    ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
+    ? posts.find((post) => post.id === focusedTaskId)?.content ?? ""
     : "";
   const composerPlaceholder = useMemo(() => {
     const mentionLabels = people.filter((person) => person.isSelected).map((person) => getCompactPersonLabel(person));

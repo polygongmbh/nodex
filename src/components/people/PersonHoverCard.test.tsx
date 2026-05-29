@@ -2,7 +2,10 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PersonHoverCard, resumePersonHoverCards, suspendPersonHoverCards } from "./PersonHoverCard";
 import type { Person } from "@/types/person";
-import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
+import {
+  ingestPost,
+  __resetPostsStoreForTests,
+} from "@/features/feed-page/stores/posts-store";
 import { PersonPresenceProvider } from "@/lib/person-presence-context";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 import { makeTask } from "@/test/fixtures";
@@ -25,6 +28,7 @@ describe("PersonHoverCard", () => {
   afterEach(() => {
     vi.useRealTimers();
     resumePersonHoverCards();
+    __resetPostsStoreForTests();
   });
 
   it("closes an already-open profile preview when another one opens", () => {
@@ -128,22 +132,16 @@ describe("PersonHoverCard", () => {
         },
       ],
     ]);
+    ingestPost({ post: makeTask({ id: "task-123", content: "Fix relay reconnect jitter" }) });
 
     render(
       <PersonPresenceProvider
         latestPresenceByAuthor={presenceByAuthor}
         now={new Date("2026-04-04T11:59:00.000Z")}
       >
-        <FeedTaskViewModelProvider
-          value={{
-            allTasks: [makeTask({ id: "task-123", content: "Fix relay reconnect jitter" })],
-            focusedTaskId: null,
-          }}
-        >
-          <PersonHoverCard person={alice}>
-            <button type="button">Alice trigger</button>
-          </PersonHoverCard>
-        </FeedTaskViewModelProvider>
+        <PersonHoverCard person={alice}>
+          <button type="button">Alice trigger</button>
+        </PersonHoverCard>
       </PersonPresenceProvider>
     );
 

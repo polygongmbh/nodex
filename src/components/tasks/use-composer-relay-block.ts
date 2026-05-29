@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { resolveRelayRoutingState, type RelayRoutingState } from "@/lib/nostr/task-relay-routing";
 import { isWritableRelay } from "./task-composer-runtime";
@@ -12,12 +12,12 @@ export interface ComposerRelayState extends RelayRoutingState {
 
 export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRelayState {
   const { relays } = useFeedSurfaceState();
-  const { allTasks } = useFeedTaskViewModel();
+  const posts = usePosts();
   const authPolicy = useAuthActionPolicy();
 
   const parentTask = useMemo(
-    () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) : undefined),
-    [allTasks, focusedTaskId]
+    () => (focusedTaskId ? posts.find((post) => post.id === focusedTaskId) : undefined),
+    [posts, focusedTaskId]
   );
 
   const shouldHideComposer = useMemo(() => {

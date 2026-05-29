@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { isWritableRelay } from "./task-composer-runtime";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -27,9 +28,10 @@ export function SharedViewComposer({
   const { t } = useTranslation("composer");
   const authPolicy = useAuthActionPolicy();
   const { relays } = useFeedSurfaceState();
-  const { allTasks, focusedTaskId } = useFeedTaskViewModel();
+  const focusedTaskId = useFocusedTaskId();
+  const posts = usePosts();
   const hasWarnedHiddenComposerRef = useRef(false);
-  const parentTask = focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) : undefined;
+  const parentTask = focusedTaskId ? posts.find((post) => post.id === focusedTaskId) : undefined;
   const shouldHideComposer =
     parentTask
     && parentTask.relays.length > 0

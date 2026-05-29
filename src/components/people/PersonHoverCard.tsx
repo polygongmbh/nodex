@@ -7,7 +7,7 @@ import type { Person } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getCompactPersonLabel } from "@/types/person";
 import { cn } from "@/lib/utils";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNip05VerifiedPubkeys } from "@/lib/nostr/use-nip05-verified-pubkeys";
@@ -79,7 +79,7 @@ export function PersonHoverCard({
   sideOffset = 8,
 }: PersonHoverCardProps) {
   const { t, i18n } = useTranslation("tasks");
-  const { allTasks } = useFeedTaskViewModel();
+  const posts = usePosts();
   const isMobile = useIsMobile();
   const personForVerification = useMemo(() => [person], [person]);
   const nip05VerifiedPubkeys = useNip05VerifiedPubkeys(personForVerification);
@@ -110,7 +110,7 @@ export function PersonHoverCard({
   const presenceView = presence?.context?.view;
   const resolvedPresenceTaskTitle = presenceTaskId
     ? getTrimmedFirstTaskContentLine(
-        allTasks.find((task) => task.id === presenceTaskId)?.content
+        posts.find((post) => post.id === presenceTaskId)?.content
       )
     : "";
   const presenceViewLabel = presenceView

@@ -1,12 +1,16 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ScopeFooterHint } from "./ScopeFooterHint";
 import type { Channel, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { makeTask, makePerson } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
-import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
+import {
+  ingestPost,
+  __resetPostsStoreForTests,
+} from "@/features/feed-page/stores/posts-store";
 
 const relays: Relay[] = [
   {
@@ -49,26 +53,40 @@ const PARENT_SCOPE_SUFFIX = ', under "Parent Task".';
 const RECENT_SCOPE = "from the last 7 days";
 const PRIORITY_SCOPE = "at priority P4 or higher";
 
+afterEach(() => {
+  __resetPostsStoreForTests();
+});
+
 function renderHint(
   viewModel: { focusedTaskId?: string | null; allTasks?: Post[] } = {},
   surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
+  for (const post of viewModel.allTasks ?? []) {
+    ingestPost({ post });
+  }
+  const focusedTaskId = viewModel.focusedTaskId ?? null;
+  const initialPath = focusedTaskId ? `/feed/${focusedTaskId}` : "/feed";
   return render(
-    <FeedSurfaceProvider
-      value={{
-        relays: surface.relays ?? relays,
-        channels: surface.channels ?? channels,
-        people: surface.people ?? people,
-        searchQuery: "",
-        quickFilters: surface.quickFilters ?? makeQuickFilterState(),
-      }}
-    >
-      <FeedTaskViewModelProvider
-        value={{ allTasks: viewModel.allTasks ?? [], focusedTaskId: viewModel.focusedTaskId ?? null }}
-      >
-        <ScopeFooterHint />
-      </FeedTaskViewModelProvider>
-    </FeedSurfaceProvider>
+    <MemoryRouter initialEntries={[initialPath]}>
+      <Routes>
+        <Route
+          path="/:view/:taskId?"
+          element={
+            <FeedSurfaceProvider
+              value={{
+                relays: surface.relays ?? relays,
+                channels: surface.channels ?? channels,
+                people: surface.people ?? people,
+                searchQuery: "",
+                quickFilters: surface.quickFilters ?? makeQuickFilterState(),
+              }}
+            >
+              <ScopeFooterHint />
+            </FeedSurfaceProvider>
+          }
+        />
+      </Routes>
+    </MemoryRouter>
   );
 }
 

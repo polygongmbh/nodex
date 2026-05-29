@@ -1,20 +1,24 @@
 import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { Button } from "@/components/ui/button";
 
 export function FilteredEmptyState() {
   const { t } = useTranslation("tasks");
   const surface = useFeedSurfaceState();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { isHydrating = false, focusedTaskId, allTasks } = useFeedTaskViewModel();
+  const isHydrating = useIsHydrating();
+  const focusedTaskId = useFocusedTaskId();
+  const posts = usePosts();
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const contextTaskTitle = focusedTaskId
-    ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
+    ? posts.find((post) => post.id === focusedTaskId)?.content ?? ""
     : "";
   const scopeModel = useEmptyScopeModel({
     relays: surface.relays,

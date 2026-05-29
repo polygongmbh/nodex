@@ -14,8 +14,9 @@ import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { useFocusedTaskId } from "@/features/feed-page/controllers/use-focused-task-id";
+import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { getCompactPersonLabel } from "@/types/person";
 
@@ -24,11 +25,12 @@ export function DesktopSearchDock() {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { channels = [], people = [] } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
-  const { allTasks, focusedTaskId } = useFeedTaskViewModel();
+  const focusedTaskId = useFocusedTaskId();
+  const posts = usePosts();
   const { currentView, displayDepthMode } = useFeedViewState();
   const showDisplayDepthSelector = currentView === "kanban" || currentView === "list";
   const contextTaskTitle = focusedTaskId
-    ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? ""
+    ? posts.find((post) => post.id === focusedTaskId)?.content ?? ""
     : "";
   const searchPlaceholder = useMemo(() => {
     const translatePlaceholder = (key: string, values?: Record<string, unknown>) =>
