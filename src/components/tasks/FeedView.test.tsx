@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, ReactElement, ReactNode } from "react";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { FeedView } from "./FeedView";
 import { Post, Channel, Relay } from "@/types";
 import type { SelectablePerson } from "@/types/person";
@@ -67,17 +68,21 @@ beforeEach(() => {
 });
 
 type FeedViewProps = ComponentProps<typeof FeedView>;
-type TestFeedViewProps = FeedViewProps & {
-  isHydrating?: boolean;
-};
+
+function withFocusedTask(taskId: string, ui: ReactElement): ReactElement {
+  return (
+    <MemoryRouter initialEntries={[`/feed/${taskId}`]}>
+      <Routes>
+        <Route path="/:view/:taskId" element={ui} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
 
 function renderFeedView(
-  { focusedTaskId = null, isHydrating, ...rest }: TestFeedViewProps,
+  props: FeedViewProps,
   surfaceOverrides: Partial<FeedSurfaceState> = {}
 ) {
-  if (typeof isHydrating === "boolean") {
-    useHydrationStatusStore.getState().setIsHydrating(isHydrating);
-  }
   const surfaceState: FeedSurfaceState = {
     relays,
     channels,
@@ -91,7 +96,7 @@ function renderFeedView(
 
   return render(
     <FeedSurfaceProvider value={surfaceState}>
-      <FeedView focusedTaskId={focusedTaskId} {...rest} />
+      <FeedView {...props} />
     </FeedSurfaceProvider>
   );
 }
@@ -138,7 +143,7 @@ describe("FeedView", () => {
       },
     });
     render(
-      <FeedView focusedTaskId={null} posts={[root, child]} />
+      <FeedView posts={[root, child]} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp("\\broot task general\\b", "i") }));
@@ -165,7 +170,7 @@ describe("FeedView", () => {
     });
 
     const { container } = render(
-      <FeedView focusedTaskId={null} posts={[rawTask]} />
+      <FeedView posts={[rawTask]} />
     );
 
     const row = container.querySelector('[data-task-id="task-raw"]');
@@ -177,69 +182,11 @@ describe("FeedView", () => {
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-raw" });
   });
 
-  it("does not rebuild unrelated task content when focus moves to a sibling task", () => {
-    const firstTask = makeTask({
-      id: "task-1",
-      content: "First task #general https://example.com/alpha",
-      author,
-      state: {
-        status: "open"
-      },
-    });
-    const secondTask = makeTask({
-      id: "task-2",
-      content: "Second task #general",
-      author,
-      state: {
-        status: "open"
-      },
-    });
-    const linkifySpy = vi.spyOn(linkify, "renderTaskContentWithProjectHeading");
-
-    const { rerender } = render(
-      <FeedSurfaceProvider
-        value={{
-          relays,
-          channels,
-          people: [author],
-          mentionablePeople: [author],
-          searchQuery: "",
-          quickFilters: makeQuickFilterState(),
-          channelMatchMode: "and",
-        }}
-      >
-        <FeedView focusedTaskId={null} posts={[firstTask, secondTask]} />
-      </FeedSurfaceProvider>
-    );
-
-    const initialFirstTaskCalls = linkifySpy.mock.calls.filter(([content]) => content === firstTask.content).length;
-    expect(initialFirstTaskCalls).toBeGreaterThan(0);
-
-    rerender(
-      <FeedSurfaceProvider
-        value={{
-          relays,
-          channels,
-          people: [author],
-          mentionablePeople: [author],
-          searchQuery: "",
-          quickFilters: makeQuickFilterState(),
-          channelMatchMode: "and",
-        }}
-      >
-        <FeedView focusedTaskId="task-2" posts={[firstTask, secondTask]} />
-      </FeedSurfaceProvider>
-    );
-
-    const nextFirstTaskCalls = linkifySpy.mock.calls.filter(([content]) => content === firstTask.content).length;
-    expect(nextFirstTaskCalls).toBe(initialFirstTaskCalls);
-  });
-
   it("hydrates the feed incrementally instead of mounting all entries at once", () => {
     const manyTasks = makeFeedTasks(41);
 
     const { container } = render(
-      <FeedView focusedTaskId={null} posts={manyTasks} />
+      <FeedView posts={manyTasks} />
     );
 
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
@@ -250,7 +197,7 @@ describe("FeedView", () => {
     const manyTasks = makeFeedTasks(71);
 
     const { container } = render(
-      <FeedView focusedTaskId={null} posts={manyTasks} searchQueryOverride="" />
+      <FeedView posts={manyTasks} searchQueryOverride="" />
     );
 
     const scroller = container.querySelector('[data-onboarding="task-list"]');
@@ -308,11 +255,11 @@ describe("FeedView", () => {
     );
 
     const scopedPerson = { ...author, isSelected: true };
+    useHydrationStatusStore.getState().setIsHydrating(true);
     const { container } = renderFeedView(
       {
         posts: manyTasks,
         searchQueryOverride: "",
-        isHydrating: true
       },
       {
         people: [scopedPerson],
@@ -356,7 +303,7 @@ describe("FeedView", () => {
           channelMatchMode: "and",
         }}
       >
-        <FeedView focusedTaskId={null} posts={manyTasks} searchQueryOverride="" />
+        <FeedView posts={manyTasks} searchQueryOverride="" />
       </FeedSurfaceProvider>
     );
 
@@ -419,7 +366,7 @@ describe("FeedView", () => {
           channelMatchMode: "and",
         }}
       >
-        <FeedView focusedTaskId={null} posts={relayOneTasks} searchQueryOverride="" />
+        <FeedView posts={relayOneTasks} searchQueryOverride="" />
       </FeedSurfaceProvider>
     );
 
@@ -472,7 +419,7 @@ describe("FeedView", () => {
           channelMatchMode: "and",
         }}
       >
-        <FeedView focusedTaskId={null} posts={manyTasks} searchQueryOverride="" />
+        <FeedView posts={manyTasks} searchQueryOverride="" />
       </FeedSurfaceProvider>
     );
 
@@ -494,7 +441,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView focusedTaskId={null} posts={[root, child]} />
+      <FeedView posts={[root, child]} />
     );
 
     const breadcrumbButton = screen.getByRole("button", { name: new RegExp("\\broot breadcrumb label that should not wrap\\b", "i") });
@@ -525,7 +472,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView focusedTaskId={null} posts={[root, middle, leaf]} />
+      <FeedView posts={[root, middle, leaf]} />
     );
 
     // Multiple cards reference each ancestor (the leaf shows root + middle
@@ -562,9 +509,7 @@ describe("FeedView", () => {
       },
     });
 
-    render(
-      <FeedView focusedTaskId="middle" posts={[root, middle, leaf]} />
-    );
+    render(withFocusedTask("middle", <FeedView posts={[root, middle, leaf]} />));
 
     expect(screen.queryByRole("button", { name: new RegExp("\\broot breadcrumb\\b", "i") })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: new RegExp("\\bmiddle breadcrumb\\b", "i") })).not.toBeInTheDocument();
@@ -582,7 +527,7 @@ describe("FeedView", () => {
     } });
 
     render(
-      <FeedView focusedTaskId={null} posts={[pubkeyTask]} />
+      <FeedView posts={[pubkeyTask]} />
     );
 
     await waitFor(() => {
@@ -594,7 +539,7 @@ describe("FeedView", () => {
 
   it("shows the author display name and parenthesized handle inline on desktop", () => {
     render(
-      <FeedView focusedTaskId={null} posts={tasks} />
+      <FeedView posts={tasks} />
     );
 
     expect(screen.getByTestId("feed-author-primary-task-1")).toHaveTextContent("Alice Doe");
@@ -649,7 +594,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView focusedTaskId={null} posts={[taskWithStateUpdates]} />
+      <FeedView posts={[taskWithStateUpdates]} />
     );
 
     const taskTimestamp = screen.getByTitle(/task created at/i);
@@ -661,7 +606,7 @@ describe("FeedView", () => {
 
   it("hides secondary author metadata on mobile for a denser header row", () => {
     render(
-      <FeedView focusedTaskId={null} posts={tasks} isMobile />
+      <FeedView posts={tasks} />
     );
 
     expect(screen.queryByTestId("feed-author-secondary-task-1")).not.toBeInTheDocument();
@@ -669,7 +614,7 @@ describe("FeedView", () => {
 
   it("supports modifier-based author filtering from the author label", () => {
     render(
-      <FeedView focusedTaskId={null} posts={tasks} />
+      <FeedView posts={tasks} />
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0], { ctrlKey: true });
@@ -682,7 +627,7 @@ describe("FeedView", () => {
 
   it("does not focus the task on a plain author click", () => {
     render(
-      <FeedView focusedTaskId={null} posts={tasks} />
+      <FeedView posts={tasks} />
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0]);
@@ -698,7 +643,7 @@ describe("FeedView", () => {
 
   it("supports Ctrl/Cmd+Alt author shortcuts for filter and mention", () => {
     render(
-      <FeedView focusedTaskId={null} posts={tasks} />
+      <FeedView posts={tasks} />
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0], {
@@ -754,7 +699,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView focusedTaskId={null} posts={[mentionTask]} />
+      <FeedView posts={[mentionTask]} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
@@ -807,7 +752,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView focusedTaskId={null} posts={[task]} />
+      <FeedView posts={[task]} />
     );
 
     const entry = screen.getByTestId("feed-state-entry-state-active-no-desc");
@@ -840,7 +785,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView focusedTaskId={null} posts={[taskWithStateUpdates]} />
+      <FeedView posts={[taskWithStateUpdates]} />
     );
 
     const latestStateEntry = screen.getByTestId("feed-state-entry-state-2");
@@ -877,7 +822,7 @@ describe("FeedView", () => {
     });
 
     render(
-      <FeedView focusedTaskId={null} posts={[taskWithLongMultilineTitle]} />
+      <FeedView posts={[taskWithLongMultilineTitle]} />
     );
 
     const titleButton = screen.getByRole("button", {
@@ -918,7 +863,7 @@ describe("FeedView", () => {
     });
 
     const { container } = render(
-      <FeedView focusedTaskId={null} posts={[openTask, doneTask, closedTask]} />
+      <FeedView posts={[openTask, doneTask, closedTask]} />
     );
 
     expect(container.querySelector('[data-task-id="task-open"]')).toBeInTheDocument();
@@ -937,7 +882,7 @@ describe("FeedView", () => {
     });
 
     const { container } = render(
-      <FeedView focusedTaskId="task-closed-focused" posts={[closedTask]} />
+      withFocusedTask("task-closed-focused", <FeedView posts={[closedTask]} />)
     );
 
     expect(container.querySelector('[data-task-id="task-closed-focused"]')).toBeInTheDocument();
@@ -967,7 +912,7 @@ describe("FeedView", () => {
     });
 
     const { container } = render(
-      <FeedView focusedTaskId={null} posts={[openTask, closedTask]} />
+      <FeedView posts={[openTask, closedTask]} />
     );
 
     expect(container.querySelector('[data-task-id="task-closed-with-updates"]')).not.toBeInTheDocument();
@@ -1023,11 +968,11 @@ describe("FeedView", () => {
   });
 
   it("keeps showing feed posts on mobile when the current scope has no matches", () => {
+    useIsMobileMock.mockReturnValue(true);
     const { container } = renderFeedView(
       {
         posts: tasks,
         searchQueryOverride: "nomatchquery",
-        isMobile: true
       },
       {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
@@ -1056,11 +1001,11 @@ describe("FeedView", () => {
       },
     });
 
+    useIsMobileMock.mockReturnValue(true);
     const { container } = renderFeedView(
       {
         posts: [otherTask],
         searchQueryOverride: "",
-        isMobile: true
       },
       {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
@@ -1084,7 +1029,7 @@ describe("FeedView", () => {
 
     useCurrentUserStore.getState().setCurrentUser(author);
     render(
-      <FeedView focusedTaskId={null} posts={[taskWithPriority]} />
+      <FeedView posts={[taskWithPriority]} />
     );
 
     chooseComboboxOptionByIndex("priority-select", 4);

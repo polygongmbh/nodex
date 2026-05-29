@@ -59,11 +59,7 @@ const KANBAN_TERMINAL_COLUMN_INITIAL = 15;
 
 interface KanbanViewProps {
   posts: Post[];
-  focusedTaskId?: string | null;
   searchQueryOverride?: string;
-  depthMode?: DisplayDepthMode;
-  /** Test-only escape hatch over the current-user store. */
-  currentUser?: Person;
 }
 
 interface KanbanColumn {
@@ -154,18 +150,13 @@ function DraggableCardWrapper({ id, disabled, isActiveOverlay, children }: Dragg
 export function KanbanView({
   posts,
   searchQueryOverride,
-  depthMode,
-  focusedTaskId: focusedTaskIdOverride,
-  currentUser: currentUserOverride,
 }: KanbanViewProps) {
-  const currentUserFromStore = useCurrentUser();
-  const currentUser = currentUserOverride ?? currentUserFromStore;
+  const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
   const isPendingPublishTask = useIsPendingPublishTask();
-  const displayDepthMode = usePreferencesStore((s) => s.displayDepthMode);
-  const resolvedDepthMode = depthMode ?? displayDepthMode;
-  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
-  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
+  const depthMode = usePreferencesStore((s) => s.displayDepthMode);
+  const { taskId } = useParams<{ taskId: string }>();
+  const focusedTaskId = taskId ?? null;
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
@@ -179,7 +170,7 @@ export function KanbanView({
     posts,
     focusedTaskId,
     searchQueryOverride,
-    depthMode: resolvedDepthMode,
+    depthMode,
   });
   const sortContext = useMemo<SortContext>(() => {
     const childrenMap = buildChildrenMap(posts);

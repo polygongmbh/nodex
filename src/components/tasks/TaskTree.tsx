@@ -22,21 +22,16 @@ import { TaskAuthorProfilesProvider } from "./task-author-profiles-context";
 export function TaskTree({
   posts,
   searchQueryOverride,
-  focusedTaskId: focusedTaskIdOverride,
-  isMobile: isMobileOverride,
 }: {
   posts: Post[];
   searchQueryOverride?: string;
-  focusedTaskId?: string | null;
-  isMobile?: boolean;
 }) {
-  const isMobileFromHook = useIsMobile();
-  const isMobile = isMobileOverride ?? isMobileFromHook;
+  const isMobile = useIsMobile();
   const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
   const isPendingPublishTask = useIsPendingPublishTask();
-  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
-  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
+  const { taskId } = useParams<{ taskId: string }>();
+  const focusedTaskId = taskId ?? null;
   const compactTaskCardsEnabled = usePreferencesStore(s => s.compactTaskCardsEnabled);
   const { forceShowComposer } = useFeedViewInteractionModel();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();

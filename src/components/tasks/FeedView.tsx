@@ -185,22 +185,17 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
 export function FeedView({
   posts,
   searchQueryOverride,
-  focusedTaskId: focusedTaskIdOverride,
-  isMobile: isMobileOverride,
 }: {
   posts: Post[];
   searchQueryOverride?: string;
-  focusedTaskId?: string | null;
-  isMobile?: boolean;
 }) {
-  const isMobileFromHook = useIsMobile();
-  const isMobile = isMobileOverride ?? isMobileFromHook;
+  const isMobile = useIsMobile();
   const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
   const isPendingPublishTask = useIsPendingPublishTask();
   const isHydrating = useIsHydrating();
-  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
-  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
+  const { taskId } = useParams<{ taskId: string }>();
+  const focusedTaskId = taskId ?? null;
   const { t, i18n } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();

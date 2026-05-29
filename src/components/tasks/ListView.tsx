@@ -59,11 +59,7 @@ import { usePreferencesStore } from "@/features/feed-page/stores/preferences-sto
 
 interface ListViewProps {
   posts: Post[];
-  focusedTaskId?: string | null;
   searchQueryOverride?: string;
-  depthMode?: DisplayDepthMode;
-  /** Test-only escape hatch over the current-user store. */
-  currentUser?: Person;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -122,17 +118,12 @@ const PriorityCell = memo(function PriorityCell({
 export function ListView({
   posts,
   searchQueryOverride,
-  depthMode,
-  focusedTaskId: focusedTaskIdOverride,
-  currentUser: currentUserOverride,
 }: ListViewProps) {
-  const currentUserFromStore = useCurrentUser();
-  const currentUser = currentUserOverride ?? currentUserFromStore;
+  const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
-  const displayDepthMode = usePreferencesStore((s) => s.displayDepthMode);
-  const resolvedDepthMode = depthMode ?? displayDepthMode;
-  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
-  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
+  const depthMode = usePreferencesStore((s) => s.displayDepthMode);
+  const { taskId } = useParams<{ taskId: string }>();
+  const focusedTaskId = taskId ?? null;
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
@@ -152,7 +143,7 @@ export function ListView({
     posts,
     focusedTaskId,
     searchQueryOverride,
-    depthMode: resolvedDepthMode,
+    depthMode,
   });
   const prevTasksHashRef = useRef<number>(0);
   const prevSearchRef = useRef(searchQuery);
@@ -223,7 +214,7 @@ export function ListView({
   const sortListTasks = useCallback((taskCandidates: TaskPost[]): TaskPost[] => {
     let filtered = filterTasksByDepthMode({
       tasks: taskCandidates,
-      depthMode: resolvedDepthMode,
+      depthMode,
       focusedTaskId,
       getDepth,
       hasChildren,
@@ -279,7 +270,7 @@ export function ListView({
     return filtered;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    resolvedDepthMode,
+    depthMode,
     focusedTaskId,
     getDepth,
     hasChildren,

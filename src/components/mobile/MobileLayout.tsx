@@ -166,15 +166,15 @@ export function MobileLayout() {
       case "status":
         return <StatusView posts={viewPosts} />;
       case "tree":
-        return <TaskTree posts={viewPosts} searchQueryOverride={viewSearchOverride} isMobile />;
+        return <TaskTree posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
       case "feed":
-        return <FeedView posts={viewPosts} searchQueryOverride={viewSearchOverride} isMobile />;
+        return <FeedView posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
       case "list":
         return <UpcomingView posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
       case "calendar":
-        return <CalendarView posts={viewPosts} searchQueryOverride="" isMobile selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView posts={viewPosts} searchQueryOverride="" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
-        return <TaskTree posts={viewPosts} searchQueryOverride={viewSearchOverride} isMobile />;
+        return <TaskTree posts={viewPosts} searchQueryOverride={viewSearchOverride} />;
     }
   };
 

@@ -57,18 +57,16 @@ import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 
 interface UpcomingViewProps {
   posts: Post[];
-  focusedTaskId?: string | null;
   searchQueryOverride?: string;
 }
 
 export function UpcomingView({
   posts,
-  focusedTaskId: focusedTaskIdOverride,
   searchQueryOverride,
 }: UpcomingViewProps) {
   const currentUser = useCurrentUser();
-  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
-  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
+  const { taskId } = useParams<{ taskId: string }>();
+  const focusedTaskId = taskId ?? null;
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();

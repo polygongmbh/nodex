@@ -45,11 +45,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CalendarViewProps {
   posts: Post[];
-  focusedTaskId?: string | null;
   searchQueryOverride?: string;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
-  isMobile?: boolean;
 }
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
@@ -57,16 +55,13 @@ const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 export function CalendarView({
   posts,
   searchQueryOverride,
-  focusedTaskId: focusedTaskIdOverride,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
-  isMobile: isMobileOverride,
 }: CalendarViewProps) {
   const currentUser = useCurrentUser();
-  const isMobileFromHook = useIsMobile();
-  const isMobile = isMobileOverride ?? isMobileFromHook;
-  const { taskId: focusedTaskIdParam } = useParams<{ taskId: string }>();
-  const focusedTaskId = focusedTaskIdOverride ?? focusedTaskIdParam ?? null;
+  const isMobile = useIsMobile();
+  const { taskId } = useParams<{ taskId: string }>();
+  const focusedTaskId = taskId ?? null;
   const { t } = useTranslation(["tasks", "composer"]);
   const { authPolicy, focusTask } = useTaskViewServices();
   const { people, relays } = useFeedSurfaceState();

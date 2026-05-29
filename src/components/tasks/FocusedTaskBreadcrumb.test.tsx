@@ -52,10 +52,7 @@ describe("FocusedTaskBreadcrumb", () => {
     };
 
     render(
-      <FocusedTaskBreadcrumb
-        posts={[baseTask, middle, leaf]}
-        focusedTaskId="leaf"
-      />
+      <FocusedTaskBreadcrumb posts={[baseTask, middle, leaf]} focusedTaskId="leaf" />
     );
 
     fireEvent.click(screen.getByRole("button", { name: "All" }));
@@ -87,10 +84,7 @@ describe("FocusedTaskBreadcrumb", () => {
     };
 
     render(
-      <FocusedTaskBreadcrumb
-        posts={[baseTask, longTask]}
-        focusedTaskId="long"
-      />
+      <FocusedTaskBreadcrumb posts={[baseTask, longTask]} focusedTaskId="long" />
     );
 
     expect(screen.getByRole("button", { name: "Task delegated to with enough room to display frontend!!!" })).toBeInTheDocument();

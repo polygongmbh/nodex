@@ -42,11 +42,7 @@ const tasks: Post[] = [];
 describe("CalendarView responsiveness", () => {
   it("shows both Create Task and Create Event buttons on the selected-day panel", () => {
     render(
-      <CalendarView
-        focusedTaskId={null}
-        posts={tasks}
-        isMobile
-        selectedDate={new Date("2026-02-18T10:00:00.000Z")} />
+      <CalendarView posts={tasks} selectedDate={new Date("2026-02-18T10:00:00.000Z")} />
     );
 
     expect(screen.getByTestId("calendar-create-task")).toBeInTheDocument();
@@ -77,11 +73,7 @@ describe("CalendarView responsiveness", () => {
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
     };
     render(
-      <CalendarView
-        focusedTaskId={null}
-        posts={[root, child]}
-        isMobile
-        selectedDate={new Date("2026-02-18T10:00:00.000Z")} />
+      <CalendarView posts={[root, child]} selectedDate={new Date("2026-02-18T10:00:00.000Z")} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp("\\broot\\b", "i") }));
@@ -94,7 +86,7 @@ describe("CalendarView responsiveness", () => {
     vi.setSystemTime(new Date("2026-02-17T10:00:00.000Z"));
 
     render(
-      <CalendarView focusedTaskId={null} posts={tasks} />
+      <CalendarView posts={tasks} />
     );
 
     expect(screen.getAllByText("Wk").length).toBeGreaterThan(0);
@@ -110,7 +102,7 @@ describe("CalendarView responsiveness", () => {
     vi.setSystemTime(new Date("2026-02-17T10:00:00.000Z"));
 
     render(
-      <CalendarView focusedTaskId={null} posts={tasks} isMobile />
+      <CalendarView posts={tasks} />
     );
 
     expect(screen.getByRole("heading", { name: /january 2026/i })).toBeInTheDocument();
@@ -122,7 +114,7 @@ describe("CalendarView responsiveness", () => {
 
   it("renders core month navigation controls", () => {
     render(
-      <CalendarView focusedTaskId={null} posts={tasks} />
+      <CalendarView posts={tasks} />
     );
 
     expect(screen.getByRole("button", { name: /previous month/i })).toBeInTheDocument();
@@ -160,7 +152,6 @@ describe("CalendarView responsiveness", () => {
 
     const { container } = render(
       <CalendarView
-        focusedTaskId={null}
         posts={[openTask, doneTask, closedTask]}
         selectedDate={new Date("2026-02-18T00:00:00.000Z")} />
     );
@@ -184,10 +175,7 @@ describe("CalendarView responsiveness", () => {
     });
 
     render(
-      <CalendarView
-        focusedTaskId={null}
-        posts={[task]}
-        selectedDate={new Date("2026-02-18T00:00:00.000Z")} />
+      <CalendarView posts={[task]} selectedDate={new Date("2026-02-18T00:00:00.000Z")} />
     );
 
     const chipRow = screen.getByTestId("calendar-chip-row-calendar-priority-task");
@@ -219,7 +207,6 @@ describe("CalendarView responsiveness", () => {
 
     const { container } = render(
       <CalendarView
-        focusedTaskId={null}
         posts={[parent, child]}
         selectedDate={new Date("2026-02-18T00:00:00.000Z")} />
     );
@@ -244,10 +231,7 @@ describe("CalendarView responsiveness", () => {
     });
 
     const { container } = render(
-      <CalendarView
-        focusedTaskId={null}
-        posts={[leaf]}
-        selectedDate={new Date("2026-02-18T00:00:00.000Z")} />
+      <CalendarView posts={[leaf]} selectedDate={new Date("2026-02-18T00:00:00.000Z")} />
     );
 
     const leafCard = container.querySelector('[data-task-id="calendar-leaf"]');

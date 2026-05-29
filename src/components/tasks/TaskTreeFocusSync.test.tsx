@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { TaskTree } from "./TaskTree";
 import { TaskViewStatusRow } from "./TaskViewStatusRow";
@@ -64,8 +64,12 @@ const doneGrandchildTask: TaskPost = {
 
 function renderTaskTree(
   ui: ReactNode,
-  surfaceOverrides: Partial<FeedSurfaceState> = {}
+  options: {
+    focusedTaskId?: string | null;
+    surfaceOverrides?: Partial<FeedSurfaceState>;
+  } = {}
 ) {
+  const { focusedTaskId = null, surfaceOverrides = {} } = options;
   const surfaceState: FeedSurfaceState = {
     relays,
     channels,
@@ -77,9 +81,15 @@ function renderTaskTree(
     ...surfaceOverrides,
   };
 
+  const initialPath = focusedTaskId ? `/tree/${focusedTaskId}` : "/tree";
   return render(
-    <MemoryRouter>
-      <FeedSurfaceProvider value={surfaceState}>{ui}</FeedSurfaceProvider>
+    <MemoryRouter initialEntries={[initialPath]}>
+      <Routes>
+        <Route
+          path="/:view/:taskId?"
+          element={<FeedSurfaceProvider value={surfaceState}>{ui}</FeedSurfaceProvider>}
+        />
+      </Routes>
     </MemoryRouter>
   );
 }
@@ -90,8 +100,9 @@ describe("TaskTree focus sync", () => {
     renderTaskTree(
       <>
         <TaskViewStatusRow posts={[rootTask, childTask]} focusedTaskId="root" />
-        <TaskTree posts={[rootTask, childTask]} focusedTaskId="root" />
-      </>
+        <TaskTree posts={[rootTask, childTask]} />
+      </>,
+      { focusedTaskId: "root" }
     );
 
     expect(screen.getByText("Child task")).toBeInTheDocument();
@@ -104,8 +115,9 @@ describe("TaskTree focus sync", () => {
     renderTaskTree(
       <>
         <TaskViewStatusRow posts={[rootTask, childTask]} focusedTaskId="root" />
-        <TaskTree posts={[rootTask, childTask]} focusedTaskId="root" />
-      </>
+        <TaskTree posts={[rootTask, childTask]} />
+      </>,
+      { focusedTaskId: "root" }
     );
 
     const composerInput = screen.getByRole("textbox");
@@ -125,9 +137,11 @@ describe("TaskTree focus sync", () => {
   it("keeps done subtasks behind the third fold state when only broader scope filters are active", () => {
     dispatchFeedInteraction.mockClear();
     renderTaskTree(
-      <TaskTree focusedTaskId={null} posts={[rootTask, childTask, doneGrandchildTask]} />,
+      <TaskTree posts={[rootTask, childTask, doneGrandchildTask]} />,
       {
-        quickFilters: makeQuickFilterState({ recentEnabled: true, recentDays: 30 }),
+        surfaceOverrides: {
+          quickFilters: makeQuickFilterState({ recentEnabled: true, recentDays: 30 }),
+        },
       }
     );
 
