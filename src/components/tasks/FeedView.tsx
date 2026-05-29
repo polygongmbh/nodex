@@ -207,7 +207,6 @@ export function FeedView({
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
   const {
     searchQuery,
-    focusedTask,
     taskById,
     feedTasks,
     feedEntries,

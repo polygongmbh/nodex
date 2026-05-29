@@ -69,7 +69,6 @@ export interface FeedEntry {
 
 export interface FeedViewState {
   searchQuery: string;
-  focusedTask: Post | null;
   taskById: ReadonlyMap<string, Post>;
   feedTasks: Post[];
   allFeedEntries: FeedEntry[];
@@ -84,7 +83,6 @@ export interface FeedViewState {
 
 export interface ListViewState {
   searchQuery: string;
-  focusedTask: Post | null;
   taskById: ReadonlyMap<string, Post>;
   filteredTaskCandidates: TaskPost[];
   baseListTaskCandidates: TaskPost[];
@@ -621,7 +619,6 @@ export function useFeedViewState({
     [filteredFeedTasksWithClosed, focusedTaskId]
   );
   const taskById = resolvePostsByIdFor(posts);
-  const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
   const scopeModel = useEmptyScopeModel({
     relays,
     channels,
@@ -643,7 +640,6 @@ export function useFeedViewState({
   const activeFeedEntries = shouldShowMobileScopeFallback ? allFeedEntries : feedEntries;
   return {
     searchQuery,
-    focusedTask,
     taskById,
     feedTasks,
     allFeedEntries,
@@ -690,7 +686,6 @@ export function useListViewState({
     taskPredicate: isTaskPost,
   });
   const taskById = resolvePostsByIdFor(posts);
-  const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
   const scopeModel = useEmptyScopeModel({
     relays,
     channels,
@@ -702,7 +697,6 @@ export function useListViewState({
   });
   return {
     searchQuery,
-    focusedTask,
     taskById,
     filteredTaskCandidates,
     baseListTaskCandidates,

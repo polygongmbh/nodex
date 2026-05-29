@@ -135,7 +135,6 @@ export function ListView({
   const [sortVersion, setSortVersion] = useState(0);
   const {
     searchQuery,
-    focusedTask,
     filteredTaskCandidates,
     hasSelectedScope,
   } = useListViewState({
