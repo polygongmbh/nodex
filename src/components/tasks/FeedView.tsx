@@ -62,6 +62,7 @@ import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsInteractionBlocked } from "@/features/feed-page/stores/interaction-block-store";
 import { useIsPendingPublishTask } from "@/features/feed-page/stores/pending-publish-store";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
+import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 2000;
@@ -204,7 +205,6 @@ export function FeedView({
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
   const {
-    taskById,
     feedTasks,
     feedEntries,
     activeFeedEntries,
@@ -216,6 +216,7 @@ export function FeedView({
     focusedTaskId,
     isMobile,
   });
+  const taskById = resolvePostsByIdFor(posts);
   const filterKey = useMemo(() =>
     channels
       .filter((c) => c.filterState !== "neutral")

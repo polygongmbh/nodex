@@ -48,6 +48,7 @@ import {
   useListViewState,
 } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
@@ -132,7 +133,6 @@ export function ListView({
   // Track sort version - incremented on view/filter changes, not status changes
   const [sortVersion, setSortVersion] = useState(0);
   const {
-    searchQuery,
     filteredTaskCandidates,
     hasSelectedScope,
   } = useListViewState({
@@ -140,6 +140,7 @@ export function ListView({
     focusedTaskId,
     depthMode,
   });
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const prevTasksHashRef = useRef<number>(0);
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);

@@ -74,8 +74,6 @@ export interface FeedEntry {
 }
 
 export interface FeedViewState {
-  searchQuery: string;
-  taskById: ReadonlyMap<string, Post>;
   feedTasks: Post[];
   allFeedEntries: FeedEntry[];
   feedEntries: FeedEntry[];
@@ -88,8 +86,6 @@ export interface FeedViewState {
 }
 
 export interface ListViewState {
-  searchQuery: string;
-  taskById: ReadonlyMap<string, Post>;
   filteredTaskCandidates: TaskPost[];
   baseListTaskCandidates: TaskPost[];
   hasActiveFilters: boolean;
@@ -732,8 +728,6 @@ export function useFeedViewState({
     !shouldShowInlineEmptyHint;
   const activeFeedEntries = shouldShowMobileScopeFallback ? allFeedEntries : feedEntries;
   return {
-    searchQuery,
-    taskById,
     feedTasks,
     allFeedEntries,
     feedEntries,
@@ -776,7 +770,6 @@ export function useListViewState({
     channelMatchMode: deferredChannelMatchMode,
     taskPredicate: isTaskPost,
   });
-  const taskById = resolvePostsByIdFor(posts);
   const scopeModel = useEmptyScopeModel({
     relays,
     channels,
@@ -787,8 +780,6 @@ export function useListViewState({
     allTasks: posts,
   });
   return {
-    searchQuery,
-    taskById,
     filteredTaskCandidates,
     baseListTaskCandidates,
     hasActiveFilters: scopeModel.hasActiveFilters,
