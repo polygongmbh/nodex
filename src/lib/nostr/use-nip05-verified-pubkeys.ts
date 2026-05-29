@@ -1,5 +1,5 @@
-import { useState, useEffect, useContext } from "react";
-import { NDKContext } from "@/infrastructure/nostr/provider/ndk-provider";
+import { useEffect, useState } from "react";
+import { resolveNip05Identifier } from "./nip05-resolver";
 
 interface PersonWithNip05 {
   pubkey: string;
@@ -7,30 +7,26 @@ interface PersonWithNip05 {
 }
 
 export function useNip05VerifiedPubkeys(people: PersonWithNip05[]): Set<string> {
-  const ndk = useContext(NDKContext)?.ndk ?? null;
   const [verifiedPubkeys, setVerifiedPubkeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!ndk) return;
     let cancelled = false;
-
-    for (const person of people) {
-      if (!person.nip05) continue;
-      const { pubkey, nip05 } = person;
-      ndk.getUser({ pubkey }).validateNip05(nip05).then((result) => {
-        if (!cancelled && result === true) {
-          setVerifiedPubkeys((prev) => {
-            if (prev.has(pubkey)) return prev;
-            const next = new Set(prev);
-            next.add(pubkey);
-            return next;
-          });
-        }
-      }).catch(() => {});
+    for (const { pubkey, nip05 } of people) {
+      if (!pubkey || !nip05) continue;
+      const normalizedPubkey = pubkey.trim().toLowerCase();
+      resolveNip05Identifier(nip05).then((resolved) => {
+        if (cancelled) return;
+        if (resolved !== normalizedPubkey) return;
+        setVerifiedPubkeys((prev) => {
+          if (prev.has(pubkey)) return prev;
+          const next = new Set(prev);
+          next.add(pubkey);
+          return next;
+        });
+      });
     }
-
     return () => { cancelled = true; };
-  }, [ndk, people]);
+  }, [people]);
 
   return verifiedPubkeys;
 }
