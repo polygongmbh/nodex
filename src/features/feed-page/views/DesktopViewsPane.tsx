@@ -5,8 +5,9 @@ import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { isTaskPost } from "@/types";
-import { filterTasksForView } from "@/domain/content/task-view-filtering";
-import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
+import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
+import { useFeedSurfaceState } from "./feed-surface-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useFeedViewState } from "./feed-view-state-context";
 import { ViewLoadingFallback } from "./ViewLoadingFallback";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
@@ -34,35 +35,36 @@ export function DesktopViewsPane({
 }) {
   const { currentView } = useFeedViewState();
   const isHydrating = useIsHydrating();
-  const taskSource = useTaskViewSource({
-    posts,
-    focusedTaskId,
-  });
+  const { channels, people, quickFilters } = useFeedSurfaceState();
+  const searchQuery = useFilterStore((s) => s.searchQuery);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const filterIndex = useMemo(() => buildTaskViewFilterIndex(posts, people), [posts, people]);
+  const prefilteredTaskIds = useMemo(() => new Set(posts.map((task) => task.id)), [posts]);
   const { included, excluded } = useMemo(
-    () => getIncludedExcludedChannelNames(taskSource.channels),
-    [taskSource.channels]
+    () => getIncludedExcludedChannelNames(channels),
+    [channels]
   );
   const scopedTasks = useMemo(
     () =>
       filterTasksForView({
         source: {
-          allTasks: taskSource.posts,
-          filterIndex: taskSource.filterIndex,
-          prefilteredTaskIds: taskSource.prefilteredTaskIds,
-          people: taskSource.people,
+          allTasks: posts,
+          filterIndex,
+          prefilteredTaskIds,
+          people,
         },
         scope: {
-          focusedTaskId: taskSource.focusedTaskId,
+          focusedTaskId,
           includeFocusedTask: currentView === "feed",
           hideClosedTasks: false,
         },
         criteria: {
-          searchQuery: taskSource.searchQuery,
-          quickFilters: taskSource.quickFilters,
+          searchQuery,
+          quickFilters,
           channels: {
             included,
             excluded,
-            matchMode: taskSource.channelMatchMode,
+            matchMode: channelMatchMode,
           },
         },
       }),
@@ -70,14 +72,14 @@ export function DesktopViewsPane({
       excluded,
       included,
       currentView,
-      taskSource.posts,
-      taskSource.channelMatchMode,
-      taskSource.filterIndex,
-      taskSource.focusedTaskId,
-      taskSource.people,
-      taskSource.prefilteredTaskIds,
-      taskSource.quickFilters,
-      taskSource.searchQuery,
+      posts,
+      channelMatchMode,
+      filterIndex,
+      focusedTaskId,
+      people,
+      prefilteredTaskIds,
+      quickFilters,
+      searchQuery,
     ]
   );
   // Only the feed view surfaces non-task items (comments, offers, requests).

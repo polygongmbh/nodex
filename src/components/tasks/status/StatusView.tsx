@@ -5,9 +5,9 @@ import { StatusMyTasksTree } from "./StatusMyTasksTree";
 import { StatusTimeline } from "./StatusTimeline";
 import { resolveStatusConcernsScope, resolveStatusPeopleScope } from "./status-filters";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
-import { filterTasksForView } from "@/domain/content/task-view-filtering";
+import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import type { Post } from "@/types";
@@ -22,51 +22,51 @@ export function StatusView({
   const { t } = useTranslation("tasks");
   const isMobile = useIsMobile();
   const currentUser = useCurrentUser();
-  const surface = useFeedSurfaceState();
-  const taskSource = useTaskViewSource({
-    posts,
-    focusedTaskId,
-  });
+  const { channels, people, quickFilters } = useFeedSurfaceState();
+  const searchQuery = useFilterStore((s) => s.searchQuery);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const filterIndex = useMemo(() => buildTaskViewFilterIndex(posts, people), [posts, people]);
+  const prefilteredTaskIds = useMemo(() => new Set(posts.map((task) => task.id)), [posts]);
   const { included, excluded } = useMemo(
-    () => getIncludedExcludedChannelNames(taskSource.channels),
-    [taskSource.channels]
+    () => getIncludedExcludedChannelNames(channels),
+    [channels]
   );
   const contextTasks = useMemo(
     () =>
       filterTasksForView({
         source: {
-          allTasks: taskSource.posts,
-          filterIndex: taskSource.filterIndex,
-          prefilteredTaskIds: taskSource.prefilteredTaskIds,
-          people: taskSource.people,
+          allTasks: posts,
+          filterIndex,
+          prefilteredTaskIds,
+          people,
         },
         scope: {
-          focusedTaskId: taskSource.focusedTaskId,
+          focusedTaskId,
           hideClosedTasks: false,
         },
         criteria: {
-          searchQuery: taskSource.searchQuery,
-          quickFilters: taskSource.quickFilters,
-          channels: { included, excluded, matchMode: taskSource.channelMatchMode },
+          searchQuery,
+          quickFilters,
+          channels: { included, excluded, matchMode: channelMatchMode },
         },
       }),
     [
       excluded,
       included,
-      taskSource.posts,
-      taskSource.channelMatchMode,
-      taskSource.filterIndex,
-      taskSource.focusedTaskId,
-      taskSource.people,
-      taskSource.prefilteredTaskIds,
-      taskSource.quickFilters,
-      taskSource.searchQuery,
+      posts,
+      channelMatchMode,
+      filterIndex,
+      focusedTaskId,
+      people,
+      prefilteredTaskIds,
+      quickFilters,
+      searchQuery,
     ]
   );
 
   const selectedPeoplePubkeys = useMemo(
-    () => surface.people.filter((p) => p.isSelected).map((p) => p.pubkey),
-    [surface.people]
+    () => people.filter((p) => p.isSelected).map((p) => p.pubkey),
+    [people]
   );
   // "My tasks" falls back to the signed-in user when nobody is selected — it's
   // the personal column. The timeline's concerns scope is additive: it pulls
@@ -83,19 +83,19 @@ export function StatusView({
   const pinnedChannelIds = useMemo(
     () =>
       new Set(
-        taskSource.channels
+        channels
           .filter((channel) => channel.pinIndex !== undefined)
           .map((channel) => channel.id)
       ),
-    [taskSource.channels]
+    [channels]
   );
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       <StatusProjectsRow
         contextTasks={contextTasks}
-        allTasks={taskSource.posts}
-        focusedTaskId={taskSource.focusedTaskId}
+        allTasks={posts}
+        focusedTaskId={focusedTaskId}
       />
       <div className={isMobile ? "flex flex-1 min-h-0 flex-col divide-y divide-border" : "flex flex-1 min-h-0 divide-x divide-border"}>
         <div className={isMobile ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-hidden"}>
@@ -103,9 +103,9 @@ export function StatusView({
           <div className="h-[calc(100%-2rem)]">
             <StatusMyTasksTree
               contextTasks={contextTasks}
-              allTasks={taskSource.posts}
+              allTasks={posts}
               peopleScope={myTasksPeopleScope}
-              focusedTaskId={taskSource.focusedTaskId}
+              focusedTaskId={focusedTaskId}
             />
           </div>
         </div>
@@ -114,8 +114,8 @@ export function StatusView({
           <div className="h-[calc(100%-2rem)]">
             <StatusTimeline
               contextTasks={contextTasks}
-              allTasks={taskSource.posts}
-              focusedTaskId={taskSource.focusedTaskId}
+              allTasks={posts}
+              focusedTaskId={focusedTaskId}
               concernsScope={timelineConcernsScope}
               pinnedChannelIds={pinnedChannelIds}
             />
