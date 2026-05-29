@@ -12,6 +12,7 @@ import { makeQuickFilterState } from "@/test/quick-filter-state";
 import * as linkify from "@/lib/linkify";
 import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
 const useIsMobileMock = vi.fn(() => false);
 vi.mock("@/hooks/use-mobile", () => ({
@@ -65,6 +66,7 @@ beforeEach(() => {
   useIsMobileMock.mockReturnValue(false);
   useHydrationStatusStore.getState().setIsHydrating(false);
   useCurrentUserStore.getState().setCurrentUser(undefined);
+  useFilterStore.getState().setSearchQuery("");
 });
 
 type FeedViewProps = ComponentProps<typeof FeedView>;
@@ -80,18 +82,18 @@ function withFocusedTask(taskId: string, ui: ReactElement): ReactElement {
 }
 
 function renderFeedView(
-  props: Partial<FeedViewProps> & { posts: FeedViewProps["posts"] },
+  props: Partial<FeedViewProps> & { posts: FeedViewProps["posts"]; searchQuery?: string },
   surfaceOverrides: Partial<FeedSurfaceState> = {}
 ) {
-  const resolvedProps: FeedViewProps = { focusedTaskId: null, ...props };
+  const { searchQuery: searchQueryInput = "", ...feedProps } = props;
+  useFilterStore.getState().setSearchQuery(searchQueryInput);
+  const resolvedProps: FeedViewProps = { focusedTaskId: null, ...feedProps };
   const surfaceState: FeedSurfaceState = {
     relays,
     channels,
     people: [author],
     mentionablePeople: [author],
-    searchQuery: "",
     quickFilters: makeQuickFilterState(),
-    channelMatchMode: "and",
     ...surfaceOverrides,
   };
 
@@ -198,7 +200,7 @@ describe("FeedView", () => {
     const manyTasks = makeFeedTasks(71);
 
     const { container } = render(
-      <FeedView posts={manyTasks} focusedTaskId={null} searchQueryOverride="" />
+      <FeedView posts={manyTasks} focusedTaskId={null} />
     );
 
     const scroller = container.querySelector('[data-onboarding="task-list"]');
@@ -230,7 +232,7 @@ describe("FeedView", () => {
     const { container } = renderFeedView(
       {
         posts: manyTasks,
-        searchQueryOverride: ""
+        searchQuery: ""
       },
       {
         people: [scopedPerson],
@@ -260,7 +262,7 @@ describe("FeedView", () => {
     const { container } = renderFeedView(
       {
         posts: manyTasks,
-        searchQueryOverride: "",
+        searchQuery: "",
       },
       {
         people: [scopedPerson],
@@ -283,7 +285,7 @@ describe("FeedView", () => {
     const { container, rerender } = renderFeedView(
       {
         posts: manyTasks,
-        searchQueryOverride: ""
+        searchQuery: ""
       },
       {
         channels: [includedChannel],
@@ -299,12 +301,10 @@ describe("FeedView", () => {
           channels: [neutralChannel],
           people: [author],
           mentionablePeople: [author],
-          searchQuery: "",
           quickFilters: makeQuickFilterState(),
-          channelMatchMode: "and",
         }}
       >
-        <FeedView posts={manyTasks} focusedTaskId={null} searchQueryOverride="" />
+        <FeedView posts={manyTasks} focusedTaskId={null} />
       </FeedSurfaceProvider>
     );
 
@@ -321,7 +321,7 @@ describe("FeedView", () => {
     const { container, rerender } = renderFeedView(
       {
         posts: manyTasks,
-        searchQueryOverride: ""
+        searchQuery: ""
       },
       {
         relays: [relayOne, relayTwo],
@@ -362,12 +362,10 @@ describe("FeedView", () => {
           channels,
           people: [author],
           mentionablePeople: [author],
-          searchQuery: "",
           quickFilters: makeQuickFilterState(),
-          channelMatchMode: "and",
         }}
       >
-        <FeedView posts={relayOneTasks} focusedTaskId={null} searchQueryOverride="" />
+        <FeedView posts={relayOneTasks} focusedTaskId={null} />
       </FeedSurfaceProvider>
     );
 
@@ -382,7 +380,7 @@ describe("FeedView", () => {
     const { container, rerender } = renderFeedView(
       {
         posts: manyTasks,
-        searchQueryOverride: ""
+        searchQuery: ""
       }
     );
 
@@ -415,12 +413,10 @@ describe("FeedView", () => {
           channels,
           people: [author],
           mentionablePeople: [author],
-          searchQuery: "",
           quickFilters: makeQuickFilterState({ priorityEnabled: true, minPriority: 50 }),
-          channelMatchMode: "and",
         }}
       >
-        <FeedView posts={manyTasks} focusedTaskId={null} searchQueryOverride="" />
+        <FeedView posts={manyTasks} focusedTaskId={null} />
       </FeedSurfaceProvider>
     );
 
@@ -671,7 +667,7 @@ describe("FeedView", () => {
 
     renderFeedView({
       posts: [mentionTask],
-      searchQueryOverride: ""
+      searchQuery: ""
     });
 
     const mention = screen.getByRole("button", { name: "@alice" });
@@ -730,7 +726,7 @@ describe("FeedView", () => {
 
     renderFeedView({
       posts: [mentionTask],
-      searchQueryOverride: ""
+      searchQuery: ""
     });
 
     expect(screen.getByRole("button", { name: "@alice" })).toBeInTheDocument();
@@ -925,7 +921,7 @@ describe("FeedView", () => {
     const { container } = renderFeedView(
       {
         posts: tasks,
-        searchQueryOverride: "nomatchquery"
+        searchQuery: "nomatchquery"
       },
       {
         channels: [makeChannel({ id: "general", name: "general", filterState: "included" })],
@@ -940,7 +936,7 @@ describe("FeedView", () => {
     renderFeedView(
       {
         posts: tasks,
-        searchQueryOverride: ""
+        searchQuery: ""
       },
       {
         people: [selectedAuthor],
@@ -958,7 +954,7 @@ describe("FeedView", () => {
     renderFeedView(
       {
         posts: tasks,
-        searchQueryOverride: ""
+        searchQuery: ""
       },
       {
         relays: singleRelay,
@@ -973,7 +969,7 @@ describe("FeedView", () => {
     const { container } = renderFeedView(
       {
         posts: tasks,
-        searchQueryOverride: "nomatchquery",
+        searchQuery: "nomatchquery",
       },
       {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
@@ -1006,7 +1002,7 @@ describe("FeedView", () => {
     const { container } = renderFeedView(
       {
         posts: [otherTask],
-        searchQueryOverride: "",
+        searchQuery: "",
       },
       {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],

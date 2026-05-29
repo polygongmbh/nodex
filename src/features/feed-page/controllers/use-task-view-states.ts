@@ -20,6 +20,7 @@ import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallbac
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useEmptyScopeModel } from "./use-empty-scope-model";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
@@ -48,7 +49,12 @@ import type { MobileViewType } from "@/components/mobile/MobileNav";
 interface BaseViewStateInput {
   posts: Post[];
   focusedTaskId: string | null;
-  searchQueryOverride?: string;
+}
+
+// Views that scope their content can opt into the mobile search-omission
+// fallback by declaring which mobile view they represent.
+interface ScopedViewStateInput extends BaseViewStateInput {
+  currentView?: MobileViewType;
 }
 
 interface MobileScopedViewStateInput extends BaseViewStateInput {
@@ -173,7 +179,6 @@ export interface TreeVisibilityState {
 }
 
 export interface MobileFallbackNoticeState {
-  effectiveSearchQuery: string;
   mobileFallbackMessage: string | null;
   shouldShowMobileFallbackNotice: boolean;
 }
@@ -205,15 +210,102 @@ function buildFeedEntries(tasks: Post[], focusedTaskId: string | null): FeedEntr
   return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
 
+interface MobileViewScopeMatches {
+  hasSearchQuery: boolean;
+  hasScopedMatchesWithSearch: boolean;
+  hasScopedMatchesWithoutSearch: boolean;
+  hasSourceContent: boolean;
+  effectiveSearchQuery: string;
+}
+
+// On mobile, when a typed search produces no results inside the active scope
+// but the same scope without the search does, we drop the search so the user
+// still sees their scoped content (a notice explains why). This resolves that
+// "effective" query from the filter store directly — no prop is threaded
+// through the view tree. Desktop and the unscoped status view keep the raw
+// query. The filter index is WeakMap-cached per (posts, people), so computing
+// the match probes here is shared with each view's useTaskViewSource.
+function useMobileViewScopeMatches({
+  posts,
+  focusedTaskId,
+  currentView,
+}: ScopedViewStateInput): MobileViewScopeMatches {
+  const isMobile = useIsMobile();
+  const { channels, people, quickFilters } = useFeedSurfaceState();
+  const searchQuery = useFilterStore((s) => s.searchQuery);
+  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const hasSearchQuery = searchQuery.trim().length > 0;
+
+  const matches = useMemo(() => {
+    if (!isMobile || !currentView) {
+      return null;
+    }
+    const prefilteredTaskIds = new Set(posts.map((task) => task.id));
+    const neutralPeople = clearSelectedPeople(people);
+    const filterIndex = buildTaskViewFilterIndex(posts, people);
+    const { included, excluded } = getIncludedExcludedChannelNames(channels);
+    const taskPredicate =
+      currentView === "list" || currentView === "calendar"
+        ? (task: Post) =>
+            isTaskPost(task) && Boolean(getTaskPrimaryDate(task)) && !isTaskTerminal(getTaskState(task))
+        : undefined;
+    const includeFocusedTask = currentView === "feed";
+    const hideClosedTasks = currentView === "feed";
+    type MatchVariant = "scopedWithSearch" | "scopedWithoutSearch" | "sourceWithoutScope";
+    const hasMatches = (variant: MatchVariant): boolean => {
+      const useScopedFilters = variant !== "sourceWithoutScope";
+      const effectivePeople = variant === "sourceWithoutScope" ? neutralPeople : people;
+      const variantSearchQuery = variant === "scopedWithSearch" ? searchQuery : "";
+      return (
+        getDirectMatchTaskIdsForView({
+          source: { allTasks: posts, filterIndex, prefilteredTaskIds, people: effectivePeople },
+          scope: { focusedTaskId, includeFocusedTask, hideClosedTasks, taskPredicate },
+          criteria: {
+            searchQuery: variantSearchQuery,
+            quickFilters,
+            channels: {
+              included: useScopedFilters ? included : [],
+              excluded: useScopedFilters ? excluded : [],
+              matchMode: channelMatchMode,
+            },
+          },
+        }).size > 0
+      );
+    };
+    return {
+      hasScopedMatchesWithSearch: hasMatches("scopedWithSearch"),
+      hasScopedMatchesWithoutSearch: hasMatches("scopedWithoutSearch"),
+      hasSourceContent: hasMatches("sourceWithoutScope"),
+    };
+  }, [isMobile, currentView, posts, people, channels, quickFilters, channelMatchMode, searchQuery, focusedTaskId]);
+
+  const hasScopedMatchesWithSearch = matches?.hasScopedMatchesWithSearch ?? false;
+  const hasScopedMatchesWithoutSearch = matches?.hasScopedMatchesWithoutSearch ?? false;
+  const hasSourceContent = matches?.hasSourceContent ?? false;
+  const shouldOmitSearchQuery =
+    matches !== null && hasSearchQuery && !hasScopedMatchesWithSearch && hasScopedMatchesWithoutSearch;
+
+  return {
+    hasSearchQuery,
+    hasScopedMatchesWithSearch,
+    hasScopedMatchesWithoutSearch,
+    hasSourceContent,
+    effectiveSearchQuery: shouldOmitSearchQuery ? "" : searchQuery,
+  };
+}
+
 export function useTaskViewSource({
   posts,
   focusedTaskId,
-  searchQueryOverride,
-}: BaseViewStateInput): TaskViewSource {
+  currentView,
+}: ScopedViewStateInput): TaskViewSource {
+  const isMobile = useIsMobile();
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
-  const surfaceSearchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
-  const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
+  const { effectiveSearchQuery } = useMobileViewScopeMatches({ posts, focusedTaskId, currentView });
+  // The calendar has no search affordance on mobile, so it always ignores the
+  // typed query there rather than applying the omission fallback.
+  const searchQuery = isMobile && currentView === "calendar" ? "" : effectiveSearchQuery;
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const taskById = resolvePostsByIdFor(posts);
   const childrenMap = useMemo(() => buildChildrenMap(posts), [posts]);
@@ -546,13 +638,15 @@ export function buildTreeVisibilityState({
 export function useFeedViewState({
   posts,
   focusedTaskId,
-  searchQueryOverride,
   isMobile = false,
 }: BaseViewStateInput & { isMobile?: boolean }): FeedViewState {
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
-  const surfaceSearchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
-  const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
+  const { effectiveSearchQuery: searchQuery } = useMobileViewScopeMatches({
+    posts,
+    focusedTaskId,
+    currentView: "feed",
+  });
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
@@ -655,13 +749,11 @@ export function useFeedViewState({
 export function useListViewState({
   posts,
   focusedTaskId,
-  searchQueryOverride,
   depthMode = "leaves",
 }: BaseViewStateInput & { depthMode?: DisplayDepthMode }): ListViewState {
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
-  const surfaceSearchQuery = useFilterStore((s) => s.searchQuery);
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
-  const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
   const filteredTaskCandidates = useTaskViewFiltering<TaskPost>({
@@ -707,13 +799,11 @@ export function useListViewState({
 export function useKanbanViewState({
   posts,
   focusedTaskId,
-  searchQueryOverride,
   depthMode,
 }: BaseViewStateInput & { depthMode: DisplayDepthMode }): KanbanViewState {
   const { channels, people, quickFilters } = useFeedSurfaceState();
-  const surfaceSearchQuery = useFilterStore((s) => s.searchQuery);
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
-  const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
   const childrenMap = useMemo(() => buildChildrenMap(posts), [posts]);
@@ -784,64 +874,13 @@ export function useMobileFallbackNoticeState({
 }: MobileScopedViewStateInput): MobileFallbackNoticeState {
   const { t } = useTranslation("tasks");
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
-  const searchQuery = useFilterStore((s) => s.searchQuery);
-  const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
-  const hasSearchQuery = searchQuery.trim().length > 0;
   const taskById = resolvePostsByIdFor(posts);
-  const prefilteredTaskIds = useMemo(() => new Set(posts.map((task) => task.id)), [posts]);
-  const neutralPeople = useMemo(() => clearSelectedPeople(people), [people]);
-  const taskFilterIndex = useMemo(() => buildTaskViewFilterIndex(posts, people), [posts, people]);
-  const { included: includedChannelNames, excluded: excludedChannelNames } = useMemo(
-    () => getIncludedExcludedChannelNames(channels),
-    [channels]
-  );
-  const activeViewTaskPredicate = useMemo(() => {
-    if (currentView !== "list" && currentView !== "calendar") {
-      return undefined;
-    }
-    return (task: Post) => isTaskPost(task) && Boolean(getTaskPrimaryDate(task)) && !isTaskTerminal(getTaskState(task));
-  }, [currentView]);
-  const includeFocusedTaskForActiveView = currentView === "feed";
-  const hideClosedForActiveView = currentView === "feed";
-  type ActiveViewMatchVariant = "scopedWithSearch" | "scopedWithoutSearch" | "sourceWithoutScope";
-  function hasActiveViewMatches(variant: ActiveViewMatchVariant): boolean {
-    const useScopedFilters = variant !== "sourceWithoutScope";
-    const effectivePeople = variant === "sourceWithoutScope" ? neutralPeople : people;
-    const effectiveSearchQuery = variant === "scopedWithSearch" ? searchQuery : "";
-
-    return getDirectMatchTaskIdsForView({
-      source: {
-        allTasks: posts,
-        filterIndex: taskFilterIndex,
-        prefilteredTaskIds,
-        people: effectivePeople,
-      },
-      scope: {
-        focusedTaskId,
-        includeFocusedTask: includeFocusedTaskForActiveView,
-        hideClosedTasks: hideClosedForActiveView,
-        taskPredicate: activeViewTaskPredicate,
-      },
-      criteria: {
-        searchQuery: effectiveSearchQuery,
-        quickFilters,
-        channels: {
-          included: useScopedFilters ? includedChannelNames : [],
-          excluded: useScopedFilters ? excludedChannelNames : [],
-          matchMode: channelMatchMode,
-        },
-      },
-    }).size > 0;
-  }
-  const hasScopedMatchesWithSearch = hasActiveViewMatches("scopedWithSearch");
-  const hasScopedMatchesWithoutSearch = hasActiveViewMatches("scopedWithoutSearch");
-  const hasSourceContent = hasActiveViewMatches("sourceWithoutScope");
-  const shouldOmitSearchQuery =
-    !showFilters &&
-    hasSearchQuery &&
-    !hasScopedMatchesWithSearch &&
-    hasScopedMatchesWithoutSearch;
-  const effectiveSearchQuery = shouldOmitSearchQuery ? "" : searchQuery;
+  const {
+    hasSearchQuery,
+    hasScopedMatchesWithSearch,
+    hasScopedMatchesWithoutSearch,
+    hasSourceContent,
+  } = useMobileViewScopeMatches({ posts, focusedTaskId, currentView });
   const scopeModelWithoutQuickSearch = useEmptyScopeModel({
     relays,
     channels,
@@ -870,7 +909,6 @@ export function useMobileFallbackNoticeState({
         ? quickFilterFallbackMessage
         : null;
   return {
-    effectiveSearchQuery,
     mobileFallbackMessage,
     shouldShowMobileFallbackNotice: !showFilters && !isHydrating && Boolean(mobileFallbackMessage),
   };

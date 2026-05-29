@@ -37,6 +37,10 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ndkMock,
 }));
 
+vi.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => true,
+}));
+
 const dispatchFeedInteraction = vi.fn().mockResolvedValue({
   envelope: { id: 1, dispatchedAtMs: 0, intent: { type: "ui.focusTasks" } },
   outcome: { status: "handled" as const },
@@ -132,9 +136,7 @@ vi.mock("./MobileFilters", () => ({
 }));
 
 vi.mock("@/components/tasks/TaskTree", () => ({
-  TaskTree: ({ searchQueryOverride }: { searchQueryOverride?: string }) => (
-    <div data-testid="task-tree" data-search-query={searchQueryOverride ?? ""} />
-  ),
+  TaskTree: () => <div data-testid="task-tree" />,
 }));
 
 vi.mock("@/components/tasks/FeedView", () => ({
@@ -382,9 +384,7 @@ describe("MobileLayout auth wiring", () => {
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
-    expect(status).toHaveClass("text-center");
-    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
-  });
+    expect(status).toHaveClass("text-center");  });
 
   it("drops only the text filter when an included channel still has matches", () => {
     setSignedInUser();
@@ -404,9 +404,7 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
-    expect(status).toHaveTextContent("#nodex");
-    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
-  });
+    expect(status).toHaveTextContent("#nodex");  });
 
   it("drops only the text filter when a selected person still has matches", () => {
     setSignedInUser();
@@ -425,9 +423,7 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
-    expect(status).toHaveTextContent("Alice Doe");
-    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
-  });
+    expect(status).toHaveTextContent("Alice Doe");  });
 
   it("hides fallback notices while hydration is active", () => {
     setSignedInUser();
@@ -442,9 +438,7 @@ describe("MobileLayout auth wiring", () => {
       searchQuery: "nomatchquery",
     });
 
-    expect(screen.getByRole("status")).toHaveTextContent(/loading/i);
-    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
-  });
+    expect(screen.getByRole("status")).toHaveTextContent(/loading/i);  });
 
   it("shows scope fallback text when scope and quick filter both have no matches", () => {
     setSignedInUser();
@@ -469,9 +463,7 @@ describe("MobileLayout auth wiring", () => {
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent("Nothing yet in #nodex and #nostr, excluding #tech");
-    expect(status).toHaveTextContent("showing everything");
-    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "nomatchquery");
-  });
+    expect(status).toHaveTextContent("showing everything");  });
 
   it("uses the same scoped fallback contract on mobile upcoming view", () => {
     setSignedInUser();
@@ -563,9 +555,7 @@ describe("MobileLayout auth wiring", () => {
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent("Nothing yet with Me, in #nodex");
-    expect(status).toHaveTextContent("showing everything");
-    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
-  });
+    expect(status).toHaveTextContent("showing everything");  });
 
   it("shows a single loading row on mobile upcoming while hydrating", () => {
     setSignedInUser();

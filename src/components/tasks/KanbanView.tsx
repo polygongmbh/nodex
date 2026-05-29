@@ -59,7 +59,6 @@ const KANBAN_TERMINAL_COLUMN_INITIAL = 15;
 interface KanbanViewProps {
   posts: Post[];
   focusedTaskId: string | null;
-  searchQueryOverride?: string;
 }
 
 interface KanbanColumn {
@@ -150,7 +149,6 @@ function DraggableCardWrapper({ id, disabled, isActiveOverlay, children }: Dragg
 export function KanbanView({
   posts,
   focusedTaskId,
-  searchQueryOverride,
 }: KanbanViewProps) {
   const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
@@ -168,7 +166,6 @@ export function KanbanView({
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     posts,
     focusedTaskId,
-    searchQueryOverride,
     depthMode,
   });
   const sortContext = useMemo<SortContext>(() => {

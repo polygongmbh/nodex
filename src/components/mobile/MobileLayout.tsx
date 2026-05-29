@@ -94,7 +94,6 @@ export function MobileLayout({
   const mobileCurrentView: MobileViewType = activePrimaryView;
   const viewFallback = <ViewLoadingFallback />;
   const {
-    effectiveSearchQuery,
     mobileFallbackMessage,
     shouldShowMobileFallbackNotice,
   } = useMobileFallbackNoticeState({
@@ -149,15 +148,15 @@ export function MobileLayout({
       case "status":
         return <StatusView posts={posts} focusedTaskId={focusedTaskId} />;
       case "tree":
-        return <TaskTree posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride={effectiveSearchQuery} />;
+        return <TaskTree posts={posts} focusedTaskId={focusedTaskId} />;
       case "feed":
-        return <FeedView posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride={effectiveSearchQuery} />;
+        return <FeedView posts={posts} focusedTaskId={focusedTaskId} />;
       case "list":
-        return <UpcomingView posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride={effectiveSearchQuery} />;
+        return <UpcomingView posts={posts} focusedTaskId={focusedTaskId} />;
       case "calendar":
-        return <CalendarView posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride="" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView posts={posts} focusedTaskId={focusedTaskId} selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
-        return <TaskTree posts={posts} focusedTaskId={focusedTaskId} searchQueryOverride={effectiveSearchQuery} />;
+        return <TaskTree posts={posts} focusedTaskId={focusedTaskId} />;
     }
   };
 

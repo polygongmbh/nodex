@@ -57,13 +57,11 @@ import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 interface UpcomingViewProps {
   posts: Post[];
   focusedTaskId: string | null;
-  searchQueryOverride?: string;
 }
 
 export function UpcomingView({
   posts,
   focusedTaskId,
-  searchQueryOverride,
 }: UpcomingViewProps) {
   const currentUser = useCurrentUser();
   const { t } = useTranslation("tasks");
@@ -74,7 +72,7 @@ export function UpcomingView({
   const taskSource = useTaskViewSource({
     posts,
     focusedTaskId,
-    searchQueryOverride,
+    currentView: "list",
   });
   const calendarSelectors = useMemo(() => createCalendarSelectors(taskSource), [taskSource]);
   const upcomingTasks = calendarSelectors.getUpcomingTasks();

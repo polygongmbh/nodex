@@ -59,7 +59,6 @@ import { usePreferencesStore } from "@/features/feed-page/stores/preferences-sto
 interface ListViewProps {
   posts: Post[];
   focusedTaskId: string | null;
-  searchQueryOverride?: string;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -118,7 +117,6 @@ const PriorityCell = memo(function PriorityCell({
 export function ListView({
   posts,
   focusedTaskId,
-  searchQueryOverride,
 }: ListViewProps) {
   const currentUser = useCurrentUser();
   const isInteractionBlocked = useIsInteractionBlocked();
@@ -140,7 +138,6 @@ export function ListView({
   } = useListViewState({
     posts,
     focusedTaskId,
-    searchQueryOverride,
     depthMode,
   });
   const prevTasksHashRef = useRef<number>(0);

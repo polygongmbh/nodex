@@ -184,11 +184,9 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
 export function FeedView({
   posts,
   focusedTaskId,
-  searchQueryOverride,
 }: {
   posts: Post[];
   focusedTaskId: string | null;
-  searchQueryOverride?: string;
 }) {
   const isMobile = useIsMobile();
   const currentUser = useCurrentUser();
@@ -206,7 +204,6 @@ export function FeedView({
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
   const {
-    searchQuery,
     taskById,
     feedTasks,
     feedEntries,
@@ -217,7 +214,6 @@ export function FeedView({
   } = useFeedViewState({
     posts,
     focusedTaskId,
-    searchQueryOverride,
     isMobile,
   });
   const filterKey = useMemo(() =>

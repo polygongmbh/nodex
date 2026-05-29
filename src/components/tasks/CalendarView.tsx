@@ -45,7 +45,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface CalendarViewProps {
   posts: Post[];
   focusedTaskId: string | null;
-  searchQueryOverride?: string;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
 }
@@ -55,7 +54,6 @@ const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 export function CalendarView({
   posts,
   focusedTaskId,
-  searchQueryOverride,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
 }: CalendarViewProps) {
@@ -93,7 +91,7 @@ export function CalendarView({
   const taskSource = useTaskViewSource({
     posts,
     focusedTaskId,
-    searchQueryOverride,
+    currentView: "calendar",
   });
   const calendarSelectors = useMemo(() => createCalendarSelectors(taskSource), [taskSource]);
   const getTasksForDay = calendarSelectors.getTasksForDay;

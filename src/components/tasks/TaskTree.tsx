@@ -21,11 +21,9 @@ import { TaskAuthorProfilesProvider } from "./task-author-profiles-context";
 export function TaskTree({
   posts,
   focusedTaskId,
-  searchQueryOverride,
 }: {
   posts: Post[];
   focusedTaskId: string | null;
-  searchQueryOverride?: string;
 }) {
   const isMobile = useIsMobile();
   const currentUser = useCurrentUser();
@@ -38,13 +36,12 @@ export function TaskTree({
   const taskSource = useTaskViewSource({
     posts,
     focusedTaskId,
-    searchQueryOverride,
+    currentView: "tree",
   });
   const treeSelectors = useMemo(() => createTreeSelectors(taskSource), [taskSource]);
   const {
     activeRelays,
     childrenMap,
-    searchQuery,
     sortContext,
   } = taskSource;
   const currentContextTask = treeSelectors.getCurrentContextTask();
