@@ -97,7 +97,6 @@ export function MobileLayout({
     effectiveSearchQuery,
     mobileFallbackMessage,
     shouldShowMobileFallbackNotice,
-    mobileShellFocusedTaskId,
   } = useMobileFallbackNoticeState({
     posts,
     focusedTaskId,
@@ -105,7 +104,7 @@ export function MobileLayout({
     showFilters,
     isHydrating,
   });
-  const hasMobileBreadcrumbOffset = !showFilters && !isHydrating && Boolean(mobileShellFocusedTaskId);
+  const hasMobileBreadcrumbOffset = !showFilters && !isHydrating && Boolean(focusedTaskId);
 
   useEffect(() => {
     if (isManageRouteActive) {
@@ -174,7 +173,7 @@ export function MobileLayout({
           <div>
             <TaskViewStatusRow
               posts={posts}
-              focusedTaskId={mobileShellFocusedTaskId}
+              focusedTaskId={focusedTaskId}
               isHydrating={isHydrating}
               className="h-10 px-3 text-xs"
               visible={!showFilters}

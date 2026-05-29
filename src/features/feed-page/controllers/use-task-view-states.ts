@@ -176,7 +176,6 @@ export interface MobileFallbackNoticeState {
   effectiveSearchQuery: string;
   mobileFallbackMessage: string | null;
   shouldShowMobileFallbackNotice: boolean;
-  mobileShellFocusedTaskId: string | null;
 }
 
 export function sortKanbanColumnTasks(tasks: TaskPost[], status: TaskStatus, sortContext: SortContext): TaskPost[] {
@@ -874,6 +873,5 @@ export function useMobileFallbackNoticeState({
     effectiveSearchQuery,
     mobileFallbackMessage,
     shouldShowMobileFallbackNotice: !showFilters && !isHydrating && Boolean(mobileFallbackMessage),
-    mobileShellFocusedTaskId: focusedTaskId,
   };
 }
