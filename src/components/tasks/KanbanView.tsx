@@ -35,6 +35,10 @@ import {
 import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
+import {
+  useKanbanComposerHint,
+  useClearKanbanComposerHint,
+} from "@/features/feed-page/stores/composer-signals-store";
 import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
@@ -180,6 +184,16 @@ export function KanbanView({
   }, [posts]);
 
   const columns = useMemo(() => getColumns(kanbanTasks), [kanbanTasks]);
+
+  const composerHint = useKanbanComposerHint();
+  const clearComposerHint = useClearKanbanComposerHint();
+  useEffect(() => {
+    if (!composerHint) return;
+    if (composerHint.columnSelector !== "firstActive") return;
+    const target = columns.find((column) => column.state.status === "active");
+    if (target) setComposingColumnId(target.id);
+    clearComposerHint(composerHint.id);
+  }, [composerHint, columns, clearComposerHint]);
   // Group task IDs by column instead of replicating full task references.
   // The canonical task object lives in sortContext.taskById; consumers look
   // it up on demand. Sorting still needs object access, but the sorted

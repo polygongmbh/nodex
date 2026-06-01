@@ -16,7 +16,17 @@ export type FeedInteractionIntent =
   | { type: "ui.focusSidebar" }
   | { type: "ui.focusTasks" }
   | { type: "ui.interaction.guardModify" }
-  | { type: "ui.view.change"; view: ViewType }
+  | {
+      type: "ui.view.change";
+      view: ViewType;
+      /**
+       * Optional hint to pop a composer open on the target view. Currently
+       * only kanban honors it (the StatusView "Create active project" card
+       * uses this to land in kanban with the composer already open in the
+       * first active column).
+       */
+      compose?: { columnSelector: "firstActive" };
+    }
   | { type: "ui.search.change"; query: string }
   | { type: "ui.displayDepth.change"; mode: DisplayDepthMode }
   | { type: "ui.manageRoute.change"; isActive: boolean }

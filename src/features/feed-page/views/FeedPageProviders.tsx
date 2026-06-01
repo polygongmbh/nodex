@@ -14,6 +14,7 @@ import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-conte
 import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-context";
 import { ScrollCaptureProvider, type ScrollCaptureRef } from "./scroll-capture-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
 import { ProfileCompletionDialog } from "@/components/auth/ProfileCompletionDialog";
 import { dismissRetryInProgress, notifyRetryInProgress } from "@/lib/notifications";
 
@@ -79,6 +80,9 @@ function FeedInteractionBusFromContexts({
         viewCommands.focusTasks();
       },
       "ui.view.change": (intent) => {
+        if (intent.compose) {
+          useComposerSignalsStore.getState().requestKanbanComposer(intent.compose.columnSelector);
+        }
         viewCommands.setCurrentView(intent.view);
       },
       "ui.search.change": (intent) => {
