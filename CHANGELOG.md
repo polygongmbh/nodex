@@ -6,6 +6,10 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- The Status view's "My tasks" and "Activity" headers are now clickable shortcuts into the tree and feed views, with a small plus-icon button on each header that opens an inline composer in context — task-only on My tasks, task-or-comment on Activity — without leaving the status landing.
+- A dashed "Create an active project" card at the end of the Status projects row jumps to the kanban board with the depth set to "projects only" and the column composer already open in the first active state, so starting a new project is a single click.
+
 ### Changed
 - Kanban's terminal-state columns (Done, Closed) now render only the 15 most-recent cards initially with a `Show N older` button to reveal the rest, so long-lived boards stay snappy as completed tasks pile up.
 - Kanban cards no longer dim, strike through, or mute their text when they sit in Done/Closed columns — the column header already carries that signal, so the per-card styling was redundant and made archived work look like dead weight.

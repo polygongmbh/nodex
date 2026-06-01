@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Plus } from "lucide-react";
 import { StatusProjectCard } from "./StatusProjectCard";
 import { hasInProgressTopLevelProject, selectStatusInProgressTopLevelTasks } from "./status-filters";
 import { SharedViewComposer } from "@/components/tasks/SharedViewComposer";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
@@ -58,7 +60,30 @@ export function StatusProjectsRow({ contextTasks, allTasks, focusedTaskId }: Sta
             subtaskCount={(childrenByParentId.get(task.id) || []).filter((child) => isTaskPost(child)).length}
           />
         ))}
+        {authPolicy.canOpenCompose && <CreateActiveProjectCard />}
       </div>
     </section>
+  );
+}
+
+function CreateActiveProjectCard() {
+  const { t } = useTranslation("tasks");
+  const dispatch = useFeedInteractionDispatch();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void dispatch({ type: "ui.displayDepth.change", mode: "projects" });
+        void dispatch({
+          type: "ui.view.change",
+          view: "kanban",
+          compose: { columnSelector: "firstActive" },
+        });
+      }}
+      className="flex h-full min-w-[16rem] max-w-[22rem] flex-1 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/20 p-6 text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+    >
+      <Plus className="w-8 h-8" strokeWidth={1.5} />
+      <span className="text-sm font-medium">{t("status.projects.createActiveCta")}</span>
+    </button>
   );
 }
