@@ -205,7 +205,7 @@ describe("TaskComposer", () => {
 
   it("submits listing-specific fields from listing mode", () => {
     const onSubmit = vi.fn();
-    renderComposer({ onSubmit, allowFeedMessageTypes: true });
+    renderComposer({ onSubmit, allowedPostTypes: ["task", "comment", "listing", "event"] });
 
     fireEvent.click(screen.getByRole("button", { name: "Listing" }));
     fireEvent.change(getComposerInput("listing"), {
@@ -472,7 +472,7 @@ describe("TaskComposer", () => {
       explicitMentionPubkeys: [alicePubkey],
     }));
 
-    renderComposer({ allowFeedMessageTypes: true });
+    renderComposer({ allowedPostTypes: ["task", "comment", "listing", "event"] });
 
     expect(getComposerInput("listing")).toHaveValue("Need a designer #design");
     expect(screen.getByTestId("titled-post-title")).toHaveValue("Need designer for mobile UI");
@@ -552,7 +552,7 @@ describe("TaskComposer", () => {
 
     rerender(
       <TaskComposerRuntimeProvider value={buildRuntimeValue()}>
-        <TaskComposer onSubmit={() => {}} onCancel={() => {}} allowFeedMessageTypes />
+        <TaskComposer onSubmit={() => {}} onCancel={() => {}} allowedPostTypes={["task", "comment", "listing", "event"]} />
       </TaskComposerRuntimeProvider>
     );
 
@@ -655,7 +655,7 @@ describe("TaskComposer auto-fill", () => {
   });
 
   it("auto-fills listing title from the first line of content", async () => {
-    renderComposer({ allowFeedMessageTypes: true });
+    renderComposer({ allowedPostTypes: ["task", "comment", "listing", "event"] });
     fireEvent.click(screen.getByRole("button", { name: "Listing" }));
     fireEvent.change(getComposerInput("listing"), {
       target: { value: "First line title\n\nBody text continues here." },
@@ -667,7 +667,7 @@ describe("TaskComposer auto-fill", () => {
   });
 
   it("preserves a manually-edited listing title across content changes", async () => {
-    renderComposer({ allowFeedMessageTypes: true });
+    renderComposer({ allowedPostTypes: ["task", "comment", "listing", "event"] });
     fireEvent.click(screen.getByRole("button", { name: "Listing" }));
     fireEvent.change(getComposerInput("listing"), {
       target: { value: "Initial title\n\nBody" },
@@ -686,7 +686,7 @@ describe("TaskComposer auto-fill", () => {
   });
 
   it("auto-fills event title from the first line of content", async () => {
-    renderComposer({ allowFeedMessageTypes: true });
+    renderComposer({ allowedPostTypes: ["task", "comment", "listing", "event"] });
     fireEvent.click(screen.getByRole("button", { name: "Event" }));
     fireEvent.change(getComposerInput(), {
       target: { value: "Team standup\n\nNotes" },
@@ -697,7 +697,7 @@ describe("TaskComposer auto-fill", () => {
   });
 
   it("preserves a manually-edited event title across content changes", async () => {
-    renderComposer({ allowFeedMessageTypes: true });
+    renderComposer({ allowedPostTypes: ["task", "comment", "listing", "event"] });
     fireEvent.click(screen.getByRole("button", { name: "Event" }));
     fireEvent.change(getComposerInput(), {
       target: { value: "Initial title\n\nBody" },
@@ -723,27 +723,23 @@ describe("TaskComposer Event mode", () => {
   });
 
   it("renders Start and End date controls in Event mode", () => {
-    renderComposer({ allowFeedMessageTypes: true, defaultPostType: "event" });
+    renderComposer({ allowedPostTypes: ["event", "task", "comment", "listing"] });
     expect(screen.getByRole("button", { name: "Start date" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "End date" })).toBeInTheDocument();
   });
 
-  it("initializes in Event mode when defaultPostType=event", () => {
-    renderComposer({ allowFeedMessageTypes: true, defaultPostType: "event" });
+  it("initializes in the first allowed type (event)", () => {
+    renderComposer({ allowedPostTypes: ["event", "task", "comment", "listing"] });
     expect(screen.getByRole("button", { name: /create event/i })).toBeInTheDocument();
   });
 
-  it("initializes in Task mode when defaultPostType=task", () => {
-    renderComposer({ allowFeedMessageTypes: true, defaultPostType: "task" });
+  it("initializes in the first allowed type (task)", () => {
+    renderComposer({ allowedPostTypes: ["task", "comment", "listing", "event"] });
     expect(screen.getByTestId("composer-primary-action")).toBeInTheDocument();
   });
 
-  // Regression: the calendar's Add Event button passes allowComment=false and
-  // defaultPostType="event". An effect used to coerce any non-task type to
-  // "task" whenever allowComment was false, silently turning the click into
-  // task creation.
-  it("preserves Event mode when allowComment is false", () => {
-    renderComposer({ allowFeedMessageTypes: true, allowComment: false, defaultPostType: "event" });
+  it("locks to Event when allowedPostTypes is just ['event']", () => {
+    renderComposer({ allowedPostTypes: ["event"] });
     expect(screen.getByRole("button", { name: /create event/i })).toBeInTheDocument();
   });
 });

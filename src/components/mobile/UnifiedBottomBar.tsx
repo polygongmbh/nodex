@@ -165,7 +165,7 @@ export function UnifiedBottomBar({
     initialComposerStateRef.current = resolveTaskComposerInitialState({
       draftStorageKey: COMPOSE_DRAFT_STORAGE_KEY,
       defaultContent: searchQuery || defaultContent,
-      allowFeedMessageTypes: true,
+      allowedPostTypes: ["task", "comment", "listing", "event"],
       displayPriorityFromStored,
     });
   }

@@ -502,7 +502,7 @@ export function FeedView({
         <SharedViewComposer
           focusedTaskId={focusedTaskId}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
-          allowFeedMessageTypes
+          allowedPostTypes={["task", "comment", "listing", "event"]}
         />
       )}
 

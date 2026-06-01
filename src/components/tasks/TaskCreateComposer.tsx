@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { TaskComposer, type TaskComposerFormData } from "./TaskComposer";
 import type { PostType, TaskDate } from "@/types";
+
+const DEFAULT_ALLOWED_POST_TYPES: readonly PostType[] = ["task", "comment"];
 import { TaskComposerRuntimeProvider, useResolvedTaskComposerEnvironment } from "./task-composer-runtime";
 import { useComposerRelayBlock } from "./use-composer-relay-block";
 import { useComposerFilterSync } from "./use-composer-filter-sync";
@@ -28,9 +30,7 @@ interface TaskCreateComposerProps {
   focusOnMount?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   collapseOnSuccess?: boolean;
-  allowComment?: boolean;
-  allowFeedMessageTypes?: boolean;
-  defaultPostType?: PostType;
+  allowedPostTypes?: readonly PostType[];
   onSubmit?: (data: TaskComposerFormData) => void;
 }
 
@@ -44,9 +44,7 @@ export function TaskCreateComposer({
   focusOnMount = true,
   onExpandedChange,
   collapseOnSuccess = false,
-  allowComment = true,
-  allowFeedMessageTypes = false,
-  defaultPostType,
+  allowedPostTypes = DEFAULT_ALLOWED_POST_TYPES,
   onSubmit,
 }: TaskCreateComposerProps) {
   const { createHttpAuthHeader } = useNDK();
@@ -120,9 +118,7 @@ export function TaskCreateComposer({
         mentionRequest={mentionRequest}
         onMentionRequestConsumed={onMentionRequestConsumed}
         collapseOnSuccess={collapseOnSuccess}
-        allowComment={allowComment}
-        allowFeedMessageTypes={allowFeedMessageTypes}
-        defaultPostType={defaultPostType}
+        allowedPostTypes={allowedPostTypes}
         composeRestoreRequest={composeRestoreRequest}
         onComposeRestoreRequestConsumed={onComposeRestoreRequestConsumed}
         contextTaskTitle={contextTaskTitle}

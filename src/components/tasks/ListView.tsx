@@ -473,7 +473,7 @@ export function ListView({
         <SharedViewComposer
           focusedTaskId={focusedTaskId}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
-          allowComment={false}
+          allowedPostTypes={["task"]}
         />
       )}
       {/* Table */}

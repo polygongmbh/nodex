@@ -215,22 +215,15 @@ function isPersistedDraftStale(persisted: PersistedComposerDraft): boolean {
 
 function resolveInitialPostType(
   persisted: PersistedComposerDraft | null,
-  allowFeedMessageTypes: boolean,
-  defaultPostType?: PostType
+  allowedPostTypes: readonly PostType[]
 ): PostType {
-  // An explicit defaultPostType (e.g. from "Add Event" on the calendar) is a
-  // direct user gesture and wins over any persisted draft mode, so the button
-  // the user just clicked actually decides what they're composing.
-  if (defaultPostType) {
-    if (defaultPostType === "task" || defaultPostType === "comment") return defaultPostType;
-    if (allowFeedMessageTypes) return defaultPostType;
-  }
+  // A single-entry allowedPostTypes array is a direct caller gesture (e.g.
+  // calendar's "Add Event" → ["event"]) and locks the composer to that type
+  // regardless of what's in the persisted draft.
+  if (allowedPostTypes.length === 1) return allowedPostTypes[0];
   const draftPostType = persisted?.postType;
-  if (draftPostType === "task" || draftPostType === "comment") return draftPostType;
-  if (allowFeedMessageTypes && (draftPostType === "listing" || draftPostType === "event")) {
-    return draftPostType;
-  }
-  return "task";
+  if (draftPostType && allowedPostTypes.includes(draftPostType)) return draftPostType;
+  return allowedPostTypes[0];
 }
 
 function emptyDraft(
@@ -320,15 +313,13 @@ export function resolveTaskComposerInitialState({
   draftStorageKey,
   defaultContent,
   defaultDates,
-  allowFeedMessageTypes,
-  defaultPostType,
+  allowedPostTypes,
   displayPriorityFromStored,
 }: {
   draftStorageKey?: string;
   defaultContent: string;
   defaultDates?: TaskDate[];
-  allowFeedMessageTypes: boolean;
-  defaultPostType?: PostType;
+  allowedPostTypes: readonly PostType[];
   displayPriorityFromStored: (stored?: number) => number | undefined;
 }): ComposerDraft {
   const persisted = draftStorageKey ? readPersistedDraft(draftStorageKey) : null;
@@ -345,7 +336,7 @@ export function resolveTaskComposerInitialState({
     })
       ? persisted
       : null;
-  const postType = resolveInitialPostType(substantive, allowFeedMessageTypes, defaultPostType);
+  const postType = resolveInitialPostType(substantive, allowedPostTypes);
   if (!substantive) return emptyDraft(defaultContent, postType, defaultDates);
   const restored = deserializeDraft(substantive, postType, displayPriorityFromStored, defaultDates);
   // For stale drafts, the user's text/attachments/listing details are still
@@ -415,12 +406,9 @@ export function isWritableRelay(relay: { connectionStatus?: string } | undefined
 
 export function getTaskComposerRestorePostType(
   request: ComposeRestoreRequest | null,
-  allowComment: boolean,
-  allowFeedMessageTypes: boolean
+  allowedPostTypes: readonly PostType[]
 ): PostType {
   const requested = request?.state.postType;
-  if (allowFeedMessageTypes && (requested === "listing" || requested === "event")) {
-    return requested;
-  }
-  return allowComment && requested === "comment" ? "comment" : "task";
+  if (requested && allowedPostTypes.includes(requested)) return requested;
+  return allowedPostTypes[0];
 }

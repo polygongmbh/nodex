@@ -162,7 +162,7 @@ describe("TaskCreateComposer", () => {
             onCancel={onCancel}
             onSubmit={submit}
             focusedTaskId="parent-task"
-            allowComment={false}
+            allowedPostTypes={["task"]}
           />
         </FeedSurfaceProvider>
       );
@@ -196,7 +196,7 @@ describe("TaskCreateComposer", () => {
     renderCreateComposer({
       focusedTaskId: "parent-task",
       allTasks: [parentTask],
-      allowComment: false,
+      allowedPostTypes: ["task"],
     });
 
     expect(screen.getByRole("textbox")).toHaveAttribute(
@@ -411,7 +411,7 @@ describe("TaskCreateComposer", () => {
       feedRelays: multiRelays,
       allTasks: [parentTask],
       focusedTaskId: "parent-task",
-      allowComment: true,
+      allowedPostTypes: ["task", "comment"],
     });
 
     fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
@@ -453,7 +453,7 @@ describe("TaskCreateComposer", () => {
       return (
         <FeedSurfaceProvider value={{ relays: relaysWithSelection, channels, people, searchQuery: "", quickFilters: makeQuickFilterState(), channelMatchMode: "and" }}>
           <button onClick={() => setActiveRelayId("relay-b")}>Switch to Relay B</button>
-          <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} allowComment={false} />
+          <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} allowedPostTypes={["task"]} />
         </FeedSurfaceProvider>
       );
     }

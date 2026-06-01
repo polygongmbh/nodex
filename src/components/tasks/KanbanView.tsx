@@ -574,7 +574,7 @@ export function KanbanView({
                       onSubmit={handleComposerSubmit}
                       compact
                       focusedTaskId={focusedTaskId}
-                      allowComment={false}
+                      allowedPostTypes={["task"]}
                     />
                   </div>
                 )}

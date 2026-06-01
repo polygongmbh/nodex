@@ -548,9 +548,7 @@ export function CalendarView({
                     onSubmit={handleComposerSubmit}
                     compact
                     focusedTaskId={focusedTaskId}
-                    allowComment={false}
-                    allowFeedMessageTypes={composerMode === "event"}
-                    defaultPostType={composerMode}
+                    allowedPostTypes={[composerMode]}
                     defaultDates={[
                       { date: formatLocalIsoDate(selectedDate), type: composerMode === "event" ? "start" : "due" },
                     ]}

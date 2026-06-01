@@ -84,9 +84,12 @@ interface TaskComposerProps {
   } | null;
   onMentionRequestConsumed?: (requestId: number) => void;
   collapseOnSuccess?: boolean;
-  allowComment?: boolean;
-  allowFeedMessageTypes?: boolean;
-  defaultPostType?: PostType;
+  /**
+   * Which post types the composer offers. Length 1 hides the type switcher
+   * and locks the composer to that single type; otherwise a chip bar with one
+   * button per allowed type is rendered. The first entry is the default.
+   */
+  allowedPostTypes?: readonly PostType[];
   composeRestoreRequest?: ComposeRestoreRequest | null;
   onComposeRestoreRequestConsumed?: (requestId: number) => void;
   contextTaskTitle?: string;
@@ -99,6 +102,19 @@ interface TaskComposerProps {
 
 export type TaskComposerFormData = ComposerContent & SubmitTagging;
 
+const DEFAULT_ALLOWED_POST_TYPES: readonly PostType[] = ["task", "comment"];
+const POST_TYPE_LABEL_KEYS: Record<PostType, string> = {
+  task: "composer.labels.task",
+  comment: "composer.labels.comment",
+  listing: "composer.labels.listing",
+  event: "composer.labels.event",
+};
+const POST_TYPE_ICONS: Record<PostType, React.ReactNode> = {
+  task: <CheckSquare className="w-3.5 h-3.5" />,
+  comment: <MessageSquare className="w-3.5 h-3.5" />,
+  listing: <Package className="w-3.5 h-3.5" />,
+  event: <Calendar className="w-3.5 h-3.5" />,
+};
 const TITLED_POST_TITLE_MAX_LENGTH = 80;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
 const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
@@ -170,9 +186,7 @@ export function TaskComposer({
   mentionRequest = null,
   onMentionRequestConsumed,
   collapseOnSuccess = false,
-  allowComment = true,
-  allowFeedMessageTypes = false,
-  defaultPostType,
+  allowedPostTypes = DEFAULT_ALLOWED_POST_TYPES,
   composeRestoreRequest = null,
   onComposeRestoreRequestConsumed,
   contextTaskTitle = "",
@@ -197,11 +211,10 @@ export function TaskComposer({
         draftStorageKey,
         defaultContent,
         defaultDates,
-        allowFeedMessageTypes,
-        defaultPostType,
+        allowedPostTypes,
         displayPriorityFromStored,
       }),
-    [allowFeedMessageTypes, defaultContent, defaultDates, defaultPostType, draftStorageKey]
+    [allowedPostTypes, defaultContent, defaultDates, draftStorageKey]
   );
   const shouldFocusOnMount = focusOnMount;
 
@@ -508,13 +521,10 @@ export function TaskComposer({
   }, [adaptiveSize, forceExpandSignal]);
 
   useEffect(() => {
-    // Only override "comment" — the calendar's Add Event button passes
-    // allowComment=false but explicitly chose "event", and clobbering that
-    // back to "task" silently produced tasks instead of events.
-    if (!allowComment && postType === "comment") {
-      setPostType("task");
+    if (!allowedPostTypes.includes(postType)) {
+      setPostType(allowedPostTypes[0]);
     }
-  }, [allowComment, postType]);
+  }, [allowedPostTypes, postType]);
 
   useEffect(() => {
     if (!composeRestoreRequest) return;
@@ -523,13 +533,7 @@ export function TaskComposer({
     const restoreState = composeRestoreRequest.state;
     setActiveRecomposeOf(restoreState.recomposeOf);
     setContent(restoreState.content || "");
-    setPostType(
-      getTaskComposerRestorePostType(
-        composeRestoreRequest,
-        allowComment,
-        allowFeedMessageTypes
-      )
-    );
+    setPostType(getTaskComposerRestorePostType(composeRestoreRequest, allowedPostTypes));
     setDates(restoreState.dates);
     setPriority(restoreState.priority);
     setNip99({ ...restoreState.nip99 });
@@ -561,7 +565,7 @@ export function TaskComposer({
       setIsExpanded(true);
     }
     onComposeRestoreRequestConsumed?.(composeRestoreRequest.id);
-  }, [adaptiveSize, allowComment, allowFeedMessageTypes, composeRestoreRequest, onComposeRestoreRequestConsumed]);
+  }, [adaptiveSize, allowedPostTypes, composeRestoreRequest, onComposeRestoreRequestConsumed]);
 
   useEffect(() => {
     if (!draftStorageKey) return;
@@ -922,12 +926,8 @@ export function TaskComposer({
   }, [inheritedMentionPubkeys, filterMentionPubkeys]);
 
   const resolveSubmitType = (value: unknown): PostType => {
-    if (
-      value === "task" ||
-      value === "comment" ||
-      (allowFeedMessageTypes && (value === "listing" || value === "event"))
-    ) {
-      return value;
+    if (typeof value === "string" && (allowedPostTypes as readonly string[]).includes(value)) {
+      return value as PostType;
     }
     return postType;
   };
@@ -1414,11 +1414,12 @@ export function TaskComposer({
 
     if (isAlternateSubmitKey(e) && !showHashtagSuggestions && !showMentionSuggestions) {
       e.preventDefault();
-      const alternateType: PostType = allowComment
-        ? postType === "task"
-          ? "comment"
-          : "task"
-        : "task";
+      // Alt-submit toggles between task and comment when both are allowed; if
+      // one is missing or there's only one allowed type, fall back to current.
+      const alternateType: PostType =
+        allowedPostTypes.includes("task") && allowedPostTypes.includes("comment")
+          ? postType === "task" ? "comment" : "task"
+          : postType;
       handleSubmit(alternateType);
       return;
     }
@@ -2299,7 +2300,7 @@ export function TaskComposer({
 
         <div className="ml-auto flex min-w-0 flex-col gap-1 sm:items-end">
           <div className="inline-flex self-end overflow-hidden rounded-xl border border-border/40 shadow-sm">
-            {allowComment && (
+            {allowedPostTypes.length > 1 && (
               <div
                 data-onboarding="compose-kind"
                 className="inline-flex items-center gap-1 bg-muted/40 border-r border-border/50 p-1"
@@ -2312,67 +2313,26 @@ export function TaskComposer({
                   tabIndex={-1}
                   className="sr-only"
                 >
-                  <option value="task">{t("composer.labels.task")}</option>
-                  <option value="comment">{t("composer.labels.comment")}</option>
-                  {allowFeedMessageTypes && <option value="listing">{t("composer.labels.listing")}</option>}
-                  {allowFeedMessageTypes && <option value="event">{t("composer.labels.event")}</option>}
+                  {allowedPostTypes.map((pt) => (
+                    <option key={pt} value={pt}>{t(POST_TYPE_LABEL_KEYS[pt])}</option>
+                  ))}
                 </select>
-                <button
-                  type="button"
-                  onClick={() => setPostType("task")}
-                  className={cn(
-                    "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                    postType === "task"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <CheckSquare className="w-3.5 h-3.5" />
-                  <span>{t("composer.labels.task")}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPostType("comment")}
-                  className={cn(
-                    "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                    postType === "comment"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>{t("composer.labels.comment")}</span>
-                </button>
-                {allowFeedMessageTypes && (
+                {allowedPostTypes.map((pt) => (
                   <button
+                    key={pt}
                     type="button"
-                    onClick={() => setPostType("listing")}
+                    onClick={() => setPostType(pt)}
                     className={cn(
                       "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                      postType === "listing"
+                      postType === pt
                         ? "bg-background text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Package className="w-3.5 h-3.5" />
-                    <span>{t("composer.labels.listing")}</span>
+                    {POST_TYPE_ICONS[pt]}
+                    <span>{t(POST_TYPE_LABEL_KEYS[pt])}</span>
                   </button>
-                )}
-                {allowFeedMessageTypes && (
-                  <button
-                    type="button"
-                    onClick={() => setPostType("event")}
-                    className={cn(
-                      "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                      postType === "event"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{t("composer.labels.event")}</span>
-                  </button>
-                )}
+                ))}
               </div>
             )}
             {(() => {

@@ -6,6 +6,9 @@ import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import type { PostType } from "@/types";
+
+const DEFAULT_ALLOWED_POST_TYPES: readonly PostType[] = ["task", "comment"];
 
 interface SharedViewComposerProps {
   focusedTaskId: string | null;
@@ -13,8 +16,7 @@ interface SharedViewComposerProps {
   defaultContent?: string;
   className?: string;
   collapseOnSuccess?: boolean;
-  allowComment?: boolean;
-  allowFeedMessageTypes?: boolean;
+  allowedPostTypes?: readonly PostType[];
 }
 
 export function SharedViewComposer({
@@ -23,8 +25,7 @@ export function SharedViewComposer({
   defaultContent = "",
   className = "relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
   collapseOnSuccess = false,
-  allowComment = true,
-  allowFeedMessageTypes = false,
+  allowedPostTypes = DEFAULT_ALLOWED_POST_TYPES,
 }: SharedViewComposerProps) {
   const { t } = useTranslation("composer");
   const authPolicy = useAuthActionPolicy();
@@ -60,8 +61,7 @@ export function SharedViewComposer({
         defaultContent={defaultContent}
         focusOnMount={false}
         collapseOnSuccess={collapseOnSuccess}
-        allowComment={allowComment}
-        allowFeedMessageTypes={allowFeedMessageTypes}
+        allowedPostTypes={allowedPostTypes}
       />
     </div>
   );
