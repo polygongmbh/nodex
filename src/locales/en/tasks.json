@@ -266,6 +266,7 @@
   "status": {
     "viewMore": "View {{count}} more in {{view}}",
     "showView": "Show {{view}}",
+    "headerCreate": "Create",
     "myTasks": {
       "label": "My tasks",
       "signInPrompt": "Sign in to see tasks assigned to you."
@@ -274,7 +275,8 @@
       "label": "Activity"
     },
     "projects": {
-      "label": "In progress"
+      "label": "In progress",
+      "createActiveCta": "Create an active project"
     }
   }
 }

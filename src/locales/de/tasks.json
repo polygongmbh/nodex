@@ -266,6 +266,7 @@
   "status": {
     "viewMore": "{{count}} weitere in {{view}} anzeigen",
     "showView": "{{view}} anzeigen",
+    "headerCreate": "Erstellen",
     "myTasks": {
       "label": "Meine Aufgaben",
       "signInPrompt": "Melde dich an, um dir zugewiesene Aufgaben zu sehen."
@@ -274,7 +275,8 @@
       "label": "Aktivität"
     },
     "projects": {
-      "label": "In Bearbeitung"
+      "label": "In Bearbeitung",
+      "createActiveCta": "Aktives Projekt anlegen"
     }
   }
 }
