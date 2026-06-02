@@ -204,11 +204,18 @@ function Harness({
       >
         ConsumeRestoreRequest
       </button>
-      {submitButton("RecomposeWithParentSubmit", {
+      {submitButton("RecomposeWithSelfFocusSubmit", {
         content: "Edited",
         tags: ["general"],
         postType: "comment",
-        focusedTaskId: null,
+        focusedTaskId: "task-1",
+        recomposeOf: { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId: "b".repeat(64) },
+      })}
+      {submitButton("RecomposeWithUnrelatedFocusSubmit", {
+        content: "Edited",
+        tags: ["general"],
+        postType: "comment",
+        focusedTaskId: "c".repeat(64),
         recomposeOf: { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId: "b".repeat(64) },
       })}
       {submitButton("RecomposeSubmit", {
@@ -499,7 +506,7 @@ describe("useTaskPublishFlow", () => {
     });
   });
 
-  it("carries the original post's parent into the recomposed reply", async () => {
+  it("keeps the original parent when re-composing while focused on the post being recomposed", async () => {
     const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
     const parentId = "b".repeat(64);
     const parentTask = makeTask({
@@ -523,7 +530,7 @@ describe("useTaskPublishFlow", () => {
       expect(screen.getByTestId("restore-recompose-parent")).toHaveTextContent(parentId);
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "RecomposeWithParentSubmit" }));
+    fireEvent.click(screen.getByRole("button", { name: "RecomposeWithSelfFocusSubmit" }));
 
     await waitFor(() => {
       expect(publishEvent).toHaveBeenCalled();
@@ -531,6 +538,46 @@ describe("useTaskPublishFlow", () => {
     const publishCalls = publishEvent.mock.calls as unknown as PublishEventCall[];
     const replacementCall = publishCalls.find(([kind]) => kind !== 5);
     expect(replacementCall?.[3]).toBe(parentId);
+  });
+
+  it("inherits the current focused task as parent when re-composing", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const originalParentId = "b".repeat(64);
+    const newFocusId = "c".repeat(64);
+    const originalParent = makeTask({
+      id: originalParentId,
+      content: "Original parent #general",
+      relays: ["relay-one"],
+    });
+    const newFocusTask = makeTask({
+      id: newFocusId,
+      content: "New focus #general",
+      relays: ["relay-one"],
+    });
+    const childTask = makeTask({
+      id: "task-1",
+      content: "Reply body",
+      relays: ["relay-one"],
+      author: currentUser,
+      parentId: originalParentId,
+    });
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt" }));
+
+    renderHarness({ initialTasks: [originalParent, newFocusTask, childTask], currentUser, publishEvent });
+    fireEvent.click(screen.getByRole("button", { name: "Recompose" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("restore-recompose-parent")).toHaveTextContent(originalParentId);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "RecomposeWithUnrelatedFocusSubmit" }));
+
+    await waitFor(() => {
+      expect(publishEvent).toHaveBeenCalled();
+    });
+    const publishCalls = publishEvent.mock.calls as unknown as PublishEventCall[];
+    const replacementCall = publishCalls.find(([kind]) => kind !== 5);
+    expect(replacementCall?.[3]).toBe(newFocusId);
   });
 
   it("skips deletion when the re-compose replacement publish fails", async () => {

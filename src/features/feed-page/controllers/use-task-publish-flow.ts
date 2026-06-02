@@ -344,7 +344,10 @@ export function useTaskPublishFlow({
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
-    const submissionParentId = recomposeOf ? recomposeOf.parentId ?? null : focusedTaskId;
+    const submissionParentId =
+      recomposeOf && focusedTaskId === recomposeOf.eventId
+        ? recomposeOf.parentId ?? null
+        : focusedTaskId;
     const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
     const resolvedRelaySelection = resolveRelaySelectionForSubmission({
       taskType: normalizedTaskType,
