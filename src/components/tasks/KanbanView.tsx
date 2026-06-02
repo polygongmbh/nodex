@@ -185,15 +185,40 @@ export function KanbanView({
 
   const columns = useMemo(() => getColumns(kanbanTasks), [kanbanTasks]);
 
+  // Center the column first, then mount the composer — otherwise the textarea's
+  // focus-scroll fights the centering scroll and wins on partially-visible columns.
+  const openComposer = useCallback((columnId: string) => {
+    const container = columnsContainerRef.current;
+    const column = container?.querySelector(
+      `[data-droppable-id="${columnId}"]`
+    ) as HTMLElement | null;
+    if (!container || !column) {
+      setComposingColumnId(columnId);
+      return;
+    }
+    const containerRect = container.getBoundingClientRect();
+    const columnRect = column.getBoundingClientRect();
+    const delta =
+      columnRect.left + columnRect.width / 2 - (containerRect.left + containerRect.width / 2);
+    // Skip the scroll when the column is roughly centered already — a small
+    // nudge is more distracting than helpful.
+    if (Math.abs(delta) < 80) {
+      setComposingColumnId(columnId);
+      return;
+    }
+    container.scrollTo({ left: container.scrollLeft + delta, behavior: "smooth" });
+    window.setTimeout(() => setComposingColumnId(columnId), 200);
+  }, []);
+
   const composerHint = useKanbanComposerHint();
   const clearComposerHint = useClearKanbanComposerHint();
   useEffect(() => {
     if (!composerHint) return;
     if (composerHint.columnSelector !== "firstActive") return;
     const target = columns.find((column) => column.state.status === "active");
-    if (target) setComposingColumnId(target.id);
+    if (target) openComposer(target.id);
     clearComposerHint(composerHint.id);
-  }, [composerHint, columns, clearComposerHint]);
+  }, [composerHint, columns, clearComposerHint, openComposer]);
   // Group task IDs by column instead of replicating full task references.
   // The canonical task object lives in sortContext.taskById; consumers look
   // it up on demand. Sorting still needs object access, but the sorted
@@ -562,7 +587,7 @@ export function KanbanView({
                   </div>
                   {authPolicy.canOpenCompose && !isInteractionBlocked && column.state.status !== "closed" && (
                     <button
-                      onClick={() => setComposingColumnId(column.id)}
+                      onClick={() => openComposer(column.id)}
                       className="p-1 rounded hover:bg-muted transition-colors"
                       data-onboarding="kanban-add-task"
                     >
