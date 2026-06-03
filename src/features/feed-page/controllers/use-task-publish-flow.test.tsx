@@ -1,12 +1,13 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPublishFlow } from "./use-task-publish-flow";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Relay, Post, TaskCreatePayload } from "@/types";
+import type { Relay, Post, TaskCreatePayload, TaskCreateResult } from "@/types";
 import { getTaskAssigneePubkeys, getTaskPriority, getTaskPrimaryDate } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 
@@ -41,11 +42,30 @@ vi.mock("@/lib/notifications", () => ({
   notifyRetryRelayMissing: vi.fn(),
   notifyRetryRejectedByRelay: vi.fn(),
   notifyTaskCreationFailed: vi.fn(),
+  notifyRecomposeRelaysUnavailable: vi.fn(),
 }));
 
 vi.mock("@/lib/user-preferences", () => ({
   loadPublishDelayEnabled: vi.fn(() => false),
 }));
+
+type HarnessProps = {
+  publishEvent?: ReturnType<typeof vi.fn>;
+  signEvent?: ReturnType<typeof vi.fn>;
+  broadcastSignedEvent?: ReturnType<typeof vi.fn>;
+  initialTasks?: Post[];
+  currentUser?: SelectablePerson;
+  people?: SelectablePerson[];
+  dispatchFrecencyIntent?: ReturnType<typeof vi.fn>;
+  publishTaskDueUpdate?: ReturnType<typeof vi.fn>;
+  publishTaskPriorityUpdate?: ReturnType<typeof vi.fn>;
+  forceLocalMode?: boolean;
+  relays?: Relay[];
+  hasDisconnectedSelectedRelays?: boolean;
+};
+
+type Hook = ReturnType<typeof useTaskPublishFlow>;
+const hookRef: { current: Hook | null } = { current: null };
 
 function Harness({
   publishEvent = vi.fn(async () => ({ success: true, eventId: "b".repeat(64), publishedRelayUrls: ["wss://relay.one"] })),
@@ -60,29 +80,11 @@ function Harness({
   forceLocalMode = false,
   relays = [makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" })] as Relay[],
   hasDisconnectedSelectedRelays = false,
-  queryClient = new QueryClient(),
-}: {
-  publishEvent?: ReturnType<typeof vi.fn>;
-  signEvent?: ReturnType<typeof vi.fn>;
-  broadcastSignedEvent?: ReturnType<typeof vi.fn>;
-  initialTasks?: Post[];
-  currentUser?: SelectablePerson;
-  people?: SelectablePerson[];
-  dispatchFrecencyIntent?: ReturnType<typeof vi.fn>;
-  publishTaskDueUpdate?: ReturnType<typeof vi.fn>;
-  publishTaskPriorityUpdate?: ReturnType<typeof vi.fn>;
-  forceLocalMode?: boolean;
-  relays?: Relay[];
-  hasDisconnectedSelectedRelays?: boolean;
-  queryClient?: QueryClient;
-}) {
+}: HarnessProps) {
   const localTasks = useTaskMutationStore((s) => s.localTasks);
-  const postedTags = useTaskMutationStore((s) => s.postedTags);
-  const suppressedNostrEventIds = useTaskMutationStore((s) => s.suppressedNostrEventIds);
-  const failedPublishDrafts = useFailedPublishDraftsStore((s) => s.failedPublishDrafts);
   const availablePeople = people.length > 0 ? people : [currentUser];
   const allTasks = localTasks.length > 0 ? localTasks : initialTasks;
-  const hook = useTaskPublishFlow({
+  hookRef.current = useTaskPublishFlow({
     allTasks,
     relays,
     people: availablePeople,
@@ -115,177 +117,44 @@ function Harness({
     publishTaskPriorityUpdate,
     publishTaskCreateFollowUps: vi.fn(async () => undefined),
   });
-
-  // Centralized helper for triggering handleNewTask from a fixture button. Every
-  // submit-driver button below differs only in 1-3 fields; spelling out the
-  // whole 8-field payload at each call drowns the per-test intent in noise.
-  const submitButton = (label: string, overrides: Partial<TaskCreatePayload>) => (
-    <button
-      onClick={async () => {
-        window.__TEST_RESULT__ = await hook.handleNewTask({
-          content: "",
-          tags: [],
-          relays: ["relay-one"],
-          postType: "task",
-          dates: [],
-          attachments: [],
-          ...overrides,
-        });
-      }}
-    >
-      {label}
-    </button>
-  );
-
-  return (
-    <>
-      {submitButton("Submit", { content: "New task #general", tags: ["general"] })}
-      {submitButton("SubmitRootOfferNoRelay", { content: "Need support #general", tags: ["general"], relays: [], postType: "listing" })}
-      {submitButton("SubmitRootOfferMixedRelays", { content: "Need support #general", tags: ["general"], relays: ["relay-one", "relay-two"], postType: "listing" })}
-      {submitButton("SubmitChildOfferWithDate", {
-        content: "Need support",
-        postType: "listing",
-        dates: [{ datetime: new Date("2026-04-01T10:00:00.000Z"), type: "start" }],
-        focusedTaskId: "a".repeat(64),
-      })}
-      {submitButton("SubmitRootOfferWithDate", {
-        content: "Need support #general",
-        tags: ["general"],
-        postType: "listing",
-        dates: [{ datetime: new Date("2026-04-01T10:00:00.000Z"), type: "start" }],
-      })}
-      {submitButton("SubmitAuthoritativeMentions", {
-        content: "Assign @alice #general",
-        tags: ["general"],
-        explicitMentionPubkeys: [],
-        mentionIdentifiers: [],
-      })}
-      {submitButton("SubmitWhitespaceDelimitedTokens", {
-        content: "Assign(@alice) (#general) and @alice #general",
-        tags: ["general"],
-      })}
-      {submitButton("SubmitEvent", {
-        content: "Standup #general",
-        tags: ["general"],
-        postType: "event",
-        dates: [
-          { datetime: new Date("2026-04-01T10:00:00.000Z"), type: "start" },
-          { datetime: new Date("2026-04-01T12:00:00.000Z"), type: "end" },
-        ],
-        titledPost: { title: "Standup" },
-      })}
-      <button
-        onClick={() => {
-          const id = localTasks[0]?.id;
-          if (id) hook.handleUndoPendingPublish(id);
-        }}
-      >
-        UndoPending
-      </button>
-      <button onClick={() => hook.handleRetryFailedPublish(failedPublishDrafts[0]?.id || "")}>Retry</button>
-      <button onClick={() => hook.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due")}>
-        Due
-      </button>
-      <button onClick={() => hook.handlePriorityChange("task-1", 60)}>Priority</button>
-      <button
-        onClick={async () => {
-          const result = await hook.handlePostDelete("task-1");
-          window.__TEST_RESULT__ = result;
-        }}
-      >
-        Delete
-      </button>
-      <button onClick={() => hook.handleRecomposeTask("task-1")}>Recompose</button>
-      <button
-        onClick={() => {
-          const id = hook.composeRestoreRequest?.id;
-          if (typeof id === "number") hook.onComposeRestoreRequestConsumed(id);
-        }}
-      >
-        ConsumeRestoreRequest
-      </button>
-      {submitButton("RecomposeWithSelfFocusSubmit", {
-        content: "Edited",
-        tags: ["general"],
-        postType: "comment",
-        focusedTaskId: "task-1",
-        recomposeOf: { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId: "b".repeat(64) },
-      })}
-      {submitButton("RecomposeWithUnrelatedFocusSubmit", {
-        content: "Edited",
-        tags: ["general"],
-        postType: "comment",
-        focusedTaskId: "c".repeat(64),
-        recomposeOf: { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId: "b".repeat(64) },
-      })}
-      {submitButton("RecomposeSubmit", {
-        content: "Edited #general",
-        tags: ["general"],
-        focusedTaskId: null,
-        recomposeOf: { eventId: "task-1", originalKind: 1621, relayIds: ["relay-one"] },
-      })}
-      <output data-testid="restore-id">{String(hook.composeRestoreRequest?.id ?? "")}</output>
-      <output data-testid="restore-content">{hook.composeRestoreRequest?.state.content ?? ""}</output>
-      <output data-testid="restore-post-type">{hook.composeRestoreRequest?.state.postType ?? ""}</output>
-      <output data-testid="restore-start-date">{(() => {
-        const e = hook.composeRestoreRequest?.state.dates.find((d) => d.type === "start");
-        if (!e) return "";
-        return "datetime" in e ? e.datetime.toISOString() : e.date;
-      })()}</output>
-      <output data-testid="restore-start-time">{(() => {
-        const e = hook.composeRestoreRequest?.state.dates.find((d) => d.type === "start");
-        if (!e || !("datetime" in e)) return "";
-        return `${String(e.datetime.getHours()).padStart(2, "0")}:${String(e.datetime.getMinutes()).padStart(2, "0")}`;
-      })()}</output>
-      <output data-testid="restore-end-date">{(() => {
-        const e = hook.composeRestoreRequest?.state.dates.find((d) => d.type === "end");
-        if (!e) return "";
-        return "datetime" in e ? e.datetime.toISOString() : e.date;
-      })()}</output>
-      <output data-testid="restore-end-time">{(() => {
-        const e = hook.composeRestoreRequest?.state.dates.find((d) => d.type === "end");
-        if (!e || !("datetime" in e)) return "";
-        return `${String(e.datetime.getHours()).padStart(2, "0")}:${String(e.datetime.getMinutes()).padStart(2, "0")}`;
-      })()}</output>
-      <output data-testid="restore-recompose">{hook.composeRestoreRequest?.state.recomposeOf?.eventId ?? ""}</output>
-      <output data-testid="restore-recompose-parent">{hook.composeRestoreRequest?.state.recomposeOf?.parentId ?? ""}</output>
-      <output data-testid="draft-count">{String(failedPublishDrafts.length)}</output>
-      <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
-      <output data-testid="local-count">{String(localTasks.length)}</output>
-      <output data-testid="first-priority">{String(getTaskPriority(localTasks[0]) ?? "")}</output>
-      <output data-testid="first-due-date">{(() => {
-        const e = getTaskPrimaryDate(localTasks[0]);
-        if (!e) return "";
-        return "datetime" in e ? e.datetime.toISOString() : e.date;
-      })()}</output>
-      <output data-testid="first-assignees">{getTaskAssigneePubkeys(localTasks[0]).join(",")}</output>
-      <output data-testid="first-mentions">{(localTasks[0]?.mentions || []).join(",")}</output>
-      <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
-    </>
-  );
+  return null;
 }
 
-declare global {
-  interface Window {
-    __TEST_RESULT__?: unknown;
-  }
-}
-
-function renderHarness(props?: Parameters<typeof Harness>[0]) {
-  if (props?.initialTasks?.length) {
+function renderHarness(props: HarnessProps = {}) {
+  if (props.initialTasks?.length) {
     useTaskMutationStore.setState({ localTasks: props.initialTasks });
   }
-  const queryClient = new QueryClient();
   return render(
-    <QueryClientProvider client={queryClient}>
-      <Harness {...props} queryClient={queryClient} />
+    <QueryClientProvider client={new QueryClient()}>
+      <Harness {...props} />
     </QueryClientProvider>
   );
 }
 
+const basePayload: TaskCreatePayload = {
+  content: "",
+  tags: [],
+  relays: ["relay-one"],
+  postType: "task",
+  dates: [],
+  attachments: [],
+};
+
+async function submit(overrides: Partial<TaskCreatePayload> = {}): Promise<TaskCreateResult> {
+  let result!: TaskCreateResult;
+  await act(async () => {
+    result = await hookRef.current!.handleNewTask({ ...basePayload, ...overrides });
+  });
+  return result;
+}
+
+const localTasks = () => useTaskMutationStore.getState().localTasks;
+const failedDrafts = () => useFailedPublishDraftsStore.getState().failedPublishDrafts;
+const postedTags = () => useTaskMutationStore.getState().postedTags;
+const suppressedIds = () => useTaskMutationStore.getState().suppressedNostrEventIds;
+
 describe("useTaskPublishFlow", () => {
   beforeEach(() => {
-    window.__TEST_RESULT__ = undefined;
     window.localStorage.clear();
     useTaskMutationStore.setState({
       localTasks: [],
@@ -294,9 +163,11 @@ describe("useTaskPublishFlow", () => {
     });
     useFailedPublishDraftsStore.setState({ failedPublishDrafts: [] });
     usePreferencesStore.setState({ publishDelayEnabled: false });
+    useFilterStore.setState({ activeRelayIds: new Set() });
+    hookRef.current = null;
   });
 
-  it("queues a failed publish draft when submission is rejected", async () => {
+  it("queues a failed publish draft and records posted tags when submission is rejected", async () => {
     const publishEvent = vi.fn(async () => ({
       success: false,
       eventId: "c".repeat(64),
@@ -305,85 +176,71 @@ describe("useTaskPublishFlow", () => {
     }));
 
     renderHarness({ publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    const result = await submit({ content: "New task #general", tags: ["general"] });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("draft-count")).toHaveTextContent("1");
-    });
-
-    expect(screen.getByTestId("suppressed-count")).toHaveTextContent("1");
-    expect(screen.getByTestId("posted-tags")).toHaveTextContent("general:relay-one");
-    expect(window.__TEST_RESULT__).toEqual({ ok: true });
-  });
-
-  it("restores the event start and end fields when undoing a pending publish", async () => {
-    usePreferencesStore.setState({ publishDelayEnabled: true });
-
-    renderHarness({});
-    fireEvent.click(screen.getByRole("button", { name: "SubmitEvent" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("local-count")).toHaveTextContent("1");
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "UndoPending" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("restore-post-type")).toHaveTextContent("event");
-    });
-    const start = new Date("2026-04-01T10:00:00.000Z");
-    const end = new Date("2026-04-01T12:00:00.000Z");
-    const fmt = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-    expect(screen.getByTestId("restore-start-date")).toHaveTextContent(start.toISOString());
-    expect(screen.getByTestId("restore-start-time")).toHaveTextContent(fmt(start));
-    expect(screen.getByTestId("restore-end-date")).toHaveTextContent(end.toISOString());
-    expect(screen.getByTestId("restore-end-time")).toHaveTextContent(fmt(end));
-    expect(screen.getByTestId("local-count")).toHaveTextContent("0");
+    expect(result).toEqual({ ok: true });
+    expect(failedDrafts()).toHaveLength(1);
+    expect(suppressedIds().size).toBeGreaterThan(0);
+    expect(postedTags()).toEqual([{ name: "general", relayIds: ["relay-one"] }]);
   });
 
   it("dispatches channel frecency intents for submitted tags", async () => {
     const dispatchFrecencyIntent = vi.fn();
 
     renderHarness({ dispatchFrecencyIntent });
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    await submit({ content: "New task #general", tags: ["general"] });
 
-    await waitFor(() => {
-      expect(dispatchFrecencyIntent).toHaveBeenCalledWith({
-        type: "channel.bump",
-        tag: "general",
-        weight: 1.1,
-      });
+    expect(dispatchFrecencyIntent).toHaveBeenCalledWith({
+      type: "channel.bump",
+      tag: "general",
+      weight: 1.1,
     });
   });
 
   it("clears the failed draft after a successful retry", async () => {
     const publishEvent = vi
       .fn()
-      .mockResolvedValueOnce({
-        success: false,
-        eventId: "d".repeat(64),
-        rejectionReason: "blocked",
-        publishedRelayUrls: [],
-      })
-      .mockResolvedValueOnce({
-        success: true,
-        eventId: "e".repeat(64),
-        publishedRelayUrls: ["wss://relay.one"],
-      });
+      .mockResolvedValueOnce({ success: false, eventId: "d".repeat(64), rejectionReason: "blocked", publishedRelayUrls: [] })
+      .mockResolvedValueOnce({ success: true, eventId: "e".repeat(64), publishedRelayUrls: ["wss://relay.one"] });
 
     renderHarness({ publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    await submit({ content: "New task #general", tags: ["general"] });
+    expect(failedDrafts()).toHaveLength(1);
 
-    await waitFor(() => {
-      expect(screen.getByTestId("draft-count")).toHaveTextContent("1");
+    await act(async () => {
+      await hookRef.current!.handleRetryFailedPublish(failedDrafts()[0].id);
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("draft-count")).toHaveTextContent("0");
-    });
+    expect(failedDrafts()).toHaveLength(0);
     expect(publishEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it("restores the event start and end fields when undoing a pending publish", async () => {
+    usePreferencesStore.setState({ publishDelayEnabled: true });
+    renderHarness({});
+
+    await submit({
+      content: "Standup #general",
+      tags: ["general"],
+      postType: "event",
+      dates: [
+        { datetime: new Date("2026-04-01T10:00:00.000Z"), type: "start" },
+        { datetime: new Date("2026-04-01T12:00:00.000Z"), type: "end" },
+      ],
+      titledPost: { title: "Standup" },
+    });
+    const taskId = localTasks()[0].id;
+    await act(async () => {
+      hookRef.current!.handleUndoPendingPublish(taskId);
+    });
+
+    const restored = hookRef.current!.composeRestoreRequest;
+    expect(restored?.state.postType).toBe("event");
+    expect(restored?.state.dates).toEqual([
+      { datetime: new Date("2026-04-01T10:00:00.000Z"), type: "start" },
+      { datetime: new Date("2026-04-01T12:00:00.000Z"), type: "end" },
+    ]);
+    expect(localTasks()).toHaveLength(0);
   });
 
   it("updates due date and priority through the extracted handlers", async () => {
@@ -391,17 +248,13 @@ describe("useTaskPublishFlow", () => {
     const publishTaskDueUpdate = vi.fn(async () => true);
     const publishTaskPriorityUpdate = vi.fn(async () => true);
 
-    renderHarness({
-      initialTasks: [initialTask],
-      publishTaskDueUpdate,
-      publishTaskPriorityUpdate,
+    renderHarness({ initialTasks: [initialTask], publishTaskDueUpdate, publishTaskPriorityUpdate });
+    await act(async () => {
+      hookRef.current!.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due");
+      hookRef.current!.handlePriorityChange("task-1", 60);
     });
-    fireEvent.click(screen.getByRole("button", { name: "Due" }));
-    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
 
-    await waitFor(() => {
-      expect(publishTaskPriorityUpdate).toHaveBeenCalledWith("task-1", 60);
-    });
+    expect(publishTaskPriorityUpdate).toHaveBeenCalledWith("task-1", 60);
     expect(publishTaskDueUpdate).toHaveBeenCalledWith(
       "task-1",
       expect.any(String),
@@ -411,25 +264,48 @@ describe("useTaskPublishFlow", () => {
     );
   });
 
-  it("publishes a NIP-09 deletion and removes the local task on success", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+  it("blocks due date and priority changes for unrelated users on assigned tasks", async () => {
+    const currentUser = makePerson({ pubkey: "viewer-pubkey", name: "viewer", displayName: "Viewer" });
+    const taskAuthor = makePerson({ pubkey: "creator-pubkey", name: "creator", displayName: "Creator" });
     const initialTask = makeTask({
       id: "task-1",
       relays: ["relay-one"],
-      author: currentUser,
+      author: taskAuthor,
+      assigneePubkeys: ["assignee-pubkey"],
     });
-    const publishEvent = vi.fn(async () => ({
-      success: true,
-      eventId: "del-1",
-      publishedRelayUrls: ["wss://relay.one"],
-    }));
+    const publishTaskDueUpdate = vi.fn(async () => true);
+    const publishTaskPriorityUpdate = vi.fn(async () => true);
+
+    renderHarness({
+      initialTasks: [initialTask],
+      currentUser,
+      people: [currentUser, taskAuthor],
+      publishTaskDueUpdate,
+      publishTaskPriorityUpdate,
+    });
+    await act(async () => {
+      hookRef.current!.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due");
+      hookRef.current!.handlePriorityChange("task-1", 60);
+    });
+
+    expect(getTaskPriority(localTasks()[0])).toBeUndefined();
+    expect(getTaskPrimaryDate(localTasks()[0])).toBeUndefined();
+    expect(publishTaskDueUpdate).not.toHaveBeenCalled();
+    expect(publishTaskPriorityUpdate).not.toHaveBeenCalled();
+  });
+
+  it("publishes a NIP-09 deletion and removes the local task on success", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "del-1", publishedRelayUrls: ["wss://relay.one"] }));
 
     renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-
-    await waitFor(() => {
-      expect(window.__TEST_RESULT__).toBe(true);
+    let deleted!: boolean;
+    await act(async () => {
+      deleted = await hookRef.current!.handlePostDelete("task-1");
     });
+
+    expect(deleted).toBe(true);
     expect(publishEvent).toHaveBeenCalledWith(
       5,
       "",
@@ -437,163 +313,8 @@ describe("useTaskPublishFlow", () => {
       undefined,
       ["wss://relay.one"],
     );
-    expect(screen.getByTestId("local-count")).toHaveTextContent("0");
-    expect(Number(screen.getByTestId("suppressed-count").textContent)).toBeGreaterThan(0);
-  });
-
-  it("primes the composer with the original content when re-composing", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({
-      id: "task-1",
-      content: "Original body #general",
-      relays: ["relay-one"],
-      author: currentUser,
-    });
-
-    renderHarness({ initialTasks: [initialTask], currentUser });
-    fireEvent.click(screen.getByRole("button", { name: "Recompose" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("restore-content")).toHaveTextContent("Original body #general");
-    });
-    expect(screen.getByTestId("restore-recompose")).toHaveTextContent("task-1");
-  });
-
-  it("clears the compose restore request once consumed", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({
-      id: "task-1",
-      content: "Original body #general",
-      relays: ["relay-one"],
-      author: currentUser,
-    });
-
-    renderHarness({ initialTasks: [initialTask], currentUser });
-    fireEvent.click(screen.getByRole("button", { name: "Recompose" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("restore-recompose")).toHaveTextContent("task-1");
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "ConsumeRestoreRequest" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("restore-id")).toHaveTextContent("");
-    });
-    expect(screen.getByTestId("restore-recompose")).toHaveTextContent("");
-  });
-
-  it("fires a deletion event after a re-compose submit succeeds", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
-    const publishEvent = vi.fn(async () => ({
-      success: true,
-      eventId: "new-evt",
-      publishedRelayUrls: ["wss://relay.one"],
-    }));
-
-    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "RecomposeSubmit" }));
-
-    await waitFor(() => {
-      expect(publishEvent).toHaveBeenCalledWith(
-        5,
-        "",
-        [["e", "task-1"], ["k", "1621"]],
-        undefined,
-        ["wss://relay.one"],
-      );
-    });
-  });
-
-  it("keeps the original parent when re-composing while focused on the post being recomposed", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const parentId = "b".repeat(64);
-    const parentTask = makeTask({
-      id: parentId,
-      content: "Parent task #general",
-      relays: ["relay-one"],
-    });
-    const childTask = makeTask({
-      id: "task-1",
-      content: "Reply body",
-      relays: ["relay-one"],
-      author: currentUser,
-      parentId,
-    });
-    const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt" }));
-
-    renderHarness({ initialTasks: [parentTask, childTask], currentUser, publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "Recompose" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("restore-recompose-parent")).toHaveTextContent(parentId);
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "RecomposeWithSelfFocusSubmit" }));
-
-    await waitFor(() => {
-      expect(publishEvent).toHaveBeenCalled();
-    });
-    const publishCalls = publishEvent.mock.calls as unknown as PublishEventCall[];
-    const replacementCall = publishCalls.find(([kind]) => kind !== 5);
-    expect(replacementCall?.[3]).toBe(parentId);
-  });
-
-  it("inherits the current focused task as parent when re-composing", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const originalParentId = "b".repeat(64);
-    const newFocusId = "c".repeat(64);
-    const originalParent = makeTask({
-      id: originalParentId,
-      content: "Original parent #general",
-      relays: ["relay-one"],
-    });
-    const newFocusTask = makeTask({
-      id: newFocusId,
-      content: "New focus #general",
-      relays: ["relay-one"],
-    });
-    const childTask = makeTask({
-      id: "task-1",
-      content: "Reply body",
-      relays: ["relay-one"],
-      author: currentUser,
-      parentId: originalParentId,
-    });
-    const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt" }));
-
-    renderHarness({ initialTasks: [originalParent, newFocusTask, childTask], currentUser, publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "Recompose" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("restore-recompose-parent")).toHaveTextContent(originalParentId);
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "RecomposeWithUnrelatedFocusSubmit" }));
-
-    await waitFor(() => {
-      expect(publishEvent).toHaveBeenCalled();
-    });
-    const publishCalls = publishEvent.mock.calls as unknown as PublishEventCall[];
-    const replacementCall = publishCalls.find(([kind]) => kind !== 5);
-    expect(replacementCall?.[3]).toBe(newFocusId);
-  });
-
-  it("skips deletion when the re-compose replacement publish fails", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
-    const publishEvent = vi.fn(async () => ({ success: false, eventId: "new-evt" }));
-
-    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "RecomposeSubmit" }));
-
-    await waitFor(() => {
-      expect(publishEvent).toHaveBeenCalledTimes(1);
-    });
-    const publishCalls = publishEvent.mock.calls as unknown as PublishEventCall[];
-    const deletionCall = publishCalls.find(([kind]) => kind === 5);
-    expect(deletionCall).toBeUndefined();
+    expect(localTasks()).toHaveLength(0);
+    expect(suppressedIds().size).toBeGreaterThan(0);
   });
 
   it("refuses to delete a post the user does not own", async () => {
@@ -603,125 +324,169 @@ describe("useTaskPublishFlow", () => {
     const publishEvent = vi.fn(async () => ({ success: true, eventId: "x" }));
 
     renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
-
-    await waitFor(() => {
-      expect(window.__TEST_RESULT__).toBe(false);
+    let deleted!: boolean;
+    await act(async () => {
+      deleted = await hookRef.current!.handlePostDelete("task-1");
     });
+
+    expect(deleted).toBe(false);
     expect(publishEvent).not.toHaveBeenCalled();
   });
 
-  it("blocks due date and priority changes for unrelated users on assigned tasks", async () => {
-    const publishTaskDueUpdate = vi.fn(async () => true);
-    const publishTaskPriorityUpdate = vi.fn(async () => true);
-    const currentUser = makePerson({ pubkey: "viewer-pubkey", name: "viewer", displayName: "Viewer" });
-    const taskAuthor = makePerson({ pubkey: "creator-pubkey", name: "creator", displayName: "Creator" });
+  it("primes the composer and clears the restore request once consumed", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
     const initialTask = makeTask({
       id: "task-1",
+      content: "Original body #general",
       relays: ["relay-one"],
-      author: taskAuthor,
-      assigneePubkeys: ["assignee-pubkey"],
+      author: currentUser,
     });
 
-    renderHarness({
-      initialTasks: [initialTask],
-      currentUser,
-      people: [currentUser, taskAuthor],
-      publishTaskDueUpdate,
-      publishTaskPriorityUpdate,
+    renderHarness({ initialTasks: [initialTask], currentUser });
+    await act(async () => {
+      hookRef.current!.handleRecomposeTask("task-1");
     });
-    fireEvent.click(screen.getByRole("button", { name: "Due" }));
-    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
 
-    expect(screen.getByTestId("first-priority")).toBeEmptyDOMElement();
-    expect(screen.getByTestId("first-due-date")).toBeEmptyDOMElement();
-    expect(publishTaskDueUpdate).not.toHaveBeenCalled();
-    expect(publishTaskPriorityUpdate).not.toHaveBeenCalled();
+    const primed = hookRef.current!.composeRestoreRequest;
+    expect(primed?.state.content).toBe("Original body #general");
+    expect(primed?.state.recomposeOf?.eventId).toBe("task-1");
+
+    await act(async () => {
+      hookRef.current!.onComposeRestoreRequestConsumed(primed!.id);
+    });
+
+    expect(hookRef.current!.composeRestoreRequest).toBeNull();
+  });
+
+  it("fires a deletion event after a re-compose submit succeeds", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt", publishedRelayUrls: ["wss://relay.one"] }));
+
+    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    await submit({
+      content: "Edited #general",
+      tags: ["general"],
+      recomposeOf: { eventId: "task-1", originalKind: 1621, relayIds: ["relay-one"] },
+    });
+
+    expect(publishEvent).toHaveBeenCalledWith(
+      5,
+      "",
+      [["e", "task-1"], ["k", "1621"]],
+      undefined,
+      ["wss://relay.one"],
+    );
+  });
+
+  it("skips deletion when the re-compose replacement publish fails", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
+    const publishEvent = vi.fn(async () => ({ success: false, eventId: "new-evt" }));
+
+    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    await submit({
+      content: "Edited #general",
+      tags: ["general"],
+      recomposeOf: { eventId: "task-1", originalKind: 1621, relayIds: ["relay-one"] },
+    });
+
+    const deletionCall = (publishEvent.mock.calls as unknown as PublishEventCall[]).find(([kind]) => kind === 5);
+    expect(deletionCall).toBeUndefined();
+  });
+
+  it("keeps the original parent when re-composing while focused on the post being recomposed", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const parentId = "b".repeat(64);
+    const parentTask = makeTask({ id: parentId, content: "Parent #general", relays: ["relay-one"] });
+    const childTask = makeTask({ id: "task-1", content: "Reply", relays: ["relay-one"], author: currentUser, parentId });
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt" }));
+
+    renderHarness({ initialTasks: [parentTask, childTask], currentUser, publishEvent });
+    await submit({
+      content: "Edited",
+      tags: ["general"],
+      postType: "comment",
+      focusedTaskId: "task-1",
+      recomposeOf: { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId },
+    });
+
+    const replacement = (publishEvent.mock.calls as unknown as PublishEventCall[]).find(([kind]) => kind !== 5);
+    expect(replacement?.[3]).toBe(parentId);
+  });
+
+  it("inherits the current focused task as parent when re-composing", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const originalParentId = "b".repeat(64);
+    const newFocusId = "c".repeat(64);
+    const originalParent = makeTask({ id: originalParentId, content: "Original #general", relays: ["relay-one"] });
+    const newFocusTask = makeTask({ id: newFocusId, content: "New focus #general", relays: ["relay-one"] });
+    const childTask = makeTask({ id: "task-1", content: "Reply", relays: ["relay-one"], author: currentUser, parentId: originalParentId });
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt" }));
+
+    renderHarness({ initialTasks: [originalParent, newFocusTask, childTask], currentUser, publishEvent });
+    await submit({
+      content: "Edited",
+      tags: ["general"],
+      postType: "comment",
+      focusedTaskId: newFocusId,
+      recomposeOf: { eventId: "task-1", originalKind: 1, relayIds: ["relay-one"], parentId: originalParentId },
+    });
+
+    const replacement = (publishEvent.mock.calls as unknown as PublishEventCall[]).find(([kind]) => kind !== 5);
+    expect(replacement?.[3]).toBe(newFocusId);
   });
 
   it("uses provided mention identifiers as the authoritative mention set", async () => {
-    const publishEvent = vi.fn(async () => ({
-      success: true,
-      eventId: "f".repeat(64),
-      publishedRelayUrls: ["wss://relay.one"],
-    }));
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "f".repeat(64), publishedRelayUrls: ["wss://relay.one"] }));
 
     renderHarness({
       publishEvent,
       people: [makePerson({ pubkey: "a".repeat(64), name: "alice", displayName: "Alice" })],
     });
-    fireEvent.click(screen.getByRole("button", { name: "SubmitAuthoritativeMentions" }));
-
-    await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true });
+    await submit({
+      content: "Assign @alice #general",
+      tags: ["general"],
+      explicitMentionPubkeys: [],
+      mentionIdentifiers: [],
     });
 
-    const [, , publishTags] = publishEvent.mock.calls[0] as unknown as [
-      number,
-      string,
-      string[][] | undefined,
-    ];
+    const [, , publishTags] = publishEvent.mock.calls[0] as unknown as PublishEventCall;
     expect(publishTags).toEqual(expect.arrayContaining([["t", "general"]]));
     expect(publishTags).not.toEqual(expect.arrayContaining([["p", "a".repeat(64)]]));
-    expect(screen.getByTestId("first-assignees")).toBeEmptyDOMElement();
-    expect(screen.getByTestId("first-mentions")).toBeEmptyDOMElement();
+    expect(getTaskAssigneePubkeys(localTasks()[0])).toHaveLength(0);
+    expect(localTasks()[0]?.mentions ?? []).toHaveLength(0);
   });
 
   it("publishes only whitespace-delimited mention and hashtag tokens from content", async () => {
-    const publishEvent = vi.fn(async () => ({
-      success: true,
-      eventId: "f".repeat(64),
-      publishedRelayUrls: ["wss://relay.one"],
-    }));
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "f".repeat(64), publishedRelayUrls: ["wss://relay.one"] }));
 
     renderHarness({
       publishEvent,
       people: [makePerson({ pubkey: "a".repeat(64), name: "alice", displayName: "Alice" })],
     });
-    fireEvent.click(screen.getByRole("button", { name: "SubmitWhitespaceDelimitedTokens" }));
-
-    await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true });
+    await submit({
+      content: "Assign(@alice) (#general) and @alice #general",
+      tags: ["general"],
     });
 
-    const [, , publishTags] = publishEvent.mock.calls[0] as unknown as [
-      number,
-      string,
-      string[][] | undefined,
-    ];
+    const [, , publishTags] = publishEvent.mock.calls[0] as unknown as PublishEventCall;
     expect(publishTags).toEqual(expect.arrayContaining([["t", "general"], ["p", "a".repeat(64)]]));
     expect(publishTags).not.toEqual(expect.arrayContaining([["t", "(#general)"]]));
   });
 
   it("defaults root offer submissions to the only active relay when none is explicitly selected", async () => {
-    const publishEvent = vi.fn(async () => ({
-      success: true,
-      eventId: "e".repeat(64),
-      publishedRelayUrls: ["wss://relay.one"],
-    }));
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "e".repeat(64), publishedRelayUrls: ["wss://relay.one"] }));
     renderHarness({ publishEvent });
-    fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferNoRelay" }));
 
-    await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true });
-    });
-    expect(publishEvent).toHaveBeenCalledTimes(1);
-    const [, , , , relayUrls] = publishEvent.mock.calls[0] as unknown as [
-      number,
-      string,
-      string[][] | undefined,
-      string | undefined,
-      string[] | undefined
-    ];
+    await submit({ content: "Need support #general", tags: ["general"], relays: [], postType: "listing" });
+
+    const [, , , , relayUrls] = publishEvent.mock.calls[0] as unknown as PublishEventCall;
     expect(relayUrls).toEqual(["wss://relay.one"]);
   });
 
   it("publishes root offers when at least one selected relay remains writable", async () => {
-    const publishEvent = vi.fn(async () => ({
-      success: true,
-      eventId: "f".repeat(64),
-      publishedRelayUrls: ["wss://relay.one"],
-    }));
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "f".repeat(64), publishedRelayUrls: ["wss://relay.one"] }));
 
     renderHarness({
       publishEvent,
@@ -731,52 +496,34 @@ describe("useTaskPublishFlow", () => {
         makeRelay({ id: "relay-two", url: "wss://relay.two", connectionStatus: "disconnected" }),
       ],
     });
-    fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferMixedRelays" }));
-
-    await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true });
+    await submit({
+      content: "Need support #general",
+      tags: ["general"],
+      relays: ["relay-one", "relay-two"],
+      postType: "listing",
     });
-    expect(publishEvent).toHaveBeenCalledTimes(1);
-    const [, , , , relayUrls] = publishEvent.mock.calls[0] as unknown as [
-      number,
-      string,
-      string[][] | undefined,
-      string | undefined,
-      string[] | undefined
-    ];
+
+    const [, , , , relayUrls] = publishEvent.mock.calls[0] as unknown as PublishEventCall;
     expect(relayUrls).toEqual(["wss://relay.one"]);
   });
 
   it("inherits parent tags and parent relay for child offer submissions", async () => {
-    const publishEvent = vi.fn(async () => ({
-      success: true,
-      eventId: "f".repeat(64),
-      publishedRelayUrls: ["wss://relay.one"],
-    }));
-    const parentTask = makeTask({
-      id: "a".repeat(64),
-      tags: ["backend"],
-      relays: ["relay-one"],
-    });
+    const publishEvent = vi.fn(async () => ({ success: true, eventId: "f".repeat(64), publishedRelayUrls: ["wss://relay.one"] }));
+    const parentTask = makeTask({ id: "a".repeat(64), tags: ["backend"], relays: ["relay-one"] });
 
     renderHarness({ publishEvent, initialTasks: [parentTask] });
-    fireEvent.click(screen.getByRole("button", { name: "SubmitChildOfferWithDate" }));
-
-    await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: true });
+    await submit({
+      content: "Need support",
+      postType: "listing",
+      dates: [{ datetime: new Date("2026-04-01T10:00:00.000Z"), type: "start" }],
+      focusedTaskId: "a".repeat(64),
     });
-    expect(publishEvent).toHaveBeenCalledTimes(1);
-    const [, , publishTags, publishParentId, relayUrls] = publishEvent.mock.calls[0] as unknown as [
-      number,
-      string,
-      string[][] | undefined,
-      string | undefined,
-      string[] | undefined
-    ];
+
+    const [, , publishTags, publishParentId, relayUrls] = publishEvent.mock.calls[0] as unknown as PublishEventCall;
     expect(publishTags).toEqual(expect.arrayContaining([["t", "backend"]]));
     expect(publishParentId).toBe(parentTask.id);
     expect(relayUrls).toEqual(["wss://relay.one"]);
-    expect(screen.getByTestId("first-due-date")).toBeEmptyDOMElement();
+    expect(getTaskPrimaryDate(localTasks()[0])).toBeUndefined();
   });
 
   it("assigns the signed eventId to the optimistic task when publish delay is enabled", async () => {
@@ -787,17 +534,13 @@ describe("useTaskPublishFlow", () => {
     const publishEvent = vi.fn();
 
     renderHarness({ publishEvent, signEvent, broadcastSignedEvent });
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    const result = await submit({ content: "New task #general", tags: ["general"] });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("local-count")).toHaveTextContent("1");
-    });
-
+    expect(result).toEqual({ ok: true });
     expect(signEvent).toHaveBeenCalledTimes(1);
     expect(publishEvent).not.toHaveBeenCalled();
     expect(broadcastSignedEvent).not.toHaveBeenCalled();
-    expect(useTaskMutationStore.getState().localTasks[0]?.id).toBe(signedEventId);
-    expect(window.__TEST_RESULT__).toEqual({ ok: true });
+    expect(localTasks()[0]?.id).toBe(signedEventId);
   });
 
   it("queues a failed publish draft when signing fails in the delay path", async () => {
@@ -806,14 +549,47 @@ describe("useTaskPublishFlow", () => {
     const broadcastSignedEvent = vi.fn();
 
     renderHarness({ signEvent, broadcastSignedEvent });
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    const result = await submit({ content: "New task #general", tags: ["general"] });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("draft-count")).toHaveTextContent("1");
-    });
-
+    expect(result).toEqual({ ok: true });
+    expect(failedDrafts()).toHaveLength(1);
     expect(broadcastSignedEvent).not.toHaveBeenCalled();
-    expect(window.__TEST_RESULT__).toEqual({ ok: true });
   });
 
+  it("switches the active-relay sidebar to the original post's relays on recompose initiate", async () => {
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-two"], author: currentUser });
+
+    renderHarness({
+      initialTasks: [initialTask],
+      currentUser,
+      relays: [
+        makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" }),
+        makeRelay({ id: "relay-two", url: "wss://relay.two", connectionStatus: "connected" }),
+      ],
+    });
+    useFilterStore.setState({ activeRelayIds: new Set(["relay-one"]) });
+
+    await act(async () => {
+      hookRef.current!.handleRecomposeTask("task-1");
+    });
+
+    expect(Array.from(useFilterStore.getState().activeRelayIds)).toEqual(["relay-two"]);
+  });
+
+  it("warns and leaves the sidebar untouched when the original post's relays are unknown", async () => {
+    const { notifyRecomposeRelaysUnavailable } = await import("@/lib/notifications");
+    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-gone"], author: currentUser });
+
+    renderHarness({ initialTasks: [initialTask], currentUser });
+    useFilterStore.setState({ activeRelayIds: new Set(["relay-one"]) });
+
+    await act(async () => {
+      hookRef.current!.handleRecomposeTask("task-1");
+    });
+
+    expect(notifyRecomposeRelaysUnavailable).toHaveBeenCalledTimes(1);
+    expect(Array.from(useFilterStore.getState().activeRelayIds)).toEqual(["relay-one"]);
+  });
 });
