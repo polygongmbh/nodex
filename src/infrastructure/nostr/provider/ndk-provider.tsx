@@ -135,7 +135,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
   const [isProfileSyncing, setIsProfileSyncing] = useState(false);
   const profileSyncRunRef = useRef(0);
-  const relayInitialFailureCountsRef = useRef<Map<string, number>>(new Map());
+  const relayConnectFailureCountsRef = useRef<Map<string, number>>(new Map());
   const relayConnectedOnceRef = useRef<Set<string>>(new Set());
   const connectResolvedAuthRelayUrlsRef = useRef<(relayUrls: string[]) => void>(() => undefined);
   const {
@@ -305,7 +305,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
       markRelayPendingSubscriptionReplay(relayUrl);
       if (needsReconnect) {
-        relayInitialFailureCountsRef.current.delete(relayUrl);
+        relayConnectFailureCountsRef.current.delete(relayUrl);
         relayAuthRetryHistoryRef.current.delete(relayUrl);
         pendingRelayVerificationRef.current.delete(relayUrl);
       }
@@ -356,7 +356,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     scheduleRelayTimeout,
     resolveRelayConnectRetryDelay,
     relayDocumentRef,
-    relayInitialFailureCountsRef,
+    relayConnectFailureCountsRef,
     relayConnectedOnceRef,
     pendingRelayVerificationRef,
     consumeRelayPendingSubscriptionReplay,
@@ -445,7 +445,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     }
     const normalized = normalizeRelayUrl(url);
     removedRelaysRef.current.delete(normalized);
-    relayInitialFailureCountsRef.current.delete(normalized);
+    relayConnectFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     nostrDevLog("relay", "Adding relay and initiating connection", { relayUrl: normalized });
     void probeRelayInfo(normalized);
@@ -608,7 +608,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       savePersistedRelayUrls(next.map((relay) => relay.url));
       return next;
     });
-    relayInitialFailureCountsRef.current.delete(normalized);
+    relayConnectFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     forgetAuthPreflight(normalized);
     clearRelayInfo(normalized);
@@ -637,7 +637,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     pendingRelayVerificationRef.current.delete(normalized);
     relayAuthRetryHistoryRef.current.delete(normalized);
     if (forceNewSocket) {
-      relayInitialFailureCountsRef.current.delete(normalized);
+      relayConnectFailureCountsRef.current.delete(normalized);
       relayConnectedOnceRef.current.delete(normalized);
     }
     if (ndk.signer) {

@@ -32,7 +32,7 @@ export interface UseRelayPoolDeps {
   scheduleRelayTimeout: (callback: () => void, delayMs: number) => number;
   resolveRelayConnectRetryDelay: (failureCount: number) => number;
   relayDocumentRef: MutableRefObject<Map<string, NDKRelayInformation>>;
-  relayInitialFailureCountsRef: MutableRefObject<Map<string, number>>;
+  relayConnectFailureCountsRef: MutableRefObject<Map<string, number>>;
   relayConnectedOnceRef: MutableRefObject<Set<string>>;
   pendingRelayVerificationRef: MutableRefObject<Map<string, { operation: "read" | "write" | "unknown"; requestedAt: number }>>;
   consumeRelayPendingSubscriptionReplay: (normalizedRelayUrl: string) => boolean;
@@ -98,7 +98,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
       clearRelayConnectWatchdog,
       attachRelayOkRejectObserver,
       relayConnectedOnceRef,
-      relayInitialFailureCountsRef,
+      relayConnectFailureCountsRef,
       relayDocumentRef,
       primeRelayAuthChallenge,
       pendingRelayVerificationRef,
@@ -116,7 +116,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
     attachRelayOkRejectObserver(relay);
     nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
     relayConnectedOnceRef.current.add(normalized);
-    relayInitialFailureCountsRef.current.delete(normalized);
+    relayConnectFailureCountsRef.current.delete(normalized);
     const relayDocument = relayDocumentRef.current.get(normalized);
     if (relayDocument && summarizeRelayInfo(relayDocument).authRequired) {
       primeRelayAuthChallenge(ndkInstance, normalized);
@@ -244,7 +244,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         clearRelayConnectWatchdog,
         detachRelayOkRejectObserver,
         relayConnectedOnceRef,
-        relayInitialFailureCountsRef,
+        relayConnectFailureCountsRef,
         scheduleRelayTimeout,
         resolveRelayConnectRetryDelay,
       } = depsRef.current;
@@ -258,7 +258,7 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
       if (activeRelay && activeRelay !== relay) {
         return;
       }
-      if (!activeRelay && !relayConnectedOnceRef.current.has(normalized) && !relayInitialFailureCountsRef.current.has(normalized)) {
+      if (!activeRelay && !relayConnectedOnceRef.current.has(normalized) && !relayConnectFailureCountsRef.current.has(normalized)) {
         return;
       }
 
@@ -272,42 +272,25 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         });
       }
 
-      if (relayConnectedOnceRef.current.has(normalized)) {
-        // Relay had connected before. NDK normally handles reconnection via handleReconnection(),
-        // but NDK's handleStaleConnection() (wsStateMonitor / keepalive probe) sets status to
-        // DISCONNECTED *before* calling onDisconnect(), so handleReconnection is never scheduled.
-        // Scheduling relay.connect() here covers that gap; NDK's internal guard makes it a no-op
-        // if NDK is already reconnecting.
-        if (!removedRelaysRef.current.has(normalized)) {
-          scheduleRelayTimeout(() => {
-            if (
-              ndkInstance.pool.relays.get(normalized) === relay &&
-              !removedRelaysRef.current.has(normalized)
-            ) {
-              relay.connect();
-            }
-          }, 3000);
+      if (removedRelaysRef.current.has(normalized)) return;
+
+      // Exponential backoff for both initial-connect failures and post-success drops.
+      // NDK's own handleReconnection() skips both cases (initial CONNECTING close;
+      // handleStaleConnection setting DISCONNECTED before onDisconnect), so we drive
+      // the retry. NDK's internal guard makes relay.connect() a no-op if it's already
+      // reconnecting. Counter is cleared on successful connect (handleRelayConnect)
+      // and at instance-replacement sites, so the next failure starts fresh at 1s.
+      const nextFailureCount = (relayConnectFailureCountsRef.current.get(normalized) ?? 0) + 1;
+      relayConnectFailureCountsRef.current.set(normalized, nextFailureCount);
+      const delay = resolveRelayConnectRetryDelay(nextFailureCount);
+      scheduleRelayTimeout(() => {
+        if (
+          ndkInstance.pool.relays.get(normalized) === relay &&
+          !removedRelaysRef.current.has(normalized)
+        ) {
+          relay.connect();
         }
-        return;
-      }
-
-      // Relay has never connected. NDK skips handleReconnection() when the initial WebSocket
-      // closes while still in CONNECTING state (because status wasn't CONNECTED). Track failures
-      // and schedule retries with exponential backoff ourselves.
-      const nextFailureCount = (relayInitialFailureCountsRef.current.get(normalized) ?? 0) + 1;
-      relayInitialFailureCountsRef.current.set(normalized, nextFailureCount);
-
-      if (!removedRelaysRef.current.has(normalized)) {
-        const delay = resolveRelayConnectRetryDelay(nextFailureCount);
-        scheduleRelayTimeout(() => {
-          if (
-            ndkInstance.pool.relays.get(normalized) === relay &&
-            !removedRelaysRef.current.has(normalized)
-          ) {
-            relay.connect();
-          }
-        }, delay);
-      }
+      }, delay);
     };
 
     ndkInstance.pool.on("relay:connecting", onRelayConnecting);
