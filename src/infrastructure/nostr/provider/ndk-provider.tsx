@@ -671,10 +671,18 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus, updateRelayEntry]);
 
-  // After tab/computer sleep, the WebSocket gets closed but NDK's disconnect-triggered
-  // retry timer is throttled or paused, so relays stay stuck on "disconnected". Re-poke
-  // any stale relay when the page resumes (visibility, focus, network restore) or when
-  // a setInterval gap reveals a wake-from-sleep that fired no other signal.
+  // Single watchdog interval: every HEARTBEAT_MS, detect wake-from-sleep AND
+  // reconcile any drift between React relay state and NDK's pool. Drift can
+  // happen when NDK replaces a pool relay instance between relay:connecting
+  // and relay:connect (handleRelayConnect bails on its replaced-instance
+  // guard) or when handleStaleConnection sets status to DISCONNECTED before
+  // firing relay:disconnect. Without periodic reconciliation the sidebar can
+  // show "connecting" indefinitely — covers sign-in, post-startup adds, and
+  // any future drift source uniformly.
+  //
+  // Wake-from-sleep is detected by an unusually large gap between ticks (the
+  // browser throttles setInterval when the tab/computer sleeps). Visibility
+  // and online events also trigger an immediate stale sweep.
   useEffect(() => {
     if (!ndk) return;
     const reconnectStaleRelays = (reason: string) => {
@@ -702,7 +710,17 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       const now = Date.now();
       const gap = now - lastTick;
       lastTick = now;
-      if (gap > WAKE_GAP_MS) reconnectStaleRelays(`wake-after-${gap}ms`);
+      if (gap > WAKE_GAP_MS) {
+        reconnectStaleRelays(`wake-after-${gap}ms`);
+        return;
+      }
+      const { driftCorrections, stuckOnTransport } = reconcileRelayStatusesFromPool(ndk);
+      if (driftCorrections > 0 || stuckOnTransport.length > 0) {
+        nostrDevLog("relay", "Heartbeat reconciliation", { driftCorrections, stuckOnTransport });
+      }
+      stuckOnTransport.forEach((relayUrl) => {
+        reconnectRelay(relayUrl, { forceNewSocket: true });
+      });
     }, HEARTBEAT_MS);
 
     document.addEventListener("visibilitychange", onVisibilityChange);
@@ -711,63 +729,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       window.clearInterval(heartbeatId);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("online", onOnline);
-    };
-  }, [ndk, reconnectRelay, relaysRef, removedRelaysRef]);
-
-  // Startup reconciliation: catches divergence between React relay state and NDK's
-  // pool that can leave the sidebar showing "connecting" forever after initial load.
-  // The most common case is a missed `relay:connect` event when session restore
-  // re-adds a default relay between the relay:connecting and relay:connect dispatches,
-  // which makes onRelayConnect bail at its "pool relay instance was replaced" guard.
-  useEffect(() => {
-    if (!ndk) return;
-    const TICK_DELAYS_MS = [1000, 3000, 7000, 14000, 22000];
-    let cancelled = false;
-    const timeoutIds: number[] = [];
-
-    const allSettled = () =>
-      relaysRef.current.every((relay) =>
-        removedRelaysRef.current.has(relay.url)
-        || relay.status === "connected"
-        || relay.status === "read-only"
-        || relay.status === "verification-failed"
-      );
-
-    const runTick = (tickIndex: number) => {
-      if (cancelled) return;
-      if (allSettled()) return;
-
-      const { driftCorrections, stuckOnTransport } = reconcileRelayStatusesFromPool(ndk);
-      if (driftCorrections > 0 || stuckOnTransport.length > 0) {
-        nostrDevLog("relay", "Startup reconciliation tick", {
-          tickIndex,
-          driftCorrections,
-          stuckOnTransport,
-        });
-      }
-
-      // After the second tick (~3s), force-reconnect any relay whose React
-      // state is "connecting" but whose underlying transport is not connected
-      // — either still mid-handshake, or silently disconnected (e.g. relay
-      // closed the WS during NIP-42 before promoting to CONNECTED, so
-      // relay:disconnect never fired and the 15s watchdog short-circuited
-      // because mapNativeRelayStatus already returns "disconnected").
-      if (tickIndex >= 1) {
-        stuckOnTransport.forEach((relayUrl) => {
-          nostrDevLog("relay", "Startup reconciliation forcing relay reconnect", { relayUrl });
-          reconnectRelay(relayUrl, { forceNewSocket: true });
-        });
-      }
-    };
-
-    TICK_DELAYS_MS.forEach((delay, index) => {
-      const id = window.setTimeout(() => runTick(index), delay);
-      timeoutIds.push(id);
-    });
-
-    return () => {
-      cancelled = true;
-      timeoutIds.forEach((id) => window.clearTimeout(id));
     };
   }, [ndk, reconcileRelayStatusesFromPool, reconnectRelay, relaysRef, removedRelaysRef]);
 
