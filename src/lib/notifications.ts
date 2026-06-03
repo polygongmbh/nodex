@@ -216,6 +216,10 @@ export function notifyRetryRelayMissing(): void {
   toast.error(i18n.t("composer:toasts.errors.retryRelayMissing"));
 }
 
+export function notifyRecomposeRelaysUnavailable(): void {
+  toast.warning(i18n.t("composer:toasts.warnings.recomposeRelaysUnavailable"));
+}
+
 export function notifyRetryRejectedByRelay(reason?: string): void {
   if (reason) {
     toast.error(i18n.t("composer:toasts.errors.retryRejectedByRelayWithReason", { reason }));

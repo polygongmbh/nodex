@@ -224,7 +224,8 @@
       "disconnectedSelectedFeeds": "Verbinde die ausgewählten Spaces wieder, bevor du etwas änderst oder sendest",
       "noWritableRelay": "Verbinde mindestens einen Space, um fortzufahren",
       "partialPublish": "An {{publishedCount}} von {{targetCount}} ausgewählten Spaces gesendet",
-      "readOnlyParentReplyHidden": "Dieser Thread liegt auf einem schreibgeschützten Space, daher sind Antworten hier deaktiviert."
+      "readOnlyParentReplyHidden": "Dieser Thread liegt auf einem schreibgeschützten Space, daher sind Antworten hier deaktiviert.",
+      "recomposeRelaysUnavailable": "Die Spaces des Originalbeitrags sind nicht in deiner aktuellen Liste; die Sidebar-Auswahl wurde nicht geändert."
     }
   },
   "publishQueue": {

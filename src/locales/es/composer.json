@@ -224,7 +224,8 @@
       "disconnectedSelectedFeeds": "Vuelve a conectar los spaces seleccionados antes de modificar o publicar",
       "noWritableRelay": "Conéctate al menos a un space para continuar",
       "partialPublish": "Publicado en {{publishedCount}} de {{targetCount}} spaces seleccionados",
-      "readOnlyParentReplyHidden": "Este hilo está en un space de solo lectura, así que las respuestas están deshabilitadas aquí."
+      "readOnlyParentReplyHidden": "Este hilo está en un space de solo lectura, así que las respuestas están deshabilitadas aquí.",
+      "recomposeRelaysUnavailable": "Los spaces del post original no están en tu lista actual; la selección de la barra lateral no se cambió."
     }
   },
   "publishQueue": {

@@ -16,6 +16,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Fixed
 - Recomposing a post now inherits the parent from the current focus context instead of always reusing the original post's parent — only when the user is still focused on the very post being recomposed does the replacement keep the original parent (so an in-place rewrite still threads correctly).
+- Recomposing a post now also switches the sidebar's active spaces to the original post's spaces (intersected with your current list), so the replacement publishes where the original lived. If none of the original spaces are still in your list, the sidebar is left alone and a warning toast explains why.
 
 ## [4.0.0] - 2026-05-28
 Major release: NIP-52 calendar event composing, a typed in-memory ingest pipeline that replaces raw-event localStorage, a slimmer top nav, and broad composer/feed/calendar polish.

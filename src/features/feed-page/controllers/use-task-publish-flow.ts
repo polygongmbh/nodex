@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFailedPublishDraftsStore } from "@/features/feed-page/stores/failed-publish-drafts-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { toast } from "sonner";
 import { type FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import {
@@ -57,6 +58,7 @@ import {
   notifyRetryRelayMissing,
   notifyRetryRejectedByRelay,
   notifyTaskCreationFailed,
+  notifyRecomposeRelaysUnavailable,
 } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
@@ -1052,6 +1054,14 @@ export function useTaskPublishFlow({
       )
     );
 
+    const knownRelayIds = new Set(relays.map((relay) => relay.id));
+    const matchingRelayIds = existingTask.relays.filter((id) => knownRelayIds.has(id));
+    if (matchingRelayIds.length > 0) {
+      useFilterStore.getState().setActiveRelayIds(new Set(matchingRelayIds));
+    } else {
+      notifyRecomposeRelaysUnavailable();
+    }
+
     const restoreState: ComposerDraft = {
       content: existingTask.content,
       postType,
@@ -1065,7 +1075,6 @@ export function useTaskPublishFlow({
       attachments: existingTask.attachments ?? [],
       explicitTagNames,
       explicitMentionPubkeys,
-      selectedRelays: existingTask.relays,
       priority: displayPriorityFromStored(getTaskPriority(existingTask)),
       locationGeohash: existingTask.locationGeohash,
       recomposeOf: {
@@ -1079,7 +1088,7 @@ export function useTaskPublishFlow({
     };
 
     setComposeRestoreRequest({ id: Date.now(), state: restoreState });
-  }, [allTasks, currentUser?.pubkey, guardInteraction]);
+  }, [allTasks, currentUser?.pubkey, guardInteraction, relays]);
 
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
     if (guardInteraction("modify")) return;

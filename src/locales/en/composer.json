@@ -224,7 +224,8 @@
       "disconnectedSelectedFeeds": "Reconnect selected spaces before modifying or posting",
       "noWritableRelay": "Connect to at least one space before continuing",
       "partialPublish": "Published to {{publishedCount}} of {{targetCount}} selected spaces",
-      "readOnlyParentReplyHidden": "This thread is on a read-only space, so replies are disabled here."
+      "readOnlyParentReplyHidden": "This thread is on a read-only space, so replies are disabled here.",
+      "recomposeRelaysUnavailable": "The original post's spaces aren't in your current list; the sidebar selection wasn't changed."
     }
   },
   "publishQueue": {
