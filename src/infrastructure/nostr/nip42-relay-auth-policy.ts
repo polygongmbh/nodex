@@ -17,14 +17,15 @@ export function createRelayNip42AuthPolicy(
     const relayUrl = relay.url;
     onVerificationEvent?.({ relayUrl, operation: "unknown", outcome: "required" });
     if (!ndk.signer) {
-      nostrDevLog("relay", "NIP-42 auth requested without active signer", { relayUrl: relay.url });
-      onVerificationEvent?.({
-        relayUrl,
-        operation: "unknown",
-        outcome: "failed",
-        reason: "missing-signer",
+      // Returning true (rather than false) lets NDK queue the auth via
+      // once("signer:ready", authenticate) (relay/connectivity.ts). When the
+      // user signs in later, NDK auto-sends the AUTH event using this
+      // challenge and emits "authed", and existing subs that registered
+      // once("authed", reExecuteAfterAuth) re-issue their REQ automatically.
+      nostrDevLog("relay", "NIP-42 auth requested without active signer; deferring to signer:ready", {
+        relayUrl: relay.url,
       });
-      return false;
+      return true;
     }
 
     try {

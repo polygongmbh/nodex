@@ -31,24 +31,21 @@ describe("createRelayNip42AuthPolicy", () => {
     expect(onVerificationEvent).toHaveBeenCalledTimes(1);
   });
 
-  it("emits required then failed when signer is missing", async () => {
+  it("defers to NDK's signer:ready queue when signer is missing", async () => {
     const ndk = {} as never;
 
     const policy = createRelayNip42AuthPolicy(ndk, onVerificationEvent);
     const result = await policy(relay, challenge);
 
-    expect(result).toBe(false);
+    // Returning true lets NDK register once("signer:ready", authenticate) so
+    // the auth completes automatically when the user signs in later.
+    expect(result).toBe(true);
     expect(createNIP42Response).not.toHaveBeenCalled();
+    expect(onVerificationEvent).toHaveBeenCalledTimes(1);
     expect(onVerificationEvent).toHaveBeenNthCalledWith(1, {
       relayUrl: relay.url,
       operation: "unknown",
       outcome: "required",
-    });
-    expect(onVerificationEvent).toHaveBeenNthCalledWith(2, {
-      relayUrl: relay.url,
-      operation: "unknown",
-      outcome: "failed",
-      reason: "missing-signer",
     });
   });
 
