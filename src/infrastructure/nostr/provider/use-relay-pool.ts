@@ -28,14 +28,12 @@ export interface UseRelayPoolDeps {
     relayUrl: string,
     nextStatus: "connected" | "read-only" | "verification-failed"
   ) => void;
-  replayActiveSubscriptionsForRelay: (ndkInstance: NDK, relayUrl: string) => void;
   scheduleRelayTimeout: (callback: () => void, delayMs: number) => number;
   resolveRelayConnectRetryDelay: (failureCount: number) => number;
   relayDocumentRef: MutableRefObject<Map<string, NDKRelayInformation>>;
   relayConnectFailureCountsRef: MutableRefObject<Map<string, number>>;
   relayConnectedOnceRef: MutableRefObject<Set<string>>;
   pendingRelayVerificationRef: MutableRefObject<Map<string, { operation: "read" | "write" | "unknown"; requestedAt: number }>>;
-  consumeRelayPendingSubscriptionReplay: (normalizedRelayUrl: string) => boolean;
 }
 
 export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
@@ -143,17 +141,12 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         nip11: document ? buildNip11Status(document) : undefined,
       }];
     });
-    // For non-auth relays joining the pool after subscriptions were registered (e.g.
-    // re-add), NDK won't replay subscriptions on its own. relay:authed already does
-    // this for NIP-42 relays; consumeRelayPendingSubscriptionReplay is atomic, so
-    // only the first signal wins and we never double-replay.
-    const {
-      consumeRelayPendingSubscriptionReplay,
-      replayActiveSubscriptionsForRelay,
-    } = depsRef.current;
-    if (consumeRelayPendingSubscriptionReplay(normalized)) {
-      replayActiveSubscriptionsForRelay(ndkInstance, normalized);
-    }
+    // NDK does NOT auto-add existing subs to a freshly-pooled NDKRelay instance;
+    // callers that replace the instance (addRelay, reconnectRelay with
+    // forceNewSocket, sign-in needsReconnect) call replayActiveSubscriptionsForRelay
+    // themselves. For self-reconnects of the same instance, NDK keeps the subs.
+    // For NIP-42 auth re-execute after CLOSED auth-required, NDK's per-sub
+    // once("authed", reExecuteAfterAuth) (relay/subscription.ts) handles it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -209,8 +202,6 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
         pendingRelayVerificationRef,
         markRelayVerificationSuccess,
         updateRelayCapabilityStatus,
-        consumeRelayPendingSubscriptionReplay,
-        replayActiveSubscriptionsForRelay,
       } = depsRef.current;
       const normalized = normalizeRelayUrl(relay.url);
       const pooledRelay = ndkInstance.pool.relays.get(normalized);
@@ -234,9 +225,8 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
           relayUrl: normalized,
         });
       }
-      if (consumeRelayPendingSubscriptionReplay(normalized)) {
-        replayActiveSubscriptionsForRelay(ndkInstance, normalized);
-      }
+      // Sub re-issue after auth is handled by NDK's per-sub
+      // once("authed", reExecuteAfterAuth) registered at the original execute().
     };
 
     const onRelayDisconnect = (relay: NDKRelay) => {

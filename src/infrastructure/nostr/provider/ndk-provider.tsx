@@ -205,8 +205,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     endRelayOperation,
     tryRecordAuthPreflight,
     forgetAuthPreflight,
-    markRelayPendingSubscriptionReplay,
-    consumeRelayPendingSubscriptionReplay,
     clearAuthSessionState,
   } = useRelayVerification({
     updateRelayEntry,
@@ -303,7 +301,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       if (needsReconnect) {
         hasReconnectRelay = true;
       }
-      markRelayPendingSubscriptionReplay(relayUrl);
       if (needsReconnect) {
         relayConnectFailureCountsRef.current.delete(relayUrl);
         relayAuthRetryHistoryRef.current.delete(relayUrl);
@@ -314,10 +311,17 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         forgetAuthPreflight(relayUrl);
       }
       // Only force a new socket for relays that need reconnecting. Healthy connected relays
-      // can receive a fresh NIP-42 challenge on the existing socket via primeRelayAuthChallenge.
+      // can receive a fresh NIP-42 challenge on the existing socket via primeRelayAuthChallenge;
+      // their existing subs already registered once("authed", reExecuteAfterAuth) inside NDK,
+      // so they re-issue automatically when the new auth round succeeds.
       connectManagedRelay(ndk, relayUrl, {
         forceNewSocket: needsReconnect,
       });
+      if (needsReconnect) {
+        // Fresh NDKRelay instance has no subs; attach the active ones explicitly.
+        // NDK will queue them until the new socket is ready and (for NIP-42) authed.
+        replayActiveSubscriptionsForRelay(ndk, relayUrl);
+      }
       if (shouldPrimeAuth) {
         primeRelayAuthChallenge(ndk, relayUrl);
       }
@@ -341,7 +345,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // Intentionally omits stable refs and setters; adding callbacks here would
     // recreate this handler whenever upstream identities churn.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectManagedRelay, ndk, primeRelayAuthChallenge]);
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, replayActiveSubscriptionsForRelay]);
 
   // Sync pool-hook deps every render so attach-time handlers see latest callbacks.
   poolDepsRef.current = {
@@ -352,14 +356,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     primeRelayAuthChallenge,
     markRelayVerificationSuccess,
     updateRelayCapabilityStatus,
-    replayActiveSubscriptionsForRelay,
     scheduleRelayTimeout,
     resolveRelayConnectRetryDelay,
     relayDocumentRef,
     relayConnectFailureCountsRef,
     relayConnectedOnceRef,
     pendingRelayVerificationRef,
-    consumeRelayPendingSubscriptionReplay,
   };
 
   // Initialize NDK
@@ -488,17 +490,16 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // state, leaked beginRelayOperation("read") calls, and listener accumulation on re-add.
     connectManagedRelay(ndk, normalized);
 
-    // The global subscription was registered with the NDK sub-manager before this relay
-    // joined the pool, so NDK won't automatically send its REQ to the new socket. Flag
-    // the relay for replay; relay:connect (and relay:authed for NIP-42 relays) will then
-    // call replayActiveSubscriptionsForRelay so events flow back.
-    markRelayPendingSubscriptionReplay(normalized);
+    // Active subs were registered with NDK's sub-manager before this relay joined the pool,
+    // so NDK won't add the new NDKRelay to existing per-relay sub records. Attach them now;
+    // NDK queues them until the socket is ready (and, for NIP-42, until authed).
+    replayActiveSubscriptionsForRelay(ndk, normalized);
     if (ndk.signer) {
       primeRelayAuthChallenge(ndk, normalized);
     }
     // Stable refs and setRelays intentionally omitted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectManagedRelay, markRelayPendingSubscriptionReplay, ndk, primeRelayAuthChallenge, probeRelayInfo]);
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, probeRelayInfo, replayActiveSubscriptionsForRelay]);
 
   const connectResolvedAuthRelayUrls = useCallback((relayUrls: string[]) => {
     relayUrls
@@ -646,17 +647,20 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         operation: relayStatus === "read-only" ? "write" : "read",
         requestedAt: Date.now(),
       });
-      markRelayPendingSubscriptionReplay(normalized);
     }
     nostrDevLog("relay", "Relay reconnect requested", {
       relayUrl: normalized,
       relayStatus,
       retryAuth: Boolean(ndk.signer),
-      replaySubscriptionsAfterAuth: Boolean(ndk.signer),
       reconnectMode: forceNewSocket ? "hard" : "soft",
     });
 
     const relay = connectManagedRelay(ndk, normalized, { forceNewSocket });
+    if (forceNewSocket) {
+      // Fresh NDKRelay has no subs; re-attach active ones. Soft reconnects reuse
+      // the existing instance which still holds its subs.
+      replayActiveSubscriptionsForRelay(ndk, normalized);
+    }
     if (ndk.signer) {
       primeRelayAuthChallenge(ndk, normalized);
     }
@@ -669,7 +673,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
     // Stable refs intentionally omitted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus, updateRelayEntry]);
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, updateRelayEntry]);
 
   // Single watchdog interval: every HEARTBEAT_MS, detect wake-from-sleep AND
   // reconcile any drift between React relay state and NDK's pool. Drift can
@@ -767,7 +771,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     authMethodRef,
     pendingRelayVerificationRef,
     relayAuthRetryHistoryRef,
-    markRelayPendingSubscriptionReplay,
     beginRelayOperation,
     endRelayOperation,
     markRelayVerificationFailure,

@@ -22,7 +22,6 @@ interface UseSubscribeArgs {
   authMethodRef: MutableRefObject<AuthMethod>;
   pendingRelayVerificationRef: MutableRefObject<Map<string, { operation: RelayOperation; requestedAt: number }>>;
   relayAuthRetryHistoryRef: MutableRefObject<Map<string, number>>;
-  markRelayPendingSubscriptionReplay: (normalizedRelayUrl: string) => void;
   beginRelayOperation: (op: "read" | "write") => void;
   endRelayOperation: (op: "read" | "write") => void;
   markRelayVerificationFailure: (
@@ -41,7 +40,6 @@ export function useSubscribe({
   authMethodRef,
   pendingRelayVerificationRef,
   relayAuthRetryHistoryRef,
-  markRelayPendingSubscriptionReplay,
   beginRelayOperation,
   endRelayOperation,
   markRelayVerificationFailure,
@@ -123,7 +121,8 @@ export function useSubscribe({
         const managedRelay = connectManagedRelay(ndk, normalizedRelayUrl);
         managedRelay.subscribe(subscription, relayFilters);
       } else {
-        markRelayPendingSubscriptionReplay(normalizedRelayUrl);
+        // No manual replay queueing — NDK's per-sub once("authed", reExecuteAfterAuth)
+        // re-sends the REQ automatically when the relay eventually authenticates.
         nostrDevLog("relay", "Skipping auth-closed relay subscription retry", {
           relayUrl: normalizedRelayUrl,
           reason,
@@ -144,7 +143,7 @@ export function useSubscribe({
     subscription.on("close", finishRead);
 
     return subscription;
-  }, [authMethodRef, beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayPendingSubscriptionReplay, markRelayVerificationFailure, ndk, pendingRelayVerificationRef, primeRelayAuthChallenge, relayAuthRetryHistoryRef, relaysRef, updateRelayCapabilityStatus]);
+  }, [authMethodRef, beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayVerificationFailure, ndk, pendingRelayVerificationRef, primeRelayAuthChallenge, relayAuthRetryHistoryRef, relaysRef, updateRelayCapabilityStatus]);
 
   return { subscribe };
 }

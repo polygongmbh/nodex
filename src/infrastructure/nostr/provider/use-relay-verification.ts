@@ -39,7 +39,6 @@ export function useRelayVerification({
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
   const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
-  const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
   const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
 
   const tryRecordAuthPreflight = useCallback((normalizedRelayUrl: string): boolean => {
@@ -54,17 +53,8 @@ export function useRelayVerification({
     relayAuthPreflightHistoryRef.current.delete(normalizedRelayUrl);
   }, []);
 
-  const markRelayPendingSubscriptionReplay = useCallback((normalizedRelayUrl: string) => {
-    relaysPendingAuthSubscriptionReplayRef.current.add(normalizedRelayUrl);
-  }, []);
-
-  const consumeRelayPendingSubscriptionReplay = useCallback((normalizedRelayUrl: string): boolean => {
-    return relaysPendingAuthSubscriptionReplayRef.current.delete(normalizedRelayUrl);
-  }, []);
-
   const clearAuthSessionState = useCallback(() => {
     relayAuthPreflightHistoryRef.current.clear();
-    relaysPendingAuthSubscriptionReplayRef.current.clear();
   }, []);
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
@@ -282,8 +272,6 @@ export function useRelayVerification({
     endRelayOperation,
     tryRecordAuthPreflight,
     forgetAuthPreflight,
-    markRelayPendingSubscriptionReplay,
-    consumeRelayPendingSubscriptionReplay,
     clearAuthSessionState,
   };
 }

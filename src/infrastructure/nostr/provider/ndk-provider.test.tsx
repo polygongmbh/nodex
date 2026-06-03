@@ -1046,9 +1046,9 @@ describe("NDKProvider relay lifecycle", () => {
     // Flip the relay to "success" so the reconciler's force-reconnect succeeds.
     mockedNdk.relayConnectModes.set("wss://relay.one", "success");
 
-    // Tick 1 fires at 3s and triggers reconnectRelay(forceNewSocket: true).
+    // Steady 10s heartbeat reconciles + force-reconnects stuck relays.
     await act(async () => {
-      vi.advanceTimersByTime(3500);
+      vi.advanceTimersByTime(10500);
       await Promise.resolve();
     });
 
@@ -1082,9 +1082,9 @@ describe("NDKProvider relay lifecycle", () => {
     const relay = ndk.pool.getRelay("wss://relay.one", false);
     relay.status = mockedNdk.MockNDKRelayStatus.CONNECTED;
 
-    // Reconciler tick 0 fires at ~1s and should fix the drift.
+    // Steady 10s heartbeat reconciles the drift on the next tick.
     await act(async () => {
-      vi.advanceTimersByTime(1100);
+      vi.advanceTimersByTime(10500);
       await Promise.resolve();
     });
 
@@ -1395,7 +1395,6 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     const subscribeCallsBeforeReconnect = ndk.subscribeCalls.length;
-    const replayedSubscriptionsBeforeAuth = relay.subscribeCalls.length;
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
@@ -1412,8 +1411,10 @@ describe("NDKProvider relay lifecycle", () => {
       ndk.pool.emit("relay:authed", relay);
     });
 
+    // Post-authed re-issue of the original sub is NDK's job (per-sub
+    // once("authed", reExecuteAfterAuth) registered at the original execute()).
+    // The mock doesn't simulate that; we just verify status returns to connected.
     await waitFor(() => {
-      expect(relay.subscribeCalls.length).toBeGreaterThan(replayedSubscriptionsBeforeAuth);
       expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     });
   });
@@ -1692,57 +1693,13 @@ describe("NDKProvider relay lifecycle", () => {
     });
   });
 
-  it("replays active subscriptions after relay auth succeeds on sign-in", async () => {
-    const fetchedAt = Date.now();
-    window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
-      "wss://relay.one": {
-        nip11: {
-          document: {
-            supported_nips: [42],
-            limitation: { auth_required: true },
-          },
-          fetchedAt,
-        },
-      },
-    }));
-
-    render(
-      <NDKProvider defaultRelays={["wss://relay.one/"]}>
-        <AuthReplayHarness />
-      </NDKProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "start feed sub" }));
-    });
-
-    const ndk = mockedNdk.ndkInstances[0];
-    expect(ndk.subManager.subscriptions.size).toBeGreaterThan(0);
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
-    });
-
-    const relay = ndk.pool.getRelay("wss://relay.one", false);
-    const subscribeCallsBeforeAuth = relay.subscribeCalls.length;
-
-    await act(async () => {
-      ndk.pool.emit("relay:authed", relay);
-    });
-
-    await waitFor(() => {
-      expect(relay.subscribeCalls.length).toBeGreaterThan(subscribeCallsBeforeAuth);
-    });
-
-    const replayedKinds = relay.subscribeCalls
-      .map((call) => (call.filters as Array<{ kinds?: number[] }> | undefined)?.[0]?.kinds ?? [])
-      .filter((kinds): kinds is number[] => Array.isArray(kinds));
-    expect(
-      replayedKinds.some((kinds) => [1, 1621, 0].every((kind) => kinds.includes(kind)))
-    ).toBe(true);
-  });
+  // Re-issuing the original sub after a previously-connected NIP-42 relay completes
+  // its first auth round is now NDK's job: relay/subscription.ts registers
+  // once("authed", reExecuteAfterAuth) at every execute() while
+  // relay.status < AUTHENTICATED, and the listener persists across the relay's
+  // CLOSED auth-required frame. The mock NDK doesn't simulate that listener, so
+  // we removed the wrapper-side replay-on-authed and rely on the real NDK in
+  // production. Instance-replacement paths (addRelay, forceNewSocket reconnect,
+  // sign-in with needsReconnect) still call replayActiveSubscriptionsForRelay
+  // explicitly and are covered by the surrounding tests.
 });
