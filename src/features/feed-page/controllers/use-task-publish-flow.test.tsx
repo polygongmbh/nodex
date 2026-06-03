@@ -140,6 +140,13 @@ const basePayload: TaskCreatePayload = {
   attachments: [],
 };
 
+const AUTHOR = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
+const VIEWER = makePerson({ pubkey: "viewer-pub", name: "Viewer", displayName: "Viewer" });
+
+function authoredTask(overrides: Partial<Parameters<typeof makeTask>[0]> = {}): Post {
+  return makeTask({ id: "task-1", relays: ["relay-one"], author: AUTHOR, ...overrides });
+}
+
 async function submit(overrides: Partial<TaskCreatePayload> = {}): Promise<TaskCreateResult> {
   let result!: TaskCreateResult;
   await act(async () => {
@@ -295,11 +302,10 @@ describe("useTaskPublishFlow", () => {
   });
 
   it("publishes a NIP-09 deletion and removes the local task on success", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
+    const initialTask = authoredTask();
     const publishEvent = vi.fn(async () => ({ success: true, eventId: "del-1", publishedRelayUrls: ["wss://relay.one"] }));
 
-    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    renderHarness({ initialTasks: [initialTask], currentUser: AUTHOR, publishEvent });
     let deleted!: boolean;
     await act(async () => {
       deleted = await hookRef.current!.handlePostDelete("task-1");
@@ -318,12 +324,9 @@ describe("useTaskPublishFlow", () => {
   });
 
   it("refuses to delete a post the user does not own", async () => {
-    const currentUser = makePerson({ pubkey: "viewer-pub", name: "Viewer", displayName: "Viewer" });
-    const author = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author });
     const publishEvent = vi.fn(async () => ({ success: true, eventId: "x" }));
 
-    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    renderHarness({ initialTasks: [authoredTask()], currentUser: VIEWER, publishEvent });
     let deleted!: boolean;
     await act(async () => {
       deleted = await hookRef.current!.handlePostDelete("task-1");
@@ -334,15 +337,10 @@ describe("useTaskPublishFlow", () => {
   });
 
   it("primes the composer and clears the restore request once consumed", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({
-      id: "task-1",
-      content: "Original body #general",
-      relays: ["relay-one"],
-      author: currentUser,
+    renderHarness({
+      initialTasks: [authoredTask({ content: "Original body #general" })],
+      currentUser: AUTHOR,
     });
-
-    renderHarness({ initialTasks: [initialTask], currentUser });
     await act(async () => {
       hookRef.current!.handleRecomposeTask("task-1");
     });
@@ -359,11 +357,9 @@ describe("useTaskPublishFlow", () => {
   });
 
   it("fires a deletion event after a re-compose submit succeeds", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
     const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt", publishedRelayUrls: ["wss://relay.one"] }));
 
-    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    renderHarness({ initialTasks: [authoredTask()], currentUser: AUTHOR, publishEvent });
     await submit({
       content: "Edited #general",
       tags: ["general"],
@@ -380,11 +376,9 @@ describe("useTaskPublishFlow", () => {
   });
 
   it("skips deletion when the re-compose replacement publish fails", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"], author: currentUser });
     const publishEvent = vi.fn(async () => ({ success: false, eventId: "new-evt" }));
 
-    renderHarness({ initialTasks: [initialTask], currentUser, publishEvent });
+    renderHarness({ initialTasks: [authoredTask()], currentUser: AUTHOR, publishEvent });
     await submit({
       content: "Edited #general",
       tags: ["general"],
@@ -396,13 +390,12 @@ describe("useTaskPublishFlow", () => {
   });
 
   it("keeps the original parent when re-composing while focused on the post being recomposed", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
     const parentId = "b".repeat(64);
     const parentTask = makeTask({ id: parentId, content: "Parent #general", relays: ["relay-one"] });
-    const childTask = makeTask({ id: "task-1", content: "Reply", relays: ["relay-one"], author: currentUser, parentId });
+    const childTask = authoredTask({ content: "Reply", parentId });
     const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt" }));
 
-    renderHarness({ initialTasks: [parentTask, childTask], currentUser, publishEvent });
+    renderHarness({ initialTasks: [parentTask, childTask], currentUser: AUTHOR, publishEvent });
     await submit({
       content: "Edited",
       tags: ["general"],
@@ -416,15 +409,14 @@ describe("useTaskPublishFlow", () => {
   });
 
   it("inherits the current focused task as parent when re-composing", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
     const originalParentId = "b".repeat(64);
     const newFocusId = "c".repeat(64);
     const originalParent = makeTask({ id: originalParentId, content: "Original #general", relays: ["relay-one"] });
     const newFocusTask = makeTask({ id: newFocusId, content: "New focus #general", relays: ["relay-one"] });
-    const childTask = makeTask({ id: "task-1", content: "Reply", relays: ["relay-one"], author: currentUser, parentId: originalParentId });
+    const childTask = authoredTask({ content: "Reply", parentId: originalParentId });
     const publishEvent = vi.fn(async () => ({ success: true, eventId: "new-evt" }));
 
-    renderHarness({ initialTasks: [originalParent, newFocusTask, childTask], currentUser, publishEvent });
+    renderHarness({ initialTasks: [originalParent, newFocusTask, childTask], currentUser: AUTHOR, publishEvent });
     await submit({
       content: "Edited",
       tags: ["general"],
@@ -557,12 +549,9 @@ describe("useTaskPublishFlow", () => {
   });
 
   it("switches the active-relay sidebar to the original post's relays on recompose initiate", async () => {
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({ id: "task-1", relays: ["relay-two"], author: currentUser });
-
     renderHarness({
-      initialTasks: [initialTask],
-      currentUser,
+      initialTasks: [authoredTask({ relays: ["relay-two"] })],
+      currentUser: AUTHOR,
       relays: [
         makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" }),
         makeRelay({ id: "relay-two", url: "wss://relay.two", connectionStatus: "connected" }),
@@ -579,10 +568,11 @@ describe("useTaskPublishFlow", () => {
 
   it("warns and leaves the sidebar untouched when the original post's relays are unknown", async () => {
     const { notifyRecomposeRelaysUnavailable } = await import("@/lib/notifications");
-    const currentUser = makePerson({ pubkey: "author-pub", name: "Author", displayName: "Author" });
-    const initialTask = makeTask({ id: "task-1", relays: ["relay-gone"], author: currentUser });
 
-    renderHarness({ initialTasks: [initialTask], currentUser });
+    renderHarness({
+      initialTasks: [authoredTask({ relays: ["relay-gone"] })],
+      currentUser: AUTHOR,
+    });
     useFilterStore.setState({ activeRelayIds: new Set(["relay-one"]) });
 
     await act(async () => {
