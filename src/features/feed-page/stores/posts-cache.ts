@@ -119,8 +119,8 @@ export function saveCachedPosts(posts: Post[]): void {
   const trimmed = applyRetentionLimits(posts);
   try {
     window.localStorage.setItem(POSTS_CACHE_STORAGE_KEY, JSON.stringify(serialize(trimmed)));
-  } catch {
-    console.warn("Failed to persist posts cache", { postCount: trimmed.length });
+  } catch (error) {
+    console.warn("Failed to persist posts cache", { postCount: trimmed.length, error });
   }
 }
 

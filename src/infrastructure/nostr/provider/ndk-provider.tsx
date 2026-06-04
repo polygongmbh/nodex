@@ -708,7 +708,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const onOnline = () => reconnectStaleRelays("online");
 
     const HEARTBEAT_MS = 10000;
-    const WAKE_GAP_MS = 30000;
+    const WAKE_GAP_MS = 120000;
     let lastTick = Date.now();
     const heartbeatId = window.setInterval(() => {
       const now = Date.now();
