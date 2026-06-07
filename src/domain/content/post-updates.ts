@@ -1,4 +1,4 @@
-import type { Post, TaskDateType, TaskStatus, TaskStateUpdate } from "@/types";
+import type { Post, TaskDateType, TaskState, TaskStateUpdate } from "@/types";
 import type { TaskDate } from "@/types";
 import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
 import { isTaskPost } from "@/types";
@@ -10,7 +10,7 @@ import { isTaskPost } from "@/types";
 export interface PostStateUpdateRequest {
   targetId: string;
   updateId: string;
-  newState: TaskStatus;
+  newState: TaskState;
   authorPubkey: string;
   timestampMs: number;
 }
