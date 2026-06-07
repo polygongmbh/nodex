@@ -19,7 +19,7 @@ describe("default relay env resolution", () => {
   it("normalizes and dedupes relay urls", () => {
     expect(
       resolveDefaultRelayUrls(["wss://relay.example.com", "relay.example.com/", "wss://relay.example.com"])
-    ).toEqual(["wss://relay.example.com"]);
+    ).toEqual(["wss://relay.example.com/"]);
   });
 
   it("falls back to host-derived relay candidates and keeps only available relays", async () => {
@@ -182,7 +182,7 @@ describe("default relay env resolution", () => {
         hostname: "app.example.test",
         probeRelay,
       })
-    ).resolves.toEqual(["wss://relay.example.com"]);
+    ).resolves.toEqual(["wss://relay.example.com/"]);
     expect(probeRelay).not.toHaveBeenCalled();
   });
 

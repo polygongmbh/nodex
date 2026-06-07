@@ -12,7 +12,7 @@ describe("relay enrichment precedence", () => {
         ["p", "abc"],
         ["r", "relay.two"],
       ])
-    ).toEqual(["wss://relay.one", "wss://relay.two"]);
+    ).toEqual(["wss://relay.one/", "wss://relay.two/"]);
   });
 
   it("prefers NIP-65 relays and ignores NIP-05 when NIP-65 exists", () => {
@@ -23,7 +23,7 @@ describe("relay enrichment precedence", () => {
       })
     ).toEqual({
       source: "nip65",
-      relayUrls: ["wss://relay.one"],
+      relayUrls: ["wss://relay.one/"],
     });
   });
 
@@ -35,7 +35,7 @@ describe("relay enrichment precedence", () => {
       })
     ).toEqual({
       source: "nip05",
-      relayUrls: ["wss://relay.two"],
+      relayUrls: ["wss://relay.two/"],
     });
   });
 

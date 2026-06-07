@@ -30,7 +30,7 @@ describe("createNdkMetadataCacheAdapter", () => {
     const raw = window.localStorage.getItem(RELAY_STATUS_CACHE_STORAGE_KEY);
     expect(raw).toBeTruthy();
     const parsed = JSON.parse(raw || "{}") as Record<string, unknown>;
-    expect(parsed["wss://relay.one"]).toBeTruthy();
+    expect(parsed["wss://relay.one/"]).toBeTruthy();
 
     const cached = await adapter.getRelayStatus?.("wss://relay.one");
     expect(cached?.nip11?.fetchedAt).toBe(fetchedAt);

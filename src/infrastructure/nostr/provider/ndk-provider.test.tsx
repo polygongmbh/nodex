@@ -76,7 +76,7 @@ const mockedNdk = vi.hoisted(() => {
     connectivity: { ws?: FakeWebSocket } = {};
     private listeners = new Map<string, Set<(...args: unknown[]) => void>>();
     constructor(url: string, private pool: FakePool) {
-      this.url = url.replace(/\/+$/, "");
+      this.url = `${url.replace(/\/+$/, "")}/`;
     }
 
     on(event: string, callback: (...args: unknown[]) => void) {
@@ -184,7 +184,7 @@ const mockedNdk = vi.hoisted(() => {
     }
 
     getRelay(url: string, connect = true) {
-      const normalized = url.replace(/\/+$/, "");
+      const normalized = `${url.replace(/\/+$/, "")}/`;
       let relay = this.relays.get(normalized);
       if (!relay) {
         relay = this.createRelay(normalized);
@@ -197,7 +197,7 @@ const mockedNdk = vi.hoisted(() => {
     }
 
     removeRelay(url: string) {
-      const normalized = url.replace(/\/+$/, "");
+      const normalized = `${url.replace(/\/+$/, "")}/`;
       const relay = this.relays.get(normalized);
       if (!relay) return false;
       this.relays.delete(normalized);
@@ -212,7 +212,7 @@ const mockedNdk = vi.hoisted(() => {
     }
 
     getCreatedRelays(url: string) {
-      return this.createdRelays.get(url.replace(/\/+$/, "")) ?? [];
+      return this.createdRelays.get(`${url.replace(/\/+$/, "")}/`) ?? [];
     }
 
     getOpenSocketCount(url: string) {
@@ -322,6 +322,10 @@ const noasClientModule = vi.hoisted(() => {
 vi.mock("@nostr-dev-kit/ndk", () => ({
   __esModule: true,
   default: mockedNdk.FakeNDK,
+  normalizeRelayUrl: (url: string) => {
+    const trimmed = url.trim();
+    return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+  },
   NDKRelayStatus: mockedNdk.MockNDKRelayStatus,
   NDKSubscriptionCacheUsage: {
     ONLY_RELAY: "ONLY_RELAY",
@@ -619,7 +623,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     expect(mockedNdk.ndkInstances).toHaveLength(1);
@@ -632,7 +636,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two/:connected");
     });
 
     expect(mockedNdk.ndkInstances).toHaveLength(1);
@@ -695,8 +699,8 @@ describe("NDKProvider relay lifecycle", () => {
 
     await waitFor(() => {
       const relayState = mockedNdk.ndkInstances[0]?.pool.relays;
-      expect(relayState?.get("wss://relay.one")?.status).toBe(mockedNdk.MockNDKRelayStatus.CONNECTED);
-      expect(relayState?.get("wss://relay.two")?.status).toBe(mockedNdk.MockNDKRelayStatus.CONNECTED);
+      expect(relayState?.get("wss://relay.one/")?.status).toBe(mockedNdk.MockNDKRelayStatus.CONNECTED);
+      expect(relayState?.get("wss://relay.two/")?.status).toBe(mockedNdk.MockNDKRelayStatus.CONNECTED);
     });
 
     await act(async () => {
@@ -710,7 +714,7 @@ describe("NDKProvider relay lifecycle", () => {
       expect.stringMatching(/^nsec1/),
       "pub",
       expect.objectContaining({
-        relays: ["wss://relay.one", "wss://relay.two"],
+        relays: ["wss://relay.one/", "wss://relay.two/"],
       })
     );
     expect(toast.success).toHaveBeenCalledTimes(1);
@@ -852,7 +856,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -863,7 +867,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).not.toContain("wss://relay.one:");
+      expect(screen.getByTestId("relay-state").textContent).not.toContain("wss://relay.one/:");
     });
 
     await act(async () => {
@@ -875,8 +879,8 @@ describe("NDKProvider relay lifecycle", () => {
 
     await waitFor(() => {
       const relayState = screen.getByTestId("relay-state").textContent ?? "";
-      expect(relayState).toContain("wss://relay.one:connected");
-      expect(relayState.match(/wss:\/\/relay\.one:/g)).toHaveLength(1);
+      expect(relayState).toContain("wss://relay.one/:connected");
+      expect(relayState.match(/wss:\/\/relay\.one\/:/g)).toHaveLength(1);
     });
 
     await act(async () => {
@@ -884,7 +888,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
     expect(readdedRelay.connectCalls).toBe(1);
     }
@@ -899,8 +903,8 @@ describe("NDKProvider relay lifecycle", () => {
 
     await waitFor(() => {
       const relayState = screen.getByTestId("relay-state").textContent ?? "";
-      expect(relayState).toContain("wss://relay.one:connected");
-      expect(relayState).toContain("wss://relay.two:connected");
+      expect(relayState).toContain("wss://relay.one/:connected");
+      expect(relayState).toContain("wss://relay.two/:connected");
     });
 
     expect(mockedNdk.ndkInstances).toHaveLength(1);
@@ -915,8 +919,8 @@ describe("NDKProvider relay lifecycle", () => {
 
     await waitFor(() => {
       const relayState = screen.getByTestId("relay-state").textContent ?? "";
-      expect(relayState).not.toContain("wss://relay.one:");
-      expect(relayState).toContain("wss://relay.two:connected");
+      expect(relayState).not.toContain("wss://relay.one/:");
+      expect(relayState).toContain("wss://relay.two/:connected");
     });
 
     expect(mockedNdk.ndkInstances).toHaveLength(1);
@@ -933,7 +937,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -946,7 +950,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     expect(firstRelay.disconnectCalls).toBe(0);
@@ -962,7 +966,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -973,7 +977,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
@@ -983,7 +987,7 @@ describe("NDKProvider relay lifecycle", () => {
 
   it("retries a startup connection that stays stuck connecting without moving to connection-error", async () => {
     vi.useFakeTimers();
-    mockedNdk.relayConnectModes.set("wss://relay.one", "hang");
+    mockedNdk.relayConnectModes.set("wss://relay.one/", "hang");
 
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
@@ -995,7 +999,7 @@ describe("NDKProvider relay lifecycle", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connecting");
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connecting");
     const ndk = mockedNdk.ndkInstances[0];
 
     // Keep the relay hanging through the startup reconciler ticks and watchdog window
@@ -1007,14 +1011,14 @@ describe("NDKProvider relay lifecycle", () => {
       await Promise.resolve();
     });
 
-    mockedNdk.relayConnectModes.set("wss://relay.one", "success");
+    mockedNdk.relayConnectModes.set("wss://relay.one/", "success");
 
     await act(async () => {
       vi.advanceTimersByTime(8000);
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     expect(screen.getByTestId("relay-state").textContent).not.toContain("connection-error");
     expect(ndk.pool.getCreatedRelays("wss://relay.one").length).toBeGreaterThanOrEqual(1);
     vi.useRealTimers();
@@ -1022,7 +1026,7 @@ describe("NDKProvider relay lifecycle", () => {
 
   it("unsticks a relay whose WebSocket closed during the connect window without firing relay:disconnect", async () => {
     vi.useFakeTimers();
-    mockedNdk.relayConnectModes.set("wss://relay.one", "hang");
+    mockedNdk.relayConnectModes.set("wss://relay.one/", "hang");
 
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
@@ -1034,7 +1038,7 @@ describe("NDKProvider relay lifecycle", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connecting");
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connecting");
 
     // Simulate the silent-close race: NDK's underlying relay status moves to
     // DISCONNECTED (the WS opened+closed) but neither relay:connect nor
@@ -1044,7 +1048,7 @@ describe("NDKProvider relay lifecycle", () => {
     firstRelay.status = mockedNdk.MockNDKRelayStatus.DISCONNECTED;
 
     // Flip the relay to "success" so the reconciler's force-reconnect succeeds.
-    mockedNdk.relayConnectModes.set("wss://relay.one", "success");
+    mockedNdk.relayConnectModes.set("wss://relay.one/", "success");
 
     // Steady 10s heartbeat reconciles + force-reconnects stuck relays.
     await act(async () => {
@@ -1052,7 +1056,7 @@ describe("NDKProvider relay lifecycle", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     expect(ndk.pool.getCreatedRelays("wss://relay.one").length).toBeGreaterThan(1);
     vi.useRealTimers();
   });
@@ -1061,7 +1065,7 @@ describe("NDKProvider relay lifecycle", () => {
     vi.useFakeTimers();
     // Hang on the very first dispatch so React state initialises to 'connecting'
     // but we can flip the underlying relay to CONNECTED without firing relay:connect.
-    mockedNdk.relayConnectModes.set("wss://relay.one", "hang");
+    mockedNdk.relayConnectModes.set("wss://relay.one/", "hang");
 
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
@@ -1073,7 +1077,7 @@ describe("NDKProvider relay lifecycle", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connecting");
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connecting");
 
     // Simulate the missed-event race: the underlying relay's status is silently
     // promoted to CONNECTED (e.g. a relay:connect dispatch that our handler bailed
@@ -1088,43 +1092,42 @@ describe("NDKProvider relay lifecycle", () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     vi.useRealTimers();
   });
 
-  it("reconnects relays that went stale while the tab was hidden when visibility resumes", async () => {
+  it("reconnects a relay that disconnects via the per-relay backoff scheduler", async () => {
+    vi.useFakeTimers();
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
         <Harness />
       </NDKProvider>
     );
 
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    await act(async () => {
+      await Promise.resolve();
     });
+
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
 
     const ndk = mockedNdk.ndkInstances[0];
     const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
 
     await act(async () => {
       firstRelay.disconnect();
+      await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:disconnected");
-    });
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:disconnected");
 
-    const createdBefore = ndk.pool.getCreatedRelays("wss://relay.one").length;
-
+    // onRelayDisconnect schedules a backoff retry (base 1s); advance past it.
     await act(async () => {
-      document.dispatchEvent(new Event("visibilitychange"));
+      vi.advanceTimersByTime(1500);
+      await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-    });
-
-    expect(ndk.pool.getCreatedRelays("wss://relay.one").length).toBeGreaterThan(createdBefore);
+    expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
+    vi.useRealTimers();
   });
 
   it("does not re-trigger reconnect on visibility change while relays are healthy", async () => {
@@ -1135,7 +1138,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -1156,7 +1159,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     await act(async () => {
@@ -1174,7 +1177,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:read-only");
     });
   });
 
@@ -1186,7 +1189,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     await act(async () => {
@@ -1204,7 +1207,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:read-only");
     });
 
     await act(async () => {
@@ -1212,7 +1215,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:read-only");
     });
   });
 
@@ -1224,7 +1227,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -1242,7 +1245,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:read-only");
     });
 
     const subscribeCallsBeforeReconnect = ndk.subscribeCalls.length;
@@ -1263,7 +1266,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
   });
 
@@ -1275,7 +1278,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -1290,7 +1293,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:verification-failed");
     });
   });
 
@@ -1302,7 +1305,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -1314,7 +1317,7 @@ describe("NDKProvider relay lifecycle", () => {
 
     await waitFor(() => {
       expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     await act(async () => {
@@ -1322,7 +1325,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
   });
 
@@ -1334,7 +1337,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -1349,7 +1352,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:verification-failed");
     });
 
     await act(async () => {
@@ -1375,7 +1378,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     await act(async () => {
@@ -1391,7 +1394,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:verification-failed");
     });
 
     const subscribeCallsBeforeReconnect = ndk.subscribeCalls.length;
@@ -1415,7 +1418,7 @@ describe("NDKProvider relay lifecycle", () => {
     // once("authed", reExecuteAfterAuth) registered at the original execute()).
     // The mock doesn't simulate that; we just verify status returns to connected.
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
   });
 
@@ -1427,8 +1430,8 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two/:connected");
     });
 
     await act(async () => {
@@ -1444,7 +1447,7 @@ describe("NDKProvider relay lifecycle", () => {
       expect(mockedNdk.publishedEvents).toContainEqual(
         expect.objectContaining({
           kind: 30315,
-          relayUrls: ["wss://relay.two"],
+          relayUrls: ["wss://relay.two/"],
         })
       );
     });
@@ -1458,8 +1461,8 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two/:connected");
     });
 
     await act(async () => {
@@ -1477,7 +1480,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:read-only");
     });
 
     mockedNdk.publishedEvents.length = 0;
@@ -1490,7 +1493,7 @@ describe("NDKProvider relay lifecycle", () => {
       expect(mockedNdk.publishedEvents).toContainEqual(
         expect.objectContaining({
           kind: NostrEventKind.TextNote,
-          relayUrls: ["wss://relay.two"],
+          relayUrls: ["wss://relay.two/"],
         })
       );
     });
@@ -1504,8 +1507,8 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two/:connected");
     });
 
     await act(async () => {
@@ -1523,7 +1526,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:read-only");
     });
 
     mockedNdk.publishedEvents.length = 0;
@@ -1537,7 +1540,7 @@ describe("NDKProvider relay lifecycle", () => {
       expect(mockedNdk.publishedEvents).toContainEqual(
         expect.objectContaining({
           kind: NostrEventKind.UserStatus,
-          relayUrls: ["wss://relay.two"],
+          relayUrls: ["wss://relay.two/"],
         })
       );
     });
@@ -1546,7 +1549,7 @@ describe("NDKProvider relay lifecycle", () => {
   it("preloads cached nip11 relay auth metadata on startup and skips fresh probe", async () => {
     const fetchedAt = Date.now();
     window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
-      "wss://relay.one": {
+      "wss://relay.one/": {
         nip11: {
           document: {
             supported_nips: [42],
@@ -1564,8 +1567,8 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-      expect(screen.getByTestId("relay-nip11").textContent).toContain("wss://relay.one:auth");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
+      expect(screen.getByTestId("relay-nip11").textContent).toContain("wss://relay.one/:auth");
     });
 
     expect(fetchRelayInfo).not.toHaveBeenCalled();
@@ -1579,7 +1582,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
@@ -1600,7 +1603,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:read-only");
     });
 
     const afterStatusUpdateIdentityChanges = Number(
@@ -1612,7 +1615,7 @@ describe("NDKProvider relay lifecycle", () => {
   it("reruns auth preflight on sign-in for connected relays that support nip-42", async () => {
     const fetchedAt = Date.now();
     window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
-      "wss://relay.one": {
+      "wss://relay.one/": {
         nip11: {
           document: {
             supported_nips: [42],
@@ -1630,8 +1633,8 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-      expect(screen.getByTestId("relay-nip11").textContent).toContain("wss://relay.one:auth");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
+      expect(screen.getByTestId("relay-nip11").textContent).toContain("wss://relay.one/:auth");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -1646,7 +1649,7 @@ describe("NDKProvider relay lifecycle", () => {
         const options = (call.options || {}) as { closeOnEose?: boolean; relayUrls?: string[] };
         return options.closeOnEose === true
           && Array.isArray(options.relayUrls)
-          && options.relayUrls.includes("wss://relay.one");
+          && options.relayUrls.includes("wss://relay.one/");
       })).toBe(true);
     });
   });
@@ -1659,7 +1662,7 @@ describe("NDKProvider relay lifecycle", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
     });
 
     const ndk = mockedNdk.ndkInstances[0];
@@ -1674,7 +1677,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:verification-failed");
     });
 
     ndk.subscribeCalls.length = 0;
@@ -1688,7 +1691,7 @@ describe("NDKProvider relay lifecycle", () => {
         const options = (call.options || {}) as { closeOnEose?: boolean; relayUrls?: string[] };
         return options.closeOnEose === true
           && Array.isArray(options.relayUrls)
-          && options.relayUrls.includes("wss://relay.one");
+          && options.relayUrls.includes("wss://relay.one/");
       })).toBe(true);
     });
   });

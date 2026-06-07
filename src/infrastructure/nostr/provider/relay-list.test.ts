@@ -24,7 +24,7 @@ describe("mergeConfiguredRelayStatuses", () => {
     const merged = mergeConfiguredRelayStatuses({
       relays: [],
       configuredRelayUrls: ["wss://relay.one"],
-      removedRelayUrls: new Set(["wss://relay.one"]),
+      removedRelayUrls: new Set(["wss://relay.one/"]),
     });
 
     expect(merged).toEqual([]);
@@ -37,7 +37,7 @@ describe("mergeConfiguredRelayStatuses", () => {
         { url: "wss://relay.two", status: "connected" },
       ],
       configuredRelayUrls: ["wss://relay.two"],
-      removedRelayUrls: new Set(["wss://relay.one"]),
+      removedRelayUrls: new Set(["wss://relay.one/"]),
     });
 
     expect(merged).toEqual([
@@ -52,7 +52,7 @@ describe("filterAutoAddRelayUrls", () => {
       candidateRelayUrls: ["wss://relay.one/", "wss://relay.two", "wss://relay.three"],
       existingRelayUrls: ["wss://relay.one"],
       removedRelayUrls: ["wss://relay.two/"],
-    })).toEqual(["wss://relay.three"]);
+    })).toEqual(["wss://relay.three/"]);
   });
 });
 
@@ -66,9 +66,9 @@ describe("reorderResolvedRelayStatuses", () => {
       ],
       orderedRelayUrls: ["wss://relay.three/", "wss://relay.one"],
     })).toEqual([
-      { url: "wss://relay.three", status: "connecting" },
-      { url: "wss://relay.one", status: "connected" },
-      { url: "wss://relay.two", status: "disconnected" },
+      { url: "wss://relay.three/", status: "connecting" },
+      { url: "wss://relay.one/", status: "connected" },
+      { url: "wss://relay.two/", status: "disconnected" },
     ]);
   });
 
@@ -80,8 +80,8 @@ describe("reorderResolvedRelayStatuses", () => {
       ],
       orderedRelayUrls: ["wss://relay.two", "wss://relay.two/", "wss://relay.missing"],
     })).toEqual([
-      { url: "wss://relay.two", status: "disconnected" },
-      { url: "wss://relay.one", status: "connected" },
+      { url: "wss://relay.two/", status: "disconnected" },
+      { url: "wss://relay.one/", status: "connected" },
     ]);
   });
 });

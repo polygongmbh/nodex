@@ -59,7 +59,7 @@ function expectExclusiveSelectReconnect(
     ReturnType<typeof useRelaySelectionController>,
     { currentRelays: Relay[] }
   >["result"],
-  expectedRelayUrl = "wss://relay.one"
+  expectedRelayUrl = "wss://relay.one/"
 ) {
   act(() => {
     expect(result.current.handleRelaySelectIntent("relay-one", "exclusive")).toBe(expectedRelayUrl);

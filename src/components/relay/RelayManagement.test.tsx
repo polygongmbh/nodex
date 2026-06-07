@@ -139,7 +139,7 @@ describe("RelayManagement", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    fireEvent.click(screen.getByRole("button", { name: /move relay\.one down/i }));
+    fireEvent.click(screen.getByRole("button", { name: /move relay\.one\/ down/i }));
 
     expect(dispatch).toHaveBeenCalledWith({
       type: "sidebar.relay.reorder",

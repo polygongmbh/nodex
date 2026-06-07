@@ -36,7 +36,7 @@ describe("useIndexRelayShell", () => {
 
     result.current.handleAddRelay(" relay.example.com/ ");
 
-    expect(addRelay).toHaveBeenCalledWith("wss://relay.example.com");
+    expect(addRelay).toHaveBeenCalledWith("wss://relay.example.com/");
     expect(setActiveRelayIds).toHaveBeenCalledTimes(1);
     const setState = setActiveRelayIds.mock.calls[0]?.[0] as (previous: Set<string>) => Set<string>;
     const next = setState(new Set());
@@ -105,14 +105,14 @@ describe("useIndexRelayShell", () => {
       { wrapper: createWrapper() }
     );
 
-    expect(result.current.selectedRelayUrls).toEqual(["wss://relay.two"]);
+    expect(result.current.selectedRelayUrls).toEqual(["wss://relay.two/"]);
   });
 });
 
 describe("normalizeRelayAddUrl", () => {
   it("normalizes and validates relay input for shared add handling", () => {
-    expect(normalizeRelayAddUrl("relay.example.com")).toBe("wss://relay.example.com");
-    expect(normalizeRelayAddUrl(" ws://relay.example.com/ ")).toBe("ws://relay.example.com");
+    expect(normalizeRelayAddUrl("relay.example.com")).toBe("wss://relay.example.com/");
+    expect(normalizeRelayAddUrl(" ws://relay.example.com/ ")).toBe("ws://relay.example.com/");
     expect(normalizeRelayAddUrl("   ")).toBeNull();
     expect(normalizeRelayAddUrl("https://relay.example.com")).toBeNull();
   });
@@ -147,6 +147,6 @@ describe("deriveSelectedRelayUrls", () => {
         ],
         new Set(["relay-two"])
       )
-    ).toEqual(["wss://relay.two"]);
+    ).toEqual(["wss://relay.two/"]);
   });
 });

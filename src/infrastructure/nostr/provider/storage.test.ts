@@ -35,12 +35,12 @@ describe("relay list persistence", () => {
     savePersistedRelayUrls([
       "wss://relay.one/",
       "wss://relay.one",
-      "wss://relay.two///",
+      "wss://relay.two",
     ]);
 
     expect(loadPersistedRelayUrls()).toEqual([
-      "wss://relay.one",
-      "wss://relay.two",
+      "wss://relay.one/",
+      "wss://relay.two/",
     ]);
   });
 

@@ -8,13 +8,16 @@ const WRITE_REJECT_REASON_PATTERN =
 const TRANSIENT_FAILURE_PATTERN =
   /(timeout|timed out|network|disconnected|connection closed|unknown host|ns_error_unknown_host|not enough relays received)/i;
 
+// These URLs go into toasts, console warnings, and verification-failure
+// callbacks that renormalize on receipt — so we strip the trailing slash
+// for cleaner display. Pool / state-machine lookups normalize themselves.
 export function extractRelayUrlsFromErrorMessage(message: string): string[] {
   if (!message) return [];
   const matches = message.match(RELAY_URL_PATTERN) ?? [];
-  const normalized = matches
-    .map((url) => normalizeRelayUrl(url))
+  const stripped = matches
+    .map((url) => url.replace(/\/+$/, ""))
     .filter((url) => url.length > 0);
-  return Array.from(new Set(normalized));
+  return Array.from(new Set(stripped));
 }
 
 function extractErrorMessage(error: unknown): string {

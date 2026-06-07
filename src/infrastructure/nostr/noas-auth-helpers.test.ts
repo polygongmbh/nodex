@@ -10,7 +10,7 @@ describe("buildNoasSignupOptions", () => {
       )
     ).toEqual({
       redirect: "https://nodex.example",
-      relays: ["wss://relay.one", "ws://relay.two"],
+      relays: ["wss://relay.one/", "ws://relay.two/"],
     });
   });
 
@@ -28,7 +28,7 @@ describe("resolveNoasAuthRelayUrls", () => {
       resolveNoasAuthRelayUrls({
         relays: ["wss://relay.one/", "wss://relay.one", "", "https://not-a-relay", "ws://relay.two"],
       })
-    ).toEqual(["wss://relay.one", "ws://relay.two"]);
+    ).toEqual(["wss://relay.one/", "ws://relay.two/"]);
   });
 
   it("returns an empty list when the response has no relay array", () => {

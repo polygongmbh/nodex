@@ -58,11 +58,11 @@ describe("buildRelayScopedPresenceTargets", () => {
     expect(targets).toHaveLength(2);
     expect(targets).toEqual([
       expect.objectContaining({
-        relayUrls: ["wss://relay.a", "wss://relay.c"],
+        relayUrls: ["wss://relay.a/", "wss://relay.c/"],
         taskId: "a".repeat(64),
       }),
       expect.objectContaining({
-        relayUrls: ["wss://relay.b"],
+        relayUrls: ["wss://relay.b/"],
         taskId: null,
       }),
     ]);
@@ -82,7 +82,7 @@ describe("buildRelayScopedPresenceTargets", () => {
     });
 
     expect(targets).toHaveLength(1);
-    expect(targets[0].relayUrls).toEqual(["wss://relay.a", "wss://relay.b"]);
+    expect(targets[0].relayUrls).toEqual(["wss://relay.a/", "wss://relay.b/"]);
   });
 
 });
@@ -135,7 +135,7 @@ describe("useRelayScopedPresence", () => {
           ["e", "a".repeat(64)],
         ]),
         undefined,
-        ["wss://relay.a"],
+        ["wss://relay.a/"],
       ],
       [
         30315,
@@ -145,7 +145,7 @@ describe("useRelayScopedPresence", () => {
           ["nodex-view", "feed"],
         ],
         undefined,
-        ["wss://relay.b"],
+        ["wss://relay.b/"],
       ],
     ]);
 
@@ -228,14 +228,14 @@ describe("useRelayScopedPresence", () => {
     await flushPresenceDebounce();
 
     expect(publishEvent).toHaveBeenCalledTimes(1);
-    expect(publishEvent.mock.calls[0]?.[4]).toEqual(["wss://relay.a"]);
+    expect(publishEvent.mock.calls[0]?.[4]).toEqual(["wss://relay.a/"]);
 
     rerender({ relayScopeIds: new Set(["relay-b"]) });
     expect(publishEvent).toHaveBeenCalledTimes(1);
     await flushPresenceDebounce();
 
     expect(publishEvent).toHaveBeenCalledTimes(2);
-    expect(publishEvent.mock.calls[1]?.[4]).toEqual(["wss://relay.b"]);
+    expect(publishEvent.mock.calls[1]?.[4]).toEqual(["wss://relay.b/"]);
     expect(
       publishEvent.mock.calls.every((call) =>
         (call[2] as string[][]).some((tag) => tag[0] === "nodex-view")
@@ -248,6 +248,6 @@ describe("useRelayScopedPresence", () => {
 
     expect(publishEvent).toHaveBeenCalledTimes(3);
     expect(publishEvent.mock.calls[2]?.[2]).toEqual([["d", "nodex-presence"]]);
-    expect(publishEvent.mock.calls[2]?.[4]).toEqual(["wss://relay.b", "wss://relay.a"]);
+    expect(publishEvent.mock.calls[2]?.[4]).toEqual(["wss://relay.b/", "wss://relay.a/"]);
   });
 });
