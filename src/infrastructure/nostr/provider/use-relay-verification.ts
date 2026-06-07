@@ -86,7 +86,7 @@ export function useRelayVerification({
     relayUrl: string,
     nextStatus: "connected" | "read-only" | "verification-failed"
   ) => {
-    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     updateRelayEntry(normalizedRelayUrl, (relay) => {
       if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
         return relay;
@@ -111,7 +111,7 @@ export function useRelayVerification({
   }, []);
 
   const markRelayVerificationSuccess = useCallback((relayUrl: string, operation: RelayOperation) => {
-    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     updateRelayCapabilityStatus(normalizedRelayUrl, "connected");
     if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {
       return;
@@ -119,7 +119,7 @@ export function useRelayVerification({
     if (!authMethodRef.current) {
       return;
     }
-    const normalizedUrl = relayUrl.replace(/\/+$/, "");
+    const normalizedUrl = normalizeRelayUrl(relayUrl);
     const document = relayDocumentRef.current.get(normalizedUrl);
     if (document && summarizeRelayInfo(document).authRequired === false) {
       return;
@@ -142,7 +142,7 @@ export function useRelayVerification({
   ) => {
     const shouldSetStatus = options?.setStatus ?? false;
     const shouldShowToast = options?.showToast ?? true;
-    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     if (shouldSetStatus) {
       if (operation === "read") {
@@ -229,7 +229,7 @@ export function useRelayVerification({
   }, []);
 
   const notifyRelayVerificationEvent = useCallback((incoming: RelayVerificationEvent) => {
-    const normalizedRelayUrl = incoming.relayUrl.replace(/\/+$/, "");
+    const normalizedRelayUrl = normalizeRelayUrl(incoming.relayUrl);
     const existingPendingVerification = pendingRelayVerificationRef.current.get(normalizedRelayUrl);
     const operation = incoming.operation === "unknown"
       ? existingPendingVerification?.operation ?? resolveRelayVerificationOperation()

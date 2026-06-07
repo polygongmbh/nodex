@@ -107,7 +107,7 @@ export function useIndexRelayShell({
 
   const handleRemoveRelay = useCallback(
     (url: string) => {
-      const normalizedRelayUrl = url.trim().replace(/\/+$/, "");
+      const normalizedRelayUrl = normalizeRelayUrl(url);
       if (!normalizedRelayUrl) return;
 
       // Don't strip the relay URL from cached events. Removing then re-adding the

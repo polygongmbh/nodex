@@ -197,7 +197,7 @@ export function usePublish({
       if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason })) {
         const failedRelayUrls = [...targetRelayUrls];
         if (failedRelayUrls.length === 0 && relayUrls && relayUrls.length === 1) {
-          failedRelayUrls.push(relayUrls[0].replace(/\/+$/, ""));
+          failedRelayUrls.push(normalizeRelayUrl(relayUrls[0]));
         }
         failedRelayUrls.forEach((relayUrl) => {
           markRelayVerificationFailure(relayUrl, "write", {

@@ -61,9 +61,7 @@ function dedupeStrings(...sources: ReadonlyArray<readonly string[]>): string[] {
 }
 
 function getRelayIdsFromEvent(event: NostrEventWithRelay): string[] {
-  const relayUrls = event.relayUrls
-    .map((url) => url.trim().replace(/\/+$/, ""))
-    .filter((url) => Boolean(url));
+  const relayUrls = event.relayUrls.filter((url) => Boolean(url));
   if (relayUrls.length === 0) {
     // Every event NDK hands us should arrive with relay attribution. Reaching
     // here means an upstream subscription path lost it — log loudly instead of

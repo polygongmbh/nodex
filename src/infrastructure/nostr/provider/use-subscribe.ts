@@ -103,7 +103,7 @@ export function useSubscribe({
         relayUrl: relay.url,
         reason,
       });
-      const normalizedRelayUrl = relay.url.replace(/\/+$/, "");
+      const normalizedRelayUrl = relay.url;
       const relayFilters = subscription.relayFilters?.get(normalizedRelayUrl) ?? limitDecision.filters;
       const shouldRetry = shouldRetryAuthClosedSubscription({
         hasSigner: Boolean(ndk.signer),

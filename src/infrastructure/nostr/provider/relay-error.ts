@@ -1,3 +1,5 @@
+import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
+
 const RELAY_URL_PATTERN = /\bwss?:\/\/[^\s,)"'}\]]+/gi;
 const OK_REJECTION_PATTERN = /\[\s*"OK"\s*,\s*"[^"]*"\s*,\s*false\s*,\s*"([^"]+)"\s*\]/i;
 const AUTH_REQUIRED_REASON_PATTERN = /(auth[ -]?required(?::[^\]\n]*)?)/i;
@@ -10,7 +12,7 @@ export function extractRelayUrlsFromErrorMessage(message: string): string[] {
   if (!message) return [];
   const matches = message.match(RELAY_URL_PATTERN) ?? [];
   const normalized = matches
-    .map((url) => url.replace(/\/+$/, ""))
+    .map((url) => normalizeRelayUrl(url))
     .filter((url) => url.length > 0);
   return Array.from(new Set(normalized));
 }
@@ -71,12 +73,12 @@ function extractNdkRelayErrorEntries(error: unknown): NdkRelayErrorEntry[] {
 }
 
 export function extractRelayErrorMessage(error: unknown, relayUrl: string): string | undefined {
-  const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+  const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
   const entries = extractNdkRelayErrorEntries(error);
 
   for (const entry of entries) {
-    const normalizedEntryRelayUrl = entry.relayUrl?.replace(/\/+$/, "");
-    if (!normalizedEntryRelayUrl || normalizedEntryRelayUrl !== normalizedRelayUrl) continue;
+    if (!entry.relayUrl) continue;
+    if (normalizeRelayUrl(entry.relayUrl) !== normalizedRelayUrl) continue;
     if (!entry.message) continue;
     return entry.message;
   }

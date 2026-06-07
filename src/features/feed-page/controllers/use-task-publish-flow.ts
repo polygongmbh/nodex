@@ -276,9 +276,8 @@ export function useTaskPublishFlow({
   }, []);
 
   const notifyIfPartialPublish = useCallback((targetRelayUrls: string[], publishedRelayUrls?: string[]) => {
-    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
-    const targetCount = new Set(targetRelayUrls.map(normalizeUrl)).size;
-    const publishedCount = new Set((publishedRelayUrls || []).map(normalizeUrl)).size;
+    const targetCount = new Set(targetRelayUrls).size;
+    const publishedCount = new Set(publishedRelayUrls || []).size;
     if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
       notifyPartialPublish({ publishedCount, targetCount });
       nostrDevLog("publish", "Partial publish acknowledged by subset of target relays", {

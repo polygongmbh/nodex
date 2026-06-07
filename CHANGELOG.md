@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+
+- The relay reconnect button (and the 10-second heartbeat that retries stuck relays) now actually rebuilds the WebSocket. Until now, an internal URL-canonicalization mismatch with NDK silently made every pool lookup miss, so reconnects no-op'd inside NDK and relays sat in `connecting` forever — visible in logs as `Relay requested to be connected but was in state 4` repeating every heartbeat. Read-only / verification-failed transitions on publish rejections that depended on the same lookup are now reliable too.
+
 ## [4.1.0] - 2026-06-07
 Minor release for Status view creation shortcuts, kanban compose hints, recomposition context fixes, relay recovery, and profile/presence cleanup.
 
