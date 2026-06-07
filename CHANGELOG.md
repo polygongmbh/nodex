@@ -6,9 +6,6 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-### Fixed
-- The Status view's section create buttons now use the task and comment icons (instead of the tree/feed view icons) to signal what they create, and the Activity button opens the composer pinned to comment instead of letting it default to task.
-
 ## [4.1.0] - 2026-06-07
 Minor release for Status view creation shortcuts, kanban compose hints, recomposition context fixes, relay recovery, and profile/presence cleanup.
 
@@ -21,6 +18,7 @@ Minor release for Status view creation shortcuts, kanban compose hints, recompos
 - Kanban cards no longer dim, strike through, or mute their text when they sit in Done/Closed columns — the column header already carries that signal, so the per-card styling was redundant and made archived work look like dead weight.
 
 ### Fixed
+- The Status view's section create buttons now use the task and comment icons (instead of the tree/feed view icons) to signal what they create, and the Activity button opens the composer pinned to comment instead of letting it default to task.
 - Recomposing a post now inherits the parent from the current focus context instead of always reusing the original post's parent — only when the user is still focused on the very post being recomposed does the replacement keep the original parent (so an in-place rewrite still threads correctly).
 - Recomposing a post now also switches the sidebar's active spaces to the original post's spaces (intersected with your current list), so the replacement publishes where the original lived. If none of the original spaces are still in your list, the sidebar is left alone and a warning toast explains why.
 
