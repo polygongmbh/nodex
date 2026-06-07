@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { GitBranch, LayoutList, Plus, X } from "lucide-react";
+import { CheckSquare, MessageSquare, Plus, X } from "lucide-react";
 import { StatusProjectsRow } from "./StatusProjectsRow";
 import { StatusMyTasksTree } from "./StatusMyTasksTree";
 import { StatusTimeline } from "./StatusTimeline";
@@ -114,7 +114,7 @@ export function StatusView({
           <SectionHeader
             label={t("status.myTasks.label")}
             targetView="tree"
-            viewIcon={<GitBranch className="w-4 h-4" />}
+            createIcon={<CheckSquare className="w-4 h-4" />}
             canCreate={authPolicy.canOpenCompose}
             onCreate={() => setComposerOpenFor("myTasks")}
           />
@@ -139,7 +139,7 @@ export function StatusView({
           <SectionHeader
             label={t("status.timeline.label")}
             targetView="feed"
-            viewIcon={<LayoutList className="w-4 h-4" />}
+            createIcon={<MessageSquare className="w-4 h-4" />}
             canCreate={authPolicy.canOpenCompose}
             onCreate={() => setComposerOpenFor("activity")}
           />
@@ -147,7 +147,7 @@ export function StatusView({
             <HeaderComposer
               label={t("status.timeline.label")}
               focusedTaskId={focusedTaskId}
-              allowedPostTypes={["task", "comment"]}
+              allowedPostTypes={["comment"]}
               onClose={closeComposer}
             />
           )}
@@ -169,13 +169,13 @@ export function StatusView({
 function SectionHeader({
   label,
   targetView,
-  viewIcon,
+  createIcon,
   canCreate,
   onCreate,
 }: {
   label: string;
   targetView: ViewType;
-  viewIcon: React.ReactNode;
+  createIcon: React.ReactNode;
   canCreate: boolean;
   onCreate: () => void;
 }) {
@@ -198,7 +198,7 @@ function SectionHeader({
           className="relative p-1 rounded hover:bg-muted hover:text-foreground transition-colors"
           title={t("status.headerCreate")}
         >
-          {viewIcon}
+          {createIcon}
           <Plus
             className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-muted/80"
             strokeWidth={3}

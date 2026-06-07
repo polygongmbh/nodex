@@ -6,6 +6,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- The Status view's section create buttons now use the task and comment icons (instead of the tree/feed view icons) to signal what they create, and the Activity button opens the composer pinned to comment instead of letting it default to task.
+
+## [4.1.0] - 2026-06-07
+Minor release for Status view creation shortcuts, kanban compose hints, recomposition context fixes, relay recovery, and profile/presence cleanup.
+
 ### Added
 - The Status view's "My tasks" and "Activity" headers are now clickable shortcuts into the tree and feed views, with a small plus-icon button on each header that opens an inline composer in context — task-only on My tasks, task-or-comment on Activity — without leaving the status landing.
 - A dashed "Create an active project" card at the end of the Status projects row jumps to the kanban board with the depth set to "projects only" and the column composer already open in the first active state, so starting a new project is a single click.
