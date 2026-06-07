@@ -1,4 +1,17 @@
+import { normalizeRelayUrl as ndkNormalizeRelayUrl } from "@nostr-dev-kit/ndk";
 import type { Relay } from "@/types";
+
+// Defer to NDK so our canonical form (trailing slash) matches its pool keys.
+// NDK throws on malformed input; callers here often handle untrusted strings
+// (env vars, user input, third-party responses), so swallow and return "".
+export function normalizeRelayUrl(value: string): string {
+  if (!value) return "";
+  try {
+    return ndkNormalizeRelayUrl(value);
+  } catch {
+    return "";
+  }
+}
 
 export type RelayProtocol = "ws" | "wss";
 
@@ -23,10 +36,6 @@ function getRelayEnvValue(
   env: Record<string, unknown>
 ): unknown {
   return env[key];
-}
-
-export function normalizeRelayUrl(value: string): string {
-  return value.trim().replace(/\/+$/, "");
 }
 
 export function dedupeNormalizedRelayUrls(relayUrls: readonly string[]): string[] {
@@ -55,10 +64,15 @@ export function isRelayUrl(value: string): boolean {
 }
 
 export function ensureRelayProtocol(value: string, protocol: RelayProtocol = "wss"): string {
-  const normalized = normalizeRelayUrl(value);
-  if (!normalized) return normalized;
-  if (isRelayUrl(normalized)) return normalized;
-  return `${protocol}://${normalized}`;
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  // Prepend the protocol BEFORE normalizing — NDK's normalize defaults the
+  // protocol to http:// when missing, which would corrupt bare-hostname input.
+  const lower = trimmed.toLowerCase();
+  const withProtocol = lower.startsWith("ws://") || lower.startsWith("wss://")
+    ? trimmed
+    : `${protocol}://${trimmed}`;
+  return normalizeRelayUrl(withProtocol);
 }
 
 export function stripRelayProtocol(value: string): string {
@@ -137,7 +151,7 @@ export function relayUrlToDomainMinusTld(
 }
 
 export function relayUrlToId(url: string): string {
-  return stripRelayProtocol(url).toLowerCase().replace(/[./]/g, "-");
+  return stripRelayProtocol(url).toLowerCase().replace(/\/+$/, "").replace(/[./]/g, "-");
 }
 
 export function relayUrlToName(url: string): string {

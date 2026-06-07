@@ -12,10 +12,10 @@ import {
 } from "./relay-url";
 
 describe("normalizeRelayUrl", () => {
-  it("removes trailing slashes and trims surrounding whitespace", () => {
-    expect(normalizeRelayUrl("wss://relay.example.com///")).toBe("wss://relay.example.com");
-    expect(normalizeRelayUrl("  wss://relay.example.com  ")).toBe("wss://relay.example.com");
-    expect(normalizeRelayUrl("  wss://relay.example.com/ ")).toBe("wss://relay.example.com");
+  it("produces NDK's canonical form with a trailing slash", () => {
+    expect(normalizeRelayUrl("wss://relay.example.com")).toBe("wss://relay.example.com/");
+    expect(normalizeRelayUrl("  wss://relay.example.com  ")).toBe("wss://relay.example.com/");
+    expect(normalizeRelayUrl("  wss://relay.example.com/ ")).toBe("wss://relay.example.com/");
   });
 });
 
@@ -60,7 +60,7 @@ describe("relay-url naming", () => {
       { id: "relay-one", url: "wss://relay.one/" },
       { id: "relay-two", url: "wss://relay.two" },
       { id: "relay-two-duplicate", url: "wss://relay.two/" },
-    ], ["relay-two", "relay-two-duplicate", "missing"])).toEqual(["wss://relay.two"]);
+    ], ["relay-two", "relay-two-duplicate", "missing"])).toEqual(["wss://relay.two/"]);
   });
 
   it("builds stable normalized relay scopes", () => {
@@ -68,11 +68,11 @@ describe("relay-url naming", () => {
       "wss://relay.two/",
       "wss://relay.one",
       "wss://relay.two",
-    ])).toEqual(["wss://relay.one", "wss://relay.two"]);
+    ])).toEqual(["wss://relay.one/", "wss://relay.two/"]);
     expect(dedupeNormalizedRelayUrls([
       "wss://relay.two/",
       "wss://relay.two",
       "wss://relay.one",
-    ])).toEqual(["wss://relay.two", "wss://relay.one"]);
+    ])).toEqual(["wss://relay.two/", "wss://relay.one/"]);
   });
 });
