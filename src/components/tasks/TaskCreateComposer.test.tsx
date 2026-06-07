@@ -115,9 +115,7 @@ function renderCreateComposer({
         relays: feedRelays,
         channels,
         people,
-        searchQuery: "",
-        quickFilters: makeQuickFilterState(),
-        channelMatchMode: "and",
+        quickFilters: makeQuickFilterState()
       }}
     >
       <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} {...props} />
@@ -153,9 +151,7 @@ describe("TaskCreateComposer", () => {
             relays,
             channels,
             people,
-            searchQuery: "",
-            quickFilters: makeQuickFilterState(),
-            channelMatchMode: "and",
+            quickFilters: makeQuickFilterState()
           }}
         >
           <TaskCreateComposer
@@ -451,7 +447,12 @@ describe("TaskCreateComposer", () => {
         },
       ];
       return (
-        <FeedSurfaceProvider value={{ relays: relaysWithSelection, channels, people, searchQuery: "", quickFilters: makeQuickFilterState(), channelMatchMode: "and" }}>
+        <FeedSurfaceProvider value={{
+          relays: relaysWithSelection,
+          channels,
+          people,
+          quickFilters: makeQuickFilterState()
+        }}>
           <button onClick={() => setActiveRelayId("relay-b")}>Switch to Relay B</button>
           <TaskCreateComposer onCancel={() => {}} focusedTaskId={null} allowedPostTypes={["task"]} />
         </FeedSurfaceProvider>

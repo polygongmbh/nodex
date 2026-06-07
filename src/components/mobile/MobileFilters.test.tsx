@@ -113,15 +113,16 @@ describe("MobileFilters management view", () => {
           relays,
           channels: [{ id: "broad-channel", name: "broad-channel", filterState: "neutral" }],
           visibleChannels: [{ id: "visible-channel", name: "visible-channel", filterState: "neutral" }],
+
           people: [
             { pubkey: "broad-person", name: "Broad Person", displayName: "Broad Person", avatar: "", isSelected: false },
           ],
+
           visiblePeople: [
             { pubkey: "visible-person", name: "visible-user", displayName: "Visible Person", avatar: "", isSelected: false },
           ],
-          searchQuery: "",
-          quickFilters: makeQuickFilterState(),
-          channelMatchMode: "and",
+
+          quickFilters: makeQuickFilterState()
         }}
       >
         <MobileFilters />

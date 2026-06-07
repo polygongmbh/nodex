@@ -118,13 +118,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("shows a single attachment action", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     expect(screen.getByRole("button", { name: /add attachment/i })).toBeInTheDocument();
@@ -135,13 +133,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("focuses the unified composer on mount", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     await waitFor(() => {
@@ -153,7 +149,6 @@ describe("UnifiedBottomBar auth gating", () => {
     ingestPost({ post: makeTask({ id: "focused-task", content: "Coordinate launch copy" }) });
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="tree"
         focusedTaskId="focused-task"
         relays={relays}
@@ -166,8 +161,7 @@ describe("UnifiedBottomBar auth gating", () => {
             isSelected: true,
           },
         ]}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     expect(screen.getByRole("textbox")).toHaveAttribute(
@@ -184,6 +178,7 @@ describe("UnifiedBottomBar auth gating", () => {
           relays,
           channels,
           visibleChannels: channels,
+
           people: [
             {
               pubkey: "broad-person",
@@ -193,6 +188,7 @@ describe("UnifiedBottomBar auth gating", () => {
               isSelected: false,
             },
           ],
+
           visiblePeople: [
             {
               pubkey: "visible-person",
@@ -202,18 +198,15 @@ describe("UnifiedBottomBar auth gating", () => {
               isSelected: false,
             },
           ],
-          searchQuery: "",
-          quickFilters: makeQuickFilterState(),
-          channelMatchMode: "and",
+
+          quickFilters: makeQuickFilterState()
         }}
       >
         <UnifiedBottomBar
-          searchQuery=""
           currentView="feed"
           relays={relays}
           channels={channels}
-          canCreateContent={true}
-        />
+          canCreateContent={true} />
       </FeedSurfaceProvider>
     );
 
@@ -227,13 +220,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("routes signed-out create attempts through task.create dispatch", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={false}
-      />
+        canCreateContent={false} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -246,13 +237,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("disables the mobile primary send button when the textbox is actually empty", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const button = getMobilePrimaryAction();
@@ -262,13 +251,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("searches as user types in combined field", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -289,13 +276,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -320,13 +305,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("shows a blocker panel and opens channel remediation when sending without a selected channel tag", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -343,13 +326,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("shows the blocker CTA when content has only tags and mentions", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -365,15 +346,13 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="calendar"
         defaultContent="Ship #general"
         selectedCalendarDate={dueDate}
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -393,7 +372,6 @@ describe("UnifiedBottomBar auth gating", () => {
   it("opens relay selection when task posting is blocked by multiple active feeds", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="tree"
         relays={[
           { id: "relay-one", name: "Relay One", isActive: true, url: "wss://relay-one.test" },
@@ -401,8 +379,7 @@ describe("UnifiedBottomBar auth gating", () => {
         ]}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -427,13 +404,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]');
@@ -467,7 +442,6 @@ describe("UnifiedBottomBar auth gating", () => {
   it("submits a root task when exactly one active relay is writable", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="tree"
         relays={[
           { id: "relay-one", name: "Relay One", isActive: true, connectionStatus: "connected", url: "wss://relay-one.test" },
@@ -475,8 +449,7 @@ describe("UnifiedBottomBar auth gating", () => {
         ]}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -497,15 +470,13 @@ describe("UnifiedBottomBar auth gating", () => {
   it("submits a root task when no relay is selected but exactly one writable relay exists", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="tree"
         relays={[
           { id: "relay-one", name: "Relay One", isActive: false, connectionStatus: "connected", url: "wss://relay-one.test" },
         ]}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -526,14 +497,12 @@ describe("UnifiedBottomBar auth gating", () => {
   it("allows focused-subtask send without explicit tags", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="tree"
         focusedTaskId="parent-task"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -556,13 +525,11 @@ describe("UnifiedBottomBar auth gating", () => {
     createTaskMock.mockImplementation(async () => ({ ok: false as const, reason: "relay-selection" as const }));
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -578,13 +545,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("submits as comment on Alt+Enter when no hashtag token is being typed", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -602,13 +567,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -635,13 +598,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("submits comment when add comment button is tapped", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -660,13 +621,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("shows listing option in feed view and submits listing metadata", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -691,14 +650,12 @@ describe("UnifiedBottomBar auth gating", () => {
   it("does not offer comment send options in tree view without a focused parent", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="tree"
         focusedTaskId={null}
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     expect(getMobilePrimaryAction()).toBeInTheDocument();
@@ -709,14 +666,12 @@ describe("UnifiedBottomBar auth gating", () => {
   it("reveals task and comment send options in tree view when a focused parent exists", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="tree"
         focusedTaskId="parent-1"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     expect(getMobilePrimaryAction()).toBeInTheDocument();
@@ -735,13 +690,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("hides comment send button in non-feed/tree views", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="calendar"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     expect(screen.getByTestId("mobile-primary-action")).toBeInTheDocument();
@@ -751,14 +704,12 @@ describe("UnifiedBottomBar auth gating", () => {
   it("prefills due date with today in calendar view once the composer is focused", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="calendar"
         defaultContent="Ship #general"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -774,15 +725,13 @@ describe("UnifiedBottomBar auth gating", () => {
     const nextDay = addDays(new Date(), 1);
     const { rerender } = render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="calendar"
         defaultContent="Ship #general"
         selectedCalendarDate={new Date()}
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -790,15 +739,13 @@ describe("UnifiedBottomBar auth gating", () => {
 
     rerender(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="calendar"
         defaultContent="Ship #general"
         selectedCalendarDate={nextDay}
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     await waitFor(() => {
@@ -809,13 +756,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("hides date type until a due date is selected", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     expect(screen.queryByLabelText(/date type/i)).not.toBeInTheDocument();
@@ -848,13 +793,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
       return (
         <UnifiedBottomBar
-          searchQuery=""
           currentView="feed"
           relays={relays}
           channels={statefulChannels}
           people={people}
-          canCreateContent={true}
-        />
+          canCreateContent={true} />
       );
     };
 
@@ -896,13 +839,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
       return (
         <UnifiedBottomBar
-          searchQuery=""
           currentView="feed"
           relays={relays}
           channels={statefulChannels}
           people={people}
-          canCreateContent={true}
-        />
+          canCreateContent={true} />
       );
     };
 
@@ -919,13 +860,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("supports @mention autocomplete in the combined search/compose field", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -945,13 +884,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("anchors mobile mention autocomplete above the composer", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -965,13 +902,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("supports #channel autocomplete in the combined search/compose field", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={autocompleteChannels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -991,13 +926,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("closes mention autocomplete when compose is cancelled", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1011,13 +944,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("closes hashtag autocomplete on escape", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={autocompleteChannels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1032,13 +963,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("adds mention tag via Alt+Enter without inserting mention text", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1066,13 +995,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1103,13 +1030,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("submits on Cmd/Ctrl+Enter even when mention autocomplete is open", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1127,13 +1052,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1161,13 +1084,11 @@ describe("UnifiedBottomBar auth gating", () => {
   it("uses Alt+Click on hashtag autocomplete option to add tag-only", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={autocompleteChannels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1207,13 +1128,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     expect(screen.queryByRole("button", { name: /use current location/i })).not.toBeInTheDocument();
@@ -1235,13 +1154,11 @@ describe("UnifiedBottomBar auth gating", () => {
     });
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /location/i }));
@@ -1274,13 +1191,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const locationButton = screen.getByRole("button", { name: /^location$/i });
@@ -1308,7 +1223,6 @@ describe("UnifiedBottomBar auth gating", () => {
   it("allows focused comment submit with multiple active relays and no single selected space", async () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         focusedTaskId="parent-task"
         relays={[
@@ -1317,8 +1231,7 @@ describe("UnifiedBottomBar auth gating", () => {
         ]}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1340,7 +1253,6 @@ describe("UnifiedBottomBar auth gating", () => {
   it("does not surface selectRelayOrParent copy in the send button title when focused", () => {
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="tree"
         focusedTaskId="parent-task"
         relays={[
@@ -1349,8 +1261,7 @@ describe("UnifiedBottomBar auth gating", () => {
         ]}
         channels={channels}
         people={people}
-        canCreateContent={true}
-      />
+        canCreateContent={true} />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1367,13 +1278,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const { unmount } = render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const pointerDownRegistration = addEventListenerSpy.mock.calls.find(
@@ -1395,13 +1304,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const { unmount } = render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
@@ -1422,7 +1329,6 @@ describe("UnifiedBottomBar auth gating", () => {
     const cancelAnimationFrameSpy = vi.spyOn(window, "cancelAnimationFrame");
     const { unmount } = render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1440,8 +1346,7 @@ describe("UnifiedBottomBar auth gating", () => {
             titledPost: {},
             nip99: { status: "active" },
           },
-        }}
-      />
+        }} />
     );
 
     unmount();
@@ -1454,7 +1359,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1476,8 +1380,7 @@ describe("UnifiedBottomBar auth gating", () => {
             titledPost: {},
             nip99: { status: "active" },
           },
-        }}
-      />
+        }} />
     );
 
     await waitFor(() => {
@@ -1497,13 +1400,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        searchQuery=""
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        canCreateContent
-      />
+        canCreateContent />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /location/i }));
@@ -1524,11 +1425,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
   function renderSelector(value: Parameters<typeof FeedSurfaceProvider>[0]["value"]) {
     render(
       <FeedSurfaceProvider value={value}>
-        <UnifiedBottomBar
-          searchQuery=""
-          currentView="feed"
-          canCreateContent={true}
-        />
+        <UnifiedBottomBar currentView="feed" canCreateContent={true} />
       </FeedSurfaceProvider>
     );
     fireEvent.click(screen.getByTestId("mobile-channel-filter"));
@@ -1554,9 +1451,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
       people: [],
       visiblePeople: [],
       mentionablePeople: [],
-      searchQuery: "",
-      quickFilters: makeQuickFilterState(),
-      channelMatchMode: "and",
+      quickFilters: makeQuickFilterState()
     });
 
     expect(screen.getByRole("button", { name: "#alpha" })).toBeInTheDocument();
@@ -1574,9 +1469,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
       people: [],
       visiblePeople: [],
       mentionablePeople: [],
-      searchQuery: "",
-      quickFilters: makeQuickFilterState(),
-      channelMatchMode: "and",
+      quickFilters: makeQuickFilterState()
     });
 
     const showMore = screen.getByRole("button", { name: /Show more/ });
@@ -1600,9 +1493,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
       people: [],
       visiblePeople: [],
       mentionablePeople: [],
-      searchQuery: "",
-      quickFilters: makeQuickFilterState(),
-      channelMatchMode: "and",
+      quickFilters: makeQuickFilterState()
     });
 
     expect(screen.getByRole("button", { name: "#alpha" })).toHaveClass("font-bold");
@@ -1619,9 +1510,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
       people: [],
       visiblePeople: [],
       mentionablePeople: [],
-      searchQuery: "",
-      quickFilters: makeQuickFilterState(),
-      channelMatchMode: "and",
+      quickFilters: makeQuickFilterState()
     });
 
     expect(screen.queryByRole("button", { name: /Show more/ })).not.toBeInTheDocument();
@@ -1644,9 +1533,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
       people: [],
       visiblePeople: [],
       mentionablePeople: [],
-      searchQuery: "",
-      quickFilters: makeQuickFilterState(),
-      channelMatchMode: "and",
+      quickFilters: makeQuickFilterState()
     });
 
     const collapsedChips = screen
@@ -1672,9 +1559,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
       people: [],
       visiblePeople: [],
       mentionablePeople: [],
-      searchQuery: "",
-      quickFilters: makeQuickFilterState(),
-      channelMatchMode: "and",
+      quickFilters: makeQuickFilterState()
     });
 
     fireEvent.click(screen.getByRole("button", { name: "#alpha" }));
@@ -1697,9 +1582,7 @@ describe("UnifiedBottomBar channel selector banding", () => {
       people: [],
       visiblePeople: [],
       mentionablePeople: [],
-      searchQuery: "",
-      quickFilters: makeQuickFilterState(),
-      channelMatchMode: "and",
+      quickFilters: makeQuickFilterState()
     });
 
     fireEvent.click(screen.getByRole("button", { name: "#alpha" }));

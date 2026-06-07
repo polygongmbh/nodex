@@ -43,11 +43,10 @@ function renderComposer(parentTask: Post, focusedTaskId: string) {
             connectionStatus: "read-only",
           }),
         ],
+
         channels: [makeChannel({ id: "backend", name: "backend" })],
         people: [makePerson()],
-        searchQuery: "",
-        quickFilters: makeQuickFilterState(),
-        channelMatchMode: "and",
+        quickFilters: makeQuickFilterState()
       }}
     >
       <SharedViewComposer focusedTaskId={focusedTaskId} />

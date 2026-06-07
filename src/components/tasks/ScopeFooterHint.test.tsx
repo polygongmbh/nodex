@@ -70,8 +70,7 @@ function renderHint(
         relays: surface.relays ?? relays,
         channels: surface.channels ?? channels,
         people: surface.people ?? people,
-        searchQuery: "",
-        quickFilters: surface.quickFilters ?? makeQuickFilterState(),
+        quickFilters: surface.quickFilters ?? makeQuickFilterState()
       }}
     >
       <ScopeFooterHint focusedTaskId={focusedTaskId} />

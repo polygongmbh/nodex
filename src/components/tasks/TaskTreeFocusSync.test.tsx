@@ -75,10 +75,8 @@ function renderTaskTree(
     channels,
     people,
     mentionablePeople: people,
-    searchQuery: "",
     quickFilters: makeQuickFilterState(),
-    channelMatchMode: "and",
-    ...surfaceOverrides,
+    ...surfaceOverrides
   };
 
   const initialPath = focusedTaskId ? `/tree/${focusedTaskId}` : "/tree";
