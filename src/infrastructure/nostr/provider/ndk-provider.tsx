@@ -675,66 +675,45 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, updateRelayEntry]);
 
-  // Single watchdog interval: every HEARTBEAT_MS, detect wake-from-sleep AND
-  // reconcile any drift between React relay state and NDK's pool. Drift can
-  // happen when NDK replaces a pool relay instance between relay:connecting
-  // and relay:connect (handleRelayConnect bails on its replaced-instance
-  // guard) or when handleStaleConnection sets status to DISCONNECTED before
-  // firing relay:disconnect. Without periodic reconciliation the sidebar can
-  // show "connecting" indefinitely — covers sign-in, post-startup adds, and
-  // any future drift source uniformly.
+  // Periodic + visibility-triggered reconciliation of React relay state against
+  // NDK's pool. Catches two divergence sources nothing else fixes uniformly:
+  //   1. Missed `relay:connect` — pool is CONNECTED but React shows connecting,
+  //      typically when session restore replaces the pool relay between the
+  //      relay:connecting and relay:connect dispatches (handleRelayConnect
+  //      bails on its replaced-instance guard).
+  //   2. Stuck-on-CONNECTING — pool isn't progressing but no relay:disconnect
+  //      ever reached our handler. Force a fresh socket.
   //
-  // Wake-from-sleep is detected by an unusually large gap between ticks (the
-  // browser throttles setInterval when the tab/computer sleeps). Visibility
-  // and online events also trigger an immediate stale sweep.
+  // Wake-from-sleep is handled by NDK's own 15s sleep detector plus the
+  // per-relay backoff in onRelayDisconnect; this heartbeat does not need
+  // to special-case it.
   useEffect(() => {
     if (!ndk) return;
-    const reconnectStaleRelays = (reason: string) => {
-      let triggered = 0;
-      relaysRef.current.forEach((relay) => {
-        if (removedRelaysRef.current.has(relay.url)) return;
-        if (relay.status === "connected" || relay.status === "read-only") return;
-        reconnectRelay(relay.url);
-        triggered += 1;
-      });
-      if (triggered > 0) {
-        nostrDevLog("relay", "Reconnecting stale relays after resume", { reason, count: triggered });
-      }
-    };
-    const onVisibilityChange = () => {
-      if (document.visibilityState !== "visible") return;
-      reconnectStaleRelays("visibilitychange");
-    };
-    const onOnline = () => reconnectStaleRelays("online");
-
-    const HEARTBEAT_MS = 10000;
-    const WAKE_GAP_MS = 120000;
-    let lastTick = Date.now();
-    const heartbeatId = window.setInterval(() => {
-      const now = Date.now();
-      const gap = now - lastTick;
-      lastTick = now;
-      if (gap > WAKE_GAP_MS) {
-        reconnectStaleRelays(`wake-after-${gap}ms`);
-        return;
-      }
+    const reconcile = () => {
       const { driftCorrections, stuckOnTransport } = reconcileRelayStatusesFromPool(ndk);
       if (driftCorrections > 0 || stuckOnTransport.length > 0) {
-        nostrDevLog("relay", "Heartbeat reconciliation", { driftCorrections, stuckOnTransport });
+        nostrDevLog("relay", "Reconciling relay state", { driftCorrections, stuckOnTransport });
       }
       stuckOnTransport.forEach((relayUrl) => {
         reconnectRelay(relayUrl, { forceNewSocket: true });
       });
-    }, HEARTBEAT_MS);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      reconcile();
+    };
+
+    const HEARTBEAT_MS = 10000;
+    const heartbeatId = window.setInterval(reconcile, HEARTBEAT_MS);
 
     document.addEventListener("visibilitychange", onVisibilityChange);
-    window.addEventListener("online", onOnline);
+    window.addEventListener("online", reconcile);
     return () => {
       window.clearInterval(heartbeatId);
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.removeEventListener("online", onOnline);
+      window.removeEventListener("online", reconcile);
     };
-  }, [ndk, reconcileRelayStatusesFromPool, reconnectRelay, relaysRef, removedRelaysRef]);
+  }, [ndk, reconcileRelayStatusesFromPool, reconnectRelay]);
 
   const { publishEvent, signEvent, broadcastSignedEvent } = usePublish({
     ndk,
