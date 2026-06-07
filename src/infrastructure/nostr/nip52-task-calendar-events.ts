@@ -1,10 +1,10 @@
 import type {
   CalendarEventPost,
   DateBasedEventPost,
-  Person,
   TaskDateType,
   TimeBasedEventPost,
 } from "@/types";
+import type { Person } from "@/types/person";
 import { NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";

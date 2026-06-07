@@ -189,14 +189,7 @@ export class Kind0Cache {
     }
     this.bucketByStorageKey.clear();
     this.dirtyStorageKeys.clear();
-    if (this.pendingFlushTimer !== null && typeof window !== "undefined") {
-      window.clearTimeout(this.pendingFlushTimer);
-      this.pendingFlushTimer = null;
-    }
-    if (this.pendingNotifyTimer !== null && typeof window !== "undefined") {
-      window.clearTimeout(this.pendingNotifyTimer);
-      this.pendingNotifyTimer = null;
-    }
+    this.batchedNotifyPending = false;
   }
 
   loadForRelay(relayUrl: string): NostrEvent[] {
