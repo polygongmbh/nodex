@@ -212,16 +212,9 @@ dir, then a single jscodeshift/`grep`-driven import-path rewrite.
 
 ## Verification (after every commit)
 
-1. `npx tsc -b --force` — zero NEW errors. Pre-existing baseline
-   errors to ignore (unrelated, predate this work):
-   `UnifiedBottomBar.test`, `MobileFilters.test`, `App.test`,
-   `TaskComposer*` / `task-composer-runtime`, `CalendarTaskCard`
-   (`Post.priority`), `FailedPublishQueueBanner.test`, `demo-feed`,
-   `post-updates`, `Nip99Metadata` (`task-collections.test`,
-   `listing-identity.test`, `use-listing-status-publish`,
-   `nip99-metadata.test`, `use-task-publish-flow`), `nip52-task-*`,
-   `failed-publish-drafts-store.test`, and any
-   `searchQuery does not exist in type 'FeedSurfaceState'` test errors.
+1. `npx tsc -b --force` — zero errors. The baseline-tolerance list that
+   used to live here was cleared after the 125-error sweep; `tsc -b`
+   is now an enforceable regression signal again.
 2. `npx vitest run src/components/tasks src/components/mobile
    src/components/people src/features/feed-page src/domain/auth`
    (path changes after B.8 — adjust to `src/features/posts`). Baseline
