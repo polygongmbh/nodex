@@ -106,3 +106,15 @@ When the user says `squash`, inspect recent unpushed commits and suggest sensibl
 - localStorage holds caches the live subscription rebuilds. When changing a cache's schema, don't write migration code or default-fill missing fields — reject malformed entries and let the next ingest backfill. Bump the storage key prefix if you want a clean cut.
 - when touching tests, check if they might be simplified by dropping overly specific or complex assertions
 - Do not use any `aria-*` attributes — this is a visual application with no screen-reader / a11y target. Tests should query by visible test-fixture data (`@alice`, `#general`, task content, displayName), existing `data-onboarding` anchors, or `data-testid` (last-resort for irreducibly icon-only critical actions and form controls without a visible label). The only allowed `aria-hidden="true"` is what Lucide / shadcn `ui/*` primitives render themselves on decorative SVGs — those are vendored, do not touch.
+
+### New Code Discipline
+
+New code arrives clean, even when adjacent to crufty old code:
+
+- New shared state lives in a focused Zustand store under `src/features/feed-page/stores/`, not a new React Context. `useFilterStore` is the canonical home for sidebar filter dimensions (see `plans/filter-state-unification.md`); add new filter dimensions there, not via fresh `useState` in a controller or page.
+- New `useEffect` calls include a one-line `// why:` comment explaining the side effect — at minimum the trigger and the externally observable result. Missing `why:` blocks merge.
+- Keep `src/infrastructure/nostr/` and `src/domain/` React-free where practical. Pure functions, return data not hooks. These are the layers the test suite treats as the engineering invariant spec (per `plans/behavior-spec-coverage.md`) and the layers that survive any future rewrite.
+- Do not extend the known god-files: `TaskComposer.tsx`, `UnifiedBottomBar.tsx`, `Index.tsx`, `ndk-provider.tsx`, `CalendarView.tsx`. New features mount adjacent components / controllers; the priority order for shrinking them is in `plans/rewrite-vs-refactor-strategy.md`.
+- New components should not exceed ~8 hooks before splitting; this complements the 300-line file cap above. Use the split as the moment to ask whether the new state belongs in a store instead.
+- New controller hooks should not return setters as part of their public API. Per `plans/project-analysis-zustand.md` Fault 3, return commands and derived state; write directly to the appropriate store for everything else.
+- When a user-observable behavior changes, update `USER_GUIDE.md` in the same commit. It is the canonical UX behavior spec (see `plans/behavior-spec-coverage.md`); a feature that ships without a USER_GUIDE update creates documentation debt that compounds.
