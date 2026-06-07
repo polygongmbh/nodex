@@ -123,6 +123,8 @@ function toIngestable(
     : (event as NostrEvent);
   return {
     ...raw,
+    id: raw.id ?? "",
+    sig: raw.sig ?? "",
     kind: event.kind as NostrEventKind,
     relayUrls: getRelayUrls(event, relayOverride),
   };

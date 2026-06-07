@@ -44,9 +44,12 @@ export const mockPeople: SelectablePerson[] = [
 ];
 
 export const mockKind0Events = mockPeople.map((person, index) => ({
+  id: `mock-kind0-${person.pubkey.slice(0, 16)}`,
   kind: NostrEventKind.Metadata,
   pubkey: person.pubkey,
   created_at: Math.floor(Date.now() / 1000) - index,
+  tags: [],
+  sig: "",
   content: JSON.stringify({
     name: person.name,
     displayName: person.displayName,
