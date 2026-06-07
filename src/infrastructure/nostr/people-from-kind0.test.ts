@@ -16,9 +16,12 @@ const prevPeople: SelectablePerson[] = [
 
 function metadataEvent(pubkey: string, content: object, created_at = 1) {
   return {
+    id: `kind0-${pubkey.slice(0, 8)}-${created_at}`,
     kind: NostrEventKind.Metadata,
     pubkey,
     created_at,
+    tags: [] as string[][],
+    sig: "",
     content: JSON.stringify(content),
   };
 }

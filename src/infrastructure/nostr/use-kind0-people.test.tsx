@@ -13,9 +13,12 @@ describe("useKind0People", () => {
   it("derives people from selected relay kind0 cache without live task events", async () => {
     peopleFromKind0.saveCachedKind0Events([
       {
+        id: "kind0-alice",
         kind: NostrEventKind.Metadata,
         pubkey: "a".repeat(64),
         created_at: 1,
+        tags: [],
+        sig: "",
         content: JSON.stringify({
           name: "alice",
           displayName: "Alice Demo",
