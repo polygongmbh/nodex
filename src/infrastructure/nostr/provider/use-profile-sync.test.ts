@@ -2,7 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { useRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { useProfileSync } from "./use-profile-sync";
-import type { NDKRelayStatus } from "./contracts";
+import type { NDKContextValue, NDKRelayStatus } from "./contracts";
 
 const PUBKEY = "a".repeat(64);
 
@@ -11,7 +11,7 @@ function makeHarness(
   publishResult: { success: boolean; eventId?: string; publishedRelayUrls?: string[] },
   initialUserProfile?: Record<string, string>,
 ) {
-  const publishEvent = vi.fn(async () => publishResult);
+  const publishEvent = vi.fn<NDKContextValue["publishEvent"]>(async () => publishResult);
   const fetchLatestKind0Profile = vi.fn(async () => null);
   const setUser = vi.fn();
   const setNeedsProfileSetup = vi.fn();

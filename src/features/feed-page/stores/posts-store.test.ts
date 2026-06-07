@@ -49,13 +49,13 @@ describe("posts-store", () => {
     applyStateUpdate({
       targetId: "task-a",
       updateId: "state-1",
-      newState: "done",
+      newState: { status: "done" },
       authorPubkey: author.pubkey,
       timestampMs: Date.now(),
     });
     const [post] = getPosts() as TaskPost[];
     expect(post.stateUpdates).toHaveLength(1);
-    expect(post.stateUpdates[0].state).toBe("done");
+    expect(post.stateUpdates[0].state).toEqual({ status: "done" });
   });
 
   it("buffers a state update arriving before its target Post and replays on ingest", () => {
@@ -63,7 +63,7 @@ describe("posts-store", () => {
     applyStateUpdate({
       targetId: "task-late",
       updateId: "state-1",
-      newState: "done",
+      newState: { status: "done" },
       authorPubkey: author.pubkey,
       timestampMs: Date.now(),
     });
@@ -73,7 +73,7 @@ describe("posts-store", () => {
     ingestPost({ post: makeTaskPost({ id: "task-late", author }) });
     const [post] = getPosts() as TaskPost[];
     expect(post.stateUpdates).toHaveLength(1);
-    expect(post.stateUpdates[0].state).toBe("done");
+    expect(post.stateUpdates[0].state).toEqual({ status: "done" });
   });
 
   it("applies a deletion targeting an existing Post and rejects subsequent re-ingest by the same author", () => {

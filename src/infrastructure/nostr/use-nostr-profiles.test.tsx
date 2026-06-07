@@ -96,7 +96,7 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
       return null;
     }
     render(<Probe />);
-    expect(observed?.displayName).toBe("Snake Case");
+    expect(observed).toMatchObject({ displayName: "Snake Case" });
   });
 
   it("does not enter a rerender loop when pubkey is null", async () => {

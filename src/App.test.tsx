@@ -7,7 +7,7 @@ import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 const startupRelaysModule = vi.hoisted(() => ({
   readStartupRelayBootstrap: vi.fn(),
   resolveStartupRelayBootstrap: vi.fn(),
-  extractPathRelayOverride: vi.fn(() => null),
+  extractPathRelayOverride: vi.fn<() => string | null>(() => null),
 }));
 
 const startupNoasModule = vi.hoisted(() => ({

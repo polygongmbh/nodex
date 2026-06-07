@@ -110,7 +110,7 @@ describe("task calendar event helpers", () => {
         ["start", String(startUnix)],
         ["end", String(endUnix)],
       ]);
-      expect(parsed.kind).toBe(NostrEventKind.CalendarTimeBased);
+      if (parsed.kind !== NostrEventKind.CalendarTimeBased) throw new Error("expected time-based");
       expect(parsed.start?.getHours()).toBe(10);
       expect(parsed.start?.getMinutes()).toBe(30);
       expect(parsed.end?.getHours()).toBe(11);
@@ -120,6 +120,7 @@ describe("task calendar event helpers", () => {
       const parsed = parseCalendarEventDates(NostrEventKind.CalendarTimeBased, [
         ["start", "not-a-number"],
       ]);
+      if (parsed.kind !== NostrEventKind.CalendarTimeBased) throw new Error("expected time-based");
       expect(parsed.start).toBeUndefined();
     });
   });
