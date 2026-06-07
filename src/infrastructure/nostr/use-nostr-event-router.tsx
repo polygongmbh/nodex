@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-kit/ndk";
+import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription, NostrEvent } from "@nostr-dev-kit/ndk";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import type { NostrEventKind, NostrEventWithRelay } from "@/lib/nostr/types";
 import { registerMemdiagStore } from "@/lib/memdiag";
@@ -100,19 +100,29 @@ interface UseNostrEventRouterResult {
   isHydrating: boolean;
 }
 
-function getRelayUrls(event: NDKEvent, relayOverride?: NDKRelay | null): string[] {
+function getRelayUrls(event: NDKEvent | NostrEvent, relayOverride?: NDKRelay | null): string[] {
+  const ndkEvent = event as NDKEvent;
   return normalizeRelayUrlScope(
     [
       relayOverride?.url,
-      event.relay?.url,
-      ...(event.onRelays || []).map((relay) => relay?.url),
+      ndkEvent.relay?.url,
+      ...(ndkEvent.onRelays || []).map((relay) => relay?.url),
     ].filter((url): url is string => Boolean(url))
   );
 }
 
-function toIngestable(event: NDKEvent, relayOverride?: NDKRelay | null): NostrEventWithRelay {
+// NDK's `event:dup` emits a raw NostrEvent when the duplicate came in via
+// dispatchEvent (subManager → eventReceived), not a wrapped NDKEvent — so
+// rawEvent() may not exist. Spread the raw fields when it doesn't.
+function toIngestable(
+  event: NDKEvent | NostrEvent,
+  relayOverride?: NDKRelay | null,
+): NostrEventWithRelay {
+  const raw = typeof (event as NDKEvent).rawEvent === "function"
+    ? (event as NDKEvent).rawEvent()
+    : (event as NostrEvent);
   return {
-    ...event.rawEvent(),
+    ...raw,
     kind: event.kind as NostrEventKind,
     relayUrls: getRelayUrls(event, relayOverride),
   };
@@ -300,7 +310,7 @@ export function useNostrEventRouter({
     flushPendingRef.current = flushPending;
   }, [flushPending]);
 
-  const pushEvent = useCallback((event: NDKEvent, relayOverride?: NDKRelay | null) => {
+  const pushEvent = useCallback((event: NDKEvent | NostrEvent, relayOverride?: NDKRelay | null) => {
     pendingEventsRef.current.push(toIngestable(event, relayOverride));
     // A new event arrived — cancel any pending quiescence-based finalize so
     // we wait for this burst to drain before re-arming.
@@ -356,9 +366,7 @@ export function useNostrEventRouter({
     );
     subscriptionRef.current = subscription;
     subscription?.on("event:dup", (event, relay) => {
-      // event:dup is typed (NDKEvent | NDK's NostrEvent) but NDK only ever
-      // emits NDKEvent instances; the union is overly defensive.
-      pushEventRef.current(event as NDKEvent, relay);
+      pushEventRef.current(event, relay);
     });
     subscription?.on("eose", () => finalizeBootstrapScopeRef.current());
     subscription?.on("close", () => finalizeBootstrapScopeRef.current());
