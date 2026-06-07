@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  getTaskPriority,
   getTaskState,
   isCalendarEventPost,
   type Post,
@@ -84,6 +85,7 @@ export function CalendarTaskCard({
   const authorColor = getAuthorColor(task.author);
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
   const taskState = getTaskState(task);
+  const taskPriority = getTaskPriority(task);
   const isEvent = isCalendarEventPost(task);
 
   const { mediaCaptionByUrl, attachmentsWithoutInlineEmbeds } = useTaskMediaAttachments(task);
@@ -196,10 +198,10 @@ export function CalendarTaskCard({
             onMediaClick={(url) => onOpenMedia(task.id, url)}
           />
           <CalendarTaskTimeRow task={task} selectedDate={selectedDate} accent={authorColor.accent} />
-          {(typeof task.priority === "number" || hasTaskMetadataChips(task, activeRelayCount)) && (
+          {(typeof taskPriority === "number" || hasTaskMetadataChips(task, activeRelayCount)) && (
             <TaskTagChipRow
               task={task}
-              priority={task.priority}
+              priority={taskPriority}
               className="mt-1"
               tagClassName="px-1 py-0.5 rounded text-xs"
               showEmptyPlaceholder={false}
