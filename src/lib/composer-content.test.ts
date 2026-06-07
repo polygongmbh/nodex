@@ -55,7 +55,7 @@ describe("hasNip99Content", () => {
   });
 
   it("ignores whitespace-only fields", () => {
-    expect(hasNip99Content({ title: "   ", summary: "" })).toBe(false);
+    expect(hasNip99Content({ identifier: "   ", price: "" })).toBe(false);
   });
 
   it("returns true when any user-entered listing-specific field has content", () => {

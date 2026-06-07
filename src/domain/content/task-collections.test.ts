@@ -45,13 +45,15 @@ describe("dedupeMergedTasks", () => {
       id: "listing-a",
       timestamp: new Date("2026-03-16T09:00:00.000Z"),
       author: makePerson({ pubkey: "a".repeat(64), name: "a", displayName: "A" }),
-      nip99: { identifier: "listing-1", title: "Listing 1", status: "active" },
+      title: "Listing 1",
+      nip99: { identifier: "listing-1", status: "active" },
     });
     const listingB = makeListing({
       id: "listing-b",
       timestamp: new Date("2026-03-16T10:00:00.000Z"),
       author: makePerson({ pubkey: "a".repeat(64), name: "a", displayName: "A" }),
-      nip99: { identifier: "listing-1", title: "Listing 1", status: "sold" },
+      title: "Listing 1",
+      nip99: { identifier: "listing-1", status: "sold" },
     });
 
     const deduped = dedupeMergedTasks([listingA, listingB]);

@@ -19,9 +19,9 @@ const listingTask = makeListing({
   content: "Listing body",
   tags: ["market"],
   relays: ["relay-one"],
+  title: "Listing 1",
   nip99: {
     identifier: "listing-1",
-    title: "Listing 1",
     status: "active",
   },
 });

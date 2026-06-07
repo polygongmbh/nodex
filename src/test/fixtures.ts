@@ -140,13 +140,15 @@ export function makeComment(overrides: BaseOverrides = {}): CommentPost {
 }
 
 export function makeListing(
-  overrides: BaseOverrides & { nip99?: Nip99Metadata } = {}
+  overrides: BaseOverrides & { nip99?: Nip99Metadata; title?: string; summary?: string } = {}
 ): ListingPost {
-  const { nip99, ...rest } = overrides;
+  const { nip99, title, summary, ...rest } = overrides;
   const base = buildBase(rest);
   return {
     ...base,
     kind: NostrEventKind.ClassifiedListing,
-    nip99: nip99 ?? { identifier: base.id, title: base.content, status: "active" },
+    title,
+    summary,
+    nip99: nip99 ?? { identifier: base.id, status: "active" },
   };
 }
