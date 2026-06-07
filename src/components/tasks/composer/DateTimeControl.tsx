@@ -15,7 +15,7 @@ export interface DateTimeControlProps {
   clearLabel: string;
   clearTitle?: string;
   timeLabel?: string;
-  popoverContentRef?: RefObject<HTMLDivElement>;
+  popoverContentRef?: RefObject<HTMLDivElement | null>;
   buttonClassName?: string;
   leading?: ReactNode;
   minDate?: Date;
