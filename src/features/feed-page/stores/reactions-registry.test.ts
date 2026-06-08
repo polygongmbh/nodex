@@ -4,6 +4,7 @@ import {
   __resetReactionsRegistryForTests,
   bootstrapReactions,
   getReactionsForTarget,
+  getReactorsForTarget,
   mergeReactionEvents,
   setReactionsViewerPubkey,
   useReactionsFor,
@@ -135,6 +136,19 @@ describe("reactions-registry", () => {
     expect(b.result.current).toBeUndefined();
   });
 
+  it("keeps one reaction per (post, reactor): a second emoji overwrites the first", () => {
+    const { result } = renderHook(() => useReactionsFor("task-a"));
+    act(() => {
+      mergeReactionEvents([reaction("r1", "alice", "task-a", "👍")]);
+    });
+    expect(result.current?.totals).toEqual({ "👍": 1 });
+    act(() => {
+      mergeReactionEvents([reaction("r2", "alice", "task-a", "❤️")]);
+    });
+    expect(result.current?.totals).toEqual({ "❤️": 1 });
+    expect(getReactorsForTarget("task-a")).toEqual({ "❤️": ["alice"] });
+  });
+
   describe("getReactionsForTarget", () => {
     it("returns the same snapshot as useReactionsFor outside a render path", () => {
       mergeReactionEvents([reaction("r1", "alice", "task-a")]);
@@ -145,6 +159,25 @@ describe("reactions-registry", () => {
       mergeReactionEvents([reaction("r1", "alice", "task-a")]);
       expect(getReactionsForTarget("task-b")).toBeUndefined();
       expect(getReactionsForTarget(undefined)).toBeUndefined();
+    });
+  });
+
+  describe("getReactorsForTarget", () => {
+    it("groups reactor pubkeys per emoji", () => {
+      mergeReactionEvents([
+        reaction("r1", "alice", "task-a", "👍"),
+        reaction("r2", "bob", "task-a", "👍"),
+        reaction("r3", "carol", "task-a", "❤️"),
+      ]);
+      const reactors = getReactorsForTarget("task-a");
+      expect(new Set(reactors["👍"])).toEqual(new Set(["alice", "bob"]));
+      expect(reactors["❤️"]).toEqual(["carol"]);
+    });
+
+    it("returns an empty object for an unknown target or empty id", () => {
+      mergeReactionEvents([reaction("r1", "alice", "task-a")]);
+      expect(getReactorsForTarget("task-b")).toEqual({});
+      expect(getReactorsForTarget(undefined)).toEqual({});
     });
   });
 });
