@@ -117,7 +117,7 @@ const POST_TYPE_ICONS: Record<PostType, React.ReactNode> = {
 };
 const TITLED_POST_TITLE_MAX_LENGTH = 80;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
-const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
+const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.3;
 function normalizeTitledPostText(value: string): string {
   return stripStandaloneMentionsAndHashtags(value)
     .replace(/\s+/g, " ")
@@ -1877,7 +1877,7 @@ export function TaskComposer({
         <div
           ref={attachmentsRef}
           className={cn(
-            "order-2 space-y-2 rounded-xl",
+            "order-2 space-y-2 rounded-xl max-h-[25vh] overflow-y-auto",
             highlightedTarget === "attachments" && "ring-2 ring-amber-400/80 ring-offset-2 ring-offset-background"
           )}
         >

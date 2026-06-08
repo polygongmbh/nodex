@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- The composer's post button no longer disappears when you stack attachments and a long body. The textarea now caps at 30% of viewport height (was 50%) and the attachments list caps at 25vh with internal scrolling, so the action row always stays in view on both desktop and mobile.
 - Date pickers now mark today consistently across the app with a bold day number and a foreground-colored inset ring, replacing a filled accent background that visually competed with the selection. All popover calendars (composer, task metadata editor, mobile inline picker) also cap to 5 week rows for a stable popover height.
 
 - See who reacted to a post: hover a reaction chip (or long-press it on mobile) to reveal a compact popup listing the reactors for each emoji.

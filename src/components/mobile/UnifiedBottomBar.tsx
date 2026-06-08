@@ -89,7 +89,7 @@ type SelectorType = "relay" | "channel" | "person" | "date" | null;
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 const NIP99_TITLE_MAX_LENGTH = 80;
-const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
+const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.3;
 
 function normalizeListingTextFromContent(content: string): string {
   return content
@@ -1629,7 +1629,7 @@ export function UnifiedBottomBar({
         <div
           ref={attachmentsRef}
           className={cn(
-            "px-3 pb-2 space-y-1.5 rounded-xl",
+            "px-3 pb-2 space-y-1.5 rounded-xl max-h-[25vh] overflow-y-auto",
             highlightedTarget === "attachments" && "ring-2 ring-amber-400/80 ring-offset-2 ring-offset-background"
           )}
         >

@@ -266,7 +266,7 @@ describe("UnifiedBottomBar auth gating", () => {
     });
   });
 
-  it("grows the mobile compose box with content until half the viewport height", () => {
+  it("grows the mobile compose box with content until 30% of viewport height", () => {
     const originalInnerHeight = window.innerHeight;
     Object.defineProperty(window, "innerHeight", {
       configurable: true,
@@ -291,8 +291,8 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.change(field, { target: { value: "line 1\nline 2\nline 3\nline 4\nline 5\nline 6" } });
 
-    expect(field.style.height).toBe("400px");
-    expect(field.style.maxHeight).toBe("400px");
+    expect(field.style.height).toBe("240px");
+    expect(field.style.maxHeight).toBe("240px");
     expect(field.style.overflowY).toBe("auto");
 
     Object.defineProperty(window, "innerHeight", {
