@@ -11,9 +11,10 @@ import { OnboardingController } from "@/components/onboarding/OnboardingControll
 import { WelcomeController } from "@/components/welcome/WelcomeController";
 import { NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import {
-  mergeReactionEvents,
-  setReactionsViewerPubkey,
-} from "@/features/feed-page/stores/reactions-registry";
+  REACTION_INGEST_KINDS,
+  handleReactionEvent,
+  useReactionViewerSync,
+} from "@/features/feed-page/controllers/reaction-ingest";
 import { ingestKind0Event } from "@/infrastructure/nostr/people-from-kind0";
 import { ingestPresenceEvent } from "@/lib/presence-status";
 import { ingestPostEvent } from "@/infrastructure/nostr/post-event-ingest";
@@ -29,7 +30,6 @@ import {
   notifyPermalinkCopied,
   notifyPermalinkCopyFailed,
 } from "@/lib/notifications";
-import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 import { useTaskPublishControls } from "@/features/feed-page/controllers/use-task-publish-controls";
 import { useTaskStatusController } from "@/features/feed-page/controllers/use-task-status-controller";
 import { useKind0People } from "@/infrastructure/nostr/use-kind0-people";
@@ -116,20 +116,22 @@ function FeedIndexContent() {
 
   const subscribedKinds = useMemo<NostrEventKind[]>(
     () => [
-      NostrEventKind.TextNote,
-      NostrEventKind.Task,
-      NostrEventKind.Metadata,
-      NostrEventKind.GitStatusOpen,
-      NostrEventKind.GitStatusApplied,
-      NostrEventKind.GitStatusClosed,
-      NostrEventKind.GitStatusDraft,
-      NostrEventKind.Procedure,
-      NostrEventKind.ClassifiedListing,
-      NostrEventKind.CalendarDateBased,
-      NostrEventKind.CalendarTimeBased,
-      NostrEventKind.UserStatus,
-      NostrEventKind.Reaction,
-      NostrEventKind.EventDeletion,
+      ...new Set<NostrEventKind>([
+        NostrEventKind.TextNote,
+        NostrEventKind.Task,
+        NostrEventKind.Metadata,
+        NostrEventKind.GitStatusOpen,
+        NostrEventKind.GitStatusApplied,
+        NostrEventKind.GitStatusClosed,
+        NostrEventKind.GitStatusDraft,
+        NostrEventKind.Procedure,
+        NostrEventKind.ClassifiedListing,
+        NostrEventKind.CalendarDateBased,
+        NostrEventKind.CalendarTimeBased,
+        NostrEventKind.UserStatus,
+        NostrEventKind.EventDeletion,
+        ...REACTION_INGEST_KINDS,
+      ]),
     ],
     []
   );
@@ -138,13 +140,13 @@ function FeedIndexContent() {
   const dispatchIncomingEvent = useCallback(
     (event: NostrEventWithRelay) => {
       if (event.kind === NostrEventKind.Reaction) {
-        mergeReactionEvents([event]);
+        handleReactionEvent(event);
         return;
       }
       if (event.kind === NostrEventKind.EventDeletion) {
         // NIP-09 deletions can target a reaction OR a task; both stores get to
         // see them and decide whether the targeted id is theirs.
-        mergeReactionEvents([event]);
+        handleReactionEvent(event);
         ingestPostEvent(event);
         return;
       }
@@ -172,9 +174,7 @@ function FeedIndexContent() {
   useEffect(() => {
     useHydrationStatusStore.getState().setIsHydrating(isHydrating);
   }, [isHydrating]);
-  useEffect(() => {
-    setReactionsViewerPubkey(user?.pubkey);
-  }, [user?.pubkey]);
+  useReactionViewerSync(user?.pubkey);
 
   const {
     people,
@@ -420,13 +420,6 @@ function FeedIndexContent() {
     onTogglePriorityFilter: handleTogglePriorityFilterShortcut,
     onToggleCompactView: handleToggleCompactTaskCards,
   });
-
-  const { react: publishReaction, ensureReactionsFetched } = useReactions();
-
-  useEffect(() => {
-    if (!focusedTaskId) return;
-    void ensureReactionsFetched(focusedTaskId);
-  }, [focusedTaskId, ensureReactionsFetched]);
 
   const currentFilterSnapshot = useMemo<FilterSnapshot>(
     () =>

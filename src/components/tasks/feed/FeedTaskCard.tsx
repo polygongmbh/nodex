@@ -1,4 +1,4 @@
-import { memo, useMemo, type ReactNode } from "react";
+import { memo, useEffect, useMemo, type ReactNode } from "react";
 import { Calendar as CalendarIcon, MessageSquare, Package } from "lucide-react";
 import { isCommentKind, isListingKind } from "@/domain/content/task-kind";
 import { getTaskStateToneClass } from "@/components/tasks/task-state-ui";
@@ -90,8 +90,11 @@ export const FeedTaskCard = memo(function FeedTaskCard({
 }: FeedTaskCardProps) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { react: publishReaction, unreact: publishUnreact } = useReactions();
+  const { react: publishReaction, unreact: publishUnreact, ensureReactionsFetched } = useReactions();
   const reactions = useReactionsFor(task.id);
+  useEffect(() => {
+    void ensureReactionsFetched(task.id);
+  }, [task.id, ensureReactionsFetched]);
   const taskCommands = useFeedTaskCommands();
   const hasAnyReaction = Object.keys(reactions?.totals ?? {}).length > 0;
   const handleMenuReact = (emoji: string) => {

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { NDKKind } from "@nostr-dev-kit/ndk";
 import { toast } from "sonner";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
@@ -17,6 +17,11 @@ import {
 const FETCH_TTL_MS = 60_000;
 const FETCH_LIMIT = 200;
 
+// Module-scoped so the 60s dedup is global per target id. Each visible card
+// mounts its own useReactions() and ensures its own reactions; a per-hook map
+// would let virtualized remounts refetch-storm the same targets.
+const lastFetchAtByTargetId = new Map<string, number>();
+
 interface ReactionTarget {
   id: string;
   kind: number;
@@ -25,7 +30,6 @@ interface ReactionTarget {
 
 export function useReactions() {
   const { ndk, user, publishEvent } = useNDK();
-  const lastFetchAtByTargetId = useRef(new Map<string, number>());
 
   const react = useCallback(async (
     target: ReactionTarget,
@@ -57,9 +61,9 @@ export function useReactions() {
 
   const ensureFetched = useCallback(async (targetEventId: string): Promise<void> => {
     if (!ndk || !targetEventId) return;
-    const lastAt = lastFetchAtByTargetId.current.get(targetEventId);
+    const lastAt = lastFetchAtByTargetId.get(targetEventId);
     if (lastAt && Date.now() - lastAt < FETCH_TTL_MS) return;
-    lastFetchAtByTargetId.current.set(targetEventId, Date.now());
+    lastFetchAtByTargetId.set(targetEventId, Date.now());
     try {
       const events = await ndk.fetchEvents(
         { kinds: [NDKKind.Reaction], "#e": [targetEventId], limit: FETCH_LIMIT },
