@@ -69,9 +69,6 @@ export function DateTimeControl({
             disabled={minDate ? { before: minDate } : undefined}
             initialFocus
             className="p-3 pointer-events-auto"
-            classNames={{
-              today: "[&>button]:font-bold [&>button]:ring-1 [&>button]:ring-accent-foreground/60 [&>button]:ring-inset",
-            }}
           />
         </PopoverContent>
       </Popover>

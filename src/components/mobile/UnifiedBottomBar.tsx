@@ -1435,10 +1435,7 @@ export function UnifiedBottomBar({
                         month={month}
                         fixedWeeks
                         hideNavigation
-                        className="pointer-events-auto !p-0 [&_tbody_tr:nth-child(n+6)]:hidden"
-                        classNames={{
-                          nav: "hidden",
-                        }}
+                        className="pointer-events-auto !p-0"
                       />
                     </div>
                   );

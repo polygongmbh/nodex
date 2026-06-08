@@ -72,7 +72,7 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       locale={resolvedLocale}
-      className={cn("p-3", className)}
+      className={cn("p-3 [&_tbody_tr:nth-child(n+6)]:hidden", className)}
       classNames={{
         months: "flex flex-col sm:flex-row gap-4",
         month: "flex flex-col gap-2",
@@ -90,7 +90,7 @@ function Calendar({
         ),
         selected:
           "[&>button]:bg-primary [&>button]:text-primary-foreground [&>button:hover]:bg-primary [&>button:focus]:bg-primary",
-        today: "[&>button]:bg-accent [&>button]:text-accent-foreground",
+        today: "[&>button]:font-bold [&>button]:ring-1 [&>button]:ring-foreground [&>button]:ring-inset",
         outside: "text-muted-foreground opacity-50",
         disabled: "text-muted-foreground opacity-50",
         hidden: "invisible",

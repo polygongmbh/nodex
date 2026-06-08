@@ -114,7 +114,7 @@ export function TaskDueDateEditorForm({
         autoFocus
         showOutsideDays
         fixedWeeks
-        className="p-0 pointer-events-auto [&_tbody_tr:nth-child(n+6)]:hidden"
+        className="p-0 pointer-events-auto"
       />
       <div className="flex items-center gap-2">
         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
