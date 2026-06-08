@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
-import { getCompactPersonLabel } from "@/types/person";
+import { formatAuthorMetaParts } from "@/types/person";
 
 interface ReactionReactorListProps {
   // Sorted `[emoji, reactor pubkeys[]]`, mirroring the chip order.
@@ -36,11 +36,14 @@ export function ReactionReactorList({ entries, targetId }: ReactionReactorListPr
           <span className="min-w-0 leading-5 text-muted-foreground">
             {pubkeys.map((pubkey) => {
               const profile = getProfile(pubkey);
-              const label = getCompactPersonLabel({
+              // formatAuthorMetaParts disambiguates by shape — plain displayName,
+              // "@name" when only a username is set, short npub when nothing is.
+              const label = formatAuthorMetaParts({
                 pubkey,
                 displayName: profile?.displayName ?? "",
                 name: profile?.name ?? "",
-              });
+                nip05: profile?.nip05 ?? "",
+              }).primary;
               return (
                 <span key={pubkey} className="mr-1.5 inline-block whitespace-nowrap">
                   {label}

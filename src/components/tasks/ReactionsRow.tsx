@@ -179,7 +179,6 @@ export function ReactionsRow({ targetId, reactions, onReact, onUnreact, classNam
               "border-border/60 bg-muted/40 text-muted-foreground hover:bg-muted",
               isMine && "border-primary/40 bg-primary/10 text-foreground",
             )}
-            title={isMine ? `Remove your ${emoji} reaction` : `React with ${emoji}`}
             data-testid={`reaction-chip-${targetId}-${emoji}`}
           >
             <span>{emoji}</span>
