@@ -43,6 +43,7 @@ export interface UseFeedSidebarCommandsControllerResult {
   commands: FeedSidebarCommands;
   channelsWithState: Channel[];
   peopleWithState: SidebarPerson[];
+  pinnedPersonIds: string[];
 }
 
 export function useFeedSidebarCommandsController({
@@ -86,6 +87,7 @@ export function useFeedSidebarCommandsController({
 
   const {
     peopleWithState,
+    pinnedPersonIds,
     handlePersonPin,
     handlePersonUnpin,
   } = usePinnedSidebarPeople({
@@ -139,5 +141,5 @@ export function useFeedSidebarCommandsController({
     ]
   );
 
-  return { commands, channelsWithState, peopleWithState };
+  return { commands, channelsWithState, peopleWithState, pinnedPersonIds };
 }

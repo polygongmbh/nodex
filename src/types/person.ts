@@ -17,12 +17,20 @@ export interface PersonPresenceSnapshot {
   context?: { view?: string; taskId?: string | null };
 }
 
-export interface SidebarPerson extends SelectablePerson {
-  pinIndex?: number;
-  presence?: PersonPresenceSnapshot;
-}
+// SidebarPerson used to carry pinIndex + presence snapshots; both moved off
+// the type — pin order is read from the pinning store via dedicated props,
+// presence from usePersonPresence at the row level. The alias is here so
+// existing imports keep working until call sites switch to SelectablePerson.
+export type SidebarPerson = SelectablePerson;
 
-type AuthorMetaLabelInput = Pick<Person, "pubkey" | "displayName" | "name" | "nip05">;
+// Loose shape so a NostrProfile (`displayName`/`name` are optional) is accepted
+// directly without converting each undefined to "" at every call site.
+interface AuthorMetaLabelInput {
+  pubkey: string;
+  displayName?: string;
+  name?: string;
+  nip05?: string;
+}
 
 interface AuthorMetaLabelParts {
   primary: string;
@@ -101,7 +109,7 @@ export function formatAuthorMetaParts({
   name,
   nip05,
 }: AuthorMetaLabelInput): AuthorMetaLabelParts {
-  const normalizedName = displayName.trim();
+  const normalizedName = (displayName ?? "").trim();
   const normalizedUsername = (name || "").trim();
   const normalizedNip05 = (nip05 || "").trim();
   const hasDisplayName = normalizedName.length > 0;

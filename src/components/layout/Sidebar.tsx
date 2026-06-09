@@ -70,6 +70,7 @@ export interface SidebarProps {
   channelMatchMode?: ChannelMatchMode;
   people: SidebarPerson[];
   collapsedPreviewPeople?: SidebarPerson[];
+  pinnedPersonIds?: string[];
   nostrRelays: NDKRelayStatus[];
   isFocused?: boolean;
   quickFilters?: QuickFilterState;
@@ -84,12 +85,20 @@ export function Sidebar({
   channelMatchMode = "and",
   people,
   collapsedPreviewPeople,
+  pinnedPersonIds = [],
   nostrRelays,
   isFocused = false,
   quickFilters,
   savedFilterConfigurations = [],
   activeSavedFilterConfigurationId = null,
 }: SidebarProps) {
+  // Membership-only check; pin order is already baked into `people`.
+  const pinnedPersonIdSet = useMemo(
+    () => new Set(pinnedPersonIds.map((id) => id.trim().toLowerCase())),
+    [pinnedPersonIds],
+  );
+  const isPersonPinned = (pubkey: string) =>
+    pinnedPersonIdSet.has(pubkey.trim().toLowerCase());
   const { t } = useTranslation("shell");
   const { isCore } = useCoreChannels();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -152,12 +161,12 @@ export function Sidebar({
         buildCollapsedPreviewItems({
           items: collapsedPreviewPeople ?? people,
           isSelected: (person) => person.isSelected,
-          isPinned: (person) => person.pinIndex !== undefined,
+          isPinned: (person) => pinnedPersonIdSet.has(person.pubkey.trim().toLowerCase()),
           maxItems: collapsedPreviewLimit,
           alwaysIncludePinned: true,
         }).map((person) => person.pubkey)
       ),
-    [collapsedPreviewLimit, collapsedPreviewPeople, people]
+    [collapsedPreviewLimit, collapsedPreviewPeople, people, pinnedPersonIdSet]
   );
 
   // Flat list of all focusable items — computed once per relevant input
@@ -438,7 +447,7 @@ export function Sidebar({
             <PersonItem
               key={person.pubkey}
               person={person}
-              isPinned={person.pinIndex !== undefined}
+              isPinned={isPersonPinned(person.pubkey)}
               isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.pubkey}
               className={!expandedSections.people && !collapsedPreviewPersonIds.has(person.pubkey) ? "hidden" : undefined}
             />

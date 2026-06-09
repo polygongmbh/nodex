@@ -29,7 +29,7 @@ export function PersonItem({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const personName = person.pubkey === "me" ? t("sidebar.filters.me") : person.displayName;
   const sharedPresence = usePersonPresence(person.pubkey);
-  const onlineStatus = sharedPresence?.state ?? person.presence?.state ?? "offline";
+  const onlineStatus = sharedPresence?.state ?? "offline";
   const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-warning" : null;
   const handlePersonShortcut = (event: MouseEvent, fallback: "toggle" | "exclusive") => {
     const shortcutIntent = getPersonShortcutIntent(event);

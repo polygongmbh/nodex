@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { Post } from "@/types";
-import type { SelectablePerson, SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 function normalizePersonId(id: string): string {
@@ -16,7 +16,10 @@ export interface UsePinnedSidebarPeopleOptions {
 
 export interface UsePinnedSidebarPeopleResult {
   pinnedPersonIds: string[];
-  peopleWithState: SidebarPerson[];
+  // Sorted with pinned pubkeys first (in pin order), then the rest by their
+  // input ordering. Pinned membership is exposed via pinnedPersonIds, not
+  // attached as a per-row field.
+  peopleWithState: SelectablePerson[];
   handlePersonPin: (id: string) => void;
   handlePersonUnpin: (id: string) => void;
 }
@@ -55,7 +58,7 @@ export function usePinnedSidebarPeople({
     normalizeEntityId: normalizePersonId,
   });
 
-  const peopleWithState: SidebarPerson[] = useMemo(() => {
+  const peopleWithState: SelectablePerson[] = useMemo(() => {
     const pinnedIndexMap = new Map(pinnedPersonIds.map((id, idx) => [normalizePersonId(id), idx]));
     const existingIds = new Set(people.map((person) => normalizePersonId(person.pubkey)));
     const stubs: SelectablePerson[] = pinnedPersonIds
@@ -67,12 +70,11 @@ export function usePinnedSidebarPeople({
         isSelected: false,
       }));
 
-    return [...stubs, ...people]
-      .map((person) => ({
-        ...person,
-        pinIndex: pinnedIndexMap.get(normalizePersonId(person.pubkey)),
-      }))
-      .sort((a, b) => (a.pinIndex ?? Infinity) - (b.pinIndex ?? Infinity));
+    return [...stubs, ...people].sort((a, b) => {
+      const aIdx = pinnedIndexMap.get(normalizePersonId(a.pubkey)) ?? Infinity;
+      const bIdx = pinnedIndexMap.get(normalizePersonId(b.pubkey)) ?? Infinity;
+      return aIdx - bIdx;
+    });
   }, [people, pinnedPersonIds]);
 
   return { pinnedPersonIds, peopleWithState, handlePersonPin, handlePersonUnpin };

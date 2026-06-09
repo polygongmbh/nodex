@@ -1,6 +1,6 @@
 import type { Post } from "@/types";
-import type { SelectablePerson, SidebarPerson } from "@/types/person";
-import { derivePersonPresenceSnapshot, type LatestPresenceSnapshot } from "@/lib/presence-status";
+import type { SelectablePerson } from "@/types/person";
+import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 
 const DEFAULT_MIN_POSTS = 3;
 
@@ -20,7 +20,7 @@ export function deriveSidebarPeople(
   latestPresenceByAuthorId: Map<string, LatestPresenceSnapshot> = new Map(),
   now: Date = new Date(),
   options: DeriveSidebarPeopleOptions = {}
-): SidebarPerson[] {
+): SelectablePerson[] {
   const minPosts = options.minPosts ?? DEFAULT_MIN_POSTS;
   const personalizeScores = options.personalizeScores ?? new Map();
   const statsByAuthorId = new Map<string, SidebarPersonStats>();
@@ -56,12 +56,11 @@ export function deriveSidebarPeople(
       }
       const personalScore = personalizeScores.get(normalizedId) || 0;
 
+      // Presence influences sort order (an "active" snapshot keeps a person
+      // near the top even if their last post is older), but it is no longer
+      // attached to the returned record — the row component reads presence
+      // live via usePersonPresence(pubkey).
       const latestPresence = latestPresenceByAuthorId.get(normalizedId);
-      const presence = derivePersonPresenceSnapshot(
-        latestPresence,
-        stats.latestTimestampMs,
-        now,
-      );
       const latestPresenceTimestampMs =
         latestPresence?.state === "active" ? latestPresence.reportedAtMs : undefined;
       const latestActivityTimestampMs = Math.max(
@@ -70,7 +69,7 @@ export function deriveSidebarPeople(
       );
 
       return {
-        person: { ...person, presence },
+        person,
         latestTimestampMs: latestActivityTimestampMs,
         personalScore,
       };

@@ -11,6 +11,7 @@ export interface FeedSidebarState {
   channelMatchMode: ChannelMatchMode;
   people: SidebarPerson[];
   collapsedPreviewPeople?: SidebarPerson[];
+  pinnedPersonIds: string[];
   nostrRelays: NDKRelayStatus[];
   isFocused: boolean;
   quickFilters?: QuickFilterState;
@@ -25,6 +26,7 @@ const defaultSidebarState: FeedSidebarState = {
   channelMatchMode: "and",
   people: [],
   collapsedPreviewPeople: undefined,
+  pinnedPersonIds: [],
   nostrRelays: [],
   isFocused: false,
   quickFilters: undefined,

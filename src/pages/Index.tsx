@@ -450,6 +450,7 @@ function FeedIndexContent() {
     commands: sidebarCommands,
     channelsWithState,
     peopleWithState,
+    pinnedPersonIds,
   } = useFeedSidebarCommandsController({
     userPubkey: user?.pubkey,
     effectiveActiveRelayIds,
@@ -797,6 +798,7 @@ function FeedIndexContent() {
       channelMatchMode,
       people: peopleWithState,
       collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people as typeof peopleWithState,
+      pinnedPersonIds,
       nostrRelays,
       isFocused: isSidebarFocused,
       quickFilters,
@@ -812,6 +814,7 @@ function FeedIndexContent() {
       isSidebarFocused,
       nostrRelays,
       peopleWithState,
+      pinnedPersonIds,
       quickFilters,
       relaysWithActiveState,
       savedFilterController,
