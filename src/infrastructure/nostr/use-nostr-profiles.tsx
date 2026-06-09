@@ -23,7 +23,7 @@ function normalizePubkey(pubkey: string): string {
   return pubkey.trim().toLowerCase();
 }
 
-function parseEventToProfile(event: NostrEvent): NostrProfile {
+export function parseEventToProfile(event: NostrEvent): NostrProfile {
   let profile: NDKUserProfile;
   try {
     // NDK's parser expects an NDKEvent; ours are plain NostrEvents.

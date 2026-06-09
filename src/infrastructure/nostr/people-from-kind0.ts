@@ -2,7 +2,7 @@ import type { SelectablePerson } from "@/types/person";
 import { normalizeRelayUrl, normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind, type NostrEvent, type NostrEventWithRelay } from "@/lib/nostr/types";
-import { parseKind0Content } from "./profile-metadata";
+import { parseEventToProfile } from "./use-nostr-profiles";
 import { registerMemdiagStore } from "@/lib/memdiag";
 import {
   isBatchingNotifications,
@@ -421,18 +421,18 @@ export function derivePeopleFromKind0Events(
 
   const people = normalizedVisiblePubkeys.map((pubkey) => {
     const event = resolveKind0EventForPubkey(pubkey, selectedLatestByPubkey, fallbackLatestByPubkey);
-    const parsed = event ? parseKind0Content(event.content) : {};
+    const parsed = event ? parseEventToProfile(event) : undefined;
     const fallbackPubkeyLabel = formatUserFacingPubkey(pubkey);
-    const name = (parsed.name || parsed.displayName || fallbackPubkeyLabel).trim();
-    const displayName = (parsed.displayName || parsed.name || fallbackPubkeyLabel).trim();
+    const name = (parsed?.name || parsed?.displayName || fallbackPubkeyLabel).trim();
+    const displayName = (parsed?.displayName || parsed?.name || fallbackPubkeyLabel).trim();
 
     return {
       pubkey,
       name,
       displayName,
-      nip05: parsed.nip05?.trim().toLowerCase(),
-      about: parsed.about?.trim(),
-      avatar: parsed.picture,
+      nip05: parsed?.nip05?.trim().toLowerCase(),
+      about: parsed?.about?.trim(),
+      avatar: parsed?.picture,
       isSelected: previousSelection.get(pubkey) || false,
     } satisfies SelectablePerson;
   });
