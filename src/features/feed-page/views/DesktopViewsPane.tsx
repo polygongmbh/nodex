@@ -127,7 +127,9 @@ export function DesktopViewsPane({
     <div className="flex h-full min-h-0 flex-col">
       <TaskViewStatusRow
         posts={posts}
-        focusedTaskId={focusedTaskId}
+        // In the home view the sidebar's Projects section indicates the
+        // current position instead of the breadcrumb bar.
+        focusedTaskId={currentView === "home" ? null : focusedTaskId}
         isHydrating={isHydrating}
       />
       <div className="relative min-h-0 flex-1 overflow-hidden">

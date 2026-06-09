@@ -61,6 +61,7 @@ export function Sidebar({
   savedFilterConfigurations = [],
   activeSavedFilterConfigurationId = null,
   posts = [],
+  focusedTaskId = null,
 }: SidebarProps) {
   // Membership-only check; pin order is already baked into `people`.
   const pinnedPersonIdSet = useMemo(
@@ -198,6 +199,7 @@ export function Sidebar({
         </SidebarInset>
         <SidebarProjectsSection
           posts={posts}
+          focusedTaskId={focusedTaskId}
           isExpanded={expandedSections.projects}
           onToggle={() => toggleSection("projects")}
         />

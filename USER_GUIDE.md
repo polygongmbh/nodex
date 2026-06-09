@@ -38,6 +38,7 @@
 ## Sidebar Projects
 - The desktop sidebar's Projects section (above Spaces) lists active top-level tasks that still have open subtasks, with active subprojects (active subtasks that again have open subtasks) indented beneath them.
 - Clicking a project focuses it, the same as clicking the task elsewhere. The section hides itself when nothing qualifies.
+- In the Home view there is no breadcrumb bar; instead the Projects section highlights the project (and subproject) chain containing the post you are focused in.
 
 ## Channel and Tag Filtering
 ### Desktop sidebar channels

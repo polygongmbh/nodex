@@ -15,12 +15,20 @@ vi.mock("@/components/tasks/TaskTree", () => ({
   TaskTree: () => <div data-testid="tree-view" />,
 }));
 
+const statusRowProps = vi.fn();
 vi.mock("@/components/tasks/TaskViewStatusRow", () => ({
-  TaskViewStatusRow: () => <div data-testid="status-row" />,
+  TaskViewStatusRow: (props: Record<string, unknown>) => {
+    statusRowProps(props);
+    return <div data-testid="status-row" />;
+  },
 }));
 
 vi.mock("@/components/tasks/FeedView", () => ({
   FeedView: () => <div data-testid="feed-view" />,
+}));
+
+vi.mock("@/components/tasks/home/HomeView", () => ({
+  HomeView: () => <div data-testid="home-view" />,
 }));
 
 vi.mock("@/components/tasks/KanbanView", () => ({
@@ -37,6 +45,7 @@ vi.mock("@/components/tasks/ListView", () => ({
 
 afterEach(() => {
   __resetPostsStoreForTests();
+  statusRowProps.mockClear();
 });
 
 function renderPane(
@@ -138,6 +147,28 @@ describe("DesktopViewsPane overlay", () => {
 
     await waitFor(() => expect(screen.getByTestId("list-view")).toBeInTheDocument());
     expect(screen.getByRole("status")).toBeInTheDocument();
+  });
+
+  it("suppresses the breadcrumb in the home view in favor of the sidebar projects indicator", async () => {
+    const task = makeTask({ id: "home-focused", author, content: "Focused #general" });
+
+    renderPane("home", { allTasks: [task], focusedTaskId: "home-focused" });
+
+    await waitFor(() => expect(screen.getByTestId("home-view")).toBeInTheDocument());
+    expect(statusRowProps).toHaveBeenCalledWith(
+      expect.objectContaining({ focusedTaskId: null })
+    );
+  });
+
+  it("keeps the breadcrumb for a focused task outside the home view", async () => {
+    const task = makeTask({ id: "feed-focused", author, content: "Focused #general" });
+
+    renderPane("feed", { allTasks: [task], focusedTaskId: "feed-focused" });
+
+    await waitFor(() => expect(screen.getByTestId("feed-view")).toBeInTheDocument());
+    expect(statusRowProps).toHaveBeenCalledWith(
+      expect.objectContaining({ focusedTaskId: "feed-focused" })
+    );
   });
 
   it("does not show the shared overlay for a focused leaf task in timeline view", async () => {

@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarProjectsSection } from "./SidebarProjectsSection";
+import { FeedViewStateProvider } from "@/features/feed-page/views/feed-view-state-context";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { makeTask } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
@@ -13,9 +15,30 @@ beforeEach(() => {
   dispatchFeedInteraction.mockClear();
 });
 
-function renderSection(posts: Parameters<typeof SidebarProjectsSection>[0]["posts"]) {
+function renderSection(
+  posts: Parameters<typeof SidebarProjectsSection>[0]["posts"],
+  { currentView = "feed", focusedTaskId = null }: { currentView?: ViewType; focusedTaskId?: string | null } = {}
+) {
   return render(
-    <SidebarProjectsSection posts={posts} isExpanded onToggle={() => {}} />
+    <FeedViewStateProvider
+      value={{
+        currentView,
+        displayDepthMode: "leaves",
+        isSidebarFocused: false,
+        isOnboardingOpen: false,
+        activeOnboardingStepId: null,
+        isManageRouteActive: false,
+        canCreateContent: true,
+        profileCompletionPromptSignal: 0,
+      }}
+    >
+      <SidebarProjectsSection
+        posts={posts}
+        focusedTaskId={focusedTaskId}
+        isExpanded
+        onToggle={() => {}}
+      />
+    </FeedViewStateProvider>
   );
 }
 
@@ -51,5 +74,32 @@ describe("SidebarProjectsSection", () => {
     const { container } = renderSection([makeTask({ id: "leaf-only", state: "active" })]);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("highlights the chain containing the focused post in the home view", () => {
+    renderSection([project, subproject, subprojectChild], {
+      currentView: "home",
+      focusedTaskId: "leaf",
+    });
+
+    expect(screen.getByText("Release work").closest("button")).toHaveAttribute(
+      "data-current-position",
+      "true"
+    );
+    expect(screen.getByText("Docs overhaul").closest("button")).toHaveAttribute(
+      "data-current-position",
+      "true"
+    );
+  });
+
+  it("does not mark the current position outside the home view", () => {
+    renderSection([project, subproject, subprojectChild], {
+      currentView: "feed",
+      focusedTaskId: "leaf",
+    });
+
+    expect(screen.getByText("Release work").closest("button")).not.toHaveAttribute(
+      "data-current-position"
+    );
   });
 });
