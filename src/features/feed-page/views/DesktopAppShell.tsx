@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { SidebarHeader } from "@/components/layout/Sidebar";
+import { SidebarHeader } from "@/components/layout/sidebar/SidebarHeader";
 import { FailedPublishQueueBannerContainer } from "./FailedPublishQueueBannerContainer";
 import { DesktopSearchDock } from "@/components/tasks/DesktopSearchDock";
 import { ViewSwitcher } from "@/components/tasks/ViewSwitcher";
