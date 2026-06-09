@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import type { Channel, QuickFilterState, Relay } from "@/types";
-import type { SelectablePerson, SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 export interface FeedSurfaceState {
   relays: Relay[];
@@ -9,7 +9,7 @@ export interface FeedSurfaceState {
   visibleChannels?: Channel[];
   primaryChannels?: Channel[];
   people: SelectablePerson[];
-  visiblePeople?: SidebarPerson[];
+  visiblePeople?: SelectablePerson[];
   mentionablePeople?: SelectablePerson[];
   quickFilters: QuickFilterState;
 }

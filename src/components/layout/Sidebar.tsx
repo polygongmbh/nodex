@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
 import {   Relay, Channel, ChannelMatchMode, QuickFilterState, SavedFilterConfiguration } from "@/types";
-import type { SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
@@ -68,8 +68,8 @@ export interface SidebarProps {
   channels: Channel[];
   collapsedPreviewChannels?: Channel[];
   channelMatchMode?: ChannelMatchMode;
-  people: SidebarPerson[];
-  collapsedPreviewPeople?: SidebarPerson[];
+  people: SelectablePerson[];
+  collapsedPreviewPeople?: SelectablePerson[];
   pinnedPersonIds?: string[];
   nostrRelays: NDKRelayStatus[];
   isFocused?: boolean;

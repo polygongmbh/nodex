@@ -1,7 +1,7 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
 import type { ChannelMatchMode, QuickFilterState, SavedFilterConfiguration } from "@/types";
 import type { Relay, Channel } from "@/types";
-import type { SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 
 export interface FeedSidebarState {
@@ -9,8 +9,8 @@ export interface FeedSidebarState {
   channels: Channel[];
   collapsedPreviewChannels?: Channel[];
   channelMatchMode: ChannelMatchMode;
-  people: SidebarPerson[];
-  collapsedPreviewPeople?: SidebarPerson[];
+  people: SelectablePerson[];
+  collapsedPreviewPeople?: SelectablePerson[];
   pinnedPersonIds: string[];
   nostrRelays: NDKRelayStatus[];
   isFocused: boolean;

@@ -7,7 +7,7 @@ import {
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 import type { Post } from "@/types";
-import type { SelectablePerson, SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 
 interface UseSidebarPeopleOptions {
   allTasks: Post[];
@@ -25,7 +25,7 @@ export function useSidebarPeople({
   effectiveActiveRelayIds,
   allRelayIds,
   personFrecencyState,
-}: UseSidebarPeopleOptions): SidebarPerson[] {
+}: UseSidebarPeopleOptions): SelectablePerson[] {
   const personalizeScores = useMemo(
     () => getPersonFrecencyScores(personFrecencyState),
     [personFrecencyState]

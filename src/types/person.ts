@@ -17,11 +17,6 @@ export interface PersonPresenceSnapshot {
   context?: { view?: string; taskId?: string | null };
 }
 
-// SidebarPerson used to carry pinIndex + presence snapshots; both moved off
-// the type — pin order is read from the pinning store via dedicated props,
-// presence from usePersonPresence at the row level. The alias is here so
-// existing imports keep working until call sites switch to SelectablePerson.
-export type SidebarPerson = SelectablePerson;
 
 // Loose shape so a NostrProfile (`displayName`/`name` are optional) is accepted
 // directly without converting each undefined to "" at every call site.

@@ -24,7 +24,7 @@ import {
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, QuickFilterState, Relay } from "@/types";
-import type { Person, SelectablePerson, SidebarPerson } from "@/types/person";
+import type { Person, SelectablePerson } from "@/types/person";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
@@ -35,7 +35,7 @@ interface UseChannelFilterControllerOptions {
   channels: Channel[];
   people: SelectablePerson[];
   setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
-  sidebarPeople: SidebarPerson[];
+  sidebarPeople: SelectablePerson[];
   hasLiveHydratedScope?: boolean;
   isHydrating?: boolean;
 }

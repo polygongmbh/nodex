@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import type { Channel, Post } from "@/types";
 import type { ChannelMatchMode } from "@/types";
-import type { SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import type { FeedSidebarCommands } from "./feed-sidebar-commands-context";
 import { usePinnedSidebarChannels } from "./use-pinned-sidebar-channels";
 import { usePinnedSidebarPeople } from "./use-pinned-sidebar-people";
@@ -12,7 +12,7 @@ export interface UseFeedSidebarCommandsControllerOptions {
   effectiveActiveRelayIds: Set<string>;
   sidebarChannels: Channel[];
   channelFilterStates: Map<string, Channel["filterState"]>;
-  sidebarPeople: SidebarPerson[];
+  sidebarPeople: SelectablePerson[];
   allTasks: Post[];
   // Channel filter commands
   onToggleChannel: (channelId: string) => void;
@@ -42,7 +42,7 @@ export interface UseFeedSidebarCommandsControllerOptions {
 export interface UseFeedSidebarCommandsControllerResult {
   commands: FeedSidebarCommands;
   channelsWithState: Channel[];
-  peopleWithState: SidebarPerson[];
+  peopleWithState: SelectablePerson[];
   pinnedPersonIds: string[];
 }
 

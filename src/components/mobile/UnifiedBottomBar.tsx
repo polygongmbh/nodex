@@ -3,7 +3,7 @@ import { Search, X, Hash, Radio, Users, Check, Calendar, Clock, MessageSquare, C
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, TaskCreateResult, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType, formatLocalIsoDate } from "@/types";
 import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
-import type { SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -78,7 +78,7 @@ interface UnifiedBottomBarProps {
   selectedCalendarDate?: Date | null;
   relays?: Relay[];
   channels?: Channel[];
-  people?: SidebarPerson[];
+  people?: SelectablePerson[];
   defaultContent?: string;
   canCreateContent: boolean;
   forceComposeMode?: boolean;
@@ -1198,7 +1198,7 @@ export function UnifiedBottomBar({
     captureCurrentLocation();
   };
 
-  const addMentionTagOnly = (person: SidebarPerson) => {
+  const addMentionTagOnly = (person: SelectablePerson) => {
     const normalizedPubkey = person.pubkey.trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/i.test(normalizedPubkey)) {
       return;

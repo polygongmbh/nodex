@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { SidebarFilterRow } from "./SidebarFilterRow";
 import { SidebarPinButton } from "./SidebarPinButton";
@@ -13,7 +13,7 @@ import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/componen
 import { usePersonPresence } from "@/lib/person-presence-context";
 
 interface PersonItemProps {
-  person: SidebarPerson;
+  person: SelectablePerson;
   isPinned?: boolean;
   isKeyboardFocused?: boolean;
   className?: string;

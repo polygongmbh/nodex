@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Relay, Channel } from "@/types";
-import type { SidebarPerson } from "@/types/person";
+import type { SelectablePerson } from "@/types/person";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import type { TFunction } from "i18next";
 interface MobileFiltersProps {
   relays?: Relay[];
   channels?: Channel[];
-  people?: SidebarPerson[];
+  people?: SelectablePerson[];
   profileEditorOpenSignal?: number;
 }
 

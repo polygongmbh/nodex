@@ -9,7 +9,7 @@ interface DeriveSidebarPeopleOptions {
   personalizeScores?: Map<string, number>;
 }
 
-interface SidebarPersonStats {
+interface SelectablePersonStats {
   count: number;
   latestTimestampMs: number;
 }
@@ -23,7 +23,7 @@ export function deriveSidebarPeople(
 ): SelectablePerson[] {
   const minPosts = options.minPosts ?? DEFAULT_MIN_POSTS;
   const personalizeScores = options.personalizeScores ?? new Map();
-  const statsByAuthorId = new Map<string, SidebarPersonStats>();
+  const statsByAuthorId = new Map<string, SelectablePersonStats>();
 
   for (const task of tasks) {
     const authorId = task.author?.pubkey?.trim().toLowerCase();
