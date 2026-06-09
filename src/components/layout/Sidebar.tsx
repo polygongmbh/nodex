@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Hash, Users } from "lucide-react";
-import {   Relay, Channel, ChannelMatchMode, QuickFilterState, SavedFilterConfiguration } from "@/types";
+import {   Relay, Channel, ChannelMatchMode, Post, QuickFilterState, SavedFilterConfiguration } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
 import { SidebarInset } from "./sidebar/SidebarInset";
 import { SidebarFooter } from "./sidebar/SidebarFooter";
+import { SidebarProjectsSection } from "./sidebar/SidebarProjectsSection";
 import { SidebarRelaysSection } from "./sidebar/SidebarRelaysSection";
 import { useSidebarKeyboardNav, type SidebarFocusableItem } from "./sidebar/use-sidebar-keyboard-nav";
 import { SavedFilterPresetRow } from "@/components/tasks/SavedFilterPresetRow";
@@ -20,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const DEFAULT_EXPANDED_SECTIONS = {
+  projects: true,
   feeds: true,
   channels: false,
   people: false,
@@ -40,6 +42,9 @@ export interface SidebarProps {
   quickFilters?: QuickFilterState;
   savedFilterConfigurations?: SavedFilterConfiguration[];
   activeSavedFilterConfigurationId?: string | null;
+  /** Relay-scoped posts feeding the Projects section; omitted on mobile. */
+  posts?: Post[];
+  focusedTaskId?: string | null;
 }
 
 export function Sidebar({
@@ -55,6 +60,7 @@ export function Sidebar({
   quickFilters,
   savedFilterConfigurations = [],
   activeSavedFilterConfigurationId = null,
+  posts = [],
 }: SidebarProps) {
   // Membership-only check; pin order is already baked into `people`.
   const pinnedPersonIdSet = useMemo(
@@ -190,6 +196,11 @@ export function Sidebar({
             />
           )}
         </SidebarInset>
+        <SidebarProjectsSection
+          posts={posts}
+          isExpanded={expandedSections.projects}
+          onToggle={() => toggleSection("projects")}
+        />
         <SidebarRelaysSection
           relays={relays}
           nostrRelays={nostrRelays}

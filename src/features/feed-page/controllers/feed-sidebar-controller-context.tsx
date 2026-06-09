@@ -1,5 +1,5 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
-import type { ChannelMatchMode, QuickFilterState, SavedFilterConfiguration } from "@/types";
+import type { ChannelMatchMode, Post, QuickFilterState, SavedFilterConfiguration } from "@/types";
 import type { Relay, Channel } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
@@ -17,6 +17,9 @@ export interface FeedSidebarState {
   quickFilters?: QuickFilterState;
   savedFilterConfigurations: SavedFilterConfiguration[];
   activeSavedFilterConfigurationId: string | null;
+  /** Relay-scoped posts feeding the Projects section. */
+  posts?: Post[];
+  focusedTaskId?: string | null;
 }
 
 const defaultSidebarState: FeedSidebarState = {
@@ -32,6 +35,8 @@ const defaultSidebarState: FeedSidebarState = {
   quickFilters: undefined,
   savedFilterConfigurations: [],
   activeSavedFilterConfigurationId: null,
+  posts: [],
+  focusedTaskId: null,
 };
 
 const FeedSidebarControllerContext = createContext<FeedSidebarState>(defaultSidebarState);

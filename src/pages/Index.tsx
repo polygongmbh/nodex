@@ -804,6 +804,8 @@ function FeedIndexContent() {
       quickFilters,
       savedFilterConfigurations: savedFilterController.configurations,
       activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
+      posts: relayScopedTasks,
+      focusedTaskId,
     }),
     [
       channelMatchMode,
@@ -811,11 +813,13 @@ function FeedIndexContent() {
       expandedBandChannels,
       focusedTaskCollapsedSidebarPreview.channels,
       focusedTaskCollapsedSidebarPreview.people,
+      focusedTaskId,
       isSidebarFocused,
       nostrRelays,
       peopleWithState,
       pinnedPersonIds,
       quickFilters,
+      relayScopedTasks,
       relaysWithActiveState,
       savedFilterController,
     ]

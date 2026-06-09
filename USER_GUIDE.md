@@ -35,6 +35,10 @@
   - `All levels`: full parent/subtask hierarchy.
   - `Leaves only`: only end-node tasks with no subtasks.
 
+## Sidebar Projects
+- The desktop sidebar's Projects section (above Spaces) lists active top-level tasks that still have open subtasks, with active subprojects (active subtasks that again have open subtasks) indented beneath them.
+- Clicking a project focuses it, the same as clicking the task elsewhere. The section hides itself when nothing qualifies.
+
 ## Channel and Tag Filtering
 ### Desktop sidebar channels
 - Click the `#` icon next to a channel to cycle filter state:

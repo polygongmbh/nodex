@@ -45,9 +45,13 @@
   "sidebar": {
     "tagline": "Plataforma de colaboración",
     "sections": {
+      "projects": "Proyectos",
       "feeds": "Spaces",
       "channels": "Canales",
       "people": "Personas"
+    },
+    "projects": {
+      "openProject": "Abrir {{name}}"
     },
     "hints": {
       "relays": "Relays",
