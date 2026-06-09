@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { NDKEvent, profileFromEvent, type NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { NostrEvent } from "@/lib/nostr/types";
 import {
   getKind0CacheVersion,
@@ -7,17 +8,9 @@ import {
 } from "@/infrastructure/nostr/people-from-kind0";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
-export interface NostrProfile {
-  pubkey: string;
-  name?: string;
-  displayName?: string;
-  picture?: string;
-  about?: string;
-  nip05?: string;
-  banner?: string;
-  website?: string;
-  lud16?: string;
-}
+// NDK's NDKUserProfile is our canonical parsed-kind-0 shape. We tack `pubkey`
+// on at the cache boundary so consumers don't need to track it separately.
+export type NostrProfile = NDKUserProfile & { pubkey: string };
 
 interface ProfileCache {
   [pubkey: string]: NostrProfile;
@@ -30,32 +23,22 @@ function normalizePubkey(pubkey: string): string {
   return pubkey.trim().toLowerCase();
 }
 
-function stringOrUndefined(value: unknown): string | undefined {
-  return typeof value === "string" && value.length > 0 ? value : undefined;
-}
-
 function parseEventToProfile(event: NostrEvent): NostrProfile {
-  let parsed: Record<string, unknown> = {};
+  let profile: NDKUserProfile;
   try {
-    const raw = JSON.parse(event.content);
-    if (raw && typeof raw === "object") parsed = raw as Record<string, unknown>;
+    // NDK's parser expects an NDKEvent; ours are plain NostrEvents.
+    // profileFromEvent only touches .content and .rawEvent(), so a bare
+    // wrapper is enough.
+    const ndkEvent = new NDKEvent(undefined, event as never);
+    profile = profileFromEvent(ndkEvent);
   } catch {
-    // Malformed kind 0 content — fall through to a pubkey-only profile.
+    // NDK throws on malformed content JSON; surface as a pubkey-only profile.
+    profile = {};
   }
-  return {
-    pubkey: event.pubkey,
-    name: stringOrUndefined(parsed.name),
-    // Some clients (and the published payload in profile-metadata.ts) use
-    // camelCase; the NIP-01 example uses snake_case. Accept both.
-    displayName:
-      stringOrUndefined(parsed.display_name) || stringOrUndefined(parsed.displayName),
-    picture: stringOrUndefined(parsed.picture),
-    about: stringOrUndefined(parsed.about),
-    nip05: stringOrUndefined(parsed.nip05),
-    banner: stringOrUndefined(parsed.banner),
-    website: stringOrUndefined(parsed.website),
-    lud16: stringOrUndefined(parsed.lud16),
-  };
+  // NDK stuffs JSON.stringify(rawEvent()) onto profile.profileEvent on every
+  // parse — we never read it and it would bloat every cache entry.
+  delete profile.profileEvent;
+  return { ...profile, pubkey: event.pubkey };
 }
 
 // Memoize parsed profile per event reference. Kind0Cache hands back stable
