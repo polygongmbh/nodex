@@ -4,6 +4,7 @@ import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import {
   Post,
   RawNostrEvent,
+  TaskDate,
   getTaskStatus,
   getTaskState,
   getTaskPrimaryDate,
@@ -48,7 +49,9 @@ import {
   getAncestorChainFromSource,
   useFeedViewState,
   type FeedEntry,
+  type FeedScope,
 } from "@/features/feed-page/controllers/use-task-view-states";
+import { useHomeDayStore } from "@/features/feed-page/stores/home-day-store";
 import {
   useFeedPersonLookup,
   useFeedSurfaceState,
@@ -185,9 +188,12 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
 export function FeedView({
   posts,
   focusedTaskId,
+  scope = "default",
 }: {
   posts: Post[];
   focusedTaskId: string | null;
+  /** Baseline feed scope; "home" pulls its restriction and selected day from the stores. */
+  scope?: FeedScope;
 }) {
   const isMobile = useIsMobile();
   const currentUser = useCurrentUser();
@@ -215,7 +221,18 @@ export function FeedView({
     posts,
     focusedTaskId,
     isMobile,
+    scope,
   });
+  const homeSelectedDayKey = useHomeDayStore((s) => s.selectedDayKey);
+  // A day selected in the home mini calendar pre-fills the composer's
+  // primary date, mirroring the calendar view's day composer.
+  const composerDefaultDates = useMemo<TaskDate[] | undefined>(
+    () =>
+      scope === "home" && homeSelectedDayKey
+        ? [{ date: homeSelectedDayKey, type: "due" }]
+        : undefined,
+    [homeSelectedDayKey, scope]
+  );
   const taskById = resolvePostsByIdFor(posts);
   const filterKey = useMemo(() =>
     channels
@@ -503,6 +520,7 @@ export function FeedView({
           focusedTaskId={focusedTaskId}
           className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
           allowedPostTypes={["task", "comment", "listing", "event"]}
+          defaultDates={composerDefaultDates}
         />
       )}
 

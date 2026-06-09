@@ -13,6 +13,7 @@ import * as linkify from "@/lib/linkify";
 import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { useHomeDayStore } from "@/features/feed-page/stores/home-day-store";
 
 const useIsMobileMock = vi.fn(() => false);
 vi.mock("@/hooks/use-mobile", () => ({
@@ -67,6 +68,7 @@ beforeEach(() => {
   useHydrationStatusStore.getState().setIsHydrating(false);
   useCurrentUserStore.getState().setCurrentUser(undefined);
   useFilterStore.getState().setSearchQuery("");
+  useHomeDayStore.getState().clearSelectedDay();
 });
 
 type FeedViewProps = ComponentProps<typeof FeedView>;
@@ -1035,6 +1037,88 @@ describe("FeedView", () => {
       type: "task.updatePriority",
       taskId: "task-priority",
       priority: 80,
+    });
+  });
+
+  describe("home scope", () => {
+    const otherAuthor = makePerson({
+      pubkey: "f".repeat(64),
+      name: "bob",
+      displayName: "Bob Doe",
+    });
+    const foreignRoot = makeTask({ id: "task-root", author: otherAuthor, content: "Root #general" });
+    const foreignNested = makeTask({
+      id: "task-foreign-nested",
+      author: otherAuthor,
+      parentId: "task-root",
+      content: "Foreign nested #general",
+    });
+    const myNested = makeTask({
+      id: "task-my-nested",
+      author,
+      parentId: "task-root",
+      content: "My nested #general",
+    });
+
+    it("restricts the home timeline to top-level posts and the signed-in user's activity", () => {
+      useCurrentUserStore.getState().setCurrentUser(author);
+
+      const { container } = render(
+        <FeedView posts={[foreignRoot, foreignNested, myNested]} focusedTaskId={null} scope="home" />
+      );
+
+      expect(container.querySelector('[data-task-id="task-root"]')).toBeInTheDocument();
+      expect(container.querySelector('[data-task-id="task-my-nested"]')).toBeInTheDocument();
+      expect(container.querySelector('[data-task-id="task-foreign-nested"]')).not.toBeInTheDocument();
+    });
+
+    it("lifts the home restriction when a sidebar person filter is active", () => {
+      useCurrentUserStore.getState().setCurrentUser(author);
+
+      const { container } = renderFeedView(
+        { posts: [foreignRoot, foreignNested, myNested], scope: "home" },
+        {
+          people: [author, { ...otherAuthor, isSelected: true }],
+          mentionablePeople: [author, otherAuthor],
+        }
+      );
+
+      expect(container.querySelector('[data-task-id="task-foreign-nested"]')).toBeInTheDocument();
+    });
+
+    it("shows a selected day's state updates without the cards of tasks from other days", () => {
+      const oldTaskWithFreshUpdate = makeTask({
+        id: "task-old",
+        author,
+        content: "Old task #general",
+        timestamp: new Date(2026, 0, 1),
+        stateUpdates: [
+          {
+            id: "fresh-update",
+            state: { status: "active" },
+            timestamp: new Date(2026, 5, 9, 12, 0),
+            authorPubkey: author.pubkey,
+          },
+        ],
+      });
+      useHomeDayStore.getState().toggleSelectedDay("2026-06-09");
+
+      const { container } = render(
+        <FeedView posts={[oldTaskWithFreshUpdate]} focusedTaskId={null} scope="home" />
+      );
+
+      expect(screen.getByTestId("feed-state-entry-fresh-update")).toBeInTheDocument();
+      expect(container.querySelector('[data-task-id="task-old"]')).not.toBeInTheDocument();
+    });
+
+    it("ignores the selected day outside the home scope", () => {
+      useHomeDayStore.getState().toggleSelectedDay("2026-06-09");
+
+      const { container } = render(
+        <FeedView posts={[makeTask({ id: "task-1", author, timestamp: new Date(2026, 0, 1) })]} focusedTaskId={null} />
+      );
+
+      expect(container.querySelector('[data-task-id="task-1"]')).toBeInTheDocument();
     });
   });
 

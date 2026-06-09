@@ -17,8 +17,12 @@ import { getTaskLocalDate } from "@/lib/task-dates";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
+import { buildUserInvolvementIndex, makeHomeTimelinePredicate } from "@/domain/content/user-involvement";
+import { formatDayKey, postOccursOnDay } from "@/domain/content/post-day-matching";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
+import { useHomeDayStore } from "@/features/feed-page/stores/home-day-store";
 import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEmptyScopeModel } from "./use-empty-scope-model";
@@ -72,6 +76,13 @@ export interface FeedEntry {
   task: Post;
   update?: TaskStateUpdate;
 }
+
+/**
+ * Which baseline scope the feed renders. "home" applies the home view's
+ * default restriction and day filter, both derived here from the relevant
+ * stores (current user, home day selection) rather than threaded by callers.
+ */
+export type FeedScope = "default" | "home";
 
 export interface FeedViewState {
   feedTasks: Post[];
@@ -635,9 +646,42 @@ export function useFeedViewState({
   posts,
   focusedTaskId,
   isMobile = false,
-}: BaseViewStateInput & { isMobile?: boolean }): FeedViewState {
+  scope = "default",
+}: BaseViewStateInput & {
+  isMobile?: boolean;
+  scope?: FeedScope;
+}): FeedViewState {
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const currentUser = useCurrentUser();
+  const homeSelectedDayKey = useHomeDayStore((s) => s.selectedDayKey);
+  const isHomeScope = scope === "home";
+  const hasSidebarScopeFilters = useMemo(
+    () =>
+      channels.some((channel) => channel.filterState !== "neutral") ||
+      people.some((person) => person.isSelected),
+    [channels, people]
+  );
+  // Baseline post-level scope of the home timeline: top-level activity plus
+  // anything involving the signed-in user. Part of what the home view *is*
+  // (hence also applied to the unfiltered fallback variants below) — and
+  // lifted entirely as soon as any sidebar channel/person filter is active.
+  const taskPredicate = useMemo(() => {
+    if (!isHomeScope || hasSidebarScopeFilters) return undefined;
+    const involvedIds = buildUserInvolvementIndex(posts, currentUser?.pubkey);
+    return makeHomeTimelinePredicate({ focusedTaskId, involvedIds });
+  }, [currentUser?.pubkey, focusedTaskId, hasSidebarScopeFilters, isHomeScope, posts]);
+  // Entry-level day restriction: unlike taskPredicate this distinguishes a
+  // task's own card from its state updates (each entry carries its own
+  // timestamp), so a day shows exactly that day's activity — posts created
+  // or dated that day plus state updates made that day.
+  const entryPredicate = useMemo(() => {
+    if (!isHomeScope || !homeSelectedDayKey) return undefined;
+    return (entry: FeedEntry) =>
+      entry.type === "state-update"
+        ? formatDayKey(entry.timestamp) === homeSelectedDayKey
+        : postOccursOnDay(entry.task, homeSelectedDayKey);
+  }, [homeSelectedDayKey, isHomeScope]);
   const { effectiveSearchQuery: searchQuery } = useMobileViewScopeMatches({
     posts,
     focusedTaskId,
@@ -657,6 +701,7 @@ export function useFeedViewState({
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
+    taskPredicate,
   });
   const neutralChannels = useMemo(
     () => deferredChannels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
@@ -672,6 +717,7 @@ export function useFeedViewState({
     quickFilters,
     channels: neutralChannels,
     channelMatchMode: deferredChannelMatchMode,
+    taskPredicate,
   });
   const filteredFeedTasksWithClosed = useTaskViewFiltering({
     posts,
@@ -683,6 +729,7 @@ export function useFeedViewState({
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
+    taskPredicate,
   });
   const unfilteredFeedTasksWithClosed = useTaskViewFiltering({
     posts,
@@ -694,19 +741,24 @@ export function useFeedViewState({
     quickFilters,
     channels: neutralChannels,
     channelMatchMode: deferredChannelMatchMode,
+    taskPredicate,
   });
-  const feedTasks = useMemo(
-    () => [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
-    [filteredFeedTasks]
-  );
-  const allFeedEntries = useMemo(
-    () => buildFeedEntries(unfilteredFeedTasksWithClosed, focusedTaskId),
-    [focusedTaskId, unfilteredFeedTasksWithClosed]
-  );
-  const feedEntries = useMemo(
-    () => buildFeedEntries(filteredFeedTasksWithClosed, focusedTaskId),
-    [filteredFeedTasksWithClosed, focusedTaskId]
-  );
+  const feedTasks = useMemo(() => {
+    const sorted = [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    if (!entryPredicate) return sorted;
+    // Keep keyboard navigation aligned with the entries actually displayed.
+    return sorted.filter((task) =>
+      entryPredicate({ type: "task", id: task.id, timestamp: task.timestamp, task })
+    );
+  }, [entryPredicate, filteredFeedTasks]);
+  const allFeedEntries = useMemo(() => {
+    const entries = buildFeedEntries(unfilteredFeedTasksWithClosed, focusedTaskId);
+    return entryPredicate ? entries.filter(entryPredicate) : entries;
+  }, [entryPredicate, focusedTaskId, unfilteredFeedTasksWithClosed]);
+  const feedEntries = useMemo(() => {
+    const entries = buildFeedEntries(filteredFeedTasksWithClosed, focusedTaskId);
+    return entryPredicate ? entries.filter(entryPredicate) : entries;
+  }, [entryPredicate, filteredFeedTasksWithClosed, focusedTaskId]);
   const taskById = resolvePostsByIdFor(posts);
   const scopeModel = useEmptyScopeModel({
     relays,

@@ -6,7 +6,7 @@ import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import type { PostType } from "@/types";
+import type { PostType, TaskDate } from "@/types";
 
 const DEFAULT_ALLOWED_POST_TYPES: readonly PostType[] = ["task", "comment"];
 
@@ -14,6 +14,7 @@ interface SharedViewComposerProps {
   focusedTaskId: string | null;
   onExpandedChange?: (expanded: boolean) => void;
   defaultContent?: string;
+  defaultDates?: TaskDate[];
   className?: string;
   collapseOnSuccess?: boolean;
   allowedPostTypes?: readonly PostType[];
@@ -23,6 +24,7 @@ export function SharedViewComposer({
   focusedTaskId,
   onExpandedChange,
   defaultContent = "",
+  defaultDates,
   className = "relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
   collapseOnSuccess = false,
   allowedPostTypes = DEFAULT_ALLOWED_POST_TYPES,
@@ -59,6 +61,7 @@ export function SharedViewComposer({
         adaptiveSize
         onExpandedChange={onExpandedChange}
         defaultContent={defaultContent}
+        defaultDates={defaultDates}
         focusOnMount={false}
         collapseOnSuccess={collapseOnSuccess}
         allowedPostTypes={allowedPostTypes}
