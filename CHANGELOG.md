@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- New desktop-only Home view, now the default landing view (`/` redirects to `/home` on desktop, `/status` on mobile). It combines the timeline on the left — restricted to top-level activity plus posts involving you until sidebar channel/person filters widen it — with the My Tasks panel and a mini month calendar on the right. Calendar days with dated entries show a dot; selecting a day scopes both panels to that day's activity (created/dated posts, status updates, messages) and pre-fills composer dates, and clicking it again clears the selection.
 - The composer's post button no longer disappears when you stack attachments and a long body. The textarea now caps at 30% of viewport height (was 50%) and the attachments list caps at 25vh with internal scrolling, so the action row always stays in view on both desktop and mobile.
 - Date pickers now mark today consistently across the app with a bold day number and a foreground-colored inset ring, replacing a filled accent background that visually competed with the selection. All popover calendars (composer, task metadata editor, mobile inline picker) also cap to 5 week rows for a stable popover height.
 

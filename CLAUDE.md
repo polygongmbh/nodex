@@ -40,7 +40,7 @@ The `useNDK()` hook exposes the entire app state: authenticated user, relay list
 - `Relay` — relay connection with status
 
 ### Views & Routing
-Routes are `/:view` and `/:view/:taskId`. Views (left-to-right in nav): `status`, `feed`, `tree`, `kanban`, `list`, `calendar`. The canonical order is `VIEW_ORDER` in `src/components/tasks/ViewSwitcher.tsx`; both the URL validator and the keyboard cycler derive from it — do not duplicate. `Index.tsx` renders the appropriate view component via `ViewSwitcher`. `/` redirects to `/status`.
+Routes are `/:view` and `/:view/:taskId`. Views (left-to-right in nav): `home` (desktop-only), `status`, `feed`, `tree`, `kanban`, `list`, `calendar`. The canonical order is `VIEW_ORDER` in `src/components/tasks/ViewSwitcher.tsx`; both the URL validator and the keyboard cycler derive from it — do not duplicate. `Index.tsx` renders the appropriate view component via `ViewSwitcher`. `/` redirects to `/home` on desktop and `/status` on mobile.
 
 ### Context
 The user's **context** is the full current slice of content: sidebar filters (active relays, included/excluded channels, selected people, quick filters, search query) **plus** the currently focused task. Every view-level helper consumes the context — there is no separate "unfocused" mode. The only places that intentionally ignore the focused task (e.g. sidebar list rendering, composer default content) should call that out inline.

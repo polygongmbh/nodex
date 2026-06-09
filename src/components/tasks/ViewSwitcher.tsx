@@ -1,9 +1,9 @@
-import { LayoutList, Columns3, GitBranch, Calendar, List, LayoutDashboard } from "lucide-react";
+import { Home, LayoutList, Columns3, GitBranch, Calendar, List, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
-export const VIEW_ORDER = ["status", "feed", "tree", "kanban", "list", "calendar"] as const;
+export const VIEW_ORDER = ["home", "status", "feed", "tree", "kanban", "list", "calendar"] as const;
 export type ViewType = (typeof VIEW_ORDER)[number];
 
 // Tree and list are reachable via direct URL but hidden from the desktop nav.
@@ -17,6 +17,7 @@ export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
   const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const viewMeta: Record<ViewType, { labelKey: string; icon: React.ReactNode }> = {
+    home: { labelKey: "navigation.views.home", icon: <Home className="w-4 h-4 xl:w-5 xl:h-5" /> },
     status: { labelKey: "navigation.views.status", icon: <LayoutDashboard className="w-4 h-4 xl:w-5 xl:h-5" /> },
     feed: { labelKey: "navigation.views.feed", icon: <LayoutList className="w-4 h-4 xl:w-5 xl:h-5" /> },
     tree: { labelKey: "navigation.views.tree", icon: <GitBranch className="w-4 h-4 xl:w-5 xl:h-5" /> },

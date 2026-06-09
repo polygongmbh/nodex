@@ -13,6 +13,9 @@ import { ViewLoadingFallback } from "./ViewLoadingFallback";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
 import type { Post } from "@/types";
 
+const HomeView = lazy(() =>
+  import("@/components/tasks/home/HomeView").then((module) => ({ default: module.HomeView }))
+);
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
 );
@@ -85,15 +88,18 @@ export function DesktopViewsPane({
   // Only the feed view surfaces non-task items (comments, offers, requests).
   // Other views render tasks only, so the empty-state overlay should appear
   // whenever no task-typed items match the current filters even if other
-  // post types do.
+  // post types do. Status and home bring their own empty states.
   const shouldShowOverlay =
-    currentView === "status"
+    currentView === "status" || currentView === "home"
       ? false
       : currentView === "feed"
         ? scopedTasks.length === 0
         : scopedTasks.every((task) => !isTaskPost(task));
   let viewPane: ReactNode;
   switch (currentView) {
+    case "home":
+      viewPane = <HomeView posts={posts} focusedTaskId={focusedTaskId} />;
+      break;
     case "status":
       viewPane = <StatusView posts={posts} focusedTaskId={focusedTaskId} />;
       break;

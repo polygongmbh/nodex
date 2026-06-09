@@ -14,18 +14,25 @@ import {
 import { readStartupNoasBootstrap, resolveStartupNoasBootstrap } from "@/infrastructure/nostr/startup-noas";
 import { relayUrlToId } from "@/infrastructure/nostr/relay-url";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { MOBILE_BREAKPOINT } from "@/hooks/use-mobile";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function RootFeedRedirect() {
+export function RootFeedRedirect() {
   const location = useLocation();
+  // Home is desktop-only; mobile lands on status. useIsMobile() reports false
+  // on its first render, so the one-shot redirect checks the viewport
+  // synchronously instead.
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
 
   return (
     <Navigate
       to={{
-        pathname: "/status",
+        pathname: isMobileViewport ? "/status" : "/home",
         search: location.search,
         hash: location.hash,
       }}

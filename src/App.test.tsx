@@ -92,14 +92,30 @@ describe("App routes", () => {
     await screen.findByTestId("index-page");
   });
 
-  it("preserves filter query params when redirecting from root to /status", async () => {
+  it("preserves filter query params when redirecting from root to the home view", async () => {
     window.history.pushState({}, "", "/?ch=general&p=alice");
 
     render(<App />);
 
     await screen.findByTestId("index-page");
-    expect(window.location.pathname).toBe("/status");
+    expect(window.location.pathname).toBe("/home");
     expect(window.location.search).toBe("?ch=general&p=alice");
+  });
+
+  it("redirects root to /status on mobile viewports where the home view is unavailable", async () => {
+    const desktopMatchMedia = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      ...desktopMatchMedia(query),
+      matches: true,
+    })) as typeof window.matchMedia;
+    try {
+      render(<App />);
+
+      await screen.findByTestId("index-page");
+      expect(window.location.pathname).toBe("/status");
+    } finally {
+      window.matchMedia = desktopMatchMedia;
+    }
   });
 
   it("mounts immediately while async fallback relay bootstrap continues in the background", async () => {

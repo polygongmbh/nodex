@@ -278,5 +278,10 @@
       "label": "En curso",
       "createActiveCta": "Crear un proyecto activo"
     }
+  },
+  "home": {
+    "myTasks": {
+      "emptyForDay": "No hay tareas para este día."
+    }
   }
 }

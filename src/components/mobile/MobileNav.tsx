@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useTranslation } from "react-i18next";
 
-/** Mobile can render the same views as desktop except kanban, in the desktop order. */
-export const MOBILE_VIEW_ORDER = VIEW_ORDER.filter((view) => view !== "kanban");
+/** Mobile can render the same views as desktop except kanban and the desktop-only home view, in the desktop order. */
+export const MOBILE_VIEW_ORDER = VIEW_ORDER.filter((view) => view !== "kanban" && view !== "home");
 export type MobileViewType = (typeof MOBILE_VIEW_ORDER)[number];
 
 /** Tree is reachable via direct URL but hidden from the mobile nav segmented control. */

@@ -15,8 +15,12 @@
 - Views share the current context: selected feeds, included/excluded channels, selected people, quick filters, search text, and the focused task when one is active.
 
 ## Navigation
-- Use the top view switcher to move between Status, Feed, Kanban, and Calendar. Tree and Table are hidden from the top nav but remain reachable via direct URL (`/tree`, `/list`) and the numeric view shortcuts.
-- Status is the default landing view. It highlights active projects, your relevant tasks, and recent task/comment activity for the current context.
+- Use the top view switcher to move between Home, Status, Feed, Kanban, and Calendar. Tree and Table are hidden from the top nav but remain reachable via direct URL (`/tree`, `/list`) and the numeric view shortcuts.
+- Home is the default landing view on desktop (mobile lands on Status; Home is desktop-only).
+- The Home timeline (left) shows top-level activity plus anything that involves you — posts you authored, tasks assigned to you, and activity beneath those. Activating any sidebar channel or person filter lifts that restriction and shows everything matching the filters.
+- The Home right column shows My Tasks (same ownership rules as the Status view) above a small month calendar. Days with dated tasks or events carry a dot.
+- Clicking a day in the Home mini calendar scopes both panels to that day — the timeline shows posts created or dated that day plus that day's status updates and messages; My Tasks shows your tasks whose dates fall on that day. Clicking the selected day again clears the selection. While a day is selected, new tasks composed in Home pre-fill it as their primary date. The day selection does not affect other views.
+- Status highlights active projects, your relevant tasks, and recent task/comment activity for the current context.
 - The Status projects row lists active top-level work. Project cards stay in the Status workflow, while clicking an active non-project task opens it in the Feed view.
 - Status activity includes task and comment updates. Task activity rows expose a status checkbox for quick state changes.
 - Click a task to focus on that task context.

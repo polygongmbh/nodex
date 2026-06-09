@@ -25,7 +25,7 @@ describe("useKeyboardShortcuts", () => {
       />
     );
 
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "2" }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "3" }));
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "m" }));
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "r" }));
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "p" }));

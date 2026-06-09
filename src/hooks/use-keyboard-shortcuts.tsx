@@ -41,8 +41,8 @@ export function useKeyboardShortcuts({
 
       const normalizedKey = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
-      // Number keys 1-6 to switch views
-      if (event.key >= "1" && event.key <= "6") {
+      // Number keys to switch views (bounded by the view order length)
+      if (event.key >= "1" && event.key <= "9") {
         const index = parseInt(event.key) - 1;
         if (index < viewOrder.length) {
           event.preventDefault();

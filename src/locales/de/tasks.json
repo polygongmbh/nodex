@@ -278,5 +278,10 @@
       "label": "In Bearbeitung",
       "createActiveCta": "Aktives Projekt anlegen"
     }
+  },
+  "home": {
+    "myTasks": {
+      "emptyForDay": "Keine Aufgaben für diesen Tag."
+    }
   }
 }
