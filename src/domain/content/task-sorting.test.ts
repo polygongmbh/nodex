@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addDays, startOfDay, subDays } from "date-fns";
 import { makeTask } from "@/test/fixtures";
 import { buildChildrenMap, getDueDateColorClass, sortTasks } from "./task-sorting";
@@ -24,7 +24,18 @@ describe("getDueDateColorClass", () => {
   });
 
   describe("calendar events", () => {
-    const now = new Date();
+    // Pinned to local noon: relative offsets like "an hour ago" must stay on
+    // the same calendar day, which real time breaks right after midnight.
+    const now = new Date("2026-03-15T12:00:00");
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(now);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
     it("greys out events that have fully ended", () => {
       const start = subDays(now, 2);
