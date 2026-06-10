@@ -91,16 +91,17 @@ describe("buildFocusChain", () => {
     expect(buildFocusChain([root, mid, leaf], "missing")).toEqual([]);
   });
 
-  it("yields task ancestors for a focused comment and survives parent cycles", () => {
+  it("includes non-task posts like a breadcrumb and survives parent cycles", () => {
     const comment = makeComment({ id: "comment", parentId: "leaf" });
-    expect(buildFocusChain([root, mid, leaf, comment], "comment").map((task) => task.id)).toEqual([
+    expect(buildFocusChain([root, mid, leaf, comment], "comment").map((post) => post.id)).toEqual([
       "root",
       "mid",
       "leaf",
+      "comment",
     ]);
 
     const cycleA = makeTask({ id: "a", parentId: "b" });
     const cycleB = makeTask({ id: "b", parentId: "a" });
-    expect(buildFocusChain([cycleA, cycleB], "a").map((task) => task.id)).toEqual(["b", "a"]);
+    expect(buildFocusChain([cycleA, cycleB], "a").map((post) => post.id)).toEqual(["b", "a"]);
   });
 });

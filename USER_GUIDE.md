@@ -39,7 +39,7 @@
 - The desktop sidebar's Projects section (above Spaces) lists active top-level tasks that still have open subtasks, with active subprojects (active subtasks that themselves have an active subtask) indented beneath them.
 - Clicking a project focuses it, the same as clicking the task elsewhere. The section hides itself when nothing qualifies.
 - Clicking the folder icon in the section header goes back to the root, clearing the current focus.
-- In every view the Projects section highlights the chain of rows containing the focused post, and temporary indented entries extend the listed projects down to the focused post itself — even through subtasks that are not subprojects — so your position in the tree stays visible (in Home this replaces the breadcrumb bar).
+- In every view the Projects section mirrors the breadcrumb for any focused post — task, comment, or note: the rows containing it are highlighted and temporary indented entries trace the path down to the focused post itself, even through posts that are not subprojects. A focused post whose root is not a listed project appears as its own temporary group, so the section also shows up while only such a post is focused (in Home this replaces the breadcrumb bar).
 
 ## Channel and Tag Filtering
 ### Desktop sidebar channels

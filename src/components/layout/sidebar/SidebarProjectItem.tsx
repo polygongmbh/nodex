@@ -1,13 +1,14 @@
 import { CornerDownRight, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import type { TaskPost } from "@/types";
+import type { Post } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface SidebarProjectItemProps {
-  task: TaskPost;
+  /** Any post — temporary chain entries mirror the breadcrumb, not just tasks. */
+  post: Post;
   /** Nesting level; 0 = top-level project, each level indents one step. */
   depth?: number;
   /** Temporary chain entry shown only because it leads to the focused post. */
@@ -16,21 +17,21 @@ interface SidebarProjectItemProps {
   isCurrentPosition?: boolean;
 }
 
-/** One project row in the sidebar's Projects section; clicking focuses the task. */
+/** One row in the sidebar's Projects section; clicking focuses the post. */
 export function SidebarProjectItem({
-  task,
+  post,
   depth = 0,
   isTemporary = false,
   isCurrentPosition = false,
 }: SidebarProjectItemProps) {
   const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const label = formatBreadcrumbLabel(task.content);
+  const label = formatBreadcrumbLabel(post.content);
   const Icon = isTemporary ? CornerDownRight : FolderOpen;
 
   return (
     <SidebarFilterRow
-      itemId={`project-${task.id}`}
+      itemId={`project-${post.id}`}
       className={cn(
         "relative gap-2 py-1.5",
         isCurrentPosition && "bg-sidebar-accent"
@@ -48,7 +49,7 @@ export function SidebarProjectItem({
       <button
         data-current-position={isCurrentPosition || undefined}
         onClick={() => {
-          void dispatchFeedInteraction({ type: "task.focus.change", taskId: task.id });
+          void dispatchFeedInteraction({ type: "task.focus.change", taskId: post.id });
         }}
         className="flex flex-1 min-w-0 items-center text-left"
         title={t("sidebar.projects.openProject", { name: label })}

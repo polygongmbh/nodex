@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarProjectsSection } from "./SidebarProjectsSection";
-import { makeTask } from "@/test/fixtures";
+import { makeComment, makeTask } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
 
@@ -62,10 +62,34 @@ describe("SidebarProjectsSection", () => {
     });
   });
 
-  it("renders nothing without qualifying projects", () => {
+  it("renders nothing without qualifying projects or a focused post", () => {
     const { container } = renderSection([makeTask({ id: "leaf-only", state: "active" })]);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("temporarily shows a focused chain whose root is not a listed project", () => {
+    const note = makeTask({ id: "note", content: "Loose note", state: "open" });
+    const reply = makeComment({ id: "reply", parentId: "note", content: "A reply" });
+
+    renderSection([project, subproject, subprojectChild, note, reply], "reply");
+
+    expect(screen.getByText("Loose note")).toBeInTheDocument();
+    expect(screen.getByText("A reply").closest("button")).toHaveAttribute(
+      "data-current-position",
+      "true"
+    );
+  });
+
+  it("shows the focused post even when no project qualifies at all", () => {
+    const note = makeComment({ id: "solo-note", content: "Standalone thought" });
+
+    renderSection([note], "solo-note");
+
+    expect(screen.getByText("Standalone thought").closest("button")).toHaveAttribute(
+      "data-current-position",
+      "true"
+    );
   });
 
   it("highlights the chain containing the focused post", () => {

@@ -24,11 +24,13 @@ interface SidebarProjectsSectionProps {
 /**
  * Sidebar section listing active top-level projects (active tasks with
  * non-terminal subtasks) and one indented level of active subprojects.
- * Hidden entirely while no project qualifies. In every view the rows
- * containing the focused post are highlighted, and the chain down to the
- * focused post is shown as temporary indented entries so the current
- * position in the tree stays visible. Clicking the section's folder icon
- * clears the focus back to the root.
+ * Hidden entirely while no project qualifies and nothing is focused. In
+ * every view the rows containing the focused post are highlighted, and the
+ * chain down to the focused post — any post type, like the breadcrumb —
+ * is shown as temporary indented entries so the current position stays
+ * visible; a focused post outside the listed projects gets its own
+ * temporary group. Clicking the section's folder icon clears the focus
+ * back to the root.
  */
 export function SidebarProjectsSection({
   posts,
@@ -68,7 +70,7 @@ export function SidebarProjectsSection({
     [focusChain]
   );
 
-  if (projects.length === 0) return null;
+  if (projects.length === 0 && focusChain.length === 0) return null;
 
   return (
     <SidebarSection
@@ -91,21 +93,21 @@ export function SidebarProjectsSection({
         return (
           <div key={project.id}>
             <SidebarProjectItem
-              task={project}
+              post={project}
               isCurrentPosition={currentPositionIds.has(project.id)}
             />
             {subprojects.map((subproject) => (
               <Fragment key={subproject.id}>
                 <SidebarProjectItem
-                  task={subproject}
+                  post={subproject}
                   depth={1}
                   isCurrentPosition={currentPositionIds.has(subproject.id)}
                 />
                 {chainBelowProject[0]?.id === subproject.id &&
-                  chainBelowProject.slice(1).map((task, index) => (
+                  chainBelowProject.slice(1).map((post, index) => (
                     <SidebarProjectItem
-                      key={task.id}
-                      task={task}
+                      key={post.id}
+                      post={post}
                       depth={2 + index}
                       isTemporary
                       isCurrentPosition
@@ -114,10 +116,10 @@ export function SidebarProjectsSection({
               </Fragment>
             ))}
             {!chainContinuesInSubproject &&
-              chainBelowProject.map((task, index) => (
+              chainBelowProject.map((post, index) => (
                 <SidebarProjectItem
-                  key={task.id}
-                  task={task}
+                  key={post.id}
+                  post={post}
                   depth={1 + index}
                   isTemporary
                   isCurrentPosition
@@ -126,6 +128,20 @@ export function SidebarProjectsSection({
           </div>
         );
       })}
+      {focusChain.length > 0 &&
+        !projects.some(({ project }) => project.id === focusChain[0].id) && (
+          <div>
+            {focusChain.map((post, index) => (
+              <SidebarProjectItem
+                key={post.id}
+                post={post}
+                depth={index}
+                isTemporary
+                isCurrentPosition
+              />
+            ))}
+          </div>
+        )}
     </SidebarSection>
   );
 }

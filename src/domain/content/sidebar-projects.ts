@@ -37,19 +37,19 @@ export function selectSidebarProjects(posts: Post[]): SidebarProject[] {
 
 /**
  * Ancestor chain of the focused post, topmost ancestor first, ending at the
- * focused post itself. Only task posts appear as entries (a focused comment
- * still yields its task ancestors); cycle-guarded against malformed parent
- * links. Empty when nothing is focused or the focused post is unknown.
+ * focused post itself — the same path a breadcrumb would show, regardless of
+ * post type. Cycle-guarded against malformed parent links. Empty when nothing
+ * is focused or the focused post is unknown.
  */
-export function buildFocusChain(posts: Post[], focusedId: string | null | undefined): TaskPost[] {
+export function buildFocusChain(posts: Post[], focusedId: string | null | undefined): Post[] {
   if (!focusedId) return [];
   const byId = new Map(posts.map((post) => [post.id, post]));
-  const chain: TaskPost[] = [];
+  const chain: Post[] = [];
   const visited = new Set<string>();
   let current = byId.get(focusedId);
   while (current && !visited.has(current.id)) {
     visited.add(current.id);
-    if (isTaskPost(current)) chain.unshift(current);
+    chain.unshift(current);
     current = current.parentId ? byId.get(current.parentId) : undefined;
   }
   return chain;
