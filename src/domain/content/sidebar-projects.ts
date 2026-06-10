@@ -4,33 +4,53 @@ import { getTaskState, getTaskStatus, isTaskPost, type Post, type TaskPost } fro
 
 export interface SidebarProject {
   project: TaskPost;
-  /** Active children that are themselves projects (one nesting level). */
+  /** Active children that themselves have an active subtask (one nesting level). */
   subprojects: TaskPost[];
 }
 
-function isActiveProject(post: Post, childrenMap: Map<string | undefined, Post[]>): post is TaskPost {
-  return (
-    isTaskPost(post) &&
-    getTaskStatus(getTaskState(post)) === "active" &&
-    isProjectFromChildrenMap(post.id, childrenMap)
-  );
+function isActiveTask(post: Post): post is TaskPost {
+  return isTaskPost(post) && getTaskStatus(getTaskState(post)) === "active";
+}
+
+function hasActiveSubtask(taskId: string, childrenMap: Map<string | undefined, Post[]>): boolean {
+  return (childrenMap.get(taskId) || []).some(isActiveTask);
 }
 
 /**
  * Projects shown in the sidebar: top-level tasks that are active and have at
  * least one non-terminal subtask, each with one level of subprojects (active
- * children that again have non-terminal subtasks). Callers sort the rows.
+ * children that themselves have an active subtask). Callers sort the rows.
  */
 export function selectSidebarProjects(posts: Post[]): SidebarProject[] {
   const childrenMap = buildChildrenMap(posts);
   const result: SidebarProject[] = [];
   for (const post of posts) {
     if (post.parentId) continue;
-    if (!isActiveProject(post, childrenMap)) continue;
+    if (!isActiveTask(post) || !isProjectFromChildrenMap(post.id, childrenMap)) continue;
     const subprojects = (childrenMap.get(post.id) || []).filter(
-      (child): child is TaskPost => isActiveProject(child, childrenMap)
+      (child): child is TaskPost => isActiveTask(child) && hasActiveSubtask(child.id, childrenMap)
     );
     result.push({ project: post, subprojects });
   }
   return result;
+}
+
+/**
+ * Ancestor chain of the focused post, topmost ancestor first, ending at the
+ * focused post itself. Only task posts appear as entries (a focused comment
+ * still yields its task ancestors); cycle-guarded against malformed parent
+ * links. Empty when nothing is focused or the focused post is unknown.
+ */
+export function buildFocusChain(posts: Post[], focusedId: string | null | undefined): TaskPost[] {
+  if (!focusedId) return [];
+  const byId = new Map(posts.map((post) => [post.id, post]));
+  const chain: TaskPost[] = [];
+  const visited = new Set<string>();
+  let current = byId.get(focusedId);
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    if (isTaskPost(current)) chain.unshift(current);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+  return chain;
 }

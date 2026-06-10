@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { selectSidebarProjects } from "./sidebar-projects";
+import { buildFocusChain, selectSidebarProjects } from "./sidebar-projects";
 import { makeComment, makeTask } from "@/test/fixtures";
 
 describe("selectSidebarProjects", () => {
@@ -11,7 +11,7 @@ describe("selectSidebarProjects", () => {
       content: "Subproject",
       state: "active",
     });
-    const subprojectLeaf = makeTask({ id: "leaf", parentId: "subproject", state: "open" });
+    const subprojectLeaf = makeTask({ id: "leaf", parentId: "subproject", state: "active" });
 
     const result = selectSidebarProjects([project, subproject, subprojectLeaf]);
 
@@ -38,6 +38,18 @@ describe("selectSidebarProjects", () => {
     expect(result).toHaveLength(0);
   });
 
+  it("excludes subprojects without an active subtask of their own", () => {
+    const project = makeTask({ id: "project", state: "active" });
+    const subproject = makeTask({ id: "subproject", parentId: "project", state: "active" });
+    const openLeaf = makeTask({ id: "leaf", parentId: "subproject", state: "open" });
+
+    const result = selectSidebarProjects([project, subproject, openLeaf]);
+
+    expect(result).toHaveLength(1);
+    // The subproject's only subtask is open, not active, so it does not qualify.
+    expect(result[0].subprojects).toHaveLength(0);
+  });
+
   it("does not count comments as subtasks and excludes active subtasks without further subtasks", () => {
     const project = makeTask({ id: "project", state: "active" });
     const child = makeTask({ id: "child", parentId: "project", state: "active" });
@@ -58,5 +70,37 @@ describe("selectSidebarProjects", () => {
     const result = selectSidebarProjects([root, nestedProject, nestedChild]);
 
     expect(result.map((row) => row.project.id)).toEqual(["root"]);
+  });
+});
+
+describe("buildFocusChain", () => {
+  const root = makeTask({ id: "root", state: "active" });
+  const mid = makeTask({ id: "mid", parentId: "root", state: "open" });
+  const leaf = makeTask({ id: "leaf", parentId: "mid", state: "open" });
+
+  it("returns the ancestor chain topmost-first, ending at the focused task", () => {
+    expect(buildFocusChain([root, mid, leaf], "leaf").map((task) => task.id)).toEqual([
+      "root",
+      "mid",
+      "leaf",
+    ]);
+  });
+
+  it("returns an empty chain without focus or for an unknown id", () => {
+    expect(buildFocusChain([root, mid, leaf], null)).toEqual([]);
+    expect(buildFocusChain([root, mid, leaf], "missing")).toEqual([]);
+  });
+
+  it("yields task ancestors for a focused comment and survives parent cycles", () => {
+    const comment = makeComment({ id: "comment", parentId: "leaf" });
+    expect(buildFocusChain([root, mid, leaf, comment], "comment").map((task) => task.id)).toEqual([
+      "root",
+      "mid",
+      "leaf",
+    ]);
+
+    const cycleA = makeTask({ id: "a", parentId: "b" });
+    const cycleB = makeTask({ id: "b", parentId: "a" });
+    expect(buildFocusChain([cycleA, cycleB], "a").map((task) => task.id)).toEqual(["b", "a"]);
   });
 });
