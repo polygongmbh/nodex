@@ -1,8 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarProjectsSection } from "./SidebarProjectsSection";
-import { FeedViewStateProvider } from "@/features/feed-page/views/feed-view-state-context";
-import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { makeTask } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
@@ -17,28 +15,15 @@ beforeEach(() => {
 
 function renderSection(
   posts: Parameters<typeof SidebarProjectsSection>[0]["posts"],
-  { currentView = "feed", focusedTaskId = null }: { currentView?: ViewType; focusedTaskId?: string | null } = {}
+  focusedTaskId: string | null = null
 ) {
   return render(
-    <FeedViewStateProvider
-      value={{
-        currentView,
-        displayDepthMode: "leaves",
-        isSidebarFocused: false,
-        isOnboardingOpen: false,
-        activeOnboardingStepId: null,
-        isManageRouteActive: false,
-        canCreateContent: true,
-        profileCompletionPromptSignal: 0,
-      }}
-    >
-      <SidebarProjectsSection
-        posts={posts}
-        focusedTaskId={focusedTaskId}
-        isExpanded
-        onToggle={() => {}}
-      />
-    </FeedViewStateProvider>
+    <SidebarProjectsSection
+      posts={posts}
+      focusedTaskId={focusedTaskId}
+      isExpanded
+      onToggle={() => {}}
+    />
   );
 }
 
@@ -50,13 +35,20 @@ describe("SidebarProjectsSection", () => {
     content: "Docs overhaul",
     state: "active",
   });
-  const subprojectChild = makeTask({ id: "leaf", parentId: "subproject", state: "open" });
+  const subprojectChild = makeTask({
+    id: "leaf",
+    parentId: "subproject",
+    content: "Rewrite intro",
+    state: "active",
+  });
 
   it("lists active projects with their subprojects", () => {
     renderSection([project, subproject, subprojectChild]);
 
     expect(screen.getByText("Release work")).toBeInTheDocument();
     expect(screen.getByText("Docs overhaul")).toBeInTheDocument();
+    // Plain subtasks below subprojects only appear while focused.
+    expect(screen.queryByText("Rewrite intro")).not.toBeInTheDocument();
   });
 
   it("focuses a project on click", () => {
@@ -76,11 +68,8 @@ describe("SidebarProjectsSection", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("highlights the chain containing the focused post in the home view", () => {
-    renderSection([project, subproject, subprojectChild], {
-      currentView: "home",
-      focusedTaskId: "leaf",
-    });
+  it("highlights the chain containing the focused post", () => {
+    renderSection([project, subproject, subprojectChild], "subproject");
 
     expect(screen.getByText("Release work").closest("button")).toHaveAttribute(
       "data-current-position",
@@ -92,14 +81,59 @@ describe("SidebarProjectsSection", () => {
     );
   });
 
-  it("does not mark the current position outside the home view", () => {
-    renderSection([project, subproject, subprojectChild], {
-      currentView: "feed",
-      focusedTaskId: "leaf",
+  it("extends a subproject with temporary entries down to the focused post", () => {
+    renderSection([project, subproject, subprojectChild], "leaf");
+
+    const leafRow = screen.getByText("Rewrite intro");
+    expect(leafRow.closest("button")).toHaveAttribute("data-current-position", "true");
+    expect(screen.getByText("Docs overhaul").closest("button")).toHaveAttribute(
+      "data-current-position",
+      "true"
+    );
+  });
+
+  it("shows the chain through children that are not subprojects while focused there", () => {
+    const openChild = makeTask({
+      id: "open-child",
+      parentId: "project",
+      content: "Backlog grooming",
+      state: "open",
+    });
+    const grandchild = makeTask({
+      id: "grandchild",
+      parentId: "open-child",
+      content: "Sort tickets",
+      state: "open",
     });
 
-    expect(screen.getByText("Release work").closest("button")).not.toHaveAttribute(
-      "data-current-position"
+    const { unmount } = renderSection(
+      [project, subproject, subprojectChild, openChild, grandchild],
+      "grandchild"
     );
+
+    expect(screen.getByText("Backlog grooming")).toBeInTheDocument();
+    expect(screen.getByText("Sort tickets").closest("button")).toHaveAttribute(
+      "data-current-position",
+      "true"
+    );
+    unmount();
+
+    // Without focus the same children stay hidden.
+    renderSection([project, subproject, subprojectChild, openChild, grandchild]);
+    expect(screen.queryByText("Sort tickets")).not.toBeInTheDocument();
+  });
+
+  it("clears the focus back to the root when clicking the section's folder icon", () => {
+    const { container } = renderSection([project, subproject, subprojectChild], "leaf");
+
+    const iconButton = container
+      .querySelector('[data-onboarding="projects-section"]')
+      ?.querySelector("button") as HTMLElement;
+    fireEvent.click(iconButton);
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.focus.change",
+      taskId: null,
+    });
   });
 });

@@ -1,14 +1,18 @@
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { FolderKanban } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Post, TaskPost } from "@/types";
 import { SidebarSection } from "./SidebarSection";
 import { SidebarProjectItem } from "./SidebarProjectItem";
-import { selectSidebarProjects, type SidebarProject } from "@/domain/content/sidebar-projects";
+import {
+  buildFocusChain,
+  selectSidebarProjects,
+  type SidebarProject,
+} from "@/domain/content/sidebar-projects";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { evaluateTaskPriorities } from "@/domain/content/task-priority-evaluation";
 import { resolvePostsByIdFor } from "@/features/feed-page/stores/posts-store";
-import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface SidebarProjectsSectionProps {
   posts: Post[];
@@ -20,9 +24,11 @@ interface SidebarProjectsSectionProps {
 /**
  * Sidebar section listing active top-level projects (active tasks with
  * non-terminal subtasks) and one indented level of active subprojects.
- * Hidden entirely while no project qualifies. In the home view — which has
- * no breadcrumb bar — the rows containing the focused post are highlighted
- * to indicate the current position.
+ * Hidden entirely while no project qualifies. In every view the rows
+ * containing the focused post are highlighted, and the chain down to the
+ * focused post is shown as temporary indented entries so the current
+ * position in the tree stays visible. Clicking the section's folder icon
+ * clears the focus back to the root.
  */
 export function SidebarProjectsSection({
   posts,
@@ -31,7 +37,7 @@ export function SidebarProjectsSection({
   focusedTaskId = null,
 }: SidebarProjectsSectionProps) {
   const { t } = useTranslation("shell");
-  const { currentView } = useFeedViewState();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const childrenMap = useMemo(() => buildChildrenMap(posts), [posts]);
   const taskById = resolvePostsByIdFor(posts);
   const priorityScores = useMemo(() => evaluateTaskPriorities(posts), [posts]);
@@ -53,21 +59,14 @@ export function SidebarProjectsSection({
     });
   }, [posts, sortContext]);
 
-  // Ancestor chain of the focused post (including itself), cycle-guarded —
-  // marks which project rows contain the user's current position in home.
-  const currentPositionIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (currentView !== "home" || !focusedTaskId) return ids;
-    ids.add(focusedTaskId);
-    let current = taskById.get(focusedTaskId);
-    const visited = new Set<string>();
-    while (current?.parentId && !visited.has(current.id)) {
-      visited.add(current.id);
-      ids.add(current.parentId);
-      current = taskById.get(current.parentId);
-    }
-    return ids;
-  }, [currentView, focusedTaskId, taskById]);
+  // Ancestor chain of the focused post (topmost first, focused post last) —
+  // highlights the rows containing the current position and supplies the
+  // temporary entries that extend a project down to the focused post.
+  const focusChain = useMemo(() => buildFocusChain(posts, focusedTaskId), [posts, focusedTaskId]);
+  const currentPositionIds = useMemo(
+    () => new Set(focusChain.map((task) => task.id)),
+    [focusChain]
+  );
 
   if (projects.length === 0) return null;
 
@@ -76,26 +75,57 @@ export function SidebarProjectsSection({
       dataOnboarding="projects-section"
       title={t("sidebar.sections.projects")}
       icon={FolderKanban}
+      iconLabel={t("sidebar.projects.backToRoot")}
+      onIconClick={() => {
+        void dispatchFeedInteraction({ type: "task.focus.change", taskId: null });
+      }}
       isExpanded={isExpanded}
       animationMode="fullCollapse"
       onToggle={onToggle}
     >
-      {projects.map(({ project, subprojects }) => (
-        <div key={project.id}>
-          <SidebarProjectItem
-            task={project}
-            isCurrentPosition={currentPositionIds.has(project.id)}
-          />
-          {subprojects.map((subproject) => (
+      {projects.map(({ project, subprojects }) => {
+        const chainBelowProject = focusChain[0]?.id === project.id ? focusChain.slice(1) : [];
+        const chainContinuesInSubproject = subprojects.some(
+          (subproject) => subproject.id === chainBelowProject[0]?.id
+        );
+        return (
+          <div key={project.id}>
             <SidebarProjectItem
-              key={subproject.id}
-              task={subproject}
-              isSubproject
-              isCurrentPosition={currentPositionIds.has(subproject.id)}
+              task={project}
+              isCurrentPosition={currentPositionIds.has(project.id)}
             />
-          ))}
-        </div>
-      ))}
+            {subprojects.map((subproject) => (
+              <Fragment key={subproject.id}>
+                <SidebarProjectItem
+                  task={subproject}
+                  depth={1}
+                  isCurrentPosition={currentPositionIds.has(subproject.id)}
+                />
+                {chainBelowProject[0]?.id === subproject.id &&
+                  chainBelowProject.slice(1).map((task, index) => (
+                    <SidebarProjectItem
+                      key={task.id}
+                      task={task}
+                      depth={2 + index}
+                      isTemporary
+                      isCurrentPosition
+                    />
+                  ))}
+              </Fragment>
+            ))}
+            {!chainContinuesInSubproject &&
+              chainBelowProject.map((task, index) => (
+                <SidebarProjectItem
+                  key={task.id}
+                  task={task}
+                  depth={1 + index}
+                  isTemporary
+                  isCurrentPosition
+                />
+              ))}
+          </div>
+        );
+      })}
     </SidebarSection>
   );
 }

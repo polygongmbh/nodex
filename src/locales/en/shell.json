@@ -51,7 +51,8 @@
       "people": "People"
     },
     "projects": {
-      "openProject": "Open {{name}}"
+      "openProject": "Open {{name}}",
+      "backToRoot": "Back to root"
     },
     "hints": {
       "relays": "Relays",

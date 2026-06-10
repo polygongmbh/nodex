@@ -36,9 +36,10 @@
   - `Leaves only`: only end-node tasks with no subtasks.
 
 ## Sidebar Projects
-- The desktop sidebar's Projects section (above Spaces) lists active top-level tasks that still have open subtasks, with active subprojects (active subtasks that again have open subtasks) indented beneath them.
+- The desktop sidebar's Projects section (above Spaces) lists active top-level tasks that still have open subtasks, with active subprojects (active subtasks that themselves have an active subtask) indented beneath them.
 - Clicking a project focuses it, the same as clicking the task elsewhere. The section hides itself when nothing qualifies.
-- In the Home view there is no breadcrumb bar; instead the Projects section highlights the project (and subproject) chain containing the post you are focused in.
+- Clicking the folder icon in the section header goes back to the root, clearing the current focus.
+- In every view the Projects section highlights the chain of rows containing the focused post, and temporary indented entries extend the listed projects down to the focused post itself — even through subtasks that are not subprojects — so your position in the tree stays visible (in Home this replaces the breadcrumb bar).
 
 ## Channel and Tag Filtering
 ### Desktop sidebar channels
