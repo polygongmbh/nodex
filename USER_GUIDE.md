@@ -156,7 +156,7 @@
 - When a task status control is disabled, hovering it explains why edits are blocked (for example assigned owner, task owner, sign-in required, or temporary interaction lock).
 - Date-typed tasks appear in Calendar view. Tasks with multiple dates appear on each date, and Start/End ranges span every day in the range.
 - The calendar's selected-day panel offers both `Create Task` and `Create Event` buttons; `Create Event` opens the composer in Event mode (NIP-52) with explicit Start Date / Start Time / End Date / End Time controls. Times are optional — leaving both sides timeless publishes an all-day event (kind 31922); adding any time promotes it to a timed event (kind 31923).
-- Calendar events appear in the feed and on the calendar grid alongside tasks, marked with an `EVENT` label. Their date chip is grey once ended, yellow while active, blue while upcoming.
+- Calendar events appear in the feed and on the calendar grid alongside tasks, marked with an `EVENT` label. Their date chip is grey once ended, yellow while active, blue while upcoming. An event without an explicit end counts as active through its start day — and for at least an hour after start, so a timed late-evening event does not grey out at midnight.
 - Tree, Kanban, List, and Status cards show a paperclip and attachment count when a post has attachments; Feed and Calendar render attachments inline.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, use the task/comment send actions in the combined bottom bar to create.

@@ -188,7 +188,17 @@ export function getDueDateColorClass(
 
   if (eventInterval) {
     const now = new Date();
-    const activeEnd = eventInterval.end ?? endOfDay(eventInterval.start);
+    // No explicit end: active through the start day, but never less than an
+    // hour past start — otherwise a timed event starting late in the evening
+    // would grey out at local midnight, minutes after it began. For date-based
+    // events start is local midnight, so endOfDay always wins and behavior is
+    // unchanged (NIP-52: a date-based event without end spans its start date).
+    const activeEnd =
+      eventInterval.end ??
+      new Date(Math.max(
+        endOfDay(eventInterval.start).getTime(),
+        eventInterval.start.getTime() + 60 * 60 * 1000,
+      ));
     if (now > activeEnd) return "text-muted-foreground";
     if (now < eventInterval.start) return "text-blue-500";
     return "text-warning";

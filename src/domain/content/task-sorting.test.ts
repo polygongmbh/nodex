@@ -77,6 +77,21 @@ describe("getDueDateColorClass", () => {
         getDueDateColorClass(startYesterday, "open", "start", { start: startYesterday }),
       ).toBe("text-muted-foreground");
     });
+
+    it("keeps a late-night event without end active across midnight for at least an hour", () => {
+      const justPastMidnight = new Date("2026-03-16T00:30:00");
+      vi.setSystemTime(justPastMidnight);
+
+      const startedRecently = new Date("2026-03-15T23:45:00");
+      expect(
+        getDueDateColorClass(startedRecently, "open", "start", { start: startedRecently }),
+      ).toBe("text-warning");
+
+      const startedEarlier = new Date("2026-03-15T22:30:00");
+      expect(
+        getDueDateColorClass(startedEarlier, "open", "start", { start: startedEarlier }),
+      ).toBe("text-muted-foreground");
+    });
   });
 });
 
