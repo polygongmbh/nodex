@@ -5,6 +5,7 @@ import type {
   TimeBasedEventPost,
 } from "@/types";
 import type { Person } from "@/types/person";
+import { addDays } from "date-fns";
 import { NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
@@ -102,6 +103,19 @@ export function parseIsoDateLocal(value: string): Date | undefined {
   const [y, m, d] = value.split("-").map(Number);
   const parsed = new Date(y, m - 1, d);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+/**
+ * Convert NIP-52's exclusive date-based `end` to the inclusive last day the
+ * domain stores. Drops one day; a malformed peer event whose end is not after
+ * start collapses to a single-day event (no end).
+ */
+function exclusiveEndToInclusiveDay(startDate: string, endDate?: string): string | undefined {
+  if (!endDate) return undefined;
+  const parsed = parseIsoDateLocal(endDate);
+  if (!parsed) return undefined;
+  const inclusive = toDateTagValue(addDays(parsed, -1));
+  return inclusive < startDate ? undefined : inclusive;
 }
 
 function parseDateType(tags: string[][], fallback: TaskDateType): TaskDateType {
@@ -284,7 +298,7 @@ export function parseStandaloneCalendarEvent(
       ...base,
       kind: NostrEventKind.CalendarDateBased,
       startDate: parsed.startDate,
-      endDate: parsed.endDate,
+      endDate: exclusiveEndToInclusiveDay(parsed.startDate, parsed.endDate),
     };
     return post;
   }
@@ -337,7 +351,11 @@ export function buildStandaloneCalendarEvent({
     ["start", startValue],
   ];
   if (end) {
-    tags.push(["end", isAllDay ? toDateTagValue(end) : toUnixSeconds(end)]);
+    // NIP-52's date-based `end` is exclusive, but the composer's End Date is the
+    // inclusive last day the user picked — publish the following day. Timed
+    // events carry a precise instant, so no day shift.
+    const endValue = isAllDay ? toDateTagValue(addDays(end, 1)) : toUnixSeconds(end);
+    tags.push(["end", endValue]);
   }
   if (summary) tags.push(["summary", summary]);
   if (location) tags.push(["location", location]);

@@ -160,7 +160,8 @@ describe("task calendar event helpers", () => {
       expect(isDateBasedEventPost(post!)).toBe(true);
       if (isDateBasedEventPost(post!)) {
         expect(post.startDate).toBe("2026-05-10");
-        expect(post.endDate).toBe("2026-05-12");
+        // wire end 2026-05-12 is exclusive → inclusive last day is 2026-05-11
+        expect(post.endDate).toBe("2026-05-11");
       }
       expect(post!.title).toBe("Conference");
       expect(post!.summary).toBe("Annual gathering");
@@ -191,21 +192,55 @@ describe("task calendar event helpers", () => {
       });
       expect(parseStandaloneCalendarEvent(event)).toBeNull();
     });
+
+    it("round-trips an all-day range back to the inclusive days the user picked", () => {
+      const built = buildStandaloneCalendarEvent({
+        title: "Trip",
+        content: "Away",
+        start: new Date(2026, 5, 1),
+        end: new Date(2026, 5, 3), // inclusive Jun 1–3
+        isAllDay: true,
+      });
+      const post = parseStandaloneCalendarEvent(
+        makeRawEvent({ kind: NostrEventKind.CalendarDateBased, tags: built.tags })
+      );
+      expect(isDateBasedEventPost(post!)).toBe(true);
+      if (isDateBasedEventPost(post!)) {
+        expect(post.startDate).toBe("2026-06-01");
+        expect(post.endDate).toBe("2026-06-03");
+      }
+    });
+
+    it("collapses an exclusive end that is not after start to a single-day event", () => {
+      const event = makeRawEvent({
+        kind: NostrEventKind.CalendarDateBased,
+        tags: [
+          ["start", "2026-05-10"],
+          ["end", "2026-05-10"], // malformed: not after start
+        ],
+      });
+      const post = parseStandaloneCalendarEvent(event);
+      expect(isDateBasedEventPost(post!)).toBe(true);
+      if (isDateBasedEventPost(post!)) {
+        expect(post.startDate).toBe("2026-05-10");
+        expect(post.endDate).toBeUndefined();
+      }
+    });
   });
 
   describe("buildStandaloneCalendarEvent", () => {
-    it("emits kind 31922 with ISO start/end when isAllDay", () => {
+    it("emits kind 31922 with an exclusive wire end one day past the inclusive pick", () => {
       const built = buildStandaloneCalendarEvent({
         title: "Off-site",
         content: "Plan the off-site",
         start: new Date(2026, 5, 1),
-        end: new Date(2026, 5, 3),
+        end: new Date(2026, 5, 3), // inclusive last day
         isAllDay: true,
       });
       expect(built.kind).toBe(NostrEventKind.CalendarDateBased);
       expect(built.tags).toContainEqual(["title", "Off-site"]);
       expect(built.tags).toContainEqual(["start", "2026-06-01"]);
-      expect(built.tags).toContainEqual(["end", "2026-06-03"]);
+      expect(built.tags).toContainEqual(["end", "2026-06-04"]); // exclusive on the wire
       expect(built.tags.find((t) => t[0] === "d")?.[1]).toBeTruthy();
     });
 

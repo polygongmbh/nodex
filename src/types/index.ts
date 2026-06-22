@@ -1,3 +1,4 @@
+import { endOfDay } from "date-fns";
 import type { Person } from "./person";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { ComposerContent, DraftTagging, SubmitTagging } from "./composer-base";
@@ -441,16 +442,18 @@ export function findTaskDate(
 }
 
 /**
- * End instant for a calendar event, if one is set. For date-based events the
- * NIP-52 `endDate` is exclusive — callers comparing against "now" should treat
- * the start day as still active when no end is provided. Returns a `Date`
- * (local-midnight for date-based) for ergonomic comparison with `Date.now()`.
+ * End instant for a calendar event, for comparison against "now" (active vs.
+ * past colouring). `endDate` holds the inclusive last day — the wire's
+ * exclusive NIP-52 `end` is converted to inclusive on parse — so a date-based
+ * event stays active through the end of that day. Returns `undefined` when no
+ * end is set; callers treat a no-end event as active through its start day.
  */
 export function getEventEndDate(post: Post | undefined): Date | undefined {
   if (!post) return undefined;
   if (isTimeBasedEventPost(post)) return post.end;
   if (isDateBasedEventPost(post) && post.endDate) {
-    return parseIsoDateLocal(post.endDate);
+    const day = parseIsoDateLocal(post.endDate);
+    return day ? endOfDay(day) : undefined;
   }
   return undefined;
 }
