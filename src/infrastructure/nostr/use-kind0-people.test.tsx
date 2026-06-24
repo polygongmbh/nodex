@@ -44,6 +44,30 @@ describe("useKind0People", () => {
     expect(result.current.cachedKind0Events).toHaveLength(1);
   });
 
+  it("resolves people across all cached relays when no space is selected", async () => {
+    peopleFromKind0.saveCachedKind0Events([
+      {
+        id: "kind0-alice",
+        kind: NostrEventKind.Metadata,
+        pubkey: "a".repeat(64),
+        created_at: 1,
+        tags: [],
+        sig: "",
+        content: JSON.stringify({ name: "alice", displayName: "Alice Demo" }),
+      },
+    ], DEMO_RELAY_URL);
+
+    // Empty relay list === "All spaces"; profiles must still resolve.
+    const { result } = renderHook(() => useKind0People([], null));
+
+    await waitFor(() => {
+      expect(result.current.people).toHaveLength(1);
+    });
+    expect(result.current.people[0]).toEqual(
+      expect.objectContaining({ pubkey: "a".repeat(64), displayName: "Alice Demo" })
+    );
+  });
+
   it("does not refresh selected relay cache when rerendered with an equivalent normalized relay list", async () => {
     const loadSpy = vi.spyOn(peopleFromKind0, "loadCachedKind0EventsForRelayUrls");
 

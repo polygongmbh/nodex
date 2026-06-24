@@ -75,8 +75,17 @@ export function useKind0People(
     getKind0CacheVersion,
     getKind0CacheVersion,
   );
+  // An empty scope means "All spaces" (no relay filter selected), so resolve
+  // profiles across every cached relay bucket — mirroring resolveChannelRelayScopeIds,
+  // which the feed and channel-list scoping use. Without this fallback,
+  // loadCachedKind0EventsForRelayUrls([]) returns nothing and the People sidebar
+  // collapses to empty whenever no space is selected, even though the feed and
+  // channel list still show everything.
   const cachedKind0Events = useMemo(
-    () => loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls),
+    () =>
+      normalizedSelectedRelayUrls.length === 0
+        ? loadCachedKind0Events()
+        : loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [kind0CacheVersion, selectedRelayScopeKey],
   );
