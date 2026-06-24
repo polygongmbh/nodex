@@ -115,6 +115,27 @@ describe("usePinnedSidebarEntityState", () => {
     expect(pinned).toContain("unknown-channel");
   });
 
+  it("pins across content relays and resolves pins when no relay filter is active", () => {
+    const entityRelayIds = new Map([["ops", new Set(["relay-one", "relay-two"])]]);
+
+    const { result } = renderHook(() =>
+      usePinnedSidebarEntityState(makeOptions({
+        effectiveActiveRelayIds: new Set(),
+        entityRelayIds,
+      }))
+    );
+
+    act(() => {
+      result.current.pinAcrossRelays("ops");
+    });
+
+    const saved = loadState(undefined);
+    expect(getPinnedEntityIdsForRelays(saved, ["relay-one"], IK)).toContain("ops");
+    expect(getPinnedEntityIdsForRelays(saved, ["relay-two"], IK)).toContain("ops");
+    // Pin resolves as visible even though no relay filter is selected.
+    expect(result.current.pinnedIds).toContain("ops");
+  });
+
   it("unpins from all active relays", () => {
     const initial = pinEntityForRelays(
       pinEntityForRelays(createEmptyPinnedEntityState(), ["relay-one"], "ops", IK),

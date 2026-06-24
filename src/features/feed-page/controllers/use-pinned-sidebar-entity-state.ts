@@ -62,10 +62,20 @@ export function usePinnedSidebarEntityState<IdKey extends string>({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, userPubkey]);
 
-  const activeRelayIdList = useMemo(
-    () => Array.from(effectiveActiveRelayIds),
-    [effectiveActiveRelayIds]
-  );
+  // The relay scope pins resolve and write to. With a relay filter active, that's
+  // the active set. With none active, fall back to every relay that has content
+  // (the union of entityRelayIds) so "no space selected" still pins a channel
+  // across the spaces where it actually appears — mirroring how content scoping
+  // falls back to all relays. Without this, clearing the relay filter silently
+  // breaks pinning (pins write to zero relays and resolve to nothing).
+  const activeRelayIdList = useMemo(() => {
+    if (effectiveActiveRelayIds.size > 0) return Array.from(effectiveActiveRelayIds);
+    const allContentRelays = new Set<string>();
+    for (const relays of entityRelayIds.values()) {
+      for (const relayId of relays) allContentRelays.add(relayId);
+    }
+    return Array.from(allContentRelays);
+  }, [effectiveActiveRelayIds, entityRelayIds]);
 
   const pinnedIds = useMemo(
     () => getPinnedEntityIdsForRelays(state, activeRelayIdList, idKey),
