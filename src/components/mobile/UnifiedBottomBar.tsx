@@ -1119,7 +1119,10 @@ export function UnifiedBottomBar({
 
   const handlePrimarySend = () => {
     if (!canCreateContent) {
-      void handleSubmit("task");
+      // why: when signed out the primary action is a login affordance, so tap
+      // opens the auth modal instead of running submit-time validation (which
+      // would surface irrelevant "select a channel" complaints).
+      void dispatchFeedInteraction({ type: "ui.openAuthModal" });
       return;
     }
     if (taskSubmitBlock && !taskSubmitBlock.isHardDisabled && !canSendComment && !canSendListing) {

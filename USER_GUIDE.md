@@ -117,6 +117,7 @@
 - The bottom bar is a combined search/compose field:
   - typing updates search results live,
   - send buttons post as task/comment from the same text.
+  - while signed out the send button is a sign-in button — tapping it opens the sign-in popup instead of attempting to post.
 
 ## Legal Information
 - Desktop: the bottom search dock now includes an `Impressum` link next to the version hint.

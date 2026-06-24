@@ -217,7 +217,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.queryByRole("button", { name: /broad person/i })).not.toBeInTheDocument();
   });
 
-  it("routes signed-out create attempts through task.create dispatch", () => {
+  it("opens the auth modal on signed-out submit instead of running submit-time checks", () => {
     render(
       <UnifiedBottomBar
         currentView="feed"
@@ -227,11 +227,13 @@ describe("UnifiedBottomBar auth gating", () => {
         canCreateContent={false} />
     );
 
+    // No channel selected — the old flow would complain "select a channel".
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
-    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.change(field, { target: { value: "Ship it" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
-    expect(getTaskCreateCalls()).toHaveLength(1);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.openAuthModal" });
+    expect(getTaskCreateCalls()).toHaveLength(0);
   });
 
   it("disables the mobile primary send button when the textbox is actually empty", () => {
