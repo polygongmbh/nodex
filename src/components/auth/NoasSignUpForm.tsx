@@ -62,6 +62,11 @@ export function NoasSignUpForm({
   const [emailVerificationMode, setEmailVerificationMode] = useState<NoasEmailVerificationMode>("none");
   const [localError, setLocalError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
+  // Safari ignores autocomplete="off" and treats the -webkit-text-security
+  // masked field as a password, dumping the account password into it. A field
+  // that is readOnly until focused is skipped by autofill; we drop readOnly on
+  // first focus so the user can still paste/type their own key.
+  const [isPrivateKeyEditable, setIsPrivateKeyEditable] = useState(false);
   const displayedError = localError ?? error;
   const userFacingPubkey = toUserFacingPubkey(pubkey);
 
@@ -310,6 +315,8 @@ export function NoasSignUpForm({
               onChange={(e) => handlePrivateKeyChange(e.target.value)}
               placeholder={t("auth.noas.privateKeyPlaceholder")}
               disabled={isLoading}
+              readOnly={!isPrivateKeyEditable}
+              onFocus={() => setIsPrivateKeyEditable(true)}
               autoComplete="off"
               autoCapitalize="none"
               autoCorrect="off"
