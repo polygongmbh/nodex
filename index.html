@@ -36,8 +36,76 @@
         var root = document.documentElement;
         root.classList.toggle("dark", effectiveTheme === "dark");
         root.style.colorScheme = effectiveTheme;
+        // Hide the app until the splash dismiss runs (src/lib/splash.ts). This
+        // class always gets set because the IIFE runs synchronously during parse.
+        root.classList.add("app-loading");
       })();
     </script>
+    <style>
+      /* Express splash: paints from index.html before the JS bundle loads, then
+         zooms + fades out once the app has mounted (dismissSplash in main.tsx). */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: hsl(210 28% 98%);
+        opacity: 1;
+        transition: opacity 700ms ease;
+      }
+      html.dark #splash {
+        background: hsl(220 20% 10%);
+      }
+      #splash svg {
+        width: 62vmin;
+        height: 62vmin;
+        transform: scale(1);
+        transform-origin: center;
+        transition: transform 700ms cubic-bezier(0.4, 0, 0.2, 1);
+        animation: splash-pulse 1600ms ease-in-out infinite;
+      }
+      #splash .glyph {
+        stroke: #000000;
+      }
+      html.dark #splash .glyph {
+        stroke: hsl(210 100% 55%);
+      }
+      @keyframes splash-pulse {
+        0%, 100% { opacity: 0.85; }
+        50% { opacity: 1; }
+      }
+      /* Dismiss: icon zooms in past the viewport while the overlay fades out. */
+      #splash.splash-hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash.splash-hide svg {
+        transform: scale(2.6);
+        animation: none;
+      }
+      /* App fades in underneath the dissolving splash. */
+      #root {
+        transition: opacity 700ms ease;
+      }
+      html.app-loading #root {
+        opacity: 0;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #splash,
+        #splash svg,
+        #root {
+          transition-duration: 200ms;
+        }
+        #splash svg {
+          animation: none;
+        }
+        #splash.splash-hide svg {
+          transform: scale(1);
+        }
+      }
+    </style>
     
     <meta property="og:type" content="website" />
 
@@ -47,6 +115,20 @@
 
   <body>
     <div id="root"></div>
+    <div id="splash">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+        <g
+          class="glyph"
+          transform="translate(-54.08,-13.59) scale(1.12)"
+          fill="none"
+          stroke-width="31.104"
+          stroke-linecap="round"
+        >
+          <path d="M90.4329 180.698L90.0113 86.1228C89.9973 82.9897 93.8252 81.4563 95.9781 83.7326L166.928 158.748" />
+          <path d="M202.53 40.0443L202.952 134.619C202.966 137.752 199.138 139.286 196.985 137.01L126.035 61.9938" />
+        </g>
+      </svg>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

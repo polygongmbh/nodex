@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import { AppErrorBoundary } from "@/components/app/AppErrorBoundary";
 import { AppErrorScreen } from "@/components/app/AppErrorScreen";
 import { consumeReloadSearchParam, getAppErrorMessage } from "@/lib/app-fatal-error";
+import { dismissSplash } from "@/lib/splash";
 import "@/lib/runtime-storage-guard";
 import "@/lib/i18n/config";
 import "./index.css";
@@ -22,6 +23,8 @@ const root = createRoot(rootElement);
 
 const showFatalAppError = (error: unknown) => {
   console.error("Fatal application error", { error });
+  // Tear down the splash so the error screen is never hidden behind it.
+  dismissSplash();
   root.render(<AppErrorScreen errorMessage={getAppErrorMessage(error)} />);
 };
 
@@ -68,3 +71,6 @@ root.render(
     <App />
   </AppErrorBoundary>
 );
+
+// Zoom + fade the express splash once the app has mounted and painted.
+dismissSplash();
