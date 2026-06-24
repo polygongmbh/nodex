@@ -4,8 +4,8 @@ import { MobileChannelChips } from "./MobileChannelChips";
 import { makeChannel } from "@/test/fixtures";
 
 const channels = [
-  makeChannel({ id: "dev", name: "dev", usageCount: 4, pinIndex: 0 }),
-  makeChannel({ id: "design", name: "design", usageCount: 5, pinIndex: 1 }),
+  makeChannel({ id: "dev", name: "dev", usageCount: 4 }),
+  makeChannel({ id: "design", name: "design", usageCount: 5 }),
 ];
 
 function renderChips(overrides: Partial<React.ComponentProps<typeof MobileChannelChips>> = {}) {
@@ -83,25 +83,28 @@ describe("MobileChannelChips", () => {
     expect(devChipClass()).toContain("text-primary-foreground");
   });
 
-  it("gently highlights pinned chips and marks them via data-pinned", () => {
+  it("marks pinned chips with a pin icon and drops the hash prefix", () => {
     renderChips({
       channels: [
         makeChannel({ id: "dev", name: "dev", usageCount: 4, pinIndex: 0 }),
         makeChannel({ id: "random", name: "random", usageCount: 1 }),
       ],
     });
-    const pinned = screen.getByText("#dev").closest("button")!;
+    // Pinned chip shows the bare name (no '#') and a pin glyph.
+    const pinned = screen.getByText("dev").closest("button")!;
     const unpinned = screen.getByText("#random").closest("button")!;
     expect(pinned).toHaveAttribute("data-pinned", "true");
-    expect(pinned.className).toContain("bg-primary/10");
+    expect(pinned.querySelector("svg")).not.toBeNull();
     expect(unpinned).not.toHaveAttribute("data-pinned");
-    expect(unpinned.className).not.toContain("bg-primary/10");
+    expect(unpinned.querySelector("svg")).toBeNull();
   });
 
   it("toggles pin on long-press and suppresses the trailing tap", () => {
     vi.useFakeTimers();
-    const { onTogglePin, onSelectChannel } = renderChips();
-    const devChip = screen.getByText("#dev");
+    const { onTogglePin, onSelectChannel } = renderChips({
+      channels: [makeChannel({ id: "dev", name: "dev", usageCount: 4, pinIndex: 0 })],
+    });
+    const devChip = screen.getByText("dev");
 
     fireEvent.pointerDown(devChip, { button: 0, pointerId: 1 });
     vi.advanceTimersByTime(500);

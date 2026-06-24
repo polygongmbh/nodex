@@ -1,5 +1,5 @@
 import { useCallback, useRef, type PointerEvent, type ReactNode } from "react";
-import { Menu } from "lucide-react";
+import { Menu, Pin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { Channel } from "@/types";
@@ -41,7 +41,8 @@ interface ChannelChipProps {
  * Tap selects the channel exclusively (tap again clears it); a long-press
  * toggles its pin state. We track the long-press with a timer and suppress the
  * trailing click so a long-press never also selects the channel. Pinned chips
- * carry a gentle tint so they read apart from the trailing discovery channels.
+ * swap the `#` prefix for a small pin glyph so they read apart from the trailing
+ * discovery channels without a louder background change.
  */
 function ChannelChip({ channel, isActive, onSelect, onLongPress }: ChannelChipProps) {
   const isPinned = channel.pinIndex !== undefined;
@@ -80,21 +81,17 @@ function ChannelChip({ channel, isActive, onSelect, onLongPress }: ChannelChipPr
     <button
       type="button"
       data-pinned={isPinned ? "true" : undefined}
-      className={cn(
-        chipBase,
-        isActive
-          ? "bg-primary text-primary-foreground shadow-sm"
-          : isPinned
-            ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary/20"
-            : "bg-muted/80 dark:bg-muted/60 text-muted-foreground/80 dark:text-muted-foreground"
-      )}
+      className={cn(chipBase, chipColors(isActive))}
       onPointerDown={handlePointerDown}
       onPointerUp={clearTimer}
       onPointerLeave={clearTimer}
       onPointerCancel={clearTimer}
       onClick={handleClick}
     >
-      <span>#{channel.name}</span>
+      {isPinned ? (
+        <Pin className="h-3 w-3 shrink-0" />
+      ) : null}
+      <span>{isPinned ? channel.name : `#${channel.name}`}</span>
       {channel.usageCount ? (
         <span
           className={cn(
