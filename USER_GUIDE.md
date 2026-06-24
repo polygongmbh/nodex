@@ -5,7 +5,7 @@
 - Guest sign-in starts with a deterministic placeholder username derived from your pubkey.
 - Compose a post with at least one `#channel` tag.
 - Desktop: choose Task, Comment, Listing, or Event from the compose kind control.
-- Mobile: use the dedicated send actions for task/comment in the bottom bar.
+- Mobile: the bottom-bar send button posts a message in the timeline and a task in upcoming (no kind picker); the tree view keeps task/comment send actions. Attach an event from the timeline's extras button to post a calendar event.
 - Optional: set task priority before posting.
 - Optional: switch UI language (`EN`/`DE`/`ES`) from the language dropdown in the desktop top-right controls.
 
@@ -116,7 +116,9 @@
 - *Open Guide* in *Manage* launches onboarding for signed-out users.
 - The bottom bar is a combined search/compose field:
   - typing updates search results live,
-  - send buttons post as task/comment from the same text.
+  - the send button posts from the same text; in the timeline (Timeline) it posts a **message**, in upcoming (Upcoming) it creates a **task** — neither shows a post-kind picker. The tree/thread view keeps its task/comment send options.
+  - the send button only appears once a channel is selected (or a `#hashtag` is typed); until then the bar is a pure search field. If your typed search has no matches and no channel is selected, the empty-results notice adds a line reminding you to select a channel before you can post.
+  - in the timeline, a small **extras** button sits to the left of the text field (whenever the send button is shown). It opens a popup to attach media or attach an **event** — the event popup asks for a start date (required) plus optional end date, time, title, and location, and turns the message into a NIP-52 calendar event (all-day when no time is set, timed otherwise). An attached event shows as a chip you can tap to edit or remove. The timeline hides the task-property second bar, since a message has no due date/priority.
   - while signed out the send button is a sign-in button — tapping it opens the sign-in popup instead of attempting to post.
 
 ## Legal Information
@@ -173,7 +175,7 @@
 - For an all-day event, the End Date you pick is the last day the event runs (inclusive): an event ending `Jun 12` shows on the calendar and stays active through all of Jun 12. On the wire it is published per NIP-52 (the end date is stored exclusively, as the day after), so other Nostr clients show the same range.
 - Tree, Kanban, List, and Status cards show a paperclip and attachment count when a post has attachments; Feed and Calendar render attachments inline.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
-- On mobile, use the task/comment send actions in the combined bottom bar to create.
+- On mobile, the combined bottom bar's send button creates a message in the timeline and a task in upcoming; the tree view keeps task/comment send options. The timeline's extras button (left of the field) attaches media or an event.
 
 ## Table and Calendar Editing
 - Table view supports inline priority editing.
