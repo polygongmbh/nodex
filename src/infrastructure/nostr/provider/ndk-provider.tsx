@@ -43,6 +43,7 @@ import {
   resolveWritableNdkRelayUrls,
 } from "@/lib/nostr/relay-write-targets";
 import { useProfileSync } from "./use-profile-sync";
+import { useEnsureOwnProfile } from "./use-ensure-own-profile";
 export type { AuthMethod, NDKUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 export const NDKContext = createContext<NDKContextValue | null>(null);
@@ -743,6 +744,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     setNeedsProfileSetup,
     setIsProfileSyncing,
   );
+
+  useEnsureOwnProfile(user, authMethod, relays, publishEvent, fetchLatestKind0Profile);
 
   const { subscribe } = useSubscribe({
     ndk,
