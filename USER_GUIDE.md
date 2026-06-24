@@ -57,6 +57,14 @@
   - if all are neutral -> set all to included
   - otherwise -> reset all to neutral
 
+### Mobile channel chips
+- Every mobile view shows a horizontally scrollable chip row under the nav bar: a *Manage* (burger) chip, a *Home* chip, then one chip per channel.
+- Channel chips are your pinned channels (in pin order); before you pin any, the row falls back to the most-used channels. Each chip shows the channel's usage count.
+- Tap a channel chip to show only that channel; tap it again (or tap *Home*) to clear it. Tapping a chip while *Manage* is open also closes *Manage*.
+- Long-press a channel chip to pin/unpin it.
+- The first chip is the burger/manage menu (moved out of the view switcher); tap it to open or close the *Manage* pane.
+- On the feed and status timeline, *Home* shows top-level posts from your pinned channels plus anything involving you (authored, assigned, or replies under your posts). On tree/list/calendar, *Home* simply means no channel filter.
+
 ### Content hashtag click behavior
 - Clicking a hashtag inside task/comment content adds that tag to the included channel filters without clearing existing channel selections.
 
@@ -95,9 +103,9 @@
 - Use the preset chip menu to rename or delete a saved preset.
 
 ## Mobile Usage
-- The view navigation is at the top.
+- The view navigation is at the top, with a channel-chip row directly beneath it (see *Mobile channel chips*).
 - Top-bar view buttons switch directly between task views; they do not close/reopen Manage unless Manage is currently open.
-- Open *Manage* for feed, channel, people, profile, and guide controls.
+- Open *Manage* (the burger chip in the channel-chip row) for feed, channel, people, profile, and guide controls.
 - In *Manage* (same row as *Open Guide*), use legal actions:
   - `Impressum` opens the imprint dialog section.
   - `Datenschutz` opens the privacy policy dialog section.
