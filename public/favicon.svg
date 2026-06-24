@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+  <style>
+    /* Logo color — light mode black, dark mode brand blue (--primary). Adjust here. */
+    svg { --logo: #000000; }
+    @media (prefers-color-scheme: dark) {
+      svg { --logo: hsl(210 100% 55%); }
+    }
+    /* First declaration is the fallback for renderers without var() support. */
+    .glyph { stroke: #000000; stroke: var(--logo, #000000); }
+  </style>
+  <g class="glyph" transform="translate(-54.08,-13.59) scale(1.12)" fill="none" stroke-width="31.104" stroke-linecap="round">
+    <path d="M90.4329 180.698L90.0113 86.1228C89.9973 82.9897 93.8252 81.4563 95.9781 83.7326L166.928 158.748"/>
+    <path d="M202.53 40.0443L202.952 134.619C202.966 137.752 199.138 139.286 196.985 137.01L126.035 61.9938"/>
+  </g>
+</svg>
