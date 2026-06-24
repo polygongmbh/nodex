@@ -285,4 +285,70 @@ describe("linkifyContent interaction styles", () => {
       "https://example.com/photo.png",
     ]);
   });
+
+  it("linkifies non-http schemes like ssh:// and ftp://", () => {
+    render(<div>{linkifyContent("connect ssh://example.com or ftp://files.example.com/a.txt")}</div>);
+
+    expect(screen.getByRole("link", { name: "ssh://example.com" })).toHaveAttribute(
+      "href",
+      "ssh://example.com"
+    );
+    expect(
+      screen.getByRole("link", { name: "ftp://files.example.com/a.txt" })
+    ).toHaveAttribute("href", "ftp://files.example.com/a.txt");
+  });
+
+  it("renders mailto: and tel: links without the scheme prefix", () => {
+    render(<div>{linkifyContent("write mailto:foo@bar.com or call tel:+1-202-555-0123")}</div>);
+
+    expect(screen.getByRole("link", { name: "foo@bar.com" })).toHaveAttribute(
+      "href",
+      "mailto:foo@bar.com"
+    );
+    expect(screen.getByRole("link", { name: "+1-202-555-0123" })).toHaveAttribute(
+      "href",
+      "tel:+12025550123"
+    );
+  });
+
+  it("auto-linkifies bare international phone numbers", () => {
+    render(<div>{linkifyContent("ring +49 151 23456789 today")}</div>);
+
+    expect(screen.getByRole("link", { name: "+49 151 23456789" })).toHaveAttribute(
+      "href",
+      "tel:+4915123456789"
+    );
+  });
+
+  it("linkifies bare domains but leaves filename-like extensions as text", () => {
+    render(<div>{linkifyContent("visit example.com but keep report.zip alone")}</div>);
+
+    expect(screen.getByRole("link", { name: "example.com" })).toHaveAttribute(
+      "href",
+      "http://example.com"
+    );
+    expect(screen.queryByRole("link", { name: "report.zip" })).not.toBeInTheDocument();
+  });
+
+  it("does not render a javascript: link as clickable", () => {
+    render(<div>{linkifyContent("danger [click](javascript:alert(1)) here")}</div>);
+
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByText((value) => value.includes("click"))).toBeInTheDocument();
+  });
+
+  it("does not autolink URLs inside inline code", () => {
+    render(<div>{linkifyContent("run `ssh://example.com` now")}</div>);
+
+    expect(screen.queryByRole("link", { name: "ssh://example.com" })).not.toBeInTheDocument();
+    expect(screen.getByText("ssh://example.com").tagName).toBe("CODE");
+  });
+
+  it("does not double-link an explicit markdown link", () => {
+    render(<div>{linkifyContent("see [the site](https://example.com) here")}</div>);
+
+    const link = screen.getByRole("link", { name: "the site" });
+    expect(link).toHaveAttribute("href", "https://example.com");
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+  });
 });

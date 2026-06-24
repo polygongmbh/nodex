@@ -5,6 +5,8 @@ import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import { nip19 } from "nostr-tools";
 import { LINKIFY_CONTENT_TOKEN_REGEX, isHexColorToken } from "@/lib/content-tokens";
+import { remarkAutolinkExtras } from "@/lib/content-autolink";
+import { transformContentUrl } from "@/lib/content-url-safety";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Person } from "@/types/person";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
@@ -528,7 +530,8 @@ function renderMarkdownBlock(
   return (
     <div className="whitespace-normal" key={baseKey}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkBreaks]}
+        remarkPlugins={[remarkGfm, remarkBreaks, remarkAutolinkExtras]}
+        urlTransform={transformContentUrl}
         components={{
           p: MarkdownParagraph,
           ul: ({ children }) => <MarkdownList>{children}</MarkdownList>,
