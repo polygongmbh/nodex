@@ -58,11 +58,12 @@
   - otherwise -> reset all to neutral
 
 ### Mobile channel chips
-- Every mobile view shows a horizontally scrollable chip row under the nav bar: a *Manage* (burger) chip, a *Home* chip, then one chip per channel.
-- Channel chips are your pinned channels (in pin order); before you pin any, the row falls back to the most-used channels. Each chip shows the channel's usage count.
-- Tap a channel chip to show only that channel; tap it again (or tap *Home*) to clear it. Tapping a chip while *Manage* is open also closes *Manage*.
-- Long-press a channel chip to pin/unpin it.
+- Every mobile view shows a horizontally scrollable chip row under the nav bar: a *Manage* (burger) chip, a space selector pill, a *Home* chip, then one chip per channel.
 - The first chip is the burger/manage menu (moved out of the view switcher); tap it to open or close the *Manage* pane.
+- The space selector pill shows the current space's (relay's) icon. Tap it to open a menu with: *All spaces* (no space filter), your connected spaces, then — after a divider — any disconnected spaces, and finally an inline *Connect to another space* URL field (type a `wss://…` address and press Enter or the add button). Selecting a space scopes everything to just that space; *All spaces* clears the filter.
+- Channel chips list your pinned channels first (in pin order, gently highlighted), then the other channels in the same order as the sidebar. Each chip shows the channel's usage count.
+- Tap a channel chip to show only that channel; tap it again (or tap *Home*) to clear it back to the home filter. Switching channels this way does not show a toast. Tapping a chip while *Manage* is open also closes *Manage*.
+- Long-press a channel chip to pin/unpin it.
 - On the feed and status timeline, *Home* shows top-level posts from your pinned channels plus anything involving you (authored, assigned, or replies under your posts). On tree/list/calendar, *Home* simply means no channel filter.
 
 ### Content hashtag click behavior
