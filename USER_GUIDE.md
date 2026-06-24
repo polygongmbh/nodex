@@ -221,6 +221,7 @@
   - hashtag and mention chips,
   - posting user identity (username/display name), including resolved names from cached profile metadata.
 - The active search query is mirrored to the URL as `?q=`, so a filtered view is shareable and browser back/forward restore it. Focusing into a sibling/child/unrelated task clears the search; focusing up or unfocusing back to the global view preserves it.
+- The browser tab title tracks your context: with a post focused it shows that post's content, otherwise the current view name, always suffixed with the instance host (e.g. `Kanban — talk.nodex.io`) so several open Nodex instances stay easy to tell apart in tabs and history.
 
 ## Notes
 - Nodex is in beta; behavior can evolve as Nostr integrations mature.

@@ -72,6 +72,7 @@ import { FeedPageProviders } from "@/features/feed-page/views/FeedPageProviders"
 import { FeedRelayProvider, useFeedRelayState } from "@/features/feed-page/views/FeedRelayProvider";
 import { PersonPresenceProvider } from "@/lib/person-presence-context";
 import { MotdBanner } from "@/components/MotdBanner";
+import { DocumentTitleSync } from "@/components/DocumentTitleSync";
 import { featureDebugLog } from "@/lib/feature-debug";
 
 function FeedIndexContent() {
@@ -880,6 +881,7 @@ function FeedIndexContent() {
       sidebarController={isMobile ? undefined : desktopSidebarController}
       scrollCaptureRef={scrollCaptureRef}
     >
+      <DocumentTitleSync currentView={currentView} focusedTask={focusedTask} />
       <MotdBanner />
       {isMobile ? (
         <FeedPageMobileShell
