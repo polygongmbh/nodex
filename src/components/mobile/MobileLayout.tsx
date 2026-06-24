@@ -102,6 +102,15 @@ export function MobileLayout({
     dispatchManageRouteChange(false);
   }, [dispatchFeedInteraction, dispatchManageRouteChange]);
 
+  // Burger acts as a toggle: tapping it while the manage pane is open closes it.
+  const toggleManageView = useCallback(() => {
+    if (showFilters) {
+      closeManageView();
+      return;
+    }
+    openManageView();
+  }, [closeManageView, openManageView, showFilters]);
+
   const handleMobileViewChange = useCallback((view: MobileViewType) => {
     if (showFilters) {
       closeManageView(view);
@@ -214,9 +223,8 @@ export function MobileLayout({
         )}
         <MobileChannelChips
           channels={chipChannels}
-          activeChannelId={activeChannelId}
           isManageActive={showFilters}
-          onManageOpen={openManageView}
+          onManageToggle={toggleManageView}
           onSelectHome={handleSelectHome}
           onSelectChannel={handleSelectChannel}
           onTogglePin={handleToggleChannelPin}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MobileChannelChips } from "./MobileChannelChips";
 import { makeChannel } from "@/test/fixtures";
@@ -11,9 +11,8 @@ const channels = [
 function renderChips(overrides: Partial<React.ComponentProps<typeof MobileChannelChips>> = {}) {
   const props = {
     channels,
-    activeChannelId: null,
     isManageActive: false,
-    onManageOpen: vi.fn(),
+    onManageToggle: vi.fn(),
     onSelectHome: vi.fn(),
     onSelectChannel: vi.fn(),
     onTogglePin: vi.fn(),
@@ -37,10 +36,10 @@ describe("MobileChannelChips", () => {
     expect(screen.getByText("5")).toBeInTheDocument();
   });
 
-  it("opens manage from the menu chip", () => {
-    const { onManageOpen } = renderChips();
+  it("toggles manage from the menu chip", () => {
+    const { onManageToggle } = renderChips();
     fireEvent.click(screen.getByTestId("mobile-chip-menu"));
-    expect(onManageOpen).toHaveBeenCalledOnce();
+    expect(onManageToggle).toHaveBeenCalledOnce();
   });
 
   it("selects home and channels on tap", () => {
@@ -51,36 +50,35 @@ describe("MobileChannelChips", () => {
     expect(onSelectChannel).toHaveBeenCalledWith("dev");
   });
 
-  it("marks Home active when no channel is selected, and the channel otherwise", () => {
-    const { rerender } = render(
-      <MobileChannelChips
-        channels={channels}
-        activeChannelId={null}
-        isManageActive={false}
-        onManageOpen={vi.fn()}
-        onSelectHome={vi.fn()}
-        onSelectChannel={vi.fn()}
-        onTogglePin={vi.fn()}
-      />
-    );
+  it("marks Home active when no channel is included, and the included channel otherwise", () => {
     const devChipClass = () => screen.getByText("#dev").closest("button")!.className;
+    renderChips();
     // The active chip is the only one with the primary-foreground text color.
     expect(screen.getByText("Home").className).toContain("text-primary-foreground");
     expect(devChipClass()).not.toContain("text-primary-foreground");
 
-    rerender(
-      <MobileChannelChips
-        channels={channels}
-        activeChannelId="dev"
-        isManageActive={false}
-        onManageOpen={vi.fn()}
-        onSelectHome={vi.fn()}
-        onSelectChannel={vi.fn()}
-        onTogglePin={vi.fn()}
-      />
-    );
+    cleanup();
+    renderChips({
+      channels: [
+        makeChannel({ id: "dev", name: "dev", usageCount: 4, filterState: "included" }),
+        makeChannel({ id: "design", name: "design", usageCount: 5 }),
+      ],
+    });
     expect(screen.getByText("Home").className).not.toContain("text-primary-foreground");
     expect(devChipClass()).toContain("text-primary-foreground");
+  });
+
+  it("lights up every included chip when multiple channels are selected", () => {
+    renderChips({
+      channels: [
+        makeChannel({ id: "dev", name: "dev", usageCount: 4, filterState: "included" }),
+        makeChannel({ id: "design", name: "design", usageCount: 5, filterState: "included" }),
+      ],
+    });
+    expect(screen.getByText("#dev").closest("button")!.className).toContain("text-primary-foreground");
+    expect(screen.getByText("#design").closest("button")!.className).toContain("text-primary-foreground");
+    // Home steps aside while any channel is scoped.
+    expect(screen.getByText("Home").className).not.toContain("text-primary-foreground");
   });
 
   it("marks pinned chips with a pin icon and drops the hash prefix", () => {

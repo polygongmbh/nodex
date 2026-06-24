@@ -9,10 +9,9 @@ const LONG_PRESS_MS = 500;
 interface MobileChannelChipsProps {
   /** Chips to render, already ordered (pinned first, then other channels). */
   channels: Channel[];
-  /** Id of the sole exclusively-included channel, or null when Home is active. */
-  activeChannelId: string | null;
   isManageActive: boolean;
-  onManageOpen: () => void;
+  /** Toggles the manage pane: opens it, or closes it when already active. */
+  onManageToggle: () => void;
   onSelectHome: () => void;
   onSelectChannel: (channelId: string) => void;
   /** Long-press toggles pin state; `isPinned` is the current state. */
@@ -114,16 +113,19 @@ function ChannelChip({ channel, isActive, onSelect, onLongPress }: ChannelChipPr
  */
 export function MobileChannelChips({
   channels,
-  activeChannelId,
   isManageActive,
-  onManageOpen,
+  onManageToggle,
   onSelectHome,
   onSelectChannel,
   onTogglePin,
   leading,
 }: MobileChannelChipsProps) {
   const { t } = useTranslation("shell");
-  const isHomeActive = activeChannelId === null && !isManageActive;
+  // Every chip lights up when its channel is included, so multi-channel scopes
+  // show every active chip. Home stands in for the unscoped default — lit only
+  // when nothing is included (and we're not in the manage pane).
+  const isHomeActive =
+    !isManageActive && !channels.some((channel) => channel.filterState === "included");
 
   return (
     <div className="px-2 mb-1 flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -133,7 +135,7 @@ export function MobileChannelChips({
         data-testid="mobile-chip-menu"
         title={t("navigation.views.switchTo", { view: t("navigation.views.manage") })}
         className={cn(chipBase, "w-11 justify-center px-0", chipColors(isManageActive))}
-        onClick={onManageOpen}
+        onClick={onManageToggle}
       >
         <Menu className="h-[18px] w-[18px]" />
       </button>
@@ -152,7 +154,7 @@ export function MobileChannelChips({
         <ChannelChip
           key={channel.id}
           channel={channel}
-          isActive={activeChannelId === channel.id}
+          isActive={channel.filterState === "included"}
           onSelect={() => onSelectChannel(channel.id)}
           onLongPress={() => onTogglePin(channel.id, channel.pinIndex !== undefined)}
         />

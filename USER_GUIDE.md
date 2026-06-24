@@ -63,6 +63,7 @@
 - The space selector pill shows the current space's (relay's) icon. Tap it to open a menu with: *All spaces* (no space filter), your connected spaces, then — after a divider — any disconnected spaces, and finally an inline *Connect to another space* URL field (type a `wss://…` address and press Enter or the add button). Selecting a space scopes everything to just that space; *All spaces* clears the filter.
 - Channel chips list your pinned channels first (in pin order, shown with a small pin icon instead of the `#`), then the other channels in the same order as the sidebar. Each chip shows the channel's usage count.
 - Tap a channel chip to show only that channel; tap it again (or tap *Home*) to clear it back to the home filter. Switching channels this way does not show a toast. Tapping a chip while *Manage* is open also closes *Manage*.
+- Every included channel lights up its chip, so a multi-channel scope (selected from the sidebar / *Manage* pane) highlights all of those chips at once; *Home* is highlighted only when no channel is included.
 - Long-press a channel chip to pin/unpin it.
 - On the feed and status timeline, *Home* shows top-level posts from your pinned channels plus anything involving you (authored, assigned, or replies under your posts). On tree/list/calendar, *Home* simply means no channel filter.
 

@@ -91,9 +91,9 @@ vi.mock("./MobileNav", async (importOriginal) => {
 });
 
 vi.mock("./MobileChannelChips", () => ({
-  MobileChannelChips: ({ onManageOpen }: { onManageOpen?: () => void }) => (
+  MobileChannelChips: ({ onManageToggle }: { onManageToggle?: () => void }) => (
     <div data-testid="mobile-channel-chips">
-      <button onClick={onManageOpen}>Manage</button>
+      <button onClick={onManageToggle}>Manage</button>
     </div>
   ),
 }));
@@ -315,6 +315,18 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
     expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
+  });
+
+  it("closes the manage view when the burger is tapped again", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    renderMobileLayout();
+
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
+    expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
+    expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
   });
 
   it("syncs manage route state when opening manage view", () => {
