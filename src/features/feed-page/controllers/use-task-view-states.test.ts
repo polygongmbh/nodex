@@ -99,7 +99,7 @@ describe("buildTreeVisibilityState", () => {
 
 describe("createTreeSelectors", () => {
   it("treats selected people as active matching filters", () => {
-    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
+    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe" });
     const bob = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob Doe" });
     const aliceTask = makeTask({ id: "alice-task", author: alice, content: "Ship #general" });
     const bobTask = makeTask({ id: "bob-task", author: bob, content: "Review #general" });
@@ -114,6 +114,7 @@ describe("createTreeSelectors", () => {
       deferredSearchQuery: "",
       channels: [makeChannel()],
       people: [alice, bob],
+      selectedPubkeys: new Set(["alice"]),
       quickFilters: makeQuickFilterState(),
       channelMatchMode: "and",
       taskById,
@@ -159,6 +160,7 @@ function makeCalendarSource(tasks: Post[]): TaskViewSource {
     channels: [],
     neutralChannels: [],
     people,
+    selectedPubkeys: new Set(),
     quickFilters: makeQuickFilterState(),
     channelMatchMode: "and",
     taskById,

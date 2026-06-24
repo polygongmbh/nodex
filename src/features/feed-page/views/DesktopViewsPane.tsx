@@ -41,6 +41,7 @@ export function DesktopViewsPane({
   const { channels, people, quickFilters } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const filterIndex = useMemo(() => buildTaskViewFilterIndex(posts, people), [posts, people]);
   const prefilteredTaskIds = useMemo(() => new Set(posts.map((task) => task.id)), [posts]);
   const { included, excluded } = useMemo(
@@ -55,6 +56,7 @@ export function DesktopViewsPane({
           filterIndex,
           prefilteredTaskIds,
           people,
+          selectedPubkeys,
         },
         scope: {
           focusedTaskId,
@@ -80,6 +82,7 @@ export function DesktopViewsPane({
       filterIndex,
       focusedTaskId,
       people,
+      selectedPubkeys,
       prefilteredTaskIds,
       quickFilters,
       searchQuery,

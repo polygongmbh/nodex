@@ -39,6 +39,7 @@ export function useHomeViewState({ posts, focusedTaskId }: HomeViewStateInput): 
   const { channels, people, quickFilters } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const selectedDayKey = useHomeDayStore((s) => s.selectedDayKey);
   const toggleSelectedDay = useHomeDayStore((s) => s.toggleSelectedDay);
 
@@ -51,7 +52,7 @@ export function useHomeViewState({ posts, focusedTaskId }: HomeViewStateInput): 
   const contextTasks = useMemo(
     () =>
       filterTasksForView({
-        source: { allTasks: posts, filterIndex, prefilteredTaskIds, people },
+        source: { allTasks: posts, filterIndex, prefilteredTaskIds, people, selectedPubkeys },
         scope: { focusedTaskId, hideClosedTasks: false },
         criteria: {
           searchQuery,
@@ -67,6 +68,7 @@ export function useHomeViewState({ posts, focusedTaskId }: HomeViewStateInput): 
       filterIndex,
       focusedTaskId,
       people,
+      selectedPubkeys,
       prefilteredTaskIds,
       quickFilters,
       searchQuery,
@@ -76,10 +78,10 @@ export function useHomeViewState({ posts, focusedTaskId }: HomeViewStateInput): 
   const myTasksPeopleScope = useMemo(
     () =>
       resolveStatusPeopleScope(
-        people.filter((person) => person.isSelected).map((person) => person.pubkey),
+        Array.from(selectedPubkeys),
         currentUser?.pubkey
       ),
-    [people, currentUser?.pubkey]
+    [selectedPubkeys, currentUser?.pubkey]
   );
 
   const myTasksContextTasks = useMemo(

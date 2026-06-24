@@ -8,14 +8,12 @@ const people: SelectablePerson[] = [
     name: "me",
     displayName: "You",
     avatar: "",
-    isSelected: false,
   },
   {
     pubkey: "pubkey-alice",
     name: "alice",
     displayName: "Alice",
     avatar: "",
-    isSelected: false,
   },
 ];
 

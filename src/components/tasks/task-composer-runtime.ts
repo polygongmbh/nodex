@@ -1,5 +1,6 @@
 import { createContext, createElement, useContext, useMemo, type PropsWithChildren } from "react";
 import { useFeedComposerOptions } from "@/features/feed-page/views/feed-surface-context";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { hasComposerSubstance } from "@/lib/composer-content";
 import {
   formatMentionIdentifierForDisplay,
@@ -102,6 +103,7 @@ export function useResolvedTaskComposerEnvironment({
   people?: SelectablePerson[];
 }): ResolvedTaskComposerEnvironment {
   const composerOptions = useFeedComposerOptions();
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const resolvedRelays = relays ?? composerOptions.relays;
   const resolvedChannels = channels ?? composerOptions.channels;
   const resolvedPeople = people ?? composerOptions.people;
@@ -118,11 +120,11 @@ export function useResolvedTaskComposerEnvironment({
         .map((channel) => channel.name.trim().toLowerCase())
         .filter(Boolean),
       selectedPeoplePubkeys: resolvedPeople
-        .filter((person) => person.isSelected)
+        .filter((person) => selectedPubkeys.has(person.pubkey))
         .map((person) => person.pubkey.trim().toLowerCase())
         .filter((value) => /^[a-f0-9]{64}$/i.test(value)),
     }),
-    [mentionablePeople, resolvedChannels, resolvedPeople, resolvedRelays]
+    [mentionablePeople, resolvedChannels, resolvedPeople, resolvedRelays, selectedPubkeys]
   );
 }
 
@@ -141,6 +143,7 @@ export function useTaskComposerModel(): TaskComposerModel {
 
   return useMemo(() => {
     const channelOptions = environment.channels;
+    const selectedPubkeySet = new Set(environment.selectedPeoplePubkeys);
 
     const mentionOptions = environment.people.map((person) => {
       const identifier = getPreferredMentionIdentifier(person);
@@ -152,7 +155,7 @@ export function useTaskComposerModel(): TaskComposerModel {
         mentionDisplay: formatMentionIdentifierForDisplay(identifier),
         primaryLabel,
         avatar: person.avatar,
-        isSelected: person.isSelected,
+        isSelected: selectedPubkeySet.has(person.pubkey.trim().toLowerCase()),
         aliases: getMentionAliases(person),
       };
     });

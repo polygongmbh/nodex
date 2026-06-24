@@ -408,10 +408,7 @@ export function derivePeopleFromKind0Events(
   visiblePubkeys: string[],
   selectedEvents: NostrEvent[],
   fallbackEvents: NostrEvent[],
-  previousPeople: SelectablePerson[],
 ): SelectablePerson[] {
-  const previousSelection = new Map(previousPeople.map((person) => [normalizePubkey(person.pubkey), person.isSelected]));
-
   const normalizedVisiblePubkeys = Array.from(
     new Set(visiblePubkeys.map((pubkey) => normalizePubkey(pubkey)).filter(Boolean))
   );
@@ -433,7 +430,6 @@ export function derivePeopleFromKind0Events(
       nip05: parsed?.nip05?.trim().toLowerCase(),
       about: parsed?.about?.trim(),
       avatar: parsed?.picture,
-      isSelected: previousSelection.get(pubkey) || false,
     } satisfies SelectablePerson;
   });
 

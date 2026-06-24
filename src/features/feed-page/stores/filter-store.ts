@@ -64,11 +64,16 @@ interface FilterStoreState {
   activeRelayIds: Set<string>;
   channelFilterStates: Map<string, Channel["filterState"]>;
   channelMatchMode: ChannelMatchMode;
+  // Pubkeys (normalized lowercase hex) of people the feed is scoped to. Binary
+  // selection — there is no per-person include/exclude like channels have. Not
+  // persisted: selection is URL-driven (the `p` search param), rebuilt on load.
+  selectedPubkeys: Set<string>;
   searchQuery: string;
 
   setActiveRelayIds: (updater: SetStateUpdater<Set<string>>) => void;
   setChannelFilterStates: (updater: SetStateUpdater<Map<string, Channel["filterState"]>>) => void;
   setChannelMatchMode: (updater: SetStateUpdater<ChannelMatchMode>) => void;
+  setSelectedPubkeys: (updater: SetStateUpdater<Set<string>>) => void;
   setSearchQuery: (query: string) => void;
 }
 
@@ -78,6 +83,7 @@ export const useFilterStore = create<FilterStoreState>()(
       activeRelayIds: new Set<string>(),
       channelFilterStates: new Map<string, Channel["filterState"]>(),
       channelMatchMode: DEFAULT_CHANNEL_MATCH_MODE,
+      selectedPubkeys: new Set<string>(),
       searchQuery: "",
 
       setActiveRelayIds: (updater) =>
@@ -96,6 +102,12 @@ export const useFilterStore = create<FilterStoreState>()(
         set((state) => ({
           channelMatchMode:
             typeof updater === "function" ? updater(state.channelMatchMode) : updater,
+        })),
+
+      setSelectedPubkeys: (updater) =>
+        set((state) => ({
+          selectedPubkeys:
+            typeof updater === "function" ? updater(state.selectedPubkeys) : updater,
         })),
 
       setSearchQuery: (query) => set({ searchQuery: query }),
@@ -143,3 +155,12 @@ export const useFilterStore = create<FilterStoreState>()(
     }
   )
 );
+
+/**
+ * Narrow selector hook: is this pubkey currently selected? Centralizes the
+ * lowercase-hex normalization so callers never have to remember it, and keeps
+ * each subscribing row re-rendering only when its own selection flips.
+ */
+export function useIsPersonSelected(pubkey: string): boolean {
+  return useFilterStore((s) => s.selectedPubkeys.has(pubkey.trim().toLowerCase()));
+}

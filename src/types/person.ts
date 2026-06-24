@@ -9,7 +9,10 @@ export interface Person {
   avatar?: string;
 }
 
-export type SelectablePerson = Person & { isSelected: boolean };
+// Selection state moved off the record into useFilterStore.selectedPubkeys
+// (keyed by pubkey). SelectablePerson is retained as an alias while call sites
+// migrate; it carries no extra fields over Person.
+export type SelectablePerson = Person;
 
 export interface PersonPresenceSnapshot {
   state: "online" | "recent" | "offline";

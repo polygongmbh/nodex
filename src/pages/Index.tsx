@@ -184,6 +184,9 @@ function FeedIndexContent() {
     user,
   );
 
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
+  const setSelectedPubkeys = useFilterStore((s) => s.setSelectedPubkeys);
+
   const {
     nostrRelays,
     relaysWithActiveState,
@@ -244,7 +247,6 @@ function FeedIndexContent() {
   const mentionAutocompletePeople = useMentionAutocompletePeople({
     scopedPosts: scopedPostsForMentions,
     cachedKind0Events,
-    people,
   });
 
   const currentUser = resolveCurrentUser(people, user);
@@ -259,9 +261,9 @@ function FeedIndexContent() {
 
   const sidebarPeopleWithSelected = useMemo(() => {
     const sidebarIds = new Set(sidebarPeople.map((person) => person.pubkey));
-    const selectedMissing = people.filter((person) => person.isSelected && !sidebarIds.has(person.pubkey));
+    const selectedMissing = people.filter((person) => selectedPubkeys.has(person.pubkey) && !sidebarIds.has(person.pubkey));
     return [...(selectedMissing as typeof sidebarPeople), ...sidebarPeople];
-  }, [people, sidebarPeople]);
+  }, [people, selectedPubkeys, sidebarPeople]);
 
   const {
     mentionRequest,
@@ -423,11 +425,11 @@ function FeedIndexContent() {
       buildFilterSnapshot({
         activeRelayIds: effectiveActiveRelayIds,
         channelFilterStates,
-        people,
+        selectedPubkeys,
         channelMatchMode,
         quickFilters,
       }),
-    [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
+    [effectiveActiveRelayIds, channelFilterStates, selectedPubkeys, channelMatchMode, quickFilters]
   );
 
   const { savedFilterController } = useSavedFilterConfigs({
@@ -436,7 +438,7 @@ function FeedIndexContent() {
     setActiveRelayIds,
     setChannelFilterStates,
     setChannelMatchMode,
-    setPeople,
+    setSelectedPubkeys,
     setQuickFilters,
     resetFiltersToDefault,
   });
@@ -498,19 +500,15 @@ function FeedIndexContent() {
       filterTasksByRelayAndPeople({
         tasks: allTasks,
         activeRelayIds: effectiveActiveRelayIds,
-        people: [],
+        selectedPeople: [],
         allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
       }),
     [allTasks, effectiveActiveRelayIds, hasLiveHydratedRelayScope]
   );
 
   const shouldRestoreTaskScopeFilters = useCallback((snapshot: FilterSnapshot) => {
-    const selectedPeopleIds = new Set(snapshot.selectedPeopleIds);
-    const snapshotPeople = people.map((person) => ({
-      ...person,
-      isSelected: selectedPeopleIds.has(person.pubkey),
-    }));
-    const snapshotFilterIndex = buildTaskViewFilterIndex(allTasks, snapshotPeople);
+    const snapshotSelectedPubkeys = new Set(snapshot.selectedPeopleIds);
+    const snapshotFilterIndex = buildTaskViewFilterIndex(allTasks, people);
     const prefilteredTaskIds = new Set(relayScopedTasks.map((task) => task.id));
     const includedChannels = Object.entries(snapshot.channelStates)
       .filter(([, filterState]) => filterState === "included")
@@ -526,7 +524,8 @@ function FeedIndexContent() {
         allTasks,
         filterIndex: snapshotFilterIndex,
         prefilteredTaskIds,
-        people: snapshotPeople,
+        people,
+        selectedPubkeys: snapshotSelectedPubkeys,
       },
       criteria: {
         searchQuery: useFilterStore.getState().searchQuery,
@@ -552,7 +551,7 @@ function FeedIndexContent() {
     shouldRestoreSnapshot: shouldRestoreTaskScopeFilters,
     setChannelFilterStates,
     setChannelMatchMode,
-    setPeople,
+    setSelectedPubkeys,
     onCaptureScrollTop,
     onRestoreScrollTop,
   });
@@ -577,7 +576,6 @@ function FeedIndexContent() {
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,
-    setPeople,
   });
   useEffect(() => {
     useComposerSignalsStore.getState().setForceShowComposer(forceShowComposeForGuide);

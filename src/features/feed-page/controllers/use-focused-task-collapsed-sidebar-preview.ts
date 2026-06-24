@@ -37,7 +37,7 @@ export function deriveFocusedTaskCollapsedSidebarPreview({
   const relayScopedTasks = filterTasksByRelayAndPeople({
     tasks: allTasks,
     activeRelayIds,
-    people: [],
+    selectedPeople: [],
     allowUnknownRelayMetadata,
   });
 

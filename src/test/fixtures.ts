@@ -11,7 +11,6 @@ export function makePerson(overrides: Partial<SelectablePerson> = {}): Selectabl
     name: "person",
     displayName: "Person",
     avatar: "",
-    isSelected: false,
     ...overrides,
   };
 }

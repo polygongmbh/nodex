@@ -84,7 +84,7 @@ const channels: Channel[] = [
 ];
 
 const people: SelectablePerson[] = [
-  { pubkey: "p1", name: "Alice", displayName: "Alice", avatar: "", isSelected: false },
+  { pubkey: "p1", name: "Alice", displayName: "Alice", avatar: "" },
 ];
 
 function renderMobileFilters(overrides: Partial<React.ComponentProps<typeof MobileFilters>> = {}) {
@@ -115,11 +115,11 @@ describe("MobileFilters management view", () => {
           visibleChannels: [{ id: "visible-channel", name: "visible-channel", filterState: "neutral" }],
 
           people: [
-            { pubkey: "broad-person", name: "Broad Person", displayName: "Broad Person", avatar: "", isSelected: false },
+            { pubkey: "broad-person", name: "Broad Person", displayName: "Broad Person", avatar: "" },
           ],
 
           visiblePeople: [
-            { pubkey: "visible-person", name: "visible-user", displayName: "Visible Person", avatar: "", isSelected: false },
+            { pubkey: "visible-person", name: "visible-user", displayName: "Visible Person", avatar: "" },
           ],
 
           quickFilters: makeQuickFilterState()

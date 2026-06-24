@@ -153,7 +153,10 @@ export interface TaskViewFilterSource {
   allTasks: Post[];
   filterIndex?: TaskViewFilterIndex;
   prefilteredTaskIds: Set<string>;
+  // Full people list for name/mention indexing; selectedPubkeys (from the
+  // filter store) is the binary person-scope on top of it.
   people: SelectablePerson[];
+  selectedPubkeys: Set<string>;
 }
 
 export interface TaskViewFilterScope {
@@ -184,7 +187,7 @@ export function getDirectMatchTaskIdsForView({
   scope = { focusedTaskId: null },
   criteria,
 }: TaskViewFilterRequest): Set<string> {
-  const { allTasks, filterIndex, prefilteredTaskIds, people } = source;
+  const { allTasks, filterIndex, prefilteredTaskIds, people, selectedPubkeys } = source;
   const {
     focusedTaskId,
     includeFocusedTask = false,
@@ -204,7 +207,7 @@ export function getDirectMatchTaskIdsForView({
   const descendantIds = focusedTaskId
     ? effectiveFilterIndex.descendantIdsByTaskId.get(focusedTaskId) ?? new Set<string>()
     : null;
-  const selectedPeople = people.filter((person) => person.isSelected);
+  const selectedPeople = people.filter((person) => selectedPubkeys.has(person.pubkey));
   const matchingIds = new Set<string>();
 
   for (const task of allTasks) {

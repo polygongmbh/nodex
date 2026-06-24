@@ -8,8 +8,6 @@ const basePerson: SelectablePerson = {
   pubkey: "npub123",
   name: "alice",
   displayName: "Alice",
-
-  isSelected: false,
 };
 
 describe("PersonItem", () => {

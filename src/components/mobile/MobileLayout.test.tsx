@@ -214,10 +214,11 @@ function setMocks(overrides: MobileLayoutOverrides = {}) {
   applyTaskViewModelOverride(overrides.taskViewModel);
 }
 
-function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: string } = {}) {
-  const { searchQuery, ...rest } = overrides;
+function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: string; selectedPubkeys?: Set<string> } = {}) {
+  const { searchQuery, selectedPubkeys, ...rest } = overrides;
   setMocks(rest);
   useFilterStore.getState().setSearchQuery(searchQuery ?? "");
+  useFilterStore.setState({ selectedPubkeys: selectedPubkeys ?? new Set() });
   const focusedTaskId = rest.taskViewModel?.focusedTaskId ?? null;
   const posts = rest.taskViewModel?.allTasks ?? [];
   return render(
@@ -468,7 +469,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
+    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe" });
     const sampleTasks: Post[] = [
       makeTask({ id: "task-alice", content: "Ship #general", author: alice }),
     ];
@@ -477,6 +478,7 @@ describe("MobileLayout auth wiring", () => {
       surfaceState: { people: [alice] },
       taskViewModel: { allTasks: sampleTasks },
       searchQuery: "nomatchquery",
+      selectedPubkeys: new Set(["alice"]),
     });
 
     const status = screen.getByRole("status");
@@ -596,8 +598,8 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const selectedPerson = makePerson({ pubkey: "me", name: "me", displayName: "Me", isSelected: true });
-    const otherPerson = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false });
+    const selectedPerson = makePerson({ pubkey: "me", name: "me", displayName: "Me" });
+    const otherPerson = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" });
     const sampleTasks: Post[] = [
       makeTask({ id: "task-1", content: "Ship #general", tags: ["general"], author: otherPerson }),
     ];
@@ -608,6 +610,7 @@ describe("MobileLayout auth wiring", () => {
         people: [selectedPerson, otherPerson],
       },
       taskViewModel: { allTasks: sampleTasks },
+      selectedPubkeys: new Set(["me"]),
     });
 
     const status = screen.getByRole("status");

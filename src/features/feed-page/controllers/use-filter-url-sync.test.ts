@@ -60,20 +60,13 @@ describe("parseFilterSearchParams", () => {
 });
 
 describe("buildFilterSearchParams", () => {
-  const makePerson = (pubkey: string, isSelected: boolean): SelectablePerson => ({
-    pubkey,
-    name: pubkey,
-    displayName: pubkey,
-    isSelected,
-  });
-
   it("builds empty params when no filters active", () => {
-    const params = buildFilterSearchParams(new Set(), new Map(), [makePerson("a", false)]);
+    const params = buildFilterSearchParams(new Set(), new Map(), new Set());
     expect(params.toString()).toBe("");
   });
 
   it("builds r param for active relays", () => {
-    const params = buildFilterSearchParams(new Set(["relay-b", "relay-a"]), new Map(), []);
+    const params = buildFilterSearchParams(new Set(["relay-b", "relay-a"]), new Map(), new Set());
     expect(params.get("r")).toBe("relay-a,relay-b"); // sorted
   });
 
@@ -83,7 +76,7 @@ describe("buildFilterSearchParams", () => {
       ["alpha", "included"],
       ["gamma", "neutral"],
     ]);
-    const params = buildFilterSearchParams(new Set(), filters, []);
+    const params = buildFilterSearchParams(new Set(), filters, new Set());
     expect(params.get("ch")).toBe("alpha,beta"); // sorted
     expect(params.has("ex")).toBe(false);
   });
@@ -92,13 +85,12 @@ describe("buildFilterSearchParams", () => {
     const filters = new Map<string, "included" | "excluded" | "neutral">([
       ["spam", "excluded"],
     ]);
-    const params = buildFilterSearchParams(new Set(), filters, []);
+    const params = buildFilterSearchParams(new Set(), filters, new Set());
     expect(params.get("ex")).toBe("spam");
   });
 
   it("builds p param for selected people", () => {
-    const people = [makePerson("z", true), makePerson("a", true), makePerson("m", false)];
-    const params = buildFilterSearchParams(new Set(), new Map(), people);
+    const params = buildFilterSearchParams(new Set(), new Map(), new Set(["z", "a"]));
     expect(params.get("p")).toBe("a,z"); // sorted
   });
 
@@ -108,8 +100,7 @@ describe("buildFilterSearchParams", () => {
       ["dev", "included"],
       ["spam", "excluded"],
     ]);
-    const people = [makePerson("pub1", true), makePerson("pub2", false)];
-    const params = buildFilterSearchParams(relayIds, filters, people);
+    const params = buildFilterSearchParams(relayIds, filters, new Set(["pub1"]));
     const parsed = parseFilterSearchParams(params);
     expect(parsed.relayIds).toEqual(new Set(["relay-x"]));
     expect(parsed.channelFilters?.get("dev")).toBe("included");

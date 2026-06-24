@@ -8,14 +8,12 @@ const alice: SelectablePerson = {
   pubkey: "alice-id",
   name: "alice",
   displayName: "Alice",
-  isSelected: false,
 };
 
 const bob: SelectablePerson = {
   pubkey: "bob-id",
   name: "bob",
   displayName: "Bob",
-  isSelected: false,
 };
 
 function buildTask(overrides: Partial<TaskPost> = {}): TaskPost {
@@ -46,7 +44,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(["r1"]),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
 
@@ -60,7 +58,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(["r2"]),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
 
@@ -78,7 +76,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(["r1"]),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
 
@@ -96,7 +94,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(["r1"]),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
       allowUnknownRelayMetadata: false,
     });
@@ -119,7 +117,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(),
       channels,
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
 
@@ -136,14 +134,13 @@ describe("filterTasks", () => {
       tasks: [heavyTagTask],
       activeRelayIds: new Set(),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
     expect(result).toHaveLength(1);
   });
 
   it("matches selected people by author id or mentions", () => {
-    const selectedBob: SelectablePerson = { ...bob, isSelected: true };
     const tasks = [
       buildTask({ id: "author", author: bob }),
       buildTask({ id: "mention", author: alice, content: "ping @bob" }),
@@ -154,7 +151,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(),
       channels: [],
-      people: [alice, selectedBob],
+      selectedPeople: [bob],
       channelMatchMode: "and",
     });
 
@@ -178,7 +175,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(),
       channels,
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "or",
     });
 
@@ -186,7 +183,6 @@ describe("filterTasks", () => {
   });
 
   it("can prefilter by relay and people without applying channel filters", () => {
-    const selectedBob: SelectablePerson = { ...bob, isSelected: true };
     const tasks = [
       buildTask({ id: "relay-one-general", relays: ["r1"], author: bob, tags: ["general"] }),
       buildTask({ id: "relay-one-ops", relays: ["r1"], author: bob, tags: ["ops"] }),
@@ -197,7 +193,7 @@ describe("filterTasks", () => {
     const result = filterTasksByRelayAndPeople({
       tasks,
       activeRelayIds: new Set(["r1"]),
-      people: [alice, selectedBob],
+      selectedPeople: [bob],
     });
 
     expect(result.map((task) => task.id)).toEqual(["relay-one-general", "relay-one-ops"]);

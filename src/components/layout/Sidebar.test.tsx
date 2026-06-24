@@ -29,7 +29,7 @@ const nostrRelays: NDKRelayStatus[] = [
 ];
 
 const channels: Channel[] = [{ id: "general", name: "general", filterState: "neutral" }];
-const people: SelectablePerson[] = [{ pubkey: "alice", name: "alice", displayName: "Alice", avatar: "", isSelected: false }];
+const people: SelectablePerson[] = [{ pubkey: "alice", name: "alice", displayName: "Alice", avatar: "" }];
 
 function renderSidebar(relays: Relay[]) {
   return render(

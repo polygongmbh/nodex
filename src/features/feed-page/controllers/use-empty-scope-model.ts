@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel, type EmptyScopeModel } from "@/lib/empty-scope";
 import type { Channel, QuickFilterState, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
 interface UseEmptyScopeModelOptions {
   relays: Relay[];
@@ -29,6 +30,11 @@ export function useEmptyScopeModel({
 }: UseEmptyScopeModelOptions): EmptyScopeModel {
   const { t, i18n } = useTranslation("tasks");
   const locale = i18n.resolvedLanguage || i18n.language || "en";
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
+  const selectedPeople = useMemo(
+    () => people.filter((person) => selectedPubkeys.has(person.pubkey)),
+    [people, selectedPubkeys]
+  );
 
   const resolvedContextTaskTitle = useMemo(() => {
     if (typeof contextTaskTitle === "string") {
@@ -51,13 +57,13 @@ export function useEmptyScopeModel({
       buildEmptyScopeModel({
         relays,
         channels,
-        people,
+        selectedPeople,
         quickFilters,
         searchQuery,
         contextTaskTitle: resolvedContextTaskTitle,
         locale,
         t,
       }),
-    [channels, locale, people, quickFilters, relays, resolvedContextTaskTitle, searchQuery, t]
+    [channels, locale, selectedPeople, quickFilters, relays, resolvedContextTaskTitle, searchQuery, t]
   );
 }

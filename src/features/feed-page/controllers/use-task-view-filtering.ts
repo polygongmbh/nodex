@@ -15,6 +15,9 @@ interface UseTaskViewFilteringParams<T extends Post = Post> {
   hideClosedTasks?: boolean;
   searchQuery: string;
   people: SelectablePerson[];
+  // Explicit (not read from the store) so callers can pass an empty set to get
+  // the person-unscoped "neutral" variant, mirroring neutralChannels.
+  selectedPubkeys: Set<string>;
   quickFilters?: QuickFilterState;
   channels: Channel[];
   channelMatchMode: ChannelMatchMode;
@@ -33,6 +36,7 @@ export function useTaskViewFiltering<T extends Post = Post>({
   hideClosedTasks = false,
   searchQuery,
   people,
+  selectedPubkeys,
   quickFilters,
   channels,
   channelMatchMode,
@@ -54,6 +58,7 @@ export function useTaskViewFiltering<T extends Post = Post>({
         filterIndex,
         prefilteredTaskIds,
         people,
+        selectedPubkeys,
       },
       scope: {
         focusedTaskId,
@@ -81,6 +86,7 @@ export function useTaskViewFiltering<T extends Post = Post>({
       includeFocusedTask,
       included,
       people,
+      selectedPubkeys,
       prefilteredTaskIds,
       quickFilters,
       searchQuery,

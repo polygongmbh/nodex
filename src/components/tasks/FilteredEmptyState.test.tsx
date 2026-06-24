@@ -11,6 +11,7 @@ import {
   __resetPostsStoreForTests,
 } from "@/features/feed-page/stores/posts-store";
 import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
 const relays: Relay[] = [
   {
@@ -41,7 +42,6 @@ const people: SelectablePerson[] = [
     name: "alice",
     displayName: "Alice",
     avatar: "",
-    isSelected: true,
   }),
 ];
 
@@ -55,12 +55,15 @@ const PRIORITY_SCOPE = "at priority P4 or higher";
 
 function renderOverlay(
   viewModel: { isHydrating?: boolean; focusedTaskId?: string | null; allTasks?: Post[] } = {},
-  surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
+  surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; selectedPubkeys?: Set<string>; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
   for (const post of viewModel.allTasks ?? []) {
     ingestPost({ post });
   }
   useHydrationStatusStore.getState().setIsHydrating(viewModel.isHydrating ?? false);
+  // Default to Alice selected (the module `people` fixture); override tests pass
+  // an explicit set to scope by relay/channel only.
+  useFilterStore.setState({ selectedPubkeys: surface.selectedPubkeys ?? new Set(["alice"]) });
   const focusedTaskId = viewModel.focusedTaskId ?? null;
   return render(
     <FeedSurfaceProvider
@@ -95,7 +98,8 @@ describe("FilteredEmptyState overlay", () => {
       {},
       {
         channels: [{ id: "ops", name: "ops", filterState: "neutral" }],
-        people: [{ ...people[0], isSelected: false }],
+        people: [{ ...people[0] }],
+        selectedPubkeys: new Set(),
         quickFilters: makeQuickFilterState({ recentEnabled: true, recentDays: 7 }),
       }
     );
@@ -108,7 +112,8 @@ describe("FilteredEmptyState overlay", () => {
       {},
       {
         channels: [{ id: "ops", name: "ops", filterState: "neutral" }],
-        people: [{ ...people[0], isSelected: false }],
+        people: [{ ...people[0] }],
+        selectedPubkeys: new Set(),
         quickFilters: makeQuickFilterState({ priorityEnabled: true, minPriority: 80 }),
       }
     );
@@ -121,7 +126,8 @@ describe("FilteredEmptyState overlay", () => {
       {},
       {
         channels: [{ id: "ops", name: "ops", filterState: "neutral" }],
-        people: [{ ...people[0], isSelected: false }],
+        people: [{ ...people[0] }],
+        selectedPubkeys: new Set(),
         quickFilters: makeQuickFilterState({ recentEnabled: false, priorityEnabled: false }),
       }
     );

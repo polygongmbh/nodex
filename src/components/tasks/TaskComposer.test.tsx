@@ -65,9 +65,7 @@ function buildRuntimeValue({
       includedChannels: channels
         .filter((channel) => channel.filterState === "included")
         .map((channel) => channel.name.trim().toLowerCase()),
-      selectedPeoplePubkeys: people
-        .filter((person) => person.isSelected)
-        .map((person) => person.pubkey.trim().toLowerCase()),
+      selectedPeoplePubkeys: [],
     },
     draftStorageKey: COMPOSE_DRAFT_STORAGE_KEY,
   };

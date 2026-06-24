@@ -60,6 +60,7 @@ export function MobileFilters({
   const channels = channelsProp ?? surface.visibleChannels ?? surface.channels;
   const people = peopleProp ?? surface.visiblePeople ?? surface.people;
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
 
   const { ndk, user, authMethod, hasWritableRelayConnection, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
@@ -377,7 +378,7 @@ export function MobileFilters({
                   }}
                   className={cn(
                     "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm active:scale-95",
-                    person.isSelected
+                    selectedPubkeys.has(person.pubkey)
                       ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                       : "border-border hover:bg-muted"
                   )}
@@ -388,7 +389,7 @@ export function MobileFilters({
                   <span className="truncate max-w-[9rem]" title={personDisplayName}>
                     {personLabel}
                   </span>
-                  {person.isSelected && <Check className="w-3.5 h-3.5" />}
+                  {selectedPubkeys.has(person.pubkey) && <Check className="w-3.5 h-3.5" />}
                 </button>
               );
             })}

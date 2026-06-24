@@ -59,6 +59,7 @@ function Harness({
   startWithEmptyPeople?: boolean;
 }) {
   const [people, setPeople] = useState<SelectablePerson[]>(startWithEmptyPeople ? [] : peopleSeed);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const [visibleChannels, setVisibleChannels] = useState<Channel[]>(startWithEmptyScope ? [] : channels);
   const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<SelectablePerson[]>(
     startWithEmptyScope ? [] : peopleSeed
@@ -108,7 +109,7 @@ function Harness({
       </output>
       <output data-testid="channel-match-mode">{filters.channelMatchMode}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
+        {Array.from(selectedPubkeys).join(",")}
       </output>
       <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
       <output data-testid="mention-request">{filters.mentionRequest?.mention ?? ""}</output>
@@ -136,7 +137,7 @@ function renderHarness(options?: {
 describe("useChannelFilterController", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    useFilterStore.setState({ activeRelayIds: new Set(), channelFilterStates: new Map(), channelMatchMode: "and" });
+    useFilterStore.setState({ activeRelayIds: new Set(), channelFilterStates: new Map(), channelMatchMode: "and", selectedPubkeys: new Set() });
     vi.mocked(toast).mockClear();
     useTaskMutationStore.setState({
       localTasks: [],
@@ -229,7 +230,7 @@ describe("useChannelFilterController", () => {
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
   });
 
-  it("applies URL-hydrated selected people when people profiles load after mount", () => {
+  it("applies URL-hydrated selected people immediately, before their profiles load", () => {
     renderHarness({
       isHydrating: true,
       hasLiveHydratedScope: false,
@@ -237,7 +238,9 @@ describe("useChannelFilterController", () => {
       initialEntries: ["/?p=alice"],
     });
 
-    expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+    // Selection is keyed by pubkey in the store, so it applies immediately
+    // without waiting for the matching kind-0 profile to arrive.
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
 
     fireEvent.click(screen.getByRole("button", { name: "LoadPeople" }));
 

@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { Channel } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 
 const RELAY_PARAM = "r";
 const CHANNEL_INCLUDE_PARAM = "ch";
@@ -64,7 +63,7 @@ export function parseFilterSearchParams(searchParams: URLSearchParams): {
 export function buildFilterSearchParams(
   activeRelayIds: Set<string>,
   channelFilterStates: Map<string, Channel["filterState"]>,
-  people: SelectablePerson[]
+  selectedPubkeys: Set<string>
 ): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -81,10 +80,7 @@ export function buildFilterSearchParams(
   if (included.length > 0) params.set(CHANNEL_INCLUDE_PARAM, included.sort().join(","));
   if (excluded.length > 0) params.set(CHANNEL_EXCLUDE_PARAM, excluded.sort().join(","));
 
-  const selectedPeople = people
-    .filter((p) => p.isSelected)
-    .map((p) => p.pubkey);
-  if (selectedPeople.length > 0) params.set(PEOPLE_PARAM, selectedPeople.sort().join(","));
+  if (selectedPubkeys.size > 0) params.set(PEOPLE_PARAM, [...selectedPubkeys].sort().join(","));
 
   return params;
 }
@@ -125,9 +121,9 @@ interface UseFilterUrlSyncOptions {
   activeRelayIds: Set<string>;
   setActiveRelayIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   channelFilterStates: Map<string, Channel["filterState"]>;
-  people: SelectablePerson[];
+  selectedPubkeys: Set<string>;
   setChannelFilterStates: React.Dispatch<React.SetStateAction<Map<string, Channel["filterState"]>>>;
-  setPeople: React.Dispatch<React.SetStateAction<SelectablePerson[]>>;
+  setSelectedPubkeys: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 /**
@@ -146,13 +142,12 @@ export function useFilterUrlSync({
   activeRelayIds,
   setActiveRelayIds,
   channelFilterStates,
-  people,
+  selectedPubkeys,
   setChannelFilterStates,
-  setPeople,
+  setSelectedPubkeys,
 }: UseFilterUrlSyncOptions) {
   const [searchParams, setSearchParams] = useSearchParams();
   const didHydrateFromUrlRef = useRef(false);
-  const pendingUrlSelectedPersonIdsRef = useRef<Set<string> | null>(null);
 
   // Per-relay session memory: channel/people snapshot per relay ID (only saved for single-relay selections)
   const perRelayMemoryRef = useRef(new Map<string, RelayFilterSnapshot>());
@@ -160,9 +155,11 @@ export function useFilterUrlSync({
   // Previous-value refs for change detection in the per-relay memory effect
   const prevRelayIdsRef = useRef<Set<string> | null>(null);
   const prevChannelStatesRef = useRef(channelFilterStates);
-  const prevPeopleRef = useRef(people);
+  const prevSelectedRef = useRef(selectedPubkeys);
 
-  // Hydrate state from URL on initial mount (URL wins)
+  // Hydrate state from URL on initial mount (URL wins). Selection is keyed by
+  // pubkey now, so it applies immediately — no need to wait for the matching
+  // kind-0 profiles to load (the old pending-ids backfill effect is gone).
   useEffect(() => {
     if (didHydrateFromUrlRef.current) return;
     didHydrateFromUrlRef.current = true;
@@ -178,44 +175,9 @@ export function useFilterUrlSync({
     }
 
     if (selectedPersonIds !== null && selectedPersonIds.size > 0) {
-      pendingUrlSelectedPersonIdsRef.current = new Set(selectedPersonIds);
-      setPeople((prev) =>
-        prev.map((person) => ({
-          ...person,
-          isSelected: selectedPersonIds.has(person.pubkey),
-        }))
-      );
+      setSelectedPubkeys(new Set(selectedPersonIds));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Apply URL-selected people to profiles that load after initial mount.
-  useEffect(() => {
-    const pendingIds = pendingUrlSelectedPersonIdsRef.current;
-    if (!pendingIds || pendingIds.size === 0) return;
-
-    const matchedIds = new Set(
-      people
-        .map((person) => person.pubkey)
-        .filter((id) => pendingIds.has(id))
-    );
-
-    if (matchedIds.size === 0) return;
-
-    setPeople((prev) => {
-      let changed = false;
-      const next = prev.map((person) => {
-        if (!matchedIds.has(person.pubkey)) return person;
-        if (person.isSelected) return person;
-        changed = true;
-        return { ...person, isSelected: true };
-      });
-      return changed ? next : prev;
-    });
-
-    const remainingIds = new Set(pendingIds);
-    matchedIds.forEach((id) => remainingIds.delete(id));
-    pendingUrlSelectedPersonIdsRef.current = remainingIds.size > 0 ? remainingIds : null;
-  }, [people, setPeople]);
 
   // Per-relay session memory: save and restore channel/people selection on relay switches.
   useEffect(() => {
@@ -225,16 +187,16 @@ export function useFilterUrlSync({
     if (prevRelayIds === null) {
       prevRelayIdsRef.current = activeRelayIds;
       prevChannelStatesRef.current = channelFilterStates;
-      prevPeopleRef.current = people;
+      prevSelectedRef.current = selectedPubkeys;
       return;
     }
 
     const prevChannelStates = prevChannelStatesRef.current;
-    const prevPeople = prevPeopleRef.current;
+    const prevSelected = prevSelectedRef.current;
 
     const isRelayChange = !setsEqual(prevRelayIds, activeRelayIds);
     const isChannelChange = channelFilterStates !== prevChannelStates;
-    const isPeopleChange = people !== prevPeople;
+    const isSelectionChange = selectedPubkeys !== prevSelected;
 
     if (isRelayChange) {
       // Always save the departing single-relay's state before this render's values take hold
@@ -242,24 +204,21 @@ export function useFilterUrlSync({
         const [oldRelayId] = prevRelayIds;
         perRelayMemoryRef.current.set(oldRelayId, {
           channelStates: prevChannelStates,
-          selectedPeopleIds: new Set(prevPeople.filter((p) => p.isSelected).map((p) => p.pubkey)),
+          selectedPeopleIds: new Set(prevSelected),
         });
       }
 
       // Restore only on a pure relay switch (channels/people unchanged in the same batch).
       // If channels or people also changed, something else (e.g. a saved-filter apply) drove
       // the update and should own the resulting state.
-      if (!isChannelChange && !isPeopleChange) {
+      if (!isChannelChange && !isSelectionChange) {
         const isCompleteSwitch = [...activeRelayIds].every((id) => !prevRelayIds.has(id));
         if (isCompleteSwitch && activeRelayIds.size === 1) {
           const [newRelayId] = activeRelayIds;
           const saved = perRelayMemoryRef.current.get(newRelayId);
           if (saved) {
             setChannelFilterStates(saved.channelStates);
-            const savedIds = saved.selectedPeopleIds;
-            setPeople((prev) =>
-              prev.map((person) => ({ ...person, isSelected: savedIds.has(person.pubkey) }))
-            );
+            setSelectedPubkeys(new Set(saved.selectedPeopleIds));
           }
         }
       }
@@ -267,14 +226,14 @@ export function useFilterUrlSync({
 
     prevRelayIdsRef.current = activeRelayIds;
     prevChannelStatesRef.current = channelFilterStates;
-    prevPeopleRef.current = people;
-  }, [activeRelayIds, channelFilterStates, people, setChannelFilterStates, setPeople]);
+    prevSelectedRef.current = selectedPubkeys;
+  }, [activeRelayIds, channelFilterStates, selectedPubkeys, setChannelFilterStates, setSelectedPubkeys]);
 
   // Sync state → URL
   useEffect(() => {
     if (!didHydrateFromUrlRef.current) return;
 
-    const newFilterParams = buildFilterSearchParams(activeRelayIds, channelFilterStates, people);
+    const newFilterParams = buildFilterSearchParams(activeRelayIds, channelFilterStates, selectedPubkeys);
     const mergedSearchParams = mergeFilterSearchParams(searchParams, newFilterParams);
 
     if (mergedSearchParams.toString() === searchParams.toString()) {
@@ -282,7 +241,7 @@ export function useFilterUrlSync({
     }
 
     setSearchParams(mergedSearchParams, { replace: true });
-  }, [activeRelayIds, channelFilterStates, people, searchParams, setSearchParams]);
+  }, [activeRelayIds, channelFilterStates, selectedPubkeys, searchParams, setSearchParams]);
 
   // searchQuery ↔ ?q=
   // URL → store on external URL changes (back/forward, focus-clear strip,

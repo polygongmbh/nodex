@@ -67,7 +67,6 @@ export function usePinnedSidebarPeople({
         pubkey: id,
         name: id,
         displayName: id,
-        isSelected: false,
       }));
 
     return [...stubs, ...people].sort((a, b) => {

@@ -28,6 +28,7 @@ export function DesktopSearchDock({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { channels = [], people = [] } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const posts = usePosts();
   const { currentView, displayDepthMode } = useFeedViewState();
   const showDisplayDepthSelector = currentView === "kanban" || currentView === "list";
@@ -43,7 +44,7 @@ export function DesktopSearchDock({
       .filter((channel) => channel.filterState === "included")
       .map((channel) => channel.name);
     const mentionLabels = people
-      .filter((person) => person.isSelected)
+      .filter((person) => selectedPubkeys.has(person.pubkey))
       .map((person) => getCompactPersonLabel(person));
     return buildComposerPlaceholder({
       baseKey: "search.desktop.placeholder",
@@ -54,7 +55,7 @@ export function DesktopSearchDock({
       locale: i18n.resolvedLanguage || i18n.language || "en",
       t: translatePlaceholder,
     });
-  }, [channels, contextTaskTitle, i18n.language, i18n.resolvedLanguage, people, t]);
+  }, [channels, contextTaskTitle, i18n.language, i18n.resolvedLanguage, people, selectedPubkeys, t]);
   return (
     <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
       <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />

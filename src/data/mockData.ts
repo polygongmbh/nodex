@@ -36,11 +36,11 @@ export const mockChannels: Channel[] = [
 export const mockTags = mockChannels;
 
 export const mockPeople: SelectablePerson[] = [
-  { pubkey: MOCK_PUBKEYS.me, name: "me", displayName: "Local User", isSelected: false },
-  { pubkey: MOCK_PUBKEYS.alice, name: "alice", displayName: "Alice Chen", isSelected: false },
-  { pubkey: MOCK_PUBKEYS.bob, name: "bob", displayName: "Bob Smith", isSelected: false },
-  { pubkey: MOCK_PUBKEYS.carol, name: "carol", displayName: "Carol Davis", isSelected: false },
-  { pubkey: MOCK_PUBKEYS.david, name: "david", displayName: "David Kim", isSelected: false },
+  { pubkey: MOCK_PUBKEYS.me, name: "me", displayName: "Local User" },
+  { pubkey: MOCK_PUBKEYS.alice, name: "alice", displayName: "Alice Chen" },
+  { pubkey: MOCK_PUBKEYS.bob, name: "bob", displayName: "Bob Smith" },
+  { pubkey: MOCK_PUBKEYS.carol, name: "carol", displayName: "Carol Davis" },
+  { pubkey: MOCK_PUBKEYS.david, name: "david", displayName: "David Kim" },
 ];
 
 export const mockKind0Events = mockPeople.map((person, index) => ({

@@ -26,6 +26,7 @@ vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
 
 beforeEach(() => {
   useFilterStore.getState().setSearchQuery("");
+  useFilterStore.setState({ selectedPubkeys: new Set() });
 });
 
 afterEach(() => {
@@ -56,8 +57,9 @@ describe("DesktopSearchDock", () => {
   it("builds a search-only placeholder with dynamic suffixes and no fallback guidance", () => {
     mockUseFeedSurfaceState.mockReturnValue({
       channels: [{ id: "general", name: "general", filterState: "included" }],
-      people: [{ pubkey: "p1", name: "alice", displayName: "Alice", avatar: "", isSelected: true }],
+      people: [{ pubkey: "p1", name: "alice", displayName: "Alice", avatar: "" }],
     });
+    useFilterStore.setState({ selectedPubkeys: new Set(["p1"]) });
     ingestPost({ post: makeTask({ id: "focused-task", content: "Coordinate launch copy" }) });
 
     render(<DesktopSearchDock focusedTaskId="focused-task" />);

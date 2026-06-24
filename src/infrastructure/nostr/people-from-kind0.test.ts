@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { SelectablePerson } from "@/types/person";
 import {
   Kind0Cache,
   derivePeopleFromKind0Events,
@@ -9,10 +8,6 @@ import { NostrEventKind } from "@/lib/nostr/types";
 
 const ALICE = "a".repeat(64);
 const BOB = "b".repeat(64);
-
-const prevPeople: SelectablePerson[] = [
-  { pubkey: ALICE, name: "alice", displayName: "Alice", avatar: "", isSelected: true },
-];
 
 function metadataEvent(pubkey: string, content: object, created_at = 1) {
   return {
@@ -27,16 +22,14 @@ function metadataEvent(pubkey: string, content: object, created_at = 1) {
 }
 
 describe("derivePeopleFromKind0Events", () => {
-  it("uses selected relay metadata first and preserves prior selection", () => {
+  it("uses selected relay metadata first", () => {
     const people = derivePeopleFromKind0Events(
       [ALICE],
       [metadataEvent(ALICE, { name: "alice", displayName: "Alice Selected" }, 2)],
       [metadataEvent(ALICE, { name: "fallback", displayName: "Fallback Name" }, 3)],
-      prevPeople,
     );
     expect(people).toHaveLength(1);
     expect(people[0].displayName).toBe("Alice Selected");
-    expect(people[0].isSelected).toBe(true);
   });
 
   it("falls back to cached metadata from another relay when the selected relay has no profile", () => {
@@ -44,13 +37,12 @@ describe("derivePeopleFromKind0Events", () => {
       [BOB],
       [],
       [metadataEvent(BOB, { name: "bob", displayName: "Bob Fallback" })],
-      [],
     );
     expect(people[0].displayName).toBe("Bob Fallback");
   });
 
   it("falls back to a pubkey placeholder when no metadata exists", () => {
-    const people = derivePeopleFromKind0Events([ALICE], [], [], []);
+    const people = derivePeopleFromKind0Events([ALICE], [], []);
     expect(people[0].name.startsWith("npub1")).toBe(true);
   });
 });

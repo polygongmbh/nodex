@@ -68,6 +68,7 @@ beforeEach(() => {
   useHydrationStatusStore.getState().setIsHydrating(false);
   useCurrentUserStore.getState().setCurrentUser(undefined);
   useFilterStore.getState().setSearchQuery("");
+  useFilterStore.setState({ selectedPubkeys: new Set() });
   useHomeDayStore.getState().clearSelectedDay();
 });
 
@@ -84,11 +85,12 @@ function withFocusedTask(taskId: string, ui: ReactElement): ReactElement {
 }
 
 function renderFeedView(
-  props: Partial<FeedViewProps> & { posts: FeedViewProps["posts"]; searchQuery?: string },
+  props: Partial<FeedViewProps> & { posts: FeedViewProps["posts"]; searchQuery?: string; selectedPubkeys?: Set<string> },
   surfaceOverrides: Partial<FeedSurfaceState> = {}
 ) {
-  const { searchQuery: searchQueryInput = "", ...feedProps } = props;
+  const { searchQuery: searchQueryInput = "", selectedPubkeys, ...feedProps } = props;
   useFilterStore.getState().setSearchQuery(searchQueryInput);
+  useFilterStore.setState({ selectedPubkeys: selectedPubkeys ?? new Set() });
   const resolvedProps: FeedViewProps = { focusedTaskId: null, ...feedProps };
   const surfaceState: FeedSurfaceState = {
     relays,
@@ -230,15 +232,15 @@ describe("FeedView", () => {
   it("hides the scope footer while more feed entries still remain to hydrate", () => {
     const manyTasks = makeFeedTasks(41);
 
-    const scopedPerson = { ...author, isSelected: true };
     const { container } = renderFeedView(
       {
         posts: manyTasks,
-        searchQuery: ""
+        searchQuery: "",
+        selectedPubkeys: new Set([author.pubkey]),
       },
       {
-        people: [scopedPerson],
-        mentionablePeople: [scopedPerson],
+        people: [author],
+        mentionablePeople: [author],
       }
     );
 
@@ -259,16 +261,16 @@ describe("FeedView", () => {
       })
     );
 
-    const scopedPerson = { ...author, isSelected: true };
     useHydrationStatusStore.getState().setIsHydrating(true);
     const { container } = renderFeedView(
       {
         posts: manyTasks,
         searchQuery: "",
+        selectedPubkeys: new Set([author.pubkey]),
       },
       {
-        people: [scopedPerson],
-        mentionablePeople: [scopedPerson],
+        people: [author],
+        mentionablePeople: [author],
       }
     );
 
@@ -519,7 +521,6 @@ describe("FeedView", () => {
       pubkey: author.pubkey,
       name: author.pubkey,
       displayName: author.pubkey,
-      isSelected: false,
     };
     const pubkeyTask = makeTask({ id: "task-pubkey", author: pubkeyOnlyAuthor, state: {
       status: "open"
@@ -934,15 +935,15 @@ describe("FeedView", () => {
   });
 
   it("renders a scope footer hint at the end when filtered results are visible", () => {
-    const selectedAuthor = { ...author, isSelected: true };
     renderFeedView(
       {
         posts: tasks,
-        searchQuery: ""
+        searchQuery: "",
+        selectedPubkeys: new Set([author.pubkey]),
       },
       {
-        people: [selectedAuthor],
-        mentionablePeople: [selectedAuthor],
+        people: [author],
+        mentionablePeople: [author],
       }
     );
     const footerText = screen.getByText(/This is all/);
@@ -983,12 +984,10 @@ describe("FeedView", () => {
   });
 
   it("ignores selected people as well as channel filters for the mobile fallback", () => {
-    const selectedAuthor = { ...author, isSelected: true };
     const otherAuthor: SelectablePerson = {
       pubkey: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       name: "bob",
       displayName: "Bob Doe",
-      isSelected: false,
     };
     const otherTask = makeTask({
       id: "task-2",
@@ -1005,11 +1004,12 @@ describe("FeedView", () => {
       {
         posts: [otherTask],
         searchQuery: "",
+        selectedPubkeys: new Set([author.pubkey]),
       },
       {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
-        people: [selectedAuthor, otherAuthor],
-        mentionablePeople: [selectedAuthor, otherAuthor],
+        people: [author, otherAuthor],
+        mentionablePeople: [author, otherAuthor],
       }
     );
 
@@ -1076,9 +1076,9 @@ describe("FeedView", () => {
       useCurrentUserStore.getState().setCurrentUser(author);
 
       const { container } = renderFeedView(
-        { posts: [foreignRoot, foreignNested, myNested], scope: "home" },
+        { posts: [foreignRoot, foreignNested, myNested], scope: "home", selectedPubkeys: new Set([otherAuthor.pubkey]) },
         {
-          people: [author, { ...otherAuthor, isSelected: true }],
+          people: [author, otherAuthor],
           mentionablePeople: [author, otherAuthor],
         }
       );

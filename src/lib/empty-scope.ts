@@ -2,7 +2,7 @@ import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constra
 import { displayPriorityFromStored } from "@/domain/content/task-priority";
 import { formatContextTaskTitle } from "@/lib/context-task-title";
 import type { Channel, QuickFilterState, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 
 interface TranslateFn {
   (key: string, options?: Record<string, unknown>): string;
@@ -11,7 +11,9 @@ interface TranslateFn {
 interface BuildEmptyScopeModelParams {
   relays: Relay[];
   channels: Channel[];
-  people: SelectablePerson[];
+  // Already resolved from the store's selectedPubkeys — we need the people (not
+  // just pubkeys) to render their names in the scope description.
+  selectedPeople: Person[];
   quickFilters?: QuickFilterState;
   searchQuery?: string;
   contextTaskTitle?: string;
@@ -52,7 +54,7 @@ function resolveRelayStatus(relay: Relay): NonNullable<Relay["connectionStatus"]
 export function buildEmptyScopeModel({
   relays,
   channels,
-  people,
+  selectedPeople,
   quickFilters,
   searchQuery = "",
   contextTaskTitle = "",
@@ -66,7 +68,7 @@ export function buildEmptyScopeModel({
   const activeRelays = relays.filter((relay) => relay.isActive);
   const includedChannels = channels.filter((channel) => channel.filterState === "included");
   const excludedChannels = channels.filter((channel) => channel.filterState === "excluded");
-  const activePeople = people.filter((person) => person.isSelected);
+  const activePeople = selectedPeople;
   const activeRelayStatuses = activeRelays.map((relay) => resolveRelayStatus(relay));
   const hasRelayConnection = activeRelayStatuses.some(
     (status) => status === "connected" || status === "read-only"

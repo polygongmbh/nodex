@@ -5,6 +5,7 @@ import type { Channel, Relay, Post } from "@/types";
 import type { SelectablePerson } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { makeTask, makePerson } from "@/test/fixtures";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import {
   ingestPost,
@@ -40,7 +41,6 @@ const people: SelectablePerson[] = [
     name: "alice",
     displayName: "Alice",
     avatar: "",
-    isSelected: true,
   }),
 ];
 
@@ -58,11 +58,14 @@ afterEach(() => {
 
 function renderHint(
   viewModel: { focusedTaskId?: string | null; allTasks?: Post[] } = {},
-  surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
+  surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; selectedPubkeys?: Set<string>; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
   for (const post of viewModel.allTasks ?? []) {
     ingestPost({ post });
   }
+  // Default to Alice selected (the module `people` fixture); override tests pass
+  // an explicit set to scope by relay/channel only.
+  useFilterStore.setState({ selectedPubkeys: surface.selectedPubkeys ?? new Set(["alice"]) });
   const focusedTaskId = viewModel.focusedTaskId ?? null;
   return render(
     <FeedSurfaceProvider
@@ -89,7 +92,7 @@ describe("ScopeFooterHint", () => {
   it("renders for a single-relay selection", () => {
     renderHint(
       {},
-      { relays: singleRelay, channels: [{ id: "ops", name: "ops", filterState: "neutral" }], people: [{ ...people[0], isSelected: false }] }
+      { relays: singleRelay, channels: [{ id: "ops", name: "ops", filterState: "neutral" }], people: [{ ...people[0] }], selectedPubkeys: new Set() }
     );
 
     expect(screen.getByText("This is all on relay.one.")).toBeInTheDocument();
@@ -101,7 +104,8 @@ describe("ScopeFooterHint", () => {
       {
         relays: singleRelay,
         channels: [{ id: "ops", name: "ops", filterState: "neutral" }],
-        people: [{ ...people[0], isSelected: false }],
+        people: [{ ...people[0] }],
+        selectedPubkeys: new Set(),
         quickFilters: makeQuickFilterState({ recentEnabled: true, recentDays: 7, priorityEnabled: true, minPriority: 80 }),
       }
     );

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
@@ -11,8 +10,6 @@ import {
   isNavigationFocusStep,
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
-import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
-import type { SelectablePerson } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
@@ -24,7 +21,6 @@ interface UseOnboardingOptions {
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
-  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
 }
 
 export function useOnboarding({
@@ -34,10 +30,9 @@ export function useOnboarding({
   onBeforeResetFocusedTaskScope,
   setCurrentView,
   setFocusedTaskId,
-  setPeople,
 }: UseOnboardingOptions) {
   const { t } = useTranslation("onboarding");
-  const { setActiveRelayIds, setChannelFilterStates, setSearchQuery } = useFilterStore();
+  const { setActiveRelayIds, setChannelFilterStates, setSearchQuery, setSelectedPubkeys } = useFilterStore();
   const setIsAuthModalOpen = useAuthModalStore((s) => s.setIsOpen);
 
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -122,7 +117,7 @@ export function useOnboarding({
       setSearchQuery("");
       setActiveRelayIds(new Set());
       setChannelFilterStates(new Map());
-      setPeople((prev) => mapPeopleSelection(prev, () => false));
+      setSelectedPubkeys(() => new Set());
       return;
     }
 
@@ -137,7 +132,7 @@ export function useOnboarding({
     setSearchQuery("");
     setActiveRelayIds(new Set());
     setChannelFilterStates(new Map());
-    setPeople((prev) => mapPeopleSelection(prev, () => false));
+    setSelectedPubkeys(() => new Set());
   }, [
     currentView,
     isMobile,
@@ -146,7 +141,7 @@ export function useOnboarding({
     setChannelFilterStates,
     setCurrentView,
     setFocusedTaskId,
-    setPeople,
+    setSelectedPubkeys,
     setSearchQuery,
   ]);
 

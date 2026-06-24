@@ -9,8 +9,6 @@ interface UseMentionAutocompletePeopleOptions {
   scopedPosts: Pick<Post, "author">[];
   /** All known kind:0 profile events (resolved labels, NIP-05, etc). */
   cachedKind0Events: NostrEvent[];
-  /** People manifest passed through unchanged for label resolution. */
-  people: SelectablePerson[];
 }
 
 /**
@@ -22,7 +20,6 @@ interface UseMentionAutocompletePeopleOptions {
 export function useMentionAutocompletePeople({
   scopedPosts,
   cachedKind0Events,
-  people,
 }: UseMentionAutocompletePeopleOptions): SelectablePerson[] {
   return useMemo(() => {
     const visiblePubkeys = Array.from(
@@ -38,7 +35,6 @@ export function useMentionAutocompletePeople({
       visiblePubkeys,
       cachedKind0Events,
       cachedKind0Events,
-      people,
     );
-  }, [cachedKind0Events, people, scopedPosts]);
+  }, [cachedKind0Events, scopedPosts]);
 }

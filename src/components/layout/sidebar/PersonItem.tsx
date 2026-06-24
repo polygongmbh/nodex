@@ -11,6 +11,7 @@ import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 import { usePersonPresence } from "@/lib/person-presence-context";
+import { useIsPersonSelected } from "@/features/feed-page/stores/filter-store";
 
 interface PersonItemProps {
   person: SelectablePerson;
@@ -28,6 +29,7 @@ export function PersonItem({
   const { t } = useTranslation("shell");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const personName = person.pubkey === "me" ? t("sidebar.filters.me") : person.displayName;
+  const isSelected = useIsPersonSelected(person.pubkey);
   const sharedPresence = usePersonPresence(person.pubkey);
   const onlineStatus = sharedPresence?.state ?? "offline";
   const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-warning" : null;
@@ -52,7 +54,7 @@ export function PersonItem({
       isKeyboardFocused={isKeyboardFocused}
       className={cn(
         "relative gap-3 py-1.5",
-        person.isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]",
+        isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]",
         className
       )}
     >
@@ -87,7 +89,7 @@ export function PersonItem({
             title={t("sidebar.filters.togglePerson", { name: personName })}
             className={cn(
               "relative w-7 h-7 rounded-full transition-colors hover:ring-2 hover:ring-primary/50",
-              person.isSelected
+              isSelected
                 ? "ring-2 ring-primary/50 motion-filter-pop"
                 : "group-hover:opacity-90"
             )}
@@ -109,12 +111,12 @@ export function PersonItem({
             <span
               className={cn(
                 "block min-w-0 flex-1 truncate text-sm transition-colors",
-                person.isSelected ? "text-foreground font-semibold" : "text-sidebar-foreground hover:text-primary"
+                isSelected ? "text-foreground font-semibold" : "text-sidebar-foreground hover:text-primary"
               )}
             >
               {personName}
             </span>
-            {person.isSelected && (
+            {isSelected && (
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
             )}
           </button>

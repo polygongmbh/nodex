@@ -121,6 +121,7 @@ export interface TaskViewSource {
   channels: Channel[];
   neutralChannels: Channel[];
   people: SelectablePerson[];
+  selectedPubkeys: Set<string>;
   quickFilters: ReturnType<typeof useFeedSurfaceState>["quickFilters"];
   channelMatchMode: ChannelMatchMode;
   taskById: ReadonlyMap<string, Post>;
@@ -138,6 +139,7 @@ type TreeSelectorSource = Pick<
   | "deferredSearchQuery"
   | "channels"
   | "people"
+  | "selectedPubkeys"
   | "quickFilters"
   | "channelMatchMode"
   | "taskById"
@@ -194,9 +196,9 @@ export function sortKanbanColumnTasks(tasks: TaskPost[], status: TaskStatus, sor
   return isTaskTerminal(status) ? sortByLatestModified(tasks) : sortTasks(tasks, sortContext);
 }
 
-function clearSelectedPeople(people: SelectablePerson[]): SelectablePerson[] {
-  return people.map((person) => (person.isSelected ? { ...person, isSelected: false } : person));
-}
+// Stable identity for the person-unscoped ("neutral") filter variants, so the
+// useTaskViewFiltering memo isn't busted by a fresh Set each render.
+const EMPTY_PUBKEY_SET: Set<string> = new Set();
 
 function buildFeedEntries(tasks: Post[], focusedTaskId: string | null): FeedEntry[] {
   const entries: FeedEntry[] = [];
@@ -241,6 +243,7 @@ function useMobileViewScopeMatches({
   const { channels, people, quickFilters } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const hasSearchQuery = searchQuery.trim().length > 0;
 
   const matches = useMemo(() => {
@@ -248,7 +251,6 @@ function useMobileViewScopeMatches({
       return null;
     }
     const prefilteredTaskIds = new Set(posts.map((task) => task.id));
-    const neutralPeople = clearSelectedPeople(people);
     const filterIndex = buildTaskViewFilterIndex(posts, people);
     const { included, excluded } = getIncludedExcludedChannelNames(channels);
     const taskPredicate =
@@ -261,11 +263,11 @@ function useMobileViewScopeMatches({
     type MatchVariant = "scopedWithSearch" | "scopedWithoutSearch" | "sourceWithoutScope";
     const hasMatches = (variant: MatchVariant): boolean => {
       const useScopedFilters = variant !== "sourceWithoutScope";
-      const effectivePeople = variant === "sourceWithoutScope" ? neutralPeople : people;
+      const effectiveSelectedPubkeys = variant === "sourceWithoutScope" ? new Set<string>() : selectedPubkeys;
       const variantSearchQuery = variant === "scopedWithSearch" ? searchQuery : "";
       return (
         getDirectMatchTaskIdsForView({
-          source: { allTasks: posts, filterIndex, prefilteredTaskIds, people: effectivePeople },
+          source: { allTasks: posts, filterIndex, prefilteredTaskIds, people, selectedPubkeys: effectiveSelectedPubkeys },
           scope: { focusedTaskId, includeFocusedTask, hideClosedTasks, taskPredicate },
           criteria: {
             searchQuery: variantSearchQuery,
@@ -284,7 +286,7 @@ function useMobileViewScopeMatches({
       hasScopedMatchesWithoutSearch: hasMatches("scopedWithoutSearch"),
       hasSourceContent: hasMatches("sourceWithoutScope"),
     };
-  }, [isMobile, currentView, posts, people, channels, quickFilters, channelMatchMode, searchQuery, focusedTaskId]);
+  }, [isMobile, currentView, posts, people, selectedPubkeys, channels, quickFilters, channelMatchMode, searchQuery, focusedTaskId]);
 
   const hasScopedMatchesWithSearch = matches?.hasScopedMatchesWithSearch ?? false;
   const hasScopedMatchesWithoutSearch = matches?.hasScopedMatchesWithoutSearch ?? false;
@@ -309,6 +311,7 @@ export function useTaskViewSource({
   const isMobile = useIsMobile();
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const { effectiveSearchQuery } = useMobileViewScopeMatches({ posts, focusedTaskId, currentView });
   // The calendar has no search affordance on mobile, so it always ignores the
   // typed query there rather than applying the omission fallback.
@@ -348,6 +351,7 @@ export function useTaskViewSource({
     channels,
     neutralChannels,
     people,
+    selectedPubkeys,
     quickFilters,
     channelMatchMode,
     taskById,
@@ -400,6 +404,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
         filterIndex: source.filterIndex,
         prefilteredTaskIds: source.prefilteredTaskIds,
         people: source.people,
+        selectedPubkeys: source.selectedPubkeys,
       },
       scope: {
         focusedTaskId: source.focusedTaskId,
@@ -491,7 +496,7 @@ export function createTreeSelectors(source: TreeSelectorSource): TreeSelectors {
   const getVisibility = () => {
     if (visibilityCache) return visibilityCache;
     const { included, excluded } = getIncludedExcludedChannelNames(source.channels);
-    const hasSelectedPeople = source.people.some((person) => person.isSelected);
+    const hasSelectedPeople = source.selectedPubkeys.size > 0;
     const hasMatchingFilters =
       source.deferredSearchQuery.trim().length > 0 ||
       included.length > 0 ||
@@ -505,6 +510,7 @@ export function createTreeSelectors(source: TreeSelectorSource): TreeSelectors {
           filterIndex: source.filterIndex,
           prefilteredTaskIds: source.prefilteredTaskIds,
           people: source.people,
+          selectedPubkeys: source.selectedPubkeys,
         },
         scope: {
           focusedTaskId: source.focusedTaskId,
@@ -653,14 +659,15 @@ export function useFeedViewState({
 }): FeedViewState {
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const currentUser = useCurrentUser();
   const homeSelectedDayKey = useHomeDayStore((s) => s.selectedDayKey);
   const isHomeScope = scope === "home";
   const hasSidebarScopeFilters = useMemo(
     () =>
       channels.some((channel) => channel.filterState !== "neutral") ||
-      people.some((person) => person.isSelected),
-    [channels, people]
+      selectedPubkeys.size > 0,
+    [channels, selectedPubkeys]
   );
   // On mobile, the Home chip narrows top-level activity to the user's pinned
   // channels; desktop Home keeps showing all top-level activity (empty set).
@@ -701,7 +708,6 @@ export function useFeedViewState({
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
-  const neutralPeople = useMemo(() => clearSelectedPeople(people), [people]);
   const filteredFeedTasks = useTaskViewFiltering({
     posts,
     focusedTaskId,
@@ -709,6 +715,7 @@ export function useFeedViewState({
     hideClosedTasks: true,
     searchQuery: deferredSearchQuery,
     people,
+    selectedPubkeys,
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
@@ -724,7 +731,8 @@ export function useFeedViewState({
     includeFocusedTask: true,
     hideClosedTasks: true,
     searchQuery: "",
-    people: neutralPeople,
+    people,
+    selectedPubkeys: EMPTY_PUBKEY_SET,
     quickFilters,
     channels: neutralChannels,
     channelMatchMode: deferredChannelMatchMode,
@@ -737,6 +745,7 @@ export function useFeedViewState({
     hideClosedTasks: false,
     searchQuery: deferredSearchQuery,
     people,
+    selectedPubkeys,
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
@@ -748,7 +757,8 @@ export function useFeedViewState({
     includeFocusedTask: true,
     hideClosedTasks: false,
     searchQuery: "",
-    people: neutralPeople,
+    people,
+    selectedPubkeys: EMPTY_PUBKEY_SET,
     quickFilters,
     channels: neutralChannels,
     channelMatchMode: deferredChannelMatchMode,
@@ -811,6 +821,7 @@ export function useListViewState({
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
   const filteredTaskCandidates = useTaskViewFiltering<TaskPost>({
@@ -818,6 +829,7 @@ export function useListViewState({
     focusedTaskId,
     searchQuery,
     people,
+    selectedPubkeys,
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,
@@ -828,6 +840,7 @@ export function useListViewState({
     focusedTaskId,
     searchQuery: "",
     people,
+    selectedPubkeys,
     quickFilters,
     channels: deferredChannels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
     channelMatchMode: deferredChannelMatchMode,
@@ -858,6 +871,7 @@ export function useKanbanViewState({
   const { channels, people, quickFilters } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const deferredChannels = useDeferredValue(channels);
   const deferredChannelMatchMode = useDeferredValue(channelMatchMode);
   const childrenMap = useMemo(() => buildChildrenMap(posts), [posts]);
@@ -890,6 +904,7 @@ export function useKanbanViewState({
     focusedTaskId,
     searchQuery,
     people,
+    selectedPubkeys,
     quickFilters,
     channels: deferredChannels,
     channelMatchMode: deferredChannelMatchMode,

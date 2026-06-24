@@ -136,6 +136,7 @@ export function UnifiedBottomBar({
   const people = peopleProp ?? surface.people;
   const visiblePeople = peopleProp ?? surface.visiblePeople ?? surface.people;
   const searchQuery = useFilterStore((s) => s.searchQuery);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const dispatchSearchChange = useCallback(
     (query: string) => {
       void dispatchFeedInteraction({ type: "ui.search.change", query });
@@ -152,7 +153,7 @@ export function UnifiedBottomBar({
     ? posts.find((post) => post.id === focusedTaskId)?.content ?? ""
     : "";
   const composerPlaceholder = useMemo(() => {
-    const mentionLabels = people.filter((person) => person.isSelected).map((person) => getCompactPersonLabel(person));
+    const mentionLabels = people.filter((person) => selectedPubkeys.has(person.pubkey)).map((person) => getCompactPersonLabel(person));
     return buildComposerPlaceholder({
       baseKey: "composer.placeholders.mobileSearchCreatePosts",
       contextTaskTitle,
@@ -161,7 +162,7 @@ export function UnifiedBottomBar({
       locale: i18n.resolvedLanguage || i18n.language || "en",
       t,
     });
-  }, [contextTaskTitle, i18n.language, i18n.resolvedLanguage, includedChannels, people, t]);
+  }, [contextTaskTitle, i18n.language, i18n.resolvedLanguage, includedChannels, people, selectedPubkeys, t]);
   const initialComposerStateRef = useRef<ReturnType<typeof resolveTaskComposerInitialState> | null>(null);
   if (initialComposerStateRef.current === null) {
     initialComposerStateRef.current = resolveTaskComposerInitialState({
@@ -891,7 +892,7 @@ export function UnifiedBottomBar({
   // Count active filters for badge display
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
-  const activePeopleCount = people.filter(p => p.isSelected).length;
+  const activePeopleCount = people.filter(p => selectedPubkeys.has(p.pubkey)).length;
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
   const hasAtLeastOneTag = countHashtagsInContent(sharedText) + explicitTagNames.length > 0;
@@ -1439,7 +1440,7 @@ export function UnifiedBottomBar({
                     }}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
-                      person.isSelected
+                      selectedPubkeys.has(person.pubkey)
                         ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                         : "border-border"
                     )}
@@ -1450,7 +1451,7 @@ export function UnifiedBottomBar({
                     <span className="truncate max-w-[8rem]" title={personDisplayName}>
                       {personLabel}
                     </span>
-                    {person.isSelected && <Check className="w-3.5 h-3.5" />}
+                    {selectedPubkeys.has(person.pubkey) && <Check className="w-3.5 h-3.5" />}
                   </button>
                 );
               })}

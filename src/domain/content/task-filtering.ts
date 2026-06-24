@@ -1,12 +1,15 @@
 import type { Channel, ChannelMatchMode, Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 
 interface FilterTasksByRelayAndPeopleParams {
   tasks: Post[];
   activeRelayIds: Set<string>;
-  people: SelectablePerson[];
+  // The people the feed is scoped to, already resolved from the store's
+  // selectedPubkeys. People (not just pubkeys) because matching also looks at
+  // name/displayName for @mention scoping.
+  selectedPeople: Person[];
   allowUnknownRelayMetadata?: boolean;
 }
 
@@ -14,7 +17,7 @@ interface FilterTasksParams {
   tasks: Post[];
   activeRelayIds: Set<string>;
   channels: Channel[];
-  people: SelectablePerson[];
+  selectedPeople: Person[];
   channelMatchMode: ChannelMatchMode;
   allowUnknownRelayMetadata?: boolean;
 }
@@ -22,11 +25,9 @@ interface FilterTasksParams {
 export function filterTasksByRelayAndPeople({
   tasks,
   activeRelayIds,
-  people,
+  selectedPeople,
   allowUnknownRelayMetadata = true,
 }: FilterTasksByRelayAndPeopleParams): Post[] {
-  const selectedPeople = people.filter((person) => person.isSelected);
-
   return tasks.filter((task) => {
     const hasUnknownRelayMetadata =
       task.relays.length === 0 ||
@@ -47,7 +48,7 @@ export function filterTasks({
   tasks,
   activeRelayIds,
   channels,
-  people,
+  selectedPeople,
   channelMatchMode,
   allowUnknownRelayMetadata = true,
 }: FilterTasksParams): Post[] {
@@ -55,7 +56,7 @@ export function filterTasks({
   return filterTasksByRelayAndPeople({
     tasks,
     activeRelayIds,
-    people,
+    selectedPeople,
     allowUnknownRelayMetadata,
   }).filter((task) =>
     taskMatchesChannelFilters(task.tags, included, excluded, channelMatchMode)
