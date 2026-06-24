@@ -2,12 +2,38 @@ import { Home, LayoutList, Columns3, GitBranch, Calendar, List, LayoutDashboard 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { CONFIGURED_VIEW_NAMES } from "@/lib/views-config";
 
 export const VIEW_ORDER = ["home", "status", "feed", "tree", "kanban", "list", "calendar"] as const;
 export type ViewType = (typeof VIEW_ORDER)[number];
 
+function resolveEnabledViews(): readonly ViewType[] {
+  if (!CONFIGURED_VIEW_NAMES) return VIEW_ORDER;
+  const allowed = new Set(CONFIGURED_VIEW_NAMES);
+  const filtered = VIEW_ORDER.filter((view) => allowed.has(view));
+  // Ignore a config that matches nothing rather than leaving the app view-less.
+  return filtered.length > 0 ? filtered : VIEW_ORDER;
+}
+
+/** Views this build exposes: VIEW_ORDER ∩ VITE_VIEWS, or all when unset. */
+export const ENABLED_VIEWS: readonly ViewType[] = resolveEnabledViews();
+
+/** With a single enabled view the nav bar is hidden (desktop and mobile). */
+export const isSingleViewMode = ENABLED_VIEWS.length === 1;
+
+/** Default landing view per platform, falling back to the first enabled view. */
+export function resolveDefaultView(isMobile: boolean): ViewType {
+  const preferred: ViewType = isMobile ? "status" : "home";
+  if (ENABLED_VIEWS.includes(preferred)) return preferred;
+  if (isMobile) {
+    const mobileView = ENABLED_VIEWS.find((view) => view !== "home" && view !== "kanban");
+    if (mobileView) return mobileView;
+  }
+  return ENABLED_VIEWS[0];
+}
+
 // Tree and list are reachable via direct URL but hidden from the desktop nav.
-const DESKTOP_NAV_VIEWS = VIEW_ORDER.filter((v) => v !== "tree" && v !== "list");
+const DESKTOP_NAV_VIEWS = ENABLED_VIEWS.filter((v) => v !== "tree" && v !== "list");
 
 interface ViewSwitcherProps {
   currentView: ViewType;

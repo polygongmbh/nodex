@@ -1,5 +1,6 @@
 import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { isPrimaryMobileView, MobileNav, MobileViewType } from "./MobileNav";
+import { isPrimaryMobileView, MobileNav, MOBILE_VIEW_ORDER, MobileViewType } from "./MobileNav";
+import { isSingleViewMode } from "@/components/tasks/ViewSwitcher";
 import { MobileChannelChips } from "./MobileChannelChips";
 import { MobileSpaceSelector } from "./MobileSpaceSelector";
 import { MobileFilters } from "./MobileFilters";
@@ -68,7 +69,9 @@ export function MobileLayout({
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
   const lastHandledProfilePromptSignalRef = useRef(0);
   const lastHandledGuideStepIdRef = useRef<string | null>(null);
-  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "status";
+  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView)
+    ? currentView
+    : (MOBILE_VIEW_ORDER[0] ?? "status");
 
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");
@@ -204,7 +207,9 @@ export function MobileLayout({
   return (
     <div className="flex flex-col app-shell-height bg-background overflow-hidden">
       <div>
-        <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} isManageActive={showFilters} />
+        {!isSingleViewMode && (
+          <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} isManageActive={showFilters} />
+        )}
         <MobileChannelChips
           channels={chipChannels}
           activeChannelId={activeChannelId}

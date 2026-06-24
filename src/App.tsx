@@ -15,6 +15,7 @@ import { readStartupNoasBootstrap, resolveStartupNoasBootstrap } from "@/infrast
 import { relayUrlToId } from "@/infrastructure/nostr/relay-url";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { MOBILE_BREAKPOINT } from "@/hooks/use-mobile";
+import { resolveDefaultView } from "@/components/tasks/ViewSwitcher";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -32,7 +33,7 @@ export function RootFeedRedirect() {
   return (
     <Navigate
       to={{
-        pathname: isMobileViewport ? "/status" : "/home",
+        pathname: `/${resolveDefaultView(isMobileViewport)}`,
         search: location.search,
         hash: location.hash,
       }}

@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { SidebarHeader } from "@/components/layout/sidebar/SidebarHeader";
 import { FailedPublishQueueBannerContainer } from "./FailedPublishQueueBannerContainer";
 import { DesktopSearchDock } from "@/components/tasks/DesktopSearchDock";
-import { ViewSwitcher } from "@/components/tasks/ViewSwitcher";
+import { ViewSwitcher, isSingleViewMode } from "@/components/tasks/ViewSwitcher";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
@@ -34,7 +34,7 @@ export function DesktopAppShell({
       <SidebarHeader className="h-[var(--topbar-height)]" />
       <div className="border-b border-border px-3 bg-background/95 backdrop-blur-sm flex items-stretch justify-between gap-1.5 min-w-0 h-[var(--topbar-height)]">
         <div className="flex-1 min-w-0 h-full">
-          <ViewSwitcher currentView={currentView} />
+          {!isSingleViewMode && <ViewSwitcher currentView={currentView} />}
         </div>
         <div className="h-full flex items-center justify-end gap-1 lg:gap-1.5 w-auto">
           <NostrUserMenu
