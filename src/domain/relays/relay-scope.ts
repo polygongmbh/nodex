@@ -12,7 +12,11 @@ interface RelayScopedTaskLike {
 export function hasActiveRelayScope(
   scope: ReadonlySet<string> | readonly string[]
 ): boolean {
-  return (scope instanceof Set ? scope.size : scope.length) > 0;
+  // `"size" in scope` narrows both branches: `readonly string[]` has no `size`
+  // member, so the true branch is ReadonlySet (has `.size`) and the false
+  // branch is the array (has `.length`). `instanceof Set` / `Array.isArray`
+  // both fail to narrow a *readonly* union cleanly.
+  return ("size" in scope ? scope.size : scope.length) > 0;
 }
 
 /**

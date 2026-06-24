@@ -2,11 +2,11 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { buildDocumentTitle } from "@/lib/document-title";
-import type { Task } from "@/types";
+import type { Post } from "@/types";
 
 interface DocumentTitleSyncProps {
   currentView: ViewType;
-  focusedTask: Task | null;
+  focusedTask: Post | null;
 }
 
 /** Keeps the browser tab title in sync with the focused task / current view. */
