@@ -10,6 +10,7 @@ import { NoasSharedFields } from "./NoasSharedFields";
 import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
 import { resolveNoasCredentialsForSubmit } from "./noas-form-helpers";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { useVanityKeyMiner } from "@/infrastructure/nostr/provider/use-vanity-key-miner";
 import {
   discoverNoasEmailVerificationMode,
   isValidNoasBaseUrl,
@@ -149,6 +150,15 @@ export function NoasSignUpForm({
     setShowPrivateKey(true);
   };
 
+  const { isMining: isMiningVanityKey } = useVanityKeyMiner({
+    username,
+    hasPrivateKey: privateKey.trim().length > 0,
+    onMined: (secretKeyHex) => {
+      setPrivateKey(secretKeyHex);
+      setPubkey(derivePublicKey(secretKeyHex) || "");
+    },
+  });
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(privateKey);
     toast.success(t("auth.noas.privateKeyCopied"));
@@ -270,7 +280,15 @@ export function NoasSignUpForm({
 
         <div className="space-y-2 rounded-lg bg-muted/50 p-3">
           <div className="flex items-center justify-between">
-            <Label htmlFor="noas-private-key">{t("auth.privateKey")}</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="noas-private-key">{t("auth.privateKey")}</Label>
+              {isMiningVanityKey ? (
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {t("auth.noas.miningVanity")}
+                </span>
+              ) : null}
+            </div>
             <Button
               type="button"
               variant="ghost"

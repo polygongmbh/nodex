@@ -38,6 +38,10 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    worker: {
+      // ES module workers so the vanity-key miner can import nostr-tools directly.
+      format: "es",
+    },
     build: {
       // Keep build output warnings focused on app-controlled issues.
       chunkSizeWarningLimit: 2000,

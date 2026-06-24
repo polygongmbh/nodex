@@ -3,6 +3,7 @@
 ## Quick Start
 - Sign in from the profile menu to post tasks/comments to feeds.
 - Guest sign-in starts with a deterministic placeholder username derived from your pubkey.
+- When creating a Noas account, typing four or more username characters (with the private-key field still empty) auto-generates a matching vanity key in the background — the resulting `npub` starts with your initials (the first three npub-safe characters), ignoring any characters that can't appear in an npub. A "Mining vanity key…" hint shows while it works; pasting or generating your own key cancels it, and it never overwrites a key you entered.
 - Compose a post with at least one `#channel` tag.
 - Desktop: choose Task, Comment, Listing, or Event from the compose kind control.
 - Mobile: the bottom-bar send button posts a message in the timeline and a task in upcoming (no kind picker); the tree view keeps task/comment send actions. Attach an event from the timeline's extras button to post a calendar event.
