@@ -178,25 +178,38 @@
   * {
     @apply border-border;
     touch-action: manipulation;
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.6) hsl(var(--foreground) / 0.03);
   }
 
-  *::-webkit-scrollbar {
-    width: 0.625rem;
-    height: 0.625rem;
-  }
+  /* Custom scrollbars are a desktop-only affordance. Below the mobile
+     breakpoint (where MobileLayout renders) we leave scrollbars native:
+     overlay-style bars that auto-hide and reserve no gutter. Styling
+     ::-webkit-scrollbar at all forces mobile webkit into a classic,
+     always-painted scrollbar, which on frequently re-laid-out views like the
+     feed produces an intermittent "layered/ghost scrollbar" repaint artifact
+     and inconsistent widths between views. Gating to >= 768px keeps all mobile
+     views on the same native scrollbar. */
+  @media (min-width: 768px) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--muted-foreground) / 0.6) hsl(var(--foreground) / 0.03);
+    }
 
-  *::-webkit-scrollbar-track {
-    background: hsl(var(--foreground) / 0.03);
-  }
+    *::-webkit-scrollbar {
+      width: 0.625rem;
+      height: 0.625rem;
+    }
 
-  *::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.6);
-    border: 0.125rem solid transparent;
-    border-radius: 9999px;
-    background-clip: padding-box;
-    min-height: 3rem;
+    *::-webkit-scrollbar-track {
+      background: hsl(var(--foreground) / 0.03);
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background-color: hsl(var(--muted-foreground) / 0.6);
+      border: 0.125rem solid transparent;
+      border-radius: 9999px;
+      background-clip: padding-box;
+      min-height: 3rem;
+    }
   }
 
   body {
@@ -294,23 +307,31 @@
     background-color: hsl(var(--task-hashtag-bg-hover));
   }
 
+  /* overflow-y stays unconditional: TaskTree relies on it to scroll at all.
+     The wider scrollbar cosmetics are desktop-only — mobile uses native overlay
+     scrollbars (see the base layer note) for consistent widths and no artifact. */
   .scrollbar-main-view {
     overflow-y: scroll;
-    scrollbar-width: auto;
   }
 
-  .scrollbar-main-view::-webkit-scrollbar {
-    width: 0.875rem;
-    height: 0.875rem;
-  }
+  @media (min-width: 768px) {
+    .scrollbar-main-view {
+      scrollbar-width: auto;
+    }
 
-  .scrollbar-auto {
-    scrollbar-width: auto;
-  }
+    .scrollbar-main-view::-webkit-scrollbar {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
 
-  .scrollbar-auto::-webkit-scrollbar {
-    width: 0.875rem;
-    height: 0.875rem;
+    .scrollbar-auto {
+      scrollbar-width: auto;
+    }
+
+    .scrollbar-auto::-webkit-scrollbar {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
   }
 
   .glow-primary {
