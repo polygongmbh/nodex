@@ -64,10 +64,9 @@ export function useRelaySelectionController({
     handleToggleAllRelays,
   } = useRelayFilterController({
     relays,
-    getEnableToastMessage: (relay) => {
-      if (!shouldShowReconnectAttemptOnSelection(relay)) return undefined;
-      return null;
-    },
+    // No toast when a space is successfully selected/enabled. Reconnect attempts
+    // for disconnected spaces still notify via onRelayEnabled below.
+    getEnableToastMessage: () => null,
     onRelayEnabled: (relay) => {
       if (!shouldShowReconnectAttemptOnSelection(relay)) return;
 

@@ -147,12 +147,12 @@ describe("useRelaySelectionController", () => {
     expect(toast.error).toHaveBeenCalled();
   });
 
-  it("uses the normal selection toast when a read-only relay is activated", () => {
+  it("does not toast when a usable relay is selected", () => {
     const { result } = renderSelectionController([buildReadOnlyRelay()]);
 
     expectExclusiveSelectReconnect(result);
 
-    expect(toast).toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
     expect(toast.info).not.toHaveBeenCalled();
     expectActiveRelayIds(result, ["relay-one"]);
   });
