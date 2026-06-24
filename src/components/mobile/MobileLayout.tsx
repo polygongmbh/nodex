@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { Suspense, lazy, useState, useCallback, useRef, useEffect } from "react";
 import { isPrimaryMobileView, MobileNav, MOBILE_VIEW_ORDER, MobileViewType } from "./MobileNav";
 import { isSingleViewMode } from "@/components/tasks/ViewSwitcher";
 import { MobileChannelChips } from "./MobileChannelChips";
@@ -18,7 +18,11 @@ import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-con
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
-import { setAllChannelFilters, setExclusiveChannelFilter } from "@/domain/content/filter-state-utils";
+import {
+  setAllChannelFilters,
+  setExclusiveChannelFilter,
+  shouldToggleOffExclusiveChannel,
+} from "@/domain/content/filter-state-utils";
 import type { Post } from "@/types";
 import {
   useComposeRestoreSignal,
@@ -47,6 +51,7 @@ export function MobileLayout({
   const surface = useFeedSurfaceState();
   const channels = surface.visibleChannels ?? surface.channels;
   const setChannelFilterStates = useFilterStore((s) => s.setChannelFilterStates);
+  const channelFilterStates = useFilterStore((s) => s.channelFilterStates);
   const {
     canCreateContent,
     profileCompletionPromptSignal,
@@ -81,12 +86,6 @@ export function MobileLayout({
   // other visible channels in the same banded order.
   const allChannels = surface.channels;
   const chipChannels = channels;
-  // Home is active unless exactly one channel is exclusively included (set by a
-  // chip tap); multiple sidebar-included channels leave no single chip active.
-  const activeChannelId = useMemo(() => {
-    const included = allChannels.filter((channel) => channel.filterState === "included");
-    return included.length === 1 ? included[0].id : null;
-  }, [allChannels]);
 
   const openManageView = useCallback(() => {
     setShowFilters(true);
@@ -128,13 +127,15 @@ export function MobileLayout({
 
   const handleSelectChannel = useCallback((channelId: string) => {
     if (showFilters) closeManageView();
-    // Tapping the already-exclusive channel again clears back to the home filter.
+    // A tap overwrites any current channel scope with just this channel; tapping
+    // the channel while it is the only one included clears back to the home
+    // filter. Read straight off the live filter map — no parallel active-id state.
     setChannelFilterStates(() =>
-      activeChannelId === channelId
+      shouldToggleOffExclusiveChannel(allChannels, channelFilterStates, channelId)
         ? setAllChannelFilters(allChannels, "neutral")
         : setExclusiveChannelFilter(allChannels, channelId)
     );
-  }, [activeChannelId, allChannels, closeManageView, setChannelFilterStates, showFilters]);
+  }, [allChannels, channelFilterStates, closeManageView, setChannelFilterStates, showFilters]);
 
   const handleToggleChannelPin = useCallback((channelId: string, isPinned: boolean) => {
     void dispatchFeedInteraction(
