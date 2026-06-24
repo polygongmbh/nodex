@@ -208,7 +208,7 @@ export function MobileLayout({
     <div className="flex flex-col app-shell-height bg-background overflow-hidden">
       {/* App-wide top spacing (safe-area + margin) so the top row never sits
           flush against the status bar — independent of whether the nav shows. */}
-      <div className="safe-area-top pt-2">
+      <div className="safe-area-top mt-2">
         {!isSingleViewMode && (
           <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} isManageActive={showFilters} />
         )}
