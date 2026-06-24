@@ -89,7 +89,7 @@
 - Feed filter controls determine which items are visible.
 - If no default relays are configured and no relay list is stored yet, Nodex probes host-derived relay candidates (`base.`, `feed.`, `nostr.`, `tasks.`) from the current domain and auto-connects only to reachable relays.
 - After sign-in, relay enrichment prefers relays from your NIP-65 relay list (`kind:10002`) and only falls back to verified NIP-05 relay hints when needed.
-- After sign-in — and again whenever a new relay connects — Nodex checks whether the connected relays already hold your profile (`kind:0`). If none is found, it publishes your current profile so your name/picture show up on those relays; if you already have a profile there, nothing is republished and it is never overwritten. Guest identities are never published this way.
+- After sign-in, once a relay is connected, Nodex checks whether the relays already hold your profile (`kind:0`). If none is found, it publishes your current profile so your name/picture show up there; if you already have a profile, it is left untouched. Guest identities are never published this way.
 - The demo feed is hidden by default and can be explicitly enabled with `VITE_ENABLE_DEMO_FEED=true`.
 - Feed chips show live connection state; selected disconnected feeds block posting/task edits until reconnected.
 - Selecting a disconnected feed (toggle, exclusive-select, or select-all) triggers an automatic reconnect attempt.

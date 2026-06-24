@@ -12,20 +12,6 @@ type FetchLatestKind0Profile = (
   options?: { force?: boolean }
 ) => Promise<NDKUserProfile | null>;
 
-// Per-pubkey lifecycle of the ensure check:
-// - "unknown":   haven't determined yet whether the relays hold our kind 0
-// - "exists":    relays already have an own kind 0 — never auto-publish (terminal)
-// - "published": relays had none, we published ours — re-broadcast to new relays
-type EnsureStatus = "unknown" | "exists" | "published";
-
-interface EnsureState {
-  pubkey: string | null;
-  status: EnsureStatus;
-  // Writable relays our kind 0 has been broadcast to, so a freshly connected
-  // relay is detected as "new" and gets the profile too.
-  coveredRelays: Set<string>;
-}
-
 function toPublishableProfile(profile: NDKUserProfile | null | undefined): EditableNostrProfile | null {
   const name = profile?.name?.trim();
   if (!name) return null;
@@ -39,16 +25,14 @@ function toPublishableProfile(profile: NDKUserProfile | null | undefined): Edita
 }
 
 /**
- * After signing in — and again whenever a new relay connects — make sure the
- * user's profile metadata (kind 0) is present on the connected relays.
+ * After signing in, publish the user's profile metadata (kind 0) to the
+ * connected relays when they don't already hold one — so a profile that lives
+ * only in app state (Noas / private-key logins) reaches the relays the app
+ * talks to. An existing profile is never overwritten.
  *
- * We only publish the locally known profile when the relays have no own kind 0
- * yet, so an established profile is never clobbered. The common case this serves
- * is a Noas / private-key login whose profile lives only in app state: it gets
- * propagated to the relays the app actually talks to.
- *
- * Guests are skipped — their deterministic throwaway identity has no business
- * being broadcast to relays.
+ * Only a confirmed outcome settles the attempt: an existing kind 0 was found,
+ * or our own publish succeeded. A failed publish is deliberately not recorded,
+ * so the next relay status change simply retries it. Guests are skipped.
  */
 export function useEnsureOwnProfile(
   user: NDKUser | null,
@@ -57,20 +41,18 @@ export function useEnsureOwnProfile(
   publishEvent: PublishEvent,
   fetchLatestKind0Profile: FetchLatestKind0Profile,
 ): void {
-  const stateRef = useRef<EnsureState>({ pubkey: null, status: "unknown", coveredRelays: new Set() });
-  const runRef = useRef(0);
+  // Pubkey whose kind 0 is confirmed on the relays (found, or just published).
+  const settledPubkeyRef = useRef<string | null>(null);
+  const inFlightRef = useRef(false);
 
-  // why: trigger on sign-in and on every relay-set change so a profile that
-  // exists only in app state reaches the relays once a writable connection is
-  // available — publishing solely when no own kind 0 is found on the relays.
+  // why: on sign-in (and the first time a relay becomes writable) make sure the
+  // user's kind 0 is on the relays, publishing the local profile only when none
+  // is found — so the profile editor is no longer the only path onto the relays.
   useEffect(() => {
     const pubkey = user?.pubkey ?? null;
-
-    if (stateRef.current.pubkey !== pubkey) {
-      stateRef.current = { pubkey, status: "unknown", coveredRelays: new Set() };
-    }
     if (!pubkey || authMethod === null || authMethod === "guest") return;
-    if (stateRef.current.status === "exists") return;
+    if (settledPubkeyRef.current === pubkey) return;
+    if (inFlightRef.current) return;
 
     const candidate = toPublishableProfile(user?.profile);
     if (!candidate) return; // nothing publishable yet (profile not synced / nameless)
@@ -78,26 +60,16 @@ export function useEnsureOwnProfile(
     const writableRelayUrls = resolveWritableNdkRelayUrls(relays);
     if (writableRelayUrls.length === 0) return; // wait for a writable relay connection
 
-    if (stateRef.current.status === "published") {
-      const hasNewRelay = writableRelayUrls.some((url) => !stateRef.current.coveredRelays.has(url));
-      if (!hasNewRelay) return; // every connected relay already has our kind 0
-    }
-
-    // Later runs supersede earlier ones: a re-run caused by a growing relay set
-    // invalidates an in-flight check so the publish targets the latest relays.
-    const runId = ++runRef.current;
-    const isStale = () => runRef.current !== runId;
-
+    inFlightRef.current = true;
     const run = async () => {
       try {
-        if (stateRef.current.status === "unknown") {
-          const existing = await fetchLatestKind0Profile(pubkey);
-          if (isStale()) return;
-          if (existing) {
-            stateRef.current = { pubkey, status: "exists", coveredRelays: new Set() };
-            nostrDevLog("provider", "Own kind 0 already on relays — skipping publish", { pubkey });
-            return;
-          }
+        // force: bypass the shared kind-0 cache, whose entry may be a premature
+        // null written by profile sync before any relay was connected.
+        const existing = await fetchLatestKind0Profile(pubkey, { force: true });
+        if (existing) {
+          settledPubkeyRef.current = pubkey;
+          nostrDevLog("provider", "Own kind 0 already on relays — skipping publish", { pubkey });
+          return;
         }
 
         const result = await publishEvent(
@@ -107,16 +79,23 @@ export function useEnsureOwnProfile(
           undefined,
           writableRelayUrls,
         );
-        if (isStale()) return;
-
-        stateRef.current = { pubkey, status: "published", coveredRelays: new Set(writableRelayUrls) };
-        nostrDevLog(
-          "provider",
-          result.success ? "Published own kind 0 — relays had none" : "Failed to publish own kind 0",
-          { pubkey, relayUrls: writableRelayUrls, success: result.success },
-        );
+        if (result.success) {
+          settledPubkeyRef.current = pubkey;
+          nostrDevLog("provider", "Published own kind 0 — relays had none", {
+            pubkey,
+            relayUrls: writableRelayUrls,
+          });
+        } else {
+          // Not recorded — the next relay status change retries the publish.
+          nostrDevLog("provider", "Own kind 0 publish failed — will retry", {
+            pubkey,
+            rejectionReason: result.rejectionReason ?? null,
+          });
+        }
       } catch (error) {
-        if (!isStale()) console.warn("Ensure own profile: publish failed", error);
+        console.warn("Ensure own profile: publish failed", error);
+      } finally {
+        inFlightRef.current = false;
       }
     };
 

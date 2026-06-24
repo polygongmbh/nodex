@@ -101,21 +101,33 @@ describe("useEnsureOwnProfile", () => {
     expect(publishEvent).toHaveBeenCalledTimes(1);
   });
 
-  it("re-broadcasts to a newly connected relay after the initial publish", async () => {
-    const { publishEvent, rerender } = makeHarness({
-      profile: { name: "alice" },
-      relays: [{ url: "wss://relay.one", status: "connected" }],
-    });
+  it("retries on the next relay change after a failed publish (failure is not recorded)", async () => {
+    const publishEvent = vi.fn<PublishEvent>()
+      .mockResolvedValueOnce({ success: false, rejectionReason: "auth-required" })
+      .mockResolvedValueOnce({ success: true, eventId: "ev1", publishedRelayUrls: [] });
+    const fetchLatestKind0Profile = vi.fn(async () => null);
+
+    const relays: NDKRelayStatus[] = [{ url: "wss://relay.one", status: "connected" }];
+    const { rerender } = renderHook(
+      ({ user, authMethod, relays }) =>
+        useEnsureOwnProfile(user, authMethod, relays, publishEvent, fetchLatestKind0Profile),
+      {
+        initialProps: {
+          user: { pubkey: PUBKEY, profile: { name: "alice" } } as never,
+          authMethod: "noas" as AuthMethod,
+          relays,
+        },
+      },
+    );
+
     await flush();
     expect(publishEvent).toHaveBeenCalledTimes(1);
 
+    // A subsequent relay status change must re-attempt — the failure was not recorded.
     rerender({
       user: { pubkey: PUBKEY, profile: { name: "alice" } } as never,
       authMethod: "noas",
-      relays: [
-        { url: "wss://relay.one", status: "connected" },
-        { url: "wss://relay.two", status: "connected" },
-      ],
+      relays: [{ url: "wss://relay.one", status: "connected" }],
     });
     await flush();
     expect(publishEvent).toHaveBeenCalledTimes(2);
