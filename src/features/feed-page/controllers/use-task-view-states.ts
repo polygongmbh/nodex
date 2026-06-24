@@ -662,15 +662,26 @@ export function useFeedViewState({
       people.some((person) => person.isSelected),
     [channels, people]
   );
-  // Baseline post-level scope of the home timeline: top-level activity plus
-  // anything involving the signed-in user. Part of what the home view *is*
-  // (hence also applied to the unfiltered fallback variants below) — and
-  // lifted entirely as soon as any sidebar channel/person filter is active.
+  // On mobile, the Home chip narrows top-level activity to the user's pinned
+  // channels; desktop Home keeps showing all top-level activity (empty set).
+  const pinnedChannelTags = useMemo(() => {
+    if (!isHomeScope || !isMobile) return undefined;
+    return new Set(
+      channels
+        .filter((channel) => channel.pinIndex !== undefined)
+        .map((channel) => channel.name.toLowerCase())
+    );
+  }, [channels, isHomeScope, isMobile]);
+  // Baseline post-level scope of the home timeline: top-level activity (narrowed
+  // to pinned channels on mobile) plus anything involving the signed-in user.
+  // Part of what the home view *is* (hence also applied to the unfiltered
+  // fallback variants below) — and lifted entirely as soon as any sidebar
+  // channel/person filter is active.
   const taskPredicate = useMemo(() => {
     if (!isHomeScope || hasSidebarScopeFilters) return undefined;
     const involvedIds = buildUserInvolvementIndex(posts, currentUser?.pubkey);
-    return makeHomeTimelinePredicate({ focusedTaskId, involvedIds });
-  }, [currentUser?.pubkey, focusedTaskId, hasSidebarScopeFilters, isHomeScope, posts]);
+    return makeHomeTimelinePredicate({ focusedTaskId, involvedIds, pinnedChannelTags });
+  }, [currentUser?.pubkey, focusedTaskId, hasSidebarScopeFilters, isHomeScope, pinnedChannelTags, posts]);
   // Entry-level day restriction: unlike taskPredicate this distinguishes a
   // task's own card from its state updates (each entry carries its own
   // timestamp), so a day shows exactly that day's activity — posts created

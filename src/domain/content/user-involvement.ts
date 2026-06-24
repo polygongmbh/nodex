@@ -61,21 +61,35 @@ interface HomeTimelinePredicateOptions {
   focusedTaskId: string | null;
   /** Result of {@link buildUserInvolvementIndex}. */
   involvedIds: Set<string>;
+  /**
+   * Lowercased pinned-channel tag names. When non-empty, top-level activity is
+   * narrowed to posts carrying one of these tags (involvement is unaffected).
+   * Omitted/empty keeps the default "all top-level activity" behavior.
+   */
+  pinnedChannelTags?: Set<string>;
 }
 
 /**
  * Default restriction of the home timeline: top-level activity everyone sees,
- * plus anything involving the current user. Callers lift this predicate
- * entirely (pass no predicate) once sidebar channel/person filters are active.
+ * plus anything involving the current user. When pinned-channel tags are
+ * supplied the top-level branch is restricted to those channels. Callers lift
+ * this predicate entirely (pass no predicate) once sidebar channel/person
+ * filters are active.
  */
 export function makeHomeTimelinePredicate({
   focusedTaskId,
   involvedIds,
+  pinnedChannelTags,
 }: HomeTimelinePredicateOptions): (post: Post) => boolean {
+  const restrictToPinned = Boolean(pinnedChannelTags && pinnedChannelTags.size > 0);
   return (post: Post) => {
     const isTopLevelInContext = focusedTaskId
       ? post.parentId === focusedTaskId
       : !post.parentId;
-    return isTopLevelInContext || involvedIds.has(post.id);
+    const topLevelMatches =
+      isTopLevelInContext &&
+      (!restrictToPinned ||
+        (post.tags ?? []).some((tag) => pinnedChannelTags!.has(tag.toLowerCase())));
+    return topLevelMatches || involvedIds.has(post.id);
   };
 }

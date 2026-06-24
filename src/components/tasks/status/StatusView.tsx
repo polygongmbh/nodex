@@ -86,14 +86,19 @@ export function StatusView({
     () => resolveStatusConcernsScope(selectedPeoplePubkeys, currentUser?.pubkey),
     [selectedPeoplePubkeys, currentUser?.pubkey]
   );
+  // Pinned channels widen the timeline beyond the current context, but once a
+  // channel is exclusively included (e.g. a mobile chip tap) the timeline must
+  // show only that channel — so drop the pinned expansion while one is active.
   const pinnedChannelIds = useMemo(
     () =>
-      new Set(
-        channels
-          .filter((channel) => channel.pinIndex !== undefined)
-          .map((channel) => channel.id)
-      ),
-    [channels]
+      included.length > 0
+        ? new Set<string>()
+        : new Set(
+            channels
+              .filter((channel) => channel.pinIndex !== undefined)
+              .map((channel) => channel.id)
+          ),
+    [channels, included]
   );
 
   const authPolicy = useAuthActionPolicy();

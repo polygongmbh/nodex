@@ -62,4 +62,20 @@ describe("makeHomeTimelinePredicate", () => {
     expect(predicate(child)).toBe(true);
     expect(predicate(grandchild)).toBe(false);
   });
+
+  it("restricts top-level posts to pinned channels but keeps involving posts", () => {
+    const pinnedTopLevel = makeTask({ id: "pinned-top", author: other, tags: ["Dev"] });
+    const unpinnedTopLevel = makeTask({ id: "unpinned-top", author: other, tags: ["random"] });
+    const involvedElsewhere = makeTask({ id: "mine", author: me, tags: ["random"] });
+    const predicate = makeHomeTimelinePredicate({
+      focusedTaskId: null,
+      involvedIds: new Set(["mine"]),
+      pinnedChannelTags: new Set(["dev"]),
+    });
+
+    expect(predicate(pinnedTopLevel)).toBe(true);
+    expect(predicate(unpinnedTopLevel)).toBe(false);
+    // Involvement bypasses the pinned-channel restriction.
+    expect(predicate(involvedElsewhere)).toBe(true);
+  });
 });
