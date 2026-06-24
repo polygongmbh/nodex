@@ -26,6 +26,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Fixed mobile scrollbars: every view now uses the device's native overlay scrollbar, so widths are consistent across views and the timeline (feed) no longer intermittently paints a stray, layered scrollbar over its content. The app's custom wider scrollbar styling is now applied only on desktop (≥768px).
 - Mobile channel chips now light up every included channel, so a multi-channel scope (selected from the sidebar / Manage pane) highlights all of those chips at once instead of none. The burger/manage chip is now a true toggle: tapping it while the Manage pane is open closes it again.
 - Fixed: while signed out the mobile composer's send button is a sign-in affordance, so tapping it now opens the sign-in popup directly instead of running submit-time checks and complaining about (for example) no channel being selected.
+- The startup Welcome popover can now be dismissed with a close (X) button or by clicking outside it, and no longer offers a "Start the Tour" action — the onboarding guide is opened from the sidebar *Guide* / mobile *Manage* instead.
 
 ## [4.1.0] - 2026-06-07
 Minor release for Status view creation shortcuts, kanban compose hints, recomposition context fixes, relay recovery, and profile/presence cleanup.

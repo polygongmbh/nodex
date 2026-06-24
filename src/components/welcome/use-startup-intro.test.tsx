@@ -11,19 +11,17 @@ function Harness({
 }) {
   const openedWithFocusedTaskRef = useRef(false);
   const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
-  const onStartTour = vi.fn();
 
-  const { isOpen, handleStartTour } = useStartupIntro({
+  const { isOpen, closeIntro } = useStartupIntro({
     user,
     openedWithFocusedTaskRef,
-    onStartTour,
   });
 
   return (
     <>
       <button onClick={() => setUser({ pubkey: "signed-in" })}>SignIn</button>
       <button onClick={() => setUser(null)}>SignOut</button>
-      <button onClick={handleStartTour}>StartTour</button>
+      <button onClick={closeIntro}>Dismiss</button>
       <output data-testid="intro-open">{String(isOpen)}</output>
     </>
   );
@@ -87,19 +85,17 @@ describe("useStartupIntro", () => {
     expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
   });
 
-  it("closes and calls onStartTour when tour is started", () => {
+  it("closes when dismissed", () => {
     vi.useFakeTimers();
-    const { rerender } = render(<Harness />);
+    render(<Harness />);
 
     act(() => {
       vi.advanceTimersByTime(300);
     });
     expect(screen.getByTestId("intro-open")).toHaveTextContent("true");
 
-    fireEvent.click(screen.getByRole("button", { name: "StartTour" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
 
     expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
-    // onStartTour is a local vi.fn() inside Harness — we verify the intro closed
-    void rerender;
   });
 });

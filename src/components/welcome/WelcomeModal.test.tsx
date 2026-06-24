@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { WelcomeModal } from "./WelcomeModal";
@@ -16,7 +16,7 @@ describe("WelcomeModal", () => {
       <WelcomeModal
         isOpen
         showCreateAccount
-        onStartTour={vi.fn()}
+        onDismiss={vi.fn()}
         onCreateAccount={vi.fn()}
         onSignIn={vi.fn()}
       />
@@ -25,6 +25,7 @@ describe("WelcomeModal", () => {
     advanceOpenAnimation();
 
     const dialog = screen.getByRole("dialog");
+    // dismiss (X) + create account + sign in
     expect(within(dialog).getAllByRole("button")).toHaveLength(3);
     vi.useRealTimers();
   });
@@ -35,7 +36,7 @@ describe("WelcomeModal", () => {
       <WelcomeModal
         isOpen
         showCreateAccount={false}
-        onStartTour={vi.fn()}
+        onDismiss={vi.fn()}
         onCreateAccount={vi.fn()}
         onSignIn={vi.fn()}
       />
@@ -44,7 +45,49 @@ describe("WelcomeModal", () => {
     advanceOpenAnimation();
 
     const dialog = screen.getByRole("dialog");
+    // dismiss (X) + sign in
     expect(within(dialog).getAllByRole("button")).toHaveLength(2);
+    vi.useRealTimers();
+  });
+
+  it("dismisses via the close button", () => {
+    vi.useFakeTimers();
+    const onDismiss = vi.fn();
+    render(
+      <WelcomeModal
+        isOpen
+        showCreateAccount
+        onDismiss={onDismiss}
+        onCreateAccount={vi.fn()}
+        onSignIn={vi.fn()}
+      />
+    );
+
+    advanceOpenAnimation();
+    fireEvent.click(screen.getByTestId("welcome-dismiss"));
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("dismisses when clicking the overlay scrim", () => {
+    vi.useFakeTimers();
+    const onDismiss = vi.fn();
+    render(
+      <WelcomeModal
+        isOpen
+        showCreateAccount
+        onDismiss={onDismiss}
+        onCreateAccount={vi.fn()}
+        onSignIn={vi.fn()}
+      />
+    );
+
+    advanceOpenAnimation();
+    const scrim = document.querySelector(".bg-overlay-scrim") as HTMLElement;
+    fireEvent.click(scrim);
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
 
@@ -53,7 +96,7 @@ describe("WelcomeModal", () => {
       <WelcomeModal
         isOpen={false}
         showCreateAccount
-        onStartTour={vi.fn()}
+        onDismiss={vi.fn()}
         onCreateAccount={vi.fn()}
         onSignIn={vi.fn()}
       />
@@ -68,7 +111,7 @@ describe("WelcomeModal", () => {
       <WelcomeModal
         isOpen
         showCreateAccount
-        onStartTour={vi.fn()}
+        onDismiss={vi.fn()}
         onCreateAccount={vi.fn()}
         onSignIn={vi.fn()}
       />
@@ -78,7 +121,7 @@ describe("WelcomeModal", () => {
       <WelcomeModal
         isOpen={false}
         showCreateAccount
-        onStartTour={vi.fn()}
+        onDismiss={vi.fn()}
         onCreateAccount={vi.fn()}
         onSignIn={vi.fn()}
       />

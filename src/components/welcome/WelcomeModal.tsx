@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogIn, Sparkles, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   OverlayScrim,
@@ -11,7 +11,7 @@ import {
 interface WelcomeModalProps {
   isOpen: boolean;
   showCreateAccount?: boolean;
-  onStartTour: () => void;
+  onDismiss: () => void;
   onCreateAccount: () => void;
   onSignIn: () => void;
 }
@@ -19,7 +19,7 @@ interface WelcomeModalProps {
 export function WelcomeModal({
   isOpen,
   showCreateAccount = false,
-  onStartTour,
+  onDismiss,
   onCreateAccount,
   onSignIn,
 }: WelcomeModalProps) {
@@ -69,7 +69,7 @@ export function WelcomeModal({
 
   return (
     <>
-      <OverlayScrim isOpen={isOpen} zIndex={134} />
+      <OverlayScrim isOpen={isOpen} zIndex={134} onClick={onDismiss} />
       <div
         className="fixed inset-0 z-[135] flex items-center justify-center pointer-events-none"
         data-state={state}
@@ -81,6 +81,14 @@ export function WelcomeModal({
           data-state={state}
           style={dialogStyle}
         >
+          <button
+            type="button"
+            onClick={onDismiss}
+            data-testid="welcome-dismiss"
+            className="absolute right-3 top-3 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
           <div className="space-y-3">
             <h2 className="text-center text-xl font-semibold">{t("welcome.title")}</h2>
             <p className="text-sm text-muted-foreground">{t("welcome.description")}</p>
@@ -96,10 +104,6 @@ export function WelcomeModal({
             <Button variant="outline" onClick={onSignIn}>
               <LogIn className="h-4 w-4" />
               {t("auth:auth.signIn")}
-            </Button>
-            <Button onClick={onStartTour}>
-              <Sparkles className="h-4 w-4" />
-              {t("welcome.startTour")}
             </Button>
           </div>
         </div>

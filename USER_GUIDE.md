@@ -126,7 +126,7 @@
 
 ## Onboarding Guide
 - Onboarding is available only while signed out.
-- Signed-out auto-start onboarding opens with a short Welcome popover first.
+- Signed-out users see a short Welcome popover on startup with sign-in / create-account actions. Dismiss it with the close (X) button or by clicking outside it.
 - Open guide from:
   - Desktop sidebar: *Guide*
   - Mobile *Manage* view: *Open Guide*

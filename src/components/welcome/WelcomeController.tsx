@@ -8,30 +8,27 @@ import type { AuthModalEntryStep } from "@/features/feed-page/controllers/use-au
 interface WelcomeControllerProps {
   openedWithFocusedTaskRef: MutableRefObject<boolean>;
   showCreateAccount: boolean;
-  onStartTour: () => void;
   onOpenAuthModal: (step?: AuthModalEntryStep) => void;
 }
 
 export function WelcomeController({
   openedWithFocusedTaskRef,
   showCreateAccount,
-  onStartTour,
   onOpenAuthModal,
 }: WelcomeControllerProps) {
   const { user } = useNDK();
   const isAuthModalOpen = useAuthModalStore((s) => s.isOpen);
 
-  const { isOpen, handleStartTour } = useStartupIntro({
+  const { isOpen, closeIntro } = useStartupIntro({
     user,
     openedWithFocusedTaskRef,
-    onStartTour,
   });
 
   return (
     <WelcomeModal
       isOpen={isOpen && !isAuthModalOpen}
       showCreateAccount={showCreateAccount}
-      onStartTour={handleStartTour}
+      onDismiss={closeIntro}
       onCreateAccount={() => onOpenAuthModal("noasSignUp")}
       onSignIn={() => onOpenAuthModal(showCreateAccount ? "noas" : undefined)}
     />

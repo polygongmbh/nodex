@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
 import { useFocusedTaskCollapsedSidebarPreview } from "@/features/feed-page/controllers/use-focused-task-collapsed-sidebar-preview";
@@ -61,7 +60,6 @@ import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { DEMO_RELAY_ID } from "@/lib/demo-feed-config";
 import { bandChannelsByActivity } from "@/lib/channel-banding";
 import { useCoreChannels } from "@/lib/use-core-channels";
-import { initializeDemoFeedData } from "@/data/demo-feed";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import {
@@ -81,7 +79,6 @@ function FeedIndexContent() {
     ? performance.now()
     : 0;
   const renderCountRef = useRef(0);
-  const navigate = useNavigate();
 
   const { publishEvent, signEvent, broadcastSignedEvent, setPresenceRelayUrls, user, defaultNoasHostUrl, isSessionLocked } = useNDK();
 
@@ -97,7 +94,6 @@ function FeedIndexContent() {
     ndkRelays,
     demoFeedActive,
     demoTasks,
-    setDemoTasks,
     isConnected,
     subscribe,
     activeRelayIds,
@@ -569,7 +565,6 @@ function FeedIndexContent() {
     onboardingStepsBySection,
     forceShowComposeForGuide,
     composeGuideActivationSignal,
-    openGuideAsStartup,
     handleOpenGuide,
     handleCloseGuide,
     handleOnboardingStepChange,
@@ -676,18 +671,6 @@ function FeedIndexContent() {
       window.removeEventListener("beforeunload", publishOfflinePresence);
     };
   }, [publishOfflinePresenceNow, user?.pubkey]);
-
-  const handleBeforeOnboardingTour = useCallback(() => {
-    if (!demoFeedActive && allTasks.length === 0) {
-      setDemoTasks(initializeDemoFeedData());
-      setActiveRelayIds((previous) => {
-        const next = new Set(previous);
-        next.add(DEMO_RELAY_ID);
-        return next;
-      });
-      navigate("/feed");
-    }
-  }, [demoFeedActive, allTasks.length, setDemoTasks, setActiveRelayIds, navigate]);
 
   const viewCommands = useMemo<FeedViewCommands>(
     () => ({
@@ -862,10 +845,6 @@ function FeedIndexContent() {
     <WelcomeController
       openedWithFocusedTaskRef={openedWithFocusedTaskRef}
       showCreateAccount={Boolean(import.meta.env.VITE_NOAS_HOST_URL || defaultNoasHostUrl)}
-      onStartTour={() => {
-        handleBeforeOnboardingTour();
-        openGuideAsStartup();
-      }}
       onOpenAuthModal={handleOpenAuthModal}
     />
   );
