@@ -142,20 +142,7 @@ export function NoasSignUpForm({
     setPubkey(derivedPubkey || "");
   };
 
-  const generatePrivateKey = () => {
-    const randomBytes = new Uint8Array(32);
-    crypto.getRandomValues(randomBytes);
-    const hexKey = Array.from(randomBytes)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    setPrivateKey(hexKey);
-
-    const derivedPubkey = derivePublicKey(hexKey);
-    setPubkey(derivedPubkey || "");
-    setShowPrivateKey(true);
-  };
-
-  const { isMining: isMiningVanityKey } = useVanityKeyMiner({
+  const { isMining: isMiningVanityKey, mineFromUsername } = useVanityKeyMiner({
     username,
     hasPrivateKey: privateKey.trim().length > 0,
     onMined: (secretKeyHex) => {
@@ -163,6 +150,12 @@ export function NoasSignUpForm({
       setPubkey(derivePublicKey(secretKeyHex) || "");
     },
   });
+
+  // Mine a vanity key from the username (or npub10… when empty); reveal once requested.
+  const handleGenerateClick = () => {
+    setShowPrivateKey(true);
+    mineFromUsername();
+  };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(privateKey);
@@ -298,7 +291,7 @@ export function NoasSignUpForm({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={generatePrivateKey}
+              onClick={handleGenerateClick}
               disabled={isLoading}
               className="text-xs"
             >
