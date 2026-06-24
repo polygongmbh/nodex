@@ -1,6 +1,7 @@
 import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { isPrimaryMobileView, MobileNav, MobileViewType } from "./MobileNav";
 import { MobileChannelChips } from "./MobileChannelChips";
+import { MobileSpaceSelector } from "./MobileSpaceSelector";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 
@@ -15,6 +16,8 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { setAllChannelFilters, setExclusiveChannelFilter } from "@/domain/content/filter-state-utils";
 import type { Post } from "@/types";
 import {
   useComposeRestoreSignal,
@@ -42,6 +45,7 @@ export function MobileLayout({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const channels = surface.visibleChannels ?? surface.channels;
+  const setChannelFilterStates = useFilterStore((s) => s.setChannelFilterStates);
   const {
     canCreateContent,
     profileCompletionPromptSignal,
@@ -70,16 +74,10 @@ export function MobileLayout({
   const includedChannels = channels.filter(c => c.filterState === "included");
   const defaultContent = includedChannels.map(c => `#${c.name}`).join(" ");
 
-  // Chip row source: pinned channels (already sorted pinned-first), or the
-  // most-used ones as a fallback so the row is never empty before any pinning.
+  // Chip row source mirrors the mobile sidebar: pinned channels first, then the
+  // other visible channels in the same banded order.
   const allChannels = surface.channels;
-  const chipChannels = useMemo(() => {
-    const pinned = allChannels.filter((channel) => channel.pinIndex !== undefined);
-    if (pinned.length > 0) return pinned;
-    return [...allChannels]
-      .sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0))
-      .slice(0, 8);
-  }, [allChannels]);
+  const chipChannels = channels;
   // Home is active unless exactly one channel is exclusively included (set by a
   // chip tap); multiple sidebar-included channels leave no single chip active.
   const activeChannelId = useMemo(() => {
@@ -109,15 +107,22 @@ export function MobileLayout({
     void dispatchFeedInteraction({ type: "ui.view.change", view });
   }, [closeManageView, dispatchFeedInteraction, showFilters]);
 
+  // Chip taps write the channel filter directly (no undo toast — the chip row is
+  // the always-visible affordance for reverting). Home clears to neutral.
   const handleSelectHome = useCallback(() => {
     if (showFilters) closeManageView();
-    void dispatchFeedInteraction({ type: "sidebar.channel.toggleAll" });
-  }, [closeManageView, dispatchFeedInteraction, showFilters]);
+    setChannelFilterStates(() => setAllChannelFilters(allChannels, "neutral"));
+  }, [allChannels, closeManageView, setChannelFilterStates, showFilters]);
 
   const handleSelectChannel = useCallback((channelId: string) => {
     if (showFilters) closeManageView();
-    void dispatchFeedInteraction({ type: "sidebar.channel.exclusive", channelId });
-  }, [closeManageView, dispatchFeedInteraction, showFilters]);
+    // Tapping the already-exclusive channel again clears back to the home filter.
+    setChannelFilterStates(() =>
+      activeChannelId === channelId
+        ? setAllChannelFilters(allChannels, "neutral")
+        : setExclusiveChannelFilter(allChannels, channelId)
+    );
+  }, [activeChannelId, allChannels, closeManageView, setChannelFilterStates, showFilters]);
 
   const handleToggleChannelPin = useCallback((channelId: string, isPinned: boolean) => {
     void dispatchFeedInteraction(
@@ -208,6 +213,7 @@ export function MobileLayout({
           onSelectHome={handleSelectHome}
           onSelectChannel={handleSelectChannel}
           onTogglePin={handleToggleChannelPin}
+          leading={<MobileSpaceSelector />}
         />
       </div>
       <FailedPublishQueueBannerContainer isMobile />

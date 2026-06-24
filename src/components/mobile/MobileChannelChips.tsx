@@ -1,4 +1,4 @@
-import { useCallback, useRef, type PointerEvent } from "react";
+import { useCallback, useRef, type PointerEvent, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import type { Channel } from "@/types";
 const LONG_PRESS_MS = 500;
 
 interface MobileChannelChipsProps {
-  /** Chips to render, already ordered (pinned first, or top-used fallback). */
+  /** Chips to render, already ordered (pinned first, then other channels). */
   channels: Channel[];
   /** Id of the sole exclusively-included channel, or null when Home is active. */
   activeChannelId: string | null;
@@ -17,6 +17,8 @@ interface MobileChannelChipsProps {
   onSelectChannel: (channelId: string) => void;
   /** Long-press toggles pin state; `isPinned` is the current state. */
   onTogglePin: (channelId: string, isPinned: boolean) => void;
+  /** Optional element placed between the menu chip and the Home chip (space selector). */
+  leading?: ReactNode;
 }
 
 const chipBase =
@@ -36,11 +38,13 @@ interface ChannelChipProps {
 }
 
 /**
- * Tap selects the channel exclusively; a long-press toggles its pin state.
- * We track the long-press with a timer and suppress the trailing click so a
- * long-press never also selects the channel.
+ * Tap selects the channel exclusively (tap again clears it); a long-press
+ * toggles its pin state. We track the long-press with a timer and suppress the
+ * trailing click so a long-press never also selects the channel. Pinned chips
+ * carry a gentle tint so they read apart from the trailing discovery channels.
  */
 function ChannelChip({ channel, isActive, onSelect, onLongPress }: ChannelChipProps) {
+  const isPinned = channel.pinIndex !== undefined;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressedRef = useRef(false);
 
@@ -75,7 +79,15 @@ function ChannelChip({ channel, isActive, onSelect, onLongPress }: ChannelChipPr
   return (
     <button
       type="button"
-      className={cn(chipBase, chipColors(isActive))}
+      data-pinned={isPinned ? "true" : undefined}
+      className={cn(
+        chipBase,
+        isActive
+          ? "bg-primary text-primary-foreground shadow-sm"
+          : isPinned
+            ? "bg-primary/10 text-primary ring-1 ring-inset ring-primary/20"
+            : "bg-muted/80 dark:bg-muted/60 text-muted-foreground/80 dark:text-muted-foreground"
+      )}
       onPointerDown={handlePointerDown}
       onPointerUp={clearTimer}
       onPointerLeave={clearTimer}
@@ -111,6 +123,7 @@ export function MobileChannelChips({
   onSelectHome,
   onSelectChannel,
   onTogglePin,
+  leading,
 }: MobileChannelChipsProps) {
   const { t } = useTranslation("shell");
   const isHomeActive = activeChannelId === null && !isManageActive;
@@ -127,6 +140,8 @@ export function MobileChannelChips({
       >
         <Menu className="h-[18px] w-[18px]" />
       </button>
+
+      {leading}
 
       <button
         type="button"

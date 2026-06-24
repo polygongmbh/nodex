@@ -64,8 +64,9 @@ describe("MobileChannelChips", () => {
       />
     );
     const devChipClass = () => screen.getByText("#dev").closest("button")!.className;
-    expect(screen.getByText("Home").className).toContain("bg-primary");
-    expect(devChipClass()).not.toContain("bg-primary");
+    // The active chip is the only one with the primary-foreground text color.
+    expect(screen.getByText("Home").className).toContain("text-primary-foreground");
+    expect(devChipClass()).not.toContain("text-primary-foreground");
 
     rerender(
       <MobileChannelChips
@@ -78,8 +79,23 @@ describe("MobileChannelChips", () => {
         onTogglePin={vi.fn()}
       />
     );
-    expect(screen.getByText("Home").className).not.toContain("bg-primary");
-    expect(devChipClass()).toContain("bg-primary");
+    expect(screen.getByText("Home").className).not.toContain("text-primary-foreground");
+    expect(devChipClass()).toContain("text-primary-foreground");
+  });
+
+  it("gently highlights pinned chips and marks them via data-pinned", () => {
+    renderChips({
+      channels: [
+        makeChannel({ id: "dev", name: "dev", usageCount: 4, pinIndex: 0 }),
+        makeChannel({ id: "random", name: "random", usageCount: 1 }),
+      ],
+    });
+    const pinned = screen.getByText("#dev").closest("button")!;
+    const unpinned = screen.getByText("#random").closest("button")!;
+    expect(pinned).toHaveAttribute("data-pinned", "true");
+    expect(pinned.className).toContain("bg-primary/10");
+    expect(unpinned).not.toHaveAttribute("data-pinned");
+    expect(unpinned.className).not.toContain("bg-primary/10");
   });
 
   it("toggles pin on long-press and suppresses the trailing tap", () => {

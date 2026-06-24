@@ -2,8 +2,10 @@
   "filters": {
     "feeds": {
       "title": "Spaces",
+      "all": "Alle Spaces",
       "placeholder": "wss://relay.example.com",
       "add": "Hinzufügen",
+      "connectAnother": "Mit anderem Space verbinden",
       "addAria": "Space hinzufügen",
       "remove": "Entfernen",
       "removeAria": "Space {{name}} entfernen"
