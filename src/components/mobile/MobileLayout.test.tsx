@@ -403,6 +403,47 @@ describe("MobileLayout auth wiring", () => {
     expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
     expect(status).toHaveClass("text-center");  });
 
+  it("prompts to select a channel when timeline search has no matches and no channel is selected", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const sampleTasks: Post[] = [
+      makeTask({ id: "task-1", content: "Ship #general", tags: ["general"] }),
+    ];
+
+    renderMobileLayout({
+      viewState: { currentView: "feed" },
+      taskViewModel: { allTasks: sampleTasks },
+      searchQuery: "nomatchquery",
+    });
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
+    expect(status).toHaveTextContent("Select a channel to create a post.");
+  });
+
+  it("omits the channel prompt when an included channel is already selected", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const sampleTasks: Post[] = [
+      makeTask({ id: "task-nodex", content: "Ship #nodex", tags: ["nodex"] }),
+    ];
+
+    renderMobileLayout({
+      viewState: { currentView: "feed" },
+      surfaceState: {
+        channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+      },
+      taskViewModel: { allTasks: sampleTasks },
+      searchQuery: "nomatchquery",
+    });
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
+    expect(status).not.toHaveTextContent("Select a channel to create a post.");
+  });
+
   it("drops only the text filter when an included channel still has matches", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;

@@ -65,6 +65,7 @@
       "addComment": "Añadir comentario",
       "postListing": "Publicar anuncio",
       "createEvent": "Crear evento",
+      "cancel": "Cancelar",
       "signin": "Iniciar sesión",
       "useCurrentLocation": "Usar ubicación actual",
       "clearLocation": "Quitar ubicación",
@@ -82,7 +83,16 @@
       "clearEnd": "Borrar fecha de fin",
       "missingStart": "Selecciona una fecha de inicio",
       "missingTitle": "Añade un título al evento",
-      "timeInferred": "Hora faltante completada con 00:00"
+      "timeInferred": "Hora faltante completada con 00:00",
+      "attach": "Adjuntar evento",
+      "attached": "Evento adjuntado",
+      "remove": "Quitar evento",
+      "allDay": "Todo el día"
+    },
+    "extras": {
+      "title": "Añadir extras",
+      "attachMedia": "Adjuntar medios",
+      "attachEvent": "Adjuntar evento"
     },
     "attachments": {
       "add": "Añadir archivo",

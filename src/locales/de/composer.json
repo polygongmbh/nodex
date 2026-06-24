@@ -65,6 +65,7 @@
       "addComment": "Kommentar hinzufügen",
       "postListing": "Inserat erstellen",
       "createEvent": "Ereignis erstellen",
+      "cancel": "Abbrechen",
       "signin": "Anmelden",
       "useCurrentLocation": "Aktuellen Standort verwenden",
       "clearLocation": "Standort entfernen",
@@ -82,7 +83,16 @@
       "clearEnd": "Enddatum löschen",
       "missingStart": "Startdatum auswählen",
       "missingTitle": "Termin-Titel hinzufügen",
-      "timeInferred": "Fehlende Uhrzeit wird mit 00:00 ergänzt"
+      "timeInferred": "Fehlende Uhrzeit wird mit 00:00 ergänzt",
+      "attach": "Termin anhängen",
+      "attached": "Termin angehängt",
+      "remove": "Termin entfernen",
+      "allDay": "Ganztägig"
+    },
+    "extras": {
+      "title": "Extras hinzufügen",
+      "attachMedia": "Medien anhängen",
+      "attachEvent": "Termin anhängen"
     },
     "attachments": {
       "add": "Anhang hinzufügen",

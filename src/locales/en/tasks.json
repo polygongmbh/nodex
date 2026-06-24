@@ -87,6 +87,7 @@
       "selectDay": "Select a day to view tasks",
       "mobileQuickFilterFallback": "No matches for the quick filter, showing all posts.",
       "mobileQuickFilterFallbackScoped": "No matches for the quick filter, showing all posts {{scope}}.",
+      "mobileNeedsChannelToPost": "Select a channel to create a post.",
       "matchFilters": "No tasks match your filters",
       "noSubtasks": "No subtasks yet",
       "noneYet": "No tasks yet",

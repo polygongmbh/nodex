@@ -33,6 +33,18 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   }),
 }));
 
+// The real DayPicker is hard to drive in jsdom; expose a single button that
+// selects a fixed start date so the event dialog flow is testable. No test in
+// this file interacts with the inline date picker, so this mock is inert there.
+const MOCK_EVENT_START = new Date("2026-07-04T00:00:00.000Z");
+vi.mock("@/components/ui/calendar", () => ({
+  Calendar: ({ onSelect }: { onSelect?: (value: unknown) => void }) => (
+    <button type="button" onClick={() => onSelect?.({ from: MOCK_EVENT_START, to: undefined })}>
+      Select calendar date
+    </button>
+  ),
+}));
+
 const buildDispatchEvent = (intent: FeedInteractionIntent, result: TaskCreateResult = successResult) => ({
   envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
   outcome: { status: "handled" as const, result },
@@ -116,9 +128,11 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("shows a single attachment action", () => {
+    // Non-timeline view keeps the inline attachment (paperclip) button; timeline
+    // moves attaching into the extras popover, covered separately below.
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}
@@ -236,7 +250,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(getTaskCreateCalls()).toHaveLength(0);
   });
 
-  it("disables the mobile primary send button when the textbox is actually empty", () => {
+  it("hides the timeline send button until a channel is selected, then reveals it", () => {
     render(
       <UnifiedBottomBar
         currentView="feed"
@@ -246,8 +260,16 @@ describe("UnifiedBottomBar auth gating", () => {
         canCreateContent={true} />
     );
 
-    const button = getMobilePrimaryAction();
-    expect(button).toBeDisabled();
+    // No channel selected and nothing taggable typed → the timeline bar is a
+    // pure search field with no send (or extras) affordance.
+    expect(screen.queryByTestId("mobile-primary-action")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("compose-extras")).not.toBeInTheDocument();
+
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+
+    expect(getMobilePrimaryAction()).toBeInTheDocument();
+    expect(screen.getByTestId("compose-extras")).toBeInTheDocument();
   });
 
   it("searches as user types in combined field", () => {
@@ -307,7 +329,8 @@ describe("UnifiedBottomBar auth gating", () => {
   it("shows a blocker panel and opens channel remediation when sending without a selected channel tag", () => {
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="tree"
+        focusedTaskId={null}
         relays={relays}
         channels={channels}
         people={people}
@@ -566,7 +589,7 @@ describe("UnifiedBottomBar auth gating", () => {
     });
   });
 
-  it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
+  it("submits the timeline message kind on Ctrl+Enter and Cmd+Enter", () => {
     render(
       <UnifiedBottomBar
         currentView="feed"
@@ -584,7 +607,7 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
-      postType: "task",
+      postType: "comment",
     });
 
     fireEvent.change(composeField, { target: { value: "Ship again #general" } });
@@ -593,11 +616,11 @@ describe("UnifiedBottomBar auth gating", () => {
       content: "Ship again #general",
       tags: ["general"],
       relays: ["demo"],
-      postType: "task",
+      postType: "comment",
     });
   });
 
-  it("submits comment when add comment button is tapped", () => {
+  it("submits a message directly from the timeline send button (no kind selector)", () => {
     render(
       <UnifiedBottomBar
         currentView="feed"
@@ -609,8 +632,8 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Reply #general" } });
-    openMobileComposeOptions();
-    fireEvent.click(getMobileCommentAction());
+    // Timeline has no send-options popup; the primary action posts a message.
+    fireEvent.click(getMobilePrimaryAction());
 
     expectLatestTaskCreateCall({
       content: "Reply #general",
@@ -620,7 +643,7 @@ describe("UnifiedBottomBar auth gating", () => {
     });
   });
 
-  it("shows listing option in feed view and submits listing metadata", async () => {
+  it("offers media and event options in the timeline extras menu", () => {
     render(
       <UnifiedBottomBar
         currentView="feed"
@@ -630,23 +653,69 @@ describe("UnifiedBottomBar auth gating", () => {
         canCreateContent={true} />
     );
 
-    const composeField = screen.getByRole("textbox") as HTMLTextAreaElement;
-    fireEvent.change(composeField, { target: { value: "Need help #general" } });
-    openMobileComposeOptions();
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Plan #general" } });
 
-    expect(screen.getByRole("button", { name: /post listing/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("compose-extras"));
+    expect(screen.getByTestId("compose-attach-media")).toBeInTheDocument();
+    expect(screen.getByTestId("compose-attach-event")).toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: /post listing/i }));
+  it("attaches an event from the extras menu and posts it as a calendar event", async () => {
+    render(
+      <UnifiedBottomBar
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        canCreateContent={true} />
+    );
+
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Launch party #general" } });
+
+    fireEvent.click(screen.getByTestId("compose-extras"));
+    fireEvent.click(screen.getByTestId("compose-attach-event"));
+    // Pick a start date (mocked calendar) and confirm.
+    fireEvent.click(screen.getByText("Select calendar date"));
+    fireEvent.click(screen.getByTestId("compose-event-confirm"));
+
+    // An attached-event chip appears and the send button switches to event mode.
+    expect(screen.getByTestId("compose-event-remove")).toBeInTheDocument();
+
+    fireEvent.click(getMobilePrimaryAction());
     await waitFor(() => expect(getTaskCreateCalls()).toHaveLength(1));
 
-    expectLatestTaskCreateCall({
-      content: "Need help #general",
-      tags: ["general"],
-      relays: ["demo"],
-      postType: "listing",
-      nip99: { status: "active" },
-      titledPost: { title: "Need help" },
-    });
+    const payload = getTaskCreateCalls().at(-1)!;
+    expect(payload.postType).toBe("event");
+    expect(payload.tags).toEqual(["general"]);
+    expect(payload.dates.some((entry) => entry.type === "start")).toBe(true);
+  });
+
+  it("removes an attached event, reverting the timeline send back to a message", async () => {
+    render(
+      <UnifiedBottomBar
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        canCreateContent={true} />
+    );
+
+    const field = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Launch party #general" } });
+
+    fireEvent.click(screen.getByTestId("compose-extras"));
+    fireEvent.click(screen.getByTestId("compose-attach-event"));
+    fireEvent.click(screen.getByText("Select calendar date"));
+    fireEvent.click(screen.getByTestId("compose-event-confirm"));
+    fireEvent.click(screen.getByTestId("compose-event-remove"));
+
+    expect(screen.queryByTestId("compose-event-remove")).not.toBeInTheDocument();
+
+    fireEvent.click(getMobilePrimaryAction());
+    await waitFor(() => expect(getTaskCreateCalls()).toHaveLength(1));
+    expect(getTaskCreateCalls().at(-1)!.postType).toBe("comment");
   });
 
   it("does not offer comment send options in tree view without a focused parent", () => {
@@ -965,7 +1034,7 @@ describe("UnifiedBottomBar auth gating", () => {
   it("adds mention tag via Alt+Enter without inserting mention text", async () => {
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}
@@ -997,7 +1066,7 @@ describe("UnifiedBottomBar auth gating", () => {
   it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}
@@ -1054,7 +1123,7 @@ describe("UnifiedBottomBar auth gating", () => {
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}
@@ -1086,7 +1155,7 @@ describe("UnifiedBottomBar auth gating", () => {
   it("uses Alt+Click on hashtag autocomplete option to add tag-only", async () => {
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={autocompleteChannels}
         people={people}
@@ -1117,6 +1186,7 @@ describe("UnifiedBottomBar auth gating", () => {
     });
   });
 
+  // Location lives in the second bar, which the upcoming (list) view keeps.
   it("captures location directly from the location button without opening a selector menu", () => {
     const latitude = 40.7128;
     const longitude = -74.006;
@@ -1130,7 +1200,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}
@@ -1156,7 +1226,7 @@ describe("UnifiedBottomBar auth gating", () => {
     });
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}
@@ -1193,7 +1263,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}
@@ -1238,8 +1308,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByRole("textbox") as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Looks good #general" } });
-    openMobileComposeOptions();
-    fireEvent.click(getMobileCommentAction());
+    fireEvent.click(getMobilePrimaryAction());
 
     await waitFor(() => {
       expect(getTaskCreateCalls()).toHaveLength(1);
@@ -1361,7 +1430,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}
@@ -1402,7 +1471,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     render(
       <UnifiedBottomBar
-        currentView="feed"
+        currentView="list"
         relays={relays}
         channels={channels}
         people={people}

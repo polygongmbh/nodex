@@ -1,4 +1,5 @@
 import { Suspense, lazy, useState, useCallback, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { isPrimaryMobileView, MobileNav, MOBILE_VIEW_ORDER, MobileViewType } from "./MobileNav";
 import { isSingleViewMode } from "@/components/tasks/ViewSwitcher";
 import { MobileChannelChips } from "./MobileChannelChips";
@@ -47,11 +48,13 @@ export function MobileLayout({
   posts: Post[];
   focusedTaskId: string | null;
 }) {
+  const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const channels = surface.visibleChannels ?? surface.channels;
   const setChannelFilterStates = useFilterStore((s) => s.setChannelFilterStates);
   const channelFilterStates = useFilterStore((s) => s.channelFilterStates);
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const {
     canCreateContent,
     profileCompletionPromptSignal,
@@ -158,6 +161,15 @@ export function MobileLayout({
     isHydrating,
   });
   const hasMobileBreadcrumbOffset = !showFilters && !isHydrating && Boolean(focusedTaskId);
+  // In timeline/upcoming the composer hides its send button until a channel is
+  // selected; when the typed search also has no matches, spell out why nothing
+  // can be posted so the missing send button isn't a mystery.
+  const postableView = activePrimaryView === "feed" || activePrimaryView === "list";
+  const showNeedsChannelToPost =
+    postableView &&
+    includedChannels.length === 0 &&
+    searchQuery.trim().length > 0 &&
+    shouldShowMobileFallbackNotice;
 
   useEffect(() => {
     if (isManageRouteActive) {
@@ -251,6 +263,11 @@ export function MobileLayout({
               className="w-full px-3 pt-2 pb-1 text-center text-xs leading-none text-muted-foreground"
             >
               {mobileFallbackMessage}
+              {showNeedsChannelToPost && (
+                <div className="pt-1 text-muted-foreground/80">
+                  {t("tasks.empty.mobileNeedsChannelToPost")}
+                </div>
+              )}
             </div>
           )}
           <div className="flex-1 min-h-0 w-full">

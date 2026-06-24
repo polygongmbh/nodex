@@ -87,6 +87,7 @@
       "selectDay": "Selecciona un día para ver tareas",
       "mobileQuickFilterFallback": "No hay coincidencias para el filtro rápido; se muestran todas las publicaciones.",
       "mobileQuickFilterFallbackScoped": "No hay coincidencias para el filtro rápido; se muestran todas las publicaciones {{scope}}.",
+      "mobileNeedsChannelToPost": "Selecciona un canal para crear una publicación.",
       "matchFilters": "No hay tareas que coincidan con tus filtros",
       "noSubtasks": "Aún no hay subtareas",
       "noneYet": "Aún no hay tareas",

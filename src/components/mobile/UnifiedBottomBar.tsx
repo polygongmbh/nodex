@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { Search, X, Hash, Radio, Users, Check, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, Package, MapPin, AlertTriangle, Flag } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Paperclip, MapPin, AlertTriangle, Flag, Plus, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, TaskCreateResult, TaskDate, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType, formatLocalIsoDate } from "@/types";
 import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
@@ -71,6 +71,8 @@ import {
   resolveRelayConnectionStatus,
 } from "@/components/relay/relayChipStyles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
+import { ComposeExtrasMenu } from "./ComposeExtrasMenu";
+import { ComposeEventDialog, type ComposeEventDraft } from "./ComposeEventDialog";
 
 interface UnifiedBottomBarProps {
   currentView: ViewType;
@@ -267,8 +269,15 @@ export function UnifiedBottomBar({
   });
   const [showSendOptions, setShowSendOptions] = useState(false);
   const [isSendLaunching, setIsSendLaunching] = useState(false);
+  // Timeline (feed) extras: media/event live in a popover instead of the second
+  // bar; an attached event turns the message into a NIP-52 calendar post.
+  const [extrasOpen, setExtrasOpen] = useState(false);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [eventDraft, setEventDraft] = useState<ComposeEventDraft | null>(null);
   const uploadEnabled = isAttachmentUploadConfigured();
   const attachmentMaxFileSizeBytes = getAttachmentMaxFileSizeBytes();
+  // Timeline collapses to a one-tap message send (no kind selector, no second bar).
+  const isTimeline = currentView === "feed";
   const canOfferComment = currentView === "feed" || (currentView === "tree" && Boolean(focusedTaskId));
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
@@ -600,7 +609,7 @@ export function UnifiedBottomBar({
     prevIncludedChannelsRef.current = [...includedChannels];
   }, [includedChannels]);
 
-  const handleSubmit = async (submitType: "task" | "comment" | FeedMessageType = "task") => {
+  const handleSubmit = async (submitType: "task" | "comment" | "event" | FeedMessageType = "task") => {
     if (!sharedText.trim()) return;
     if (!hasMeaningfulComposerText(sharedText)) return;
     const extractedChannels = extractHashtagsFromContent(sharedText);
@@ -641,6 +650,21 @@ export function UnifiedBottomBar({
               t("composer.nip99.defaultTitle"),
           }
         : undefined;
+    // An attached event posts as a NIP-52 calendar event: start/end become
+    // start/end TaskDates (date-only ⇒ all-day) and the title/location ride
+    // along as titledPost fields the publish flow tags onto the event.
+    const isEventSubmit = submitType === "event";
+    const submitDates: TaskDate[] =
+      isEventSubmit && eventDraft
+        ? [
+            buildEntry(eventDraft.start, eventDraft.time, "start"),
+            ...(eventDraft.end ? [buildEntry(eventDraft.end, eventDraft.time, "end")] : []),
+          ]
+        : dates;
+    const submitTitledPost =
+      isEventSubmit && eventDraft
+        ? { title: eventDraft.title, location: eventDraft.location }
+        : listingTitledPost;
 
     let result: TaskCreateResult;
     const submittedPriority = storedPriorityFromDisplay(priority);
@@ -651,13 +675,13 @@ export function UnifiedBottomBar({
         tags: submitChannels,
         relays: effectiveWritableRelayIds,
         postType: submitType,
-        dates,
+        dates: submitDates,
         focusedTaskId,
         explicitMentionPubkeys,
         priority: submittedPriority,
         attachments: uploadedAttachments,
         nip99: listingMetadata,
-        titledPost: listingTitledPost,
+        titledPost: submitTitledPost,
         locationGeohash: normalizedLocationGeohash,
       });
     } catch (error) {
@@ -688,6 +712,7 @@ export function UnifiedBottomBar({
     setExplicitTagNames([]);
     setExplicitMentionPubkeys([]);
     setAttachments([]);
+    setEventDraft(null);
     attachmentFileRef.current = {};
     setActiveSelector(null);
     scheduleTrackedTimeout(() => {
@@ -1113,9 +1138,16 @@ export function UnifiedBottomBar({
   const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canSendComment = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canSendListing = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
-  const canOpenSendOptions = canCreateContent && canOfferComment && hasComposeText;
+  const canOpenSendOptions = canCreateContent && canOfferComment && hasComposeText && !isTimeline;
   const hasTaskSubmitBlock = taskSubmitBlock !== null;
   const showInlineTaskSubmitBlock = hasTaskSubmitBlock && hasComposeText;
+  const isTaggable = hasAtLeastOneTag || canInheritParentTags;
+  // In timeline/upcoming the send (and extras) button only appears once the post
+  // is taggable — selecting a channel auto-injects #channel, or the user typed a
+  // #hashtag. Other views keep the always-present (disabled-when-empty) button.
+  // When signed out the button is a login affordance, so it always shows.
+  const requiresChannelToSend = canCreateContent && (currentView === "feed" || currentView === "list");
+  const canShowSend = !requiresChannelToSend || isTaggable;
 
   const handlePrimarySend = () => {
     if (!canCreateContent) {
@@ -1127,6 +1159,15 @@ export function UnifiedBottomBar({
     }
     if (taskSubmitBlock && !taskSubmitBlock.isHardDisabled && !canSendComment && !canSendListing) {
       handleBlockedTaskAttempt();
+      return;
+    }
+    if (isTimeline) {
+      // Timeline is one-tap: a plain message, or an event when one is attached.
+      if (taskSubmitBlock && !taskSubmitBlock.isHardDisabled) {
+        handleBlockedTaskAttempt();
+        return;
+      }
+      void handleSubmit(eventDraft ? "event" : "comment");
       return;
     }
     if (canOfferComment) {
@@ -1453,7 +1494,7 @@ export function UnifiedBottomBar({
       <div className="px-3 pt-2">
         <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pt-1">
-          {uploadEnabled && canCreateContent && (
+          {uploadEnabled && canCreateContent && !isTimeline && (
             <button
               type="button"
               onClick={openAttachmentPicker}
@@ -1468,7 +1509,8 @@ export function UnifiedBottomBar({
               <Paperclip className="w-3.5 h-3.5" />
             </button>
           )}
-          {showInlineTaskSubmitBlock && showTaskSubmitBlockBanner ? (
+          {/* Second bar (task properties) — hidden in timeline, where send posts a message. */}
+          {!isTimeline && (showInlineTaskSubmitBlock && showTaskSubmitBlockBanner ? (
             <div
               role="alert"
               className="inline-flex max-w-full items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-2 text-left"
@@ -1572,7 +1614,7 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
-          ) : null}
+          ) : null)}
 
           {/* Filter/Selector Buttons */}
           <div className="flex items-center gap-0.5 ml-auto shrink-0">
@@ -1698,10 +1740,62 @@ export function UnifiedBottomBar({
         </div>
       )}
 
+      {eventDraft && (
+        <div className="px-3 pb-1">
+          <div className="inline-flex max-w-full items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-xs text-foreground">
+            <CalendarPlus className="w-3.5 h-3.5 shrink-0 text-primary" />
+            <button
+              type="button"
+              onClick={() => setEventDialogOpen(true)}
+              className="truncate max-w-[14rem] text-left"
+              title={t("composer.event.attached")}
+            >
+              {eventDraft.title?.trim()
+                ? eventDraft.title
+                : `${t("composer.event.attached")} · ${format(eventDraft.start, "MMM d")}`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEventDraft(null)}
+              className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+              title={t("composer.event.remove")}
+              data-testid="compose-event-remove"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="flex items-stretch gap-2 px-3 pb-3 pt-2">
         <div className="flex-1">
           <div className="flex min-h-[2.75rem] items-end gap-2 text-sm">
+            {isTimeline && canCreateContent && canShowSend && (
+              <div className="relative self-end">
+                <button
+                  type="button"
+                  onClick={() => setExtrasOpen((previous) => !previous)}
+                  className={cn(
+                    "h-11 w-11 inline-flex items-center justify-center rounded-lg border transition-colors shrink-0",
+                    extrasOpen
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                  title={t("composer.extras.title")}
+                  data-testid="compose-extras"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+                <ComposeExtrasMenu
+                  open={extrasOpen}
+                  uploadEnabled={uploadEnabled}
+                  onAttachMedia={openAttachmentPicker}
+                  onAttachEvent={() => setEventDialogOpen(true)}
+                  onClose={() => setExtrasOpen(false)}
+                />
+              </div>
+            )}
             <div className="flex-1 relative">
               {hasComposeText ? (
                 <button
@@ -1822,12 +1916,13 @@ export function UnifiedBottomBar({
                   }
                   if (isPrimarySubmitKey(e)) {
                     e.preventDefault();
-                    handleSubmit();
+                    // Timeline submits a message (or an attached event); elsewhere a task.
+                    handleSubmit(isTimeline ? (eventDraft ? "event" : "comment") : "task");
                     return;
                   }
                   if (isAlternateSubmitKey(e)) {
                     e.preventDefault();
-                    handleSubmit(canOfferComment ? "comment" : "task");
+                    handleSubmit(eventDraft ? "event" : canOfferComment ? "comment" : "task");
                     return;
                   }
                   if (e.key === "Escape") {
@@ -1912,6 +2007,7 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
+            {canShowSend && (
             <div className="flex items-end gap-1.5 self-end">
               <div className="relative">
                 <button
@@ -1931,7 +2027,7 @@ export function UnifiedBottomBar({
                   title={primarySendTitle}
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>
-                    {!canCreateContent ? <LogIn className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
+                    {!canCreateContent ? <LogIn className="w-5 h-5" /> : eventDraft ? <CalendarPlus className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
                   </span>
                 </button>
 
@@ -1972,23 +2068,11 @@ export function UnifiedBottomBar({
                     >
                       <MessageSquare className="w-4 h-4" />
                     </button>
-                    {currentView === "feed" && (
-                      <button
-                        onClick={() => {
-                          setShowSendOptions(false);
-                          void handleSubmit("listing");
-                        }}
-                        disabled={!canSendListing}
-                        className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                        title={t("composer.actions.postListing")}
-                      >
-                        <Package className="w-4 h-4" />
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
@@ -2007,6 +2091,15 @@ export function UnifiedBottomBar({
           />
         </>
       )}
+      <ComposeEventDialog
+        open={eventDialogOpen}
+        initialDraft={eventDraft}
+        onConfirm={(draft) => {
+          setEventDraft(draft);
+          setEventDialogOpen(false);
+        }}
+        onCancel={() => setEventDialogOpen(false)}
+      />
     </div>
   );
 }
