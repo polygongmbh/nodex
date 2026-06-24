@@ -10,6 +10,7 @@ import {
 } from "@/infrastructure/nostr/people-from-kind0";
 import type { NostrEvent } from "@/lib/nostr/types";
 import { normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
+import { hasActiveRelayScope } from "@/domain/relays/relay-scope";
 import {
   getLatestPresenceByAuthor,
   getPresenceMapVersion,
@@ -75,17 +76,18 @@ export function useKind0People(
     getKind0CacheVersion,
     getKind0CacheVersion,
   );
-  // An empty scope means "All spaces" (no relay filter selected), so resolve
-  // profiles across every cached relay bucket — mirroring resolveChannelRelayScopeIds,
-  // which the feed and channel-list scoping use. Without this fallback,
-  // loadCachedKind0EventsForRelayUrls([]) returns nothing and the People sidebar
-  // collapses to empty whenever no space is selected, even though the feed and
-  // channel list still show everything.
+  // No active scope means "All spaces" (the shared hasActiveRelayScope rule), so
+  // resolve profiles across every cached relay bucket. Here "all" is loadAll
+  // rather than loadForRelayUrls(everyUrl) because the cache also holds a local
+  // bucket and buckets for relays no longer in the selectable set. Without this
+  // fallback, loadCachedKind0EventsForRelayUrls([]) returns nothing and the
+  // People sidebar collapses to empty whenever no space is selected, even though
+  // the feed and channel list still show everything.
   const cachedKind0Events = useMemo(
     () =>
-      normalizedSelectedRelayUrls.length === 0
-        ? loadCachedKind0Events()
-        : loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls),
+      hasActiveRelayScope(normalizedSelectedRelayUrls)
+        ? loadCachedKind0EventsForRelayUrls(normalizedSelectedRelayUrls)
+        : loadCachedKind0Events(),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [kind0CacheVersion, selectedRelayScopeKey],
   );

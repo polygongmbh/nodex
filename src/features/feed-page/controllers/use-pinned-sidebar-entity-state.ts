@@ -10,6 +10,7 @@ import {
   loadPinnedEntityState,
   savePinnedEntityState,
 } from "@/infrastructure/preferences/pinned-entity-storage";
+import { resolveRelayScope } from "@/domain/relays/relay-scope";
 
 export interface UsePinnedSidebarEntityStateOptions<IdKey extends string> {
   userPubkey: string | undefined;
@@ -63,19 +64,22 @@ export function usePinnedSidebarEntityState<IdKey extends string>({
   }, [state, userPubkey]);
 
   // The relay scope pins resolve and write to. With a relay filter active, that's
-  // the active set. With none active, fall back to every relay that has content
-  // (the union of entityRelayIds) so "no space selected" still pins a channel
-  // across the spaces where it actually appears — mirroring how content scoping
-  // falls back to all relays. Without this, clearing the relay filter silently
+  // the active set. With none active, resolveRelayScope (the shared "empty === all
+  // spaces" rule) falls back to every relay that has content (the union of
+  // entityRelayIds) so "no space selected" still pins a channel across the spaces
+  // where it actually appears. Without this, clearing the relay filter silently
   // breaks pinning (pins write to zero relays and resolve to nothing).
-  const activeRelayIdList = useMemo(() => {
-    if (effectiveActiveRelayIds.size > 0) return Array.from(effectiveActiveRelayIds);
-    const allContentRelays = new Set<string>();
-    for (const relays of entityRelayIds.values()) {
-      for (const relayId of relays) allContentRelays.add(relayId);
-    }
-    return Array.from(allContentRelays);
-  }, [effectiveActiveRelayIds, entityRelayIds]);
+  const activeRelayIdList = useMemo(
+    () =>
+      resolveRelayScope(effectiveActiveRelayIds, () => {
+        const allContentRelays = new Set<string>();
+        for (const relays of entityRelayIds.values()) {
+          for (const relayId of relays) allContentRelays.add(relayId);
+        }
+        return Array.from(allContentRelays);
+      }),
+    [effectiveActiveRelayIds, entityRelayIds]
+  );
 
   const pinnedIds = useMemo(
     () => getPinnedEntityIdsForRelays(state, activeRelayIdList, idKey),

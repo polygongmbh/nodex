@@ -1,5 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { isTaskOutsideSelectedRelayScope, resolveChannelRelayScopeIds } from "./relay-scope";
+import {
+  hasActiveRelayScope,
+  isTaskOutsideSelectedRelayScope,
+  resolveChannelRelayScopeIds,
+  resolveRelayScope,
+} from "./relay-scope";
+
+describe("hasActiveRelayScope", () => {
+  it("is true for a non-empty selection (set or array)", () => {
+    expect(hasActiveRelayScope(new Set(["relay-a"]))).toBe(true);
+    expect(hasActiveRelayScope(["relay-a"])).toBe(true);
+  });
+
+  it("is false for an empty selection (set or array)", () => {
+    expect(hasActiveRelayScope(new Set())).toBe(false);
+    expect(hasActiveRelayScope([])).toBe(false);
+  });
+});
+
+describe("resolveRelayScope", () => {
+  it("returns the active selection when one exists, without evaluating the fallback", () => {
+    let fallbackCalls = 0;
+    const result = resolveRelayScope(new Set(["relay-a"]), () => {
+      fallbackCalls += 1;
+      return ["relay-x"];
+    });
+
+    expect(result).toEqual(["relay-a"]);
+    expect(fallbackCalls).toBe(0);
+  });
+
+  it("falls back to the all-spaces scope when the selection is empty", () => {
+    const result = resolveRelayScope([], () => ["relay-x", "relay-y"]);
+
+    expect(result).toEqual(["relay-x", "relay-y"]);
+  });
+});
 
 describe("resolveChannelRelayScopeIds", () => {
   it("returns effective active relay ids when at least one feed is selected", () => {
