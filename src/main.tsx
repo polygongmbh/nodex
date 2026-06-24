@@ -72,5 +72,5 @@ root.render(
   </AppErrorBoundary>
 );
 
-// Zoom + fade the express splash once the app has mounted and painted.
+// Slide the express splash strokes apart + fade once the app has mounted.
 dismissSplash();

@@ -1,12 +1,14 @@
-// Dismisses the express splash painted by index.html. The icon zooms in while
-// the overlay fades out and the app fades in underneath (see #splash styles in
-// index.html). Driven from main.tsx once React has committed its first frame.
+// Dismisses the express splash painted by index.html. The two logo strokes
+// slide apart along their diagonal axis while the overlay dissolves and the app
+// fades in underneath (see #splash styles in index.html). Driven from main.tsx
+// once React has committed its first frame.
 
 // Minimum time the splash stays up so the express icon is actually seen rather
 // than flashing for a single frame on fast loads / warm caches.
 const MIN_SPLASH_MS = 450;
-// How long the dismiss transition runs in index.html (opacity/transform 700ms).
-const DISMISS_MS = 700;
+// Longest dismiss transition in index.html (stroke transform/opacity is 800ms;
+// the background fade is shorter). Remove only after this so the glide isn't cut.
+const DISMISS_MS = 800;
 
 const splashShownAt =
   typeof performance !== "undefined" ? performance.now() : 0;
@@ -24,13 +26,13 @@ function runDismiss(): void {
   root.classList.remove("app-loading");
 
   if (!splash) return;
-  // Icon zooms + overlay fades.
+  // Strokes slide apart + overlay dissolves.
   splash.classList.add("splash-hide");
 
-  const remove = () => splash.remove();
-  splash.addEventListener("transitionend", remove, { once: true });
-  // Fallback removal in case transitionend never fires (e.g. tab backgrounded).
-  window.setTimeout(remove, DISMISS_MS + 200);
+  // Remove on a fixed timeout rather than transitionend: several properties
+  // transition here (background-color at 650ms, stroke transform/opacity at
+  // 800ms) and the first transitionend would fire at 650ms, cutting the glide.
+  window.setTimeout(() => splash.remove(), DISMISS_MS + 150);
 }
 
 /**

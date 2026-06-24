@@ -42,8 +42,9 @@
       })();
     </script>
     <style>
-      /* Express splash: paints from index.html before the JS bundle loads, then
-         zooms + fades out once the app has mounted (dismissSplash in main.tsx). */
+      /* Express splash: paints from index.html before the JS bundle loads. On
+         dismiss (dismissSplash in main.tsx) the two logo strokes slide apart
+         along their shared diagonal axis while the overlay dissolves. */
       #splash {
         position: fixed;
         inset: 0;
@@ -52,8 +53,10 @@
         align-items: center;
         justify-content: center;
         background: hsl(210 28% 98%);
-        opacity: 1;
-        transition: opacity 700ms ease;
+        /* Only the background dissolves to reveal the app; the strokes animate
+           independently. Fade to zero-alpha of the SAME color (not the
+           `transparent` keyword) to avoid an interpolated grey flash. */
+        transition: background-color 650ms ease;
       }
       html.dark #splash {
         background: hsl(220 20% 10%);
@@ -61,48 +64,63 @@
       #splash svg {
         width: 62vmin;
         height: 62vmin;
-        transform: scale(1);
-        transform-origin: center;
-        transition: transform 700ms cubic-bezier(0.4, 0, 0.2, 1);
+        /* Let strokes travel beyond the 62vmin icon box, across the screen. */
+        overflow: visible;
         animation: splash-pulse 1600ms ease-in-out infinite;
       }
-      #splash .glyph {
+      #splash .glyph path {
         stroke: #000000;
+        transition: transform 800ms cubic-bezier(0.22, 1, 0.36, 1), opacity 800ms ease;
       }
-      html.dark #splash .glyph {
+      html.dark #splash .glyph path {
         stroke: hsl(210 100% 55%);
       }
       @keyframes splash-pulse {
         0%, 100% { opacity: 0.85; }
         50% { opacity: 1; }
       }
-      /* Dismiss: icon zooms in past the viewport while the overlay fades out. */
+      /* Dismiss: strokes glide apart along the diagonal axis of the parallel
+         strokes (lower-left stroke up-left, upper-right stroke down-right) and
+         fade; the overlay background dissolves. */
       #splash.splash-hide {
-        opacity: 0;
         pointer-events: none;
+        background-color: hsl(210 28% 98% / 0);
+      }
+      html.dark #splash.splash-hide {
+        background-color: hsl(220 20% 10% / 0);
       }
       #splash.splash-hide svg {
-        transform: scale(2.6);
         animation: none;
+      }
+      /* path order matches index.html: 1 = lower-left stroke, 2 = upper-right. */
+      #splash.splash-hide .glyph path:nth-of-type(1) {
+        transform: translate(-150px, -160px);
+        opacity: 0;
+      }
+      #splash.splash-hide .glyph path:nth-of-type(2) {
+        transform: translate(150px, 160px);
+        opacity: 0;
       }
       /* App fades in underneath the dissolving splash. */
       #root {
-        transition: opacity 700ms ease;
+        transition: opacity 650ms ease;
       }
       html.app-loading #root {
         opacity: 0;
       }
       @media (prefers-reduced-motion: reduce) {
         #splash,
-        #splash svg,
         #root {
           transition-duration: 200ms;
+        }
+        #splash .glyph path {
+          transition: opacity 200ms ease;
         }
         #splash svg {
           animation: none;
         }
-        #splash.splash-hide svg {
-          transform: scale(1);
+        #splash.splash-hide .glyph path {
+          transform: none;
         }
       }
     </style>
