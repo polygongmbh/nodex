@@ -139,15 +139,33 @@ export function forgetCachedRelayNip11(relayUrl: string): void {
   savePersistedRelayStatusCache(cache);
 }
 
+/**
+ * NDK cache adapter that deliberately caches *no events*.
+ *
+ * `query` returns nothing and `setEvent` discards, so NDK never serves an event
+ * from cache. NDK's event cache does not preserve which relay each event arrived
+ * from, and this app depends on per-relay attribution: every event is bucketed
+ * by its source relay URL (see `Kind0Cache` in people-from-kind0.ts and the post
+ * store) so content can be scoped to the selected space(s)/relay(s). Letting NDK
+ * answer from cache would collapse that attribution. Instead the app keeps its
+ * own relay-attributed, live-subscription-hydrated stores — i.e. at startup it
+ * ingests kind-0 events from the relays and reuses those in memory while running.
+ *
+ * Only relay-agnostic metadata is cached here: NIP-05 pointers and relay NIP-11
+ * documents.
+ */
 export function createNdkMetadataCacheAdapter(): NDKCacheAdapter {
   return {
     locking: false,
     ready: true,
+    // No event cache by design (see the note above) — relay attribution must be
+    // preserved by the app's own per-relay stores, which NDK's cache can't model.
     query(_subscription: NDKSubscription): NDKEvent[] {
       return [];
     },
     async setEvent(_event: NDKEvent, _filters: NDKFilter[], _relay?: NDKRelay): Promise<void> {
-      // Relay status caching is handled through getRelayStatus/updateRelayStatus only.
+      // Intentionally a no-op (see the note above). NIP-05 and relay NIP-11 are
+      // cached through their dedicated methods only.
     },
     async loadNip05(nip05: string): Promise<ProfilePointer | null | "missing"> {
       const cache = loadNip05Cache();
