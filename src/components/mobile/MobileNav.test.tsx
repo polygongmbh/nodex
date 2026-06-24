@@ -129,17 +129,6 @@ describe("MobileNav", () => {
     expect(onViewChange).toHaveBeenCalledWith("status");
   });
 
-  it("calls onManageOpen when hamburger button is clicked", () => {
-    const onManageOpen = vi.fn();
-
-    render(<MobileNav currentView="feed" onViewChange={vi.fn()} onManageOpen={onManageOpen} />);
-
-    const menuButton = document.querySelector('[data-onboarding="mobile-nav-manage"]') as HTMLElement;
-
-    fireEvent.click(menuButton);
-    expect(onManageOpen).toHaveBeenCalledOnce();
-  });
-
   it("remeasures the pill when leaving manage mode without changing the current view", () => {
     const { rerender, container } = render(
       <MobileNav currentView="feed" onViewChange={vi.fn()} isManageActive />

@@ -1,5 +1,5 @@
 import { useRef, useCallback, useState, PointerEvent, useEffect, useLayoutEffect } from "react";
-import { Menu, Rss, GitBranch, List, Calendar, LayoutDashboard } from "lucide-react";
+import { Rss, GitBranch, List, Calendar, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VIEW_ORDER, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useTranslation } from "react-i18next";
@@ -18,7 +18,6 @@ export function isPrimaryMobileView(view: ViewType): view is MobileViewType {
 interface MobileNavProps {
   currentView: MobileViewType;
   onViewChange: (view: MobileViewType) => void;
-  onManageOpen?: () => void;
   isManageActive?: boolean;
 }
 
@@ -51,7 +50,7 @@ export function resolveSegmentFromClientX(
   return null;
 }
 
-export function MobileNav({ currentView, onViewChange, onManageOpen, isManageActive = false }: MobileNavProps) {
+export function MobileNav({ currentView, onViewChange, isManageActive = false }: MobileNavProps) {
   const { t } = useTranslation("shell");
   const containerRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLDivElement>(null);
@@ -256,24 +255,6 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
       data-onboarding="mobile-nav"
     >
       <div className="flex items-center gap-1.5">
-        {/* Hamburger menu button */}
-        <button
-          type="button"
-          data-onboarding="mobile-nav-manage"
-          title={t("navigation.views.switchTo", { view: t("navigation.views.manage") })}
-          className={cn(
-            "flex items-center justify-center w-11 h-9 sm:w-12 sm:h-10 rounded-lg shrink-0 transition-colors duration-150",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-            "active:scale-90",
-            isManageActive
-              ? "bg-primary text-primary-foreground shadow-md"
-              : "bg-muted/80 dark:bg-muted/60 text-muted-foreground/70 dark:text-muted-foreground"
-          )}
-          onClick={onManageOpen}
-        >
-          <Menu className="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" />
-        </button>
-
         {/* Segmented control */}
         <div
           ref={containerRef}

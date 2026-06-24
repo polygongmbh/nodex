@@ -1,5 +1,6 @@
 import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { isPrimaryMobileView, MobileNav, MobileViewType } from "./MobileNav";
+import { MobileChannelChips } from "./MobileChannelChips";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 
@@ -69,6 +70,23 @@ export function MobileLayout({
   const includedChannels = channels.filter(c => c.filterState === "included");
   const defaultContent = includedChannels.map(c => `#${c.name}`).join(" ");
 
+  // Chip row source: pinned channels (already sorted pinned-first), or the
+  // most-used ones as a fallback so the row is never empty before any pinning.
+  const allChannels = surface.channels;
+  const chipChannels = useMemo(() => {
+    const pinned = allChannels.filter((channel) => channel.pinIndex !== undefined);
+    if (pinned.length > 0) return pinned;
+    return [...allChannels]
+      .sort((a, b) => (b.usageCount ?? 0) - (a.usageCount ?? 0))
+      .slice(0, 8);
+  }, [allChannels]);
+  // Home is active unless exactly one channel is exclusively included (set by a
+  // chip tap); multiple sidebar-included channels leave no single chip active.
+  const activeChannelId = useMemo(() => {
+    const included = allChannels.filter((channel) => channel.filterState === "included");
+    return included.length === 1 ? included[0].id : null;
+  }, [allChannels]);
+
   const openManageView = useCallback(() => {
     setShowFilters(true);
     dispatchManageRouteChange(true);
@@ -90,6 +108,24 @@ export function MobileLayout({
     }
     void dispatchFeedInteraction({ type: "ui.view.change", view });
   }, [closeManageView, dispatchFeedInteraction, showFilters]);
+
+  const handleSelectHome = useCallback(() => {
+    if (showFilters) closeManageView();
+    void dispatchFeedInteraction({ type: "sidebar.channel.toggleAll" });
+  }, [closeManageView, dispatchFeedInteraction, showFilters]);
+
+  const handleSelectChannel = useCallback((channelId: string) => {
+    if (showFilters) closeManageView();
+    void dispatchFeedInteraction({ type: "sidebar.channel.exclusive", channelId });
+  }, [closeManageView, dispatchFeedInteraction, showFilters]);
+
+  const handleToggleChannelPin = useCallback((channelId: string, isPinned: boolean) => {
+    void dispatchFeedInteraction(
+      isPinned
+        ? { type: "sidebar.channel.unpin", channelId }
+        : { type: "sidebar.channel.pin", channelId }
+    );
+  }, [dispatchFeedInteraction]);
 
   const mobileCurrentView: MobileViewType = activePrimaryView;
   const viewFallback = <ViewLoadingFallback />;
@@ -150,7 +186,7 @@ export function MobileLayout({
       case "tree":
         return <TaskTree posts={posts} focusedTaskId={focusedTaskId} />;
       case "feed":
-        return <FeedView posts={posts} focusedTaskId={focusedTaskId} />;
+        return <FeedView posts={posts} focusedTaskId={focusedTaskId} scope="home" />;
       case "list":
         return <UpcomingView posts={posts} focusedTaskId={focusedTaskId} />;
       case "calendar":
@@ -163,7 +199,16 @@ export function MobileLayout({
   return (
     <div className="flex flex-col app-shell-height bg-background overflow-hidden">
       <div>
-        <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} onManageOpen={openManageView} isManageActive={showFilters} />
+        <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} isManageActive={showFilters} />
+        <MobileChannelChips
+          channels={chipChannels}
+          activeChannelId={activeChannelId}
+          isManageActive={showFilters}
+          onManageOpen={openManageView}
+          onSelectHome={handleSelectHome}
+          onSelectChannel={handleSelectChannel}
+          onTogglePin={handleToggleChannelPin}
+        />
       </div>
       <FailedPublishQueueBannerContainer isMobile />
 

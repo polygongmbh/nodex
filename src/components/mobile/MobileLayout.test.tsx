@@ -77,21 +77,26 @@ vi.mock("./MobileNav", async (importOriginal) => {
     ...actual,
     MobileNav: ({
       onViewChange,
-      onManageOpen,
     }: {
       onViewChange: (view: MobileViewType) => void;
-      onManageOpen?: () => void;
     }) => (
       <div data-testid="mobile-nav">
         <button onClick={() => onViewChange("status")}>Status</button>
         <button onClick={() => onViewChange("feed")}>Feed</button>
         <button onClick={() => onViewChange("tree")}>Tree</button>
         <button onClick={() => onViewChange("calendar")}>Calendar</button>
-        <button onClick={onManageOpen}>Manage</button>
       </div>
     ),
   };
 });
+
+vi.mock("./MobileChannelChips", () => ({
+  MobileChannelChips: ({ onManageOpen }: { onManageOpen?: () => void }) => (
+    <div data-testid="mobile-channel-chips">
+      <button onClick={onManageOpen}>Manage</button>
+    </div>
+  ),
+}));
 
 vi.mock("./SwipeIndicator", () => ({
   SwipeIndicator: () => <div data-testid="swipe-indicator" />,
