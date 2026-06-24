@@ -49,9 +49,10 @@ Key env values:
 - `VITE_NODEX_MOTD`: optional message-of-the-day text shown as a dismissible top banner.
 - `VITE_CORE_CHANNELS`: optional comma-separated channels that every root post must include;
   core channels stay pinned and bolded in channel surfaces.
-- `VITE_VIEWS`: optional comma-separated list of views to expose (`home`, `status`, `feed`, `tree`,
-  `kanban`, `list`, `calendar`); blank shows all. When only one view is listed, the navigation bar
-  is hidden on desktop and mobile.
+- `VITE_VIEWS`: optional comma-separated list of views surfaced in navigation and auto-redirects
+  (`home`, `status`, `feed`, `tree`, `kanban`, `list`, `calendar`); blank shows all. When only one
+  view is listed, the navigation bar is hidden on desktop and mobile. Views left out stay reachable
+  by typing their URL directly.
 
 ## Attachment Upload Setup
 Nodex attachment uploads use a NIP-96-compatible HTTP endpoint.

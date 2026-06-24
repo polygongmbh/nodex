@@ -7,29 +7,35 @@ import { CONFIGURED_VIEW_NAMES } from "@/lib/views-config";
 export const VIEW_ORDER = ["home", "status", "feed", "tree", "kanban", "list", "calendar"] as const;
 export type ViewType = (typeof VIEW_ORDER)[number];
 
-function resolveEnabledViews(): readonly ViewType[] {
-  if (!CONFIGURED_VIEW_NAMES) return VIEW_ORDER;
-  const allowed = new Set(CONFIGURED_VIEW_NAMES);
+/** Pure: VIEW_ORDER ∩ configured names, or all views when null/empty/no match. */
+export function resolveEnabledViews(configured: readonly string[] | null): readonly ViewType[] {
+  if (!configured || configured.length === 0) return VIEW_ORDER;
+  const allowed = new Set(configured);
   const filtered = VIEW_ORDER.filter((view) => allowed.has(view));
   // Ignore a config that matches nothing rather than leaving the app view-less.
   return filtered.length > 0 ? filtered : VIEW_ORDER;
 }
 
+/** Pure: default landing view per platform, falling back to the first enabled view. */
+export function resolveDefaultViewFor(enabled: readonly ViewType[], isMobile: boolean): ViewType {
+  const preferred: ViewType = isMobile ? "status" : "home";
+  if (enabled.includes(preferred)) return preferred;
+  if (isMobile) {
+    const mobileView = enabled.find((view) => view !== "home" && view !== "kanban");
+    if (mobileView) return mobileView;
+  }
+  return enabled[0];
+}
+
 /** Views this build exposes: VIEW_ORDER ∩ VITE_VIEWS, or all when unset. */
-export const ENABLED_VIEWS: readonly ViewType[] = resolveEnabledViews();
+export const ENABLED_VIEWS: readonly ViewType[] = resolveEnabledViews(CONFIGURED_VIEW_NAMES);
 
 /** With a single enabled view the nav bar is hidden (desktop and mobile). */
 export const isSingleViewMode = ENABLED_VIEWS.length === 1;
 
 /** Default landing view per platform, falling back to the first enabled view. */
 export function resolveDefaultView(isMobile: boolean): ViewType {
-  const preferred: ViewType = isMobile ? "status" : "home";
-  if (ENABLED_VIEWS.includes(preferred)) return preferred;
-  if (isMobile) {
-    const mobileView = ENABLED_VIEWS.find((view) => view !== "home" && view !== "kanban");
-    if (mobileView) return mobileView;
-  }
-  return ENABLED_VIEWS[0];
+  return resolveDefaultViewFor(ENABLED_VIEWS, isMobile);
 }
 
 // Tree and list are reachable via direct URL but hidden from the desktop nav.

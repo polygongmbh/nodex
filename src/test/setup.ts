@@ -8,6 +8,8 @@ import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 function applyTestEnvDefaults(): void {
   vi.stubEnv("VITE_CORE_CHANNELS", "");
   vi.stubEnv("VITE_TASK_EDIT_MODE", "");
+  // Default to all views so suites don't depend on a local VITE_VIEWS setting.
+  vi.stubEnv("VITE_VIEWS", "");
 }
 
 applyTestEnvDefaults();

@@ -1,15 +1,21 @@
 import { useRef, useCallback, useState, PointerEvent, useEffect, useLayoutEffect } from "react";
 import { Rss, GitBranch, List, Calendar, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ENABLED_VIEWS, type ViewType } from "@/components/tasks/ViewSwitcher";
+import { VIEW_ORDER, ENABLED_VIEWS, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useTranslation } from "react-i18next";
 
-/** Mobile can render the enabled views except kanban and the desktop-only home view, in the desktop order. */
-export const MOBILE_VIEW_ORDER = ENABLED_VIEWS.filter((view) => view !== "kanban" && view !== "home");
+/**
+ * Views mobile can render — everything except kanban and the desktop-only home,
+ * in the desktop order. This is the rendering capability, not the nav: a view
+ * here is reachable by direct URL even when VITE_VIEWS keeps it out of the nav.
+ */
+export const MOBILE_VIEW_ORDER = VIEW_ORDER.filter((view) => view !== "kanban" && view !== "home");
 export type MobileViewType = (typeof MOBILE_VIEW_ORDER)[number];
 
-/** Tree is reachable via direct URL but hidden from the mobile nav segmented control. */
-const MOBILE_NAV_SEGMENTS = MOBILE_VIEW_ORDER.filter((view) => view !== "tree");
+/** Nav segments: tree is hidden, and only the enabled views are surfaced. */
+const MOBILE_NAV_SEGMENTS = MOBILE_VIEW_ORDER.filter(
+  (view) => view !== "tree" && ENABLED_VIEWS.includes(view)
+);
 
 export function isPrimaryMobileView(view: ViewType): view is MobileViewType {
   return (MOBILE_VIEW_ORDER as readonly ViewType[]).includes(view);

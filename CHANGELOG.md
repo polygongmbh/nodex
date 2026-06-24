@@ -6,7 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-- New `VITE_VIEWS` build option restricts which views the app exposes (any of `home`, `status`, `feed`, `tree`, `kanban`, `list`, `calendar`); leave it blank to show all. When only one view is configured, the navigation bar is hidden on desktop and mobile and the app always lands on that view.
+- New `VITE_VIEWS` build option restricts which views the app surfaces in navigation and auto-redirects to (any of `home`, `status`, `feed`, `tree`, `kanban`, `list`, `calendar`); leave it blank to show all. When only one view is configured, the navigation bar is hidden on desktop and mobile and the app always lands on that view. Views left out stay reachable by typing their URL directly.
 - Selecting a space (relay) no longer pops a confirmation toast.
 - Fixed: pinning a channel or person no longer silently fails when no space (relay) is selected. With no space filter active, pins now resolve and write across the spaces where the entity actually has content, instead of writing to zero relays — restoring pin/unpin in the "All spaces" state.
 - The app now shows an express splash on load: the Nodex "N" mark paints immediately from `index.html` (before the JS bundle loads), gently pulsing while the app boots. Once mounted, the mark zooms in and fades out while the application fades in underneath. The splash matches the active theme and is reduced for users who prefer reduced motion.

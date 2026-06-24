@@ -2,13 +2,15 @@ import { useRef, useMemo, useCallback, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { ENABLED_VIEWS, resolveDefaultView, type ViewType } from "@/components/tasks/ViewSwitcher";
+import { VIEW_ORDER, resolveDefaultView, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { isTaskOutsideSelectedRelayScope } from "@/domain/relays/relay-scope";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { Post, Relay } from "@/types";
 
-const VALID_VIEWS: readonly ViewType[] = ENABLED_VIEWS;
+// All views stay routable by direct URL. VITE_VIEWS only restricts what the nav
+// surfaces and where auto-redirects land — not what you can reach by typing.
+const VALID_VIEWS: readonly ViewType[] = VIEW_ORDER;
 const MOBILE_MANAGE_ROUTE = "manage";
 const SEARCH_PARAM = "q";
 
