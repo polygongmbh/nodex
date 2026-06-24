@@ -126,7 +126,7 @@ export function MobileChannelChips({
   const isHomeActive = activeChannelId === null && !isManageActive;
 
   return (
-    <div className="mx-2 mb-1 flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="px-2 mb-1 flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <button
         type="button"
         data-onboarding="mobile-nav-manage"

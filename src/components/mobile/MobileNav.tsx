@@ -250,7 +250,7 @@ export function MobileNav({ currentView, onViewChange, isManageActive = false }:
 
   return (
     <nav
-      className="mx-2 mt-2 mb-1 safe-area-top"
+      className="mx-2 mb-1"
       role="tablist"
       data-onboarding="mobile-nav"
     >
