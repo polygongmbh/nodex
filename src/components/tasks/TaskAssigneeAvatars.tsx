@@ -1,11 +1,7 @@
 import { getTaskAssigneePubkeys } from "@/types";
 import { useMemo } from "react";
 import type { Post } from "@/types";
-import type { Person } from "@/types/person";
-import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { cn } from "@/lib/utils";
-import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
-import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -19,15 +15,6 @@ interface TaskAssigneeAvatarsProps {
 }
 
 const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
-
-function buildFallbackPersonFromPubkey(pubkey: string): Person {
-  const label = formatUserFacingPubkey(pubkey);
-  return {
-    pubkey,
-    name: label,
-    displayName: label,
-  };
-}
 
 /**
  * Renders a small overlapping stack of profile pictures for a task's assignees.
@@ -51,9 +38,6 @@ export function TaskAssigneeAvatars({
     return [];
   }, [assigneePubkeys, authorPubkey]);
 
-  const { getProfile } = useNostrProfiles(pubkeys);
-  const { getPersonById } = useFeedPersonLookup();
-
   if (pubkeys.length === 0) return null;
 
   const visible = pubkeys.slice(0, maxVisible);
@@ -65,29 +49,15 @@ export function TaskAssigneeAvatars({
       data-testid="task-assignee-avatars"
       title={`Assigned to ${pubkeys.length} ${pubkeys.length === 1 ? "person" : "people"}`}
     >
-      {visible.map((pubkey) => {
-        const profile = getProfile(pubkey);
-        const matchedPerson = getPersonById(pubkey);
-        const fallbackPerson = buildFallbackPersonFromPubkey(pubkey);
-        const clickablePerson = matchedPerson || fallbackPerson;
-        const displayName =
-          profile?.displayName ||
-          profile?.name ||
-          matchedPerson?.displayName ||
-          matchedPerson?.name ||
-          fallbackPerson.displayName;
-
-        return (
-          <InteractivePersonAvatar
-            key={pubkey}
-            person={clickablePerson}
-            sizeClassName={avatarSizeClassName}
-            className="ring-1 ring-background hover:scale-110 transition-transform"
-            ariaLabel={displayName}
-            directFilterOnClick={!isMobile}
-          />
-        );
-      })}
+      {visible.map((pubkey) => (
+        <InteractivePersonAvatar
+          key={pubkey}
+          pubkey={pubkey}
+          sizeClassName={avatarSizeClassName}
+          className="ring-1 ring-background hover:scale-110 transition-transform"
+          directFilterOnClick={!isMobile}
+        />
+      ))}
       {overflow > 0 ? (
         <span
           className={cn(

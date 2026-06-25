@@ -1,12 +1,12 @@
 import { useTranslation } from "react-i18next";
-import type { Person } from "@/types/person";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
+import { useResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 import { cn } from "@/lib/utils";
 
 interface InteractivePersonAvatarProps {
-  person: Person;
+  pubkey: string;
   /** Tailwind size class applied to the button wrapper (e.g. "w-8 h-8"). */
   sizeClassName?: string;
   /** Extra classes for the outer button wrapper. */
@@ -33,7 +33,7 @@ interface InteractivePersonAvatarProps {
  * picture itself is resolved by `UserAvatar` from the shared profile cache.
  */
 export function InteractivePersonAvatar({
-  person,
+  pubkey,
   sizeClassName = "w-8 h-8",
   className,
   ariaLabel,
@@ -41,13 +41,14 @@ export function InteractivePersonAvatar({
   directFilterOnClick = false,
 }: InteractivePersonAvatarProps) {
   const { t } = useTranslation("tasks");
+  const person = useResolvedPerson(pubkey);
   const resolvedDisplayName = person.displayName ?? person.name ?? person.pubkey;
   const label = ariaLabel ?? t("people.actions.openMenu", { name: resolvedDisplayName });
 
   return (
-    <PersonHoverCard person={person} triggerClassName="rounded-full">
+    <PersonHoverCard pubkey={pubkey} triggerClassName="rounded-full">
       <PersonActionMenu
-        person={person}
+        pubkey={pubkey}
         enableModifierShortcuts={enableModifierShortcuts}
         directFilterOnClick={directFilterOnClick}
       >
@@ -60,7 +61,7 @@ export function InteractivePersonAvatar({
           )}
           title={label}
         >
-          <UserAvatar pubkey={person.pubkey} />
+          <UserAvatar pubkey={pubkey} />
         </button>
       </PersonActionMenu>
     </PersonHoverCard>

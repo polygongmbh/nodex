@@ -44,12 +44,12 @@ import { FeedTaskSwipeActions } from "@/components/tasks/feed/FeedTaskSwipeActio
 import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 import { useReactionsFor } from "@/features/feed-page/stores/reactions-registry";
 import { useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
+import { useResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 
 interface FeedTaskCardProps {
   task: Post;
   people: Person[];
   currentUser?: Person;
-  resolvedAuthor: Person;
   breadcrumb: { id: string; text: string }[];
   isActiveTask: boolean;
   isKeyboardFocused: boolean;
@@ -71,7 +71,6 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   task,
   people,
   currentUser,
-  resolvedAuthor,
   breadcrumb,
   isActiveTask,
   isKeyboardFocused,
@@ -115,7 +114,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const isCompletedVisual = isTaskTerminal(getTaskState(task)) || isSoldListing;
   const feedMessageLabel = isListing ? t("tasks.listing.label") : t("tasks.comment");
   const listingSoldLabel = t("tasks.listing.sold");
-  const authorCompactLabel = getCompactPersonLabel(resolvedAuthor);
+  const authorCompactLabel = getCompactPersonLabel(useResolvedPerson(task.pubkey));
   const timeLabel = timeLabelFormatter(task.timestamp);
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
   const canUpdateListingStatus =
@@ -237,7 +236,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
             </span>
           )}
           <InteractivePersonAvatar
-            person={resolvedAuthor}
+            pubkey={task.pubkey}
             sizeClassName={isMobile ? "w-7 h-7" : "w-8 h-8"}
             ariaLabel={t("people.actions.openMenu", { name: authorCompactLabel })}
             // On mobile the timeline behaves like the other views — a tap
@@ -249,7 +248,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
             <div className={cn("mb-1 flex min-w-0 items-start text-muted-foreground", isMobile ? "gap-1 text-xs" : "gap-2 text-sm")}>
               <div className={cn("min-w-0 flex-1 flex-wrap items-center", isMobile ? "gap-1" : "gap-2", "inline-flex")}>
                 <InteractivePersonName
-                  person={resolvedAuthor}
+                  pubkey={task.pubkey}
                   withHandle={!isMobile}
                   testId={`feed-author-primary-${task.id}`}
                 />

@@ -435,8 +435,8 @@ function renderMarkdownBlock(
 
       if (clickablePerson) {
         return (
-          <PersonHoverCard person={clickablePerson}>
-            <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
+          <PersonHoverCard pubkey={clickablePerson.pubkey}>
+            <PersonActionMenu pubkey={clickablePerson.pubkey} enableModifierShortcuts>
               <span
                 role="button"
                 tabIndex={0}

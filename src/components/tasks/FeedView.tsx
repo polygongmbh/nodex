@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { useScrollCapture } from "@/features/feed-page/views/scroll-capture-context";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import { resolvePersonForPubkey } from "@/domain/people/resolve-person";
 import { makeIsProject } from "@/domain/content/task-projects";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskLocalDate, getTaskTimeOfDay, getTaskDateTypeLabel } from "@/lib/task-dates";
@@ -54,7 +53,6 @@ import {
 } from "@/features/feed-page/controllers/use-task-view-states";
 import { useHomeDayStore } from "@/features/feed-page/stores/home-day-store";
 import {
-  useFeedPersonLookup,
   useFeedSurfaceState,
 } from "@/features/feed-page/views/feed-surface-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
@@ -206,7 +204,6 @@ export function FeedView({
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { relays, channels, people, quickFilters } = useFeedSurfaceState();
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
-  const { peopleById } = useFeedPersonLookup();
   const forceShowComposer = useOnboardingComposerSignal();
 
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
@@ -421,7 +418,6 @@ export function FeedView({
   const renderFeedEntry = (entry: FeedEntry) => {
     if (entry.type === "state-update" && entry.update) {
       const { task, update } = entry;
-      const resolvedUpdateAuthor = resolvePersonForPubkey(update.authorPubkey, peopleById);
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
@@ -448,7 +444,7 @@ export function FeedView({
                   <span className="truncate">{displayLabel}</span>
                   <span className="shrink-0">·</span>
                   <InteractivePersonName
-                    person={resolvedUpdateAuthor}
+                    pubkey={update.authorPubkey}
                     className="shrink-0"
                   />
                   <span className="shrink-0">·</span>
@@ -480,7 +476,6 @@ export function FeedView({
     const task = entry.task;
     const breadcrumb = getParentBreadcrumb(task);
     const isKeyboardFocused = keyboardFocusedTaskId === task.id;
-    const resolvedAuthor = resolvePersonForPubkey(task.pubkey, peopleById);
     const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
 
@@ -490,7 +485,6 @@ export function FeedView({
         task={task}
         people={people}
         currentUser={currentUser}
-        resolvedAuthor={resolvedAuthor}
         breadcrumb={breadcrumb}
         isActiveTask={focusedTaskId === task.id}
         isKeyboardFocused={isKeyboardFocused}

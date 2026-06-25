@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { BadgeCheck } from "lucide-react";
-import {
-  formatAuthorMetaParts,
-  type Person,
-} from "@/types/person";
+import { formatAuthorMetaParts } from "@/types/person";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
+import { useResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { cn } from "@/lib/utils";
 
 interface InteractivePersonNameProps {
-  person: Person;
+  pubkey: string;
   /** When true, also render the secondary handle ("(@alice)") after the name. */
   withHandle?: boolean;
   /** Optional test id placed on the visible name span. */
@@ -27,11 +25,12 @@ interface InteractivePersonNameProps {
  * formatting stay consistent.
  */
 export function InteractivePersonName({
-  person,
+  pubkey,
   withHandle = false,
   testId,
   className,
 }: InteractivePersonNameProps) {
+  const person = useResolvedPerson(pubkey);
   const [verified, setVerified] = useState(false);
   useEffect(() => {
     setVerified(false);
@@ -56,8 +55,8 @@ export function InteractivePersonName({
   );
 
   return (
-    <PersonHoverCard person={person}>
-      <PersonActionMenu person={person} enableModifierShortcuts>
+    <PersonHoverCard pubkey={pubkey}>
+      <PersonActionMenu pubkey={pubkey} enableModifierShortcuts>
         <button
           type="button"
           className={cn(

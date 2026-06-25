@@ -2,6 +2,31 @@ import type { Channel, CommentPost, ListingPost, Nip99Metadata, Post, Relay, Tas
 import { formatLocalIsoDate, normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
+import { defaultKind0Cache } from "@/infrastructure/nostr/people-from-kind0";
+
+/**
+ * Seed the shared kind-0 profile cache so person components (which resolve
+ * display via `useResolvedPerson(pubkey)` → the cache) render real metadata in
+ * tests. `content` is the kind-0 wire shape (`name`, `display_name`, `picture`,
+ * `nip05`, `about`). Pair with `clearKind0Cache()` in beforeEach.
+ */
+export function seedKind0Profile(pubkey: string, content: Record<string, string> = {}): void {
+  defaultKind0Cache.save([
+    {
+      id: "",
+      pubkey,
+      kind: NostrEventKind.Metadata,
+      tags: [],
+      sig: "",
+      created_at: Math.floor(Date.now() / 1000),
+      content: JSON.stringify(content),
+    },
+  ]);
+}
+
+export function clearKind0Cache(): void {
+  defaultKind0Cache.clear();
+}
 
 const DEFAULT_TIME = new Date("2026-01-01T00:00:00.000Z");
 

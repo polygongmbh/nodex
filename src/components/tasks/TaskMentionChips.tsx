@@ -71,15 +71,15 @@ export function TaskMentionChips({
     a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
   );
 
-  const chips = resolvedMentions.map(({ pubkey, matchedPerson, fallbackPerson, clickablePerson, label }) => {
+  const chips = resolvedMentions.map(({ pubkey, clickablePerson, label }) => {
     if (clickablePerson) {
       return (
         <PersonHoverCard
           key={pubkey}
-          person={clickablePerson}
+          pubkey={pubkey}
           triggerClassName="inline-flex shrink-0 leading-none"
         >
-          <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
+          <PersonActionMenu pubkey={pubkey} enableModifierShortcuts>
             <button
               type="button"
               className={cn(TASK_CHIP_STYLES.mention, "transition-colors hover:bg-primary/15", className)}

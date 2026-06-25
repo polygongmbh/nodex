@@ -8,7 +8,6 @@ import { AttachmentCountIndicator } from "@/components/tasks/task-card/Attachmen
 import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-attachments";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useFeedPersonLookup } from "@/features/feed-page/views/feed-surface-context";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
@@ -20,7 +19,6 @@ import { InteractivePersonName } from "@/components/people/InteractivePersonName
 import type { Post } from "@/types";
 import { getTaskState } from "@/types";
 import type { Person } from "@/types/person";
-import { resolvePersonForPubkey } from "@/domain/people/resolve-person";
 
 interface StatusTimelineItemProps {
   task: Post;
@@ -31,9 +29,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
   const { t } = useTranslation("tasks");
   const { focusTask } = useTaskViewServices();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { peopleById } = useFeedPersonLookup();
   const currentUser = useCurrentUser();
-  const resolvedAuthor = resolvePersonForPubkey(task.pubkey, peopleById);
   const isComment = isCommentPost(task);
   const isEvent = isCalendarEventPost(task);
   const isTerminal = isTaskTerminal(getTaskState(task));
@@ -73,7 +69,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <InteractivePersonName person={resolvedAuthor} />
+          <InteractivePersonName pubkey={task.pubkey} />
           <AttachmentCountIndicator count={attachmentCount} />
           <span className="ml-auto shrink-0" title={task.timestamp.toLocaleString()}>{timeAgo}</span>
         </div>

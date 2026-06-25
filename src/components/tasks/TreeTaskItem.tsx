@@ -24,7 +24,6 @@ import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import { buildFallbackPersonFromPubkey } from "@/domain/people/resolve-person";
 import { TASK_CHIP_STYLES, TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import { getTaskDisabledClasses } from "@/lib/task-style";
@@ -47,7 +46,6 @@ import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-atta
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useTaskAuthorProfiles } from "./task-author-profiles-context";
 
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -104,7 +102,6 @@ export function TreeTaskItem({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;
-  const authorProfiles = useTaskAuthorProfiles();
   const hasMatchingChildren = matchingChildren.length > 0;
 
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
@@ -121,22 +118,6 @@ export function TreeTaskItem({
   const [isContentExpanded, setIsContentExpanded] = useState(false);
   const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
-  
-  const isPubkey = task.pubkey.length === 64 && /^[a-f0-9]+$/.test(task.pubkey);
-  const nostrProfile = isPubkey ? authorProfiles?.[task.pubkey] : undefined;
-
-  // Use Nostr profile if available, fallback to a pubkey-derived synthetic person
-  const fallbackAuthor = buildFallbackPersonFromPubkey(task.pubkey);
-  const authorName = nostrProfile?.displayName || nostrProfile?.name || fallbackAuthor.displayName;
-  const authorAvatar = nostrProfile?.picture || fallbackAuthor.avatar;
-  const authorNip05 = nostrProfile?.nip05;
-  const authorPerson: Person = {
-    ...fallbackAuthor,
-    name: nostrProfile?.name || fallbackAuthor.name,
-    displayName: authorName,
-    avatar: authorAvatar,
-    nip05: authorNip05 || fallbackAuthor.nip05,
-  };
   const dispatchHashtagInclude = (tag: string) => {
     void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
   };
@@ -355,7 +336,7 @@ export function TreeTaskItem({
               {isComment && (
                 <>
                   <InteractivePersonName
-                    person={authorPerson}
+                    pubkey={task.pubkey}
                   />
                   <span>·</span>
                   <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>

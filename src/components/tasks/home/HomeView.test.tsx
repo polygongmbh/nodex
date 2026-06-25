@@ -5,7 +5,7 @@ import { HomeView } from "./HomeView";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 import { useHomeDayStore } from "@/features/feed-page/stores/home-day-store";
-import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
+import { clearKind0Cache, makeChannel, makePerson, makeRelay, makeTask, seedKind0Profile } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import type { Post } from "@/types";
 
@@ -23,14 +23,6 @@ vi.mock("@/features/auth/controllers/use-auth-action-policy", () => ({
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: null }),
-}));
-
-vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
-  useNostrProfile: (): { profile: null } => ({ profile: null }),
-  useNostrProfiles: (): { getProfile: () => null } => ({
-    getProfile: () => null,
-  }),
-  useCachedNostrProfile: () => null,
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
@@ -85,6 +77,9 @@ beforeEach(() => {
   feedViewProps.mockClear();
   useCurrentUserStore.getState().setCurrentUser(me);
   useHomeDayStore.getState().clearSelectedDay();
+  // Author display resolves from the kind-0 cache now, not the surface `people`.
+  clearKind0Cache();
+  seedKind0Profile(me.pubkey, { name: "alice", display_name: "@alice" });
 });
 
 describe("HomeView", () => {

@@ -74,7 +74,7 @@ export function PersonItem({
           : t("sidebar.filters.pinPersonToView", { name: personName })}
       />
       <PersonHoverCard
-        person={person}
+        pubkey={person.pubkey}
         side="right"
         triggerClassName="flex-1 min-w-0"
         sideOffset={32}
@@ -122,7 +122,7 @@ export function PersonItem({
           </button>
         </div>
       </PersonHoverCard>
-      <PersonActionMenu person={person} align="end">
+      <PersonActionMenu pubkey={person.pubkey} align="end">
         <button
           type="button"
           data-testid={`person-item-actions-${person.pubkey}`}

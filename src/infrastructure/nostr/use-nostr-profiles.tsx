@@ -83,22 +83,36 @@ export function getProfileSnapshot(pubkey: string | null): NostrProfile | null {
   return eventToProfile(getCachedIndex().get(normalizePubkey(pubkey)));
 }
 
-/**
- * Imperative (non-hook) resolve of a pubkey to a Person via the kind-0 cache,
- * falling back to a pubkey-derived synthetic. For command handlers (toasts,
- * mention queue, sidebar list growth) that need a Person but run outside React
- * render — render paths use `useCachedNostrProfile` directly.
- */
-export function getResolvedPerson(pubkey: string): Person {
-  const profile = getProfileSnapshot(pubkey);
+function personFromProfile(pubkey: string, profile: NostrProfile | null): Person {
   if (!profile) return buildFallbackPersonFromPubkey(pubkey);
   return {
     pubkey: profile.pubkey,
     name: profile.name ?? "",
     displayName: profile.displayName ?? "",
     nip05: profile.nip05,
+    about: profile.about,
     avatar: profile.picture ?? "",
   };
+}
+
+/**
+ * Imperative (non-hook) resolve of a pubkey to a Person via the kind-0 cache,
+ * falling back to a pubkey-derived synthetic. For command handlers (toasts,
+ * mention queue, sidebar list growth) that need a Person but run outside React
+ * render.
+ */
+export function getResolvedPerson(pubkey: string): Person {
+  return personFromProfile(pubkey, getProfileSnapshot(pubkey));
+}
+
+/**
+ * Reactive resolve of a pubkey to a Person via the kind-0 cache. The canonical
+ * render-time path for person components: they take a pubkey and resolve their
+ * own display here, so nothing upstream snapshots/threads a Person.
+ */
+export function useResolvedPerson(pubkey: string): Person {
+  const profile = useCachedNostrProfile(pubkey);
+  return useMemo(() => personFromProfile(pubkey, profile), [pubkey, profile]);
 }
 
 export function useNostrProfiles(pubkeys: string[]): {

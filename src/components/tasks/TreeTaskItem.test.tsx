@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
 import type { Post } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { makeComment, makePerson, makeTask, withTaskState } from "@/test/fixtures";
+import { clearKind0Cache, makeComment, makePerson, makeTask, withTaskState } from "@/test/fixtures";
 import { setRawEvent } from "@/stores/raw-events";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
@@ -12,14 +12,6 @@ const dispatchFeedInteraction = vi.fn();
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
-}));
-
-vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
-  useNostrProfile: (): { profile: null } => ({ profile: null }),
-  useNostrProfiles: (): { getProfile: () => null } => ({
-    getProfile: () => null,
-  }),
-  useCachedNostrProfile: () => null,
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
@@ -62,6 +54,7 @@ const baseTask: Post = makeTask({
 });
 
 beforeEach(() => {
+  clearKind0Cache();
   dispatchFeedInteraction.mockClear();
 });
 
