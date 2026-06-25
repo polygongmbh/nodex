@@ -6,7 +6,6 @@ import type {
   TaskState,
   WireTagging,
 } from "@/types";
-import type { Person } from "@/types/person";
 import { z } from "zod";
 
 import { FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
@@ -30,7 +29,6 @@ type FailedPublishContent = Omit<SerializedComposerContent, "attachments"> & {
 export type FailedPublishDraft = FailedPublishContent &
   WireTagging & {
     id: string;
-    author: Person;
     createdAt: string;
     relayIds: string[];
     relayUrls: string[];
@@ -48,13 +46,6 @@ const nip99ListingStatusSchema = z.enum(["active", "sold"] as const);
 const taskStateSchema = z.object({
   status: taskStatusSchema,
   description: z.string().optional(),
-});
-const personSchema = z.object({
-  pubkey: z.string(),
-  name: z.string(),
-  displayName: z.string(),
-  nip05: z.string().optional(),
-  avatar: z.string().optional(),
 });
 const titledPostFieldsSchema = z.object({
   title: z.string().optional(),
@@ -79,7 +70,6 @@ const composeRecomposeOfSchema = z.object({
 });
 const failedPublishDraftSchema = z.object({
   id: z.string(),
-  author: personSchema,
   content: z.string(),
   tags: z.array(z.string()),
   relayIds: z.array(z.string()),

@@ -538,7 +538,6 @@ export function useTaskPublishFlow({
       fallbackParentId?: string
     ): FailedPublishDraft => ({
       id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-      author: taskAuthor,
       content,
       tags: resolvedSubmissionTags,
       relayIds: targetRelayIds,
