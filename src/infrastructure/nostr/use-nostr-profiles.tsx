@@ -7,6 +7,8 @@ import {
   subscribeToKind0Cache,
 } from "@/infrastructure/nostr/people-from-kind0";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import type { Person } from "@/types/person";
+import { buildFallbackPersonFromPubkey } from "@/domain/people/resolve-person";
 
 // NDK's NDKUserProfile is our canonical parsed-kind-0 shape. We tack `pubkey`
 // on at the cache boundary so consumers don't need to track it separately.
@@ -76,9 +78,27 @@ function getCachedIndex(): Map<string, NostrEvent> {
   return cachedIndex;
 }
 
-function getProfileSnapshot(pubkey: string | null): NostrProfile | null {
+export function getProfileSnapshot(pubkey: string | null): NostrProfile | null {
   if (!pubkey) return null;
   return eventToProfile(getCachedIndex().get(normalizePubkey(pubkey)));
+}
+
+/**
+ * Imperative (non-hook) resolve of a pubkey to a Person via the kind-0 cache,
+ * falling back to a pubkey-derived synthetic. For command handlers (toasts,
+ * mention queue, sidebar list growth) that need a Person but run outside React
+ * render — render paths use `useCachedNostrProfile` directly.
+ */
+export function getResolvedPerson(pubkey: string): Person {
+  const profile = getProfileSnapshot(pubkey);
+  if (!profile) return buildFallbackPersonFromPubkey(pubkey);
+  return {
+    pubkey: profile.pubkey,
+    name: profile.name ?? "",
+    displayName: profile.displayName ?? "",
+    nip05: profile.nip05,
+    avatar: profile.picture ?? "",
+  };
 }
 
 export function useNostrProfiles(pubkeys: string[]): {

@@ -37,7 +37,7 @@ export function PersonItem({
     const shortcutIntent = getPersonShortcutIntent(event);
     if (shortcutIntent) {
       event.stopPropagation();
-      void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
+      void dispatchFeedInteraction(toPersonShortcutInteraction(person.pubkey, shortcutIntent));
       return true;
     }
     if (fallback === "toggle") {

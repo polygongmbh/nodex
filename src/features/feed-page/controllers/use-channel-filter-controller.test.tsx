@@ -95,7 +95,7 @@ function Harness({
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagInclude", tag: "urgent" })}>HashtagInclude</button>
       <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralEverywhere</button>
       <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAliceSelectablePerson</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", author: makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }) })}>
+      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", pubkey: "alice" })}>
         AuthorClick
       </button>
       <button onClick={() => setPeople(peopleSeed)}>LoadPeople</button>

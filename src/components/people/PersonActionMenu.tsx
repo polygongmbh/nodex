@@ -66,7 +66,7 @@ export function PersonActionMenu({
 
     event.preventDefault();
     event.stopPropagation();
-    void dispatchFeedInteraction(toPersonShortcutInteraction(person, intent));
+    void dispatchFeedInteraction(toPersonShortcutInteraction(person.pubkey, intent));
     return true;
   };
 
@@ -77,7 +77,7 @@ export function PersonActionMenu({
 
     event.preventDefault();
     event.stopPropagation();
-    void dispatchFeedInteraction({ type: "person.filter.exclusive", person });
+    void dispatchFeedInteraction({ type: "person.filter.exclusive", pubkey: person.pubkey });
     return true;
   };
 
@@ -323,7 +323,7 @@ export function PersonActionMenuContent({
           className="touch-target-sm"
           onClick={() => {
             onActionSelect?.("filterAndMention");
-            void dispatchFeedInteraction({ type: "person.filterAndMention", person });
+            void dispatchFeedInteraction({ type: "person.filterAndMention", pubkey: person.pubkey });
           }}
         >
           <span className="mr-2 inline-flex items-center">
@@ -389,7 +389,7 @@ export function PersonActionMenuContent({
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={() => {
         onActionSelect?.("filterExclusive");
-        void dispatchFeedInteraction({ type: "person.filter.exclusive", person });
+        void dispatchFeedInteraction({ type: "person.filter.exclusive", pubkey: person.pubkey });
       }}>
         <Filter className="mr-2 h-4 w-4" />
         {t("people.actions.showOnly", { name: person.displayName || person.name })}
@@ -397,7 +397,7 @@ export function PersonActionMenuContent({
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => {
         onActionSelect?.("mention");
-        void dispatchFeedInteraction({ type: "person.compose.mention", person });
+        void dispatchFeedInteraction({ type: "person.compose.mention", pubkey: person.pubkey });
       }}>
         <AtSign className="mr-2 h-4 w-4" />
         {t("people.actions.mention", { name: person.displayName || person.name })}
@@ -405,7 +405,7 @@ export function PersonActionMenuContent({
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => {
         onActionSelect?.("filterAndMention");
-        void dispatchFeedInteraction({ type: "person.filterAndMention", person });
+        void dispatchFeedInteraction({ type: "person.filterAndMention", pubkey: person.pubkey });
       }}>
         <span className="mr-2 inline-flex items-center">
           <Filter className="h-4 w-4" />

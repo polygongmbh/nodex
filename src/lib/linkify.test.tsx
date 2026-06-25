@@ -113,7 +113,7 @@ describe("linkifyContent interaction styles", () => {
     expect(mention).toHaveTextContent("@alice");
 
     fireEvent.click(mention, { ctrlKey: true });
-    expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", person: alice });
+    expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", pubkey: alice.pubkey });
   });
 
   it("supports unresolved pubkey mention shortcuts via fallback person", () => {
@@ -123,9 +123,7 @@ describe("linkifyContent interaction styles", () => {
     fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.compose.mention",
-      person: expect.objectContaining({
-        pubkey: unresolvedPubkey,
-      }),
+      pubkey: unresolvedPubkey,
     });
   });
 
@@ -141,7 +139,7 @@ describe("linkifyContent interaction styles", () => {
       ctrlKey: true,
       altKey: true,
     });
-    expect(dispatch).toHaveBeenCalledWith({ type: "person.filterAndMention", person: alice });
+    expect(dispatch).toHaveBeenCalledWith({ type: "person.filterAndMention", pubkey: alice.pubkey });
   });
 
   it("linkifies nostr:npub mentions and routes modifier clicks through fallback person actions", () => {
@@ -152,9 +150,7 @@ describe("linkifyContent interaction styles", () => {
     fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { ctrlKey: true });
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
-      person: expect.objectContaining({
-        pubkey: unresolvedPubkey,
-      }),
+      pubkey: unresolvedPubkey,
     });
   });
 

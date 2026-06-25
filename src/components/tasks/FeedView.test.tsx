@@ -617,7 +617,7 @@ describe("FeedView", () => {
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
-      person: author,
+      pubkey: author.pubkey,
     });
   });
 
@@ -645,7 +645,7 @@ describe("FeedView", () => {
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.filterAndMention",
-      person: author,
+      pubkey: author.pubkey,
     });
   });
 
@@ -671,7 +671,7 @@ describe("FeedView", () => {
     fireEvent.click(mention, { ctrlKey: true });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
-      person: author,
+      pubkey: author.pubkey,
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
       type: "task.focus.change",
@@ -697,9 +697,7 @@ describe("FeedView", () => {
     fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.compose.mention",
-      person: expect.objectContaining({
-        pubkey: unresolvedPubkey,
-      }),
+      pubkey: unresolvedPubkey,
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
       type: "task.focus.change",

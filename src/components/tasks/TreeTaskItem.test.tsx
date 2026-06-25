@@ -6,7 +6,6 @@ import type { Post } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { makeComment, makePerson, makeTask, withTaskState } from "@/test/fixtures";
 import { setRawEvent } from "@/stores/raw-events";
-import { buildFallbackPersonFromPubkey } from "@/domain/people/resolve-person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 const dispatchFeedInteraction = vi.fn();
@@ -309,7 +308,7 @@ describe("TreeTaskItem status actions", () => {
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
-      person: buildFallbackPersonFromPubkey(commentAuthorPubkey),
+      pubkey: commentAuthorPubkey,
     });
   });
 

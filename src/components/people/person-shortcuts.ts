@@ -1,5 +1,4 @@
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
-import type { Person } from "@/types/person";
 
 export type PersonShortcutIntent =
   | "person.filter.exclusive"
@@ -29,18 +28,18 @@ export function getPersonShortcutIntent(
 }
 
 export function toPersonShortcutInteraction(
-  person: Person,
+  pubkey: string,
   intent: PersonShortcutIntent,
 ): FeedInteractionIntent {
   switch (intent) {
     case "person.filter.exclusive":
-      return { type: "person.filter.exclusive", person };
+      return { type: "person.filter.exclusive", pubkey };
     case "person.filter.toggle":
-      return { type: "person.filter.toggle", person };
+      return { type: "person.filter.toggle", pubkey };
     case "person.compose.mention":
-      return { type: "person.compose.mention", person };
+      return { type: "person.compose.mention", pubkey };
     case "person.filterAndMention":
-      return { type: "person.filterAndMention", person };
+      return { type: "person.filterAndMention", pubkey };
   }
 }
 

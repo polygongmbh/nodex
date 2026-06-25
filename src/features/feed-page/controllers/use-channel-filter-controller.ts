@@ -24,6 +24,7 @@ import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-ur
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, QuickFilterState, Relay } from "@/types";
 import type { Person, SelectablePerson } from "@/types/person";
+import { getResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
@@ -272,33 +273,34 @@ export function useChannelFilterController({
       deselectPeople([intent.personId]);
     },
     "person.filter.exclusive": (intent) => {
+      const person = getResolvedPerson(intent.pubkey);
       const restoreSnapshot = captureFilterSnapshot();
-      applyExclusivePersonFilter(intent.person);
-      notifyShowingOnlyPersonExclusive(intent.person, { onUndo: restoreSnapshot });
+      applyExclusivePersonFilter(person);
+      notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
     },
     "person.filter.toggle": (intent) => {
-      const normalizedPerson = normalizeInteractivePerson(intent.person);
-      const wasSelected = selectedPubkeys.has(normalizedPerson.pubkey);
+      const person = getResolvedPerson(intent.pubkey);
+      const wasSelected = selectedPubkeys.has(person.pubkey);
       const restoreSnapshot = captureFilterSnapshot();
-      toggleInteractivePerson(normalizedPerson);
-      notifyPersonFilterToggled(normalizedPerson, wasSelected, { onUndo: restoreSnapshot });
+      toggleInteractivePerson(person);
+      notifyPersonFilterToggled(person, wasSelected, { onUndo: restoreSnapshot });
     },
     "person.compose.mention": (intent) => {
-      queueMentionForPerson(normalizeInteractivePerson(intent.person));
+      queueMentionForPerson(getResolvedPerson(intent.pubkey));
     },
     "person.filterAndMention": (intent) => {
-      const normalizedPerson = normalizeInteractivePerson(intent.person);
+      const person = getResolvedPerson(intent.pubkey);
       const restoreSnapshot = captureFilterSnapshot();
-      applyExclusivePersonFilter(normalizedPerson);
-      queueMentionForPerson(normalizedPerson);
-      notifyShowingOnlyPersonExclusive(normalizedPerson, { onUndo: restoreSnapshot });
+      applyExclusivePersonFilter(person);
+      queueMentionForPerson(person);
+      notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
     },
     "filter.applyAuthorExclusive": (intent) => {
-      const normalizedAuthor = normalizeInteractivePerson(intent.author);
+      const person = getResolvedPerson(intent.pubkey);
       const restoreSnapshot = captureFilterSnapshot();
-      applyExclusivePersonFilter(normalizedAuthor);
-      queueMentionForPerson(normalizedAuthor);
-      notifyShowingOnlyPersonExclusive(normalizedAuthor, { onUndo: restoreSnapshot });
+      applyExclusivePersonFilter(person);
+      queueMentionForPerson(person);
+      notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
     },
     "sidebar.quickFilter.recentDays.change": (intent) => {
       const nextDays = clampRecentDays(intent.days);
@@ -347,7 +349,6 @@ export function useChannelFilterController({
     selectedPubkeys,
     deselectPeople,
     applyExclusivePersonFilter,
-    normalizeInteractivePerson,
     queueMentionForPerson,
     setQuickFilters,
     setChannelFilterStates,

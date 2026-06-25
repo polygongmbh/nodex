@@ -63,7 +63,7 @@ describe("TaskMentionChips", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "@alice" }), { ctrlKey: true });
-    expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", person: alice });
+    expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", pubkey: alice.pubkey });
   });
 
   it("stops plain mention clicks from bubbling to parent containers", () => {
@@ -109,9 +109,7 @@ describe("TaskMentionChips", () => {
     fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.compose.mention",
-      person: expect.objectContaining({
-        pubkey: unmatchedPubkey,
-      }),
+      pubkey: unmatchedPubkey,
     });
   });
 });

@@ -40,11 +40,7 @@ function DispatchButtons() {
         onClick={() =>
           void dispatch({
             type: "filter.applyAuthorExclusive",
-            author: {
-              pubkey: "alice",
-              name: "alice",
-              displayName: "Alice",
-            },
+            pubkey: "alice",
           })
         }
       >
