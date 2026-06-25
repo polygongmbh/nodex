@@ -24,7 +24,7 @@ export function useProfileSync(
   user: NDKUser | null,
   relays: NDKRelayStatus[],
   publishEvent: PublishEvent,
-  fetchLatestKind0Profile: (pubkey: string) => Promise<NDKUserProfile | null>,
+  fetchCurrentUserKind0Profile: (pubkey: string) => Promise<NDKUserProfile | null>,
   profileSyncRunRef: MutableRefObject<number>,
   setUser: React.Dispatch<React.SetStateAction<NDKUser | null>>,
   setNeedsProfileSetup: React.Dispatch<React.SetStateAction<boolean>>,
@@ -134,7 +134,7 @@ export function useProfileSync(
         }
       }
 
-      const kind0Profile = await fetchLatestKind0Profile(pubkey);
+      const kind0Profile = await fetchCurrentUserKind0Profile(pubkey);
       if (isStale()) return;
 
       const mergedProfile: NDKUserProfile = {
@@ -173,7 +173,7 @@ export function useProfileSync(
     return () => {
       cancelled = true;
     };
-  }, [ndk, fetchLatestKind0Profile, user, profileSyncRunRef, setIsProfileSyncing, setNeedsProfileSetup, setUser]);
+  }, [ndk, fetchCurrentUserKind0Profile, user, profileSyncRunRef, setIsProfileSyncing, setNeedsProfileSetup, setUser]);
 
   return {
     updateUserProfile,

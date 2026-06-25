@@ -19,7 +19,7 @@ function makeHarness(opts?: {
     eventId: "ev1",
     publishedRelayUrls: [],
   }));
-  const fetchLatestKind0Profile = vi.fn(async () => opts?.existingKind0 ?? null);
+  const fetchCurrentUserKind0Profile = vi.fn(async () => opts?.existingKind0 ?? null);
 
   const initialProps = {
     user: opts?.profile === null ? null : ({ pubkey: PUBKEY, profile: opts?.profile } as never),
@@ -29,11 +29,11 @@ function makeHarness(opts?: {
 
   const { rerender } = renderHook(
     ({ user, authMethod, relays }) =>
-      useEnsureOwnProfile(user, authMethod, relays, publishEvent, fetchLatestKind0Profile),
+      useEnsureOwnProfile(user, authMethod, relays, publishEvent, fetchCurrentUserKind0Profile),
     { initialProps },
   );
 
-  return { publishEvent, fetchLatestKind0Profile, rerender };
+  return { publishEvent, fetchCurrentUserKind0Profile, rerender };
 }
 
 const flush = () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
@@ -60,12 +60,12 @@ describe("useEnsureOwnProfile", () => {
   });
 
   it("does not publish without a writable relay connection", async () => {
-    const { publishEvent, fetchLatestKind0Profile } = makeHarness({
+    const { publishEvent, fetchCurrentUserKind0Profile } = makeHarness({
       profile: { name: "alice" },
       relays: [{ url: "wss://relay.one", status: "connecting" }],
     });
     await flush();
-    expect(fetchLatestKind0Profile).not.toHaveBeenCalled();
+    expect(fetchCurrentUserKind0Profile).not.toHaveBeenCalled();
     expect(publishEvent).not.toHaveBeenCalled();
   });
 
@@ -76,12 +76,12 @@ describe("useEnsureOwnProfile", () => {
   });
 
   it("does not publish for a guest's throwaway identity", async () => {
-    const { publishEvent, fetchLatestKind0Profile } = makeHarness({
+    const { publishEvent, fetchCurrentUserKind0Profile } = makeHarness({
       profile: { name: "anon-guest" },
       authMethod: "guest",
     });
     await flush();
-    expect(fetchLatestKind0Profile).not.toHaveBeenCalled();
+    expect(fetchCurrentUserKind0Profile).not.toHaveBeenCalled();
     expect(publishEvent).not.toHaveBeenCalled();
   });
 
@@ -105,12 +105,12 @@ describe("useEnsureOwnProfile", () => {
     const publishEvent = vi.fn<PublishEvent>()
       .mockResolvedValueOnce({ success: false, rejectionReason: "auth-required" })
       .mockResolvedValueOnce({ success: true, eventId: "ev1", publishedRelayUrls: [] });
-    const fetchLatestKind0Profile = vi.fn(async () => null);
+    const fetchCurrentUserKind0Profile = vi.fn(async () => null);
 
     const relays: NDKRelayStatus[] = [{ url: "wss://relay.one", status: "connected" }];
     const { rerender } = renderHook(
       ({ user, authMethod, relays }) =>
-        useEnsureOwnProfile(user, authMethod, relays, publishEvent, fetchLatestKind0Profile),
+        useEnsureOwnProfile(user, authMethod, relays, publishEvent, fetchCurrentUserKind0Profile),
       {
         initialProps: {
           user: { pubkey: PUBKEY, profile: { name: "alice" } } as never,

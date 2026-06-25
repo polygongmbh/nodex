@@ -31,7 +31,7 @@ import { useRelayNip11 } from "./use-relay-nip11";
 import { buildNip11Status } from "./relay-status";
 import { useRelayTransport } from "./use-relay-transport";
 import { useRelayVerification } from "./use-relay-verification";
-import { useProfile } from "./use-profile";
+import { fetchCurrentUserKind0Profile as fetchCurrentUserKind0ProfileFromRelays } from "./current-user-kind0";
 import { usePresence } from "./use-presence";
 import { usePublish } from "./use-publish";
 import { useSubscribe } from "./use-subscribe";
@@ -241,18 +241,15 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
   };
 
-  const {
-    kind0ProfileInFlightRef,
-    fetchLatestKind0Profile,
-    clearKind0Caches,
-    clearKind0CachesForResignIn,
-  } = useProfile({
-    ndk,
-    beginRelayOperation,
-    endRelayOperation,
-    scheduleRelayTimeout,
-    clearTrackedRelayTimeout,
-  });
+  const fetchCurrentUserKind0Profile = useCallback(
+    (pubkey: string) => fetchCurrentUserKind0ProfileFromRelays(ndk, pubkey, {
+      beginRelayOperation,
+      endRelayOperation,
+      scheduleRelayTimeout,
+      clearTrackedRelayTimeout,
+    }),
+    [ndk, beginRelayOperation, endRelayOperation, scheduleRelayTimeout, clearTrackedRelayTimeout],
+  );
 
   const replayActiveSubscriptionsForRelay = useCallback((ndkInstance: NDK, relayUrl: string) => {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
@@ -280,8 +277,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
   const retryNip42RelaysAfterSignIn = useCallback(() => {
     if (!ndk) return;
-    // Flush kind-0 profile request cache so post-sign-in auth can rehydrate profile metadata immediately.
-    clearKind0CachesForResignIn();
 
     // Use relaysRef so this function is stable and safe to call from async contexts
     // (e.g. session restore) without capturing a stale relays snapshot.
@@ -423,7 +418,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       explicitRelayUrls: ndkInstance.explicitRelayUrls,
     });
     void session.restore();
-    const inFlightKind0ProfileRequests = kind0ProfileInFlightRef.current;
 
     return () => {
       session.abort();
@@ -432,7 +426,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();
       });
-      inFlightKind0ProfileRequests.clear();
     };
     // Init-only effect: omits refs and setRelays intentionally — they are stable
     // and re-running this would tear down NDK and reconnect every relay.
@@ -581,7 +574,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     ndk,
     applyAuthenticatedState,
     clearTransientAuthState,
-    fetchLatestKind0Profile,
+    fetchCurrentUserKind0Profile,
     retryNip42RelaysAfterSignIn,
     setUser,
     setAuthMethod,
@@ -592,7 +585,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     resetAuthSessionRefs: clearAuthSessionState,
     clearVerificationStateOnLogout,
     resetRejectedRelayStatuses,
-    clearKind0Caches,
     clearLockedSession,
   });
 
@@ -738,14 +730,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     user,
     relays,
     publishEvent,
-    fetchLatestKind0Profile,
+    fetchCurrentUserKind0Profile,
     profileSyncRunRef,
     setUser,
     setNeedsProfileSetup,
     setIsProfileSyncing,
   );
 
-  useEnsureOwnProfile(user, authMethod, relays, publishEvent, fetchLatestKind0Profile);
+  useEnsureOwnProfile(user, authMethod, relays, publishEvent, fetchCurrentUserKind0Profile);
 
   const { subscribe } = useSubscribe({
     ndk,
