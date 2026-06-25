@@ -6,7 +6,7 @@ import {
   type TaskViewFilterRequest,
 } from "@/domain/content/task-view-filtering";
 import type { Channel, ChannelMatchMode, QuickFilterState, Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 
 interface UseTaskViewFilteringParams<T extends Post = Post> {
   posts: Post[];
@@ -14,7 +14,7 @@ interface UseTaskViewFilteringParams<T extends Post = Post> {
   includeFocusedTask?: boolean;
   hideClosedTasks?: boolean;
   searchQuery: string;
-  people: SelectablePerson[];
+  people: Person[];
   // Explicit (not read from the store) so callers can pass an empty set to get
   // the person-unscoped "neutral" variant, mirroring neutralChannels.
   selectedPubkeys: Set<string>;

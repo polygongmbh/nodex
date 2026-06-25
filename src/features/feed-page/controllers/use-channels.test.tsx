@@ -12,7 +12,7 @@ import { ingestPostEvent } from "@/infrastructure/nostr/post-event-ingest";
 import type { NostrEventWithRelay } from "@/lib/nostr/types";
 import { makeRelay } from "@/test/fixtures";
 import type { Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
 
@@ -66,7 +66,7 @@ function seedNostrEventsStore(events: NostrEventWithRelay[]): void {
 }
 
 function Harness() {
-  const [people, setPeople] = useState<SelectablePerson[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
   const activeRelayIds = useFilterStore((s) => s.activeRelayIds);
   const setActiveRelayIds = useFilterStore((s) => s.setActiveRelayIds);
   const relaysWithActiveState = relays.map((relay) => ({

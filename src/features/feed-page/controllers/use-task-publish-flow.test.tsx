@@ -9,7 +9,7 @@ import { usePreferencesStore } from "@/features/feed-page/stores/preferences-sto
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay, Post, TaskCreatePayload, TaskCreateResult } from "@/types";
 import { getTaskAssigneePubkeys, getTaskPriority, getTaskPrimaryDate } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 
 type PublishEventCall = [
   kind: number,
@@ -54,8 +54,8 @@ type HarnessProps = {
   signEvent?: ReturnType<typeof vi.fn>;
   broadcastSignedEvent?: ReturnType<typeof vi.fn>;
   initialTasks?: Post[];
-  currentUser?: SelectablePerson;
-  people?: SelectablePerson[];
+  currentUser?: Person;
+  people?: Person[];
   dispatchFrecencyIntent?: ReturnType<typeof vi.fn>;
   publishTaskDueUpdate?: ReturnType<typeof vi.fn>;
   publishTaskPriorityUpdate?: ReturnType<typeof vi.fn>;
@@ -73,7 +73,7 @@ function Harness({
   broadcastSignedEvent,
   initialTasks = [] as Post[],
   currentUser = makePerson({ pubkey: "a".repeat(64), name: "Alice", displayName: "Alice" }),
-  people = [] as SelectablePerson[],
+  people = [] as Person[],
   dispatchFrecencyIntent = vi.fn(),
   publishTaskDueUpdate = vi.fn(async () => true),
   publishTaskPriorityUpdate = vi.fn(async () => true),

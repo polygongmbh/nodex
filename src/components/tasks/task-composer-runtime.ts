@@ -19,7 +19,7 @@ import type {
   SerializedComposerContent,
   TaskDate,
 } from "@/types";
-import type { Person, SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 
 /**
  * Serialized on-disk shape. Dates are ISO strings; `deserializeDraft`
@@ -42,8 +42,8 @@ type PersistedComposerDraft = Omit<SerializedComposerContent, "attachments"> &
 export interface ResolvedTaskComposerEnvironment {
   relays: Relay[];
   channels: Channel[];
-  people: SelectablePerson[];
-  mentionablePeople: SelectablePerson[];
+  people: Person[];
+  mentionablePeople: Person[];
   includedChannels: string[];
   selectedPeoplePubkeys: string[];
 }
@@ -100,7 +100,7 @@ export function useResolvedTaskComposerEnvironment({
 }: {
   relays?: Relay[];
   channels?: Channel[];
-  people?: SelectablePerson[];
+  people?: Person[];
 }): ResolvedTaskComposerEnvironment {
   const composerOptions = useFeedComposerOptions();
   const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);

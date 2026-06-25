@@ -1,18 +1,18 @@
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
+// A person record is the app-facing projection of a kind-0 profile keyed by
+// pubkey. Every field except `pubkey` is optional — kind-0 events frequently
+// omit name/displayName/picture, and the kind-0 cache populates this directly
+// (no separate "profile" type). Selection/pin/presence live in their own
+// per-pubkey stores, not on this record.
 export interface Person {
   pubkey: string; // normalized lowercase 64-char hex
-  name: string;
-  displayName: string;
+  name?: string;
+  displayName?: string;
   nip05?: string;
   about?: string;
   picture?: string;
 }
-
-// Selection state moved off the record into useFilterStore.selectedPubkeys
-// (keyed by pubkey). SelectablePerson is retained as an alias while call sites
-// migrate; it carries no extra fields over Person.
-export type SelectablePerson = Person;
 
 export interface PersonPresenceSnapshot {
   state: "online" | "recent" | "offline";
@@ -21,7 +21,7 @@ export interface PersonPresenceSnapshot {
 }
 
 
-// Loose shape so a NostrProfile (`displayName`/`name` are optional) is accepted
+// Loose shape so a sparse Person (`displayName`/`name` are optional) is accepted
 // directly without converting each undefined to "" at every call site.
 interface AuthorMetaLabelInput {
   pubkey: string;
@@ -77,7 +77,7 @@ export function isPubkeyDerivedPlaceholder(value: string, personPubkey: string):
 }
 
 export function getPersonDisplayName(person: PersonLabelSource): string {
-  return person.displayName.trim() || person.name.trim() || person.pubkey.trim();
+  return (person.displayName ?? "").trim() || (person.name ?? "").trim() || person.pubkey.trim();
 }
 
 export function getCompactPersonLabel(person: PersonLabelSource): string {

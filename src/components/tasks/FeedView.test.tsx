@@ -4,7 +4,7 @@ import type { ComponentProps, ReactElement, ReactNode } from "react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { FeedView } from "./FeedView";
 import { Post, Channel, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { clearKind0Cache, makeChannel, makePerson, makeRelay, makeTask, seedKind0Profile } from "@/test/fixtures";
 import { setRawEvent } from "@/stores/raw-events";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
@@ -45,7 +45,7 @@ vi.mock("@/components/ui/calendar", () => ({
   ),
 }));
 
-const author: SelectablePerson = makePerson({
+const author: Person = makePerson({
   pubkey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   name: "alice",
   displayName: "Alice Doe",
@@ -960,7 +960,7 @@ describe("FeedView", () => {
   });
 
   it("ignores selected people as well as channel filters for the mobile fallback", () => {
-    const otherAuthor: SelectablePerson = {
+    const otherAuthor: Person = {
       pubkey: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
       name: "bob",
       displayName: "Bob Doe",

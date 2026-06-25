@@ -12,7 +12,6 @@ import {
 import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 import type { Channel, Relay, Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 import type { Person } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
@@ -158,7 +157,7 @@ vi.mock("@/components/tasks/UpcomingView", () => ({
 
 const relays: Relay[] = [makeRelay()];
 const channels: Channel[] = [makeChannel()];
-const people: SelectablePerson[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
+const people: Person[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
 const tasks: Post[] = [];
 
 const baseFeedViewState: FeedViewState = {

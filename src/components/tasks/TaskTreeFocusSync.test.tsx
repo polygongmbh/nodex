@@ -7,7 +7,7 @@ import { TaskViewStatusRow } from "./TaskViewStatusRow";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import type { Channel, Relay, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
@@ -22,7 +22,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 
 const relays: Relay[] = [{ id: "demo", name: "Demo", isActive: true, url: "wss://demo.test" }];
 const channels: Channel[] = [{ id: "general", name: "general", filterState: "neutral" }];
-const people: SelectablePerson[] = [];
+const people: Person[] = [];
 
 const rootTask: TaskPost = {
   id: "root",

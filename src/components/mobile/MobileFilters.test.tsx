@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { MobileFilters } from "./MobileFilters";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import type { Channel, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
@@ -83,7 +83,7 @@ const channels: Channel[] = [
   { id: "general", name: "general", filterState: "neutral" },
 ];
 
-const people: SelectablePerson[] = [
+const people: Person[] = [
   { pubkey: "p1", name: "Alice", displayName: "Alice", picture: "" },
 ];
 

@@ -1,7 +1,7 @@
 import type { Channel, CommentPost, ListingPost, Nip99Metadata, Post, Relay, TaskDate, TaskDateType, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
 import { formatLocalIsoDate, normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { defaultKind0Cache } from "@/infrastructure/nostr/people-from-kind0";
 
 /**
@@ -30,7 +30,7 @@ export function clearKind0Cache(): void {
 
 const DEFAULT_TIME = new Date("2026-01-01T00:00:00.000Z");
 
-export function makePerson(overrides: Partial<SelectablePerson> = {}): SelectablePerson {
+export function makePerson(overrides: Partial<Person> = {}): Person {
   return {
     pubkey: "person-pubkey",
     name: "person",
@@ -75,7 +75,7 @@ type BaseOverrides = Partial<Pick<TaskPost,
 >> & {
   /** Test convenience: pass a whole Person and only its pubkey lands on the
    *  post (posts carry pubkey, not embedded author). Prefer `pubkey` directly. */
-  author?: SelectablePerson;
+  author?: Person;
 };
 
 type MakeTaskOverrides = BaseOverrides & Partial<Pick<TaskPost,

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { useFocusedTaskCollapsedSidebarPreview } from "./use-focused-task-collapsed-sidebar-preview";
 import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
 import type { Channel, Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 
 const channels: Channel[] = [
   makeChannel({ id: "general", name: "general" }),
@@ -11,7 +11,7 @@ const channels: Channel[] = [
   makeChannel({ id: "random", name: "random" }),
 ];
 
-const people: SelectablePerson[] = [
+const people: Person[] = [
   makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
   makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
   makePerson({ pubkey: "cara", name: "cara", displayName: "Cara" }),
@@ -49,7 +49,7 @@ function Harness({
 }: {
   focusedTaskId: string | null;
   sidebarChannels?: Channel[];
-  sidebarPeople?: SelectablePerson[];
+  sidebarPeople?: Person[];
 }) {
   const preview = useFocusedTaskCollapsedSidebarPreview({
     allTasks,

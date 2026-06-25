@@ -42,7 +42,7 @@ export function getPreferredMentionIdentifier(person: Person): string {
     return toUserFacingPubkey(normalizedId);
   }
 
-  return normalizedId || normalizeMentionIdentifier(person.name) || normalizeMentionIdentifier(person.displayName);
+  return normalizedId || normalizeMentionIdentifier(person.name ?? "") || normalizeMentionIdentifier(person.displayName ?? "");
 }
 
 export function getMentionAliases(person: Person): string[] {

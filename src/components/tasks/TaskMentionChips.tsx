@@ -68,7 +68,7 @@ export function TaskMentionChips({
   });
 
   resolvedMentions.sort((a, b) =>
-    a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+    (a.label ?? "").localeCompare(b.label ?? "", undefined, { sensitivity: "base" })
   );
 
   const chips = resolvedMentions.map(({ pubkey, clickablePerson, label }) => {

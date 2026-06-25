@@ -10,12 +10,8 @@ import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import type { Person } from "@/types/person";
 import { buildFallbackPersonFromPubkey } from "@/domain/people/resolve-person";
 
-// NDK's NDKUserProfile is our canonical parsed-kind-0 shape. We tack `pubkey`
-// on at the cache boundary so consumers don't need to track it separately.
-export type NostrProfile = NDKUserProfile & { pubkey: string };
-
 interface ProfileCache {
-  [pubkey: string]: NostrProfile;
+  [pubkey: string]: Person;
 }
 
 const EMPTY_PUBKEYS: string[] = [];
@@ -25,7 +21,14 @@ function normalizePubkey(pubkey: string): string {
   return pubkey.trim().toLowerCase();
 }
 
-export function parseEventToProfile(event: NostrEvent): NostrProfile {
+/**
+ * Parse a kind-0 event into the app's Person record via NDK's parser, keeping
+ * only the fields the app reads. NDK maps `display_name → displayName` and
+ * `image | picture → picture`; it throws on malformed content (→ pubkey-only
+ * Person) and stuffs a bloaty `profileEvent` we never read, both sidestepped by
+ * picking known fields.
+ */
+export function parseEventToProfile(event: NostrEvent): Person {
   let profile: NDKUserProfile;
   try {
     // NDK's parser expects an NDKEvent; ours are plain NostrEvents.
@@ -34,21 +37,24 @@ export function parseEventToProfile(event: NostrEvent): NostrProfile {
     const ndkEvent = new NDKEvent(undefined, event as never);
     profile = profileFromEvent(ndkEvent);
   } catch {
-    // NDK throws on malformed content JSON; surface as a pubkey-only profile.
     profile = {};
   }
-  // NDK stuffs JSON.stringify(rawEvent()) onto profile.profileEvent on every
-  // parse — we never read it and it would bloat every cache entry.
-  delete profile.profileEvent;
-  return { ...profile, pubkey: event.pubkey };
+  return {
+    pubkey: event.pubkey,
+    name: profile.name,
+    displayName: profile.displayName,
+    nip05: profile.nip05,
+    about: profile.about,
+    picture: profile.picture,
+  };
 }
 
 // Memoize parsed profile per event reference. Kind0Cache hands back stable
 // event objects until the next ingest, so the same event reference always
 // yields the same profile reference — keeps useSyncExternalStore snapshots
 // reference-stable.
-const profileByEvent = new WeakMap<NostrEvent, NostrProfile>();
-function eventToProfile(event: NostrEvent | undefined): NostrProfile | null {
+const profileByEvent = new WeakMap<NostrEvent, Person>();
+function eventToProfile(event: NostrEvent | undefined): Person | null {
   if (!event) return null;
   const existing = profileByEvent.get(event);
   if (existing) return existing;
@@ -78,21 +84,9 @@ function getCachedIndex(): Map<string, NostrEvent> {
   return cachedIndex;
 }
 
-export function getProfileSnapshot(pubkey: string | null): NostrProfile | null {
+export function getProfileSnapshot(pubkey: string | null): Person | null {
   if (!pubkey) return null;
   return eventToProfile(getCachedIndex().get(normalizePubkey(pubkey)));
-}
-
-function personFromProfile(pubkey: string, profile: NostrProfile | null): Person {
-  if (!profile) return buildFallbackPersonFromPubkey(pubkey);
-  return {
-    pubkey: profile.pubkey,
-    name: profile.name ?? "",
-    displayName: profile.displayName ?? "",
-    nip05: profile.nip05,
-    about: profile.about,
-    picture: profile.picture ?? "",
-  };
 }
 
 /**
@@ -102,7 +96,7 @@ function personFromProfile(pubkey: string, profile: NostrProfile | null): Person
  * render.
  */
 export function getResolvedPerson(pubkey: string): Person {
-  return personFromProfile(pubkey, getProfileSnapshot(pubkey));
+  return getProfileSnapshot(pubkey) ?? buildFallbackPersonFromPubkey(pubkey);
 }
 
 /**
@@ -112,13 +106,13 @@ export function getResolvedPerson(pubkey: string): Person {
  */
 export function useResolvedPerson(pubkey: string): Person {
   const profile = useCachedNostrProfile(pubkey);
-  return useMemo(() => personFromProfile(pubkey, profile), [pubkey, profile]);
+  return useMemo(() => profile ?? buildFallbackPersonFromPubkey(pubkey), [pubkey, profile]);
 }
 
 export function useNostrProfiles(pubkeys: string[]): {
   profiles: ProfileCache;
   loading: false;
-  getProfile: (pubkey: string) => NostrProfile | null;
+  getProfile: (pubkey: string) => Person | null;
 } {
   const version = useSyncExternalStore(
     subscribeToKind0Cache,
@@ -155,7 +149,7 @@ export function useNostrProfiles(pubkeys: string[]): {
   }, [version, normalizedPubkeys]);
 
   const getProfile = useCallback(
-    (pubkey: string): NostrProfile | null => profiles[pubkey] ?? getProfileSnapshot(pubkey),
+    (pubkey: string): Person | null => profiles[pubkey] ?? getProfileSnapshot(pubkey),
     [profiles],
   );
 
@@ -163,7 +157,7 @@ export function useNostrProfiles(pubkeys: string[]): {
 }
 
 export function useNostrProfile(pubkey: string | null): {
-  profile: NostrProfile | null;
+  profile: Person | null;
   loading: false;
 } {
   const profile = useCachedNostrProfile(pubkey);
@@ -174,7 +168,7 @@ export function useNostrProfile(pubkey: string | null): {
  * Cache-only profile lookup against the shared Kind 0 cache. The live kind 0
  * subscription is what fills this cache; nothing else writes to it.
  */
-export function useCachedNostrProfile(pubkey: string | null): NostrProfile | null {
+export function useCachedNostrProfile(pubkey: string | null): Person | null {
   const getSnapshot = useCallback(() => getProfileSnapshot(pubkey), [pubkey]);
   return useSyncExternalStore(subscribeToKind0Cache, getSnapshot, getSnapshot);
 }

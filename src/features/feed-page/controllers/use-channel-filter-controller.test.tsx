@@ -9,7 +9,7 @@ import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Channel, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ const channels: Channel[] = [
   makeChannel({ id: "ops", name: "ops" }),
 ];
 
-const peopleSeed: SelectablePerson[] = [
+const peopleSeed: Person[] = [
   makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
   makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
 ];
@@ -58,10 +58,10 @@ function Harness({
   startWithEmptyScope?: boolean;
   startWithEmptyPeople?: boolean;
 }) {
-  const [people, setPeople] = useState<SelectablePerson[]>(startWithEmptyPeople ? [] : peopleSeed);
+  const [people, setPeople] = useState<Person[]>(startWithEmptyPeople ? [] : peopleSeed);
   const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const [visibleChannels, setVisibleChannels] = useState<Channel[]>(startWithEmptyScope ? [] : channels);
-  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<SelectablePerson[]>(
+  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<Person[]>(
     startWithEmptyScope ? [] : peopleSeed
   );
   const postedTags = useTaskMutationStore((s) => s.postedTags);
@@ -94,7 +94,7 @@ function Harness({
       <button onClick={() => filters.toggleAllPeople()}>PersonClearAll</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagInclude", tag: "urgent" })}>HashtagInclude</button>
       <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralEverywhere</button>
-      <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAliceSelectablePerson</button>
+      <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAlicePerson</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", pubkey: "alice" })}>
         AuthorClick
       </button>
@@ -213,7 +213,7 @@ describe("useChannelFilterController", () => {
     fireEvent.click(screen.getByRole("button", { name: "PersonExclusive" }));
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
 
-    fireEvent.click(screen.getByRole("button", { name: "HideAliceSelectablePerson" }));
+    fireEvent.click(screen.getByRole("button", { name: "HideAlicePerson" }));
 
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
   });

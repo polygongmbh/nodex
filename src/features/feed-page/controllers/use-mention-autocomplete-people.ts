@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { NostrEvent } from "@/lib/nostr/types";
 import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 
@@ -20,7 +20,7 @@ interface UseMentionAutocompletePeopleOptions {
 export function useMentionAutocompletePeople({
   scopedPosts,
   cachedKind0Events,
-}: UseMentionAutocompletePeopleOptions): SelectablePerson[] {
+}: UseMentionAutocompletePeopleOptions): Person[] {
   return useMemo(() => {
     const visiblePubkeys = Array.from(
       new Set(

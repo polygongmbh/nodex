@@ -7,7 +7,7 @@ import {
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Relay, TaskCreatePayload, TaskCreateResult } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
@@ -76,7 +76,7 @@ const autocompleteChannels: Channel[] = [
   { id: "ops", name: "ops", filterState: "neutral" },
 ];
 
-const people: SelectablePerson[] = [
+const people: Person[] = [
   {
     pubkey: "e".repeat(64),
     name: "alice",

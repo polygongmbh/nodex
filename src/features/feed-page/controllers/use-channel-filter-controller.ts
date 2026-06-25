@@ -23,7 +23,7 @@ import {
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, QuickFilterState, Relay } from "@/types";
-import type { Person, SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { getResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
@@ -33,9 +33,9 @@ import type { Dispatch, SetStateAction } from "react";
 interface UseChannelFilterControllerOptions {
   relays: Relay[];
   channels: Channel[];
-  people: SelectablePerson[];
-  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
-  sidebarPeople: SelectablePerson[];
+  people: Person[];
+  setPeople: Dispatch<SetStateAction<Person[]>>;
+  sidebarPeople: Person[];
   hasLiveHydratedScope?: boolean;
   isHydrating?: boolean;
 }
@@ -129,20 +129,20 @@ export function useChannelFilterController({
     setSelectedPubkeys,
   });
 
-  const normalizeInteractivePerson = useCallback((person: Person): SelectablePerson => ({
+  const normalizeInteractivePerson = useCallback((person: Person): Person => ({
     ...person,
     picture: person.picture || "",
   }), []);
 
   // Ensure a person clicked from the feed (who may not be in the sidebar list
   // yet) exists in the iteration array, so a selected row can render for them.
-  const ensurePersonInList = useCallback((person: SelectablePerson) => {
+  const ensurePersonInList = useCallback((person: Person) => {
     setPeople((prev) =>
       prev.some((entry) => entry.pubkey === person.pubkey) ? prev : [...prev, person]
     );
   }, [setPeople]);
 
-  const queueMentionForPerson = useCallback((person: SelectablePerson) => {
+  const queueMentionForPerson = useCallback((person: Person) => {
     const mention = `@${getPreferredMentionIdentifier(person)}`;
     setMentionRequest({ mention, id: Date.now() });
     return mention;

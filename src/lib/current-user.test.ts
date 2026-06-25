@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { resolveCurrentUser } from "./current-user";
 
-const people: SelectablePerson[] = [
+const people: Person[] = [
   {
     pubkey: "pubkey-me",
     name: "me",

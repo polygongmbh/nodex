@@ -1,5 +1,5 @@
 import { Relay, Channel, Post, TaskStatus, formatLocalIsoDate, normalizeTaskState } from "@/types";
-import type { Person, SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { addDays, subDays } from "date-fns";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { DEMO_RELAY_URL } from "./basic-nostr-events";
@@ -35,7 +35,7 @@ export const mockChannels: Channel[] = [
 // Legacy alias
 export const mockTags = mockChannels;
 
-export const mockPeople: SelectablePerson[] = [
+export const mockPeople: Person[] = [
   { pubkey: MOCK_PUBKEYS.me, name: "me", displayName: "Local User" },
   { pubkey: MOCK_PUBKEYS.alice, name: "alice", displayName: "Alice Chen" },
   { pubkey: MOCK_PUBKEYS.bob, name: "bob", displayName: "Bob Smith" },

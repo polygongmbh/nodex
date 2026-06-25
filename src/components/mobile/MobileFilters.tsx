@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Relay, Channel } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import type { TFunction } from "i18next";
 interface MobileFiltersProps {
   relays?: Relay[];
   channels?: Channel[];
-  people?: SelectablePerson[];
+  people?: Person[];
   profileEditorOpenSignal?: number;
 }
 
@@ -94,7 +94,7 @@ export function MobileFilters({
     userPubkey: user?.pubkey,
     knownProfileNames: people
       .filter((person) => person.pubkey !== user?.pubkey)
-      .map((person) => person.name),
+      .map((person) => person.name ?? ""),
     t: translateMixedKey,
     updateUserProfile,
     publishEvent,

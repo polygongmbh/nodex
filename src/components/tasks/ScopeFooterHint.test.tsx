@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ScopeFooterHint } from "./ScopeFooterHint";
 import type { Channel, Relay, Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { makeTask, makePerson } from "@/test/fixtures";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
@@ -35,7 +35,7 @@ const channels: Channel[] = [
   { id: "frontend", name: "frontend", filterState: "excluded" },
 ];
 
-const people: SelectablePerson[] = [
+const people: Person[] = [
   makePerson({
     pubkey: "alice",
     name: "alice",
@@ -58,7 +58,7 @@ afterEach(() => {
 
 function renderHint(
   viewModel: { focusedTaskId?: string | null; allTasks?: Post[] } = {},
-  surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; selectedPubkeys?: Set<string>; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
+  surface: { relays?: Relay[]; channels?: Channel[]; people?: Person[]; selectedPubkeys?: Set<string>; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
   for (const post of viewModel.allTasks ?? []) {
     ingestPost({ post });

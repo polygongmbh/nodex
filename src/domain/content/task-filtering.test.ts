@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { Channel, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";
 
-const alice: SelectablePerson = {
+const alice: Person = {
   pubkey: "alice-id",
   name: "alice",
   displayName: "Alice",
 };
 
-const bob: SelectablePerson = {
+const bob: Person = {
   pubkey: "bob-id",
   name: "bob",
   displayName: "Bob",

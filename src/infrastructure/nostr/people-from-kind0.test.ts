@@ -43,7 +43,7 @@ describe("derivePeopleFromKind0Events", () => {
 
   it("falls back to a pubkey placeholder when no metadata exists", () => {
     const people = derivePeopleFromKind0Events([ALICE], [], []);
-    expect(people[0].name.startsWith("npub1")).toBe(true);
+    expect(people[0]?.name?.startsWith("npub1")).toBe(true);
   });
 });
 

@@ -47,7 +47,7 @@ import {
   getTaskPrimaryDate,
   getTaskStateUpdates,
 } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
 
 interface BaseViewStateInput {
@@ -120,7 +120,7 @@ export interface TaskViewSource {
   activeRelays: Relay[];
   channels: Channel[];
   neutralChannels: Channel[];
-  people: SelectablePerson[];
+  people: Person[];
   selectedPubkeys: Set<string>;
   quickFilters: ReturnType<typeof useFeedSurfaceState>["quickFilters"];
   channelMatchMode: ChannelMatchMode;

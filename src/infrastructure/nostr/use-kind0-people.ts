@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import {
   derivePeopleFromKind0Events,
   getKind0CacheVersion,
@@ -33,14 +33,14 @@ interface NostrUserLike {
 }
 
 interface UseKind0PeopleResult {
-  people: SelectablePerson[];
-  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
+  people: Person[];
+  setPeople: Dispatch<SetStateAction<Person[]>>;
   cachedKind0Events: NostrEvent[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
-function arePeopleListsEqual(previous: SelectablePerson[], next: SelectablePerson[]): boolean {
+function arePeopleListsEqual(previous: Person[], next: Person[]): boolean {
   if (previous.length !== next.length) return false;
   return previous.every((person, index) => {
     const candidate = next[index];
@@ -64,7 +64,7 @@ export function useKind0People(
     [selectedRelayUrls]
   );
   const selectedRelayScopeKey = normalizedSelectedRelayUrls.join("|");
-  const [people, setPeople] = useState<SelectablePerson[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
 
   // The cache's version counter is monotone — it bumps whenever the cache
   // changes — so we re-derive scope-filtered events on every change. The
@@ -129,7 +129,7 @@ export function useKind0People(
             nip05: user.profile?.nip05?.trim().toLowerCase(),
             picture: user.profile?.picture,
           },
-        ].sort((a, b) => a.displayName.localeCompare(b.displayName));
+        ].sort((a, b) => (a.displayName ?? "").localeCompare(b.displayName ?? ""));
       }
 
       return arePeopleListsEqual(prev, next) ? prev : next;

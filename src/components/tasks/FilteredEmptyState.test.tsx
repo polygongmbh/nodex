@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilteredEmptyState } from "./FilteredEmptyState";
 import type { Channel, Relay, Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { makeTask, makePerson } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
@@ -36,7 +36,7 @@ const channels: Channel[] = [
   { id: "frontend", name: "frontend", filterState: "excluded" },
 ];
 
-const people: SelectablePerson[] = [
+const people: Person[] = [
   makePerson({
     pubkey: "alice",
     name: "alice",
@@ -55,7 +55,7 @@ const PRIORITY_SCOPE = "at priority P4 or higher";
 
 function renderOverlay(
   viewModel: { isHydrating?: boolean; focusedTaskId?: string | null; allTasks?: Post[] } = {},
-  surface: { relays?: Relay[]; channels?: Channel[]; people?: SelectablePerson[]; selectedPubkeys?: Set<string>; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
+  surface: { relays?: Relay[]; channels?: Channel[]; people?: Person[]; selectedPubkeys?: Set<string>; quickFilters?: ReturnType<typeof makeQuickFilterState> } = {}
 ) {
   for (const post of viewModel.allTasks ?? []) {
     ingestPost({ post });
