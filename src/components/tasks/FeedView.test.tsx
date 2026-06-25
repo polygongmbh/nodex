@@ -538,9 +538,7 @@ describe("FeedView", () => {
   });
 
   it("shows the author display name and parenthesized handle inline on desktop", () => {
-    render(
-      <FeedView posts={tasks} focusedTaskId={null} />
-    );
+    renderFeedView({ posts: tasks });
 
     expect(screen.getByTestId("feed-author-primary-task-1")).toHaveTextContent("Alice Doe");
     const authorButton = screen.getByTestId("feed-author-primary-task-1").closest("button");
@@ -613,9 +611,7 @@ describe("FeedView", () => {
   });
 
   it("supports modifier-based author filtering from the author label", () => {
-    render(
-      <FeedView posts={tasks} focusedTaskId={null} />
-    );
+    renderFeedView({ posts: tasks });
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0], { ctrlKey: true });
 
@@ -626,9 +622,7 @@ describe("FeedView", () => {
   });
 
   it("does not focus the task on a plain author click", () => {
-    render(
-      <FeedView posts={tasks} focusedTaskId={null} />
-    );
+    renderFeedView({ posts: tasks });
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0]);
 
@@ -642,9 +636,7 @@ describe("FeedView", () => {
   });
 
   it("supports Ctrl/Cmd+Alt author shortcuts for filter and mention", () => {
-    render(
-      <FeedView posts={tasks} focusedTaskId={null} />
-    );
+    renderFeedView({ posts: tasks });
 
     fireEvent.click(screen.getAllByRole("button", { name: /^Alice Doe/ })[0], {
       ctrlKey: true,
@@ -821,9 +813,7 @@ describe("FeedView", () => {
       ],
     });
 
-    render(
-      <FeedView posts={[taskWithLongMultilineTitle]} focusedTaskId={null} />
-    );
+    renderFeedView({ posts: [taskWithLongMultilineTitle] });
 
     const titleButton = screen.getByRole("button", {
       name: /reconnect relays after resume infra and verify mobile queue drain/i,

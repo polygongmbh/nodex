@@ -32,7 +32,7 @@ const user = makeTestPerson({
 const baseTask: TaskPost = {
   id: "t1",
   kind: NostrEventKind.Task,
-  author: user,
+  pubkey: user.pubkey,
   content: "Task",
   tags: ["x"],
   relays: ["demo"],
@@ -50,17 +50,17 @@ describe("canUserUpdateTask", () => {
 
   it("allows task updates for unassigned tasks owned by another user", () => {
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
-    expect(canUserUpdateTask({ ...baseTask, author: otherAuthor }, user)).toBe(true);
+    expect(canUserUpdateTask({ ...baseTask, pubkey: otherAuthor.pubkey }, user)).toBe(true);
   });
 
   it("blocks task updates for assigned tasks when user is neither assignee nor creator", () => {
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
-    expect(canUserUpdateTask({ ...baseTask, author: otherAuthor, mentions: ["carol"] }, user)).toBe(false);
+    expect(canUserUpdateTask({ ...baseTask, pubkey: otherAuthor.pubkey, mentions: ["carol"] }, user)).toBe(false);
   });
 
   it("allows task creator to update assigned tasks", () => {
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
-    expect(canUserUpdateTask({ ...baseTask, author: otherAuthor, mentions: ["carol"] }, otherAuthor)).toBe(true);
+    expect(canUserUpdateTask({ ...baseTask, pubkey: otherAuthor.pubkey, mentions: ["carol"] }, otherAuthor)).toBe(true);
   });
 
   it("allows task creators to update assigned tasks when author and current user use hex and npub variants", () => {
@@ -73,7 +73,7 @@ describe("canUserUpdateTask", () => {
 
     expect(
       canUserUpdateTask(
-        { ...baseTask, author: taskAuthor, assigneePubkeys: ["a".repeat(64)] },
+        { ...baseTask, pubkey: taskAuthor.pubkey, assigneePubkeys: ["a".repeat(64)] },
         currentUser
       )
     ).toBe(true);
@@ -85,7 +85,7 @@ describe("canUserUpdateTask", () => {
       canUserUpdateTask(
         {
           ...baseTask,
-          author: otherAuthor,
+          pubkey: otherAuthor.pubkey,
           mentions: ["alice"],
           assigneePubkeys: ["other-pubkey"],
         },
@@ -100,7 +100,7 @@ describe("canUserUpdateTask", () => {
 
   it("uses content mentions when explicit mentions are not present", () => {
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "carol", nip05: "carol@example.com" });
-    expect(canUserUpdateTask({ ...baseTask, author: otherAuthor, content: "Sync with @bob" }, user)).toBe(
+    expect(canUserUpdateTask({ ...baseTask, pubkey: otherAuthor.pubkey, content: "Sync with @bob" }, user)).toBe(
       false
     );
   });
@@ -123,7 +123,7 @@ describe("canUserUpdateTask", () => {
 
   it("keeps status change permissions aligned with the shared task update rule", () => {
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
-    const task = { ...baseTask, author: otherAuthor };
+    const task = { ...baseTask, pubkey: otherAuthor.pubkey };
     expect(canUserChangeTaskStatus(task, user)).toBe(true);
     expect(canUserChangeTaskStatus({ ...task, mentions: ["carol"] }, user)).toBe(false);
   });
@@ -131,13 +131,13 @@ describe("canUserUpdateTask", () => {
   it("allows assigned-task edits for any signed-in user in everyone mode", () => {
     vi.stubEnv("VITE_TASK_EDIT_MODE", "everyone");
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
-    expect(canUserUpdateTask({ ...baseTask, author: otherAuthor, mentions: ["carol"] }, user)).toBe(true);
+    expect(canUserUpdateTask({ ...baseTask, pubkey: otherAuthor.pubkey, mentions: ["carol"] }, user)).toBe(true);
   });
 
   it("allows status changes for any signed-in user in everyone mode", () => {
     vi.stubEnv("VITE_TASK_EDIT_MODE", "everyone");
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
-    expect(canUserChangeTaskStatus({ ...baseTask, author: otherAuthor, mentions: ["carol"] }, user)).toBe(true);
+    expect(canUserChangeTaskStatus({ ...baseTask, pubkey: otherAuthor.pubkey, mentions: ["carol"] }, user)).toBe(true);
   });
 });
 
@@ -172,8 +172,10 @@ describe("getTaskStatusChangeBlockedReason", () => {
   it("returns assignee-focused message when task is assigned to another user", () => {
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
     const reason = getTaskStatusChangeBlockedReason(
-      { ...baseTask, mentions: ["bob"], author: otherAuthor },
-      user
+      { ...baseTask, mentions: ["bob"], pubkey: otherAuthor.pubkey },
+      user,
+      false,
+      [otherAuthor]
     );
     expect(reason).toContain("assigned to");
     expect(reason).toContain("bob@example.com");
@@ -183,22 +185,22 @@ describe("getTaskStatusChangeBlockedReason", () => {
   it("uses the shared compact pubkey formatter in assignee-focused messages", () => {
     const pubkey = "f".repeat(64);
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
-    const reason = getTaskStatusChangeBlockedReason({ ...baseTask, author: otherAuthor, mentions: [pubkey] }, user);
+    const reason = getTaskStatusChangeBlockedReason({ ...baseTask, pubkey: otherAuthor.pubkey, mentions: [pubkey] }, user);
     expect(reason).toContain("npub1");
     expect(reason).toContain("…");
   });
 
   it("returns undefined for signed-in users on unassigned tasks regardless of creator", () => {
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
-    const reason = getTaskStatusChangeBlockedReason({ ...baseTask, author: otherAuthor }, user);
+    const reason = getTaskStatusChangeBlockedReason({ ...baseTask, pubkey: otherAuthor.pubkey }, user);
     expect(reason).toBeUndefined();
   });
 
   it("enriches owner identity from known people context", () => {
-    const sparseAuthor = makeTestPerson({ pubkey: "pubkey-123", name: "pubkey123", displayName: "pubkey-123", nip05: undefined });
-    const knownPerson = makeTestPerson({ pubkey: sparseAuthor.pubkey, name: "ryan", displayName: "Ryan", nip05: "ryan@example.com" });
+    const sparseAuthorPubkey = "pubkey-123";
+    const knownPerson = makeTestPerson({ pubkey: sparseAuthorPubkey, name: "ryan", displayName: "Ryan", nip05: "ryan@example.com" });
     const reason = getTaskStatusChangeBlockedReason(
-      { ...baseTask, author: sparseAuthor, mentions: [sparseAuthor.pubkey] },
+      { ...baseTask, pubkey: sparseAuthorPubkey, mentions: [sparseAuthorPubkey] },
       user,
       false,
       [knownPerson]
@@ -217,7 +219,7 @@ describe("getTaskStatusChangeBlockedReason", () => {
     const otherAuthor = makeTestPerson({ pubkey: "other-user", name: "bob", nip05: "bob@example.com" });
     expect(
       getTaskStatusChangeBlockedReason(
-        { ...baseTask, author: otherAuthor, mentions: ["carol"] },
+        { ...baseTask, pubkey: otherAuthor.pubkey, mentions: ["carol"] },
         user
       )
     ).toBeUndefined();

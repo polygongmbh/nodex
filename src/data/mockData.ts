@@ -94,7 +94,7 @@ function createTask(
   return {
     id,
     kind: NostrEventKind.Task,
-    author,
+    pubkey: author.pubkey,
     content,
     tags,
     relays: ["demo"],
@@ -138,7 +138,7 @@ function createComment(
   return {
     id: generateMockEventId(),
     kind: NostrEventKind.TextNote,
-    author,
+    pubkey: author.pubkey,
     content,
     tags,
     relays: ["demo"],

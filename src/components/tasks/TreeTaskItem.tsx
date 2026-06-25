@@ -24,6 +24,7 @@ import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
+import { buildFallbackPersonFromPubkey } from "@/domain/people/resolve-person";
 import { TASK_CHIP_STYLES, TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
 import { getTaskDisabledClasses } from "@/lib/task-style";
@@ -121,19 +122,20 @@ export function TreeTaskItem({
   const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
-  const isPubkey = task.author.pubkey.length === 64 && /^[a-f0-9]+$/.test(task.author.pubkey);
-  const nostrProfile = isPubkey ? authorProfiles?.[task.author.pubkey] : undefined;
-  
-  // Use Nostr profile if available, fallback to task author
-  const authorName = nostrProfile?.displayName || nostrProfile?.name || task.author.displayName;
-  const authorAvatar = nostrProfile?.picture || task.author.avatar;
+  const isPubkey = task.pubkey.length === 64 && /^[a-f0-9]+$/.test(task.pubkey);
+  const nostrProfile = isPubkey ? authorProfiles?.[task.pubkey] : undefined;
+
+  // Use Nostr profile if available, fallback to a pubkey-derived synthetic person
+  const fallbackAuthor = buildFallbackPersonFromPubkey(task.pubkey);
+  const authorName = nostrProfile?.displayName || nostrProfile?.name || fallbackAuthor.displayName;
+  const authorAvatar = nostrProfile?.picture || fallbackAuthor.avatar;
   const authorNip05 = nostrProfile?.nip05;
   const authorPerson: Person = {
-    ...task.author,
-    name: nostrProfile?.name || task.author.name,
+    ...fallbackAuthor,
+    name: nostrProfile?.name || fallbackAuthor.name,
     displayName: authorName,
     avatar: authorAvatar,
-    nip05: authorNip05 || task.author.nip05,
+    nip05: authorNip05 || fallbackAuthor.nip05,
   };
   const dispatchHashtagInclude = (tag: string) => {
     void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });

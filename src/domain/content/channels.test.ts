@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { deriveChannels } from "./channels";
 
 function post(tags: string[], pubkey?: string) {
-  return { tags, author: pubkey ? { pubkey } : undefined };
+  return { tags, pubkey: pubkey ?? "" };
 }
 
 describe("deriveChannels", () => {

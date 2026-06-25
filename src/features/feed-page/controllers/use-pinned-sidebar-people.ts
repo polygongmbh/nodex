@@ -33,7 +33,7 @@ export function usePinnedSidebarPeople({
   const personRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const task of allTasks) {
-      const authorId = normalizePersonId(task.author?.pubkey || "");
+      const authorId = normalizePersonId(task.pubkey);
       if (!authorId) continue;
       let relays = map.get(authorId);
       if (!relays) {

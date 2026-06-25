@@ -7,7 +7,7 @@ interface DeriveChannelsOptions {
   userPubkey?: string;
 }
 
-type ChannelPost = Pick<Post, "tags"> & { author?: Pick<Post["author"], "pubkey"> };
+type ChannelPost = Pick<Post, "tags" | "pubkey">;
 
 export function deriveChannels(
   posts: ChannelPost[],
@@ -21,7 +21,7 @@ export function deriveChannels(
   const normalizedUserPubkey = options.userPubkey?.trim().toLowerCase();
 
   posts.forEach((post) => {
-    const authorPubkey = post.author?.pubkey?.trim().toLowerCase();
+    const authorPubkey = post.pubkey.trim().toLowerCase();
     const isUserAuthored =
       Boolean(normalizedUserPubkey) && authorPubkey === normalizedUserPubkey;
     // Posts can repeat tags; dedupe per-post so a single post can't double-count

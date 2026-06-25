@@ -8,7 +8,7 @@ describe("getListingReplaceableKey", () => {
       {
         id: "event-id-1",
         kind: NostrEventKind.ClassifiedListing,
-        author: { pubkey: "A".repeat(64) },
+        pubkey: "A".repeat(64),
         nip99: { identifier: "listing-123" },
       },
       NostrEventKind.ClassifiedListing
@@ -21,7 +21,7 @@ describe("getListingReplaceableKey", () => {
       {
         id: "legacy-event-id",
         kind: NostrEventKind.ClassifiedListing,
-        author: { pubkey: "b".repeat(64) },
+        pubkey: "b".repeat(64),
         nip99: {},
       },
       NostrEventKind.ClassifiedListing
@@ -34,7 +34,7 @@ describe("getListingReplaceableKey", () => {
       {
         id: "event-id-2",
         kind: NostrEventKind.Task,
-        author: { pubkey: "c".repeat(64) },
+        pubkey: "c".repeat(64),
         nip99: { identifier: "listing-456" },
       },
       NostrEventKind.ClassifiedListing

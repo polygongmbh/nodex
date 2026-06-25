@@ -6,7 +6,7 @@ import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-
 
 interface UseMentionAutocompletePeopleOptions {
   /** Posts visible in the current relay scope; their authors join the autocomplete set. */
-  scopedPosts: Pick<Post, "author">[];
+  scopedPosts: Pick<Post, "pubkey">[];
   /** All known kind:0 profile events (resolved labels, NIP-05, etc). */
   cachedKind0Events: NostrEvent[];
 }
@@ -25,7 +25,7 @@ export function useMentionAutocompletePeople({
     const visiblePubkeys = Array.from(
       new Set(
         [
-          ...scopedPosts.map((post) => post.author?.pubkey?.trim().toLowerCase()),
+          ...scopedPosts.map((post) => post.pubkey.trim().toLowerCase()),
           ...cachedKind0Events.map((event) => event.pubkey?.trim().toLowerCase()),
         ].filter((pubkey): pubkey is string => Boolean(pubkey)),
       ),

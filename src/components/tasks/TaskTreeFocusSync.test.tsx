@@ -5,10 +5,9 @@ import { describe, expect, it, vi } from "vitest";
 import { TaskTree } from "./TaskTree";
 import { TaskViewStatusRow } from "./TaskViewStatusRow";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import type { Channel, Relay, Post, TaskPost } from "@/types";
+import type { Channel, Relay, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SelectablePerson } from "@/types/person";
-import { makePerson } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
@@ -28,7 +27,7 @@ const people: SelectablePerson[] = [];
 const rootTask: TaskPost = {
   id: "root",
   kind: NostrEventKind.Task,
-  author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
+  pubkey: "me",
   content: "Root task",
   tags: ["general"],
   relays: ["demo"],
@@ -57,7 +56,7 @@ const doneGrandchildTask: TaskPost = {
       id: "done-grandchild-init",
       state: { status: "done" },
       timestamp: rootTask.timestamp,
-      authorPubkey: rootTask.author.pubkey,
+      authorPubkey: rootTask.pubkey,
     },
   ],
 };

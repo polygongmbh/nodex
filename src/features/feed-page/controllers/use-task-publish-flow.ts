@@ -582,7 +582,7 @@ export function useTaskPublishFlow({
     };
 
     const baseFields = {
-      author: taskAuthor,
+      pubkey: taskAuthor.pubkey,
       content,
       tags: resolvedSubmissionTags,
       relays: effectiveRelayIds.length > 0
@@ -972,7 +972,7 @@ export function useTaskPublishFlow({
     if (guardInteraction("modify")) return false;
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask) return false;
-    const ownerPubkey = existingTask.author.pubkey.trim().toLowerCase();
+    const ownerPubkey = existingTask.pubkey.trim().toLowerCase();
     const userPubkey = currentUser?.pubkey?.trim().toLowerCase() || "";
     if (!userPubkey || userPubkey !== ownerPubkey) {
       notifyStatusRestricted();
@@ -982,7 +982,7 @@ export function useTaskPublishFlow({
     const deletionTags = buildDeletionTags({
       id: taskId,
       kind: existingTask.kind,
-      pubkey: existingTask.author.pubkey,
+      pubkey: existingTask.pubkey,
       dTag: (existingTask as { dTag?: string }).dTag,
     });
     suppressFailedPublishEvent(taskId);
@@ -1016,7 +1016,7 @@ export function useTaskPublishFlow({
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask) return;
-    const ownerPubkey = existingTask.author.pubkey.trim().toLowerCase();
+    const ownerPubkey = existingTask.pubkey.trim().toLowerCase();
     const userPubkey = currentUser?.pubkey?.trim().toLowerCase() || "";
     if (!userPubkey || userPubkey !== ownerPubkey) {
       notifyStatusRestricted();

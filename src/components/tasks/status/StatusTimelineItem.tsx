@@ -20,6 +20,7 @@ import { InteractivePersonName } from "@/components/people/InteractivePersonName
 import type { Post } from "@/types";
 import { getTaskState } from "@/types";
 import type { Person } from "@/types/person";
+import { resolvePersonForPubkey } from "@/domain/people/resolve-person";
 
 interface StatusTimelineItemProps {
   task: Post;
@@ -32,7 +33,7 @@ export function StatusTimelineItem({ task, people }: StatusTimelineItemProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { peopleById } = useFeedPersonLookup();
   const currentUser = useCurrentUser();
-  const resolvedAuthor = peopleById.get(task.author.pubkey.toLowerCase()) ?? task.author;
+  const resolvedAuthor = resolvePersonForPubkey(task.pubkey, peopleById);
   const isComment = isCommentPost(task);
   const isEvent = isCalendarEventPost(task);
   const isTerminal = isTaskTerminal(getTaskState(task));

@@ -45,9 +45,13 @@ export function makeChannel(overrides: Partial<Channel> = {}): Channel {
  * or ListingPost — the result type widens to Post in those cases.
  */
 type BaseOverrides = Partial<Pick<TaskPost,
-  | "id" | "author" | "content" | "tags" | "relays" | "timestamp"
+  | "id" | "pubkey" | "content" | "tags" | "relays" | "timestamp"
   | "lastEditedAt" | "parentId" | "mentions" | "attachments" | "locationGeohash"
->>;
+>> & {
+  /** Test convenience: pass a whole Person and only its pubkey lands on the
+   *  post (posts carry pubkey, not embedded author). Prefer `pubkey` directly. */
+  author?: SelectablePerson;
+};
 
 type MakeTaskOverrides = BaseOverrides & Partial<Pick<TaskPost,
   | "stateUpdates" | "dates" | "assigneePubkeys" | "priority"
@@ -68,17 +72,17 @@ export function withTaskState(task: TaskPost, state: TaskState | TaskStatus): Ta
         id: `synthetic-${task.id}`,
         state: normalizeTaskState(state),
         timestamp: task.timestamp,
-        authorPubkey: task.author.pubkey,
+        authorPubkey: task.pubkey,
       },
     ],
   };
 }
 
 function buildBase(overrides: BaseOverrides) {
-  const author = overrides.author ?? makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
+  const pubkey = overrides.pubkey ?? overrides.author?.pubkey ?? "author-pubkey";
   return {
     id: overrides.id ?? "task-1",
-    author,
+    pubkey,
     content: overrides.content ?? "Task content #general",
     tags: overrides.tags ?? ["general"],
     relays: overrides.relays ?? ["demo"],
@@ -107,7 +111,7 @@ export function makeTask(overrides: MakeTaskOverrides = {}): TaskPost {
             id: base.id,
             state: normalizedShorthand,
             timestamp: base.timestamp,
-            authorPubkey: base.author.pubkey,
+            authorPubkey: base.pubkey,
           },
         ]
       : stateUpdates ?? [];

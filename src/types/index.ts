@@ -1,5 +1,4 @@
 import { endOfDay } from "date-fns";
-import type { Person } from "./person";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { ComposerContent, DraftTagging, SubmitTagging } from "./composer-base";
 
@@ -263,7 +262,9 @@ export interface TaskReactions {
  */
 export interface BasePost {
   id: string;
-  author: Person;
+  /** Event author pubkey, normalized lowercase 64-char hex. Profile/display
+   *  metadata is resolved separately from kind-0 people data — never embedded. */
+  pubkey: string;
   content: string;
   tags: string[];
   relays: string[];

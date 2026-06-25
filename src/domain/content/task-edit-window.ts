@@ -20,7 +20,7 @@ export interface MutationGate {
 }
 
 export interface CanAuthorMutateInput {
-  task: Pick<Post, "author" | "timestamp">;
+  task: Pick<Post, "pubkey" | "timestamp">;
   currentUserPubkey?: string;
   hasChildren: boolean;
   now?: Date;
@@ -38,7 +38,7 @@ export function canAuthorMutate(input: CanAuthorMutateInput): MutationGate {
   if (editWindowMinutes <= 0) return DENIED("disabled");
 
   const userPubkey = input.currentUserPubkey?.trim().toLowerCase() || "";
-  const ownerPubkey = input.task.author.pubkey.trim().toLowerCase();
+  const ownerPubkey = input.task.pubkey.trim().toLowerCase();
   if (!userPubkey || userPubkey !== ownerPubkey) return DENIED("not-owner");
 
   if (input.hasChildren) return DENIED("has-children");

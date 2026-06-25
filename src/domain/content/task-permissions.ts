@@ -3,6 +3,7 @@ import type { Post } from "@/types";
 import { extractMentionIdentifiersFromContent, formatMentionIdentifierForDisplay } from "@/lib/mentions";
 import { hexPubkeyToNpub, npubToHexPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { formatAuthorMetaLabel, type Person } from "@/types/person";
+import { resolvePersonForPubkey } from "@/domain/people/resolve-person";
 import { resolveTaskEditMode } from "./task-permissions-policy";
 
 function getTaskAssignees(task: Post): string[] {
@@ -75,15 +76,14 @@ function getNormalizedUserIdentifiers(user?: Person): Set<string> {
 function isTaskOwnedByUser(task: Post, currentUser?: Person): boolean {
   const userIdentifiers = getNormalizedUserIdentifiers(currentUser);
   if (userIdentifiers.size === 0) return false;
-  const ownerIdentifiers = [task.author.pubkey, task.author.name, task.author.displayName, task.author.nip05]
-    .flatMap((value) => getIdentityVariants(value));
-  return ownerIdentifiers.some((value) => userIdentifiers.has(value));
+  // Ownership is pubkey identity only — names/nip05 affect labels, not authority.
+  return getIdentityVariants(task.pubkey).some((value) => userIdentifiers.has(value));
 }
 
 function isTaskOwnedByPubkey(task: Post, pubkey?: string): boolean {
   const normalizedPubkey = normalizeIdentity(pubkey);
   if (!normalizedPubkey) return false;
-  return normalizeIdentity(task.author.pubkey) === normalizedPubkey;
+  return normalizeIdentity(task.pubkey) === normalizedPubkey;
 }
 
 function areAssignedTaskEditsOpenToEveryone(): boolean {
@@ -148,7 +148,7 @@ export function getTaskStatusChangeBlockedReason(
   const assignees = getTaskAssignees(task);
   if (assignees.length > 0) {
     const assignee = assignees[0];
-    const enrichedOwner = findMatchingPerson(task.author.pubkey, knownPeople) || task.author;
+    const enrichedOwner = resolvePersonForPubkey(task.pubkey, knownPeople);
     const matchedPerson = findMatchingPerson(assignee, [enrichedOwner, ...knownPeople]);
     const assigneeLabel = matchedPerson ? formatAuthorMetaLabel(matchedPerson) : formatPrincipalLabel(assignee);
     return `Editing is not possible because this task is assigned to ${assigneeLabel}. Only tagged assignees and the creator can update it.`;

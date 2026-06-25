@@ -98,7 +98,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const taskCommands = useFeedTaskCommands();
   const hasAnyReaction = Object.keys(reactions?.totals ?? {}).length > 0;
   const handleMenuReact = (emoji: string) => {
-    void publishReaction({ id: task.id, kind: task.kind, pubkey: task.author.pubkey }, emoji);
+    void publishReaction({ id: task.id, kind: task.kind, pubkey: task.pubkey }, emoji);
   };
   const handleMenuUnreact = (emoji: string) => {
     void publishUnreact(task.id, emoji);
@@ -121,7 +121,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const canUpdateListingStatus =
     !isInteractionBlocked &&
     isListing &&
-    Boolean(currentUser?.pubkey && currentUser.pubkey.toLowerCase() === task.author.pubkey.toLowerCase());
+    Boolean(currentUser?.pubkey && currentUser.pubkey.toLowerCase() === task.pubkey.toLowerCase());
   const { standaloneEmbedUrls, mediaCaptionByUrl, attachmentsWithoutInlineEmbeds } =
     useTaskMediaAttachments(task);
   const linkedContent = useMemo(

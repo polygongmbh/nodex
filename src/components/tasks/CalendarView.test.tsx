@@ -54,7 +54,7 @@ describe("CalendarView responsiveness", () => {
     const root: TaskPost = {
       id: "root",
       kind: NostrEventKind.Task,
-      author: people[0],
+      pubkey: people[0].pubkey,
       content: "Root task #general",
       tags: ["general"],
       relays: ["demo"],

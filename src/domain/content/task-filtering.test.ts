@@ -20,7 +20,7 @@ function buildTask(overrides: Partial<TaskPost> = {}): TaskPost {
   return {
     id: "task-1",
     kind: NostrEventKind.Task,
-    author: alice,
+    pubkey: alice.pubkey,
     content: "hello #general",
     tags: ["general"],
     relays: ["r1"],
@@ -142,9 +142,9 @@ describe("filterTasks", () => {
 
   it("matches selected people by author id or mentions", () => {
     const tasks = [
-      buildTask({ id: "author", author: bob }),
-      buildTask({ id: "mention", author: alice, content: "ping @bob" }),
-      buildTask({ id: "other", author: alice, content: "plain text" }),
+      buildTask({ id: "author", pubkey: bob.pubkey }),
+      buildTask({ id: "mention", pubkey: alice.pubkey, content: "ping @bob" }),
+      buildTask({ id: "other", pubkey: alice.pubkey, content: "plain text" }),
     ];
 
     const result = filterTasks({
@@ -184,10 +184,10 @@ describe("filterTasks", () => {
 
   it("can prefilter by relay and people without applying channel filters", () => {
     const tasks = [
-      buildTask({ id: "relay-one-general", relays: ["r1"], author: bob, tags: ["general"] }),
-      buildTask({ id: "relay-one-ops", relays: ["r1"], author: bob, tags: ["ops"] }),
-      buildTask({ id: "relay-two-general", relays: ["r2"], author: bob, tags: ["general"] }),
-      buildTask({ id: "relay-one-other-author", relays: ["r1"], author: alice, tags: ["general"] }),
+      buildTask({ id: "relay-one-general", relays: ["r1"], pubkey: bob.pubkey, tags: ["general"] }),
+      buildTask({ id: "relay-one-ops", relays: ["r1"], pubkey: bob.pubkey, tags: ["ops"] }),
+      buildTask({ id: "relay-two-general", relays: ["r2"], pubkey: bob.pubkey, tags: ["general"] }),
+      buildTask({ id: "relay-one-other-author", relays: ["r1"], pubkey: alice.pubkey, tags: ["general"] }),
     ];
 
     const result = filterTasksByRelayAndPeople({

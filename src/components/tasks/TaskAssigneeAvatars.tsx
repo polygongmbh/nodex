@@ -43,7 +43,7 @@ export function TaskAssigneeAvatars({
 }: TaskAssigneeAvatarsProps) {
   const isMobile = useIsMobile();
   const assigneePubkeys = getTaskAssigneePubkeys(task);
-  const authorPubkey = task.author?.pubkey;
+  const authorPubkey = task.pubkey;
   const pubkeys = useMemo(() => {
     const list = (assigneePubkeys ?? []).filter((p) => PUBKEY_PATTERN.test(p));
     if (list.length > 0) return list;
@@ -75,7 +75,6 @@ export function TaskAssigneeAvatars({
           profile?.name ||
           matchedPerson?.displayName ||
           matchedPerson?.name ||
-          (pubkey === task.author?.pubkey ? task.author.displayName || task.author.name : undefined) ||
           fallbackPerson.displayName;
 
         return (

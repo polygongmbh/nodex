@@ -14,15 +14,15 @@ function makeTask(overrides: MakeTaskOverrides = {}): TaskPost {
   const { state, stateUpdates, ...rest } = overrides;
   const id = rest.id ?? "task-1";
   const timestamp = rest.timestamp ?? new Date("2026-02-17T10:00:00.000Z");
-  const author = rest.author ?? { pubkey: "alice", name: "Alice", displayName: "Alice" };
+  const pubkey = rest.pubkey ?? "alice";
   const resolvedStateUpdates: TaskStateUpdate[] =
     state !== undefined
-      ? [{ id, state: normalizeTaskState(state), timestamp, authorPubkey: author.pubkey }]
+      ? [{ id, state: normalizeTaskState(state), timestamp, authorPubkey: pubkey }]
       : stateUpdates ?? [];
   return {
     id,
     kind: NostrEventKind.Task,
-    author,
+    pubkey,
     content: "Hello",
     tags: ["work"],
     relays: ["relay-a"],

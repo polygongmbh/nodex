@@ -14,7 +14,7 @@ function makeTask(overrides: Partial<TaskPost> = {}): TaskPost {
   return {
     id: "task-1",
     kind: NostrEventKind.Task,
-    author: { pubkey: OWNER, name: OWNER, displayName: OWNER },
+    pubkey: OWNER,
     content: "Do the thing",
     tags: [],
     relays: [],

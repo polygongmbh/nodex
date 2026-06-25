@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { useScrollCapture } from "@/features/feed-page/views/scroll-capture-context";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
+import { resolvePersonForPubkey } from "@/domain/people/resolve-person";
 import { makeIsProject } from "@/domain/content/task-projects";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskLocalDate, getTaskTimeOfDay, getTaskDateTypeLabel } from "@/lib/task-dates";
@@ -420,9 +421,7 @@ export function FeedView({
   const renderFeedEntry = (entry: FeedEntry) => {
     if (entry.type === "state-update" && entry.update) {
       const { task, update } = entry;
-      const resolvedUpdateAuthor =
-        peopleById.get(update.authorPubkey.toLowerCase()) ||
-        task.author;
+      const resolvedUpdateAuthor = resolvePersonForPubkey(update.authorPubkey, peopleById);
       const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
@@ -481,9 +480,7 @@ export function FeedView({
     const task = entry.task;
     const breadcrumb = getParentBreadcrumb(task);
     const isKeyboardFocused = keyboardFocusedTaskId === task.id;
-    const resolvedAuthor =
-      peopleById.get(task.author.pubkey.toLowerCase()) ??
-      task.author;
+    const resolvedAuthor = resolvePersonForPubkey(task.pubkey, peopleById);
     const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
 

@@ -82,7 +82,7 @@ export function CalendarTaskCard({
     focusOnQuickToggle: hasChildren,
   });
 
-  const authorColor = getAuthorColor(task.author);
+  const authorColor = getAuthorColor(task.pubkey);
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
   const taskState = getTaskState(task);
   const taskPriority = getTaskPriority(task);

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { Post, TaskPost } from "@/types";
-import { makePerson } from "@/test/fixtures";
+import type { TaskPost } from "@/types";
 import {
   applyDateUpdate,
   applyDeletion,
@@ -15,11 +14,11 @@ import {
 } from "./posts-store";
 
 function makeTaskPost(overrides: Partial<TaskPost> = {}): TaskPost {
-  const author = overrides.author ?? makePerson({ pubkey: "a".repeat(64) });
+  const pubkey = overrides.pubkey ?? "a".repeat(64);
   return {
     id: "task-1",
     kind: NostrEventKind.Task,
-    author,
+    pubkey,
     content: "#ops do the thing",
     tags: ["ops"],
     relays: ["relay-a"],
@@ -44,13 +43,13 @@ describe("posts-store", () => {
   });
 
   it("folds a state update into an existing Post", () => {
-    const author = makePerson({ pubkey: "a".repeat(64) });
-    ingestPost({ post: makeTaskPost({ id: "task-a", author }) });
+    const pubkey = "a".repeat(64);
+    ingestPost({ post: makeTaskPost({ id: "task-a", pubkey }) });
     applyStateUpdate({
       targetId: "task-a",
       updateId: "state-1",
       newState: { status: "done" },
-      authorPubkey: author.pubkey,
+      authorPubkey: pubkey,
       timestampMs: Date.now(),
     });
     const [post] = getPosts() as TaskPost[];
@@ -59,38 +58,38 @@ describe("posts-store", () => {
   });
 
   it("buffers a state update arriving before its target Post and replays on ingest", () => {
-    const author = makePerson({ pubkey: "a".repeat(64) });
+    const pubkey = "a".repeat(64);
     applyStateUpdate({
       targetId: "task-late",
       updateId: "state-1",
       newState: { status: "done" },
-      authorPubkey: author.pubkey,
+      authorPubkey: pubkey,
       timestampMs: Date.now(),
     });
 
     expect(getPosts()).toHaveLength(0);
 
-    ingestPost({ post: makeTaskPost({ id: "task-late", author }) });
+    ingestPost({ post: makeTaskPost({ id: "task-late", pubkey }) });
     const [post] = getPosts() as TaskPost[];
     expect(post.stateUpdates).toHaveLength(1);
     expect(post.stateUpdates[0].state).toEqual({ status: "done" });
   });
 
   it("applies a deletion targeting an existing Post and rejects subsequent re-ingest by the same author", () => {
-    const author = makePerson({ pubkey: "a".repeat(64) });
-    ingestPost({ post: makeTaskPost({ id: "task-doomed", author }) });
-    applyDeletion({ targetIds: ["task-doomed"], byPubkey: author.pubkey });
+    const pubkey = "a".repeat(64);
+    ingestPost({ post: makeTaskPost({ id: "task-doomed", pubkey }) });
+    applyDeletion({ targetIds: ["task-doomed"], byPubkey: pubkey });
 
     expect(getPosts()).toHaveLength(0);
 
-    const replayAccepted = ingestPost({ post: makeTaskPost({ id: "task-doomed", author }) });
+    const replayAccepted = ingestPost({ post: makeTaskPost({ id: "task-doomed", pubkey }) });
     expect(replayAccepted).toBe(false);
     expect(getPosts()).toHaveLength(0);
   });
 
   it("ignores a deletion from a different author than the post owner", () => {
-    const author = makePerson({ pubkey: "a".repeat(64) });
-    ingestPost({ post: makeTaskPost({ id: "task-x", author }) });
+    const pubkey = "a".repeat(64);
+    ingestPost({ post: makeTaskPost({ id: "task-x", pubkey }) });
     applyDeletion({ targetIds: ["task-x"], byPubkey: "b".repeat(64) });
     expect(getPosts().map((p) => p.id)).toEqual(["task-x"]);
   });
@@ -107,21 +106,21 @@ describe("posts-store", () => {
   });
 
   it("clears the replaceable-key mapping when a Post is deleted, allowing a fresh re-publish", () => {
-    const author = makePerson({ pubkey: "a".repeat(64) });
+    const pubkey = "a".repeat(64);
     const key = "31923:author:slug";
     ingestPost({
-      post: makeTaskPost({ id: "cal-1", author, timestamp: new Date("2026-04-01") }),
+      post: makeTaskPost({ id: "cal-1", pubkey, timestamp: new Date("2026-04-01") }),
       replaceableKey: key,
     });
     expect(getPostIdByReplaceableKey(key)).toBe("cal-1");
 
-    applyDeletion({ targetIds: ["cal-1"], byPubkey: author.pubkey });
+    applyDeletion({ targetIds: ["cal-1"], byPubkey: pubkey });
     expect(getPostIdByReplaceableKey(key)).toBeUndefined();
 
     // Fresh re-publish with same address, different id and newer timestamp
     // — must be accepted (no stale id pinning the address).
     const accepted = ingestPost({
-      post: makeTaskPost({ id: "cal-2", author, timestamp: new Date("2026-05-01") }),
+      post: makeTaskPost({ id: "cal-2", pubkey, timestamp: new Date("2026-05-01") }),
       replaceableKey: key,
     });
     expect(accepted).toBe(true);
@@ -130,15 +129,15 @@ describe("posts-store", () => {
   });
 
   it("replaces a replaceable Post when a newer one with the same key arrives", () => {
-    const author = makePerson({ pubkey: "a".repeat(64) });
+    const pubkey = "a".repeat(64);
     const oldPost = makeTaskPost({
       id: "listing-old",
-      author,
+      pubkey,
       timestamp: new Date("2026-04-01"),
     });
     const newPost = makeTaskPost({
       id: "listing-new",
-      author,
+      pubkey,
       timestamp: new Date("2026-05-01"),
     });
     ingestPost({ post: oldPost, replaceableKey: "30402:author:slug" });
@@ -147,11 +146,11 @@ describe("posts-store", () => {
   });
 
   it("applies a priority update incrementally", () => {
-    const author = makePerson({ pubkey: "a".repeat(64) });
-    ingestPost({ post: makeTaskPost({ id: "task-prio", author }) });
+    const pubkey = "a".repeat(64);
+    ingestPost({ post: makeTaskPost({ id: "task-prio", pubkey }) });
     applyPriorityUpdate({
       targetId: "task-prio",
-      authorPubkey: author.pubkey,
+      authorPubkey: pubkey,
       priority: 7,
       timestampMs: Date.now(),
     });
@@ -160,11 +159,11 @@ describe("posts-store", () => {
   });
 
   it("applies a date update incrementally", () => {
-    const author = makePerson({ pubkey: "a".repeat(64) });
-    ingestPost({ post: makeTaskPost({ id: "task-date", author }) });
+    const pubkey = "a".repeat(64);
+    ingestPost({ post: makeTaskPost({ id: "task-date", pubkey }) });
     applyDateUpdate({
       targetId: "task-date",
-      authorPubkey: author.pubkey,
+      authorPubkey: pubkey,
       entry: { date: "2026-06-15", type: "due" },
       timestampMs: Date.now(),
     });

@@ -30,7 +30,7 @@ export function areTaskFieldsEqual(a: Post, b: Post): boolean {
   if (a.parentId !== b.parentId) return false;
   if (getTaskPriority(a) !== getTaskPriority(b)) return false;
   if (!areTaskDateListsEqual(isTaskPost(a) ? a.dates : undefined, isTaskPost(b) ? b.dates : undefined)) return false;
-  if (a.author.pubkey !== b.author.pubkey) return false;
+  if (a.pubkey !== b.pubkey) return false;
   if (!areStateUpdateListsEqual(getTaskStateUpdates(a), getTaskStateUpdates(b))) return false;
   if (!areStringListsEqual(a.relays, b.relays)) return false;
   if (!areStringListsEqual(a.tags, b.tags)) return false;

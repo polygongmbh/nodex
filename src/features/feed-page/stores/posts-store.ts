@@ -177,7 +177,7 @@ export interface IngestPostInput {
 }
 
 export function ingestPost({ post, replaceableKey }: IngestPostInput): boolean {
-  if (isDeletedByOwnAuthor(post.author.pubkey, post.id)) return false;
+  if (isDeletedByOwnAuthor(post.pubkey, post.id)) return false;
 
   if (replaceableKey) {
     const existingId = replaceableKeyToPostId.get(replaceableKey);
@@ -263,7 +263,7 @@ export function applyDeletion(deletion: PostDeletionRequest): void {
   for (const targetId of deletion.targetIds) {
     authorTombstones.add(targetId);
     const existing = postsById.get(targetId);
-    if (existing && existing.author.pubkey === deletion.byPubkey) {
+    if (existing && existing.pubkey === deletion.byPubkey) {
       postsById.delete(targetId);
       datesByPostId.delete(targetId);
       priorityTimestampByPostId.delete(targetId);

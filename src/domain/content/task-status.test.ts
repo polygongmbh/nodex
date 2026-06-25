@@ -2,12 +2,11 @@ import { describe, it, expect } from "vitest";
 import { getTaskStatusFromTask, type Post, type TaskPost, getTaskStateUpdates } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { applyTaskStateUpdate } from "./task-state";
-import { makePerson } from "@/test/fixtures";
 
 const baseTask: TaskPost = {
   id: "n1",
   kind: NostrEventKind.Task,
-  author: makePerson({ pubkey: "u1", name: "me", displayName: "Me", avatar: "" }),
+  pubkey: "u1",
   content: "Task",
   tags: ["x"],
   relays: ["demo"],
@@ -51,7 +50,7 @@ describe("applyTaskStateUpdate", () => {
             id: "init-done",
             state: { status: "done" },
             timestamp: baseTask.timestamp,
-            authorPubkey: baseTask.author.pubkey,
+            authorPubkey: baseTask.pubkey,
           },
         ],
       } satisfies TaskPost,

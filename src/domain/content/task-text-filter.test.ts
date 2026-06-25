@@ -26,9 +26,9 @@ describe("taskMatchesTextQuery", () => {
       tags: ["general"],
     });
 
-    expect(taskMatchesTextQuery(task, "alice")).toBe(true);
-    expect(taskMatchesTextQuery(task, "alice doe")).toBe(true);
-    expect(taskMatchesTextQuery(task, "unrelated value")).toBe(false);
+    expect(taskMatchesTextQuery(task, "alice", [author])).toBe(true);
+    expect(taskMatchesTextQuery(task, "alice doe", [author])).toBe(true);
+    expect(taskMatchesTextQuery(task, "unrelated value", [author])).toBe(false);
   });
 
   it("matches via resolved people metadata when task author only has pubkey", () => {

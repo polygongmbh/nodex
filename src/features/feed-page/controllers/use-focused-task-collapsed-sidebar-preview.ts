@@ -55,7 +55,7 @@ export function deriveFocusedTaskCollapsedSidebarPreview({
     focusedScopeTasks.flatMap((task) => task.tags.map((tag) => normalize(tag))).filter(Boolean)
   );
   const activePeopleIds = new Set(
-    focusedScopeTasks.map((task) => normalize(task.author?.pubkey || "")).filter(Boolean)
+    focusedScopeTasks.map((task) => normalize(task.pubkey)).filter(Boolean)
   );
 
   return {

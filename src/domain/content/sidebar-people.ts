@@ -26,7 +26,7 @@ export function deriveSidebarPeople(
   const statsByAuthorId = new Map<string, SelectablePersonStats>();
 
   for (const task of tasks) {
-    const authorId = task.author?.pubkey?.trim().toLowerCase();
+    const authorId = task.pubkey.trim().toLowerCase();
     if (!authorId) continue;
 
     const nextTimestampMs =
