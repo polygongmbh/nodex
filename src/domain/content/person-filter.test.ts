@@ -8,14 +8,14 @@ const alice: Person = {
   pubkey: "alice-pubkey",
   name: "alice",
   displayName: "Alice",
-  avatar: "",
+  picture: "",
 };
 
 const bob: Person = {
   pubkey: "bob-pubkey",
   name: "bob",
   displayName: "Bob",
-  avatar: "",
+  picture: "",
 };
 
 const baseTask: TaskPost = {

@@ -6,7 +6,7 @@ export interface Person {
   displayName: string;
   nip05?: string;
   about?: string;
-  avatar?: string;
+  picture?: string;
 }
 
 // Selection state moved off the record into useFilterStore.selectedPubkeys

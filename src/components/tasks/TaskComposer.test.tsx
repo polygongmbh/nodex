@@ -33,7 +33,7 @@ const basePeople: SelectablePerson[] = [
     name: "alice",
     displayName: "Alice",
     nip05: "alice@example.com",
-    avatar: "",
+    picture: "",
   }),
 ];
 

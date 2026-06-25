@@ -11,7 +11,7 @@ const alice: Person = {
   pubkey: "a".repeat(64),
   name: "alice",
   displayName: "Alice",
-  avatar: "",
+  picture: "",
 };
 
 const baseTask: TaskPost = {

@@ -460,7 +460,7 @@ export function useTaskPublishFlow({
           name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
           displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
           nip05: user.profile?.nip05?.trim().toLowerCase(),
-          avatar: user.profile?.picture,
+          picture: user.profile?.picture,
         };
       }
       return fallbackAuthor;

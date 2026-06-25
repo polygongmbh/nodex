@@ -53,7 +53,7 @@ export const mockKind0Events = mockPeople.map((person, index) => ({
   content: JSON.stringify({
     name: person.name,
     displayName: person.displayName,
-    picture: person.avatar,
+    picture: person.picture,
     nip05: person.nip05,
     about: person.about,
   }),

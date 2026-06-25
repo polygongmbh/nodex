@@ -8,7 +8,7 @@ import { makeTask } from "@/test/fixtures";
 function renderSwipe(overrides: Partial<Parameters<typeof FeedTaskSwipeActions>[0]> = {}) {
   const props: Parameters<typeof FeedTaskSwipeActions>[0] = {
     task: makeTask({
-      author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", avatar: "" },
+      author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", picture: "" },
       timestamp: new Date(),
     }),
     currentUserPubkey: "owner-pub",
@@ -102,12 +102,12 @@ describe("FeedTaskSwipeActions", () => {
   it("collapses an already-open row when a new horizontal drag activates on another row", () => {
     const taskA = makeTask({
       id: "task-a",
-      author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", avatar: "" },
+      author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", picture: "" },
       timestamp: new Date(),
     });
     const taskB = makeTask({
       id: "task-b",
-      author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", avatar: "" },
+      author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", picture: "" },
       timestamp: new Date(),
     });
     const baseProps = {

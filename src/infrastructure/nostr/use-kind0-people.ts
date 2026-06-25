@@ -50,7 +50,7 @@ function arePeopleListsEqual(previous: SelectablePerson[], next: SelectablePerso
       person.displayName === candidate.displayName &&
       person.nip05 === candidate.nip05 &&
       person.about === candidate.about &&
-      person.avatar === candidate.avatar
+      person.picture === candidate.picture
     );
   });
 }
@@ -127,7 +127,7 @@ export function useKind0People(
             name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
             displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
             nip05: user.profile?.nip05?.trim().toLowerCase(),
-            avatar: user.profile?.picture,
+            picture: user.profile?.picture,
           },
         ].sort((a, b) => a.displayName.localeCompare(b.displayName));
       }

@@ -35,7 +35,7 @@ export function makePerson(overrides: Partial<SelectablePerson> = {}): Selectabl
     pubkey: "person-pubkey",
     name: "person",
     displayName: "Person",
-    avatar: "",
+    picture: "",
     ...overrides,
   };
 }

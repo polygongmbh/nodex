@@ -18,7 +18,7 @@ function makeTestPerson(overrides: Partial<Person> = {}): Person {
     pubkey,
     name,
     displayName: overrides.displayName ?? name ?? pubkey,
-    avatar: "",
+    picture: "",
     ...overrides,
   };
 }

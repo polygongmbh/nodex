@@ -41,7 +41,7 @@ const people: SelectablePerson[] = [
     pubkey: "alice",
     name: "alice",
     displayName: "Alice",
-    avatar: "",
+    picture: "",
   }),
 ];
 

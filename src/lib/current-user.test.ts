@@ -7,13 +7,13 @@ const people: SelectablePerson[] = [
     pubkey: "pubkey-me",
     name: "me",
     displayName: "You",
-    avatar: "",
+    picture: "",
   },
   {
     pubkey: "pubkey-alice",
     name: "alice",
     displayName: "Alice",
-    avatar: "",
+    picture: "",
   },
 ];
 

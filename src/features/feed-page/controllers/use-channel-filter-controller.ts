@@ -131,7 +131,7 @@ export function useChannelFilterController({
 
   const normalizeInteractivePerson = useCallback((person: Person): SelectablePerson => ({
     ...person,
-    avatar: person.avatar || "",
+    picture: person.picture || "",
   }), []);
 
   // Ensure a person clicked from the feed (who may not be in the sidebar list

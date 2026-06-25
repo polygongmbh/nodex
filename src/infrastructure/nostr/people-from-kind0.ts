@@ -429,7 +429,7 @@ export function derivePeopleFromKind0Events(
       displayName,
       nip05: parsed?.nip05?.trim().toLowerCase(),
       about: parsed?.about?.trim(),
-      avatar: parsed?.picture,
+      picture: parsed?.picture,
     } satisfies SelectablePerson;
   });
 

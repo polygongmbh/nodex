@@ -40,7 +40,7 @@ vi.mock("@/components/ui/alert-dialog", () => ({
 function renderMenu(overrides: Partial<Parameters<typeof FeedTaskMenu>[0]> = {}) {
   const props: Parameters<typeof FeedTaskMenu>[0] = {
     task: makeTask({
-      author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", avatar: "" },
+      author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", picture: "" },
       timestamp: new Date(),
     }),
     currentUserPubkey: "owner-pub",
@@ -113,7 +113,7 @@ describe("FeedTaskMenu", () => {
   it("hides due-date and priority editors when the post is not a task", () => {
     renderMenu({
       task: makeComment({
-        author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", avatar: "" },
+        author: { pubkey: "owner-pub", name: "owner", displayName: "Owner", picture: "" },
         timestamp: new Date(),
       }),
     });

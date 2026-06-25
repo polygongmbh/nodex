@@ -57,7 +57,7 @@ describe("DesktopSearchDock", () => {
   it("builds a search-only placeholder with dynamic suffixes and no fallback guidance", () => {
     mockUseFeedSurfaceState.mockReturnValue({
       channels: [{ id: "general", name: "general", filterState: "included" }],
-      people: [{ pubkey: "p1", name: "alice", displayName: "Alice", avatar: "" }],
+      people: [{ pubkey: "p1", name: "alice", displayName: "Alice", picture: "" }],
     });
     useFilterStore.setState({ selectedPubkeys: new Set(["p1"]) });
     ingestPost({ post: makeTask({ id: "focused-task", content: "Coordinate launch copy" }) });

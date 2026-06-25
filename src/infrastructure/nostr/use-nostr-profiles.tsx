@@ -91,7 +91,7 @@ function personFromProfile(pubkey: string, profile: NostrProfile | null): Person
     displayName: profile.displayName ?? "",
     nip05: profile.nip05,
     about: profile.about,
-    avatar: profile.picture ?? "",
+    picture: profile.picture ?? "",
   };
 }
 

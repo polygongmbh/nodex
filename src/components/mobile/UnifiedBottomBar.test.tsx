@@ -82,7 +82,7 @@ const people: SelectablePerson[] = [
     name: "alice",
     displayName: "Alice",
     nip05: "alice@example.com",
-    avatar: "",
+    picture: "",
   },
 ];
 
@@ -195,7 +195,7 @@ describe("UnifiedBottomBar auth gating", () => {
               pubkey: "broad-person",
               name: "broad-user",
               displayName: "Broad Person",
-              avatar: "",
+              picture: "",
             },
           ],
 
@@ -204,7 +204,7 @@ describe("UnifiedBottomBar auth gating", () => {
               pubkey: "visible-person",
               name: "visible-user",
               displayName: "Visible Person",
-              avatar: "",
+              picture: "",
             },
           ],
 

@@ -154,7 +154,7 @@ export function useTaskComposerModel(): TaskComposerModel {
         identifier,
         mentionDisplay: formatMentionIdentifierForDisplay(identifier),
         primaryLabel,
-        avatar: person.avatar,
+        avatar: person.picture,
         isSelected: selectedPubkeySet.has(person.pubkey.trim().toLowerCase()),
         aliases: getMentionAliases(person),
       };
