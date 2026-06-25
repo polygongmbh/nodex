@@ -55,7 +55,6 @@ function Harness({
     shouldRestoreSnapshot,
     setChannelFilterStates,
     setChannelMatchMode,
-    setSelectedPubkeys,
     onCaptureScrollTop,
     onRestoreScrollTop,
     restoreTimeoutMs,

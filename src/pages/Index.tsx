@@ -551,7 +551,6 @@ function FeedIndexContent() {
     shouldRestoreSnapshot: shouldRestoreTaskScopeFilters,
     setChannelFilterStates,
     setChannelMatchMode,
-    setSelectedPubkeys,
     onCaptureScrollTop,
     onRestoreScrollTop,
   });

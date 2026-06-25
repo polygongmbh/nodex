@@ -32,7 +32,7 @@ export function useOnboarding({
   setFocusedTaskId,
 }: UseOnboardingOptions) {
   const { t } = useTranslation("onboarding");
-  const { setActiveRelayIds, setChannelFilterStates, setSearchQuery, setSelectedPubkeys } = useFilterStore();
+  const { setActiveRelayIds, setChannelFilterStates, setSearchQuery, clearSelectedPeople } = useFilterStore();
   const setIsAuthModalOpen = useAuthModalStore((s) => s.setIsOpen);
 
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -117,7 +117,7 @@ export function useOnboarding({
       setSearchQuery("");
       setActiveRelayIds(new Set());
       setChannelFilterStates(new Map());
-      setSelectedPubkeys(() => new Set());
+      clearSelectedPeople();
       return;
     }
 
@@ -132,7 +132,7 @@ export function useOnboarding({
     setSearchQuery("");
     setActiveRelayIds(new Set());
     setChannelFilterStates(new Map());
-    setSelectedPubkeys(() => new Set());
+    clearSelectedPeople();
   }, [
     currentView,
     isMobile,
@@ -141,7 +141,7 @@ export function useOnboarding({
     setChannelFilterStates,
     setCurrentView,
     setFocusedTaskId,
-    setSelectedPubkeys,
+    clearSelectedPeople,
     setSearchQuery,
   ]);
 

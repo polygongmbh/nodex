@@ -70,10 +70,31 @@ interface FilterStoreState {
   selectedPubkeys: Set<string>;
   searchQuery: string;
 
+  // Relays/channels/matchMode keep the generic SetStateUpdater (React
+  // setState-style) form on purpose: their mutations are pure container
+  // writes whose real logic — the 3-state channel cycle, exclusive-with-undo,
+  // the postedTags side effect, toasts — already lives in the command
+  // controllers (use-channel-filter-controller, use-relay-*-controller). A
+  // store intent action there would only wrap a trivial map/set write. The
+  // updater form also gives those `useCallback`-wrapped toggles an atomic
+  // read-modify-write without stale-closure risk.
   setActiveRelayIds: (updater: SetStateUpdater<Set<string>>) => void;
   setChannelFilterStates: (updater: SetStateUpdater<Map<string, Channel["filterState"]>>) => void;
   setChannelMatchMode: (updater: SetStateUpdater<ChannelMatchMode>) => void;
-  setSelectedPubkeys: (updater: SetStateUpdater<Set<string>>) => void;
+
+  // Selection, by contrast, is pure set-algebra with no controller-side
+  // orchestration, so its read-modify-write lives here as intent commands
+  // (no `new Set(prev)` spreads leaking into controllers); each preserves
+  // identity on a no-op. `setSelectedPubkeys` is the plain bulk-replace
+  // primitive for restoring a whole set from an external source (URL, saved
+  // filter, snapshot).
+  setSelectedPubkeys: (next: Set<string>) => void;
+  selectOnlyPerson: (pubkey: string) => void;
+  togglePersonSelection: (pubkey: string) => void;
+  deselectPeople: (pubkeys: Iterable<string>) => void;
+  retainSelectedPeople: (allowed: Iterable<string>) => void;
+  clearSelectedPeople: () => void;
+
   setSearchQuery: (query: string) => void;
 }
 
@@ -104,11 +125,49 @@ export const useFilterStore = create<FilterStoreState>()(
             typeof updater === "function" ? updater(state.channelMatchMode) : updater,
         })),
 
-      setSelectedPubkeys: (updater) =>
-        set((state) => ({
-          selectedPubkeys:
-            typeof updater === "function" ? updater(state.selectedPubkeys) : updater,
-        })),
+      setSelectedPubkeys: (next) => set({ selectedPubkeys: next }),
+
+      selectOnlyPerson: (pubkey) =>
+        set((state) => {
+          const current = state.selectedPubkeys;
+          if (current.size === 1 && current.has(pubkey)) return state;
+          return { selectedPubkeys: new Set([pubkey]) };
+        }),
+
+      togglePersonSelection: (pubkey) =>
+        set((state) => {
+          const next = new Set(state.selectedPubkeys);
+          if (next.has(pubkey)) next.delete(pubkey);
+          else next.add(pubkey);
+          return { selectedPubkeys: next };
+        }),
+
+      deselectPeople: (pubkeys) =>
+        set((state) => {
+          const remove = pubkeys instanceof Set ? pubkeys : new Set(pubkeys);
+          let changed = false;
+          const next = new Set<string>();
+          for (const pubkey of state.selectedPubkeys) {
+            if (remove.has(pubkey)) changed = true;
+            else next.add(pubkey);
+          }
+          return changed ? { selectedPubkeys: next } : state;
+        }),
+
+      retainSelectedPeople: (allowed) =>
+        set((state) => {
+          const keep = allowed instanceof Set ? allowed : new Set(allowed);
+          let changed = false;
+          const next = new Set<string>();
+          for (const pubkey of state.selectedPubkeys) {
+            if (keep.has(pubkey)) next.add(pubkey);
+            else changed = true;
+          }
+          return changed ? { selectedPubkeys: next } : state;
+        }),
+
+      clearSelectedPeople: () =>
+        set((state) => (state.selectedPubkeys.size === 0 ? state : { selectedPubkeys: new Set() })),
 
       setSearchQuery: (query) => set({ searchQuery: query }),
     }),

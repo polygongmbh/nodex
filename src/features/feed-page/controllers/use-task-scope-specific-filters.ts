@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type { Channel, ChannelMatchMode } from "@/types";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
 export const TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -13,7 +14,6 @@ interface UseTaskScopeSpecificFiltersOptions {
   shouldRestoreSnapshot?: (snapshot: FilterSnapshot) => boolean;
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setChannelMatchMode: Dispatch<SetStateAction<ChannelMatchMode>>;
-  setSelectedPubkeys: Dispatch<SetStateAction<Set<string>>>;
   /** Called when entering a scoped task to capture the current scroll position. */
   onCaptureScrollTop?: () => number | undefined;
   /** Called when leaving a scoped task, only if filters are being restored. */
@@ -34,12 +34,13 @@ export function useTaskScopeSpecificFilters({
   shouldRestoreSnapshot = () => true,
   setChannelFilterStates,
   setChannelMatchMode,
-  setSelectedPubkeys,
   onCaptureScrollTop,
   onRestoreScrollTop,
   restoreTimeoutMs = TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS,
   now = DEFAULT_NOW,
 }: UseTaskScopeSpecificFiltersOptions) {
+  const setSelectedPubkeys = useFilterStore((s) => s.setSelectedPubkeys);
+  const clearSelectedPeople = useFilterStore((s) => s.clearSelectedPeople);
   const previousFocusedTaskIdRef = useRef<string | null>(null);
   const suspendedSnapshotRef = useRef<{
     snapshot: FilterSnapshot;
@@ -63,7 +64,7 @@ export function useTaskScopeSpecificFilters({
 
       setChannelFilterStates((previous) => (previous.size === 0 ? previous : new Map()));
       setChannelMatchMode((previous) => (previous === "and" ? previous : "and"));
-      setSelectedPubkeys((previous) => (previous.size === 0 ? previous : new Set()));
+      clearSelectedPeople();
     }
 
     if (leavingScopedTask && suspendedSnapshotRef.current !== null) {
@@ -97,6 +98,7 @@ export function useTaskScopeSpecificFilters({
     setChannelFilterStates,
     setChannelMatchMode,
     setSelectedPubkeys,
+    clearSelectedPeople,
     shouldRestoreSnapshot,
   ]);
 

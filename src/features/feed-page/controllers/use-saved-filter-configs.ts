@@ -11,7 +11,7 @@ interface UseSavedFilterConfigsOptions {
   setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setChannelMatchMode: Dispatch<SetStateAction<ChannelMatchMode>>;
-  setSelectedPubkeys: Dispatch<SetStateAction<Set<string>>>;
+  setSelectedPubkeys: (next: Set<string>) => void;
   setQuickFilters: Dispatch<SetStateAction<QuickFilterState>>;
   resetFiltersToDefault: () => void;
 }

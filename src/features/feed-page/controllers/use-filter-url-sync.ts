@@ -123,7 +123,7 @@ interface UseFilterUrlSyncOptions {
   channelFilterStates: Map<string, Channel["filterState"]>;
   selectedPubkeys: Set<string>;
   setChannelFilterStates: React.Dispatch<React.SetStateAction<Map<string, Channel["filterState"]>>>;
-  setSelectedPubkeys: React.Dispatch<React.SetStateAction<Set<string>>>;
+  setSelectedPubkeys: (next: Set<string>) => void;
 }
 
 /**
