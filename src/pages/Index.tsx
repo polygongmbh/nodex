@@ -884,7 +884,6 @@ function FeedIndexContent() {
       viewCommands={viewCommands}
       taskCommands={taskCommands}
       failedPublishCommands={failedPublishCommands}
-      sidebarController={isMobile ? undefined : desktopSidebarController}
       scrollCaptureRef={scrollCaptureRef}
     >
       <DocumentTitleSync currentView={currentView} focusedTask={focusedTask} />
@@ -903,6 +902,7 @@ function FeedIndexContent() {
         <DesktopAppShell
           posts={relayScopedTasks}
           focusedTaskId={focusedTaskId}
+          sidebarController={desktopSidebarController}
           shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
           authModalProps={{
             isOpen: isAuthModalOpen,

@@ -1,7 +1,27 @@
 import { Sidebar } from "@/components/layout/Sidebar";
-import { useFeedSidebarController } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
+import type { ChannelMatchMode, Post, QuickFilterState, SavedFilterConfiguration } from "@/types";
+import type { Relay, Channel } from "@/types";
+import type { Person } from "@/types/person";
+import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 
-export function FeedPageSidebar() {
-  const sidebarState = useFeedSidebarController();
+export interface FeedSidebarState {
+  relays: Relay[];
+  channels: Channel[];
+  collapsedPreviewChannels?: Channel[];
+  channelMatchMode: ChannelMatchMode;
+  people: Person[];
+  collapsedPreviewPeople?: Person[];
+  pinnedPersonIds: string[];
+  nostrRelays: NDKRelayStatus[];
+  isFocused: boolean;
+  quickFilters?: QuickFilterState;
+  savedFilterConfigurations: SavedFilterConfiguration[];
+  activeSavedFilterConfigurationId: string | null;
+  /** Relay-scoped posts feeding the Projects section. */
+  posts?: Post[];
+  focusedTaskId?: string | null;
+}
+
+export function FeedPageSidebar(sidebarState: FeedSidebarState) {
   return <Sidebar {...sidebarState} />;
 }

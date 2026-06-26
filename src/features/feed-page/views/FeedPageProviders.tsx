@@ -1,6 +1,5 @@
 import { getTaskPrimaryDate } from "@/types";
 import { useMemo, type PropsWithChildren } from "react";
-import { FeedSidebarControllerProvider, type FeedSidebarState } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
 import type { FeedSidebarCommands, FeedViewCommands, FailedPublishCommands } from "@/features/feed-page/interactions/feed-interaction-inputs";
 import { FeedTaskCommandsProvider, type FeedTaskCommands, useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -34,7 +33,6 @@ interface FeedPageProvidersProps extends PropsWithChildren {
   viewCommands: FeedViewCommands;
   taskCommands: FeedTaskCommands;
   failedPublishCommands: FailedPublishCommands;
-  sidebarController?: FeedSidebarState;
   scrollCaptureRef: ScrollCaptureRef;
 }
 
@@ -246,14 +244,9 @@ export function FeedPageProviders({
   viewCommands,
   taskCommands,
   failedPublishCommands,
-  sidebarController,
   scrollCaptureRef,
   children,
 }: FeedPageProvidersProps) {
-  const content = sidebarController
-    ? <FeedSidebarControllerProvider value={sidebarController}>{children}</FeedSidebarControllerProvider>
-    : children;
-
   return (
     <FeedTaskCommandsProvider value={taskCommands}>
       <FeedInteractionBusProvider
@@ -265,7 +258,7 @@ export function FeedPageProviders({
         <FeedSurfaceProvider value={surfaceState}>
           <FeedViewStateProvider value={viewState}>
             <ScrollCaptureProvider value={scrollCaptureRef}>
-              {content}
+              {children}
               <ProfileCompletionDialog />
             </ScrollCaptureProvider>
           </FeedViewStateProvider>

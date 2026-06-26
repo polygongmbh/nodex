@@ -9,7 +9,7 @@ import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedViewState } from "./feed-view-state-context";
-import { FeedPageSidebar } from "./FeedPageSidebar";
+import { FeedPageSidebar, type FeedSidebarState } from "./FeedPageSidebar";
 import { DesktopViewsPane } from "./DesktopViewsPane";
 import type { Post } from "@/types";
 
@@ -18,6 +18,7 @@ interface DesktopAppShellProps {
   authModalProps: ComponentProps<typeof NostrAuthModal>;
   posts: Post[];
   focusedTaskId: string | null;
+  sidebarController: FeedSidebarState;
 }
 
 export function DesktopAppShell({
@@ -25,6 +26,7 @@ export function DesktopAppShell({
   authModalProps,
   posts,
   focusedTaskId,
+  sidebarController,
 }: DesktopAppShellProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { currentView } = useFeedViewState();
@@ -46,7 +48,7 @@ export function DesktopAppShell({
           <ThemeModeToggle />
         </div>
       </div>
-      <FeedPageSidebar />
+      <FeedPageSidebar {...sidebarController} />
       <div className="min-w-0 overflow-hidden flex flex-col">
         <FailedPublishQueueBannerContainer />
         <div className="min-h-0 flex-1 overflow-hidden">
