@@ -1,8 +1,7 @@
 import { getTaskPrimaryDate } from "@/types";
 import { useMemo, type PropsWithChildren } from "react";
 import { FeedSidebarControllerProvider, type FeedSidebarState } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
-import { FeedSidebarCommandsProvider, type FeedSidebarCommands, useFeedSidebarCommands } from "@/features/feed-page/controllers/feed-sidebar-commands-context";
-import { FeedViewCommandsProvider, type FeedViewCommands, useFeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
+import type { FeedSidebarCommands, FeedViewCommands, FailedPublishCommands } from "@/features/feed-page/interactions/feed-interaction-inputs";
 import { FeedTaskCommandsProvider, type FeedTaskCommands, useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
@@ -34,21 +33,32 @@ interface FeedPageProvidersProps extends PropsWithChildren {
   sidebarCommands: FeedSidebarCommands;
   viewCommands: FeedViewCommands;
   taskCommands: FeedTaskCommands;
+  failedPublishCommands: FailedPublishCommands;
   sidebarController?: FeedSidebarState;
   scrollCaptureRef: ScrollCaptureRef;
 }
 
+interface FeedInteractionBusProviderProps extends PropsWithChildren {
+  coreHandlers: FeedPageCoreHandlers;
+  sidebarCommands: FeedSidebarCommands;
+  viewCommands: FeedViewCommands;
+  failedPublishCommands: FailedPublishCommands;
+}
+
 /**
- * Inner component that reads from feature command contexts and creates the interaction bus.
- * Must be rendered after FeedSidebarCommandsProvider, FeedViewCommandsProvider, and
- * FeedTaskCommandsProvider so the command contexts are available.
+ * Builds the interaction bus from its command inputs and creates the dispatch
+ * context. Sidebar/view/failed-publish commands arrive as plain props (their
+ * only consumer is this bus); task commands are still read from
+ * FeedTaskCommandsProvider, which has external component consumers. Must be
+ * rendered inside FeedTaskCommandsProvider.
  */
-function FeedInteractionBusFromContexts({
+function FeedInteractionBusProvider({
   coreHandlers,
+  sidebarCommands,
+  viewCommands,
+  failedPublishCommands,
   children,
-}: PropsWithChildren<{ coreHandlers: FeedPageCoreHandlers }>) {
-  const sidebarCommands = useFeedSidebarCommands();
-  const viewCommands = useFeedViewCommands();
+}: FeedInteractionBusProviderProps) {
   const taskCommands = useFeedTaskCommands();
 
   const handlers: FeedInteractionHandlerMap = useMemo(
@@ -197,7 +207,7 @@ function FeedInteractionBusFromContexts({
       "publish.failed.retry": async (intent) => {
         const toastId = notifyRetryInProgress("retry");
         try {
-          await taskCommands.retryFailedPublish(intent.draftId);
+          await failedPublishCommands.retryFailedPublish(intent.draftId);
         } finally {
           dismissRetryInProgress(toastId);
         }
@@ -205,19 +215,19 @@ function FeedInteractionBusFromContexts({
       "publish.failed.repost": async (intent) => {
         const toastId = notifyRetryInProgress("repost");
         try {
-          await taskCommands.repostFailedPublish(intent.draftId);
+          await failedPublishCommands.repostFailedPublish(intent.draftId);
         } finally {
           dismissRetryInProgress(toastId);
         }
       },
       "publish.failed.discard": (intent) => {
-        taskCommands.dismissFailedPublish(intent.draftId);
+        failedPublishCommands.dismissFailedPublish(intent.draftId);
       },
       "publish.failed.discardAll": () => {
-        taskCommands.dismissAllFailedPublish();
+        failedPublishCommands.dismissAllFailedPublish();
       },
     }),
-    [coreHandlers, sidebarCommands, viewCommands, taskCommands]
+    [coreHandlers, sidebarCommands, viewCommands, failedPublishCommands, taskCommands]
   );
 
   const bus = useMemo(
@@ -235,6 +245,7 @@ export function FeedPageProviders({
   sidebarCommands,
   viewCommands,
   taskCommands,
+  failedPublishCommands,
   sidebarController,
   scrollCaptureRef,
   children,
@@ -244,21 +255,22 @@ export function FeedPageProviders({
     : children;
 
   return (
-    <FeedSidebarCommandsProvider value={sidebarCommands}>
-      <FeedViewCommandsProvider value={viewCommands}>
-        <FeedTaskCommandsProvider value={taskCommands}>
-          <FeedInteractionBusFromContexts coreHandlers={coreHandlers}>
-            <FeedSurfaceProvider value={surfaceState}>
-              <FeedViewStateProvider value={viewState}>
-                <ScrollCaptureProvider value={scrollCaptureRef}>
-                  {content}
-                  <ProfileCompletionDialog />
-                </ScrollCaptureProvider>
-              </FeedViewStateProvider>
-            </FeedSurfaceProvider>
-          </FeedInteractionBusFromContexts>
-        </FeedTaskCommandsProvider>
-      </FeedViewCommandsProvider>
-    </FeedSidebarCommandsProvider>
+    <FeedTaskCommandsProvider value={taskCommands}>
+      <FeedInteractionBusProvider
+        coreHandlers={coreHandlers}
+        sidebarCommands={sidebarCommands}
+        viewCommands={viewCommands}
+        failedPublishCommands={failedPublishCommands}
+      >
+        <FeedSurfaceProvider value={surfaceState}>
+          <FeedViewStateProvider value={viewState}>
+            <ScrollCaptureProvider value={scrollCaptureRef}>
+              {content}
+              <ProfileCompletionDialog />
+            </ScrollCaptureProvider>
+          </FeedViewStateProvider>
+        </FeedSurfaceProvider>
+      </FeedInteractionBusProvider>
+    </FeedTaskCommandsProvider>
   );
 }

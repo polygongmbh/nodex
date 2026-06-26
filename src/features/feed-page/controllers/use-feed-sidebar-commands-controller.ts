@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import type { Channel, Post } from "@/types";
 import type { ChannelMatchMode } from "@/types";
 import type { Person } from "@/types/person";
-import type { FeedSidebarCommands } from "./feed-sidebar-commands-context";
+import type { FeedSidebarCommands } from "@/features/feed-page/interactions/feed-interaction-inputs";
 import { usePinnedSidebarChannels } from "./use-pinned-sidebar-channels";
 import { usePinnedSidebarPeople } from "./use-pinned-sidebar-people";
 

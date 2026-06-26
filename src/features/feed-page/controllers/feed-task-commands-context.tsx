@@ -21,10 +21,6 @@ export interface FeedTaskCommands {
   recomposePost(taskId: string): void;
   copyPermalink(taskId: string): Promise<boolean>;
   undoPendingPublish(taskId: string): void;
-  retryFailedPublish(draftId: string): Promise<void>;
-  repostFailedPublish(draftId: string): Promise<void>;
-  dismissFailedPublish(draftId: string): void;
-  dismissAllFailedPublish(): void;
 }
 
 const defaultCommands: FeedTaskCommands = {
@@ -39,10 +35,6 @@ const defaultCommands: FeedTaskCommands = {
   recomposePost: () => {},
   copyPermalink: async () => false,
   undoPendingPublish: () => {},
-  retryFailedPublish: async () => {},
-  repostFailedPublish: async () => {},
-  dismissFailedPublish: () => {},
-  dismissAllFailedPublish: () => {},
 };
 
 const FeedTaskCommandsContext = createContext<FeedTaskCommands>(defaultCommands);
