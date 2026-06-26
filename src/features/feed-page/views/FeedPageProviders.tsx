@@ -1,7 +1,12 @@
 import { getTaskPrimaryDate } from "@/types";
 import { useMemo, type PropsWithChildren } from "react";
-import type { FeedSidebarCommands, FeedViewCommands, FailedPublishCommands } from "@/features/feed-page/interactions/feed-interaction-inputs";
-import { FeedTaskCommandsProvider, type FeedTaskCommands, useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
+import type {
+  FeedSidebarCommands,
+  FeedViewCommands,
+  FailedPublishCommands,
+  TaskInteractionCommands,
+} from "@/features/feed-page/interactions/feed-interaction-inputs";
+import { FeedTaskCommandsProvider, type FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
   createFeedInteractionBus,
@@ -32,6 +37,7 @@ interface FeedPageProvidersProps extends PropsWithChildren {
   sidebarCommands: FeedSidebarCommands;
   viewCommands: FeedViewCommands;
   taskCommands: FeedTaskCommands;
+  taskInteractionCommands: TaskInteractionCommands;
   failedPublishCommands: FailedPublishCommands;
   scrollCaptureRef: ScrollCaptureRef;
 }
@@ -40,25 +46,24 @@ interface FeedInteractionBusProviderProps extends PropsWithChildren {
   coreHandlers: FeedPageCoreHandlers;
   sidebarCommands: FeedSidebarCommands;
   viewCommands: FeedViewCommands;
+  taskCommands: TaskInteractionCommands;
   failedPublishCommands: FailedPublishCommands;
 }
 
 /**
  * Builds the interaction bus from its command inputs and creates the dispatch
- * context. Sidebar/view/failed-publish commands arrive as plain props (their
- * only consumer is this bus); task commands are still read from
- * FeedTaskCommandsProvider, which has external component consumers. Must be
- * rendered inside FeedTaskCommandsProvider.
+ * context. Every command group arrives as a plain prop — the bus reads no
+ * context. (createTask lives in FeedTaskCommandsProvider for its component
+ * consumers, which the bus does not touch.)
  */
 function FeedInteractionBusProvider({
   coreHandlers,
   sidebarCommands,
   viewCommands,
+  taskCommands,
   failedPublishCommands,
   children,
 }: FeedInteractionBusProviderProps) {
-  const taskCommands = useFeedTaskCommands();
-
   const handlers: FeedInteractionHandlerMap = useMemo(
     () => ({
       "ui.openAuthModal": (intent) => {
@@ -243,6 +248,7 @@ export function FeedPageProviders({
   sidebarCommands,
   viewCommands,
   taskCommands,
+  taskInteractionCommands,
   failedPublishCommands,
   scrollCaptureRef,
   children,
@@ -253,6 +259,7 @@ export function FeedPageProviders({
         coreHandlers={coreHandlers}
         sidebarCommands={sidebarCommands}
         viewCommands={viewCommands}
+        taskCommands={taskInteractionCommands}
         failedPublishCommands={failedPublishCommands}
       >
         <FeedSurfaceProvider value={surfaceState}>

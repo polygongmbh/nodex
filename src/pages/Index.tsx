@@ -44,7 +44,7 @@ import { usePendingPublishStore } from "@/features/feed-page/stores/pending-publ
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
 import { useFeedSidebarCommandsController } from "@/features/feed-page/controllers/use-feed-sidebar-commands-controller";
-import type { FeedViewCommands, FailedPublishCommands } from "@/features/feed-page/interactions/feed-interaction-inputs";
+import type { FeedViewCommands, FailedPublishCommands, TaskInteractionCommands } from "@/features/feed-page/interactions/feed-interaction-inputs";
 import type { FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { useFeedInteractionFrecency } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
@@ -705,9 +705,13 @@ function FeedIndexContent() {
   }, [allTasks, relays, resolveRelayUrlsFromIds]);
 
   const taskCommands = useMemo<FeedTaskCommands>(
+    () => ({ createTask: handleNewTask }),
+    [handleNewTask]
+  );
+
+  const taskInteractionCommands = useMemo<TaskInteractionCommands>(
     () => ({
       focusTask: setFocusedTaskId,
-      createTask: handleNewTask,
       toggleComplete: handleToggleComplete,
       changeStatus: handleStatusChange,
       updateDueDate: handleDueDateChange,
@@ -719,7 +723,7 @@ function FeedIndexContent() {
       undoPendingPublish: handleUndoPendingPublish,
     }),
     [
-      setFocusedTaskId, handleNewTask, handleToggleComplete, handleStatusChange,
+      setFocusedTaskId, handleToggleComplete, handleStatusChange,
       handleDueDateChange, handlePriorityChange, handleListingStatusChange,
       handlePostDelete, handleRecomposeTask, handleCopyPermalink,
       handleUndoPendingPublish,
@@ -883,6 +887,7 @@ function FeedIndexContent() {
       sidebarCommands={sidebarCommands}
       viewCommands={viewCommands}
       taskCommands={taskCommands}
+      taskInteractionCommands={taskInteractionCommands}
       failedPublishCommands={failedPublishCommands}
       scrollCaptureRef={scrollCaptureRef}
     >

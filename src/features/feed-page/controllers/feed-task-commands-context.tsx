@@ -1,40 +1,21 @@
+// TODO: Remove this context once composer-shell-ownership-refactor.md lands —
+// when UnifiedBottomBar delegates submission to the shared composer hook,
+// createTask has a single consumer and no longer needs a context.
 import { createContext, useContext, type PropsWithChildren } from "react";
-import type {
-  PostType,
-  TaskDateType,
-  TaskState,
-  Nip99ListingStatus,
-  TaskCreateResult,
-  TaskCreatePayload,
-} from "@/types";
-import type { ViewType } from "@/components/tasks/ViewSwitcher";
+import type { TaskCreateResult, TaskCreatePayload } from "@/types";
 
+/**
+ * The one task command with direct component consumers: the composer submit
+ * hook and the mobile bottom bar both await its TaskCreateResult. Every other
+ * task command is bus-only (see TaskInteractionCommands in
+ * feed-interaction-inputs.ts).
+ */
 export interface FeedTaskCommands {
-  focusTask(taskId: string | null, view?: ViewType): void;
   createTask(payload: TaskCreatePayload): Promise<TaskCreateResult>;
-  toggleComplete(taskId: string): void;
-  changeStatus(taskId: string, status: TaskState): void;
-  updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;
-  updatePriority(taskId: string, priority: number): void;
-  changeListingStatus(taskId: string, status: Nip99ListingStatus): void;
-  deletePost(taskId: string): Promise<boolean>;
-  recomposePost(taskId: string): void;
-  copyPermalink(taskId: string): Promise<boolean>;
-  undoPendingPublish(taskId: string): void;
 }
 
 const defaultCommands: FeedTaskCommands = {
-  focusTask: () => {},
   createTask: async () => ({ ok: false, reason: "unexpected-error" }),
-  toggleComplete: () => {},
-  changeStatus: () => {},
-  updateDueDate: () => {},
-  updatePriority: () => {},
-  changeListingStatus: () => {},
-  deletePost: async () => false,
-  recomposePost: () => {},
-  copyPermalink: async () => false,
-  undoPendingPublish: () => {},
 };
 
 const FeedTaskCommandsContext = createContext<FeedTaskCommands>(defaultCommands);

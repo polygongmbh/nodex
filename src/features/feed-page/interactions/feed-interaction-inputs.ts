@@ -1,4 +1,9 @@
-import type { ChannelMatchMode } from "@/types";
+import type {
+  ChannelMatchMode,
+  TaskState,
+  TaskDateType,
+  Nip99ListingStatus,
+} from "@/types";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import type { DisplayDepthMode } from "./feed-interaction-intent";
 
@@ -61,4 +66,22 @@ export interface FailedPublishCommands {
   repostFailedPublish(draftId: string): Promise<void>;
   dismissFailedPublish(draftId: string): void;
   dismissAllFailedPublish(): void;
+}
+
+/**
+ * Task lifecycle/editing commands the bus dispatches via `task.*` intents. None
+ * are read by a component — `createTask` is the only task command with direct
+ * consumers and stays in the FeedTaskCommands context.
+ */
+export interface TaskInteractionCommands {
+  focusTask(taskId: string | null, view?: ViewType): void;
+  toggleComplete(taskId: string): void;
+  changeStatus(taskId: string, status: TaskState): void;
+  updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;
+  updatePriority(taskId: string, priority: number): void;
+  changeListingStatus(taskId: string, status: Nip99ListingStatus): void;
+  deletePost(taskId: string): Promise<boolean>;
+  recomposePost(taskId: string): void;
+  copyPermalink(taskId: string): Promise<boolean>;
+  undoPendingPublish(taskId: string): void;
 }
