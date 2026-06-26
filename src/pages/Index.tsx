@@ -821,7 +821,6 @@ function FeedIndexContent() {
   const feedViewState = useMemo(
     () => ({
       currentView,
-      displayDepthMode,
       isSidebarFocused,
       isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
       activeOnboardingStepId,
@@ -837,7 +836,6 @@ function FeedIndexContent() {
       isManageRouteActive,
       isOnboardingOpen,
       isSidebarFocused,
-      displayDepthMode,
       profileCompletionPromptSignal,
     ]
   );

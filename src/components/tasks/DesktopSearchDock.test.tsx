@@ -16,7 +16,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 }));
 
 vi.mock("@/features/feed-page/views/feed-view-state-context", () => ({
-  useFeedViewState: () => ({ currentView: "feed", displayDepthMode: "leaves" }),
+  useFeedViewState: () => ({ currentView: "feed" }),
 }));
 
 const mockUseFeedSurfaceState = vi.fn(() => ({})) as ReturnType<typeof vi.fn<() => Partial<FeedSurfaceState>>>;

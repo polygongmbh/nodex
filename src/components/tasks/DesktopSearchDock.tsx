@@ -15,6 +15,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { getCompactPersonLabel } from "@/types/person";
@@ -30,7 +31,8 @@ export function DesktopSearchDock({
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const posts = usePosts();
-  const { currentView, displayDepthMode } = useFeedViewState();
+  const { currentView } = useFeedViewState();
+  const displayDepthMode = usePreferencesStore((s) => s.displayDepthMode);
   const showDisplayDepthSelector = currentView === "kanban" || currentView === "list";
   const contextTaskTitle = focusedTaskId
     ? posts.find((post) => post.id === focusedTaskId)?.content ?? ""

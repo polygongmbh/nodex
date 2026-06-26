@@ -73,7 +73,6 @@ function renderPane(
       <FeedViewStateProvider
         value={{
           currentView,
-          displayDepthMode: "leaves",
           isSidebarFocused: false,
           isOnboardingOpen: false,
           activeOnboardingStepId: null,

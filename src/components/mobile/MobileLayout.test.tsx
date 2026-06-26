@@ -162,7 +162,6 @@ const tasks: Post[] = [];
 
 const baseFeedViewState: FeedViewState = {
   currentView: "tree",
-  displayDepthMode: "leaves",
   isSidebarFocused: false,
   isOnboardingOpen: false,
   activeOnboardingStepId: null,
