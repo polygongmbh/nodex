@@ -43,7 +43,6 @@ import { FeedTaskMenu } from "@/components/tasks/feed/FeedTaskMenu";
 import { FeedTaskSwipeActions } from "@/components/tasks/feed/FeedTaskSwipeActions";
 import { useReactions } from "@/features/feed-page/controllers/use-reactions";
 import { useReactionsFor } from "@/features/feed-page/stores/reactions-registry";
-import { useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { useResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 
 interface FeedTaskCardProps {
@@ -94,7 +93,6 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   useEffect(() => {
     void ensureReactionsFetched(task.id);
   }, [task.id, ensureReactionsFetched]);
-  const taskCommands = useFeedTaskCommands();
   const hasAnyReaction = Object.keys(reactions?.totals ?? {}).length > 0;
   const handleMenuReact = (emoji: string) => {
     void publishReaction({ id: task.id, kind: task.kind, pubkey: task.pubkey }, emoji);
@@ -305,9 +303,9 @@ export const FeedTaskCard = memo(function FeedTaskCard({
                   currentUserPubkey={currentUser.pubkey}
                   hasChildren={hasChildren}
                   onReact={handleMenuReact}
-                  onCopyPermalink={() => taskCommands.copyPermalink(task.id)}
-                  onRecompose={() => taskCommands.recomposePost(task.id)}
-                  onDelete={() => { void taskCommands.deletePost(task.id); }}
+                  onCopyPermalink={() => { void dispatchFeedInteraction({ type: "task.copyPermalink", taskId: task.id }); }}
+                  onRecompose={() => { void dispatchFeedInteraction({ type: "task.recompose", taskId: task.id }); }}
+                  onDelete={() => { void dispatchFeedInteraction({ type: "task.delete", taskId: task.id }); }}
                   className="shrink-0"
                 />
               ) : null}
@@ -355,8 +353,8 @@ export const FeedTaskCard = memo(function FeedTaskCard({
       currentUserPubkey={currentUser?.pubkey}
       hasChildren={hasChildren}
       onReact={handleMenuReact}
-      onCopyPermalink={() => { void taskCommands.copyPermalink(task.id); }}
-      onDelete={() => { void taskCommands.deletePost(task.id); }}
+      onCopyPermalink={() => { void dispatchFeedInteraction({ type: "task.copyPermalink", taskId: task.id }); }}
+      onDelete={() => { void dispatchFeedInteraction({ type: "task.delete", taskId: task.id }); }}
     >
       {surface}
     </FeedTaskSwipeActions>
