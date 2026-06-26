@@ -1,5 +1,5 @@
 import type { Post } from "@/types";
-import type { Person } from "@/types/person";
+import { getPersonDisplayName, type Person } from "@/types/person";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 
 const DEFAULT_MIN_POSTS = 3;
@@ -82,7 +82,7 @@ export function deriveSidebarPeople(
       if (b.personalScore !== a.personalScore) {
         return b.personalScore - a.personalScore;
       }
-      return (a.person.displayName ?? "").localeCompare(b.person.displayName ?? "", undefined, {
+      return getPersonDisplayName(a.person).localeCompare(getPersonDisplayName(b.person), undefined, {
         sensitivity: "base",
       });
     })

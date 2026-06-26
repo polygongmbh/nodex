@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
-import type { Person } from "@/types/person";
+import { getPersonDisplayName, type Person } from "@/types/person";
 import {
   derivePeopleFromKind0Events,
   getKind0CacheVersion,
@@ -129,7 +129,7 @@ export function useKind0People(
             nip05: user.profile?.nip05?.trim().toLowerCase(),
             picture: user.profile?.picture,
           },
-        ].sort((a, b) => (a.displayName ?? "").localeCompare(b.displayName ?? ""));
+        ].sort((a, b) => getPersonDisplayName(a).localeCompare(getPersonDisplayName(b)));
       }
 
       return arePeopleListsEqual(prev, next) ? prev : next;
