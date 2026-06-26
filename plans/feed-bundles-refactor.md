@@ -1,10 +1,23 @@
 # Command-bundle split + `Feed*` naming sweep
 
+## Status
+
+**Part A (sections A.1, A.2, A.3) is SUPERSEDED** by
+`~/.claude/plans/243-feedsidebarcommandsprovider-proud-swan.md`. Do not
+execute Part A from here. The successor plan collapses the bus-only
+command contexts entirely (rather than splitting one bundle into four),
+demotes `FeedSidebarController` to a prop, dismantles
+`FeedViewState` into stores/hooks, and partially collapses
+`FeedTaskCommands`.
+
+**Part B (the `Feed*` naming sweep) is still valid** and should be
+executed AFTER the successor plan — fewer symbols to rename by then.
+
 Successor to `counting-roughly-effervescent-nebula.md` (Phases 1–2
 done) and `ancient-riding-dewdrop.md` (Steps 1–4 done, Step 7 done).
 This plan covers the two remaining tranches of the post-browsing
-refactor: **(A) splitting the three command god-bundles** and **(B) the
-`Feed*` naming sweep (prior plan's Step 8).**
+refactor: **(A) splitting the three command god-bundles** [SUPERSEDED]
+**and (B) the `Feed*` naming sweep (prior plan's Step 8).**
 
 ## Where we are (verified 2026-05-29)
 
