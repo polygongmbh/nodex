@@ -1,5 +1,5 @@
 import { getTaskPrimaryDate } from "@/types";
-import { useMemo, type PropsWithChildren } from "react";
+import { useMemo, type ComponentType, type ReactNode, type PropsWithChildren } from "react";
 import type {
   FeedSidebarCommands,
   FeedViewCommands,
@@ -18,6 +18,22 @@ import { ScrollCaptureProvider, type ScrollCaptureRef } from "./scroll-capture-c
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
 import { dismissRetryInProgress, notifyRetryInProgress } from "@/lib/notifications";
+
+type ValueProvider<T> = ComponentType<{ value: T; children: ReactNode }>;
+type ProviderEntry = readonly [ValueProvider<unknown>, unknown];
+
+/** Pair a value-provider with its value while keeping the value type checked. */
+function providerEntry<T>(Provider: ValueProvider<T>, value: T): ProviderEntry {
+  return [Provider as ValueProvider<unknown>, value];
+}
+
+/** Nest a flat list of value-providers (outermost first) around children. */
+function composeProviders(entries: readonly ProviderEntry[], children: ReactNode): ReactNode {
+  return entries.reduceRight<ReactNode>(
+    (acc, [Provider, value]) => <Provider value={value}>{acc}</Provider>,
+    children
+  );
+}
 
 export interface FeedPageCoreHandlers {
   onOpenAuthModal: (initialStep?: "choose" | "noas" | "noasSignUp") => void;
@@ -246,21 +262,24 @@ export function FeedPageProviders({
   scrollCaptureRef,
   children,
 }: FeedPageProvidersProps) {
+  // The bus is the one non-value provider (it takes its inputs as discrete
+  // props), so it wraps explicitly; the rest are a flat value-provider list.
   return (
-    <FeedTaskCommandsProvider value={taskCommands}>
-      <FeedInteractionBusProvider
-        coreHandlers={coreHandlers}
-        sidebarCommands={sidebarCommands}
-        viewCommands={viewCommands}
-        taskCommands={taskInteractionCommands}
-        failedPublishCommands={failedPublishCommands}
-      >
-        <FeedSurfaceProvider value={surfaceState}>
-          <ScrollCaptureProvider value={scrollCaptureRef}>
-            {children}
-          </ScrollCaptureProvider>
-        </FeedSurfaceProvider>
-      </FeedInteractionBusProvider>
-    </FeedTaskCommandsProvider>
+    <FeedInteractionBusProvider
+      coreHandlers={coreHandlers}
+      sidebarCommands={sidebarCommands}
+      viewCommands={viewCommands}
+      taskCommands={taskInteractionCommands}
+      failedPublishCommands={failedPublishCommands}
+    >
+      {composeProviders(
+        [
+          providerEntry(FeedTaskCommandsProvider, taskCommands),
+          providerEntry(FeedSurfaceProvider, surfaceState),
+          providerEntry(ScrollCaptureProvider, scrollCaptureRef),
+        ],
+        children
+      )}
+    </FeedInteractionBusProvider>
   );
 }
