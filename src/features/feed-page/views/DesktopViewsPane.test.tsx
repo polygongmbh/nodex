@@ -72,7 +72,6 @@ function renderPane(
     >
       <FeedViewStateProvider
         value={{
-          currentView,
           isSidebarFocused: false,
           isOnboardingOpen: false,
           activeOnboardingStepId: null,
@@ -80,7 +79,7 @@ function renderPane(
           profileCompletionPromptSignal: 0,
         }}
       >
-        <DesktopViewsPane posts={allTasks} focusedTaskId={focusedTaskId} />
+        <DesktopViewsPane posts={allTasks} focusedTaskId={focusedTaskId} currentView={currentView} />
       </FeedViewStateProvider>
     </FeedSurfaceProvider>
   );

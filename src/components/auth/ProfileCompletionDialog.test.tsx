@@ -55,7 +55,6 @@ function renderDialog(profileCompletionPromptSignal: number) {
   return render(
     <FeedViewStateProvider
       value={{
-        currentView: "feed",
         isSidebarFocused: false,
         isOnboardingOpen: false,
         activeOnboardingStepId: null,
@@ -97,7 +96,6 @@ describe("ProfileCompletionDialog", () => {
     rendered.rerender(
       <FeedViewStateProvider
         value={{
-          currentView: "feed",
           isSidebarFocused: false,
           isOnboardingOpen: false,
           activeOnboardingStepId: null,

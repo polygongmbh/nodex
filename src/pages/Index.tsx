@@ -817,7 +817,6 @@ function FeedIndexContent() {
 
   const feedViewState = useMemo(
     () => ({
-      currentView,
       isSidebarFocused,
       isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
       activeOnboardingStepId,
@@ -827,7 +826,6 @@ function FeedIndexContent() {
     [
       activeOnboardingStepId,
       authPolicy.canCreateContent,
-      currentView,
       isAuthModalOpen,
       isOnboardingOpen,
       isSidebarFocused,
@@ -890,6 +888,7 @@ function FeedIndexContent() {
         <FeedPageMobileShell
           posts={relayScopedTasks}
           focusedTaskId={focusedTaskId}
+          currentView={currentView}
           authModalProps={{
             isOpen: isAuthModalOpen,
             onClose: handleCloseAuthModal,
@@ -900,6 +899,7 @@ function FeedIndexContent() {
         <DesktopAppShell
           posts={relayScopedTasks}
           focusedTaskId={focusedTaskId}
+          currentView={currentView}
           sidebarController={desktopSidebarController}
           shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
           authModalProps={{

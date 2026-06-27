@@ -1,7 +1,5 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
-import type { ViewType } from "@/components/tasks/ViewSwitcher";
 export interface FeedViewState {
-  currentView: ViewType;
   isSidebarFocused: boolean;
   /** Pre-gated: rawIsOnboardingOpen && !isAuthModalOpen */
   isOnboardingOpen: boolean;
@@ -11,7 +9,6 @@ export interface FeedViewState {
 }
 
 const defaultState: FeedViewState = {
-  currentView: "status",
   isSidebarFocused: false,
   isOnboardingOpen: false,
   activeOnboardingStepId: null,

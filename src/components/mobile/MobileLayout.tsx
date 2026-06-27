@@ -44,9 +44,11 @@ const UpcomingView = lazy(() =>
 export function MobileLayout({
   posts,
   focusedTaskId,
+  currentView,
 }: {
   posts: Post[];
   focusedTaskId: string | null;
+  currentView: ViewType;
 }) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -58,7 +60,6 @@ export function MobileLayout({
   const {
     canCreateContent,
     profileCompletionPromptSignal,
-    currentView,
     isOnboardingOpen,
     activeOnboardingStepId,
   } = useFeedViewState();

@@ -14,16 +14,18 @@ import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { getCompactPersonLabel } from "@/types/person";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 export function DesktopSearchDock({
   focusedTaskId,
+  currentView,
 }: {
   focusedTaskId: string | null;
+  currentView: ViewType;
 }) {
   const { t, i18n } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -31,7 +33,6 @@ export function DesktopSearchDock({
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const posts = usePosts();
-  const { currentView } = useFeedViewState();
   const displayDepthMode = usePreferencesStore((s) => s.displayDepthMode);
   const showDisplayDepthSelector = currentView === "kanban" || currentView === "list";
   const contextTaskTitle = focusedTaskId

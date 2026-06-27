@@ -18,6 +18,7 @@ import { makeQuickFilterState } from "@/test/quick-filter-state";
 import type { FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import type { FeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 const ndkMock = {
   user: null as null | {
@@ -161,13 +162,16 @@ const people: Person[] = [makePerson({ pubkey: "me", name: "Me", displayName: "M
 const tasks: Post[] = [];
 
 const baseFeedViewState: FeedViewState = {
-  currentView: "tree",
   isSidebarFocused: false,
   isOnboardingOpen: false,
   activeOnboardingStepId: null,
   canCreateContent: true,
   profileCompletionPromptSignal: 0,
 };
+
+// currentView is a prop on MobileLayout (URL-derived in production); setMocks
+// records the value so both the helper and direct rerenders can pass it.
+let mockCurrentView: ViewType = "tree";
 
 const baseSurfaceState: FeedSurfaceState = {
   relays,
@@ -185,6 +189,7 @@ interface TaskViewModelOverride {
 
 type MobileLayoutOverrides = {
   viewState?: Partial<FeedViewState>;
+  currentView?: ViewType;
   taskViewModel?: TaskViewModelOverride;
   surfaceState?: Partial<FeedSurfaceState>;
 };
@@ -208,6 +213,7 @@ function setMocks(overrides: MobileLayoutOverrides = {}) {
   };
   mockViewState.mockReturnValue({ ...baseFeedViewState, ...overrides.viewState });
   mockSurfaceState.mockReturnValue(surfaceState);
+  mockCurrentView = overrides.currentView ?? "tree";
   applyTaskViewModelOverride(overrides.taskViewModel);
 }
 
@@ -220,7 +226,7 @@ function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: s
   const posts = rest.taskViewModel?.allTasks ?? [];
   return render(
     <MemoryRouter>
-      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} />
+      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} currentView={mockCurrentView} />
     </MemoryRouter>
   );
 }
@@ -245,7 +251,7 @@ afterEach(() => {
 
 describe("MobileLayout auth wiring", () => {
   it("shows the same loading fallback copy as desktop while lazy mobile views resolve", () => {
-    renderMobileLayout({ viewState: { currentView: "feed" } });
+    renderMobileLayout({ currentView: "feed" });
 
     expect(screen.getByText("Loading view...")).toBeInTheDocument();
   });
@@ -282,7 +288,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     setMocks({ viewState: { canCreateContent: true, profileCompletionPromptSignal: 1 } });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
 
     // Prompt no longer hijacks the route; the global ProfileCompletionDialog
     // (mounted in FeedPageProviders) handles displaying the editor instead.
@@ -360,7 +366,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
 
-    renderMobileLayout({ viewState: { currentView: "list" } });
+    renderMobileLayout({ currentView: "list" });
 
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
     fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
@@ -401,7 +407,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      viewState: { currentView: "feed" },
+      currentView: "feed",
       taskViewModel: { allTasks: sampleTasks },
       searchQuery: "nomatchquery",
     });
@@ -420,7 +426,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      viewState: { currentView: "feed" },
+      currentView: "feed",
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
       },
@@ -527,7 +533,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      viewState: { currentView: "list" },
+      currentView: "list",
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
       },
@@ -550,7 +556,7 @@ describe("MobileLayout auth wiring", () => {
     const childTask = makeTask({ id: "child-task", content: "Child task #general", tags: ["general"], parentId: "root-task" });
 
     renderMobileLayout({
-      viewState: { currentView: "list" },
+      currentView: "list",
       taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
     });
 
@@ -569,7 +575,7 @@ describe("MobileLayout auth wiring", () => {
     const childTask = makeTask({ id: "child-task", content: "Child task #general", tags: ["general"], parentId: "root-task" });
 
     renderMobileLayout({
-      viewState: { currentView: "calendar" },
+      currentView: "calendar",
       taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
     });
 
@@ -611,7 +617,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     renderMobileLayout({
-      viewState: { currentView: "list" },
+      currentView: "list",
       taskViewModel: { isHydrating: true },
     });
 
@@ -627,8 +633,8 @@ describe("MobileLayout auth wiring", () => {
       viewState: { isOnboardingOpen: true, activeOnboardingStepId: "mobile-filters-use" },
     });
 
-    setMocks({ viewState: { currentView: "tree", isOnboardingOpen: true, activeOnboardingStepId: "mobile-compose-combobox" } });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
+    setMocks({ currentView: "tree", viewState: { isOnboardingOpen: true, activeOnboardingStepId: "mobile-compose-combobox" } });
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
 
     await waitFor(() => {
       expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
@@ -648,8 +654,8 @@ describe("MobileLayout auth wiring", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
-    setMocks({ viewState: { currentView: "feed" } });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
+    setMocks({ currentView: "feed" });
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("feed-view")).toBeInTheDocument();
