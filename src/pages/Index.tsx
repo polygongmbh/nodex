@@ -73,6 +73,7 @@ import { FeedRelayProvider, useFeedRelayState } from "@/features/feed-page/views
 import { PersonPresenceProvider } from "@/lib/person-presence-context";
 import { MotdBanner } from "@/components/MotdBanner";
 import { DocumentTitleSync } from "@/components/DocumentTitleSync";
+import { ProfileCompletionDialog } from "@/components/auth/ProfileCompletionDialog";
 import { featureDebugLog } from "@/lib/feature-debug";
 
 function FeedIndexContent() {
@@ -820,16 +821,12 @@ function FeedIndexContent() {
       isSidebarFocused,
       isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
       activeOnboardingStepId,
-      canCreateContent: authPolicy.canCreateContent,
-      profileCompletionPromptSignal,
     }),
     [
       activeOnboardingStepId,
-      authPolicy.canCreateContent,
       isAuthModalOpen,
       isOnboardingOpen,
       isSidebarFocused,
-      profileCompletionPromptSignal,
     ]
   );
 
@@ -911,6 +908,7 @@ function FeedIndexContent() {
       )}
       {welcomeController}
       {onboardingController}
+      <ProfileCompletionDialog profileCompletionPromptSignal={profileCompletionPromptSignal} />
     </FeedPageProviders>
     </PersonPresenceProvider>
   );

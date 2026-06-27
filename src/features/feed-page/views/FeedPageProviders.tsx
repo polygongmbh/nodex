@@ -18,7 +18,6 @@ import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-con
 import { ScrollCaptureProvider, type ScrollCaptureRef } from "./scroll-capture-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
-import { ProfileCompletionDialog } from "@/components/auth/ProfileCompletionDialog";
 import { dismissRetryInProgress, notifyRetryInProgress } from "@/lib/notifications";
 
 export interface FeedPageCoreHandlers {
@@ -263,7 +262,6 @@ export function FeedPageProviders({
           <FeedViewStateProvider value={viewState}>
             <ScrollCaptureProvider value={scrollCaptureRef}>
               {children}
-              <ProfileCompletionDialog />
             </ScrollCaptureProvider>
           </FeedViewStateProvider>
         </FeedSurfaceProvider>

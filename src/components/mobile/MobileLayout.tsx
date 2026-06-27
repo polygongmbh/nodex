@@ -16,6 +16,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
@@ -58,11 +59,10 @@ export function MobileLayout({
   const channelFilterStates = useFilterStore((s) => s.channelFilterStates);
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const {
-    canCreateContent,
-    profileCompletionPromptSignal,
     isOnboardingOpen,
     activeOnboardingStepId,
   } = useFeedViewState();
+  const { canCreateContent } = useAuthActionPolicy();
 
   const composeRestoreRequest = useComposeRestoreSignal();
   const forceComposeMode = useOnboardingComposerSignal();
@@ -71,7 +71,6 @@ export function MobileLayout({
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
-  const lastHandledProfilePromptSignalRef = useRef(0);
   const lastHandledGuideStepIdRef = useRef<string | null>(null);
   const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView)
     ? currentView
@@ -179,14 +178,6 @@ export function MobileLayout({
       closeManageView("feed");
     }
   }, [activeOnboardingStepId, isOnboardingOpen, closeManageView, openManageView]);
-
-  // Profile completion prompt is now handled globally by ProfileCompletionDialog,
-  // which pops a profile editor dialog on mobile and desktop without changing route.
-  useEffect(() => {
-    if (profileCompletionPromptSignal <= 0) return;
-    if (profileCompletionPromptSignal === lastHandledProfilePromptSignalRef.current) return;
-    lastHandledProfilePromptSignalRef.current = profileCompletionPromptSignal;
-  }, [profileCompletionPromptSignal]);
 
   useMobileToastOffset({ hasBreadcrumbOffset: hasMobileBreadcrumbOffset });
 

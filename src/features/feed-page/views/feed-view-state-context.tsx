@@ -4,16 +4,12 @@ export interface FeedViewState {
   /** Pre-gated: rawIsOnboardingOpen && !isAuthModalOpen */
   isOnboardingOpen: boolean;
   activeOnboardingStepId: string | null;
-  canCreateContent: boolean;
-  profileCompletionPromptSignal: number;
 }
 
 const defaultState: FeedViewState = {
   isSidebarFocused: false,
   isOnboardingOpen: false,
   activeOnboardingStepId: null,
-  canCreateContent: false,
-  profileCompletionPromptSignal: 0,
 };
 
 const FeedViewStateContext = createContext<FeedViewState>(defaultState);

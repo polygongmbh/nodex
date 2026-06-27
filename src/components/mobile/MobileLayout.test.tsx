@@ -165,8 +165,6 @@ const baseFeedViewState: FeedViewState = {
   isSidebarFocused: false,
   isOnboardingOpen: false,
   activeOnboardingStepId: null,
-  canCreateContent: true,
-  profileCompletionPromptSignal: 0,
 };
 
 // currentView is a prop on MobileLayout (URL-derived in production); setMocks
@@ -261,7 +259,8 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
 
-    renderMobileLayout({ viewState: { canCreateContent: false } });
+    // canCreateContent now derives from auth state (no signed-in user => false).
+    renderMobileLayout();
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
@@ -277,9 +276,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
 
-    const { rerender } = renderMobileLayout({
-      viewState: { canCreateContent: false, profileCompletionPromptSignal: 0 },
-    });
+    const { rerender } = renderMobileLayout();
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
@@ -287,7 +284,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    setMocks({ viewState: { canCreateContent: true, profileCompletionPromptSignal: 1 } });
+    setMocks();
     rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
 
     // Prompt no longer hijacks the route; the global ProfileCompletionDialog
@@ -301,9 +298,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    renderMobileLayout({
-      viewState: { canCreateContent: true, profileCompletionPromptSignal: 0 },
-    });
+    renderMobileLayout();
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();

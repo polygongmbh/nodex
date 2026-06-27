@@ -75,8 +75,6 @@ function renderPane(
           isSidebarFocused: false,
           isOnboardingOpen: false,
           activeOnboardingStepId: null,
-          canCreateContent: true,
-          profileCompletionPromptSignal: 0,
         }}
       >
         <DesktopViewsPane posts={allTasks} focusedTaskId={focusedTaskId} currentView={currentView} />
