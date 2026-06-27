@@ -59,7 +59,6 @@ function renderDialog(profileCompletionPromptSignal: number) {
         isSidebarFocused: false,
         isOnboardingOpen: false,
         activeOnboardingStepId: null,
-        isManageRouteActive: false,
         canCreateContent: true,
         profileCompletionPromptSignal,
       }}
@@ -102,7 +101,6 @@ describe("ProfileCompletionDialog", () => {
           isSidebarFocused: false,
           isOnboardingOpen: false,
           activeOnboardingStepId: null,
-          isManageRouteActive: false,
           canCreateContent: true,
           profileCompletionPromptSignal: 1,
         }}

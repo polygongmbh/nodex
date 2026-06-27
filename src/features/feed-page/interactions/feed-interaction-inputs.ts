@@ -53,7 +53,6 @@ export interface FeedViewCommands {
   focusTasks(): void;
   setCurrentView(view: ViewType): void;
   setDisplayDepthMode(mode: DisplayDepthMode): void;
-  setManageRouteActive(isActive: boolean): void;
 }
 
 /**

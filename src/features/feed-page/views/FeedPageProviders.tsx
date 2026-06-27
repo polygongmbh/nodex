@@ -104,9 +104,6 @@ function FeedInteractionBusProvider({
       "ui.displayDepth.change": (intent) => {
         viewCommands.setDisplayDepthMode(intent.mode);
       },
-      "ui.manageRoute.change": (intent) => {
-        viewCommands.setManageRouteActive(intent.isActive);
-      },
       ...coreHandlers.filterHandlers,
       "sidebar.channel.toggle": (intent) => {
         sidebarCommands.toggleChannel(intent.channelId);

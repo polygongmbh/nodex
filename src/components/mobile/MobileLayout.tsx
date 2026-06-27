@@ -61,12 +61,7 @@ export function MobileLayout({
     currentView,
     isOnboardingOpen,
     activeOnboardingStepId,
-    isManageRouteActive,
   } = useFeedViewState();
-
-  const dispatchManageRouteChange = useCallback((isActive: boolean) => {
-    void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
-  }, [dispatchFeedInteraction]);
 
   const composeRestoreRequest = useComposeRestoreSignal();
   const forceComposeMode = useOnboardingComposerSignal();
@@ -90,19 +85,17 @@ export function MobileLayout({
   const allChannels = surface.channels;
   const chipChannels = channels;
 
+  // The manage pane is a transient local overlay — no route, no shared state.
   const openManageView = useCallback(() => {
     setShowFilters(true);
-    dispatchManageRouteChange(true);
-  }, [dispatchManageRouteChange]);
+  }, []);
 
   const closeManageView = useCallback((nextView?: ViewType) => {
     setShowFilters(false);
     if (nextView) {
       void dispatchFeedInteraction({ type: "ui.view.change", view: nextView });
-      return;
     }
-    dispatchManageRouteChange(false);
-  }, [dispatchFeedInteraction, dispatchManageRouteChange]);
+  }, [dispatchFeedInteraction]);
 
   // Burger acts as a toggle: tapping it while the manage pane is open closes it.
   const toggleManageView = useCallback(() => {
@@ -170,14 +163,6 @@ export function MobileLayout({
     includedChannels.length === 0 &&
     searchQuery.trim().length > 0 &&
     shouldShowMobileFallbackNotice;
-
-  useEffect(() => {
-    if (isManageRouteActive) {
-      setShowFilters(true);
-      return;
-    }
-    setShowFilters(false);
-  }, [isManageRouteActive]);
 
   useEffect(() => {
     if (!isOnboardingOpen || !activeOnboardingStepId) {

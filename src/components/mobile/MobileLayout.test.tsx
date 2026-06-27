@@ -165,7 +165,6 @@ const baseFeedViewState: FeedViewState = {
   isSidebarFocused: false,
   isOnboardingOpen: false,
   activeOnboardingStepId: null,
-  isManageRouteActive: false,
   canCreateContent: true,
   profileCompletionPromptSignal: 0,
 };
@@ -328,7 +327,7 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
   });
 
-  it("syncs manage route state when opening manage view", () => {
+  it("opens the manage overlay locally without dispatching a route change", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
@@ -336,17 +335,10 @@ describe("MobileLayout auth wiring", () => {
     renderMobileLayout();
 
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.manageRoute.change", isActive: true });
-  });
 
-  it("restores manage panel from route state", () => {
-    setSignedInUser();
-    ndkMock.needsProfileSetup = false;
-
-    renderMobileLayout({ viewState: { isManageRouteActive: true } });
-
-    expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
     expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
 
   it("preserves compose draft text when opening and closing manage view", () => {
@@ -373,15 +365,13 @@ describe("MobileLayout auth wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
     fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
 
-    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(1, {
-      type: "ui.manageRoute.change",
-      isActive: true,
-    });
-    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(2, {
+    // Opening manage is local-only; selecting a view both closes the overlay
+    // and changes the view, so the single dispatch is the view change.
+    expect(dispatchFeedInteraction).toHaveBeenCalledTimes(1);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "ui.view.change",
       view: "calendar",
     });
-    expect(dispatchFeedInteraction).toHaveBeenCalledTimes(2);
   });
 
   it("falls back to showing all tasks when mobile quick filter has no matches", () => {
@@ -666,7 +656,7 @@ describe("MobileLayout auth wiring", () => {
     });
   });
 
-  it("switches top-bar views without closing manage route when not in manage", () => {
+  it("switches top-bar views via a view-change dispatch when not in manage", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
@@ -676,10 +666,6 @@ describe("MobileLayout auth wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: "Feed" }));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
-    const manageRouteCalls = dispatchFeedInteraction.mock.calls.filter(
-      ([intent]) => intent?.type === "ui.manageRoute.change" && intent?.isActive === false
-    );
-    expect(manageRouteCalls).toHaveLength(0);
   });
 
   it("publishes a larger mobile toast top offset when focused breadcrumb chrome is visible", async () => {

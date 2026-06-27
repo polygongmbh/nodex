@@ -28,7 +28,6 @@ export type FeedInteractionIntent =
     }
   | { type: "ui.search.change"; query: string }
   | { type: "ui.displayDepth.change"; mode: DisplayDepthMode }
-  | { type: "ui.manageRoute.change"; isActive: boolean }
   | { type: "filter.applyHashtagInclude"; tag: string }
   | { type: "filter.applyAuthorExclusive"; pubkey: string }
   | { type: "person.filter.exclusive"; pubkey: string }

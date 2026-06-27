@@ -403,10 +403,8 @@ function FeedIndexContent() {
     currentView,
     focusedTaskId,
     focusedTask,
-    isManageRouteActive,
     setCurrentView,
     setFocusedTaskId,
-    setManageRouteActive,
     openedWithFocusedTaskRef,
   } = useFeedNavigation({
     allTasks,
@@ -676,9 +674,8 @@ function FeedIndexContent() {
       focusTasks: () => setIsSidebarFocused(false),
       setCurrentView,
       setDisplayDepthMode,
-      setManageRouteActive,
     }),
-    [setCurrentView, setDisplayDepthMode, setManageRouteActive, setIsSidebarFocused]
+    [setCurrentView, setDisplayDepthMode, setIsSidebarFocused]
   );
 
   const handleCopyPermalink = useCallback(async (taskId: string): Promise<boolean> => {
@@ -824,7 +821,6 @@ function FeedIndexContent() {
       isSidebarFocused,
       isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
       activeOnboardingStepId,
-      isManageRouteActive,
       canCreateContent: authPolicy.canCreateContent,
       profileCompletionPromptSignal,
     }),
@@ -833,7 +829,6 @@ function FeedIndexContent() {
       authPolicy.canCreateContent,
       currentView,
       isAuthModalOpen,
-      isManageRouteActive,
       isOnboardingOpen,
       isSidebarFocused,
       profileCompletionPromptSignal,

@@ -76,7 +76,6 @@ function renderPane(
           isSidebarFocused: false,
           isOnboardingOpen: false,
           activeOnboardingStepId: null,
-          isManageRouteActive: false,
           canCreateContent: true,
           profileCompletionPromptSignal: 0,
         }}

@@ -11,7 +11,6 @@ import type { Post, Relay } from "@/types";
 // All views stay routable by direct URL. VITE_VIEWS only restricts what the nav
 // surfaces and where auto-redirects land — not what you can reach by typing.
 const VALID_VIEWS: readonly ViewType[] = VIEW_ORDER;
-const MOBILE_MANAGE_ROUTE = "manage";
 const SEARCH_PARAM = "q";
 
 function buildSearchUrl(loc: { pathname: string; search: string; hash: string }, q: string) {
@@ -49,18 +48,13 @@ export function useFeedNavigation({
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const lastContentViewRef = useRef<ViewType>(resolveDefaultView(isMobile));
 
-  const isManageRouteActive = urlView === MOBILE_MANAGE_ROUTE;
-  const resolvedUrlView = VALID_VIEWS.includes(urlView as ViewType)
+  // The view is a pure function of the URL — an unknown slug falls back to the
+  // platform default. (Mobile "manage" is a local overlay in MobileLayout, not a
+  // route, so it never appears here.)
+  const currentView: ViewType = VALID_VIEWS.includes(urlView as ViewType)
     ? (urlView as ViewType)
-    : null;
-
-  if (resolvedUrlView !== null) {
-    lastContentViewRef.current = resolvedUrlView;
-  }
-
-  const currentView: ViewType = resolvedUrlView ?? lastContentViewRef.current;
+    : resolveDefaultView(isMobile);
 
   const focusedTaskId = urlTaskId ?? null;
 
@@ -110,18 +104,6 @@ export function useFeedNavigation({
     [navigate, currentView, focusedTask]
   );
 
-  const setManageRouteActive = useCallback(
-    (isActive: boolean) => {
-      if (isActive) {
-        navigateToPath(`/${MOBILE_MANAGE_ROUTE}`);
-        return;
-      }
-      const pathname = focusedTaskId ? `/${currentView}/${focusedTaskId}` : `/${currentView}`;
-      navigateToPath(pathname);
-    },
-    [currentView, focusedTaskId, navigateToPath]
-  );
-
   useKeyboardShortcuts({
     onViewChange: setCurrentView,
     onToggleChannelMatchMode,
@@ -166,7 +148,7 @@ export function useFeedNavigation({
       focusedTaskId,
     });
     toast(t("tasks.toasts.postNotFound", { id: shortenPostId(focusedTaskId) }));
-    const fallbackView = resolvedUrlView ?? lastContentViewRef.current;
+    const fallbackView = currentView;
     const searchAtSchedule = location.search;
     const hashAtSchedule = location.hash;
     const timer = setTimeout(() => {
@@ -185,7 +167,7 @@ export function useFeedNavigation({
     focusedTask,
     isHydrating,
     navigate,
-    resolvedUrlView,
+    currentView,
     location.search,
     location.hash,
     t,
@@ -201,10 +183,8 @@ export function useFeedNavigation({
     currentView,
     focusedTaskId,
     focusedTask,
-    isManageRouteActive,
     setCurrentView,
     setFocusedTaskId,
-    setManageRouteActive,
     openedWithFocusedTaskRef,
   };
 }

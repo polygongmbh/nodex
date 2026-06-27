@@ -50,15 +50,12 @@ function Harness({
     <>
       <output data-testid="current-view">{nav.currentView}</output>
       <output data-testid="focused-task-id">{nav.focusedTaskId ?? "null"}</output>
-      <output data-testid="is-manage">{String(nav.isManageRouteActive)}</output>
       <output data-testid="pathname">{location.pathname}</output>
       <button onClick={() => nav.setCurrentView("tree")}>go-tree</button>
       <button onClick={() => nav.setCurrentView("kanban")}>go-kanban</button>
       <button onClick={() => nav.setCurrentView("calendar")}>go-calendar</button>
       <button onClick={() => nav.setFocusedTaskId("task-abc")}>focus-task</button>
       <button onClick={() => nav.setFocusedTaskId(null)}>unfocus-task</button>
-      <button onClick={() => nav.setManageRouteActive(true)}>open-manage</button>
-      <button onClick={() => nav.setManageRouteActive(false)}>close-manage</button>
     </>
   );
 }
@@ -128,40 +125,10 @@ describe("useFeedNavigation", () => {
     expect(screen.getByTestId("current-view")).toHaveTextContent("list");
   });
 
-  it("setManageRouteActive(true) navigates to /manage", () => {
-    renderAt("/feed");
-    act(() => screen.getByRole("button", { name: "open-manage" }).click());
-    expect(screen.getByTestId("is-manage")).toHaveTextContent("true");
-  });
-
-  it("setManageRouteActive(false) returns to current view", () => {
+  it("falls back to the default view for an unknown view slug", () => {
     renderAt("/manage");
-    // After toggling off manage, we expect to be back on the default view.
-    act(() => screen.getByRole("button", { name: "close-manage" }).click());
-    expect(screen.getByTestId("is-manage")).toHaveTextContent("false");
-  });
-
-  it("preserves the last non-manage view while the manage route is active", () => {
-    renderAt("/tree");
-
-    act(() => screen.getByRole("button", { name: "open-manage" }).click());
-    expect(screen.getByTestId("current-view")).toHaveTextContent("tree");
-    expect(screen.getByTestId("is-manage")).toHaveTextContent("true");
-
-    act(() => screen.getByRole("button", { name: "close-manage" }).click());
-    expect(screen.getByTestId("current-view")).toHaveTextContent("tree");
-    expect(screen.getByTestId("is-manage")).toHaveTextContent("false");
-  });
-
-  it("switches directly to the chosen view from manage instead of falling back to feed", () => {
-    renderAt("/list");
-
-    act(() => screen.getByRole("button", { name: "open-manage" }).click());
-    expect(screen.getByTestId("current-view")).toHaveTextContent("list");
-
-    act(() => screen.getByRole("button", { name: "go-calendar" }).click());
-    expect(screen.getByTestId("current-view")).toHaveTextContent("calendar");
-    expect(screen.getByTestId("is-manage")).toHaveTextContent("false");
+    // "manage" is no longer a route; an unknown slug resolves to the default.
+    expect(screen.getByTestId("current-view")).toHaveTextContent("home");
   });
 
   it("does not clear an unknown focused task while still hydrating", () => {
