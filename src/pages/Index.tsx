@@ -816,20 +816,6 @@ function FeedIndexContent() {
     ]
   );
 
-  const feedViewState = useMemo(
-    () => ({
-      isSidebarFocused,
-      isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
-      activeOnboardingStepId,
-    }),
-    [
-      activeOnboardingStepId,
-      isAuthModalOpen,
-      isOnboardingOpen,
-      isSidebarFocused,
-    ]
-  );
-
   useEffect(() => {
     if (!import.meta.env.DEV || typeof performance === "undefined") return;
     renderCountRef.current += 1;
@@ -871,7 +857,6 @@ function FeedIndexContent() {
     <FeedPageProviders
       coreHandlers={coreHandlers}
       surfaceState={feedSurfaceState}
-      viewState={feedViewState}
       sidebarCommands={sidebarCommands}
       viewCommands={viewCommands}
       taskCommands={taskCommands}
@@ -886,6 +871,8 @@ function FeedIndexContent() {
           posts={relayScopedTasks}
           focusedTaskId={focusedTaskId}
           currentView={currentView}
+          isOnboardingOpen={isOnboardingOpen && !isAuthModalOpen}
+          activeOnboardingStepId={activeOnboardingStepId}
           authModalProps={{
             isOpen: isAuthModalOpen,
             onClose: handleCloseAuthModal,

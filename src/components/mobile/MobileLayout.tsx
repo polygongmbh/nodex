@@ -15,7 +15,6 @@ import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
@@ -46,10 +45,14 @@ export function MobileLayout({
   posts,
   focusedTaskId,
   currentView,
+  isOnboardingOpen,
+  activeOnboardingStepId,
 }: {
   posts: Post[];
   focusedTaskId: string | null;
   currentView: ViewType;
+  isOnboardingOpen: boolean;
+  activeOnboardingStepId: string | null;
 }) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -58,10 +61,6 @@ export function MobileLayout({
   const setChannelFilterStates = useFilterStore((s) => s.setChannelFilterStates);
   const channelFilterStates = useFilterStore((s) => s.channelFilterStates);
   const searchQuery = useFilterStore((s) => s.searchQuery);
-  const {
-    isOnboardingOpen,
-    activeOnboardingStepId,
-  } = useFeedViewState();
   const { canCreateContent } = useAuthActionPolicy();
 
   const composeRestoreRequest = useComposeRestoreSignal();
