@@ -21,9 +21,12 @@ export function isReactionEvent(kind: number): boolean {
   return kind === REACTION_EVENT_KIND;
 }
 
-export function buildReactionTags(target: Pick<NostrEvent, "id" | "kind" | "pubkey">): string[][] {
+export function buildReactionTags(
+  target: Pick<NostrEvent, "id" | "kind" | "pubkey">,
+  relayHint = "",
+): string[][] {
   return [
-    ["e", target.id, "", target.pubkey],
+    ["e", target.id, relayHint, target.pubkey],
     ["p", target.pubkey],
     ["k", String(target.kind)],
   ];

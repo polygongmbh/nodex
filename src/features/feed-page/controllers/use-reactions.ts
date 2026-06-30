@@ -26,6 +26,9 @@ interface ReactionTarget {
   id: string;
   kind: number;
   pubkey: string;
+  // Relays the target post was seen on. The reaction is published here (not to
+  // every active write relay) so it lands where the post actually lives.
+  relayUrls?: string[];
 }
 
 export function useReactions() {
@@ -42,11 +45,16 @@ export function useReactions() {
     const content = normalizeReactionContent(rawContent);
     if (!content) return false;
 
+    const targetRelayUrls = target.relayUrls?.filter(Boolean) ?? [];
+    const relayHint = targetRelayUrls[0] ?? "";
+
     try {
       const result = await publishEvent(
         NostrEventKind.Reaction,
         content,
-        buildReactionTags(target),
+        buildReactionTags(target, relayHint),
+        undefined,
+        targetRelayUrls.length > 0 ? targetRelayUrls : undefined,
       );
       if (!result.success) {
         console.warn("[reactions] publish reported no success", { eventId: result.eventId });

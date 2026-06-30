@@ -30,6 +30,14 @@ describe("reaction-events", () => {
         ["k", "1"],
       ]);
     });
+
+    it("includes a relay hint in the e tag when provided", () => {
+      const tags = buildReactionTags(
+        { id: "abc", kind: NostrEventKind.TextNote, pubkey: "pk1" },
+        "wss://relay.example/",
+      );
+      expect(tags[0]).toEqual(["e", "abc", "wss://relay.example/", "pk1"]);
+    });
   });
 
   describe("extractReactionTargetId / Pubkey", () => {
