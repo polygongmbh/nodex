@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { NDKKind } from "@nostr-dev-kit/ndk";
-import { toast } from "sonner";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
@@ -9,6 +8,11 @@ import {
   normalizeReactionContent,
 } from "@/infrastructure/nostr/reaction-events";
 import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
+import {
+  notifyNeedSigninReact,
+  notifyReactionFailed,
+  notifyReactionRemoveFailed,
+} from "@/lib/notifications";
 import {
   getReactionsForTarget,
   mergeReactionEvents,
@@ -39,7 +43,7 @@ export function useReactions() {
     rawContent: string,
   ): Promise<boolean> => {
     if (!user?.pubkey) {
-      toast.error("Sign in to react");
+      notifyNeedSigninReact();
       return false;
     }
     const content = normalizeReactionContent(rawContent);
@@ -58,11 +62,13 @@ export function useReactions() {
       );
       if (!result.success) {
         console.warn("[reactions] publish reported no success", { eventId: result.eventId });
+        notifyReactionFailed(result.rejectionReason);
         return false;
       }
       return true;
     } catch (error) {
       console.warn("[reactions] publish failed", error);
+      notifyReactionFailed();
       return false;
     }
   }, [user?.pubkey, publishEvent]);
@@ -94,9 +100,10 @@ export function useReactions() {
   const unreact = useCallback(async (
     targetEventId: string,
     rawContent: string,
+    targetRelayUrls?: string[],
   ): Promise<boolean> => {
     if (!user?.pubkey) {
-      toast.error("Sign in to react");
+      notifyNeedSigninReact();
       return false;
     }
     const emoji = normalizeReactionContent(rawContent);
@@ -105,18 +112,28 @@ export function useReactions() {
     const matchingIds = getReactionsForTarget(targetEventId)?.mineEventIdsByEmoji[emoji] ?? [];
     if (matchingIds.length === 0) return false;
 
+    const relayUrls = targetRelayUrls?.filter(Boolean) ?? [];
+
     try {
       const tags = matchingIds.flatMap((id) =>
         buildDeletionTags({ id, kind: REACTION_EVENT_KIND }),
       );
-      const result = await publishEvent(NostrEventKind.EventDeletion, "", tags);
+      const result = await publishEvent(
+        NostrEventKind.EventDeletion,
+        "",
+        tags,
+        undefined,
+        relayUrls.length > 0 ? relayUrls : undefined,
+      );
       if (!result.success) {
         console.warn("[reactions] deletion publish reported no success", { targetEventId, emoji });
+        notifyReactionRemoveFailed();
         return false;
       }
       return true;
     } catch (error) {
       console.warn("[reactions] deletion publish failed", { targetEventId, emoji, error });
+      notifyReactionRemoveFailed();
       return false;
     }
   }, [user?.pubkey, publishEvent]);

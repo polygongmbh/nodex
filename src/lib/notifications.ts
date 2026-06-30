@@ -24,6 +24,22 @@ export function notifyStatusRestricted(): void {
   toast.error(i18n.t("composer:toasts.errors.statusRestricted"));
 }
 
+export function notifyNeedSigninReact(): void {
+  toast.error(i18n.t("composer:toasts.errors.needSigninReact"), { id: "react-signin" });
+}
+
+export function notifyReactionFailed(reason?: string): void {
+  if (reason) {
+    toast.error(i18n.t("composer:toasts.errors.reactionFailedWithReason", { reason }), { id: "reaction-failed" });
+    return;
+  }
+  toast.error(i18n.t("composer:toasts.errors.reactionFailed"), { id: "reaction-failed" });
+}
+
+export function notifyReactionRemoveFailed(): void {
+  toast.error(i18n.t("composer:toasts.errors.reactionRemoveFailed"), { id: "reaction-remove-failed" });
+}
+
 export function notifyDisconnectedSelectedFeeds(): void {
   toast.warning(i18n.t("composer:toasts.warnings.disconnectedSelectedFeeds"), { id: "disconnected-selected-feeds" });
 }

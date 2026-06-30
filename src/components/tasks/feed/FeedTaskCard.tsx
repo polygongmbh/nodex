@@ -111,7 +111,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
     );
   };
   const handleMenuUnreact = (emoji: string) => {
-    void publishUnreact(task.id, emoji);
+    void publishUnreact(task.id, emoji, resolveRelayUrlsForIds(relays, task.relayIds));
   };
   const { focusTask } = useTaskViewServices();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
