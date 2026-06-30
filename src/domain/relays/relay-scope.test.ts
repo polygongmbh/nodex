@@ -7,14 +7,12 @@ import {
 } from "./relay-scope";
 
 describe("hasActiveRelayScope", () => {
-  it("is true for a non-empty selection (set or array)", () => {
+  it("is true for a non-empty selection", () => {
     expect(hasActiveRelayScope(new Set(["relay-a"]))).toBe(true);
-    expect(hasActiveRelayScope(["relay-a"])).toBe(true);
   });
 
-  it("is false for an empty selection (set or array)", () => {
+  it("is false for an empty selection", () => {
     expect(hasActiveRelayScope(new Set())).toBe(false);
-    expect(hasActiveRelayScope([])).toBe(false);
   });
 });
 
@@ -31,7 +29,7 @@ describe("resolveRelayScope", () => {
   });
 
   it("falls back to the all-spaces scope when the selection is empty", () => {
-    const result = resolveRelayScope([], () => ["relay-x", "relay-y"]);
+    const result = resolveRelayScope(new Set(), () => ["relay-x", "relay-y"]);
 
     expect(result).toEqual(["relay-x", "relay-y"]);
   });

@@ -11,7 +11,6 @@ import {
 
 const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache";
 const KIND0_CACHE_RELAY_PREFIX = `${KIND0_CACHE_STORAGE_PREFIX}:relay:`;
-const KIND0_CACHE_LOCAL_STORAGE_KEY = `${KIND0_CACHE_STORAGE_PREFIX}:local`;
 const MAX_CACHED_KIND0_EVENTS = 500;
 
 function normalizePubkey(value: string): string {
@@ -185,7 +184,6 @@ export class Kind0Cache {
       for (const storageKey of this.listKnownRelayStorageKeys()) {
         try { window.localStorage.removeItem(storageKey); } catch { /* ignore */ }
       }
-      try { window.localStorage.removeItem(KIND0_CACHE_LOCAL_STORAGE_KEY); } catch { /* ignore */ }
     }
     this.bucketByStorageKey.clear();
     this.dirtyStorageKeys.clear();
@@ -200,7 +198,6 @@ export class Kind0Cache {
 
   loadAll(): NostrEvent[] {
     const acc = new Map<string, NostrEvent>();
-    for (const [, event] of this.getBucket(KIND0_CACHE_LOCAL_STORAGE_KEY)) this.setIfNewer(acc, event);
     for (const storageKey of this.listKnownRelayStorageKeys()) {
       for (const [, event] of this.getBucket(storageKey)) this.setIfNewer(acc, event);
     }
@@ -220,16 +217,11 @@ export class Kind0Cache {
     return this.bucketToArray(acc);
   }
 
-  save(events: NostrEvent[], relayUrl?: string): boolean {
+  save(events: NostrEvent[], relayUrl: string): boolean {
     if (!this.canUseStorage) return false;
-    let storageKey: string;
-    if (!relayUrl) {
-      storageKey = KIND0_CACHE_LOCAL_STORAGE_KEY;
-    } else {
-      const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
-      if (!normalizedRelayUrl) return false;
-      storageKey = getRelayStorageKey(normalizedRelayUrl);
-    }
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+    if (!normalizedRelayUrl) return false;
+    const storageKey = getRelayStorageKey(normalizedRelayUrl);
     const bucket = this.getBucket(storageKey);
     let changed = false;
     for (const event of events) {
@@ -336,7 +328,7 @@ export function loadCachedKind0EventsForRelayUrls(relayUrls: string[]): NostrEve
   return defaultKind0Cache.loadForRelayUrls(relayUrls);
 }
 
-export function saveCachedKind0Events(events: NostrEvent[], relayUrl?: string): boolean {
+export function saveCachedKind0Events(events: NostrEvent[], relayUrl: string): boolean {
   return defaultKind0Cache.save(events, relayUrl);
 }
 
