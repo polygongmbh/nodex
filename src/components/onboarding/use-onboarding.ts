@@ -12,15 +12,16 @@ import {
 } from "@/lib/onboarding-step-rules";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useOnboardingStore } from "@/components/onboarding/onboarding-store";
 
 interface UseOnboardingOptions {
   user: { pubkey?: string } | null | undefined;
   isMobile: boolean;
   currentView: ViewType;
   onBeforeResetFocusedTaskScope?: () => void;
-  setCurrentView: (view: ViewType) => void;
-  setFocusedTaskId: (taskId: string | null) => void;
 }
 
 export function useOnboarding({
@@ -28,17 +29,26 @@ export function useOnboarding({
   isMobile,
   currentView,
   onBeforeResetFocusedTaskScope,
-  setCurrentView,
-  setFocusedTaskId,
 }: UseOnboardingOptions) {
   const { t } = useTranslation("onboarding");
   const { setActiveRelayIds, setChannelFilterStates, setSearchQuery, clearSelectedPeople } = useFilterStore();
   const setIsAuthModalOpen = useAuthModalStore((s) => s.setIsOpen);
+  const dispatch = useFeedInteractionDispatch();
+  const isOnboardingOpen = useOnboardingStore((s) => s.isOpen);
+  const closeOnboarding = useOnboardingStore((s) => s.closeGuide);
 
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
-  const [onboardingManualStart, setOnboardingManualStart] = useState(false);
-  const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
+  // Onboarding drives navigation through the interaction bus (like every other
+  // caller) rather than raw setters, so the hook needs no navigation props.
+  const setCurrentView = useCallback(
+    (view: ViewType) => { void dispatch({ type: "ui.view.change", view }); },
+    [dispatch]
+  );
+  const setFocusedTaskId = useCallback(
+    (taskId: string | null) => { void dispatch({ type: "task.focus.change", taskId }); },
+    [dispatch]
+  );
+
+  const [onboardingInitialSection] = useState<OnboardingInitialSection>(isMobile ? "all" : null);
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
 
@@ -51,34 +61,18 @@ export function useOnboarding({
     [currentView, isMobile, t]
   );
 
-  const openGuideAsStartup = useCallback(() => {
-    setOnboardingManualStart(false);
-    setOnboardingInitialSection("all");
-    setActiveOnboardingSection(null);
-    setIsOnboardingOpen(true);
-  }, []);
-
-  const handleOpenGuide = useCallback(() => {
-    const initialSectionForOpen: OnboardingInitialSection = isMobile ? "all" : null;
-    setOnboardingManualStart(true);
-    setOnboardingInitialSection(initialSectionForOpen);
-    setActiveOnboardingSection(null);
-    setIsOnboardingOpen(true);
-  }, [isMobile]);
-
   const handleCloseGuide = useCallback(() => {
-    setIsOnboardingOpen(false);
-    setActiveOnboardingSection(null);
+    closeOnboarding();
     if (!user) {
       setIsAuthModalOpen(true);
     }
-  }, [setIsAuthModalOpen, user]);
+  }, [closeOnboarding, setIsAuthModalOpen, user]);
 
+  // why: signing in dismisses the guide (the auth modal / real UI takes over).
   useEffect(() => {
     if (!user) return;
-    setIsOnboardingOpen(false);
-    setActiveOnboardingSection(null);
-  }, [user]);
+    closeOnboarding();
+  }, [user, closeOnboarding]);
 
   const lastHandledStepIdRef = useRef<string | null>(null);
 
@@ -146,7 +140,6 @@ export function useOnboarding({
   ]);
 
   const handleOnboardingActiveSectionChange = useCallback((section: OnboardingSectionId | null) => {
-    setActiveOnboardingSection(section);
     const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
     if (section === "compose" && !isDedicatedViewGuide) {
       setComposeGuideActivationSignal((previous) => previous + 1);
@@ -163,18 +156,21 @@ export function useOnboarding({
     currentView,
   });
 
+  // why: publish the guide's composer signals to the store the composers read,
+  // so views force the composer open / re-activate it during the compose guide.
+  useEffect(() => {
+    useComposerSignalsStore.getState().setForceShowComposer(forceShowComposeForGuide);
+  }, [forceShowComposeForGuide]);
+  useEffect(() => {
+    useComposerSignalsStore.getState().setComposeGuideActivationSignal(composeGuideActivationSignal);
+  }, [composeGuideActivationSignal]);
+
   return {
     isOnboardingOpen,
     onboardingInitialSection,
-    onboardingManualStart,
-    activeOnboardingSection,
-    activeOnboardingStepId,
+    onboardingManualStart: true,
     onboardingSections,
     onboardingStepsBySection,
-    forceShowComposeForGuide,
-    composeGuideActivationSignal,
-    openGuideAsStartup,
-    handleOpenGuide,
     handleCloseGuide,
     handleOnboardingStepChange,
     handleOnboardingActiveSectionChange,

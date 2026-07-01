@@ -1,10 +1,16 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { useOnboarding } from "./use-onboarding";
+import { useOnboardingStore } from "./onboarding-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
+
+const dispatch = vi.fn();
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatch,
+}));
 
 function Harness({
   isMobile = true,
@@ -14,12 +20,11 @@ function Harness({
   initialUser?: { pubkey?: string } | null;
 }) {
   const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
-  const [currentView, setCurrentView] = useState<ViewType>("tree");
-  const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
+  const [currentView] = useState<ViewType>("tree");
 
+  const searchQuery = useFilterStore((s) => s.searchQuery);
   const storeRelayIds = useFilterStore((s) => s.activeRelayIds);
   const storeChannelStates = useFilterStore((s) => s.channelFilterStates);
-  const searchQuery = useFilterStore((s) => s.searchQuery);
   const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const authOpen = useAuthModalStore((s) => s.isOpen);
 
@@ -27,8 +32,7 @@ function Harness({
     user,
     isMobile,
     currentView,
-    setCurrentView,
-    setFocusedTaskId,
+    onBeforeResetFocusedTaskScope: () => {},
   });
 
   return (
@@ -37,11 +41,8 @@ function Harness({
         ResetStep
       </button>
       <button onClick={onboarding.handleCloseGuide}>CloseGuide</button>
-      <button onClick={onboarding.handleOpenGuide}>OpenGuide</button>
       <button onClick={() => setUser({ pubkey: "signed-in" })}>SignIn</button>
       <button onClick={() => setUser(null)}>SignOut</button>
-      <output data-testid="current-view">{currentView}</output>
-      <output data-testid="focused-task">{focusedTaskId ?? ""}</output>
       <output data-testid="search-query">{searchQuery}</output>
       <output data-testid="relay-ids">{Array.from(storeRelayIds).sort().join(",")}</output>
       <output data-testid="channel-state">{storeChannelStates.get("general") || "neutral"}</output>
@@ -57,6 +58,8 @@ function Harness({
 describe("useOnboarding", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    dispatch.mockClear();
+    useOnboardingStore.getState().closeGuide();
     useFilterStore.setState({
       activeRelayIds: new Set(["relay-one"]),
       channelFilterStates: new Map([["general", "included"]]),
@@ -71,8 +74,9 @@ describe("useOnboarding", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "ResetStep" }));
 
-    expect(screen.getByTestId("current-view")).toHaveTextContent("feed");
-    expect(screen.getByTestId("focused-task")).toHaveTextContent("");
+    // View + focus reset go through the interaction bus; filters reset directly.
+    expect(dispatch).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
+    expect(dispatch).toHaveBeenCalledWith({ type: "task.focus.change", taskId: null });
     expect(screen.getByTestId("search-query")).toHaveTextContent("");
     expect(screen.getByTestId("relay-ids")).toHaveTextContent("");
     expect(screen.getByTestId("channel-state")).toHaveTextContent("neutral");
@@ -87,12 +91,13 @@ describe("useOnboarding", () => {
     expect(screen.getByTestId("auth-open")).toHaveTextContent("true");
   });
 
-  it("opens the guide manually", () => {
+  it("reflects the store's open state", () => {
     render(<Harness isMobile={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "OpenGuide" }));
+    act(() => {
+      useOnboardingStore.getState().openGuide();
+    });
 
     expect(screen.getByTestId("guide-open")).toHaveTextContent("true");
   });
-
 });

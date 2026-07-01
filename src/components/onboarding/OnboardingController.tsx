@@ -1,36 +1,36 @@
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
-import type { OnboardingInitialSection, OnboardingSectionId, OnboardingSection, OnboardingStep } from "@/components/onboarding/onboarding-types";
+import { useOnboarding } from "@/components/onboarding/use-onboarding";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 interface OnboardingControllerProps {
-  isOnboardingOpen: boolean;
-  onboardingManualStart: boolean;
-  onboardingInitialSection: OnboardingInitialSection;
-  onboardingSections: OnboardingSection[];
-  onboardingStepsBySection: Record<OnboardingSectionId, OnboardingStep[]>;
   currentView: ViewType;
   focusedTaskId: string | null;
-  handleCloseGuide: () => void;
-  handleOnboardingStepChange: (payload: { id: string; stepNumber: number }) => void;
-  handleOnboardingActiveSectionChange: (section: OnboardingSectionId | null) => void;
+  /** Clears any pending focused-task filter restore before the guide resets filters. */
+  onBeforeResetFocusedTaskScope: () => void;
 }
 
 export function OnboardingController({
-  isOnboardingOpen,
-  onboardingManualStart,
-  onboardingInitialSection,
-  onboardingSections,
-  onboardingStepsBySection,
   currentView,
   focusedTaskId,
-  handleCloseGuide,
-  handleOnboardingStepChange,
-  handleOnboardingActiveSectionChange,
+  onBeforeResetFocusedTaskScope,
 }: OnboardingControllerProps) {
   const isMobile = useIsMobile();
+  const { user } = useNDK();
   const isAuthModalOpen = useAuthModalStore((s) => s.isOpen);
+
+  const {
+    isOnboardingOpen,
+    onboardingManualStart,
+    onboardingInitialSection,
+    onboardingSections,
+    onboardingStepsBySection,
+    handleCloseGuide,
+    handleOnboardingStepChange,
+    handleOnboardingActiveSectionChange,
+  } = useOnboarding({ user, isMobile, currentView, onBeforeResetFocusedTaskScope });
 
   return (
     <OnboardingGuide

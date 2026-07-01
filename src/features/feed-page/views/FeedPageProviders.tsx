@@ -17,6 +17,7 @@ import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-conte
 import { ScrollCaptureProvider, type ScrollCaptureRef } from "./scroll-capture-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
+import { useOnboardingStore } from "@/components/onboarding/onboarding-store";
 import { dismissRetryInProgress, notifyRetryInProgress } from "@/lib/notifications";
 
 type ValueProvider<T> = ComponentType<{ value: T; children: ReactNode }>;
@@ -38,7 +39,6 @@ function composeProviders(entries: readonly ProviderEntry[], children: ReactNode
 export interface FeedPageCoreHandlers {
   onOpenAuthModal: (initialStep?: "choose" | "noas" | "noasSignUp") => void;
   onOpenShortcutsHelp: () => void;
-  onOpenGuide: () => void;
   onGuardInteraction: (mode: "create" | "modify" | "post") => boolean;
   filterHandlers: FeedInteractionHandlerMap;
   interactionEffects: FeedInteractionEffect[];
@@ -94,7 +94,7 @@ function FeedInteractionBusProvider({
         coreHandlers.onOpenShortcutsHelp();
       },
       "ui.openGuide": () => {
-        coreHandlers.onOpenGuide();
+        useOnboardingStore.getState().openGuide();
       },
       "ui.interaction.guardModify": () => {
         coreHandlers.onGuardInteraction("modify");

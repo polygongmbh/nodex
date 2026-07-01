@@ -20,7 +20,6 @@ import { ingestPostEvent } from "@/infrastructure/nostr/post-event-ingest";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useChannelFilterController } from "@/features/feed-page/controllers/use-channel-filter-controller";
-import { useOnboarding } from "@/components/onboarding/use-onboarding";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
 import { buildTaskPermalink } from "@/domain/content/task-permalink";
@@ -554,33 +553,6 @@ function FeedIndexContent() {
     onRestoreScrollTop,
   });
 
-  const {
-    isOnboardingOpen,
-    onboardingInitialSection,
-    onboardingManualStart,
-    onboardingSections,
-    onboardingStepsBySection,
-    forceShowComposeForGuide,
-    composeGuideActivationSignal,
-    handleOpenGuide,
-    handleCloseGuide,
-    handleOnboardingStepChange,
-    handleOnboardingActiveSectionChange,
-  } = useOnboarding({
-    user,
-    isMobile,
-    currentView,
-    onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
-    setCurrentView,
-    setFocusedTaskId,
-  });
-  useEffect(() => {
-    useComposerSignalsStore.getState().setForceShowComposer(forceShowComposeForGuide);
-  }, [forceShowComposeForGuide]);
-  useEffect(() => {
-    useComposerSignalsStore.getState().setComposeGuideActivationSignal(composeGuideActivationSignal);
-  }, [composeGuideActivationSignal]);
-
   const { handleListingStatusChange } = useListingStatusPublish({
     allTasks,
     currentUser,
@@ -744,12 +716,11 @@ function FeedIndexContent() {
     () => ({
       onOpenAuthModal: handleOpenAuthModal,
       onOpenShortcutsHelp: shortcutsHelp.open,
-      onOpenGuide: handleOpenGuide,
       onGuardInteraction: (mode) => guardInteraction(mode === "create" ? "post" : mode),
       filterHandlers,
       interactionEffects: frecencyInteractionEffects,
     }),
-    [handleOpenAuthModal, shortcutsHelp.open, handleOpenGuide, guardInteraction, filterHandlers, frecencyInteractionEffects]
+    [handleOpenAuthModal, shortcutsHelp.open, guardInteraction, filterHandlers, frecencyInteractionEffects]
   );
   const feedSurfaceState = useMemo(
     () => ({
@@ -834,16 +805,9 @@ function FeedIndexContent() {
 
   const onboardingController = (
     <OnboardingController
-      isOnboardingOpen={isOnboardingOpen}
-      onboardingManualStart={onboardingManualStart}
-      onboardingInitialSection={onboardingInitialSection}
-      onboardingSections={onboardingSections}
-      onboardingStepsBySection={onboardingStepsBySection}
       currentView={currentView}
       focusedTaskId={focusedTaskId}
-      handleCloseGuide={handleCloseGuide}
-      handleOnboardingStepChange={handleOnboardingStepChange}
-      handleOnboardingActiveSectionChange={handleOnboardingActiveSectionChange}
+      onBeforeResetFocusedTaskScope={discardTaskScopeFilterRestore}
     />
   );
 
