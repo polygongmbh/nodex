@@ -2,22 +2,43 @@
 
 ## Status
 
-**Part A (sections A.1, A.2, A.3) is SUPERSEDED** by
-`~/.claude/plans/243-feedsidebarcommandsprovider-proud-swan.md`. Do not
-execute Part A from here. The successor plan collapses the bus-only
-command contexts entirely (rather than splitting one bundle into four),
-demotes `FeedSidebarController` to a prop, dismantles
-`FeedViewState` into stores/hooks, and partially collapses
-`FeedTaskCommands`.
+**Part A is DONE — but not as written here.** It was superseded and
+executed as the "collapse the FeedPageProviders pyramid" refactor
+(≈2026-06-27→07-01). Instead of *splitting* the command god-bundles
+into more contexts, the bus-only command contexts were *deleted* and
+their values passed to the interaction bus as plain props. Net outcome
+in the repo now:
+- `FeedSidebarCommands` and `FeedViewCommands` are no longer contexts —
+  they're plain input types in
+  `src/features/feed-page/interactions/feed-interaction-inputs.ts`,
+  produced in `Index` and handed to `FeedInteractionBusProvider` as props.
+- The failed-publish methods split off `FeedTaskCommands` into a
+  `FailedPublishCommands` bus input; the task lifecycle methods into a
+  `TaskInteractionCommands` bus input. `FeedTaskCommands` the context now
+  holds only `createTask` (has a `// TODO: remove after
+  composer-shell-ownership-refactor` marker).
+- `FeedSidebarControllerProvider` → demoted to a prop
+  (`DesktopAppShell` → `FeedPageSidebar`); context deleted.
+- `FeedViewStateProvider` → **deleted entirely**; every field moved to
+  its real source (`displayDepthMode`→preferences store,
+  `currentView`→prop from `useFeedNavigation`, `canCreateContent`→
+  `useAuthActionPolicy`, `profileCompletionPromptSignal`→prop to
+  `ProfileCompletionDialog`, onboarding fields→OnboardingController).
+- Mobile `manage` is now a **local overlay, not a `/manage` route**
+  (that removed `lastContentViewRef` and made `currentView` URL-pure).
+- `useOnboarding` was folded out of Index into `OnboardingController`
+  (new `useOnboardingStore` holds open-state; the hook dispatches
+  intents instead of calling Index setters).
 
-**Part B (the `Feed*` naming sweep) is still valid** and should be
-executed AFTER the successor plan — fewer symbols to rename by then.
+Full narrative + the steers that reshaped it: see
+`plans/architecture-decisions-log.md`.
+
+**Part B (the `Feed*` naming sweep) is still valid** and is the only
+remaining work in this plan. Run it now. Counts below were **re-verified
+2026-07-01** against the post-Part-A tree.
 
 Successor to `counting-roughly-effervescent-nebula.md` (Phases 1–2
 done) and `ancient-riding-dewdrop.md` (Steps 1–4 done, Step 7 done).
-This plan covers the two remaining tranches of the post-browsing
-refactor: **(A) splitting the three command god-bundles** [SUPERSEDED]
-**and (B) the `Feed*` naming sweep (prior plan's Step 8).**
 
 ## Where we are (verified 2026-05-29)
 
@@ -69,7 +90,12 @@ focused-task-id.
 
 ---
 
-## Part A — Split the three command god-bundles
+## Part A — Split the three command god-bundles  ⚠️ HISTORICAL / SUPERSEDED
+
+> This section is the ORIGINAL (rejected) approach, kept for context.
+> It was NOT executed as written — see the Status note at the top for
+> what actually shipped (contexts *collapsed*, not split). Do not
+> execute the steps below.
 
 The user's explicit instruction: **"break up rather than renaming."**
 So `FeedTaskCommands` / `FeedViewCommands` / `FeedSidebarCommands` are
@@ -151,75 +177,91 @@ shared infrastructure should drop the prefix. **Run lowest-blast-radius
 first, directory rename dead last, one `jscodeshift`-driven commit
 each** (include the transform in the commit body for traceability).
 
-Blast radius verified 2026-05-29 (files / occurrences):
+Blast radius **re-verified 2026-07-01** (occurrences / files).
 
-### B.1 `useFeedViewState` name collision (do first — it's a correctness trap)
+### B.1 `useFeedViewState` name collision — ALREADY RESOLVED ✅
 
-There are **two** `useFeedViewState`:
-- `src/features/feed-page/controllers/use-task-view-states.ts:634` —
-  the **data** derivation, genuinely feed-only. **Keep this name.**
-- `src/features/feed-page/views/feed-view-state-context.tsx:39` — the
-  **UI state** shared by all views (`currentView`, onboarding flags,
-  `profileCompletionPromptSignal`, `displayDepthMode`). **Rename this
-  one → `useViewState`** (and `FeedViewState` ctx type → `ViewState`).
+Part A **deleted** the UI-state context
+(`feed-view-state-context.tsx`), so the collision is gone by deletion,
+not renaming. Only the **data** hook remains —
+`src/features/feed-page/controllers/use-task-view-states.ts`'s
+`useFeedViewState`/`FeedViewState` — and it's genuinely feed-only, so
+it keeps its name. Nothing to do here. (If you still want to rename the
+data hook for consistency, it's ~4 occ / 3 files, but it's not a
+collision fix any more — judgment call, low priority.)
 
-10 files / 16 occ total across both — small, but disambiguate carefully
-(rename only the context one). Resolving the collision first makes
-every later sweep unambiguous.
+### B.2 Command input-type renames (well-bounded)
 
-### B.2 Command-context renames (well-bounded; after Part A)
-
-- `FeedViewCommands` → `ViewCommands` (18 occ / 3 files).
-- The new contexts from Part A are born correctly named, so the only
-  `Feed*` command symbol left to rename is `FeedViewCommands`.
+These are no longer *contexts* — Part A turned them into plain input
+types in
+`src/features/feed-page/interactions/feed-interaction-inputs.ts`:
+- `FeedViewCommands` → `ViewCommands` (6 occ / 3 files).
+- `FeedSidebarCommands` → `SidebarCommands` (7 occ / 3 files) — optional
+  but consistent; it's produced by `use-feed-sidebar-commands-controller`
+  and consumed by the bus.
+- Leave `FeedTaskCommands` alone until
+  `composer-shell-ownership-refactor` removes it (see its `// TODO`).
+- New in Part A, also `Feed*`-prefixed, fold into whichever sweep fits:
+  `FeedInteractionInputs` concept, `FailedPublishCommands`,
+  `TaskInteractionCommands` (already unprefixed), and
+  `FeedInteractionBusProvider` (renames with B.7).
 
 ### B.3 Navigation + shells (small)
 
 - `useFeedNavigation` → `useViewNavigation` (8 occ / 3 files).
-- `FeedPageMobileShell` → `MobileShell` (6 occ / 2 files);
-  `DesktopAppShell` → `DesktopShell` (6 occ / 2 files). Watch for a
-  name clash with `src/components/mobile/` if one exists.
+- `FeedPageMobileShell` → `MobileShell` (4 occ / 2 files);
+  `DesktopAppShell` → `DesktopShell` (4 occ / 2 files). Watch for a
+  name clash with `src/components/mobile/` if one exists. (Both shrank
+  in Part A — they no longer forward onboarding/view state.)
 
 ### B.4 Providers / policy (small-medium)
 
-- `FeedPageProviders` → `BrowsingProviders` (9 occ / 3 files).
+- `FeedPageProviders` → `BrowsingProviders` (7 occ / 3 files).
 - `FeedRelayProvider` → `RelayProvider` (7 occ / 3 files).
-- `FeedAuthPolicy` → `PostAuthPolicy` (5 occ / 2 files).
+- `useFeedAuthPolicy` → `usePostAuthPolicy` (the symbol is the hook in
+  `use-feed-auth-policy.ts`; there is no bare `FeedAuthPolicy`) — ~3
+  occ / 2 files.
 
 ### B.5 View components (medium)
 
-- `TaskTree` → `TreeView` (23 occ / 6 files) — mirrors
+- `TaskTree` → `TreeView` (19 occ / 6 files) — mirrors
   `KanbanView`/`ListView`/`CalendarView`.
-- `ListView` → `TableView` (29 occ / 6 files) — it's a tabular/row
+- `ListView` → `TableView` (22 occ / 5 files) — it's a tabular/row
   view, not a generic list.
 
 Note: these touch `VIEW_ORDER` / `ViewSwitcher` and route handling —
 verify the `/:view` URL slugs are unaffected (slugs are `tree`/`list`,
 not the component names, per CLAUDE.md — confirm before renaming).
 
-### B.6 Surface state (broad — 33 files / 92 occ)
+### B.6 Surface state (broad — grew since 2026-05-29)
 
-- `FeedSurfaceState` / `FeedSurfaceProvider` / `useFeedSurfaceState` →
+- `FeedSurfaceState` (22 occ / 7 files) / `FeedSurfaceProvider` (46 occ
+  / 12 files) / `useFeedSurfaceState` (73 occ / **35 files**) →
   `BrowsingSurfaceState` / `BrowsingSurfaceProvider` /
   `useBrowsingSurfaceState` (or shorter `SurfaceState` — pick one and
   apply uniformly). Single jscodeshift pass.
 
-### B.7 Interaction bus (broadest symbol sweep — 57 files / 98 occ +
-`FeedInteractionProvider` 40 occ / 10 files)
+### B.7 Interaction bus (broadest symbol sweep)
 
-- `FeedInteractionProvider` → `InteractionProvider`;
-  `useFeedInteractionDispatch` → `useInteractionDispatch`. Largest
-  symbol footprint after the directory — own commit, jscodeshift only,
-  no logic changes.
+- `useFeedInteractionDispatch` → `useInteractionDispatch` (118 occ / **69
+  files** — the largest symbol footprint after the directory).
+- `FeedInteractionProvider` → `InteractionProvider` (38 occ / 10 files).
+- Fold in the Part-A additions: `FeedInteractionBusProvider` →
+  `InteractionBusProvider`, and the `feed-interaction-*` module/type
+  names if you want full consistency.
+- Own commit, jscodeshift only, no logic changes.
 
 ### B.8 Directory rename (biggest blast radius — DEAD LAST)
 
 `src/features/feed-page/` → `src/features/posts/` (or keep `feed-page`
 meaning "the page hosting the feed and sibling views" if the team
-prefers — decide explicitly). 94 ts/tsx files, **332** `@/features/feed-page`
-import references. Do this as its own commit with **no other changes**
-so the diff is purely path moves + import-path rewrites. `git mv` the
-dir, then a single jscodeshift/`grep`-driven import-path rewrite.
+prefers — decide explicitly). **96** ts/tsx files, **372**
+`@/features/feed-page` import references. Do this as its own commit with
+**no other changes** so the diff is purely path moves + import-path
+rewrites. `git mv` the dir, then a single jscodeshift/`grep`-driven
+import-path rewrite. Note: onboarding now has repo state outside this
+dir (`src/components/onboarding/onboarding-store.ts`) — unaffected by
+the move.
 
 ---
 
