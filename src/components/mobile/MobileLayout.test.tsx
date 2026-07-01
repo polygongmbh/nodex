@@ -16,7 +16,6 @@ import type { Person } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import type { FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import type { FeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
@@ -56,12 +55,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", async () =
   };
 });
 
-const mockViewState = vi.fn(() => baseFeedViewState as FeedViewState);
 const mockSurfaceState = vi.fn(() => baseSurfaceState as FeedSurfaceState);
-
-vi.mock("@/features/feed-page/views/feed-view-state-context", () => ({
-  useFeedViewState: () => mockViewState(),
-}));
 
 vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
   useFeedSurfaceState: () => mockSurfaceState(),
@@ -161,15 +155,12 @@ const channels: Channel[] = [makeChannel()];
 const people: Person[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
 const tasks: Post[] = [];
 
-const baseFeedViewState: FeedViewState = {
-  isSidebarFocused: false,
-  isOnboardingOpen: false,
-  activeOnboardingStepId: null,
-};
-
-// currentView is a prop on MobileLayout (URL-derived in production); setMocks
-// records the value so both the helper and direct rerenders can pass it.
+// MobileLayout takes currentView + onboarding state as props (URL-derived /
+// produced in Index for real). setMocks records them so both the helper and
+// direct rerenders can pass them.
 let mockCurrentView: ViewType = "tree";
+let mockOnboardingOpen = false;
+let mockActiveOnboardingStepId: string | null = null;
 
 const baseSurfaceState: FeedSurfaceState = {
   relays,
@@ -186,8 +177,9 @@ interface TaskViewModelOverride {
 }
 
 type MobileLayoutOverrides = {
-  viewState?: Partial<FeedViewState>;
   currentView?: ViewType;
+  isOnboardingOpen?: boolean;
+  activeOnboardingStepId?: string | null;
   taskViewModel?: TaskViewModelOverride;
   surfaceState?: Partial<FeedSurfaceState>;
 };
@@ -209,9 +201,10 @@ function setMocks(overrides: MobileLayoutOverrides = {}) {
     quickFilters: makeQuickFilterState(),
     ...overrides.surfaceState,
   };
-  mockViewState.mockReturnValue({ ...baseFeedViewState, ...overrides.viewState });
   mockSurfaceState.mockReturnValue(surfaceState);
   mockCurrentView = overrides.currentView ?? "tree";
+  mockOnboardingOpen = overrides.isOnboardingOpen ?? false;
+  mockActiveOnboardingStepId = overrides.activeOnboardingStepId ?? null;
   applyTaskViewModelOverride(overrides.taskViewModel);
 }
 
@@ -224,7 +217,7 @@ function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: s
   const posts = rest.taskViewModel?.allTasks ?? [];
   return render(
     <MemoryRouter>
-      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} currentView={mockCurrentView} />
+      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} currentView={mockCurrentView} isOnboardingOpen={mockOnboardingOpen} activeOnboardingStepId={mockActiveOnboardingStepId} />
     </MemoryRouter>
   );
 }
@@ -285,7 +278,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     setMocks();
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} isOnboardingOpen={mockOnboardingOpen} activeOnboardingStepId={mockActiveOnboardingStepId} />);
 
     // Prompt no longer hijacks the route; the global ProfileCompletionDialog
     // (mounted in FeedPageProviders) handles displaying the editor instead.
@@ -625,11 +618,12 @@ describe("MobileLayout auth wiring", () => {
     dispatchFeedInteraction.mockClear();
 
     const { rerender } = renderMobileLayout({
-      viewState: { isOnboardingOpen: true, activeOnboardingStepId: "mobile-filters-use" },
+      isOnboardingOpen: true,
+      activeOnboardingStepId: "mobile-filters-use",
     });
 
-    setMocks({ currentView: "tree", viewState: { isOnboardingOpen: true, activeOnboardingStepId: "mobile-compose-combobox" } });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
+    setMocks({ currentView: "tree", isOnboardingOpen: true, activeOnboardingStepId: "mobile-compose-combobox" });
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} isOnboardingOpen={mockOnboardingOpen} activeOnboardingStepId={mockActiveOnboardingStepId} />);
 
     await waitFor(() => {
       expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
@@ -650,7 +644,7 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
     setMocks({ currentView: "feed" });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} isOnboardingOpen={mockOnboardingOpen} activeOnboardingStepId={mockActiveOnboardingStepId} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("feed-view")).toBeInTheDocument();

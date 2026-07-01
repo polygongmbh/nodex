@@ -15,10 +15,6 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => mockDispatch,
 }));
 
-vi.mock("@/features/feed-page/views/feed-view-state-context", () => ({
-  useFeedViewState: () => ({ currentView: "feed" }),
-}));
-
 const mockUseFeedSurfaceState = vi.fn(() => ({})) as ReturnType<typeof vi.fn<() => Partial<FeedSurfaceState>>>;
 vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
   useFeedSurfaceState: () => mockUseFeedSurfaceState(),
@@ -35,19 +31,19 @@ afterEach(() => {
 
 describe("DesktopSearchDock", () => {
   it("focuses the desktop search input on mount", () => {
-    render(<DesktopSearchDock focusedTaskId={null} />);
+    render(<DesktopSearchDock focusedTaskId={null} currentView="feed" />);
 
     expect(screen.getByRole("textbox")).toHaveFocus();
   });
 
   it("shows a clear button only when search has content and clears it on click", () => {
     mockUseFeedSurfaceState.mockReturnValue({});
-    const { rerender } = render(<DesktopSearchDock focusedTaskId={null} />);
+    const { rerender } = render(<DesktopSearchDock focusedTaskId={null} currentView="feed" />);
 
     expect(screen.queryByRole("button", { name: /clear search/i })).not.toBeInTheDocument();
 
     useFilterStore.getState().setSearchQuery("meeting");
-    rerender(<DesktopSearchDock focusedTaskId={null} />);
+    rerender(<DesktopSearchDock focusedTaskId={null} currentView="feed" />);
 
     fireEvent.click(screen.getByRole("button", { name: /clear search/i }));
 
@@ -62,7 +58,7 @@ describe("DesktopSearchDock", () => {
     useFilterStore.setState({ selectedPubkeys: new Set(["p1"]) });
     ingestPost({ post: makeTask({ id: "focused-task", content: "Coordinate launch copy" }) });
 
-    render(<DesktopSearchDock focusedTaskId="focused-task" />);
+    render(<DesktopSearchDock focusedTaskId="focused-task" currentView="feed" />);
 
     expect(screen.getByRole("textbox")).toHaveAttribute(
       "placeholder",
@@ -73,7 +69,7 @@ describe("DesktopSearchDock", () => {
   it("omits fallback guidance when no scope suffixes are active", () => {
     mockUseFeedSurfaceState.mockReturnValue({ channels: [], people: [] });
 
-    render(<DesktopSearchDock focusedTaskId={null} />);
+    render(<DesktopSearchDock focusedTaskId={null} currentView="feed" />);
 
     expect(screen.getByRole("textbox")).toHaveAttribute("placeholder", "Search posts...");
   });
