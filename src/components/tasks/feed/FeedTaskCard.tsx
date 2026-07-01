@@ -10,7 +10,6 @@ import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
 import { renderTaskContentWithProjectHeading } from "@/lib/linkify";
 import { useTaskMediaAttachments } from "@/lib/use-task-media-attachments";
 import { cn } from "@/lib/utils";
@@ -101,17 +100,12 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const hasAnyReaction = Object.keys(reactions?.totals ?? {}).length > 0;
   const handleMenuReact = (emoji: string) => {
     void publishReaction(
-      {
-        id: task.id,
-        kind: task.kind,
-        pubkey: task.author.pubkey,
-        relayUrls: resolveRelayUrlsForIds(relays, task.relayIds),
-      },
+      { id: task.id, kind: task.kind, pubkey: task.author.pubkey, relayIds: task.relayIds },
       emoji,
     );
   };
   const handleMenuUnreact = (emoji: string) => {
-    void publishUnreact(task.id, emoji, resolveRelayUrlsForIds(relays, task.relayIds));
+    void publishUnreact(task.id, emoji, task.relayIds);
   };
   const { focusTask } = useTaskViewServices();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;

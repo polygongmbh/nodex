@@ -9,6 +9,8 @@ import {
 } from "@/infrastructure/nostr/reaction-events";
 import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
 import { publishWithFeedback } from "@/lib/nostr/publish-with-feedback";
+import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import {
   notifyNeedSigninReact,
   notifyReactionFailed,
@@ -31,13 +33,15 @@ interface ReactionTarget {
   id: string;
   kind: number;
   pubkey: string;
-  // Relays the reacted-to post was seen on. A reaction is a child of that post, so it publishes to
-  // the post's relays (empty = the post's origin is unknown; defer to the selected relays instead).
-  relayUrls: string[];
+  // The reacted-to post's relay ids (domain data straight off the Task). A reaction is a child of
+  // that post, so the hook resolves these to URLs and publishes there; the transport layer can't do
+  // this itself (it has no relay id->url registry and no knowledge of the parent post).
+  relayIds: string[];
 }
 
 export function useReactions() {
   const { ndk, user, publishEvent } = useNDK();
+  const { relays } = useFeedSurfaceState();
 
   const react = useCallback(async (
     target: ReactionTarget,
@@ -50,7 +54,7 @@ export function useReactions() {
     const content = normalizeReactionContent(rawContent);
     if (!content) return false;
 
-    const relayUrls = target.relayUrls.filter(Boolean);
+    const relayUrls = resolveRelayUrlsForIds(relays, target.relayIds);
     const result = await publishWithFeedback(publishEvent, {
       kind: NostrEventKind.Reaction,
       content,
@@ -62,7 +66,7 @@ export function useReactions() {
       return false;
     }
     return true;
-  }, [user?.pubkey, publishEvent]);
+  }, [user?.pubkey, publishEvent, relays]);
 
   const ensureFetched = useCallback(async (targetEventId: string): Promise<void> => {
     if (!ndk || !targetEventId) return;
@@ -91,7 +95,7 @@ export function useReactions() {
   const unreact = useCallback(async (
     targetEventId: string,
     rawContent: string,
-    targetRelayUrls: string[],
+    targetRelayIds: string[],
   ): Promise<boolean> => {
     if (!user?.pubkey) {
       notifyNeedSigninReact();
@@ -103,7 +107,7 @@ export function useReactions() {
     const matchingIds = getReactionsForTarget(targetEventId)?.mineEventIdsByEmoji[emoji] ?? [];
     if (matchingIds.length === 0) return false;
 
-    const relayUrls = targetRelayUrls.filter(Boolean);
+    const relayUrls = resolveRelayUrlsForIds(relays, targetRelayIds);
     const result = await publishWithFeedback(publishEvent, {
       kind: NostrEventKind.EventDeletion,
       content: "",
@@ -115,7 +119,7 @@ export function useReactions() {
       return false;
     }
     return true;
-  }, [user?.pubkey, publishEvent]);
+  }, [user?.pubkey, publishEvent, relays]);
 
   return { react, unreact, ensureReactionsFetched: ensureFetched };
 }
