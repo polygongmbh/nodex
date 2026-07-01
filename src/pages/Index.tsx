@@ -44,7 +44,7 @@ import { usePendingPublishStore } from "@/features/feed-page/stores/pending-publ
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
 import { useFeedSidebarCommandsController } from "@/features/feed-page/controllers/use-feed-sidebar-commands-controller";
-import type { FeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
+import type { FeedViewCommands, FailedPublishCommands, TaskInteractionCommands } from "@/features/feed-page/interactions/feed-interaction-inputs";
 import type { FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { useFeedInteractionFrecency } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
@@ -73,6 +73,7 @@ import { FeedRelayProvider, useFeedRelayState } from "@/features/feed-page/views
 import { PersonPresenceProvider } from "@/lib/person-presence-context";
 import { MotdBanner } from "@/components/MotdBanner";
 import { DocumentTitleSync } from "@/components/DocumentTitleSync";
+import { ProfileCompletionDialog } from "@/components/auth/ProfileCompletionDialog";
 import { featureDebugLog } from "@/lib/feature-debug";
 
 function FeedIndexContent() {
@@ -184,6 +185,9 @@ function FeedIndexContent() {
     user,
   );
 
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
+  const setSelectedPubkeys = useFilterStore((s) => s.setSelectedPubkeys);
+
   const {
     nostrRelays,
     relaysWithActiveState,
@@ -244,7 +248,6 @@ function FeedIndexContent() {
   const mentionAutocompletePeople = useMentionAutocompletePeople({
     scopedPosts: scopedPostsForMentions,
     cachedKind0Events,
-    people,
   });
 
   const currentUser = resolveCurrentUser(people, user);
@@ -259,9 +262,9 @@ function FeedIndexContent() {
 
   const sidebarPeopleWithSelected = useMemo(() => {
     const sidebarIds = new Set(sidebarPeople.map((person) => person.pubkey));
-    const selectedMissing = people.filter((person) => person.isSelected && !sidebarIds.has(person.pubkey));
+    const selectedMissing = people.filter((person) => selectedPubkeys.has(person.pubkey) && !sidebarIds.has(person.pubkey));
     return [...(selectedMissing as typeof sidebarPeople), ...sidebarPeople];
-  }, [people, sidebarPeople]);
+  }, [people, selectedPubkeys, sidebarPeople]);
 
   const {
     mentionRequest,
@@ -401,10 +404,8 @@ function FeedIndexContent() {
     currentView,
     focusedTaskId,
     focusedTask,
-    isManageRouteActive,
     setCurrentView,
     setFocusedTaskId,
-    setManageRouteActive,
     openedWithFocusedTaskRef,
   } = useFeedNavigation({
     allTasks,
@@ -423,11 +424,11 @@ function FeedIndexContent() {
       buildFilterSnapshot({
         activeRelayIds: effectiveActiveRelayIds,
         channelFilterStates,
-        people,
+        selectedPubkeys,
         channelMatchMode,
         quickFilters,
       }),
-    [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
+    [effectiveActiveRelayIds, channelFilterStates, selectedPubkeys, channelMatchMode, quickFilters]
   );
 
   const { savedFilterController } = useSavedFilterConfigs({
@@ -436,7 +437,7 @@ function FeedIndexContent() {
     setActiveRelayIds,
     setChannelFilterStates,
     setChannelMatchMode,
-    setPeople,
+    setSelectedPubkeys,
     setQuickFilters,
     resetFiltersToDefault,
   });
@@ -498,19 +499,15 @@ function FeedIndexContent() {
       filterTasksByRelayAndPeople({
         tasks: allTasks,
         activeRelayIds: effectiveActiveRelayIds,
-        people: [],
+        selectedPeople: [],
         allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
       }),
     [allTasks, effectiveActiveRelayIds, hasLiveHydratedRelayScope]
   );
 
   const shouldRestoreTaskScopeFilters = useCallback((snapshot: FilterSnapshot) => {
-    const selectedPeopleIds = new Set(snapshot.selectedPeopleIds);
-    const snapshotPeople = people.map((person) => ({
-      ...person,
-      isSelected: selectedPeopleIds.has(person.pubkey),
-    }));
-    const snapshotFilterIndex = buildTaskViewFilterIndex(allTasks, snapshotPeople);
+    const snapshotSelectedPubkeys = new Set(snapshot.selectedPeopleIds);
+    const snapshotFilterIndex = buildTaskViewFilterIndex(allTasks, people);
     const prefilteredTaskIds = new Set(relayScopedTasks.map((task) => task.id));
     const includedChannels = Object.entries(snapshot.channelStates)
       .filter(([, filterState]) => filterState === "included")
@@ -526,7 +523,8 @@ function FeedIndexContent() {
         allTasks,
         filterIndex: snapshotFilterIndex,
         prefilteredTaskIds,
-        people: snapshotPeople,
+        people,
+        selectedPubkeys: snapshotSelectedPubkeys,
       },
       criteria: {
         searchQuery: useFilterStore.getState().searchQuery,
@@ -552,7 +550,6 @@ function FeedIndexContent() {
     shouldRestoreSnapshot: shouldRestoreTaskScopeFilters,
     setChannelFilterStates,
     setChannelMatchMode,
-    setPeople,
     onCaptureScrollTop,
     onRestoreScrollTop,
   });
@@ -561,7 +558,6 @@ function FeedIndexContent() {
     isOnboardingOpen,
     onboardingInitialSection,
     onboardingManualStart,
-    activeOnboardingStepId,
     onboardingSections,
     onboardingStepsBySection,
     forceShowComposeForGuide,
@@ -577,7 +573,6 @@ function FeedIndexContent() {
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,
-    setPeople,
   });
   useEffect(() => {
     useComposerSignalsStore.getState().setForceShowComposer(forceShowComposeForGuide);
@@ -679,9 +674,8 @@ function FeedIndexContent() {
       focusTasks: () => setIsSidebarFocused(false),
       setCurrentView,
       setDisplayDepthMode,
-      setManageRouteActive,
     }),
-    [setCurrentView, setDisplayDepthMode, setManageRouteActive, setIsSidebarFocused]
+    [setCurrentView, setDisplayDepthMode, setIsSidebarFocused]
   );
 
   const handleCopyPermalink = useCallback(async (taskId: string): Promise<boolean> => {
@@ -708,9 +702,13 @@ function FeedIndexContent() {
   }, [allTasks, relays, resolveRelayUrlsFromIds]);
 
   const taskCommands = useMemo<FeedTaskCommands>(
+    () => ({ createTask: handleNewTask }),
+    [handleNewTask]
+  );
+
+  const taskInteractionCommands = useMemo<TaskInteractionCommands>(
     () => ({
       focusTask: setFocusedTaskId,
-      createTask: handleNewTask,
       toggleComplete: handleToggleComplete,
       changeStatus: handleStatusChange,
       updateDueDate: handleDueDateChange,
@@ -720,16 +718,24 @@ function FeedIndexContent() {
       recomposePost: handleRecomposeTask,
       copyPermalink: handleCopyPermalink,
       undoPendingPublish: handleUndoPendingPublish,
+    }),
+    [
+      setFocusedTaskId, handleToggleComplete, handleStatusChange,
+      handleDueDateChange, handlePriorityChange, handleListingStatusChange,
+      handlePostDelete, handleRecomposeTask, handleCopyPermalink,
+      handleUndoPendingPublish,
+    ]
+  );
+
+  const failedPublishCommands = useMemo<FailedPublishCommands>(
+    () => ({
       retryFailedPublish: handleRetryFailedPublish,
       repostFailedPublish: handleRepostFailedPublish,
       dismissFailedPublish: handleDismissFailedPublish,
       dismissAllFailedPublish: handleDismissAllFailedPublish,
     }),
     [
-      setFocusedTaskId, handleNewTask, handleToggleComplete, handleStatusChange,
-      handleDueDateChange, handlePriorityChange, handleListingStatusChange,
-      handlePostDelete, handleRecomposeTask, handleCopyPermalink,
-      handleUndoPendingPublish, handleRetryFailedPublish, handleRepostFailedPublish,
+      handleRetryFailedPublish, handleRepostFailedPublish,
       handleDismissFailedPublish, handleDismissAllFailedPublish,
     ]
   );
@@ -809,30 +815,6 @@ function FeedIndexContent() {
     ]
   );
 
-  const feedViewState = useMemo(
-    () => ({
-      currentView,
-      displayDepthMode,
-      isSidebarFocused,
-      isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
-      activeOnboardingStepId,
-      isManageRouteActive,
-      canCreateContent: authPolicy.canCreateContent,
-      profileCompletionPromptSignal,
-    }),
-    [
-      activeOnboardingStepId,
-      authPolicy.canCreateContent,
-      currentView,
-      isAuthModalOpen,
-      isManageRouteActive,
-      isOnboardingOpen,
-      isSidebarFocused,
-      displayDepthMode,
-      profileCompletionPromptSignal,
-    ]
-  );
-
   useEffect(() => {
     if (!import.meta.env.DEV || typeof performance === "undefined") return;
     renderCountRef.current += 1;
@@ -874,11 +856,11 @@ function FeedIndexContent() {
     <FeedPageProviders
       coreHandlers={coreHandlers}
       surfaceState={feedSurfaceState}
-      viewState={feedViewState}
       sidebarCommands={sidebarCommands}
       viewCommands={viewCommands}
       taskCommands={taskCommands}
-      sidebarController={isMobile ? undefined : desktopSidebarController}
+      taskInteractionCommands={taskInteractionCommands}
+      failedPublishCommands={failedPublishCommands}
       scrollCaptureRef={scrollCaptureRef}
     >
       <DocumentTitleSync currentView={currentView} focusedTask={focusedTask} />
@@ -887,6 +869,7 @@ function FeedIndexContent() {
         <FeedPageMobileShell
           posts={relayScopedTasks}
           focusedTaskId={focusedTaskId}
+          currentView={currentView}
           authModalProps={{
             isOpen: isAuthModalOpen,
             onClose: handleCloseAuthModal,
@@ -897,6 +880,8 @@ function FeedIndexContent() {
         <DesktopAppShell
           posts={relayScopedTasks}
           focusedTaskId={focusedTaskId}
+          currentView={currentView}
+          sidebarController={desktopSidebarController}
           shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
           authModalProps={{
             isOpen: isAuthModalOpen,
@@ -907,6 +892,7 @@ function FeedIndexContent() {
       )}
       {welcomeController}
       {onboardingController}
+      <ProfileCompletionDialog profileCompletionPromptSignal={profileCompletionPromptSignal} />
     </FeedPageProviders>
     </PersonPresenceProvider>
   );

@@ -409,7 +409,7 @@ export function CalendarView({
                                   <div className="flex gap-0.5 mt-0.5">
                                     {Array.from({ length: Math.min(dayTasks.length, 3) }, (_, i) => {
                                       const task = dayTasks[i];
-                                      const authorColor = getAuthorColor(task.author);
+                                      const authorColor = getAuthorColor(task.pubkey);
                                       return (
                                         <span
                                           key={task.id}
@@ -426,7 +426,7 @@ export function CalendarView({
                                   <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
                                     {Array.from({ length: Math.min(dayTasks.length, 2) }, (_, i) => {
                                       const task = dayTasks[i];
-                                      const authorColor = getAuthorColor(task.author);
+                                      const authorColor = getAuthorColor(task.pubkey);
                                       return (
                                         <div
                                           key={task.id}

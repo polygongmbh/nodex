@@ -1,4 +1,4 @@
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { normalizeRelayUrl, normalizeRelayUrlScope } from "@/infrastructure/nostr/relay-url";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind, type NostrEvent, type NostrEventWithRelay } from "@/lib/nostr/types";
@@ -400,10 +400,7 @@ export function derivePeopleFromKind0Events(
   visiblePubkeys: string[],
   selectedEvents: NostrEvent[],
   fallbackEvents: NostrEvent[],
-  previousPeople: SelectablePerson[],
-): SelectablePerson[] {
-  const previousSelection = new Map(previousPeople.map((person) => [normalizePubkey(person.pubkey), person.isSelected]));
-
+): Person[] {
   const normalizedVisiblePubkeys = Array.from(
     new Set(visiblePubkeys.map((pubkey) => normalizePubkey(pubkey)).filter(Boolean))
   );
@@ -424,9 +421,8 @@ export function derivePeopleFromKind0Events(
       displayName,
       nip05: parsed?.nip05?.trim().toLowerCase(),
       about: parsed?.about?.trim(),
-      avatar: parsed?.picture,
-      isSelected: previousSelection.get(pubkey) || false,
-    } satisfies SelectablePerson;
+      picture: parsed?.picture,
+    } satisfies Person;
   });
 
   return people.sort((a, b) => a.displayName.localeCompare(b.displayName));

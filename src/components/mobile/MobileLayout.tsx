@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useCallback, useRef, useEffect } from "react";
+import { Suspense, lazy, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { isPrimaryMobileView, MobileNav, MOBILE_VIEW_ORDER, MobileViewType } from "./MobileNav";
 import { isSingleViewMode } from "@/components/tasks/ViewSwitcher";
@@ -15,7 +15,7 @@ import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { ViewLoadingFallback } from "@/features/feed-page/views/ViewLoadingFallback";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
@@ -44,9 +44,11 @@ const UpcomingView = lazy(() =>
 export function MobileLayout({
   posts,
   focusedTaskId,
+  currentView,
 }: {
   posts: Post[];
   focusedTaskId: string | null;
+  currentView: ViewType;
 }) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -55,18 +57,7 @@ export function MobileLayout({
   const setChannelFilterStates = useFilterStore((s) => s.setChannelFilterStates);
   const channelFilterStates = useFilterStore((s) => s.channelFilterStates);
   const searchQuery = useFilterStore((s) => s.searchQuery);
-  const {
-    canCreateContent,
-    profileCompletionPromptSignal,
-    currentView,
-    isOnboardingOpen,
-    activeOnboardingStepId,
-    isManageRouteActive,
-  } = useFeedViewState();
-
-  const dispatchManageRouteChange = useCallback((isActive: boolean) => {
-    void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
-  }, [dispatchFeedInteraction]);
+  const { canCreateContent } = useAuthActionPolicy();
 
   const composeRestoreRequest = useComposeRestoreSignal();
   const forceComposeMode = useOnboardingComposerSignal();
@@ -75,8 +66,6 @@ export function MobileLayout({
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
-  const lastHandledProfilePromptSignalRef = useRef(0);
-  const lastHandledGuideStepIdRef = useRef<string | null>(null);
   const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView)
     ? currentView
     : (MOBILE_VIEW_ORDER[0] ?? "status");
@@ -90,19 +79,17 @@ export function MobileLayout({
   const allChannels = surface.channels;
   const chipChannels = channels;
 
+  // The manage pane is a transient local overlay — no route, no shared state.
   const openManageView = useCallback(() => {
     setShowFilters(true);
-    dispatchManageRouteChange(true);
-  }, [dispatchManageRouteChange]);
+  }, []);
 
   const closeManageView = useCallback((nextView?: ViewType) => {
     setShowFilters(false);
     if (nextView) {
       void dispatchFeedInteraction({ type: "ui.view.change", view: nextView });
-      return;
     }
-    dispatchManageRouteChange(false);
-  }, [dispatchFeedInteraction, dispatchManageRouteChange]);
+  }, [dispatchFeedInteraction]);
 
   // Burger acts as a toggle: tapping it while the manage pane is open closes it.
   const toggleManageView = useCallback(() => {
@@ -171,36 +158,13 @@ export function MobileLayout({
     searchQuery.trim().length > 0 &&
     shouldShowMobileFallbackNotice;
 
+  // why: the mobile compose-guide step highlights the composer, which the manage
+  // overlay covers — reveal it by closing the overlay and showing the feed. The
+  // guide raises forceComposeMode for exactly that step, so no onboarding-step
+  // coupling is needed here.
   useEffect(() => {
-    if (isManageRouteActive) {
-      setShowFilters(true);
-      return;
-    }
-    setShowFilters(false);
-  }, [isManageRouteActive]);
-
-  useEffect(() => {
-    if (!isOnboardingOpen || !activeOnboardingStepId) {
-      lastHandledGuideStepIdRef.current = null;
-      return;
-    }
-    if (lastHandledGuideStepIdRef.current === activeOnboardingStepId) {
-      return;
-    }
-    lastHandledGuideStepIdRef.current = activeOnboardingStepId;
-
-    if (activeOnboardingStepId === "mobile-compose-combobox") {
-      closeManageView("feed");
-    }
-  }, [activeOnboardingStepId, isOnboardingOpen, closeManageView, openManageView]);
-
-  // Profile completion prompt is now handled globally by ProfileCompletionDialog,
-  // which pops a profile editor dialog on mobile and desktop without changing route.
-  useEffect(() => {
-    if (profileCompletionPromptSignal <= 0) return;
-    if (profileCompletionPromptSignal === lastHandledProfilePromptSignalRef.current) return;
-    lastHandledProfilePromptSignalRef.current = profileCompletionPromptSignal;
-  }, [profileCompletionPromptSignal]);
+    if (forceComposeMode) closeManageView("feed");
+  }, [forceComposeMode, closeManageView]);
 
   useMobileToastOffset({ hasBreadcrumbOffset: hasMobileBreadcrumbOffset });
 

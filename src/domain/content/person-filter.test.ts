@@ -8,20 +8,20 @@ const alice: Person = {
   pubkey: "alice-pubkey",
   name: "alice",
   displayName: "Alice",
-  avatar: "",
+  picture: "",
 };
 
 const bob: Person = {
   pubkey: "bob-pubkey",
   name: "bob",
   displayName: "Bob",
-  avatar: "",
+  picture: "",
 };
 
 const baseTask: TaskPost = {
   id: "task-1",
   kind: NostrEventKind.Task,
-  author: bob,
+  pubkey: bob.pubkey,
   content: "hello",
   tags: ["general"],
   relays: ["demo"],
@@ -112,7 +112,7 @@ describe("taskMatchesSelectedPeople", () => {
   it("does not crash when author id is missing at runtime", () => {
     const task = {
       ...baseTask,
-      author: { ...baseTask.author, pubkey: undefined },
+      pubkey: undefined,
       mentions: ["alice-pubkey"],
     } as unknown as Post;
 

@@ -1,28 +1,26 @@
 import { describe, expect, it } from "vitest";
 import type { Channel, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";
 
-const alice: SelectablePerson = {
+const alice: Person = {
   pubkey: "alice-id",
   name: "alice",
   displayName: "Alice",
-  isSelected: false,
 };
 
-const bob: SelectablePerson = {
+const bob: Person = {
   pubkey: "bob-id",
   name: "bob",
   displayName: "Bob",
-  isSelected: false,
 };
 
 function buildTask(overrides: Partial<TaskPost> = {}): TaskPost {
   return {
     id: "task-1",
     kind: NostrEventKind.Task,
-    author: alice,
+    pubkey: alice.pubkey,
     content: "hello #general",
     tags: ["general"],
     relays: ["r1"],
@@ -46,7 +44,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(["r1"]),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
 
@@ -60,7 +58,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(["r2"]),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
 
@@ -78,7 +76,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(["r1"]),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
 
@@ -96,7 +94,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(["r1"]),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
       allowUnknownRelayMetadata: false,
     });
@@ -119,7 +117,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(),
       channels,
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
 
@@ -136,25 +134,24 @@ describe("filterTasks", () => {
       tasks: [heavyTagTask],
       activeRelayIds: new Set(),
       channels: [],
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "and",
     });
     expect(result).toHaveLength(1);
   });
 
   it("matches selected people by author id or mentions", () => {
-    const selectedBob: SelectablePerson = { ...bob, isSelected: true };
     const tasks = [
-      buildTask({ id: "author", author: bob }),
-      buildTask({ id: "mention", author: alice, content: "ping @bob" }),
-      buildTask({ id: "other", author: alice, content: "plain text" }),
+      buildTask({ id: "author", pubkey: bob.pubkey }),
+      buildTask({ id: "mention", pubkey: alice.pubkey, content: "ping @bob" }),
+      buildTask({ id: "other", pubkey: alice.pubkey, content: "plain text" }),
     ];
 
     const result = filterTasks({
       tasks,
       activeRelayIds: new Set(),
       channels: [],
-      people: [alice, selectedBob],
+      selectedPeople: [bob],
       channelMatchMode: "and",
     });
 
@@ -178,7 +175,7 @@ describe("filterTasks", () => {
       tasks,
       activeRelayIds: new Set(),
       channels,
-      people: [alice, bob],
+      selectedPeople: [],
       channelMatchMode: "or",
     });
 
@@ -186,18 +183,17 @@ describe("filterTasks", () => {
   });
 
   it("can prefilter by relay and people without applying channel filters", () => {
-    const selectedBob: SelectablePerson = { ...bob, isSelected: true };
     const tasks = [
-      buildTask({ id: "relay-one-general", relays: ["r1"], author: bob, tags: ["general"] }),
-      buildTask({ id: "relay-one-ops", relays: ["r1"], author: bob, tags: ["ops"] }),
-      buildTask({ id: "relay-two-general", relays: ["r2"], author: bob, tags: ["general"] }),
-      buildTask({ id: "relay-one-other-author", relays: ["r1"], author: alice, tags: ["general"] }),
+      buildTask({ id: "relay-one-general", relays: ["r1"], pubkey: bob.pubkey, tags: ["general"] }),
+      buildTask({ id: "relay-one-ops", relays: ["r1"], pubkey: bob.pubkey, tags: ["ops"] }),
+      buildTask({ id: "relay-two-general", relays: ["r2"], pubkey: bob.pubkey, tags: ["general"] }),
+      buildTask({ id: "relay-one-other-author", relays: ["r1"], pubkey: alice.pubkey, tags: ["general"] }),
     ];
 
     const result = filterTasksByRelayAndPeople({
       tasks,
       activeRelayIds: new Set(["r1"]),
-      people: [alice, selectedBob],
+      selectedPeople: [bob],
     });
 
     expect(result.map((task) => task.id)).toEqual(["relay-one-general", "relay-one-ops"]);

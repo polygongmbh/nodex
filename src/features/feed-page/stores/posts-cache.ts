@@ -75,8 +75,7 @@ function hasMinimalPostShape(value: unknown): value is Post {
     Array.isArray(candidate.tags) &&
     Array.isArray(candidate.relays) &&
     candidate.timestamp instanceof Date &&
-    Boolean(candidate.author) &&
-    typeof (candidate.author as { pubkey?: unknown }).pubkey === "string"
+    typeof candidate.pubkey === "string"
   );
 }
 

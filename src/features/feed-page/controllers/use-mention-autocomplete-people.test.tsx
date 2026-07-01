@@ -48,9 +48,7 @@ function seedNostrEventsStore(events: NostrEventWithRelay[]): void {
 function MentionAutocompleteHarness() {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
 
-  const alice = makePerson({ pubkey: "a".repeat(64), name: "alice", displayName: "Alice" });
   const bobPubkey = "b".repeat(64);
-  const carol = makePerson({ pubkey: "c".repeat(64), name: "carol", displayName: "Carol" });
 
   const allTasks = useAllPosts({
     demoTasks: [],
@@ -77,7 +75,6 @@ function MentionAutocompleteHarness() {
         content: JSON.stringify({ name: "bob", displayName: "Bob", nip05: "bob@example.com" }),
       } as NostrEvent,
     ],
-    people: [alice, carol],
   });
 
   return (

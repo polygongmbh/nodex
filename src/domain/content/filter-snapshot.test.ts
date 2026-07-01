@@ -1,13 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SelectablePerson } from "@/types/person";
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "./filter-snapshot";
-
-const createPerson = (pubkey: string, isSelected: boolean): SelectablePerson => ({
-  pubkey,
-  name: pubkey,
-  displayName: pubkey,
-  isSelected,
-});
 
 describe("filter snapshot", () => {
   it("builds a normalized snapshot from runtime filter state", () => {
@@ -18,7 +10,7 @@ describe("filter snapshot", () => {
         ["spam", "excluded"],
         ["neutral", "neutral"],
       ]),
-      people: [createPerson("b", true), createPerson("a", true), createPerson("c", false)],
+      selectedPubkeys: new Set(["b", "a"]),
       channelMatchMode: "or",
     });
 

@@ -13,17 +13,20 @@ import { ProfileEditorFields } from "@/components/auth/ProfileEditorFields";
 import { useProfileEditor, type Nip05ValidationResult } from "@/hooks/use-profile-editor";
 import { diagnoseNip05 } from "@/lib/nostr/nip05-diagnose";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
-import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { markProfileCompletionPromptShown } from "@/lib/profile-completion-prompt-state";
 import type { TFunction } from "i18next";
 
 /**
- * Global profile completion dialog. Listens to the feed-layer
- * profileCompletionPromptSignal and pops a profile editor regardless of route
- * or platform. Same UX on mobile and desktop. Shown at most once per pubkey
- * (tracked in localStorage) so resuming a session does not reopen it.
+ * Global profile completion dialog. Pops a profile editor regardless of route or
+ * platform when the profileCompletionPromptSignal prop increments. Same UX on
+ * mobile and desktop. Shown at most once per pubkey (tracked in localStorage) so
+ * resuming a session does not reopen it.
  */
-export function ProfileCompletionDialog() {
+export function ProfileCompletionDialog({
+  profileCompletionPromptSignal,
+}: {
+  profileCompletionPromptSignal: number;
+}) {
   const { t } = useTranslation(["auth", "filters"]);
   const translate = ((key: string, values?: Record<string, unknown>) => {
     if (key.startsWith("auth.")) return t(`auth:${key}`, values);
@@ -31,7 +34,6 @@ export function ProfileCompletionDialog() {
   }) as TFunction;
 
   const { ndk, user, hasWritableRelayConnection, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
-  const { profileCompletionPromptSignal } = useFeedViewState();
 
   const [isOpen, setIsOpen] = useState(false);
   const lastHandledSignalRef = useRef(0);

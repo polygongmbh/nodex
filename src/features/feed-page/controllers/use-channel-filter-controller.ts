@@ -10,7 +10,6 @@ import {
   notifyPersonFilterToggled,
 } from "@/lib/notifications";
 import {
-  mapPeopleSelection,
   setAllChannelFilters,
   setExclusiveChannelFilter,
   shouldToggleOffExclusiveChannel,
@@ -24,7 +23,8 @@ import {
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, QuickFilterState, Relay } from "@/types";
-import type { Person, SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
+import { getResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
@@ -33,9 +33,9 @@ import type { Dispatch, SetStateAction } from "react";
 interface UseChannelFilterControllerOptions {
   relays: Relay[];
   channels: Channel[];
-  people: SelectablePerson[];
-  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
-  sidebarPeople: SelectablePerson[];
+  people: Person[];
+  setPeople: Dispatch<SetStateAction<Person[]>>;
+  sidebarPeople: Person[];
   hasLiveHydratedScope?: boolean;
   isHydrating?: boolean;
 }
@@ -56,6 +56,13 @@ export function useChannelFilterController({
   const setChannelFilterStates = useFilterStore((s) => s.setChannelFilterStates);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
   const setChannelMatchMode = useFilterStore((s) => s.setChannelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
+  const setSelectedPubkeys = useFilterStore((s) => s.setSelectedPubkeys);
+  const selectOnlyPerson = useFilterStore((s) => s.selectOnlyPerson);
+  const togglePersonSelection = useFilterStore((s) => s.togglePersonSelection);
+  const deselectPeople = useFilterStore((s) => s.deselectPeople);
+  const retainSelectedPeople = useFilterStore((s) => s.retainSelectedPeople);
+  const clearSelectedPeople = useFilterStore((s) => s.clearSelectedPeople);
 
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
   const handleMentionRequestConsumed = useCallback((requestId: number) => {
@@ -65,7 +72,7 @@ export function useChannelFilterController({
 
   const captureFilterSnapshot = useCallback(() => {
     const channelFilterStatesSnapshot = new Map(channelFilterStates);
-    const peopleSnapshot = people.map((person) => ({ ...person }));
+    const selectedPubkeysSnapshot = new Set(selectedPubkeys);
     const activeRelayIdsSnapshot = new Set(activeRelayIds);
     const postedTagsSnapshot = useTaskMutationStore.getState().postedTags.map((entry) => ({
       ...entry,
@@ -73,11 +80,11 @@ export function useChannelFilterController({
     }));
     return () => {
       setChannelFilterStates(() => new Map(channelFilterStatesSnapshot));
-      setPeople(() => peopleSnapshot.map((person) => ({ ...person })));
+      setSelectedPubkeys(new Set(selectedPubkeysSnapshot));
       setActiveRelayIds(() => new Set(activeRelayIdsSnapshot));
       setPostedTags(() => postedTagsSnapshot.map((entry) => ({ ...entry, relayIds: [...entry.relayIds] })));
     };
-  }, [activeRelayIds, channelFilterStates, people, setActiveRelayIds, setChannelFilterStates, setPeople, setPostedTags]);
+  }, [activeRelayIds, channelFilterStates, selectedPubkeys, setActiveRelayIds, setChannelFilterStates, setSelectedPubkeys, setPostedTags]);
 
   const channelsWithState = useMemo(
     () =>
@@ -110,35 +117,32 @@ export function useChannelFilterController({
 
   useEffect(() => {
     if (!isFilterPruneReady) return;
-    const sidebarPersonIds = new Set(sidebarPeople.map((person) => person.pubkey));
-    setPeople((prev) => {
-      let changed = false;
-      const next = prev.map((person) => {
-        if (!person.isSelected || sidebarPersonIds.has(person.pubkey)) return person;
-        changed = true;
-        return { ...person, isSelected: false };
-      });
-
-      return changed ? next : prev;
-    });
-  }, [isFilterPruneReady, setPeople, sidebarPeople]);
+    retainSelectedPeople(sidebarPeople.map((person) => person.pubkey));
+  }, [isFilterPruneReady, retainSelectedPeople, sidebarPeople]);
 
   useFilterUrlSync({
     activeRelayIds,
     setActiveRelayIds,
     channelFilterStates,
-    people,
+    selectedPubkeys,
     setChannelFilterStates,
-    setPeople,
+    setSelectedPubkeys,
   });
 
-  const normalizeInteractivePerson = useCallback((person: Person): SelectablePerson => ({
+  const normalizeInteractivePerson = useCallback((person: Person): Person => ({
     ...person,
-    avatar: person.avatar || "",
-    isSelected: (person as SelectablePerson).isSelected ?? false,
+    picture: person.picture || "",
   }), []);
 
-  const queueMentionForPerson = useCallback((person: SelectablePerson) => {
+  // Ensure a person clicked from the feed (who may not be in the sidebar list
+  // yet) exists in the iteration array, so a selected row can render for them.
+  const ensurePersonInList = useCallback((person: Person) => {
+    setPeople((prev) =>
+      prev.some((entry) => entry.pubkey === person.pubkey) ? prev : [...prev, person]
+    );
+  }, [setPeople]);
+
+  const queueMentionForPerson = useCallback((person: Person) => {
     const mention = `@${getPreferredMentionIdentifier(person)}`;
     setMentionRequest({ mention, id: Date.now() });
     return mention;
@@ -146,28 +150,15 @@ export function useChannelFilterController({
 
   const applyExclusivePersonFilter = useCallback((person: Person) => {
     const normalizedPerson = normalizeInteractivePerson(person);
-    setPeople((prev) => {
-      const next = prev.some((entry) => entry.pubkey === normalizedPerson.pubkey)
-        ? prev
-        : [...prev, normalizedPerson];
-      return next.map((entry) => ({
-        ...entry,
-        isSelected: entry.pubkey === normalizedPerson.pubkey,
-      }));
-    });
-  }, [normalizeInteractivePerson, setPeople]);
+    ensurePersonInList(normalizedPerson);
+    selectOnlyPerson(normalizedPerson.pubkey);
+  }, [ensurePersonInList, normalizeInteractivePerson, selectOnlyPerson]);
 
   const toggleInteractivePerson = useCallback((person: Person) => {
     const normalizedPerson = normalizeInteractivePerson(person);
-    setPeople((prev) => {
-      const next = prev.some((entry) => entry.pubkey === normalizedPerson.pubkey)
-        ? prev
-        : [...prev, normalizedPerson];
-      return next.map((entry) =>
-        entry.pubkey === normalizedPerson.pubkey ? { ...entry, isSelected: !entry.isSelected } : entry
-      );
-    });
-  }, [normalizeInteractivePerson, setPeople]);
+    ensurePersonInList(normalizedPerson);
+    togglePersonSelection(normalizedPerson.pubkey);
+  }, [ensurePersonInList, normalizeInteractivePerson, togglePersonSelection]);
 
   const toggleChannel = useCallback((channelId: string) => {
     setChannelFilterStates((prev) => {
@@ -207,23 +198,19 @@ export function useChannelFilterController({
   }, [captureFilterSnapshot, channels, channelFilterStates, setChannelFilterStates]);
 
   const togglePerson = useCallback((personId: string) => {
-    setPeople((prev) =>
-      prev.map((person) =>
-        person.pubkey === personId ? { ...person, isSelected: !person.isSelected } : person
-      )
-    );
-  }, [setPeople]);
+    togglePersonSelection(personId);
+  }, [togglePersonSelection]);
 
   const showOnlyPerson = useCallback((personId: string) => {
-    if (shouldToggleOffExclusivePerson(people, personId)) {
-      setPeople((prev) => mapPeopleSelection(prev, () => false));
+    if (shouldToggleOffExclusivePerson(selectedPubkeys, personId)) {
+      clearSelectedPeople();
       return;
     }
     const restoreSnapshot = captureFilterSnapshot();
-    setPeople((prev) => mapPeopleSelection(prev, (person) => person.pubkey === personId));
+    selectOnlyPerson(personId);
     const person = people.find((entry) => entry.pubkey === personId);
     notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
-  }, [captureFilterSnapshot, people, setPeople]);
+  }, [captureFilterSnapshot, clearSelectedPeople, people, selectOnlyPerson, selectedPubkeys]);
 
   const toggleAllPeople = useCallback(() => {
     if (sidebarPeople.length === 0) {
@@ -231,29 +218,23 @@ export function useChannelFilterController({
       return;
     }
     const sidebarIds = new Set(sidebarPeople.map((person) => person.pubkey));
-    const hasSelectedPeople = people.some((person) => sidebarIds.has(person.pubkey) && person.isSelected);
+    const hasSelectedPeople = [...selectedPubkeys].some((pubkey) => sidebarIds.has(pubkey));
     if (!hasSelectedPeople) return;
     const restoreSnapshot = captureFilterSnapshot();
-    setPeople((prev) =>
-      prev.map((person) =>
-        sidebarIds.has(person.pubkey)
-          ? { ...person, isSelected: false }
-          : person
-      )
-    );
+    deselectPeople(sidebarIds);
     notifyFrequentPeopleDeselected({ onUndo: restoreSnapshot });
-  }, [captureFilterSnapshot, people, setPeople, sidebarPeople]);
+  }, [captureFilterSnapshot, deselectPeople, selectedPubkeys, sidebarPeople]);
 
   const resetFiltersToDefault = useCallback(() => {
     setActiveRelayIds(new Set());
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
     setChannelMatchMode("and");
-    setPeople((prev) => mapPeopleSelection(prev, () => false));
+    clearSelectedPeople();
     setQuickFilters(normalizeQuickFilterState());
     featureDebugLog("quick-filters", "Reset filters to defaults with all feeds deactivated", {
       availableRelayCount: relays.length,
     });
-  }, [channels, relays, setActiveRelayIds, setChannelFilterStates, setChannelMatchMode, setPeople]);
+  }, [channels, relays, setActiveRelayIds, setChannelFilterStates, setChannelMatchMode, clearSelectedPeople]);
 
   const filterHandlers: FeedInteractionHandlerMap = useMemo(() => ({
     "filter.clearChannel": (intent) => {
@@ -289,42 +270,37 @@ export function useChannelFilterController({
       notifyShowingTag(normalizedTag, { onUndo: restoreSnapshot });
     },
     "filter.clearPerson": (intent) => {
-      setPeople((prev) =>
-        prev.map((person) =>
-          person.pubkey === intent.personId && person.isSelected ? { ...person, isSelected: false } : person
-        )
-      );
+      deselectPeople([intent.personId]);
     },
     "person.filter.exclusive": (intent) => {
+      const person = getResolvedPerson(intent.pubkey);
       const restoreSnapshot = captureFilterSnapshot();
-      applyExclusivePersonFilter(intent.person);
-      notifyShowingOnlyPersonExclusive(intent.person, { onUndo: restoreSnapshot });
+      applyExclusivePersonFilter(person);
+      notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
     },
     "person.filter.toggle": (intent) => {
-      const normalizedPerson = normalizeInteractivePerson(intent.person);
-      const wasSelected =
-        people.find((person) => person.pubkey === normalizedPerson.pubkey)?.isSelected
-        ?? normalizedPerson.isSelected;
+      const person = getResolvedPerson(intent.pubkey);
+      const wasSelected = selectedPubkeys.has(person.pubkey);
       const restoreSnapshot = captureFilterSnapshot();
-      toggleInteractivePerson(normalizedPerson);
-      notifyPersonFilterToggled(normalizedPerson, wasSelected, { onUndo: restoreSnapshot });
+      toggleInteractivePerson(person);
+      notifyPersonFilterToggled(person, wasSelected, { onUndo: restoreSnapshot });
     },
     "person.compose.mention": (intent) => {
-      queueMentionForPerson(normalizeInteractivePerson(intent.person));
+      queueMentionForPerson(getResolvedPerson(intent.pubkey));
     },
     "person.filterAndMention": (intent) => {
-      const normalizedPerson = normalizeInteractivePerson(intent.person);
+      const person = getResolvedPerson(intent.pubkey);
       const restoreSnapshot = captureFilterSnapshot();
-      applyExclusivePersonFilter(normalizedPerson);
-      queueMentionForPerson(normalizedPerson);
-      notifyShowingOnlyPersonExclusive(normalizedPerson, { onUndo: restoreSnapshot });
+      applyExclusivePersonFilter(person);
+      queueMentionForPerson(person);
+      notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
     },
     "filter.applyAuthorExclusive": (intent) => {
-      const normalizedAuthor = normalizeInteractivePerson(intent.author);
+      const person = getResolvedPerson(intent.pubkey);
       const restoreSnapshot = captureFilterSnapshot();
-      applyExclusivePersonFilter(normalizedAuthor);
-      queueMentionForPerson(normalizedAuthor);
-      notifyShowingOnlyPersonExclusive(normalizedAuthor, { onUndo: restoreSnapshot });
+      applyExclusivePersonFilter(person);
+      queueMentionForPerson(person);
+      notifyShowingOnlyPersonExclusive(person, { onUndo: restoreSnapshot });
     },
     "sidebar.quickFilter.recentDays.change": (intent) => {
       const nextDays = clampRecentDays(intent.days);
@@ -370,10 +346,9 @@ export function useChannelFilterController({
     channels,
     relays,
     setPostedTags,
-    people,
-    setPeople,
+    selectedPubkeys,
+    deselectPeople,
     applyExclusivePersonFilter,
-    normalizeInteractivePerson,
     queueMentionForPerson,
     setQuickFilters,
     setChannelFilterStates,

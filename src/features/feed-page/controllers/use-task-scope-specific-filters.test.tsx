@@ -1,19 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { makePerson } from "@/test/fixtures";
 import { makeFilterSnapshot } from "@/test/filter-state";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import type { Channel, ChannelMatchMode } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 import {
   TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS,
   useTaskScopeSpecificFilters,
 } from "./use-task-scope-specific-filters";
-
-const peopleSeed: SelectablePerson[] = [
-  makePerson({ pubkey: "alice", name: "alice", displayName: "Alice", isSelected: true }),
-  makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false }),
-];
 
 function Harness({
   initialFocusedTaskId = null,
@@ -34,7 +28,8 @@ function Harness({
     ])
   );
   const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>("or");
-  const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
+  const setSelectedPubkeys = useFilterStore((s) => s.setSelectedPubkeys);
   const nowRef = useRef(0);
   const scrollTopRef = useRef(initialScrollTop);
   const restoredScrollTopRef = useRef<number | null>(null);
@@ -45,10 +40,10 @@ function Harness({
         channelStates: Object.fromEntries(
           Array.from(channelFilterStates.entries()).filter(([, state]) => state === "included" || state === "excluded")
         ) as Record<string, "included" | "excluded">,
-        selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.pubkey).sort(),
+        selectedPeopleIds: Array.from(selectedPubkeys).sort(),
         channelMatchMode,
       }),
-    [channelFilterStates, channelMatchMode, people]
+    [channelFilterStates, channelMatchMode, selectedPubkeys]
   );
 
   const onCaptureScrollTop = useCallback(() => scrollTopRef.current, []);
@@ -60,7 +55,6 @@ function Harness({
     shouldRestoreSnapshot,
     setChannelFilterStates,
     setChannelMatchMode,
-    setPeople,
     onCaptureScrollTop,
     onRestoreScrollTop,
     restoreTimeoutMs,
@@ -78,7 +72,7 @@ function Harness({
         onClick={() => {
           setChannelFilterStates(new Map([["ops", "included"]]));
           setChannelMatchMode("and");
-          setPeople((previous) => previous.map((person) => ({ ...person, isSelected: person.pubkey === "bob" })));
+          setSelectedPubkeys(new Set(["bob"]));
         }}
       >
         MutateWhileScoped
@@ -89,7 +83,7 @@ function Harness({
       <output data-testid="channel-ops">{channelFilterStates.get("ops") || "neutral"}</output>
       <output data-testid="match-mode">{channelMatchMode}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
+        {Array.from(selectedPubkeys).join(",")}
       </output>
       <output data-testid="restored-scroll">{restoredScrollTopRef.current ?? "none"}</output>
     </>
@@ -97,6 +91,10 @@ function Harness({
 }
 
 describe("useTaskScopeSpecificFilters", () => {
+  beforeEach(() => {
+    useFilterStore.setState({ selectedPubkeys: new Set(["alice"]) });
+  });
+
   it("clears channel, people, and match-mode filters when entering task scope", () => {
     render(<Harness />);
 

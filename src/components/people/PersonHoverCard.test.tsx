@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PersonHoverCard, resumePersonHoverCards, suspendPersonHoverCards } from "./PersonHoverCard";
 import type { Person } from "@/types/person";
 import {
@@ -8,7 +8,7 @@ import {
 } from "@/features/feed-page/stores/posts-store";
 import { PersonPresenceProvider } from "@/lib/person-presence-context";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
-import { makeTask } from "@/test/fixtures";
+import { clearKind0Cache, makeTask, seedKind0Profile } from "@/test/fixtures";
 
 const alice: Person = {
   pubkey: "a".repeat(64),
@@ -25,6 +25,12 @@ const bob: Person = {
 };
 
 describe("PersonHoverCard", () => {
+  beforeEach(() => {
+    clearKind0Cache();
+    seedKind0Profile(alice.pubkey, { name: "alice", display_name: "Alice", about: "Alice bio" });
+    seedKind0Profile(bob.pubkey, { name: "bob", display_name: "Bob", about: "Bob bio" });
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     resumePersonHoverCards();
@@ -36,10 +42,10 @@ describe("PersonHoverCard", () => {
 
     render(
       <>
-        <PersonHoverCard person={alice}>
+        <PersonHoverCard pubkey={alice.pubkey}>
           <button type="button">Alice trigger</button>
         </PersonHoverCard>
-        <PersonHoverCard person={bob}>
+        <PersonHoverCard pubkey={bob.pubkey}>
           <button type="button">Bob trigger</button>
         </PersonHoverCard>
       </>
@@ -52,15 +58,15 @@ describe("PersonHoverCard", () => {
     act(() => {
       vi.advanceTimersByTime(600);
     });
-    expect(screen.getByText("Alice bio")).toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
 
     fireEvent.focus(bobTrigger);
     act(() => {
       vi.advanceTimersByTime(600);
     });
 
-    expect(screen.queryByText("Alice bio")).not.toBeInTheDocument();
-    expect(screen.getByText("Bob bio")).toBeInTheDocument();
+    expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+    expect(screen.getByText("Bob")).toBeInTheDocument();
   });
 
   it("prefers the currently hovered trigger over a previously focused one", () => {
@@ -68,10 +74,10 @@ describe("PersonHoverCard", () => {
 
     render(
       <>
-        <PersonHoverCard person={alice}>
+        <PersonHoverCard pubkey={alice.pubkey}>
           <button type="button">Alice trigger</button>
         </PersonHoverCard>
-        <PersonHoverCard person={bob}>
+        <PersonHoverCard pubkey={bob.pubkey}>
           <button type="button">Bob trigger</button>
         </PersonHoverCard>
       </>
@@ -84,22 +90,22 @@ describe("PersonHoverCard", () => {
     act(() => {
       vi.advanceTimersByTime(500);
     });
-    expect(screen.getByText("Alice bio")).toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
 
     fireEvent.mouseOver(bobTrigger);
     act(() => {
       vi.advanceTimersByTime(500);
     });
 
-    expect(screen.queryByText("Alice bio")).not.toBeInTheDocument();
-    expect(screen.getByText("Bob bio")).toBeInTheDocument();
+    expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+    expect(screen.getByText("Bob")).toBeInTheDocument();
   });
 
   it("does not open a pending hover card while person overlays are suspended", () => {
     vi.useFakeTimers();
 
     render(
-      <PersonHoverCard person={alice}>
+      <PersonHoverCard pubkey={alice.pubkey}>
         <button type="button">Alice trigger</button>
       </PersonHoverCard>
     );
@@ -115,7 +121,7 @@ describe("PersonHoverCard", () => {
       vi.advanceTimersByTime(500);
     });
 
-    expect(screen.queryByText("Alice bio")).not.toBeInTheDocument();
+    expect(screen.queryByText("Alice")).not.toBeInTheDocument();
   });
 
   it("shows presence details and resolves the viewed task title", () => {
@@ -139,7 +145,7 @@ describe("PersonHoverCard", () => {
         latestPresenceByAuthor={presenceByAuthor}
         now={new Date("2026-04-04T11:59:00.000Z")}
       >
-        <PersonHoverCard person={alice}>
+        <PersonHoverCard pubkey={alice.pubkey}>
           <button type="button">Alice trigger</button>
         </PersonHoverCard>
       </PersonPresenceProvider>
@@ -174,7 +180,7 @@ describe("PersonHoverCard", () => {
         latestPresenceByAuthor={presenceByAuthor}
         now={new Date("2026-04-04T11:59:00.000Z")}
       >
-        <PersonHoverCard person={alice}>
+        <PersonHoverCard pubkey={alice.pubkey}>
           <button type="button">Alice trigger</button>
         </PersonHoverCard>
       </PersonPresenceProvider>
@@ -208,7 +214,7 @@ describe("PersonHoverCard", () => {
         latestPresenceByAuthor={presenceByAuthor}
         now={new Date("2026-04-04T11:59:00.000Z")}
       >
-        <PersonHoverCard person={alice}>
+        <PersonHoverCard pubkey={alice.pubkey}>
           <button type="button">Alice trigger</button>
         </PersonHoverCard>
       </PersonPresenceProvider>

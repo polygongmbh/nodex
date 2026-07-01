@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { buildTaskViewFilterIndex } from "@/domain/content/task-view-filtering";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import type { Channel, Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();
@@ -13,13 +13,13 @@ export interface DeriveFocusedTaskCollapsedSidebarPreviewParams {
   focusedTaskId: string | null;
   activeRelayIds: Set<string>;
   channels: Channel[];
-  people: SelectablePerson[];
+  people: Person[];
   allowUnknownRelayMetadata?: boolean;
 }
 
 export interface FocusedTaskCollapsedSidebarPreview {
   channels: Channel[];
-  people: SelectablePerson[];
+  people: Person[];
 }
 
 export function deriveFocusedTaskCollapsedSidebarPreview({
@@ -37,7 +37,7 @@ export function deriveFocusedTaskCollapsedSidebarPreview({
   const relayScopedTasks = filterTasksByRelayAndPeople({
     tasks: allTasks,
     activeRelayIds,
-    people: [],
+    selectedPeople: [],
     allowUnknownRelayMetadata,
   });
 
@@ -55,7 +55,7 @@ export function deriveFocusedTaskCollapsedSidebarPreview({
     focusedScopeTasks.flatMap((task) => task.tags.map((tag) => normalize(tag))).filter(Boolean)
   );
   const activePeopleIds = new Set(
-    focusedScopeTasks.map((task) => normalize(task.author?.pubkey || "")).filter(Boolean)
+    focusedScopeTasks.map((task) => normalize(task.pubkey)).filter(Boolean)
   );
 
   return {

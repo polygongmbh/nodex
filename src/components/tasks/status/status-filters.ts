@@ -28,7 +28,7 @@ export function isTaskOwnedByAny(task: Post, pubkeys: Set<string>): boolean {
   if (assignees.length > 0) {
     return assignees.some((pubkey) => pubkeys.has(pubkey));
   }
-  return pubkeys.has(normalizePubkey(task.author?.pubkey));
+  return pubkeys.has(normalizePubkey(task.pubkey));
 }
 
 /**
@@ -38,7 +38,7 @@ export function isTaskOwnedByAny(task: Post, pubkeys: Set<string>): boolean {
  */
 export function taskConcernsAny(task: Post, pubkeys: Set<string>): boolean {
   if (pubkeys.size === 0) return false;
-  const author = normalizePubkey(task.author?.pubkey);
+  const author = normalizePubkey(task.pubkey);
   if (author && pubkeys.has(author)) return true;
   return getNormalizedAssignees(task).some((pubkey) => pubkeys.has(pubkey));
 }

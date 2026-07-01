@@ -8,10 +8,10 @@ import { isTaskPost } from "@/types";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useFeedSurfaceState } from "./feed-surface-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
-import { useFeedViewState } from "./feed-view-state-context";
 import { ViewLoadingFallback } from "./ViewLoadingFallback";
 import { useIsHydrating } from "@/features/feed-page/stores/hydration-status-store";
 import type { Post } from "@/types";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 const HomeView = lazy(() =>
   import("@/components/tasks/home/HomeView").then((module) => ({ default: module.HomeView }))
@@ -32,15 +32,17 @@ const ListView = lazy(() =>
 export function DesktopViewsPane({
   posts,
   focusedTaskId,
+  currentView,
 }: {
   posts: Post[];
   focusedTaskId: string | null;
+  currentView: ViewType;
 }) {
-  const { currentView } = useFeedViewState();
   const isHydrating = useIsHydrating();
   const { channels, people, quickFilters } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const filterIndex = useMemo(() => buildTaskViewFilterIndex(posts, people), [posts, people]);
   const prefilteredTaskIds = useMemo(() => new Set(posts.map((task) => task.id)), [posts]);
   const { included, excluded } = useMemo(
@@ -55,6 +57,7 @@ export function DesktopViewsPane({
           filterIndex,
           prefilteredTaskIds,
           people,
+          selectedPubkeys,
         },
         scope: {
           focusedTaskId,
@@ -80,6 +83,7 @@ export function DesktopViewsPane({
       filterIndex,
       focusedTaskId,
       people,
+      selectedPubkeys,
       prefilteredTaskIds,
       quickFilters,
       searchQuery,

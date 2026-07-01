@@ -1,6 +1,7 @@
 import { getTaskAssigneePubkeys } from "@/types";
 import type { Post } from "@/types";
 import type { Person } from "@/types/person";
+import { resolvePersonForPubkey } from "@/domain/people/resolve-person";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
 
 export function normalizeTaskSearchValue(value: string): string {
@@ -57,9 +58,7 @@ export function buildTaskSearchableText(
   const assignees = getTaskAssigneePubkeys(task) ?? [];
   const resolvedMentionPeople = collectResolvedMentionPeople(mentions, peopleById);
   const resolvedAssigneePeople = collectResolvedMentionPeople(assignees, peopleById);
-  const authorId = task.author?.pubkey ? normalizeTaskSearchValue(task.author.pubkey) : "";
-  const resolvedAuthor =
-    (authorId ? peopleById.get(authorId) : undefined) ?? task.author;
+  const resolvedAuthor = resolvePersonForPubkey(task.pubkey, peopleById);
 
   return [
     task.content,

@@ -9,19 +9,16 @@ describe("deriveSidebarPeople", () => {
       pubkey: "alice-pk",
       name: "alice",
       displayName: "Alice",
-      isSelected: true,
     });
     const bob = makePerson({
       pubkey: "bob-pk",
       name: "bob",
       displayName: "Bob",
-      isSelected: false,
     });
     const carol = makePerson({
       pubkey: "carol-pk",
       name: "carol",
       displayName: "Carol",
-      isSelected: false,
     });
 
     const tasks = [
@@ -38,7 +35,6 @@ describe("deriveSidebarPeople", () => {
     const sidebarPeople = deriveSidebarPeople([alice, bob, carol], tasks, new Map(), now);
 
     expect(sidebarPeople.map((person) => person.pubkey)).toEqual(["alice-pk", "bob-pk"]);
-    expect(sidebarPeople[0].isSelected).toBe(true);
   });
 
   // Presence-state derivation lives in presence-status (derivePersonPresenceSnapshot)

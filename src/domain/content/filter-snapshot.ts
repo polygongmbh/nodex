@@ -1,5 +1,4 @@
 import type { Channel, ChannelMatchMode, QuickFilterState } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 
 export interface FilterSnapshot {
@@ -13,7 +12,7 @@ export interface FilterSnapshot {
 interface BuildFilterSnapshotParams {
   activeRelayIds: Set<string>;
   channelFilterStates: Map<string, Channel["filterState"]>;
-  people: SelectablePerson[];
+  selectedPubkeys: Set<string>;
   channelMatchMode: ChannelMatchMode;
   quickFilters?: QuickFilterState;
 }
@@ -21,7 +20,7 @@ interface BuildFilterSnapshotParams {
 export function buildFilterSnapshot({
   activeRelayIds,
   channelFilterStates,
-  people,
+  selectedPubkeys,
   channelMatchMode,
   quickFilters,
 }: BuildFilterSnapshotParams): FilterSnapshot {
@@ -34,10 +33,7 @@ export function buildFilterSnapshot({
     }
   }
 
-  const selectedPeopleIds = people
-    .filter((person) => person.isSelected)
-    .map((person) => person.pubkey)
-    .sort();
+  const selectedPeopleIds = Array.from(selectedPubkeys).sort();
 
   return {
     relayIds,

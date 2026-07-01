@@ -12,7 +12,7 @@ function makeHarness(
   initialUserProfile?: Record<string, string>,
 ) {
   const publishEvent = vi.fn<NDKContextValue["publishEvent"]>(async () => publishResult);
-  const fetchLatestKind0Profile = vi.fn(async () => null);
+  const fetchCurrentUserKind0Profile = vi.fn(async () => null);
   const setUser = vi.fn();
   const setNeedsProfileSetup = vi.fn();
   const setIsProfileSyncing = vi.fn();
@@ -29,7 +29,7 @@ function makeHarness(
       user as any,
       relays,
       publishEvent,
-      fetchLatestKind0Profile,
+      fetchCurrentUserKind0Profile,
       profileSyncRunRef,
       setUser,
       setNeedsProfileSetup,

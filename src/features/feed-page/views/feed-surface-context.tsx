@@ -1,16 +1,16 @@
 import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import type { Channel, QuickFilterState, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 
 export interface FeedSurfaceState {
   relays: Relay[];
   channels: Channel[];
   visibleChannels?: Channel[];
   primaryChannels?: Channel[];
-  people: SelectablePerson[];
-  visiblePeople?: SelectablePerson[];
-  mentionablePeople?: SelectablePerson[];
+  people: Person[];
+  visiblePeople?: Person[];
+  mentionablePeople?: Person[];
   quickFilters: QuickFilterState;
 }
 

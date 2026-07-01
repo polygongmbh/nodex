@@ -9,7 +9,7 @@ import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
 import type { Channel, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ const channels: Channel[] = [
   makeChannel({ id: "ops", name: "ops" }),
 ];
 
-const peopleSeed: SelectablePerson[] = [
+const peopleSeed: Person[] = [
   makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
   makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
 ];
@@ -58,9 +58,10 @@ function Harness({
   startWithEmptyScope?: boolean;
   startWithEmptyPeople?: boolean;
 }) {
-  const [people, setPeople] = useState<SelectablePerson[]>(startWithEmptyPeople ? [] : peopleSeed);
+  const [people, setPeople] = useState<Person[]>(startWithEmptyPeople ? [] : peopleSeed);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const [visibleChannels, setVisibleChannels] = useState<Channel[]>(startWithEmptyScope ? [] : channels);
-  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<SelectablePerson[]>(
+  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<Person[]>(
     startWithEmptyScope ? [] : peopleSeed
   );
   const postedTags = useTaskMutationStore((s) => s.postedTags);
@@ -93,8 +94,8 @@ function Harness({
       <button onClick={() => filters.toggleAllPeople()}>PersonClearAll</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagInclude", tag: "urgent" })}>HashtagInclude</button>
       <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralEverywhere</button>
-      <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAliceSelectablePerson</button>
-      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", author: makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }) })}>
+      <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAlicePerson</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", pubkey: "alice" })}>
         AuthorClick
       </button>
       <button onClick={() => setPeople(peopleSeed)}>LoadPeople</button>
@@ -108,7 +109,7 @@ function Harness({
       </output>
       <output data-testid="channel-match-mode">{filters.channelMatchMode}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
+        {Array.from(selectedPubkeys).join(",")}
       </output>
       <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
       <output data-testid="mention-request">{filters.mentionRequest?.mention ?? ""}</output>
@@ -136,7 +137,7 @@ function renderHarness(options?: {
 describe("useChannelFilterController", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    useFilterStore.setState({ activeRelayIds: new Set(), channelFilterStates: new Map(), channelMatchMode: "and" });
+    useFilterStore.setState({ activeRelayIds: new Set(), channelFilterStates: new Map(), channelMatchMode: "and", selectedPubkeys: new Set() });
     vi.mocked(toast).mockClear();
     useTaskMutationStore.setState({
       localTasks: [],
@@ -212,7 +213,7 @@ describe("useChannelFilterController", () => {
     fireEvent.click(screen.getByRole("button", { name: "PersonExclusive" }));
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
 
-    fireEvent.click(screen.getByRole("button", { name: "HideAliceSelectablePerson" }));
+    fireEvent.click(screen.getByRole("button", { name: "HideAlicePerson" }));
 
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
   });
@@ -229,7 +230,7 @@ describe("useChannelFilterController", () => {
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
   });
 
-  it("applies URL-hydrated selected people when people profiles load after mount", () => {
+  it("applies URL-hydrated selected people immediately, before their profiles load", () => {
     renderHarness({
       isHydrating: true,
       hasLiveHydratedScope: false,
@@ -237,7 +238,9 @@ describe("useChannelFilterController", () => {
       initialEntries: ["/?p=alice"],
     });
 
-    expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+    // Selection is keyed by pubkey in the store, so it applies immediately
+    // without waiting for the matching kind-0 profile to arrive.
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
 
     fireEvent.click(screen.getByRole("button", { name: "LoadPeople" }));
 

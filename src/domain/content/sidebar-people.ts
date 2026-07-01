@@ -1,5 +1,5 @@
 import type { Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import { getPersonDisplayName, type Person } from "@/types/person";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 
 const DEFAULT_MIN_POSTS = 3;
@@ -9,24 +9,24 @@ interface DeriveSidebarPeopleOptions {
   personalizeScores?: Map<string, number>;
 }
 
-interface SelectablePersonStats {
+interface PersonStats {
   count: number;
   latestTimestampMs: number;
 }
 
 export function deriveSidebarPeople(
-  people: SelectablePerson[],
+  people: Person[],
   tasks: Post[],
   latestPresenceByAuthorId: Map<string, LatestPresenceSnapshot> = new Map(),
   now: Date = new Date(),
   options: DeriveSidebarPeopleOptions = {}
-): SelectablePerson[] {
+): Person[] {
   const minPosts = options.minPosts ?? DEFAULT_MIN_POSTS;
   const personalizeScores = options.personalizeScores ?? new Map();
-  const statsByAuthorId = new Map<string, SelectablePersonStats>();
+  const statsByAuthorId = new Map<string, PersonStats>();
 
   for (const task of tasks) {
-    const authorId = task.author?.pubkey?.trim().toLowerCase();
+    const authorId = task.pubkey.trim().toLowerCase();
     if (!authorId) continue;
 
     const nextTimestampMs =
@@ -82,7 +82,7 @@ export function deriveSidebarPeople(
       if (b.personalScore !== a.personalScore) {
         return b.personalScore - a.personalScore;
       }
-      return a.person.displayName.localeCompare(b.person.displayName, undefined, {
+      return getPersonDisplayName(a.person).localeCompare(getPersonDisplayName(b.person), undefined, {
         sensitivity: "base",
       });
     })

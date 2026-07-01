@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import type { Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { makePerson } from "@/test/fixtures";
 
 const dispatchFeedInteraction = vi.fn();
 const navigate = vi.fn();
@@ -19,7 +18,7 @@ vi.mock("react-router-dom", () => ({
 const baseTask: TaskPost = {
   id: "root",
   kind: NostrEventKind.Task,
-  author: makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
+  pubkey: "me",
   content: "Root task",
   tags: [],
   relays: [],

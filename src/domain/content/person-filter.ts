@@ -23,7 +23,7 @@ export function taskMatchesSelectedPeople(task: Post, selectedPeople: Person[]):
   if (selectedPeople.length === 0) return true;
 
   const selectedPersonIds = new Set(selectedPeople.map((person) => normalize(person.pubkey)).filter(Boolean));
-  if (selectedPersonIds.has(normalize(task.author?.pubkey))) {
+  if (selectedPersonIds.has(normalize(task.pubkey))) {
     return true;
   }
 

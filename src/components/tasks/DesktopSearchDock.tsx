@@ -14,22 +14,26 @@ import { buildComposerPlaceholder } from "@/lib/composer-placeholder";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import type { DisplayDepthMode } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
+import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
 import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { getCompactPersonLabel } from "@/types/person";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 export function DesktopSearchDock({
   focusedTaskId,
+  currentView,
 }: {
   focusedTaskId: string | null;
+  currentView: ViewType;
 }) {
   const { t, i18n } = useTranslation("filters");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { channels = [], people = [] } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const posts = usePosts();
-  const { currentView, displayDepthMode } = useFeedViewState();
+  const displayDepthMode = usePreferencesStore((s) => s.displayDepthMode);
   const showDisplayDepthSelector = currentView === "kanban" || currentView === "list";
   const contextTaskTitle = focusedTaskId
     ? posts.find((post) => post.id === focusedTaskId)?.content ?? ""
@@ -43,7 +47,7 @@ export function DesktopSearchDock({
       .filter((channel) => channel.filterState === "included")
       .map((channel) => channel.name);
     const mentionLabels = people
-      .filter((person) => person.isSelected)
+      .filter((person) => selectedPubkeys.has(person.pubkey))
       .map((person) => getCompactPersonLabel(person));
     return buildComposerPlaceholder({
       baseKey: "search.desktop.placeholder",
@@ -54,7 +58,7 @@ export function DesktopSearchDock({
       locale: i18n.resolvedLanguage || i18n.language || "en",
       t: translatePlaceholder,
     });
-  }, [channels, contextTaskTitle, i18n.language, i18n.resolvedLanguage, people, t]);
+  }, [channels, contextTaskTitle, i18n.language, i18n.resolvedLanguage, people, selectedPubkeys, t]);
   return (
     <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
       <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />

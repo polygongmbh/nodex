@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,14 +11,14 @@ import {
 } from "@/features/feed-page/stores/posts-store";
 import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
+import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
 import type { Channel, Relay, Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 import type { Person } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import type { FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import type { FeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import type { MobileViewType } from "@/components/mobile/MobileNav";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 const ndkMock = {
   user: null as null | {
@@ -56,12 +56,7 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", async () =
   };
 });
 
-const mockViewState = vi.fn(() => baseFeedViewState as FeedViewState);
 const mockSurfaceState = vi.fn(() => baseSurfaceState as FeedSurfaceState);
-
-vi.mock("@/features/feed-page/views/feed-view-state-context", () => ({
-  useFeedViewState: () => mockViewState(),
-}));
 
 vi.mock("@/features/feed-page/views/feed-surface-context", () => ({
   useFeedSurfaceState: () => mockSurfaceState(),
@@ -158,19 +153,12 @@ vi.mock("@/components/tasks/UpcomingView", () => ({
 
 const relays: Relay[] = [makeRelay()];
 const channels: Channel[] = [makeChannel()];
-const people: SelectablePerson[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
+const people: Person[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
 const tasks: Post[] = [];
 
-const baseFeedViewState: FeedViewState = {
-  currentView: "tree",
-  displayDepthMode: "leaves",
-  isSidebarFocused: false,
-  isOnboardingOpen: false,
-  activeOnboardingStepId: null,
-  isManageRouteActive: false,
-  canCreateContent: true,
-  profileCompletionPromptSignal: 0,
-};
+// MobileLayout takes currentView as a prop (URL-derived in production). setMocks
+// records it so both the helper and direct rerenders can pass it.
+let mockCurrentView: ViewType = "tree";
 
 const baseSurfaceState: FeedSurfaceState = {
   relays,
@@ -187,7 +175,7 @@ interface TaskViewModelOverride {
 }
 
 type MobileLayoutOverrides = {
-  viewState?: Partial<FeedViewState>;
+  currentView?: ViewType;
   taskViewModel?: TaskViewModelOverride;
   surfaceState?: Partial<FeedSurfaceState>;
 };
@@ -209,20 +197,21 @@ function setMocks(overrides: MobileLayoutOverrides = {}) {
     quickFilters: makeQuickFilterState(),
     ...overrides.surfaceState,
   };
-  mockViewState.mockReturnValue({ ...baseFeedViewState, ...overrides.viewState });
   mockSurfaceState.mockReturnValue(surfaceState);
+  mockCurrentView = overrides.currentView ?? "tree";
   applyTaskViewModelOverride(overrides.taskViewModel);
 }
 
-function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: string } = {}) {
-  const { searchQuery, ...rest } = overrides;
+function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: string; selectedPubkeys?: Set<string> } = {}) {
+  const { searchQuery, selectedPubkeys, ...rest } = overrides;
   setMocks(rest);
   useFilterStore.getState().setSearchQuery(searchQuery ?? "");
+  useFilterStore.setState({ selectedPubkeys: selectedPubkeys ?? new Set() });
   const focusedTaskId = rest.taskViewModel?.focusedTaskId ?? null;
   const posts = rest.taskViewModel?.allTasks ?? [];
   return render(
     <MemoryRouter>
-      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} />
+      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} currentView={mockCurrentView} />
     </MemoryRouter>
   );
 }
@@ -243,11 +232,12 @@ afterEach(() => {
   document.documentElement.style.removeProperty(MOBILE_TOAST_TOP_OFFSET_CSS_VAR);
   __resetPostsStoreForTests();
   useHydrationStatusStore.getState().setIsHydrating(false);
+  useComposerSignalsStore.getState().setForceShowComposer(false);
 });
 
 describe("MobileLayout auth wiring", () => {
   it("shows the same loading fallback copy as desktop while lazy mobile views resolve", () => {
-    renderMobileLayout({ viewState: { currentView: "feed" } });
+    renderMobileLayout({ currentView: "feed" });
 
     expect(screen.getByText("Loading view...")).toBeInTheDocument();
   });
@@ -257,7 +247,8 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
 
-    renderMobileLayout({ viewState: { canCreateContent: false } });
+    // canCreateContent now derives from auth state (no signed-in user => false).
+    renderMobileLayout();
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
@@ -273,9 +264,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
 
-    const { rerender } = renderMobileLayout({
-      viewState: { canCreateContent: false, profileCompletionPromptSignal: 0 },
-    });
+    const { rerender } = renderMobileLayout();
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
@@ -283,8 +272,8 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    setMocks({ viewState: { canCreateContent: true, profileCompletionPromptSignal: 1 } });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
+    setMocks();
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
 
     // Prompt no longer hijacks the route; the global ProfileCompletionDialog
     // (mounted in FeedPageProviders) handles displaying the editor instead.
@@ -297,9 +286,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    renderMobileLayout({
-      viewState: { canCreateContent: true, profileCompletionPromptSignal: 0 },
-    });
+    renderMobileLayout();
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
@@ -329,7 +316,7 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
   });
 
-  it("syncs manage route state when opening manage view", () => {
+  it("opens the manage overlay locally without dispatching a route change", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
@@ -337,17 +324,10 @@ describe("MobileLayout auth wiring", () => {
     renderMobileLayout();
 
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
-    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.manageRoute.change", isActive: true });
-  });
 
-  it("restores manage panel from route state", () => {
-    setSignedInUser();
-    ndkMock.needsProfileSetup = false;
-
-    renderMobileLayout({ viewState: { isManageRouteActive: true } });
-
-    expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
     expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
 
   it("preserves compose draft text when opening and closing manage view", () => {
@@ -369,20 +349,18 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
 
-    renderMobileLayout({ viewState: { currentView: "list" } });
+    renderMobileLayout({ currentView: "list" });
 
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
     fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
 
-    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(1, {
-      type: "ui.manageRoute.change",
-      isActive: true,
-    });
-    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(2, {
+    // Opening manage is local-only; selecting a view both closes the overlay
+    // and changes the view, so the single dispatch is the view change.
+    expect(dispatchFeedInteraction).toHaveBeenCalledTimes(1);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "ui.view.change",
       view: "calendar",
     });
-    expect(dispatchFeedInteraction).toHaveBeenCalledTimes(2);
   });
 
   it("falls back to showing all tasks when mobile quick filter has no matches", () => {
@@ -412,7 +390,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      viewState: { currentView: "feed" },
+      currentView: "feed",
       taskViewModel: { allTasks: sampleTasks },
       searchQuery: "nomatchquery",
     });
@@ -431,7 +409,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      viewState: { currentView: "feed" },
+      currentView: "feed",
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
       },
@@ -468,7 +446,7 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
+    const alice = makePerson({ pubkey: "alice", name: "alice", displayName: "Alice Doe" });
     const sampleTasks: Post[] = [
       makeTask({ id: "task-alice", content: "Ship #general", author: alice }),
     ];
@@ -477,6 +455,7 @@ describe("MobileLayout auth wiring", () => {
       surfaceState: { people: [alice] },
       taskViewModel: { allTasks: sampleTasks },
       searchQuery: "nomatchquery",
+      selectedPubkeys: new Set(["alice"]),
     });
 
     const status = screen.getByRole("status");
@@ -537,7 +516,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      viewState: { currentView: "list" },
+      currentView: "list",
       surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
       },
@@ -560,7 +539,7 @@ describe("MobileLayout auth wiring", () => {
     const childTask = makeTask({ id: "child-task", content: "Child task #general", tags: ["general"], parentId: "root-task" });
 
     renderMobileLayout({
-      viewState: { currentView: "list" },
+      currentView: "list",
       taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
     });
 
@@ -579,7 +558,7 @@ describe("MobileLayout auth wiring", () => {
     const childTask = makeTask({ id: "child-task", content: "Child task #general", tags: ["general"], parentId: "root-task" });
 
     renderMobileLayout({
-      viewState: { currentView: "calendar" },
+      currentView: "calendar",
       taskViewModel: { allTasks: [rootTask, childTask], focusedTaskId: "child-task" },
     });
 
@@ -596,8 +575,8 @@ describe("MobileLayout auth wiring", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    const selectedPerson = makePerson({ pubkey: "me", name: "me", displayName: "Me", isSelected: true });
-    const otherPerson = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false });
+    const selectedPerson = makePerson({ pubkey: "me", name: "me", displayName: "Me" });
+    const otherPerson = makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" });
     const sampleTasks: Post[] = [
       makeTask({ id: "task-1", content: "Ship #general", tags: ["general"], author: otherPerson }),
     ];
@@ -608,6 +587,7 @@ describe("MobileLayout auth wiring", () => {
         people: [selectedPerson, otherPerson],
       },
       taskViewModel: { allTasks: sampleTasks },
+      selectedPubkeys: new Set(["me"]),
     });
 
     const status = screen.getByRole("status");
@@ -620,24 +600,25 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     renderMobileLayout({
-      viewState: { currentView: "list" },
+      currentView: "list",
       taskViewModel: { isHydrating: true },
     });
 
     expect(screen.getAllByText("Loading events from relay…")).toHaveLength(1);
   });
 
-  it("switches to feed on mobile compose combobox onboarding step", async () => {
+  it("switches to feed when the compose guide forces the composer open", async () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
 
-    const { rerender } = renderMobileLayout({
-      viewState: { isOnboardingOpen: true, activeOnboardingStepId: "mobile-filters-use" },
-    });
+    renderMobileLayout({ currentView: "tree" });
 
-    setMocks({ viewState: { currentView: "tree", isOnboardingOpen: true, activeOnboardingStepId: "mobile-compose-combobox" } });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
+    // The mobile compose-guide step raises forceShowComposer; MobileLayout
+    // reveals the composer by closing the manage overlay and showing the feed.
+    act(() => {
+      useComposerSignalsStore.getState().setForceShowComposer(true);
+    });
 
     await waitFor(() => {
       expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
@@ -657,15 +638,15 @@ describe("MobileLayout auth wiring", () => {
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
-    setMocks({ viewState: { currentView: "feed" } });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} />);
+    setMocks({ currentView: "feed" });
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("feed-view")).toBeInTheDocument();
     });
   });
 
-  it("switches top-bar views without closing manage route when not in manage", () => {
+  it("switches top-bar views via a view-change dispatch when not in manage", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
@@ -675,10 +656,6 @@ describe("MobileLayout auth wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: "Feed" }));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
-    const manageRouteCalls = dispatchFeedInteraction.mock.calls.filter(
-      ([intent]) => intent?.type === "ui.manageRoute.change" && intent?.isActive === false
-    );
-    expect(manageRouteCalls).toHaveLength(0);
   });
 
   it("publishes a larger mobile toast top offset when focused breadcrumb chrome is visible", async () => {

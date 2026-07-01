@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { MobileFilters } from "./MobileFilters";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import type { Channel, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
@@ -83,8 +83,8 @@ const channels: Channel[] = [
   { id: "general", name: "general", filterState: "neutral" },
 ];
 
-const people: SelectablePerson[] = [
-  { pubkey: "p1", name: "Alice", displayName: "Alice", avatar: "", isSelected: false },
+const people: Person[] = [
+  { pubkey: "p1", name: "Alice", displayName: "Alice", picture: "" },
 ];
 
 function renderMobileFilters(overrides: Partial<React.ComponentProps<typeof MobileFilters>> = {}) {
@@ -115,11 +115,11 @@ describe("MobileFilters management view", () => {
           visibleChannels: [{ id: "visible-channel", name: "visible-channel", filterState: "neutral" }],
 
           people: [
-            { pubkey: "broad-person", name: "Broad Person", displayName: "Broad Person", avatar: "", isSelected: false },
+            { pubkey: "broad-person", name: "Broad Person", displayName: "Broad Person", picture: "" },
           ],
 
           visiblePeople: [
-            { pubkey: "visible-person", name: "visible-user", displayName: "Visible Person", avatar: "", isSelected: false },
+            { pubkey: "visible-person", name: "visible-user", displayName: "Visible Person", picture: "" },
           ],
 
           quickFilters: makeQuickFilterState()

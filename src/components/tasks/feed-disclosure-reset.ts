@@ -1,12 +1,11 @@
 import type { Channel, ChannelMatchMode, QuickFilterState, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 
 interface BuildFeedDisclosureResetKeyOptions {
   focusedTaskId: string | null;
   searchQuery: string;
   relays: Relay[];
   channels: Channel[];
-  people: SelectablePerson[];
+  selectedPubkeys: Set<string>;
   quickFilters: QuickFilterState;
   channelMatchMode?: ChannelMatchMode;
 }
@@ -16,7 +15,7 @@ export function buildFeedDisclosureResetKey({
   searchQuery,
   relays,
   channels,
-  people,
+  selectedPubkeys,
   quickFilters,
   channelMatchMode = "and",
 }: BuildFeedDisclosureResetKeyOptions): string {
@@ -30,11 +29,7 @@ export function buildFeedDisclosureResetKey({
     .map((channel) => `${channel.id}:${channel.filterState}`)
     .sort()
     .join(",");
-  const selectedPeopleKey = people
-    .filter((person) => person.isSelected)
-    .map((person) => person.pubkey)
-    .sort()
-    .join(",");
+  const selectedPeopleKey = [...selectedPubkeys].sort().join(",");
   const quickFiltersKey = [
     quickFilters.recentEnabled ? `recent:${quickFilters.recentDays}` : "recent:off",
     quickFilters.priorityEnabled ? `priority:${quickFilters.minPriority}` : "priority:off",

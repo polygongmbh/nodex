@@ -1,13 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Relay, Post, TaskPost } from "@/types";
+import type { Relay, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   buildRelayScopedPresenceTargets,
   useRelayScopedPresence,
 } from "./use-relay-scoped-presence";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
-import { makePerson } from "@/test/fixtures";
 
 function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id" | "url">): Relay {
   return {
@@ -23,7 +22,7 @@ function buildTask(overrides: Partial<TaskPost> & Pick<TaskPost, "id" | "relays"
   return {
     id: overrides.id,
     kind: NostrEventKind.Task,
-    author: overrides.author ?? makePerson({ pubkey: "author", name: "Author", displayName: "Author" }),
+    pubkey: overrides.pubkey ?? "author",
     content: overrides.content ?? "Task",
     tags: overrides.tags ?? [],
     relays: overrides.relays,

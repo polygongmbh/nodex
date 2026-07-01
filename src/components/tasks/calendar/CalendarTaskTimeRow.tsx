@@ -9,6 +9,7 @@ import {
   type Post,
 } from "@/types";
 import { getTaskLocalDate, getTaskTimeOfDay } from "@/lib/task-dates";
+import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 interface CalendarTaskTimeRowProps {
   task: Post;
@@ -20,7 +21,7 @@ export function CalendarTaskTimeRow({ task, selectedDate, accent }: CalendarTask
   const primary = getTaskPrimaryDate(task);
   if (!primary) return null;
   const dayKey = selectedDate ? format(startOfDay(selectedDate), "yyyy-MM-dd") : null;
-  const authorTitle = task.author?.displayName || task.author?.name || "Author";
+  const authorTitle = formatUserFacingPubkey(task.pubkey) || "Author";
 
   if (isTimeBasedEventPost(task) && task.start && task.end && dayKey) {
     const startDayKey = format(startOfDay(task.start), "yyyy-MM-dd");

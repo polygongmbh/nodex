@@ -189,7 +189,7 @@ export function UpcomingView({
                 </h3>
                 <div className="space-y-1.5">
                   {group.tasks.map((task) => {
-                    const authorColor = getAuthorColor(task.author);
+                    const authorColor = getAuthorColor(task.pubkey);
                     const canChangeStatus = canCompleteTask(task);
                     const canEditPriority = canChangeStatus && !isTaskTerminal(getTaskState(task));
                     return (

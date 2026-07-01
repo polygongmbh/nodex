@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProfileCompletionDialog } from "./ProfileCompletionDialog";
-import { FeedViewStateProvider } from "@/features/feed-page/views/feed-view-state-context";
 
 const ndkMock = {
   user: {
@@ -53,20 +52,7 @@ vi.mock("sonner", () => ({
 
 function renderDialog(profileCompletionPromptSignal: number) {
   return render(
-    <FeedViewStateProvider
-      value={{
-        currentView: "feed",
-        displayDepthMode: "1",
-        isSidebarFocused: false,
-        isOnboardingOpen: false,
-        activeOnboardingStepId: null,
-        isManageRouteActive: false,
-        canCreateContent: true,
-        profileCompletionPromptSignal,
-      }}
-    >
-      <ProfileCompletionDialog />
-    </FeedViewStateProvider>
+    <ProfileCompletionDialog profileCompletionPromptSignal={profileCompletionPromptSignal} />
   );
 }
 
@@ -97,20 +83,7 @@ describe("ProfileCompletionDialog", () => {
 
     ndkMock.hasWritableRelayConnection = true;
     rendered.rerender(
-      <FeedViewStateProvider
-        value={{
-          currentView: "feed",
-          displayDepthMode: "1",
-          isSidebarFocused: false,
-          isOnboardingOpen: false,
-          activeOnboardingStepId: null,
-          isManageRouteActive: false,
-          canCreateContent: true,
-          profileCompletionPromptSignal: 1,
-        }}
-      >
-        <ProfileCompletionDialog />
-      </FeedViewStateProvider>
+      <ProfileCompletionDialog profileCompletionPromptSignal={1} />
     );
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();

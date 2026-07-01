@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Hash, Users } from "lucide-react";
 import {   Relay, Channel, ChannelMatchMode, Post, QuickFilterState, SavedFilterConfiguration } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
@@ -16,6 +16,7 @@ import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeTog
 import { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { cn } from "@/lib/utils";
 import { buildCollapsedPreviewItems, getCollapsedPreviewMaxItems } from "@/lib/sidebar-collapsed-preview";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useCoreChannels } from "@/lib/use-core-channels";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -34,8 +35,8 @@ export interface SidebarProps {
   channels: Channel[];
   collapsedPreviewChannels?: Channel[];
   channelMatchMode?: ChannelMatchMode;
-  people: SelectablePerson[];
-  collapsedPreviewPeople?: SelectablePerson[];
+  people: Person[];
+  collapsedPreviewPeople?: Person[];
   pinnedPersonIds?: string[];
   nostrRelays: NDKRelayStatus[];
   isFocused?: boolean;
@@ -70,6 +71,7 @@ export function Sidebar({
   );
   const isPersonPinned = (pubkey: string) =>
     pinnedPersonIdSet.has(pubkey.trim().toLowerCase());
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const { t } = useTranslation("shell");
   const { isCore } = useCoreChannels();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -103,10 +105,7 @@ export function Sidebar({
     () => channels.some((channel) => channel.filterState !== "neutral"),
     [channels]
   );
-  const hasActivePeopleFilters = useMemo(
-    () => people.some((person) => person.isSelected),
-    [people]
-  );
+  const hasActivePeopleFilters = selectedPubkeys.size > 0;
 
   const collapsedPreviewChannelIds = useMemo(
     () =>
@@ -131,13 +130,13 @@ export function Sidebar({
       new Set(
         buildCollapsedPreviewItems({
           items: collapsedPreviewPeople ?? people,
-          isSelected: (person) => person.isSelected,
+          isSelected: (person) => selectedPubkeys.has(person.pubkey.trim().toLowerCase()),
           isPinned: (person) => pinnedPersonIdSet.has(person.pubkey.trim().toLowerCase()),
           maxItems: collapsedPreviewLimit,
           alwaysIncludePinned: true,
         }).map((person) => person.pubkey)
       ),
-    [collapsedPreviewLimit, collapsedPreviewPeople, people, pinnedPersonIdSet]
+    [collapsedPreviewLimit, collapsedPreviewPeople, people, pinnedPersonIdSet, selectedPubkeys]
   );
 
   // Flat list of all focusable items — computed once per relevant input

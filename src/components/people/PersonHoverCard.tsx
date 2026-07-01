@@ -3,9 +3,9 @@ import { BadgeCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import type { Person } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getCompactPersonLabel } from "@/types/person";
+import { useResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 import { cn } from "@/lib/utils";
 import { usePosts } from "@/features/feed-page/stores/posts-store";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
@@ -14,7 +14,7 @@ import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { usePersonPresence } from "@/lib/person-presence-context";
 
 interface PersonHoverCardProps {
-  person: Person;
+  pubkey: string;
   children: ReactNode;
   openDelay?: number;
   side?: "top" | "right" | "bottom" | "left";
@@ -71,7 +71,7 @@ export function resumePersonHoverCards() {
 }
 
 export function PersonHoverCard({
-  person,
+  pubkey,
   children,
   openDelay = 450,
   side = "bottom",
@@ -79,6 +79,7 @@ export function PersonHoverCard({
   sideOffset = 8,
 }: PersonHoverCardProps) {
   const { t, i18n } = useTranslation("tasks");
+  const person = useResolvedPerson(pubkey);
   const posts = usePosts();
   const isMobile = useIsMobile();
   const [isNip05Verified, setIsNip05Verified] = useState(false);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Relay, Post, TaskPost } from "@/types";
+import type { Relay, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   RELAY_SELECTION_ERROR_KEY,
@@ -8,7 +8,6 @@ import {
   resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
 } from "./task-relay-routing";
-import { makePerson } from "@/test/fixtures";
 
 const makeRelay = (id: string, url: string = `wss://${id}.example`): Relay => ({
   id,
@@ -21,7 +20,7 @@ const makeRelay = (id: string, url: string = `wss://${id}.example`): Relay => ({
 const makeTask = (overrides: Partial<TaskPost> = {}): TaskPost => ({
   id: "a".repeat(64),
   kind: NostrEventKind.Task,
-  author: makePerson({ pubkey: "b".repeat(64), name: "alice", displayName: "Alice" }),
+  pubkey: "b".repeat(64),
   content: "Task",
   tags: ["backend"],
   relays: ["relay-a"],

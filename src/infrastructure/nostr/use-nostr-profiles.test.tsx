@@ -58,7 +58,7 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
         name: "alice",
         display_name: "Alice",
         picture: "https://example.com/alice.png",
-      })]);
+      })], "wss://demo.test");
     });
 
     expect(observed).toMatchObject({
@@ -73,7 +73,7 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
     defaultKind0Cache.save([
       kind0(pubkeyA, { name: "alice", picture: "a.png" }),
       kind0(pubkeyB, { name: "bob" }),
-    ]);
+    ], "wss://demo.test");
 
     let observed: Record<string, unknown> = {};
     function Probe() {
@@ -88,7 +88,7 @@ describe("useNostrProfile / useCachedNostrProfile", () => {
   });
 
   it("accepts both camelCase displayName and snake_case display_name", () => {
-    defaultKind0Cache.save([kind0(pubkeyA, { name: "snake", display_name: "Snake Case" })]);
+    defaultKind0Cache.save([kind0(pubkeyA, { name: "snake", display_name: "Snake Case" })], "wss://demo.test");
 
     let observed: ReturnType<typeof useCachedNostrProfile> = null;
     function Probe() {

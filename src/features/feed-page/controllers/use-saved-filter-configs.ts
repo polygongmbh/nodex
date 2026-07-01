@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
-import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { areFilterSnapshotsEqual, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import { useSavedFilterStore } from "@/features/feed-page/stores/saved-filter-store";
 import type {   Channel, ChannelMatchMode, QuickFilterState, Relay, SavedFilterConfiguration, SavedFilterController } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 
 interface UseSavedFilterConfigsOptions {
   currentFilterSnapshot: FilterSnapshot;
@@ -13,7 +11,7 @@ interface UseSavedFilterConfigsOptions {
   setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setChannelMatchMode: Dispatch<SetStateAction<ChannelMatchMode>>;
-  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
+  setSelectedPubkeys: (next: Set<string>) => void;
   setQuickFilters: Dispatch<SetStateAction<QuickFilterState>>;
   resetFiltersToDefault: () => void;
 }
@@ -24,7 +22,7 @@ export function useSavedFilterConfigs({
   setActiveRelayIds,
   setChannelFilterStates,
   setChannelMatchMode,
-  setPeople,
+  setSelectedPubkeys,
   setQuickFilters,
   resetFiltersToDefault,
 }: UseSavedFilterConfigsOptions) {
@@ -108,8 +106,7 @@ export function useSavedFilterConfigs({
     setChannelFilterStates(nextChannelStates);
     setChannelMatchMode(configuration.channelMatchMode);
 
-    const selectedPeopleIdSet = new Set(configuration.selectedPeopleIds);
-    setPeople((previous) => mapPeopleSelection(previous, (person) => selectedPeopleIdSet.has(person.pubkey)));
+    setSelectedPubkeys(new Set(configuration.selectedPeopleIds));
     setQuickFilters(normalizeQuickFilterState(configuration.quickFilters));
 
     setActiveConfigurationId(configurationId);
@@ -122,7 +119,7 @@ export function useSavedFilterConfigs({
     setActiveRelayIds,
     setChannelFilterStates,
     setChannelMatchMode,
-    setPeople,
+    setSelectedPubkeys,
     setQuickFilters,
   ]);
 

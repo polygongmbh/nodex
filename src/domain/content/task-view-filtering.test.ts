@@ -83,6 +83,7 @@ describe("task view filtering", () => {
         filterIndex,
         prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
         people,
+        selectedPubkeys: new Set<string>(),
       },
       scope: {
         focusedTaskId: "root",
@@ -113,6 +114,7 @@ describe("task view filtering", () => {
         filterIndex,
         prefilteredTaskIds: new Set([task.id]),
         people: [],
+        selectedPubkeys: new Set<string>(),
       },
       criteria: {
         channels: {
@@ -173,6 +175,7 @@ describe("task view filtering", () => {
         filterIndex,
         prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
         people: [],
+        selectedPubkeys: new Set<string>(),
       },
       scope: {
         focusedTaskId: "root",
@@ -226,6 +229,7 @@ describe("task view filtering", () => {
         filterIndex,
         prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
         people: [],
+        selectedPubkeys: new Set<string>(),
       },
       scope: {
         focusedTaskId: null,
@@ -257,6 +261,7 @@ describe("task view filtering", () => {
       filterIndex,
       prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
       people: [],
+      selectedPubkeys: new Set<string>(),
     };
 
     const included = getDirectMatchTaskIdsForView({
@@ -315,6 +320,7 @@ describe("task view filtering", () => {
         filterIndex,
         prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
         people: [],
+        selectedPubkeys: new Set<string>(),
       },
       scope: {
         focusedTaskId: "closed-root",

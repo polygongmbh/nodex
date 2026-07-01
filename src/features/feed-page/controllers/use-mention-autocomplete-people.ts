@@ -1,16 +1,14 @@
 import { useMemo } from "react";
 import type { Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import type { NostrEvent } from "@/lib/nostr/types";
 import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 
 interface UseMentionAutocompletePeopleOptions {
   /** Posts visible in the current relay scope; their authors join the autocomplete set. */
-  scopedPosts: Pick<Post, "author">[];
+  scopedPosts: Pick<Post, "pubkey">[];
   /** All known kind:0 profile events (resolved labels, NIP-05, etc). */
   cachedKind0Events: NostrEvent[];
-  /** People manifest passed through unchanged for label resolution. */
-  people: SelectablePerson[];
 }
 
 /**
@@ -22,13 +20,12 @@ interface UseMentionAutocompletePeopleOptions {
 export function useMentionAutocompletePeople({
   scopedPosts,
   cachedKind0Events,
-  people,
-}: UseMentionAutocompletePeopleOptions): SelectablePerson[] {
+}: UseMentionAutocompletePeopleOptions): Person[] {
   return useMemo(() => {
     const visiblePubkeys = Array.from(
       new Set(
         [
-          ...scopedPosts.map((post) => post.author?.pubkey?.trim().toLowerCase()),
+          ...scopedPosts.map((post) => post.pubkey.trim().toLowerCase()),
           ...cachedKind0Events.map((event) => event.pubkey?.trim().toLowerCase()),
         ].filter((pubkey): pubkey is string => Boolean(pubkey)),
       ),
@@ -38,7 +35,6 @@ export function useMentionAutocompletePeople({
       visiblePubkeys,
       cachedKind0Events,
       cachedKind0Events,
-      people,
     );
-  }, [cachedKind0Events, people, scopedPosts]);
+  }, [cachedKind0Events, scopedPosts]);
 }

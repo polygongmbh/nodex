@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Channel } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 import {
   buildChannelFilterMap,
-  mapPeopleSelection,
   setAllChannelFilters,
   setExclusiveChannelFilter,
   shouldToggleOffExclusiveChannel,
@@ -13,11 +11,6 @@ import {
 const channels: Channel[] = [
   { id: "general", name: "general", filterState: "neutral" },
   { id: "release", name: "release", filterState: "neutral" },
-];
-
-const people: SelectablePerson[] = [
-  { pubkey: "alice", name: "alice", displayName: "Alice", isSelected: false },
-  { pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false },
 ];
 
 describe("filter-state-utils", () => {
@@ -49,15 +42,10 @@ describe("filter-state-utils", () => {
     expect(shouldToggleOffExclusiveChannel(channels, states, "release")).toBe(false);
   });
 
-  it("maps people selection via callback", () => {
-    const result = mapPeopleSelection(people, (person) => person.pubkey === "bob");
-    expect(result.find((person) => person.pubkey === "alice")?.isSelected).toBe(false);
-    expect(result.find((person) => person.pubkey === "bob")?.isSelected).toBe(true);
-  });
-
   it("detects when exclusive person click should toggle off", () => {
-    const selectedPeople = mapPeopleSelection(people, (person) => person.pubkey === "alice");
-    expect(shouldToggleOffExclusivePerson(selectedPeople, "alice")).toBe(true);
-    expect(shouldToggleOffExclusivePerson(selectedPeople, "bob")).toBe(false);
+    const selectedPubkeys = new Set(["alice"]);
+    expect(shouldToggleOffExclusivePerson(selectedPubkeys, "alice")).toBe(true);
+    expect(shouldToggleOffExclusivePerson(selectedPubkeys, "bob")).toBe(false);
+    expect(shouldToggleOffExclusivePerson(new Set(["alice", "bob"]), "alice")).toBe(false);
   });
 });

@@ -87,16 +87,14 @@ export function useFeedInteractionFrecency(): UseFeedInteractionFrecencyResult {
           case "person.filter.exclusive":
             dispatchFrecencyIntent({
               type: "person.bump",
-              personId: "author" in event.envelope.intent
-                ? event.envelope.intent.author.pubkey
-                : event.envelope.intent.person.pubkey,
+              personId: event.envelope.intent.pubkey,
               weight: 1.9,
             });
             return;
           case "person.filter.toggle":
             dispatchFrecencyIntent({
               type: "person.bump",
-              personId: event.envelope.intent.person.pubkey,
+              personId: event.envelope.intent.pubkey,
               weight: 1.25,
             });
             return;

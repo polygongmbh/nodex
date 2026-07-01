@@ -22,7 +22,7 @@ export function buildUserInvolvementIndex(
 
   const postById = new Map(posts.map((post) => [post.id, post]));
   const concernsSelf = (post: Post): boolean => {
-    if (normalizePubkey(post.author?.pubkey) === self) return true;
+    if (normalizePubkey(post.pubkey) === self) return true;
     return getTaskAssigneePubkeys(post).some((pubkey) => normalizePubkey(pubkey) === self);
   };
 

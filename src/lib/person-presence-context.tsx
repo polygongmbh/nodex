@@ -30,7 +30,7 @@ export function PersonPresenceProvider({
     const latestActivityByAuthor = new Map<string, number>();
     if (allTasks) {
       for (const task of allTasks) {
-        const authorId = task.author?.pubkey?.trim().toLowerCase();
+        const authorId = task.pubkey.trim().toLowerCase();
         if (!authorId) continue;
         const ts = task.timestamp instanceof Date ? task.timestamp.getTime() : 0;
         const previous = latestActivityByAuthor.get(authorId);

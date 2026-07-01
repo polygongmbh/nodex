@@ -8,16 +8,18 @@ import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal"
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useFeedViewState } from "./feed-view-state-context";
-import { FeedPageSidebar } from "./FeedPageSidebar";
+import { FeedPageSidebar, type FeedSidebarState } from "./FeedPageSidebar";
 import { DesktopViewsPane } from "./DesktopViewsPane";
 import type { Post } from "@/types";
+import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 interface DesktopAppShellProps {
   shortcutsHelpProps: ComponentProps<typeof KeyboardShortcutsHelp>;
   authModalProps: ComponentProps<typeof NostrAuthModal>;
   posts: Post[];
   focusedTaskId: string | null;
+  currentView: ViewType;
+  sidebarController: FeedSidebarState;
 }
 
 export function DesktopAppShell({
@@ -25,9 +27,10 @@ export function DesktopAppShell({
   authModalProps,
   posts,
   focusedTaskId,
+  currentView,
+  sidebarController,
 }: DesktopAppShellProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { currentView } = useFeedViewState();
 
   return (
     <div className="grid app-shell-height overflow-hidden bg-background grid-cols-[auto,1fr] grid-rows-[var(--topbar-height),1fr] [--topbar-height:3.5rem] xl:[--topbar-height:4rem]">
@@ -46,13 +49,13 @@ export function DesktopAppShell({
           <ThemeModeToggle />
         </div>
       </div>
-      <FeedPageSidebar />
+      <FeedPageSidebar {...sidebarController} />
       <div className="min-w-0 overflow-hidden flex flex-col">
         <FailedPublishQueueBannerContainer />
         <div className="min-h-0 flex-1 overflow-hidden">
-          <DesktopViewsPane posts={posts} focusedTaskId={focusedTaskId} />
+          <DesktopViewsPane posts={posts} focusedTaskId={focusedTaskId} currentView={currentView} />
         </div>
-        <DesktopSearchDock focusedTaskId={focusedTaskId} />
+        <DesktopSearchDock focusedTaskId={focusedTaskId} currentView={currentView} />
       </div>
 
       <KeyboardShortcutsHelp {...shortcutsHelpProps} />

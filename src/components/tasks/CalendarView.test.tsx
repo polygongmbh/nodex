@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CalendarView } from "./CalendarView";
 import type { Channel, Relay, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { makePerson, makeTask } from "@/test/fixtures";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
@@ -29,7 +29,7 @@ const channels: Channel[] = [
   { id: "general", name: "general", filterState: "neutral" },
 ];
 
-const people: SelectablePerson[] = [
+const people: Person[] = [
   makePerson({
     pubkey: "me",
     name: "me",
@@ -54,7 +54,7 @@ describe("CalendarView responsiveness", () => {
     const root: TaskPost = {
       id: "root",
       kind: NostrEventKind.Task,
-      author: people[0],
+      pubkey: people[0].pubkey,
       content: "Root task #general",
       tags: ["general"],
       relays: ["demo"],

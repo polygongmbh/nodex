@@ -1,7 +1,6 @@
 import { type TaskStatus, type TaskDate, type TaskDateType, Post, formatLocalIsoDate, getLastEditedAt, isTaskPost } from "@/types";
 import { setRawEvent } from "@/stores/raw-events";
 import { isListingKind, isTaskKind } from "@/domain/content/task-kind";
-import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 import {
   extractTaskStateTargetId,
@@ -37,7 +36,7 @@ import {
 } from "@/lib/attachments";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrContentReferences } from "@/lib/nostr/content-references";
-import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { canonicalizePubkey } from "@/lib/nostr/user-facing-pubkey";
 import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { getRelayIdFromUrl } from "./relay-identity";
@@ -84,10 +83,6 @@ function getRelayIdsFromEvent(event: NostrEventWithRelay): string[] {
   return out;
 }
 
-function getDisplayNameFromPubkey(pubkey: string): string {
-  return formatUserFacingPubkey(pubkey);
-}
-
 function replaceIndexedPersonMentions(content: string, tags: string[][]): string {
   return content.replace(/#\[(\d+)\]/g, (fullMatch, indexRaw: string) => {
     const index = Number.parseInt(indexRaw, 10);
@@ -103,12 +98,7 @@ function replaceIndexedPersonMentions(content: string, tags: string[][]): string
 }
 
 export function nostrEventToTask(event: NostrEventWithRelay): Post {
-  const authorFallbackLabel = formatUserFacingPubkey(event.pubkey);
-  const author: Person = {
-    pubkey: event.pubkey,
-    name: authorFallbackLabel,
-    displayName: getDisplayNameFromPubkey(event.pubkey),
-  };
+  const pubkey = canonicalizePubkey(event.pubkey);
 
   const normalizedContent = replaceIndexedPersonMentions(event.content, event.tags);
   const contentTags = extractHashtagsFromContent(normalizedContent);
@@ -181,7 +171,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Post {
 
   const base = {
     id: event.id,
-    author,
+    pubkey,
     content: normalizedContent,
     tags: allTags,
     relays: getRelayIdsFromEvent(event),

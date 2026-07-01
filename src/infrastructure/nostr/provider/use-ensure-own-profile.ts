@@ -7,10 +7,7 @@ import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { AuthMethod, NDKContextValue, NDKRelayStatus } from "./contracts";
 
 type PublishEvent = NDKContextValue["publishEvent"];
-type FetchLatestKind0Profile = (
-  pubkey: string,
-  options?: { force?: boolean }
-) => Promise<NDKUserProfile | null>;
+type FetchCurrentUserKind0Profile = (pubkey: string) => Promise<NDKUserProfile | null>;
 
 function toPublishableProfile(profile: NDKUserProfile | null | undefined): EditableNostrProfile | null {
   const name = profile?.name?.trim();
@@ -39,7 +36,7 @@ export function useEnsureOwnProfile(
   authMethod: AuthMethod,
   relays: NDKRelayStatus[],
   publishEvent: PublishEvent,
-  fetchLatestKind0Profile: FetchLatestKind0Profile,
+  fetchCurrentUserKind0Profile: FetchCurrentUserKind0Profile,
 ): void {
   // Pubkey whose kind 0 is confirmed on the relays (found, or just published).
   const settledPubkeyRef = useRef<string | null>(null);
@@ -63,9 +60,9 @@ export function useEnsureOwnProfile(
     inFlightRef.current = true;
     const run = async () => {
       try {
-        // force: bypass the shared kind-0 cache, whose entry may be a premature
-        // null written by profile sync before any relay was connected.
-        const existing = await fetchLatestKind0Profile(pubkey, { force: true });
+        // Read the relays for an existing kind 0 before publishing, so we never
+        // overwrite a profile that is already there.
+        const existing = await fetchCurrentUserKind0Profile(pubkey);
         if (existing) {
           settledPubkeyRef.current = pubkey;
           nostrDevLog("provider", "Own kind 0 already on relays — skipping publish", { pubkey });
@@ -100,5 +97,5 @@ export function useEnsureOwnProfile(
     };
 
     void run();
-  }, [user, authMethod, relays, publishEvent, fetchLatestKind0Profile]);
+  }, [user, authMethod, relays, publishEvent, fetchCurrentUserKind0Profile]);
 }

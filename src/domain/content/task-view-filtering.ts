@@ -13,7 +13,7 @@ import {
   type Post,
   getTaskState,
 } from "@/types";
-import type { Person, SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 
 function normalize(value: string): string {
   return normalizeTaskSearchValue(value);
@@ -30,15 +30,15 @@ export interface TaskViewFilterIndex {
 // builds this index on mount; a view switch remounts and re-runs it from
 // scratch with the same upstream references. Nested WeakMap so both refs
 // are GC-tracked.
-const EMPTY_PEOPLE: readonly SelectablePerson[] = [];
+const EMPTY_PEOPLE: readonly Person[] = [];
 const filterIndexCache = new WeakMap<
   readonly Post[],
-  WeakMap<readonly SelectablePerson[], TaskViewFilterIndex>
+  WeakMap<readonly Person[], TaskViewFilterIndex>
 >();
 
 export function buildTaskViewFilterIndex(
   allTasks: Post[],
-  people: SelectablePerson[] = []
+  people: Person[] = []
 ): TaskViewFilterIndex {
   const peopleKey = people.length === 0 ? EMPTY_PEOPLE : people;
   let bucket = filterIndexCache.get(allTasks);
@@ -56,7 +56,7 @@ export function buildTaskViewFilterIndex(
 
 function computeTaskViewFilterIndex(
   allTasks: Post[],
-  people: SelectablePerson[]
+  people: Person[]
 ): TaskViewFilterIndex {
   const childrenByParentId = new Map<string, string[]>();
   const searchableTextByTaskId = new Map<string, string>();
@@ -153,7 +153,10 @@ export interface TaskViewFilterSource {
   allTasks: Post[];
   filterIndex?: TaskViewFilterIndex;
   prefilteredTaskIds: Set<string>;
-  people: SelectablePerson[];
+  // Full people list for name/mention indexing; selectedPubkeys (from the
+  // filter store) is the binary person-scope on top of it.
+  people: Person[];
+  selectedPubkeys: Set<string>;
 }
 
 export interface TaskViewFilterScope {
@@ -184,7 +187,7 @@ export function getDirectMatchTaskIdsForView({
   scope = { focusedTaskId: null },
   criteria,
 }: TaskViewFilterRequest): Set<string> {
-  const { allTasks, filterIndex, prefilteredTaskIds, people } = source;
+  const { allTasks, filterIndex, prefilteredTaskIds, people, selectedPubkeys } = source;
   const {
     focusedTaskId,
     includeFocusedTask = false,
@@ -204,7 +207,7 @@ export function getDirectMatchTaskIdsForView({
   const descendantIds = focusedTaskId
     ? effectiveFilterIndex.descendantIdsByTaskId.get(focusedTaskId) ?? new Set<string>()
     : null;
-  const selectedPeople = people.filter((person) => person.isSelected);
+  const selectedPeople = people.filter((person) => selectedPubkeys.has(person.pubkey));
   const matchingIds = new Set<string>();
 
   for (const task of allTasks) {

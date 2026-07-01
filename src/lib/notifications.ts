@@ -4,7 +4,7 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 import { getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { isPubkeyDerivedPlaceholder, type Person } from "@/types/person";
+import { getHumanDisplayName, type Person } from "@/types/person";
 
 interface PublishSuccessToastOptions {
   relayUrls?: string[];
@@ -132,12 +132,10 @@ export function notifyFrequentPeopleDeselected(options: FilterToastOptions = {})
 }
 
 function resolvePersonToastName(person?: Person | null): string {
-  if (!person) return i18n.t("composer:toasts.success.selectedUserFallback");
-  const displayName = person.displayName.trim();
-  if (displayName && !isPubkeyDerivedPlaceholder(displayName, person.pubkey)) return displayName;
-  const username = person.name.trim();
-  if (username && !isPubkeyDerivedPlaceholder(username, person.pubkey)) return username;
-  return i18n.t("composer:toasts.success.selectedUserFallback");
+  return (
+    (person && getHumanDisplayName(person)) ||
+    i18n.t("composer:toasts.success.selectedUserFallback")
+  );
 }
 
 export function notifyShowingOnlyPersonExclusive(person?: Person | null, options: FilterToastOptions = {}): void {

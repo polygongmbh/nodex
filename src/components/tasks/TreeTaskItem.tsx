@@ -46,7 +46,6 @@ import { getPostAttachmentsWithoutInlineEmbeds } from "@/lib/use-task-media-atta
 import { getFocusTaskTooltip } from "@/lib/task-focus-tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { useTaskAuthorProfiles } from "./task-author-profiles-context";
 
 import { InteractivePersonAvatar } from "@/components/people/InteractivePersonAvatar";
 import { InteractivePersonName } from "@/components/people/InteractivePersonName";
@@ -103,7 +102,6 @@ export function TreeTaskItem({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;
-  const authorProfiles = useTaskAuthorProfiles();
   const hasMatchingChildren = matchingChildren.length > 0;
 
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
@@ -120,21 +118,6 @@ export function TreeTaskItem({
   const [isContentExpanded, setIsContentExpanded] = useState(false);
   const [isDueDatePopoverOpen, setIsDueDatePopoverOpen] = useState(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
-  
-  const isPubkey = task.author.pubkey.length === 64 && /^[a-f0-9]+$/.test(task.author.pubkey);
-  const nostrProfile = isPubkey ? authorProfiles?.[task.author.pubkey] : undefined;
-  
-  // Use Nostr profile if available, fallback to task author
-  const authorName = nostrProfile?.displayName || nostrProfile?.name || task.author.displayName;
-  const authorAvatar = nostrProfile?.picture || task.author.avatar;
-  const authorNip05 = nostrProfile?.nip05;
-  const authorPerson: Person = {
-    ...task.author,
-    name: nostrProfile?.name || task.author.name,
-    displayName: authorName,
-    avatar: authorAvatar,
-    nip05: authorNip05 || task.author.nip05,
-  };
   const dispatchHashtagInclude = (tag: string) => {
     void dispatchFeedInteraction({ type: "filter.applyHashtagInclude", tag });
   };
@@ -353,7 +336,7 @@ export function TreeTaskItem({
               {isComment && (
                 <>
                   <InteractivePersonName
-                    person={authorPerson}
+                    pubkey={task.pubkey}
                   />
                   <span>·</span>
                   <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>

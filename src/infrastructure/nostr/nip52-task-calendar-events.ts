@@ -4,11 +4,10 @@ import type {
   TaskDateType,
   TimeBasedEventPost,
 } from "@/types";
-import type { Person } from "@/types/person";
 import { addDays } from "date-fns";
 import { NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
-import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { canonicalizePubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getRelayIdFromUrl } from "./relay-identity";
 
 function relayIdsFromEvent(event: NostrEventWithRelay): string[] {
@@ -261,11 +260,6 @@ export function parseStandaloneCalendarEvent(
   }
 
   const parsed = parseCalendarEventDates(event.kind, event.tags);
-  const author: Person = {
-    pubkey: event.pubkey,
-    name: formatUserFacingPubkey(event.pubkey),
-    displayName: formatUserFacingPubkey(event.pubkey),
-  };
   const title = firstTagValue(event.tags, "title");
   const summary = firstTagValue(event.tags, "summary");
   const location = firstTagValue(event.tags, "location");
@@ -278,7 +272,7 @@ export function parseStandaloneCalendarEvent(
 
   const base = {
     id: event.id,
-    author,
+    pubkey: canonicalizePubkey(event.pubkey),
     content: event.content,
     tags: allTags,
     relays: relayIdsFromEvent(event),

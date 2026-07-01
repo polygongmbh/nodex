@@ -1,15 +1,18 @@
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
+// A person record is the app-facing projection of a kind-0 profile keyed by
+// pubkey. Every field except `pubkey` is optional — kind-0 events frequently
+// omit name/displayName/picture, and the kind-0 cache populates this directly
+// (no separate "profile" type). Selection/pin/presence live in their own
+// per-pubkey stores, not on this record.
 export interface Person {
   pubkey: string; // normalized lowercase 64-char hex
-  name: string;
-  displayName: string;
+  name?: string;
+  displayName?: string;
   nip05?: string;
   about?: string;
-  avatar?: string;
+  picture?: string;
 }
-
-export type SelectablePerson = Person & { isSelected: boolean };
 
 export interface PersonPresenceSnapshot {
   state: "online" | "recent" | "offline";
@@ -18,7 +21,7 @@ export interface PersonPresenceSnapshot {
 }
 
 
-// Loose shape so a NostrProfile (`displayName`/`name` are optional) is accepted
+// Loose shape so a sparse Person (`displayName`/`name` are optional) is accepted
 // directly without converting each undefined to "" at every call site.
 interface AuthorMetaLabelInput {
   pubkey: string;
@@ -74,17 +77,28 @@ export function isPubkeyDerivedPlaceholder(value: string, personPubkey: string):
 }
 
 export function getPersonDisplayName(person: PersonLabelSource): string {
-  return person.displayName.trim() || person.name.trim() || person.pubkey.trim();
+  return (person.displayName ?? "").trim() || (person.name ?? "").trim() || person.pubkey.trim();
+}
+
+/**
+ * The person's human-authored label — display name, then username — or `null`
+ * when the only available labels are pubkey-derived placeholders. The single
+ * source of truth for "is there a real name to show?": `getCompactPersonLabel`
+ * falls back to the npub, user-facing copy falls back to a generic string.
+ */
+export function getHumanDisplayName(person: PersonLabelSource): string | null {
+  const displayName = (person.displayName ?? "").trim();
+  if (displayName && !isPubkeyDerivedPlaceholder(displayName, person.pubkey)) return displayName;
+  const username = (person.name ?? "").trim();
+  if (username && !isPubkeyDerivedPlaceholder(username, person.pubkey)) return username;
+  return null;
 }
 
 export function getCompactPersonLabel(person: PersonLabelSource): string {
-  const displayName = getPersonDisplayName(person);
-
-  if (isPubkeyDerivedPlaceholder(displayName, person.pubkey)) {
-    return formatUserFacingPubkey(person.pubkey, { prefix: 10, suffix: 6, ellipsis: "…" });
-  }
-
-  return displayName;
+  return (
+    getHumanDisplayName(person) ??
+    formatUserFacingPubkey(person.pubkey, { prefix: 10, suffix: 6, ellipsis: "…" })
+  );
 }
 
 export function formatAuthorMetaLabel({

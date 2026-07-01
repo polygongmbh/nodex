@@ -2,7 +2,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { makePerson, makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "./feed-surface-context";
-import { FeedViewStateProvider } from "./feed-view-state-context";
 import { DesktopViewsPane } from "./DesktopViewsPane";
 import {
   ingestPost,
@@ -70,20 +69,7 @@ function renderPane(
         },
       }}
     >
-      <FeedViewStateProvider
-        value={{
-          currentView,
-          displayDepthMode: "leaves",
-          isSidebarFocused: false,
-          isOnboardingOpen: false,
-          activeOnboardingStepId: null,
-          isManageRouteActive: false,
-          canCreateContent: true,
-          profileCompletionPromptSignal: 0,
-        }}
-      >
-        <DesktopViewsPane posts={allTasks} focusedTaskId={focusedTaskId} />
-      </FeedViewStateProvider>
+      <DesktopViewsPane posts={allTasks} focusedTaskId={focusedTaskId} currentView={currentView} />
     </FeedSurfaceProvider>
   );
 }

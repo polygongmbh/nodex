@@ -1,9 +1,12 @@
 import { getTaskPrimaryDate } from "@/types";
-import { useMemo, type PropsWithChildren } from "react";
-import { FeedSidebarControllerProvider, type FeedSidebarState } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
-import { FeedSidebarCommandsProvider, type FeedSidebarCommands, useFeedSidebarCommands } from "@/features/feed-page/controllers/feed-sidebar-commands-context";
-import { FeedViewCommandsProvider, type FeedViewCommands, useFeedViewCommands } from "@/features/feed-page/controllers/feed-view-commands-context";
-import { FeedTaskCommandsProvider, type FeedTaskCommands, useFeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
+import { useMemo, type ComponentType, type ReactNode, type PropsWithChildren } from "react";
+import type {
+  FeedSidebarCommands,
+  FeedViewCommands,
+  FailedPublishCommands,
+  TaskInteractionCommands,
+} from "@/features/feed-page/interactions/feed-interaction-inputs";
+import { FeedTaskCommandsProvider, type FeedTaskCommands } from "@/features/feed-page/controllers/feed-task-commands-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
   createFeedInteractionBus,
@@ -11,12 +14,26 @@ import {
   type FeedInteractionHandlerMap,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-context";
-import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-context";
 import { ScrollCaptureProvider, type ScrollCaptureRef } from "./scroll-capture-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
-import { ProfileCompletionDialog } from "@/components/auth/ProfileCompletionDialog";
 import { dismissRetryInProgress, notifyRetryInProgress } from "@/lib/notifications";
+
+type ValueProvider<T> = ComponentType<{ value: T; children: ReactNode }>;
+type ProviderEntry = readonly [ValueProvider<unknown>, unknown];
+
+/** Pair a value-provider with its value while keeping the value type checked. */
+function providerEntry<T>(Provider: ValueProvider<T>, value: T): ProviderEntry {
+  return [Provider as ValueProvider<unknown>, value];
+}
+
+/** Nest a flat list of value-providers (outermost first) around children. */
+function composeProviders(entries: readonly ProviderEntry[], children: ReactNode): ReactNode {
+  return entries.reduceRight<ReactNode>(
+    (acc, [Provider, value]) => <Provider value={value}>{acc}</Provider>,
+    children
+  );
+}
 
 export interface FeedPageCoreHandlers {
   onOpenAuthModal: (initialStep?: "choose" | "noas" | "noasSignUp") => void;
@@ -30,27 +47,36 @@ export interface FeedPageCoreHandlers {
 interface FeedPageProvidersProps extends PropsWithChildren {
   coreHandlers: FeedPageCoreHandlers;
   surfaceState: FeedSurfaceState;
-  viewState: FeedViewState;
   sidebarCommands: FeedSidebarCommands;
   viewCommands: FeedViewCommands;
   taskCommands: FeedTaskCommands;
-  sidebarController?: FeedSidebarState;
+  taskInteractionCommands: TaskInteractionCommands;
+  failedPublishCommands: FailedPublishCommands;
   scrollCaptureRef: ScrollCaptureRef;
 }
 
-/**
- * Inner component that reads from feature command contexts and creates the interaction bus.
- * Must be rendered after FeedSidebarCommandsProvider, FeedViewCommandsProvider, and
- * FeedTaskCommandsProvider so the command contexts are available.
- */
-function FeedInteractionBusFromContexts({
-  coreHandlers,
-  children,
-}: PropsWithChildren<{ coreHandlers: FeedPageCoreHandlers }>) {
-  const sidebarCommands = useFeedSidebarCommands();
-  const viewCommands = useFeedViewCommands();
-  const taskCommands = useFeedTaskCommands();
+interface FeedInteractionBusProviderProps extends PropsWithChildren {
+  coreHandlers: FeedPageCoreHandlers;
+  sidebarCommands: FeedSidebarCommands;
+  viewCommands: FeedViewCommands;
+  taskCommands: TaskInteractionCommands;
+  failedPublishCommands: FailedPublishCommands;
+}
 
+/**
+ * Builds the interaction bus from its command inputs and creates the dispatch
+ * context. Every command group arrives as a plain prop — the bus reads no
+ * context. (createTask lives in FeedTaskCommandsProvider for its component
+ * consumers, which the bus does not touch.)
+ */
+function FeedInteractionBusProvider({
+  coreHandlers,
+  sidebarCommands,
+  viewCommands,
+  taskCommands,
+  failedPublishCommands,
+  children,
+}: FeedInteractionBusProviderProps) {
   const handlers: FeedInteractionHandlerMap = useMemo(
     () => ({
       "ui.openAuthModal": (intent) => {
@@ -90,9 +116,6 @@ function FeedInteractionBusFromContexts({
       },
       "ui.displayDepth.change": (intent) => {
         viewCommands.setDisplayDepthMode(intent.mode);
-      },
-      "ui.manageRoute.change": (intent) => {
-        viewCommands.setManageRouteActive(intent.isActive);
       },
       ...coreHandlers.filterHandlers,
       "sidebar.channel.toggle": (intent) => {
@@ -197,7 +220,7 @@ function FeedInteractionBusFromContexts({
       "publish.failed.retry": async (intent) => {
         const toastId = notifyRetryInProgress("retry");
         try {
-          await taskCommands.retryFailedPublish(intent.draftId);
+          await failedPublishCommands.retryFailedPublish(intent.draftId);
         } finally {
           dismissRetryInProgress(toastId);
         }
@@ -205,19 +228,19 @@ function FeedInteractionBusFromContexts({
       "publish.failed.repost": async (intent) => {
         const toastId = notifyRetryInProgress("repost");
         try {
-          await taskCommands.repostFailedPublish(intent.draftId);
+          await failedPublishCommands.repostFailedPublish(intent.draftId);
         } finally {
           dismissRetryInProgress(toastId);
         }
       },
       "publish.failed.discard": (intent) => {
-        taskCommands.dismissFailedPublish(intent.draftId);
+        failedPublishCommands.dismissFailedPublish(intent.draftId);
       },
       "publish.failed.discardAll": () => {
-        taskCommands.dismissAllFailedPublish();
+        failedPublishCommands.dismissAllFailedPublish();
       },
     }),
-    [coreHandlers, sidebarCommands, viewCommands, taskCommands]
+    [coreHandlers, sidebarCommands, viewCommands, failedPublishCommands, taskCommands]
   );
 
   const bus = useMemo(
@@ -231,34 +254,32 @@ function FeedInteractionBusFromContexts({
 export function FeedPageProviders({
   coreHandlers,
   surfaceState,
-  viewState,
   sidebarCommands,
   viewCommands,
   taskCommands,
-  sidebarController,
+  taskInteractionCommands,
+  failedPublishCommands,
   scrollCaptureRef,
   children,
 }: FeedPageProvidersProps) {
-  const content = sidebarController
-    ? <FeedSidebarControllerProvider value={sidebarController}>{children}</FeedSidebarControllerProvider>
-    : children;
-
+  // The bus is the one non-value provider (it takes its inputs as discrete
+  // props), so it wraps explicitly; the rest are a flat value-provider list.
   return (
-    <FeedSidebarCommandsProvider value={sidebarCommands}>
-      <FeedViewCommandsProvider value={viewCommands}>
-        <FeedTaskCommandsProvider value={taskCommands}>
-          <FeedInteractionBusFromContexts coreHandlers={coreHandlers}>
-            <FeedSurfaceProvider value={surfaceState}>
-              <FeedViewStateProvider value={viewState}>
-                <ScrollCaptureProvider value={scrollCaptureRef}>
-                  {content}
-                  <ProfileCompletionDialog />
-                </ScrollCaptureProvider>
-              </FeedViewStateProvider>
-            </FeedSurfaceProvider>
-          </FeedInteractionBusFromContexts>
-        </FeedTaskCommandsProvider>
-      </FeedViewCommandsProvider>
-    </FeedSidebarCommandsProvider>
+    <FeedInteractionBusProvider
+      coreHandlers={coreHandlers}
+      sidebarCommands={sidebarCommands}
+      viewCommands={viewCommands}
+      taskCommands={taskInteractionCommands}
+      failedPublishCommands={failedPublishCommands}
+    >
+      {composeProviders(
+        [
+          providerEntry(FeedTaskCommandsProvider, taskCommands),
+          providerEntry(FeedSurfaceProvider, surfaceState),
+          providerEntry(ScrollCaptureProvider, scrollCaptureRef),
+        ],
+        children
+      )}
+    </FeedInteractionBusProvider>
   );
 }

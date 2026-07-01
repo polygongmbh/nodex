@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { Post } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 function normalizePersonId(id: string): string {
@@ -10,7 +10,7 @@ function normalizePersonId(id: string): string {
 export interface UsePinnedSidebarPeopleOptions {
   userPubkey: string | undefined;
   effectiveActiveRelayIds: Set<string>;
-  people: SelectablePerson[];
+  people: Person[];
   allTasks: Post[];
 }
 
@@ -19,7 +19,7 @@ export interface UsePinnedSidebarPeopleResult {
   // Sorted with pinned pubkeys first (in pin order), then the rest by their
   // input ordering. Pinned membership is exposed via pinnedPersonIds, not
   // attached as a per-row field.
-  peopleWithState: SelectablePerson[];
+  peopleWithState: Person[];
   handlePersonPin: (id: string) => void;
   handlePersonUnpin: (id: string) => void;
 }
@@ -33,7 +33,7 @@ export function usePinnedSidebarPeople({
   const personRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const task of allTasks) {
-      const authorId = normalizePersonId(task.author?.pubkey || "");
+      const authorId = normalizePersonId(task.pubkey);
       if (!authorId) continue;
       let relays = map.get(authorId);
       if (!relays) {
@@ -58,16 +58,15 @@ export function usePinnedSidebarPeople({
     normalizeEntityId: normalizePersonId,
   });
 
-  const peopleWithState: SelectablePerson[] = useMemo(() => {
+  const peopleWithState: Person[] = useMemo(() => {
     const pinnedIndexMap = new Map(pinnedPersonIds.map((id, idx) => [normalizePersonId(id), idx]));
     const existingIds = new Set(people.map((person) => normalizePersonId(person.pubkey)));
-    const stubs: SelectablePerson[] = pinnedPersonIds
+    const stubs: Person[] = pinnedPersonIds
       .filter((id) => !existingIds.has(normalizePersonId(id)))
       .map((id) => ({
         pubkey: id,
         name: id,
         displayName: id,
-        isSelected: false,
       }));
 
     return [...stubs, ...people].sort((a, b) => {

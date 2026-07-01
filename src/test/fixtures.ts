@@ -1,17 +1,51 @@
 import type { Channel, CommentPost, ListingPost, Nip99Metadata, Post, Relay, TaskDate, TaskDateType, TaskPost, TaskState, TaskStatus, TaskStateUpdate } from "@/types";
 import { formatLocalIsoDate, normalizeTaskState } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
+import { defaultKind0Cache } from "@/infrastructure/nostr/people-from-kind0";
+
+/**
+ * Seed the shared kind-0 profile cache so person components (which resolve
+ * display via `useResolvedPerson(pubkey)` → the cache) render real metadata in
+ * tests. `content` is the kind-0 wire shape (`name`, `display_name`, `picture`,
+ * `nip05`, `about`). Pair with `clearKind0Cache()` in beforeEach.
+ */
+export function seedKind0Profile(
+  pubkey: string,
+  content: Record<string, string> = {},
+  relayUrl = "wss://demo.test",
+): void {
+  // The kind-0 cache is relay-scoped (relay-less saves were removed), so seed
+  // into a relay bucket. `useResolvedPerson` reads across all buckets, so any
+  // relay works for tests that don't assert on relay scope.
+  defaultKind0Cache.save(
+    [
+      {
+        id: "",
+        pubkey,
+        kind: NostrEventKind.Metadata,
+        tags: [],
+        sig: "",
+        created_at: Math.floor(Date.now() / 1000),
+        content: JSON.stringify(content),
+      },
+    ],
+    relayUrl,
+  );
+}
+
+export function clearKind0Cache(): void {
+  defaultKind0Cache.clear();
+}
 
 const DEFAULT_TIME = new Date("2026-01-01T00:00:00.000Z");
 
-export function makePerson(overrides: Partial<SelectablePerson> = {}): SelectablePerson {
+export function makePerson(overrides: Partial<Person> = {}): Person {
   return {
     pubkey: "person-pubkey",
     name: "person",
     displayName: "Person",
-    avatar: "",
-    isSelected: false,
+    picture: "",
     ...overrides,
   };
 }
@@ -46,9 +80,13 @@ export function makeChannel(overrides: Partial<Channel> = {}): Channel {
  * or ListingPost — the result type widens to Post in those cases.
  */
 type BaseOverrides = Partial<Pick<TaskPost,
-  | "id" | "author" | "content" | "tags" | "relays" | "timestamp"
+  | "id" | "pubkey" | "content" | "tags" | "relays" | "timestamp"
   | "lastEditedAt" | "parentId" | "mentions" | "attachments" | "locationGeohash"
->>;
+>> & {
+  /** Test convenience: pass a whole Person and only its pubkey lands on the
+   *  post (posts carry pubkey, not embedded author). Prefer `pubkey` directly. */
+  author?: Person;
+};
 
 type MakeTaskOverrides = BaseOverrides & Partial<Pick<TaskPost,
   | "stateUpdates" | "dates" | "assigneePubkeys" | "priority"
@@ -69,17 +107,17 @@ export function withTaskState(task: TaskPost, state: TaskState | TaskStatus): Ta
         id: `synthetic-${task.id}`,
         state: normalizeTaskState(state),
         timestamp: task.timestamp,
-        authorPubkey: task.author.pubkey,
+        authorPubkey: task.pubkey,
       },
     ],
   };
 }
 
 function buildBase(overrides: BaseOverrides) {
-  const author = overrides.author ?? makePerson({ pubkey: "author-pubkey", name: "author", displayName: "Author" });
+  const pubkey = overrides.pubkey ?? overrides.author?.pubkey ?? "author-pubkey";
   return {
     id: overrides.id ?? "task-1",
-    author,
+    pubkey,
     content: overrides.content ?? "Task content #general",
     tags: overrides.tags ?? ["general"],
     relays: overrides.relays ?? ["demo"],
@@ -108,7 +146,7 @@ export function makeTask(overrides: MakeTaskOverrides = {}): TaskPost {
             id: base.id,
             state: normalizedShorthand,
             timestamp: base.timestamp,
-            authorPubkey: base.author.pubkey,
+            authorPubkey: base.pubkey,
           },
         ]
       : stateUpdates ?? [];

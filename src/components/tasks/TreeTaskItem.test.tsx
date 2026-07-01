@@ -4,21 +4,14 @@ import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
 import type { Post } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { makeComment, makePerson, makeTask, withTaskState } from "@/test/fixtures";
+import { clearKind0Cache, makeComment, makePerson, makeTask, withTaskState } from "@/test/fixtures";
 import { setRawEvent } from "@/stores/raw-events";
+import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 const dispatchFeedInteraction = vi.fn();
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
-}));
-
-vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
-  useNostrProfile: (): { profile: null } => ({ profile: null }),
-  useNostrProfiles: (): { getProfile: () => null } => ({
-    getProfile: () => null,
-  }),
-  useCachedNostrProfile: () => null,
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
@@ -61,6 +54,7 @@ const baseTask: Post = makeTask({
 });
 
 beforeEach(() => {
+  clearKind0Cache();
   dispatchFeedInteraction.mockClear();
 });
 
@@ -69,7 +63,7 @@ function renderTreeTaskItem(props: Partial<ComponentProps<typeof TreeTaskItem>> 
     task: props.task ?? baseTask,
     matchingChildren: props.matchingChildren ?? [],
     childrenMap: new Map(),
-    currentUser: props.currentUser ?? baseTask.author,
+    currentUser: props.currentUser ?? makePerson({ pubkey: "me", name: "me", displayName: "Me" }),
     getMatchingChildrenFn: props.getMatchingChildrenFn ?? (() => []),
     ...props,
   };
@@ -227,7 +221,7 @@ describe("TreeTaskItem status actions", () => {
     renderTreeTaskItem({
       task: {
         ...baseTask,
-        author: makePerson({ pubkey: "other-pubkey", name: "bob" }),
+        pubkey: "other-pubkey",
         content: "Follow up with @alice",
       },
     });
@@ -246,7 +240,7 @@ describe("TreeTaskItem status actions", () => {
     renderTreeTaskItem({
       task: {
         ...baseTask,
-        author: makePerson({ pubkey: "other-pubkey", name: "alice" }),
+        pubkey: "other-pubkey",
       },
     });
 
@@ -272,7 +266,7 @@ describe("TreeTaskItem status actions", () => {
     renderTreeTaskItem({
       task: {
         ...baseTask,
-        author: sparseAuthor,
+        pubkey: sparseAuthor.pubkey,
         mentions: [sparseAuthor.pubkey],
       },
       people: [knownPerson],
@@ -289,44 +283,41 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("supports modifier-based author filtering from comment avatar/name clicks", () => {
+    const commentAuthorPubkey = "f5dc0ba672437167ccb3f58f2467990f9c574bc6522af1e76361404e7868a0f5";
     const commentTask: Post = {
       ...baseTask,
       id: "c1",
       kind: NostrEventKind.TextNote,
       content: "Looks good",
-      author: makePerson({
-        pubkey: "alice-pubkey",
-        name: "alice",
-        displayName: "Alice",
-      }),
+      pubkey: commentAuthorPubkey,
     };
 
     renderTreeTaskItem({ task: commentTask });
 
-    fireEvent.click(screen.getByRole("button", { name: "Alice" }), { ctrlKey: true });
+    fireEvent.click(
+      screen.getByRole("button", { name: toUserFacingPubkey(commentAuthorPubkey) }),
+      { ctrlKey: true }
+    );
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
-      person: commentTask.author,
+      pubkey: commentAuthorPubkey,
     });
   });
 
   it("does not focus the task on a plain comment author click", () => {
+    const commentAuthorPubkey = "f5dc0ba672437167ccb3f58f2467990f9c574bc6522af1e76361404e7868a0f5";
     const commentTask: Post = {
       ...baseTask,
       id: "c-plain-author",
       kind: NostrEventKind.TextNote,
       content: "Looks good",
-      author: makePerson({
-        pubkey: "plain-author",
-        name: "alice",
-        displayName: "Alice",
-      }),
+      pubkey: commentAuthorPubkey,
     };
 
     renderTreeTaskItem({ task: commentTask });
 
-    fireEvent.click(screen.getByRole("button", { name: "Alice" }));
+    fireEvent.click(screen.getByRole("button", { name: toUserFacingPubkey(commentAuthorPubkey) }));
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
       type: "task.focus.change",

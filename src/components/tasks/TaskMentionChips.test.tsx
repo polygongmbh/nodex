@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TaskMentionChips } from "./TaskMentionChips";
-import type { Post, TaskPost } from "@/types";
+import type { TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -11,13 +11,13 @@ const alice: Person = {
   pubkey: "a".repeat(64),
   name: "alice",
   displayName: "Alice",
-  avatar: "",
+  picture: "",
 };
 
 const baseTask: TaskPost = {
   id: "task-1",
   kind: NostrEventKind.Task,
-  author: alice,
+  pubkey: alice.pubkey,
   content: "Ship #general",
   tags: ["general"],
   relays: ["demo"],
@@ -63,7 +63,7 @@ describe("TaskMentionChips", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "@alice" }), { ctrlKey: true });
-    expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", person: alice });
+    expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", pubkey: alice.pubkey });
   });
 
   it("stops plain mention clicks from bubbling to parent containers", () => {
@@ -109,9 +109,7 @@ describe("TaskMentionChips", () => {
     fireEvent.click(screen.getByRole("button", { name: /^@npub1/ }), { altKey: true });
     expect(dispatch).toHaveBeenCalledWith({
       type: "person.compose.mention",
-      person: expect.objectContaining({
-        pubkey: unmatchedPubkey,
-      }),
+      pubkey: unmatchedPubkey,
     });
   });
 });

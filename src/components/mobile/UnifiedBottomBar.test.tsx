@@ -7,7 +7,7 @@ import {
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Relay, TaskCreatePayload, TaskCreateResult } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
@@ -24,6 +24,7 @@ import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-con
 import * as coreModule from "@/lib/core-channels";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 
 const successResult: TaskCreateResult = { ok: true };
 
@@ -75,14 +76,13 @@ const autocompleteChannels: Channel[] = [
   { id: "ops", name: "ops", filterState: "neutral" },
 ];
 
-const people: SelectablePerson[] = [
+const people: Person[] = [
   {
     pubkey: "e".repeat(64),
     name: "alice",
     displayName: "Alice",
     nip05: "alice@example.com",
-    avatar: "",
-    isSelected: false,
+    picture: "",
   },
 ];
 
@@ -113,6 +113,7 @@ function createPosition(latitude: number, longitude: number): GeolocationPositio
 
 describe("UnifiedBottomBar auth gating", () => {
   beforeEach(() => {
+    useFilterStore.setState({ selectedPubkeys: new Set() });
     dispatchFeedInteraction.mockReset();
     dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
     createTaskMock.mockReset();
@@ -161,6 +162,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
   it("builds the mobile placeholder from shared context and filters", () => {
     ingestPost({ post: makeTask({ id: "focused-task", content: "Coordinate launch copy" }) });
+    useFilterStore.setState({ selectedPubkeys: new Set([people[0].pubkey]) });
     render(
       <UnifiedBottomBar
         currentView="tree"
@@ -169,12 +171,7 @@ describe("UnifiedBottomBar auth gating", () => {
         channels={[
           { id: "general", name: "general", filterState: "included" },
         ]}
-        people={[
-          {
-            ...people[0],
-            isSelected: true,
-          },
-        ]}
+        people={[people[0]]}
         canCreateContent={true} />
     );
 
@@ -198,8 +195,7 @@ describe("UnifiedBottomBar auth gating", () => {
               pubkey: "broad-person",
               name: "broad-user",
               displayName: "Broad Person",
-              avatar: "",
-              isSelected: false,
+              picture: "",
             },
           ],
 
@@ -208,8 +204,7 @@ describe("UnifiedBottomBar auth gating", () => {
               pubkey: "visible-person",
               name: "visible-user",
               displayName: "Visible Person",
-              avatar: "",
-              isSelected: false,
+              picture: "",
             },
           ],
 

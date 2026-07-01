@@ -14,7 +14,7 @@ function task(id: string, timestamp: Date, overrides: Partial<TaskPost> = {}): T
   return {
     id,
     kind: NostrEventKind.Task,
-    author: { pubkey: "author-pk", name: "author-pk", displayName: "Author" },
+    pubkey: "author-pk",
     content: `task ${id}`,
     tags: ["alpha"],
     relays: ["relay-a"],

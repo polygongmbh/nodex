@@ -56,7 +56,7 @@ describe("nostrEventToTask", () => {
     expect(task.id).toBe("abc123");
     expect(task.content).toBe("Hello world");
     expect(task.kind).toBe(NostrEventKind.TextNote);
-    expect(task.author.pubkey).toBe(baseEvent.pubkey);
+    expect(task.pubkey).toBe(baseEvent.pubkey);
   });
 
   it("converts kind 1621 to a task", () => {
@@ -165,16 +165,10 @@ describe("nostrEventToTask", () => {
     expect(task.tags.filter((t) => t === "bug").length).toBe(1);
   });
 
-  it("does not force a placeholder avatar url", () => {
-    const task = nostrEventToTask(baseEvent);
+  it("normalizes the author pubkey to lowercase hex", () => {
+    const task = nostrEventToTask({ ...baseEvent, pubkey: baseEvent.pubkey.toUpperCase() });
 
-    expect(task.author.avatar).toBeUndefined();
-  });
-
-  it("generates display name from pubkey", () => {
-    const task = nostrEventToTask(baseEvent);
-
-    expect(task.author.displayName.startsWith("npub1")).toBe(true);
+    expect(task.pubkey).toBe(baseEvent.pubkey);
   });
 
   it("converts timestamp correctly", () => {

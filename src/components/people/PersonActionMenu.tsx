@@ -2,8 +2,8 @@ import React from "react";
 import { AtSign, Copy, Filter, MessageSquareMore } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import type { Person } from "@/types/person";
 import { usePersonPresence } from "@/lib/person-presence-context";
+import { useResolvedPerson } from "@/infrastructure/nostr/use-nostr-profiles";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
   DropdownMenu,
@@ -26,7 +26,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { getCompactPersonLabel } from "@/types/person";
 
 interface PersonActionMenuProps {
-  person: Person;
+  pubkey: string;
   children: React.ReactNode;
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
@@ -40,13 +40,14 @@ interface PersonActionMenuProps {
 }
 
 export function PersonActionMenu({
-  person,
+  pubkey,
   children,
   align = "start",
   side = "bottom",
   enableModifierShortcuts = false,
   directFilterOnClick = false,
 }: PersonActionMenuProps) {
+  const person = useResolvedPerson(pubkey);
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const handledPointerShortcutRef = React.useRef(false);
   const handledDirectFilterRef = React.useRef(false);
@@ -66,7 +67,7 @@ export function PersonActionMenu({
 
     event.preventDefault();
     event.stopPropagation();
-    void dispatchFeedInteraction(toPersonShortcutInteraction(person, intent));
+    void dispatchFeedInteraction(toPersonShortcutInteraction(person.pubkey, intent));
     return true;
   };
 
@@ -77,7 +78,7 @@ export function PersonActionMenu({
 
     event.preventDefault();
     event.stopPropagation();
-    void dispatchFeedInteraction({ type: "person.filter.exclusive", person });
+    void dispatchFeedInteraction({ type: "person.filter.exclusive", pubkey: person.pubkey });
     return true;
   };
 
@@ -223,7 +224,7 @@ export function PersonActionMenu({
         </span>
       </DropdownMenuTrigger>
       <PersonActionMenuContent
-        person={person}
+        pubkey={pubkey}
         align={align}
         side={side}
         onActionSelect={(action) => {
@@ -240,7 +241,7 @@ export function PersonActionMenu({
 }
 
 interface PersonActionMenuContentProps {
-  person: Person;
+  pubkey: string;
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   onActionSelect?: (action: "filterExclusive" | "mention" | "filterAndMention" | "copy") => void;
@@ -248,13 +249,14 @@ interface PersonActionMenuContentProps {
 }
 
 export function PersonActionMenuContent({
-  person,
+  pubkey,
   align = "start",
   side = "bottom",
   onActionSelect,
   onCloseAutoFocus,
 }: PersonActionMenuContentProps) {
   const { t } = useTranslation("tasks");
+  const person = useResolvedPerson(pubkey);
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const primaryShortcutLabel = getPlatformPrimaryShortcutLabel();
   const alternateShortcutLabel = getPlatformAlternateShortcutLabel();
@@ -323,7 +325,7 @@ export function PersonActionMenuContent({
           className="touch-target-sm"
           onClick={() => {
             onActionSelect?.("filterAndMention");
-            void dispatchFeedInteraction({ type: "person.filterAndMention", person });
+            void dispatchFeedInteraction({ type: "person.filterAndMention", pubkey: person.pubkey });
           }}
         >
           <span className="mr-2 inline-flex items-center">
@@ -389,7 +391,7 @@ export function PersonActionMenuContent({
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={() => {
         onActionSelect?.("filterExclusive");
-        void dispatchFeedInteraction({ type: "person.filter.exclusive", person });
+        void dispatchFeedInteraction({ type: "person.filter.exclusive", pubkey: person.pubkey });
       }}>
         <Filter className="mr-2 h-4 w-4" />
         {t("people.actions.showOnly", { name: person.displayName || person.name })}
@@ -397,7 +399,7 @@ export function PersonActionMenuContent({
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => {
         onActionSelect?.("mention");
-        void dispatchFeedInteraction({ type: "person.compose.mention", person });
+        void dispatchFeedInteraction({ type: "person.compose.mention", pubkey: person.pubkey });
       }}>
         <AtSign className="mr-2 h-4 w-4" />
         {t("people.actions.mention", { name: person.displayName || person.name })}
@@ -405,7 +407,7 @@ export function PersonActionMenuContent({
       </DropdownMenuItem>
       <DropdownMenuItem onClick={() => {
         onActionSelect?.("filterAndMention");
-        void dispatchFeedInteraction({ type: "person.filterAndMention", person });
+        void dispatchFeedInteraction({ type: "person.filterAndMention", pubkey: person.pubkey });
       }}>
         <span className="mr-2 inline-flex items-center">
           <Filter className="h-4 w-4" />

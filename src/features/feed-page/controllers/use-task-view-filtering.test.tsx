@@ -17,6 +17,7 @@ function Harness({
     focusedTaskId: null,
     searchQuery: "",
     people: [makePerson()],
+    selectedPubkeys: new Set(),
     channels,
     channelMatchMode: "and",
     taskPredicate: (task) => isTaskPost(task),

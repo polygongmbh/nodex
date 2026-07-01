@@ -31,7 +31,7 @@ interface UseAuthActionsArgs {
     nextAuthMethod: NonNullable<AuthMethod>
   ) => void;
   clearTransientAuthState: () => void;
-  fetchLatestKind0Profile: (pubkey: string, options?: { force?: boolean }) => Promise<NDKUserProfile | null>;
+  fetchCurrentUserKind0Profile: (pubkey: string) => Promise<NDKUserProfile | null>;
   retryNip42RelaysAfterSignIn: () => void;
   setUser: Dispatch<SetStateAction<NDKUser | null>>;
   setAuthMethod: Dispatch<SetStateAction<AuthMethod>>;
@@ -42,7 +42,6 @@ interface UseAuthActionsArgs {
   resetAuthSessionRefs: () => void;
   clearVerificationStateOnLogout: () => void;
   resetRejectedRelayStatuses: () => void;
-  clearKind0Caches: () => void;
   clearLockedSession: () => void;
 }
 
@@ -51,7 +50,7 @@ export function useAuthActions(args: UseAuthActionsArgs) {
     ndk,
     applyAuthenticatedState,
     clearTransientAuthState,
-    fetchLatestKind0Profile,
+    fetchCurrentUserKind0Profile,
     retryNip42RelaysAfterSignIn,
     setUser,
     setAuthMethod,
@@ -62,7 +61,6 @@ export function useAuthActions(args: UseAuthActionsArgs) {
     resetAuthSessionRefs,
     clearVerificationStateOnLogout,
     resetRejectedRelayStatuses,
-    clearKind0Caches,
     clearLockedSession,
   } = args;
 
@@ -161,7 +159,7 @@ export function useAuthActions(args: UseAuthActionsArgs) {
       const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
       const signer = NDKNip46Signer.bunker(ndk, bunkerUrl.trim(), localKey);
       const ndkUser = await signer.blockUntilReady();
-      const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
+      const profile = await fetchCurrentUserKind0Profile(ndkUser.pubkey);
       if (profile) ndkUser.profile = profile;
       else if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
       applyAuthenticatedState(ndk, signer, ndkUser, "nostrConnect");
@@ -180,7 +178,7 @@ export function useAuthActions(args: UseAuthActionsArgs) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [applyAuthenticatedState, clearTransientAuthState, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn, setIsAuthenticating]);
+  }, [applyAuthenticatedState, clearTransientAuthState, fetchCurrentUserKind0Profile, ndk, retryNip42RelaysAfterSignIn, setIsAuthenticating]);
 
   const logout = useCallback(() => {
     void publishPresenceOffline();
@@ -194,7 +192,6 @@ export function useAuthActions(args: UseAuthActionsArgs) {
     resetAuthSessionRefs();
     clearVerificationStateOnLogout();
     resetRejectedRelayStatuses();
-    clearKind0Caches();
     clearStoredAuthMethod();
     clearSessionPrivateKey();
     clearSessionNoasState();
@@ -203,7 +200,6 @@ export function useAuthActions(args: UseAuthActionsArgs) {
     localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
     // Keep guest key for potential re-login
   }, [
-    clearKind0Caches,
     clearLockedSession,
     clearVerificationStateOnLogout,
     ndk,

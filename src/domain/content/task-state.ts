@@ -36,7 +36,7 @@ export function applyTaskStateUpdate(
       id: `local-${task.id}-${now.getTime()}`,
       state: normalized,
       timestamp: now,
-      authorPubkey: authorPubkey ?? task.author.pubkey,
+      authorPubkey: authorPubkey ?? task.pubkey,
     };
     return {
       ...task,

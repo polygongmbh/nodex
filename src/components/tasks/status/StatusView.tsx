@@ -31,6 +31,7 @@ export function StatusView({
   const { channels, people, quickFilters } = useFeedSurfaceState();
   const searchQuery = useFilterStore((s) => s.searchQuery);
   const channelMatchMode = useFilterStore((s) => s.channelMatchMode);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const filterIndex = useMemo(() => buildTaskViewFilterIndex(posts, people), [posts, people]);
   const prefilteredTaskIds = useMemo(() => new Set(posts.map((task) => task.id)), [posts]);
   const { included, excluded } = useMemo(
@@ -45,6 +46,7 @@ export function StatusView({
           filterIndex,
           prefilteredTaskIds,
           people,
+          selectedPubkeys,
         },
         scope: {
           focusedTaskId,
@@ -64,6 +66,7 @@ export function StatusView({
       filterIndex,
       focusedTaskId,
       people,
+      selectedPubkeys,
       prefilteredTaskIds,
       quickFilters,
       searchQuery,
@@ -71,8 +74,8 @@ export function StatusView({
   );
 
   const selectedPeoplePubkeys = useMemo(
-    () => people.filter((p) => p.isSelected).map((p) => p.pubkey),
-    [people]
+    () => Array.from(selectedPubkeys),
+    [selectedPubkeys]
   );
   // "My tasks" falls back to the signed-in user when nobody is selected — it's
   // the personal column. The timeline's concerns scope is additive: it pulls

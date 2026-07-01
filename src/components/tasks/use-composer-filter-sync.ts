@@ -20,13 +20,8 @@ export function useComposerFilterSync(
   );
 
   const selectedPersonIdByPubkey = useMemo(
-    () =>
-      new Map(
-        environment.people
-          .filter((p) => p.isSelected)
-          .map((p) => [p.pubkey, p.pubkey] as const)
-      ),
-    [environment.people]
+    () => new Map(environment.selectedPeoplePubkeys.map((pubkey) => [pubkey, pubkey] as const)),
+    [environment.selectedPeoplePubkeys]
   );
 
   const onRemoveFilterTag = useCallback(

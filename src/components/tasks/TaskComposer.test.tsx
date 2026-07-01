@@ -8,7 +8,7 @@ import {
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import type { Channel, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { toast } from "sonner";
 import { makePerson } from "@/test/fixtures";
 
@@ -27,13 +27,13 @@ const baseChannels: Channel[] = [
 ];
 
 const alicePubkey = "f".repeat(64);
-const basePeople: SelectablePerson[] = [
+const basePeople: Person[] = [
   makePerson({
     pubkey: alicePubkey,
     name: "alice",
     displayName: "Alice",
     nip05: "alice@example.com",
-    avatar: "",
+    picture: "",
   }),
 ];
 
@@ -53,8 +53,8 @@ function buildRuntimeValue({
   mentionablePeople = people,
 }: {
   channels?: Channel[];
-  people?: SelectablePerson[];
-  mentionablePeople?: SelectablePerson[];
+  people?: Person[];
+  mentionablePeople?: Person[];
 } = {}) {
   return {
     environment: {
@@ -65,9 +65,7 @@ function buildRuntimeValue({
       includedChannels: channels
         .filter((channel) => channel.filterState === "included")
         .map((channel) => channel.name.trim().toLowerCase()),
-      selectedPeoplePubkeys: people
-        .filter((person) => person.isSelected)
-        .map((person) => person.pubkey.trim().toLowerCase()),
+      selectedPeoplePubkeys: [],
     },
     draftStorageKey: COMPOSE_DRAFT_STORAGE_KEY,
   };
@@ -83,8 +81,8 @@ function renderComposer({
   ...props
 }: Partial<ComponentProps<typeof TaskComposer>> & {
   channels?: Channel[];
-  people?: SelectablePerson[];
-  mentionablePeople?: SelectablePerson[];
+  people?: Person[];
+  mentionablePeople?: Person[];
 } = {}) {
   const renderResult = render(
     <TaskComposerRuntimeProvider

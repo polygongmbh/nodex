@@ -447,7 +447,7 @@ export function useTaskPublishFlow({
           name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
           displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
           nip05: user.profile?.nip05?.trim().toLowerCase(),
-          avatar: user.profile?.picture,
+          picture: user.profile?.picture,
         };
       }
       return fallbackAuthor;
@@ -525,7 +525,6 @@ export function useTaskPublishFlow({
       fallbackParentId?: string
     ): FailedPublishDraft => ({
       id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-      author: taskAuthor,
       content,
       tags: resolvedSubmissionTags,
       relayIds: targetRelayIds,
@@ -569,7 +568,7 @@ export function useTaskPublishFlow({
     };
 
     const baseFields = {
-      author: taskAuthor,
+      pubkey: taskAuthor.pubkey,
       content,
       tags: resolvedSubmissionTags,
       relays: effectiveRelayIds.length > 0
@@ -926,7 +925,7 @@ export function useTaskPublishFlow({
     if (guardInteraction("modify")) return false;
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask) return false;
-    const ownerPubkey = existingTask.author.pubkey.trim().toLowerCase();
+    const ownerPubkey = existingTask.pubkey.trim().toLowerCase();
     const userPubkey = currentUser?.pubkey?.trim().toLowerCase() || "";
     if (!userPubkey || userPubkey !== ownerPubkey) {
       notifyStatusRestricted();
@@ -936,7 +935,7 @@ export function useTaskPublishFlow({
     const deletionTags = buildDeletionTags({
       id: taskId,
       kind: existingTask.kind,
-      pubkey: existingTask.author.pubkey,
+      pubkey: existingTask.pubkey,
       dTag: (existingTask as { dTag?: string }).dTag,
     });
     suppressFailedPublishEvent(taskId);
@@ -967,7 +966,7 @@ export function useTaskPublishFlow({
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask) return;
-    const ownerPubkey = existingTask.author.pubkey.trim().toLowerCase();
+    const ownerPubkey = existingTask.pubkey.trim().toLowerCase();
     const userPubkey = currentUser?.pubkey?.trim().toLowerCase() || "";
     if (!userPubkey || userPubkey !== ownerPubkey) {
       notifyStatusRestricted();

@@ -2,16 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useState } from "react";
 import { useOnboarding } from "./use-onboarding";
-import { makePerson } from "@/test/fixtures";
-import type { SelectablePerson } from "@/types/person";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useAuthModalStore } from "@/features/auth/stores/auth-modal-store";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
-
-const peopleSeed: SelectablePerson[] = [
-  makePerson({ pubkey: "alice", name: "alice", displayName: "Alice", isSelected: true }),
-  makePerson({ pubkey: "bob", name: "bob", displayName: "Bob", isSelected: false }),
-];
 
 function Harness({
   isMobile = true,
@@ -23,11 +16,11 @@ function Harness({
   const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
   const [currentView, setCurrentView] = useState<ViewType>("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
-  const [people, setPeople] = useState<SelectablePerson[]>(peopleSeed);
 
   const storeRelayIds = useFilterStore((s) => s.activeRelayIds);
   const storeChannelStates = useFilterStore((s) => s.channelFilterStates);
   const searchQuery = useFilterStore((s) => s.searchQuery);
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
   const authOpen = useAuthModalStore((s) => s.isOpen);
 
   const onboarding = useOnboarding({
@@ -36,7 +29,6 @@ function Harness({
     currentView,
     setCurrentView,
     setFocusedTaskId,
-    setPeople,
   });
 
   return (
@@ -54,7 +46,7 @@ function Harness({
       <output data-testid="relay-ids">{Array.from(storeRelayIds).sort().join(",")}</output>
       <output data-testid="channel-state">{storeChannelStates.get("general") || "neutral"}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
+        {Array.from(selectedPubkeys).join(",")}
       </output>
       <output data-testid="auth-open">{String(authOpen)}</output>
       <output data-testid="guide-open">{String(onboarding.isOnboardingOpen)}</output>
@@ -69,6 +61,7 @@ describe("useOnboarding", () => {
       activeRelayIds: new Set(["relay-one"]),
       channelFilterStates: new Map([["general", "included"]]),
       searchQuery: "draft",
+      selectedPubkeys: new Set(["alice"]),
     });
     useAuthModalStore.setState({ isOpen: false });
   });

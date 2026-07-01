@@ -10,7 +10,7 @@ import {
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import type { Channel, Relay, TaskCreatePayload, TaskCreateResult } from "@/types";
-import type { SelectablePerson } from "@/types/person";
+import type { Person } from "@/types/person";
 import { getComposerPrimaryAction, getTaskComposerInput } from "@/test/ui";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
@@ -94,7 +94,7 @@ const mixedRelays: Relay[] = [
 ];
 
 const channels: Channel[] = [{ id: "backend", name: "backend", filterState: "neutral" }];
-const people: SelectablePerson[] = [];
+const people: Person[] = [];
 
 function renderCreateComposer({
   feedRelays = relays,

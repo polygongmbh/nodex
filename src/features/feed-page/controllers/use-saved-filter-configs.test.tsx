@@ -3,19 +3,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useMemo, useState } from "react";
 import { useSavedFilterConfigs } from "./use-saved-filter-configs";
 import { useSavedFilterStore } from "@/features/feed-page/stores/saved-filter-store";
-import { makePerson, makeRelay } from "@/test/fixtures";
-import { makeFilterSnapshot, makeQuickFilters, selectPeople } from "@/test/filter-state";
+import { useFilterStore } from "@/features/feed-page/stores/filter-store";
+import { makeRelay } from "@/test/fixtures";
+import { makeFilterSnapshot, makeQuickFilters } from "@/test/filter-state";
 import type { Channel, ChannelMatchMode, Relay } from "@/types";
-import type { SelectablePerson } from "@/types/person";
 
 const relays: Relay[] = [
   makeRelay({ id: "relay-one", name: "Relay One" }),
   makeRelay({ id: "relay-two", name: "Relay Two" }),
-];
-
-const peopleSeed: SelectablePerson[] = [
-  makePerson({ pubkey: "alice", name: "alice", displayName: "Alice" }),
-  makePerson({ pubkey: "bob", name: "bob", displayName: "Bob" }),
 ];
 
 function Harness() {
@@ -24,7 +19,8 @@ function Harness() {
     new Map([["general", "included"]])
   );
   const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>("or");
-  const [people, setPeople] = useState<SelectablePerson[]>(selectPeople(peopleSeed, ["alice"]));
+  const selectedPubkeys = useFilterStore((s) => s.selectedPubkeys);
+  const setSelectedPubkeys = useFilterStore((s) => s.setSelectedPubkeys);
   const [quickFilters, setQuickFilters] = useState(makeQuickFilters({
     recentEnabled: true,
     recentDays: 7,
@@ -39,11 +35,11 @@ function Harness() {
         channelStates: Object.fromEntries(
           Array.from(channelFilterStates.entries()).filter(([, state]) => state === "included" || state === "excluded")
         ) as Record<string, "included" | "excluded">,
-        selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.pubkey).sort(),
+        selectedPeopleIds: Array.from(selectedPubkeys).sort(),
         channelMatchMode,
         quickFilters,
       }),
-    [activeRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
+    [activeRelayIds, channelFilterStates, selectedPubkeys, channelMatchMode, quickFilters]
   );
 
   const saved = useSavedFilterConfigs({
@@ -52,13 +48,13 @@ function Harness() {
     setActiveRelayIds,
     setChannelFilterStates,
     setChannelMatchMode,
-    setPeople,
+    setSelectedPubkeys,
     setQuickFilters,
     resetFiltersToDefault: () => {
       setActiveRelayIds(new Set());
       setChannelFilterStates(new Map());
       setChannelMatchMode("and");
-      setPeople((prev) => selectPeople(prev, []));
+      setSelectedPubkeys(new Set());
       setQuickFilters(makeQuickFilters());
     },
   });
@@ -81,7 +77,7 @@ function Harness() {
           setActiveRelayIds(new Set(["relay-two"]));
           setChannelFilterStates(new Map([["general", "excluded"]]));
           setChannelMatchMode("and");
-          setPeople((prev) => selectPeople(prev, ["bob"]));
+          setSelectedPubkeys(new Set(["bob"]));
           setQuickFilters(makeQuickFilters({
             recentEnabled: true,
             recentDays: 21,
@@ -99,7 +95,7 @@ function Harness() {
       <output data-testid="channel-state">{channelFilterStates.get("general") || "neutral"}</output>
       <output data-testid="match-mode">{channelMatchMode}</output>
       <output data-testid="selected-people">
-        {people.filter((person) => person.isSelected).map((person) => person.pubkey).join(",")}
+        {Array.from(selectedPubkeys).join(",")}
       </output>
       <output data-testid="quick-filters">
         {[
@@ -118,6 +114,7 @@ describe("useSavedFilterConfigs", () => {
       activeConfigurationId: null,
       configurations: [],
     });
+    useFilterStore.setState({ selectedPubkeys: new Set(["alice"]) });
   });
 
   it("saves the current snapshot and reapplies it later", () => {

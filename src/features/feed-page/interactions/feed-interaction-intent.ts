@@ -4,7 +4,6 @@ import type {
   TaskState,
   TaskDateType,
 } from "@/types";
-import type { Person } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 export type DisplayDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
@@ -29,13 +28,12 @@ export type FeedInteractionIntent =
     }
   | { type: "ui.search.change"; query: string }
   | { type: "ui.displayDepth.change"; mode: DisplayDepthMode }
-  | { type: "ui.manageRoute.change"; isActive: boolean }
   | { type: "filter.applyHashtagInclude"; tag: string }
-  | { type: "filter.applyAuthorExclusive"; author: Person }
-  | { type: "person.filter.exclusive"; person: Person }
-  | { type: "person.filter.toggle"; person: Person }
-  | { type: "person.compose.mention"; person: Person }
-  | { type: "person.filterAndMention"; person: Person }
+  | { type: "filter.applyAuthorExclusive"; pubkey: string }
+  | { type: "person.filter.exclusive"; pubkey: string }
+  | { type: "person.filter.toggle"; pubkey: string }
+  | { type: "person.compose.mention"; pubkey: string }
+  | { type: "person.filterAndMention"; pubkey: string }
   | { type: "filter.clearChannel"; channelId: string }
   | { type: "filter.clearPerson"; personId: string }
   | { type: "filter.resetAll" }

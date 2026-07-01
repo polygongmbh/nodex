@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
-import type { SelectablePerson } from "@/types/person";
+import { getPersonDisplayName, type Person } from "@/types/person";
 import {
   derivePeopleFromKind0Events,
   getKind0CacheVersion,
@@ -32,14 +32,14 @@ interface NostrUserLike {
 }
 
 interface UseKind0PeopleResult {
-  people: SelectablePerson[];
-  setPeople: Dispatch<SetStateAction<SelectablePerson[]>>;
+  people: Person[];
+  setPeople: Dispatch<SetStateAction<Person[]>>;
   cachedKind0Events: NostrEvent[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
-function arePeopleListsEqual(previous: SelectablePerson[], next: SelectablePerson[]): boolean {
+function arePeopleListsEqual(previous: Person[], next: Person[]): boolean {
   if (previous.length !== next.length) return false;
   return previous.every((person, index) => {
     const candidate = next[index];
@@ -49,8 +49,7 @@ function arePeopleListsEqual(previous: SelectablePerson[], next: SelectablePerso
       person.displayName === candidate.displayName &&
       person.nip05 === candidate.nip05 &&
       person.about === candidate.about &&
-      person.avatar === candidate.avatar &&
-      person.isSelected === candidate.isSelected
+      person.picture === candidate.picture
     );
   });
 }
@@ -64,7 +63,7 @@ export function useKind0People(
     [selectedRelayUrls]
   );
   const selectedRelayScopeKey = normalizedSelectedRelayUrls.join("|");
-  const [people, setPeople] = useState<SelectablePerson[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
 
   // The cache's version counter is monotone — it bumps whenever the cache
   // changes — so we re-derive scope-filtered events on every change. The
@@ -117,7 +116,7 @@ export function useKind0People(
 
   useEffect(() => {
     setPeople((prev) => {
-      let next = derivePeopleFromKind0Events(visiblePubkeys, cachedKind0Events, fallbackKind0Events, prev);
+      let next = derivePeopleFromKind0Events(visiblePubkeys, cachedKind0Events, fallbackKind0Events);
 
       if (user?.pubkey && !next.some((person) => person.pubkey === user.pubkey)) {
         next = [
@@ -127,10 +126,9 @@ export function useKind0People(
             name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
             displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
             nip05: user.profile?.nip05?.trim().toLowerCase(),
-            avatar: user.profile?.picture,
-            isSelected: prev.find((person) => person.pubkey === user.pubkey)?.isSelected || false,
+            picture: user.profile?.picture,
           },
-        ].sort((a, b) => a.displayName.localeCompare(b.displayName));
+        ].sort((a, b) => getPersonDisplayName(a).localeCompare(getPersonDisplayName(b)));
       }
 
       return arePeopleListsEqual(prev, next) ? prev : next;

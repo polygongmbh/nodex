@@ -1,4 +1,4 @@
-import type { Person } from "@/types/person";
+import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 const DEFAULT_HUE = 210;
 
@@ -11,15 +11,10 @@ function hashStringToHue(value: string): number {
   return Math.abs(hash) % 360;
 }
 
-function getAuthorSeed(author: Person): string {
-  const candidate =
-    author.avatar ||
-    author.nip05 ||
-    author.displayName ||
-    author.name ||
-    author.pubkey ||
-    "anon";
-  return candidate.trim().toLowerCase();
+function getAuthorSeed(pubkey: string): string {
+  // Seed by the npub form — the label the synthetic Task.author once carried —
+  // so colors stay identical now that posts carry only a pubkey.
+  return (formatUserFacingPubkey(pubkey) || pubkey || "anon").trim().toLowerCase();
 }
 
 export interface AuthorColor {
@@ -27,8 +22,8 @@ export interface AuthorColor {
   background: string;
 }
 
-export function getAuthorColor(author: Person): AuthorColor {
-  const seed = getAuthorSeed(author);
+export function getAuthorColor(pubkey: string): AuthorColor {
+  const seed = getAuthorSeed(pubkey);
   if (!seed) {
     return {
       accent: `hsl(${DEFAULT_HUE}, 65%, 55%)`,
