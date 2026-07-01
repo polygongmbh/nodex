@@ -21,6 +21,10 @@ export interface PublishResult {
   eventId?: string;
   rejectionReason?: string;
   publishedRelayUrls?: string[];
+  // The relay set the publish fn actually resolved and attempted (after writable filtering /
+  // selected-relay fallback). Consumers use this as the denominator for partial-publish detection
+  // so they never have to re-pass or fabricate a target set.
+  targetRelayUrls?: string[];
 }
 
 interface UsePublishArgs {
@@ -189,7 +193,7 @@ export function usePublish({
         targetRelayUrls,
         publishedRelayUrls,
       });
-      return { success: true, eventId: event.id, publishedRelayUrls };
+      return { success: true, eventId: event.id, publishedRelayUrls, targetRelayUrls };
     } catch (error) {
       console.error("Failed to publish event:", error);
       const errorMessage = error instanceof Error ? error.message : String(error || "");

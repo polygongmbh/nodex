@@ -3,6 +3,7 @@ import i18n from "@/lib/i18n/config";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskKind } from "@/domain/content/task-kind";
 import { getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { isPubkeyDerivedPlaceholder, type Person } from "@/types/person";
 
 interface PublishSuccessToastOptions {
@@ -272,6 +273,23 @@ interface PublishRetryToastOptions {
 
 export function notifyPartialPublish(options: { publishedCount: number; targetCount: number }): void {
   toast.warning(i18n.t("composer:toasts.warnings.partialPublish", options));
+}
+
+/**
+ * Warn when a publish was acknowledged by only a subset of the relays it targeted.
+ * No-ops unless both counts are positive and published ⊂ target, so it is safe to call
+ * unconditionally after any successful publish.
+ */
+export function notifyIfPartialPublish(targetRelayUrls: string[], publishedRelayUrls?: string[]): void {
+  const targetCount = new Set(targetRelayUrls).size;
+  const publishedCount = new Set(publishedRelayUrls || []).size;
+  if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
+    notifyPartialPublish({ publishedCount, targetCount });
+    nostrDevLog("publish", "Partial publish acknowledged by subset of target relays", {
+      targetRelayUrls,
+      publishedRelayUrls: publishedRelayUrls || [],
+    });
+  }
 }
 
 export function notifyPublishSavedForRetry(options: PublishRetryToastOptions = {}): void {
