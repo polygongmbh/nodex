@@ -58,6 +58,25 @@ export function resolveRelayUrlsForIds(
   );
 }
 
+/**
+ * The relays to publish an event that targets an existing post (reaction, deletion,
+ * recompose-deletion) to: all of the target post's own relays. Returns `undefined` when those
+ * relays are unknown, so the caller defers to the author's selected relays (via the publish fn's
+ * fallback) instead of publishing nowhere.
+ *
+ * This is the single home for the "a child event follows its parent post's relays" rule — route the
+ * reaction / deletion / recompose paths through it so their targeting can't drift apart. (The
+ * separate "state updates go to the task's single origin relay" rule lives in resolveTaskOriginRelay
+ * / resolveOriginRelayIdForTask, and is intentionally narrower.)
+ */
+export function resolveTargetPostRelayUrls(
+  relays: Array<Pick<Relay, "id" | "url">>,
+  targetRelayIds: Iterable<string>
+): string[] | undefined {
+  const urls = resolveRelayUrlsForIds(relays, targetRelayIds);
+  return urls.length > 0 ? urls : undefined;
+}
+
 export function isRelayUrl(value: string): boolean {
   const normalized = normalizeRelayUrl(value).toLowerCase();
   return normalized.startsWith("wss://") || normalized.startsWith("ws://");

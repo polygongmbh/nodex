@@ -9,6 +9,7 @@ import {
   relayUrlToId,
   relayUrlToName,
   resolveRelayUrlsForIds,
+  resolveTargetPostRelayUrls,
 } from "./relay-url";
 
 describe("normalizeRelayUrl", () => {
@@ -61,6 +62,17 @@ describe("relay-url naming", () => {
       { id: "relay-two", url: "wss://relay.two" },
       { id: "relay-two-duplicate", url: "wss://relay.two/" },
     ], ["relay-two", "relay-two-duplicate", "missing"])).toEqual(["wss://relay.two/"]);
+  });
+
+  it("resolves a target post's relays, deferring (undefined) when they are unknown", () => {
+    const relays = [
+      { id: "relay-one", url: "wss://relay.one/" },
+      { id: "relay-two", url: "wss://relay.two/" },
+    ];
+    expect(resolveTargetPostRelayUrls(relays, ["relay-two"])).toEqual(["wss://relay.two/"]);
+    // No known relays for the target -> undefined so callers defer to selected relays, never [].
+    expect(resolveTargetPostRelayUrls(relays, [])).toBeUndefined();
+    expect(resolveTargetPostRelayUrls(relays, ["missing"])).toBeUndefined();
   });
 
   it("builds stable normalized relay scopes", () => {

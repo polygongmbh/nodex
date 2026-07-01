@@ -318,7 +318,7 @@ describe("useTaskPublishFlow", () => {
       "",
       [["e", "task-1"], ["k", String(initialTask.kind)]],
       undefined,
-      ["wss://relay.one"],
+      ["wss://relay.one/"],
     );
     expect(localTasks()).toHaveLength(0);
     expect(suppressedIds().size).toBeGreaterThan(0);
@@ -372,7 +372,7 @@ describe("useTaskPublishFlow", () => {
       "",
       [["e", "task-1"], ["k", "1621"]],
       undefined,
-      ["wss://relay.one"],
+      ["wss://relay.one/"],
     );
   });
 

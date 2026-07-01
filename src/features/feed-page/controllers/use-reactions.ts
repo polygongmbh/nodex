@@ -9,7 +9,7 @@ import {
 } from "@/infrastructure/nostr/reaction-events";
 import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
 import { publishWithFeedback } from "@/lib/nostr/publish-with-feedback";
-import { resolveRelayUrlsForIds } from "@/infrastructure/nostr/relay-url";
+import { resolveTargetPostRelayUrls } from "@/infrastructure/nostr/relay-url";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import {
   notifyNeedSigninReact,
@@ -54,12 +54,12 @@ export function useReactions() {
     const content = normalizeReactionContent(rawContent);
     if (!content) return false;
 
-    const relayUrls = resolveRelayUrlsForIds(relays, target.relayIds);
+    const relayUrls = resolveTargetPostRelayUrls(relays, target.relayIds);
     const result = await publishWithFeedback(publishEvent, {
       kind: NostrEventKind.Reaction,
       content,
-      tags: buildReactionTags(target, relayUrls[0] ?? ""),
-      relayUrls: relayUrls.length > 0 ? relayUrls : undefined,
+      tags: buildReactionTags(target, relayUrls?.[0] ?? ""),
+      relayUrls,
     }, "[reactions] publish");
     if (!result.success) {
       notifyReactionFailed(result.rejectionReason);
@@ -107,12 +107,12 @@ export function useReactions() {
     const matchingIds = getReactionsForTarget(targetEventId)?.mineEventIdsByEmoji[emoji] ?? [];
     if (matchingIds.length === 0) return false;
 
-    const relayUrls = resolveRelayUrlsForIds(relays, targetRelayIds);
+    const relayUrls = resolveTargetPostRelayUrls(relays, targetRelayIds);
     const result = await publishWithFeedback(publishEvent, {
       kind: NostrEventKind.EventDeletion,
       content: "",
       tags: matchingIds.flatMap((id) => buildDeletionTags({ id, kind: REACTION_EVENT_KIND })),
-      relayUrls: relayUrls.length > 0 ? relayUrls : undefined,
+      relayUrls,
     }, "[reactions] deletion");
     if (!result.success) {
       notifyReactionRemoveFailed();

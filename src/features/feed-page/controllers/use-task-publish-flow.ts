@@ -27,6 +27,7 @@ import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { useCoreChannels } from "@/lib/use-core-channels";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
+import { resolveTargetPostRelayUrls } from "@/infrastructure/nostr/relay-url";
 import { normalizeComposerMessageType } from "@/domain/content/task-type";
 import { isCommentKind, isListingKind, isTaskKind } from "@/domain/content/task-kind";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
@@ -276,7 +277,7 @@ export function useTaskPublishFlow({
   }, []);
 
   const publishRecomposeDeletion = useCallback(async (target: ComposeRecomposeOf): Promise<void> => {
-    const targetRelayUrls = resolveRelayUrlsFromIds(target.relayIds);
+    const targetRelayUrls = resolveTargetPostRelayUrls(relays, target.relayIds);
     const deletionTags = buildDeletionTags({
       id: target.eventId,
       kind: target.originalKind,
@@ -293,7 +294,7 @@ export function useTaskPublishFlow({
     if (!result.success) {
       notifyPostDeleteFailed();
     }
-  }, [currentUser?.pubkey, publishEvent, resolveRelayUrlsFromIds, suppressFailedPublishEvent]);
+  }, [currentUser?.pubkey, publishEvent, relays, suppressFailedPublishEvent]);
 
   const handleNewTask = useCallback(async (
     payload: TaskCreatePayload,
@@ -931,7 +932,7 @@ export function useTaskPublishFlow({
       notifyStatusRestricted();
       return false;
     }
-    const targetRelayUrls = resolveRelayUrlsFromIds(existingTask.relays);
+    const targetRelayUrls = resolveTargetPostRelayUrls(relays, existingTask.relays);
     const deletionTags = buildDeletionTags({
       id: taskId,
       kind: existingTask.kind,
@@ -957,7 +958,7 @@ export function useTaskPublishFlow({
     currentUser?.pubkey,
     guardInteraction,
     publishEvent,
-    resolveRelayUrlsFromIds,
+    relays,
     setLocalTasks,
     suppressFailedPublishEvent,
   ]);
