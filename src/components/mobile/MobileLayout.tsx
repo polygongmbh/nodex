@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useCallback, useRef, useEffect } from "react";
+import { Suspense, lazy, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { isPrimaryMobileView, MobileNav, MOBILE_VIEW_ORDER, MobileViewType } from "./MobileNav";
 import { isSingleViewMode } from "@/components/tasks/ViewSwitcher";
@@ -45,14 +45,10 @@ export function MobileLayout({
   posts,
   focusedTaskId,
   currentView,
-  isOnboardingOpen,
-  activeOnboardingStepId,
 }: {
   posts: Post[];
   focusedTaskId: string | null;
   currentView: ViewType;
-  isOnboardingOpen: boolean;
-  activeOnboardingStepId: string | null;
 }) {
   const { t } = useTranslation("tasks");
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -70,7 +66,6 @@ export function MobileLayout({
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
-  const lastHandledGuideStepIdRef = useRef<string | null>(null);
   const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView)
     ? currentView
     : (MOBILE_VIEW_ORDER[0] ?? "status");
@@ -163,20 +158,13 @@ export function MobileLayout({
     searchQuery.trim().length > 0 &&
     shouldShowMobileFallbackNotice;
 
+  // why: the mobile compose-guide step highlights the composer, which the manage
+  // overlay covers — reveal it by closing the overlay and showing the feed. The
+  // guide raises forceComposeMode for exactly that step, so no onboarding-step
+  // coupling is needed here.
   useEffect(() => {
-    if (!isOnboardingOpen || !activeOnboardingStepId) {
-      lastHandledGuideStepIdRef.current = null;
-      return;
-    }
-    if (lastHandledGuideStepIdRef.current === activeOnboardingStepId) {
-      return;
-    }
-    lastHandledGuideStepIdRef.current = activeOnboardingStepId;
-
-    if (activeOnboardingStepId === "mobile-compose-combobox") {
-      closeManageView("feed");
-    }
-  }, [activeOnboardingStepId, isOnboardingOpen, closeManageView, openManageView]);
+    if (forceComposeMode) closeManageView("feed");
+  }, [forceComposeMode, closeManageView]);
 
   useMobileToastOffset({ hasBreadcrumbOffset: hasMobileBreadcrumbOffset });
 

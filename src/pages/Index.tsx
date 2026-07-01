@@ -558,7 +558,6 @@ function FeedIndexContent() {
     isOnboardingOpen,
     onboardingInitialSection,
     onboardingManualStart,
-    activeOnboardingStepId,
     onboardingSections,
     onboardingStepsBySection,
     forceShowComposeForGuide,
@@ -871,8 +870,6 @@ function FeedIndexContent() {
           posts={relayScopedTasks}
           focusedTaskId={focusedTaskId}
           currentView={currentView}
-          isOnboardingOpen={isOnboardingOpen && !isAuthModalOpen}
-          activeOnboardingStepId={activeOnboardingStepId}
           authModalProps={{
             isOpen: isAuthModalOpen,
             onClose: handleCloseAuthModal,

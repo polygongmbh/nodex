@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,6 +11,7 @@ import {
 } from "@/features/feed-page/stores/posts-store";
 import { useHydrationStatusStore } from "@/features/feed-page/stores/hydration-status-store";
 import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
+import { useComposerSignalsStore } from "@/features/feed-page/stores/composer-signals-store";
 import type { Channel, Relay, Post } from "@/types";
 import type { Person } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -155,12 +156,9 @@ const channels: Channel[] = [makeChannel()];
 const people: Person[] = [makePerson({ pubkey: "me", name: "Me", displayName: "Me" })];
 const tasks: Post[] = [];
 
-// MobileLayout takes currentView + onboarding state as props (URL-derived /
-// produced in Index for real). setMocks records them so both the helper and
-// direct rerenders can pass them.
+// MobileLayout takes currentView as a prop (URL-derived in production). setMocks
+// records it so both the helper and direct rerenders can pass it.
 let mockCurrentView: ViewType = "tree";
-let mockOnboardingOpen = false;
-let mockActiveOnboardingStepId: string | null = null;
 
 const baseSurfaceState: FeedSurfaceState = {
   relays,
@@ -178,8 +176,6 @@ interface TaskViewModelOverride {
 
 type MobileLayoutOverrides = {
   currentView?: ViewType;
-  isOnboardingOpen?: boolean;
-  activeOnboardingStepId?: string | null;
   taskViewModel?: TaskViewModelOverride;
   surfaceState?: Partial<FeedSurfaceState>;
 };
@@ -203,8 +199,6 @@ function setMocks(overrides: MobileLayoutOverrides = {}) {
   };
   mockSurfaceState.mockReturnValue(surfaceState);
   mockCurrentView = overrides.currentView ?? "tree";
-  mockOnboardingOpen = overrides.isOnboardingOpen ?? false;
-  mockActiveOnboardingStepId = overrides.activeOnboardingStepId ?? null;
   applyTaskViewModelOverride(overrides.taskViewModel);
 }
 
@@ -217,7 +211,7 @@ function renderMobileLayout(overrides: MobileLayoutOverrides & { searchQuery?: s
   const posts = rest.taskViewModel?.allTasks ?? [];
   return render(
     <MemoryRouter>
-      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} currentView={mockCurrentView} isOnboardingOpen={mockOnboardingOpen} activeOnboardingStepId={mockActiveOnboardingStepId} />
+      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} currentView={mockCurrentView} />
     </MemoryRouter>
   );
 }
@@ -238,6 +232,7 @@ afterEach(() => {
   document.documentElement.style.removeProperty(MOBILE_TOAST_TOP_OFFSET_CSS_VAR);
   __resetPostsStoreForTests();
   useHydrationStatusStore.getState().setIsHydrating(false);
+  useComposerSignalsStore.getState().setForceShowComposer(false);
 });
 
 describe("MobileLayout auth wiring", () => {
@@ -278,7 +273,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     setMocks();
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} isOnboardingOpen={mockOnboardingOpen} activeOnboardingStepId={mockActiveOnboardingStepId} />);
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
 
     // Prompt no longer hijacks the route; the global ProfileCompletionDialog
     // (mounted in FeedPageProviders) handles displaying the editor instead.
@@ -612,18 +607,18 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getAllByText("Loading events from relay…")).toHaveLength(1);
   });
 
-  it("switches to feed on mobile compose combobox onboarding step", async () => {
+  it("switches to feed when the compose guide forces the composer open", async () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
     dispatchFeedInteraction.mockClear();
 
-    const { rerender } = renderMobileLayout({
-      isOnboardingOpen: true,
-      activeOnboardingStepId: "mobile-filters-use",
-    });
+    renderMobileLayout({ currentView: "tree" });
 
-    setMocks({ currentView: "tree", isOnboardingOpen: true, activeOnboardingStepId: "mobile-compose-combobox" });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} isOnboardingOpen={mockOnboardingOpen} activeOnboardingStepId={mockActiveOnboardingStepId} />);
+    // The mobile compose-guide step raises forceShowComposer; MobileLayout
+    // reveals the composer by closing the manage overlay and showing the feed.
+    act(() => {
+      useComposerSignalsStore.getState().setForceShowComposer(true);
+    });
 
     await waitFor(() => {
       expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
@@ -644,7 +639,7 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
     setMocks({ currentView: "feed" });
-    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} isOnboardingOpen={mockOnboardingOpen} activeOnboardingStepId={mockActiveOnboardingStepId} />);
+    rerender(<MobileLayout posts={[]} focusedTaskId={null} currentView={mockCurrentView} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("feed-view")).toBeInTheDocument();

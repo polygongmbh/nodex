@@ -9,8 +9,6 @@ interface FeedPageMobileShellProps {
   posts: Post[];
   focusedTaskId: string | null;
   currentView: ViewType;
-  isOnboardingOpen: boolean;
-  activeOnboardingStepId: string | null;
 }
 
 export function FeedPageMobileShell({
@@ -18,18 +16,10 @@ export function FeedPageMobileShell({
   posts,
   focusedTaskId,
   currentView,
-  isOnboardingOpen,
-  activeOnboardingStepId,
 }: FeedPageMobileShellProps) {
   return (
     <>
-      <MobileLayout
-        posts={posts}
-        focusedTaskId={focusedTaskId}
-        currentView={currentView}
-        isOnboardingOpen={isOnboardingOpen}
-        activeOnboardingStepId={activeOnboardingStepId}
-      />
+      <MobileLayout posts={posts} focusedTaskId={focusedTaskId} currentView={currentView} />
       <NostrAuthModal {...authModalProps} />
     </>
   );
