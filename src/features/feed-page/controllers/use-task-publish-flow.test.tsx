@@ -31,6 +31,7 @@ vi.mock("sonner", () => ({
 vi.mock("@/lib/notifications", () => ({
   notifyNeedTag: vi.fn(),
   notifyPartialPublish: vi.fn(),
+  notifyIfPartialPublish: vi.fn(),
   notifyPostDeleted: vi.fn(),
   notifyPostDeleteFailed: vi.fn(),
   notifyPublished: vi.fn(),

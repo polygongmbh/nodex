@@ -43,10 +43,10 @@ import { usePreferencesStore } from "@/features/feed-page/stores/preferences-sto
 import { canUserUpdateTask } from "@/domain/content/task-permissions";
 import { displayPriorityFromStored } from "@/domain/content/task-priority";
 import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
+import { publishWithFeedback, broadcastWithFeedback } from "@/lib/nostr/publish-with-feedback";
 import {
   notifyNeedCoreTag,
   notifyNeedTag,
-  notifyPartialPublish,
   notifyPostDeleted,
   notifyPostDeleteFailed,
   notifyPublished,
@@ -275,18 +275,6 @@ export function useTaskPublishFlow({
     return Number.isNaN(parsed.getTime()) ? undefined : parsed;
   }, []);
 
-  const notifyIfPartialPublish = useCallback((targetRelayUrls: string[], publishedRelayUrls?: string[]) => {
-    const targetCount = new Set(targetRelayUrls).size;
-    const publishedCount = new Set(publishedRelayUrls || []).size;
-    if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
-      notifyPartialPublish({ publishedCount, targetCount });
-      nostrDevLog("publish", "Partial publish acknowledged by subset of target relays", {
-        targetRelayUrls,
-        publishedRelayUrls: publishedRelayUrls || [],
-      });
-    }
-  }, []);
-
   const publishRecomposeDeletion = useCallback(async (target: ComposeRecomposeOf): Promise<void> => {
     const targetRelayUrls = resolveRelayUrlsFromIds(target.relayIds);
     const deletionTags = buildDeletionTags({
@@ -296,18 +284,16 @@ export function useTaskPublishFlow({
       dTag: target.dTag,
     });
     suppressFailedPublishEvent(target.eventId);
-    try {
-      const result = await publishEvent(NostrEventKind.EventDeletion, "", deletionTags, undefined, targetRelayUrls);
-      if (!result.success) {
-        notifyPostDeleteFailed();
-        return;
-      }
-      notifyIfPartialPublish(targetRelayUrls, result.publishedRelayUrls);
-    } catch (error) {
-      console.warn("[recompose] deletion publish failed", { eventId: target.eventId, error });
+    const result = await publishWithFeedback(publishEvent, {
+      kind: NostrEventKind.EventDeletion,
+      content: "",
+      tags: deletionTags,
+      relayUrls: targetRelayUrls,
+    }, "[recompose] deletion");
+    if (!result.success) {
       notifyPostDeleteFailed();
     }
-  }, [currentUser?.pubkey, notifyIfPartialPublish, publishEvent, resolveRelayUrlsFromIds, suppressFailedPublishEvent]);
+  }, [currentUser?.pubkey, publishEvent, resolveRelayUrlsFromIds, suppressFailedPublishEvent]);
 
   const handleNewTask = useCallback(async (
     payload: TaskCreatePayload,
@@ -682,38 +668,22 @@ export function useTaskPublishFlow({
       return { ok: false, reason: "relay-selection" };
     }
 
-    const publishWithMetadata = async () => {
+    const publishWithMetadata = () => {
       nostrDevLog("publish", "Submitting publish request", {
         kind: publishKind,
         parentId: publishParentId || null,
         relayUrls: selectedRelayUrls,
         tagCount: publishTags.length,
       });
-      try {
-        const result = await publishEvent(publishKind, content, publishTags, publishParentId, selectedRelayUrls);
-        nostrDevLog("publish", "Publish request completed", {
-          kind: publishKind,
-          success: result.success,
-          eventId: result.eventId || null,
-          rejectionReason: result.rejectionReason || null,
-          publishedRelayUrls: result.publishedRelayUrls || [],
-          relayUrls: selectedRelayUrls,
-        });
-        return result;
-      } catch (error) {
-        console.error("Task publish failed unexpectedly", error);
-        nostrDevLog("publish", "Publish request threw an exception", {
-          kind: publishKind,
-          relayUrls: selectedRelayUrls,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        return {
-          success: false,
-          eventId: undefined,
-          rejectionReason: undefined,
-          publishedRelayUrls: undefined,
-        };
-      }
+      // The primitive owns exception-safety + partial-publish notify; relay attribution comes back
+      // on the result. Only the draft-persist-on-failure / notifyPublished-on-success policy is ours.
+      return publishWithFeedback(publishEvent, {
+        kind: publishKind,
+        content,
+        tags: publishTags,
+        parentId: publishParentId,
+        relayUrls: selectedRelayUrls,
+      }, "task publish");
     };
 
     if (usePreferencesStore.getState().publishDelayEnabled) {
@@ -741,21 +711,9 @@ export function useTaskPublishFlow({
           eventId,
           relayUrls: selectedRelayUrls,
         });
-        let publishResult: PublishResult;
-        try {
-          publishResult = await broadcastSignedEvent(signedEvent, selectedRelayUrls);
-        } catch (error) {
-          console.error("Task broadcast failed unexpectedly", error);
-          nostrDevLog("publish", "Broadcast threw an exception", {
-            kind: publishKind,
-            eventId,
-            relayUrls: selectedRelayUrls,
-            error: error instanceof Error ? error.message : String(error),
-          });
-          publishResult = { success: false, eventId };
-        }
+        const publishResult = await broadcastWithFeedback(broadcastSignedEvent, signedEvent, selectedRelayUrls, "task broadcast");
         if (!publishResult.success) {
-          suppressFailedPublishEvent(publishResult.eventId);
+          suppressFailedPublishEvent(eventId);
           const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
           setFailedPublishDrafts((prev) => [failedDraft, ...prev]);
           setLocalTasks((prev) => prev.filter((task) => task.id !== eventId));
@@ -783,7 +741,6 @@ export function useTaskPublishFlow({
               : task
           )
         );
-        notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
         notifyPublished(publishKind, {
           relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
         });
@@ -825,7 +782,6 @@ export function useTaskPublishFlow({
       fallbackRelayUrls: selectedRelayUrls,
     });
 
-    notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
     notifyPublished(publishKind, {
       relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
     });
@@ -858,7 +814,6 @@ export function useTaskPublishFlow({
     setPostedTags,
     user,
     clearPendingPublishTask,
-    notifyIfPartialPublish,
     publishRecomposeDeletion,
     suppressFailedPublishEvent,
   ]);
@@ -877,13 +832,13 @@ export function useTaskPublishFlow({
       return;
     }
 
-    const result = await publishEvent(
-      draft.publishKind,
-      draft.content,
-      draft.publishTags,
-      draft.publishParentId,
-      relayUrls
-    );
+    const result = await publishWithFeedback(publishEvent, {
+      kind: draft.publishKind,
+      content: draft.content,
+      tags: draft.publishTags,
+      parentId: draft.publishParentId,
+      relayUrls,
+    }, "retry publish");
     if (!result.success) {
       if (result.eventId) {
         nostrDevLog("publish", "Suppressing retry-failed event from cache and feed", {
@@ -896,7 +851,6 @@ export function useTaskPublishFlow({
       return;
     }
 
-    notifyIfPartialPublish(relayUrls, result.publishedRelayUrls);
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
 
     const draftDates: TaskDate[] = draft.dates
@@ -924,7 +878,6 @@ export function useTaskPublishFlow({
   }, [
     failedPublishDrafts,
     guardInteraction,
-    notifyIfPartialPublish,
     parseStoredDate,
     publishEvent,
     publishTaskCreateFollowUps,
@@ -987,25 +940,22 @@ export function useTaskPublishFlow({
     });
     suppressFailedPublishEvent(taskId);
     setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
-    try {
-      const result = await publishEvent(NostrEventKind.EventDeletion, "", deletionTags, undefined, targetRelayUrls);
-      if (!result.success) {
-        notifyPostDeleteFailed();
-        return false;
-      }
-      notifyIfPartialPublish(targetRelayUrls, result.publishedRelayUrls);
-      notifyPostDeleted();
-      return true;
-    } catch (error) {
-      console.warn("[delete] publish failed", { taskId, error });
+    const result = await publishWithFeedback(publishEvent, {
+      kind: NostrEventKind.EventDeletion,
+      content: "",
+      tags: deletionTags,
+      relayUrls: targetRelayUrls,
+    }, "[delete] publish");
+    if (!result.success) {
       notifyPostDeleteFailed();
       return false;
     }
+    notifyPostDeleted();
+    return true;
   }, [
     allTasks,
     currentUser?.pubkey,
     guardInteraction,
-    notifyIfPartialPublish,
     publishEvent,
     resolveRelayUrlsFromIds,
     setLocalTasks,
