@@ -8,6 +8,7 @@ import {
   normalizeReactionContent,
 } from "@/infrastructure/nostr/reaction-events";
 import { buildDeletionTags } from "@/infrastructure/nostr/deletion-events";
+import { publishWithFeedback } from "@/lib/nostr/publish-with-feedback";
 import {
   notifyNeedSigninReact,
   notifyReactionFailed,
@@ -30,9 +31,9 @@ interface ReactionTarget {
   id: string;
   kind: number;
   pubkey: string;
-  // Relays the target post was seen on. The reaction is published here (not to
-  // every active write relay) so it lands where the post actually lives.
-  relayUrls?: string[];
+  // Relays the reacted-to post was seen on. A reaction is a child of that post, so it publishes to
+  // the post's relays (empty = the post's origin is unknown; defer to the selected relays instead).
+  relayUrls: string[];
 }
 
 export function useReactions() {
@@ -49,28 +50,18 @@ export function useReactions() {
     const content = normalizeReactionContent(rawContent);
     if (!content) return false;
 
-    const targetRelayUrls = target.relayUrls?.filter(Boolean) ?? [];
-    const relayHint = targetRelayUrls[0] ?? "";
-
-    try {
-      const result = await publishEvent(
-        NostrEventKind.Reaction,
-        content,
-        buildReactionTags(target, relayHint),
-        undefined,
-        targetRelayUrls.length > 0 ? targetRelayUrls : undefined,
-      );
-      if (!result.success) {
-        console.warn("[reactions] publish reported no success", { eventId: result.eventId });
-        notifyReactionFailed(result.rejectionReason);
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.warn("[reactions] publish failed", error);
-      notifyReactionFailed();
+    const relayUrls = target.relayUrls.filter(Boolean);
+    const result = await publishWithFeedback(publishEvent, {
+      kind: NostrEventKind.Reaction,
+      content,
+      tags: buildReactionTags(target, relayUrls[0] ?? ""),
+      relayUrls: relayUrls.length > 0 ? relayUrls : undefined,
+    }, "[reactions] publish");
+    if (!result.success) {
+      notifyReactionFailed(result.rejectionReason);
       return false;
     }
+    return true;
   }, [user?.pubkey, publishEvent]);
 
   const ensureFetched = useCallback(async (targetEventId: string): Promise<void> => {
@@ -100,7 +91,7 @@ export function useReactions() {
   const unreact = useCallback(async (
     targetEventId: string,
     rawContent: string,
-    targetRelayUrls?: string[],
+    targetRelayUrls: string[],
   ): Promise<boolean> => {
     if (!user?.pubkey) {
       notifyNeedSigninReact();
@@ -112,30 +103,18 @@ export function useReactions() {
     const matchingIds = getReactionsForTarget(targetEventId)?.mineEventIdsByEmoji[emoji] ?? [];
     if (matchingIds.length === 0) return false;
 
-    const relayUrls = targetRelayUrls?.filter(Boolean) ?? [];
-
-    try {
-      const tags = matchingIds.flatMap((id) =>
-        buildDeletionTags({ id, kind: REACTION_EVENT_KIND }),
-      );
-      const result = await publishEvent(
-        NostrEventKind.EventDeletion,
-        "",
-        tags,
-        undefined,
-        relayUrls.length > 0 ? relayUrls : undefined,
-      );
-      if (!result.success) {
-        console.warn("[reactions] deletion publish reported no success", { targetEventId, emoji });
-        notifyReactionRemoveFailed();
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.warn("[reactions] deletion publish failed", { targetEventId, emoji, error });
+    const relayUrls = targetRelayUrls.filter(Boolean);
+    const result = await publishWithFeedback(publishEvent, {
+      kind: NostrEventKind.EventDeletion,
+      content: "",
+      tags: matchingIds.flatMap((id) => buildDeletionTags({ id, kind: REACTION_EVENT_KIND })),
+      relayUrls: relayUrls.length > 0 ? relayUrls : undefined,
+    }, "[reactions] deletion");
+    if (!result.success) {
       notifyReactionRemoveFailed();
       return false;
     }
+    return true;
   }, [user?.pubkey, publishEvent]);
 
   return { react, unreact, ensureReactionsFetched: ensureFetched };
