@@ -42,6 +42,32 @@ describe("posts-store", () => {
     expect(posts.map((p) => p.id)).toEqual(["task-a"]);
   });
 
+  it("unions relay attribution when the same event arrives from another relay", () => {
+    ingestPost({ post: makeTaskPost({ id: "task-a", relays: ["relay-a"] }) });
+    ingestPost({ post: makeTaskPost({ id: "task-a", relays: ["relay-b"] }) });
+    const [post] = getPosts();
+    expect(post.relays).toEqual(["relay-a", "relay-b"]);
+  });
+
+  it("keeps folded state when a duplicate of the same event is re-ingested", () => {
+    const pubkey = "a".repeat(64);
+    ingestPost({ post: makeTaskPost({ id: "task-a", pubkey, relays: ["relay-a"] }) });
+    applyStateUpdate({
+      targetId: "task-a",
+      updateId: "state-1",
+      newState: { status: "done" },
+      authorPubkey: pubkey,
+      timestampMs: Date.now(),
+    });
+
+    ingestPost({ post: makeTaskPost({ id: "task-a", pubkey, relays: ["relay-b"] }) });
+
+    const [post] = getPosts() as TaskPost[];
+    expect(post.relays).toEqual(["relay-a", "relay-b"]);
+    expect(post.stateUpdates).toHaveLength(1);
+    expect(post.stateUpdates[0].state).toEqual({ status: "done" });
+  });
+
   it("folds a state update into an existing Post", () => {
     const pubkey = "a".repeat(64);
     ingestPost({ post: makeTaskPost({ id: "task-a", pubkey }) });

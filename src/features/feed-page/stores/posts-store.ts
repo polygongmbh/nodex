@@ -179,6 +179,20 @@ export interface IngestPostInput {
 export function ingestPost({ post, replaceableKey }: IngestPostInput): boolean {
   if (isDeletedByOwnAuthor(post.pubkey, post.id)) return false;
 
+  const existing = postsById.get(post.id);
+  if (existing) {
+    // Same id ⇒ same signed event. The only new information a re-ingest can
+    // carry is relay attribution (NDK emits `event:dup` when the event
+    // arrives from another relay). Union relays into the existing post —
+    // never overwrite it, since it carries folded state (status, dates,
+    // priority) that the fresh conversion lacks.
+    const unseenRelays = post.relays.filter((relay) => !existing.relays.includes(relay));
+    if (unseenRelays.length === 0) return true;
+    postsById.set(post.id, { ...existing, relays: [...existing.relays, ...unseenRelays] });
+    notifyChange();
+    return true;
+  }
+
   if (replaceableKey) {
     const existingId = replaceableKeyToPostId.get(replaceableKey);
     if (existingId && existingId !== post.id) {
