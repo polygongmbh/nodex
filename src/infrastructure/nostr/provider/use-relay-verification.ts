@@ -40,6 +40,12 @@ export function useRelayVerification({
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
   const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
   const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
+  // Relays observed to gate on NIP-42 auth (challenge received, CLOSED
+  // auth-required, or NIP-11 authRequired). Survives logout deliberately: the
+  // status reset on logout erases "verification-failed", but the next sign-in
+  // still needs to know these relays require a fresh socket to re-challenge —
+  // most relays send AUTH only once per connection.
+  const relayAuthGatedRef = useRef<Set<string>>(new Set());
 
   const tryRecordAuthPreflight = useCallback((normalizedRelayUrl: string): boolean => {
     const now = Date.now();
@@ -51,6 +57,14 @@ export function useRelayVerification({
 
   const forgetAuthPreflight = useCallback((normalizedRelayUrl: string) => {
     relayAuthPreflightHistoryRef.current.delete(normalizedRelayUrl);
+  }, []);
+
+  const markRelayAuthGated = useCallback((normalizedRelayUrl: string) => {
+    relayAuthGatedRef.current.add(normalizedRelayUrl);
+  }, []);
+
+  const forgetRelayAuthGated = useCallback((normalizedRelayUrl: string) => {
+    relayAuthGatedRef.current.delete(normalizedRelayUrl);
   }, []);
 
   const clearAuthSessionState = useCallback(() => {
@@ -144,6 +158,10 @@ export function useRelayVerification({
     const shouldShowToast = options?.showToast ?? true;
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
+    // Every verification failure is an auth signal (CLOSED auth-required,
+    // publish auth reject, auth-policy failure) — remember the relay gates on
+    // auth so the next sign-in gives it a fresh socket to re-challenge on.
+    relayAuthGatedRef.current.add(normalizedRelayUrl);
     if (shouldSetStatus) {
       if (operation === "read") {
         updateRelayCapabilityStatus(relayUrl, "verification-failed");
@@ -272,6 +290,9 @@ export function useRelayVerification({
     endRelayOperation,
     tryRecordAuthPreflight,
     forgetAuthPreflight,
+    relayAuthGatedRef,
+    markRelayAuthGated,
+    forgetRelayAuthGated,
     clearAuthSessionState,
   };
 }

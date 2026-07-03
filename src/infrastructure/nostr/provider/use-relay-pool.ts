@@ -28,6 +28,12 @@ export interface UseRelayPoolDeps {
     relayUrl: string,
     nextStatus: "connected" | "read-only" | "verification-failed"
   ) => void;
+  attachActiveSubscriptionsToRelay: (
+    ndkInstance: NDK,
+    relayUrl: string,
+    options?: { onlyMissing?: boolean }
+  ) => void;
+  markRelayAuthGated: (normalizedRelayUrl: string) => void;
   scheduleRelayTimeout: (callback: () => void, delayMs: number) => number;
   resolveRelayConnectRetryDelay: (failureCount: number) => number;
   relayDocumentRef: MutableRefObject<Map<string, NDKRelayInformation>>;
@@ -195,7 +201,28 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
 
   const attachPoolHandlers = useCallback((ndkInstance: NDK): (() => void) => {
     const onRelayConnecting = (relay: NDKRelay) => handleRelayConnecting(ndkInstance, relay);
-    const onRelayConnect = (relay: NDKRelay) => handleRelayConnect(ndkInstance, relay);
+    const onRelayConnect = (relay: NDKRelay) => {
+      handleRelayConnect(ndkInstance, relay);
+      // A socket just opened. NDK never re-attaches active subscriptions on its
+      // own — not for new instances, not for same-instance reconnects. This
+      // dispatch runs synchronously before NDK emits "ready", so a blind replay
+      // is safe: WAITING subs dedup via addItem, and any RUNNING per-relay sub
+      // belongs to the previous, dead socket. (The manual drift-correction call
+      // to handleRelayConnect in reconcileRelayStatusesFromPool deliberately
+      // skips this — its socket may be live with in-flight REQs.)
+      const normalized = normalizeRelayUrl(relay.url);
+      if (removedRelaysRef.current.has(normalized)) return;
+      const pooledRelay = ndkInstance.pool.relays.get(normalized);
+      if (pooledRelay && pooledRelay !== relay) return;
+      depsRef.current.attachActiveSubscriptionsToRelay(ndkInstance, normalized);
+    };
+
+    // Remember every relay that issues a NIP-42 challenge — even when auth
+    // succeeds. On the next signer change these relays need a fresh socket
+    // (most relays challenge only once per connection).
+    const onRelayAuthChallenge = (relay: NDKRelay) => {
+      depsRef.current.markRelayAuthGated(normalizeRelayUrl(relay.url));
+    };
 
     const onRelayAuthed = (relay: NDKRelay) => {
       const {
@@ -285,12 +312,14 @@ export function useRelayPool(depsRef: MutableRefObject<UseRelayPoolDeps>) {
 
     ndkInstance.pool.on("relay:connecting", onRelayConnecting);
     ndkInstance.pool.on("relay:connect", onRelayConnect);
+    ndkInstance.pool.on("relay:auth", onRelayAuthChallenge);
     ndkInstance.pool.on("relay:authed", onRelayAuthed);
     ndkInstance.pool.on("relay:disconnect", onRelayDisconnect);
 
     return () => {
       ndkInstance.pool.off("relay:connecting", onRelayConnecting);
       ndkInstance.pool.off("relay:connect", onRelayConnect);
+      ndkInstance.pool.off("relay:auth", onRelayAuthChallenge);
       ndkInstance.pool.off("relay:authed", onRelayAuthed);
       ndkInstance.pool.off("relay:disconnect", onRelayDisconnect);
     };

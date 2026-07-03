@@ -206,6 +206,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     endRelayOperation,
     tryRecordAuthPreflight,
     forgetAuthPreflight,
+    relayAuthGatedRef,
+    markRelayAuthGated,
+    forgetRelayAuthGated,
     clearAuthSessionState,
   } = useRelayVerification({
     updateRelayEntry,
@@ -251,7 +254,23 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     [ndk, beginRelayOperation, endRelayOperation, scheduleRelayTimeout, clearTrackedRelayTimeout],
   );
 
-  const replayActiveSubscriptionsForRelay = useCallback((ndkInstance: NDK, relayUrl: string) => {
+  // Attach the app's active NDKSubscriptions to a relay. NDK never re-sends a
+  // relay's REQs across socket transitions on its own (its onConnect only emits
+  // connect/ready; RUNNING per-relay subs whose socket died stay orphaned), so
+  // we drive this at every socket (re)establishment and from the heartbeat.
+  //
+  // onlyMissing=false (relay:connect): blind re-attach. Safe because the pool's
+  // relay:connect dispatch runs synchronously BEFORE NDK emits "ready" — at that
+  // moment WAITING subs dedup via addItem and any RUNNING per-relay sub belongs
+  // to the previous, dead socket.
+  // onlyMissing=true (heartbeat): only attach subscriptions with no per-relay
+  // sub on this instance — NDK removes CLOSED ones from relay.subs, so presence
+  // means live-or-pending. Catches relay-side CLOSED with no follow-up event.
+  const attachActiveSubscriptionsToRelay = useCallback((
+    ndkInstance: NDK,
+    relayUrl: string,
+    options?: { onlyMissing?: boolean }
+  ) => {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     const relay = ndkInstance.pool.relays.get(normalizedRelayUrl);
     if (!relay) return;
@@ -259,18 +278,31 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const activeSubscriptions = ndkInstance.subManager?.subscriptions;
     if (!activeSubscriptions || activeSubscriptions.size === 0) return;
 
-    let replayedSubscriptions = 0;
+    const relaySubGroups = (relay as unknown as {
+      subs?: { subscriptions?: Map<string, Array<{ items?: Map<string, unknown> }>> };
+    }).subs?.subscriptions;
+    const hasLiveRelaySub = (internalId: string): boolean => {
+      if (!relaySubGroups) return false;
+      for (const group of relaySubGroups.values()) {
+        if (group.some((relaySub) => relaySub.items?.has(internalId))) return true;
+      }
+      return false;
+    };
+
+    let attachedSubscriptions = 0;
     activeSubscriptions.forEach((subscription) => {
       const relayFilters = subscription.relayFilters?.get(normalizedRelayUrl) ?? subscription.filters;
       if (!Array.isArray(relayFilters) || relayFilters.length === 0) return;
+      if (options?.onlyMissing && hasLiveRelaySub(subscription.internalId)) return;
       relay.subscribe(subscription, relayFilters);
-      replayedSubscriptions += 1;
+      attachedSubscriptions += 1;
     });
 
-    if (replayedSubscriptions > 0) {
-      nostrDevLog("relay", "Replayed active subscriptions for relay", {
+    if (attachedSubscriptions > 0) {
+      nostrDevLog("relay", "Attached active subscriptions to relay", {
         relayUrl: normalizedRelayUrl,
-        replayedSubscriptions,
+        attachedSubscriptions,
+        onlyMissing: options?.onlyMissing ?? false,
       });
     }
   }, []);
@@ -283,44 +315,36 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     const currentRelays = relaysRef.current;
     let touchedRelay = false;
     let hasReconnectRelay = false;
+    const reconnectedRelayUrls = new Set<string>();
 
     currentRelays.forEach((relay) => {
       const relayUrl = normalizeRelayUrl(relay.url);
       const needsReconnect = shouldReconnectRelayAfterSignIn(relay);
-      const shouldPrimeAuth = needsReconnect || Boolean(relay.nip11?.supportsNip42 || relay.nip11?.authRequired);
+      // Any relay known to gate on auth needs a FRESH socket after a signer
+      // change: most relays send the NIP-42 AUTH challenge only once per
+      // connection, and a socket whose auth was consumed (or poisoned by the
+      // previous identity's failed attempt) will just CLOSED-auth-required
+      // again without re-challenging.
+      const isAuthGated = Boolean(relay.nip11?.supportsNip42 || relay.nip11?.authRequired)
+        || relayAuthGatedRef.current.has(relayUrl);
+      const forceNewSocket = needsReconnect || isAuthGated;
 
-      if (!needsReconnect && !shouldPrimeAuth) {
+      if (!forceNewSocket) {
         return;
       }
 
       touchedRelay = true;
-      if (needsReconnect) {
-        hasReconnectRelay = true;
-      }
-      if (needsReconnect) {
-        relayConnectFailureCountsRef.current.delete(relayUrl);
-        relayAuthRetryHistoryRef.current.delete(relayUrl);
-        pendingRelayVerificationRef.current.delete(relayUrl);
-      }
-      if (shouldPrimeAuth) {
-        // Force a fresh auth challenge pass immediately after sign-in.
-        forgetAuthPreflight(relayUrl);
-      }
-      // Only force a new socket for relays that need reconnecting. Healthy connected relays
-      // can receive a fresh NIP-42 challenge on the existing socket via primeRelayAuthChallenge;
-      // their existing subs already registered once("authed", reExecuteAfterAuth) inside NDK,
-      // so they re-issue automatically when the new auth round succeeds.
-      connectManagedRelay(ndk, relayUrl, {
-        forceNewSocket: needsReconnect,
-      });
-      if (needsReconnect) {
-        // Fresh NDKRelay instance has no subs; attach the active ones explicitly.
-        // NDK will queue them until the new socket is ready and (for NIP-42) authed.
-        replayActiveSubscriptionsForRelay(ndk, relayUrl);
-      }
-      if (shouldPrimeAuth) {
-        primeRelayAuthChallenge(ndk, relayUrl);
-      }
+      hasReconnectRelay = true;
+      reconnectedRelayUrls.add(relayUrl);
+      relayConnectFailureCountsRef.current.delete(relayUrl);
+      relayConnectedOnceRef.current.delete(relayUrl);
+      relayAuthRetryHistoryRef.current.delete(relayUrl);
+      pendingRelayVerificationRef.current.delete(relayUrl);
+      // Force a fresh auth challenge pass immediately after sign-in.
+      forgetAuthPreflight(relayUrl);
+      // The new socket's relay:connect event replays active subscriptions.
+      connectManagedRelay(ndk, relayUrl, { forceNewSocket });
+      primeRelayAuthChallenge(ndk, relayUrl);
     });
 
     if (!touchedRelay) return;
@@ -328,7 +352,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     if (hasReconnectRelay) {
       setRelays((previous) =>
         previous.map((relay) =>
-          shouldReconnectRelayAfterSignIn(relay)
+          reconnectedRelayUrls.has(normalizeRelayUrl(relay.url))
             ? { ...relay, status: "connecting" }
             : relay
         )
@@ -341,7 +365,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // Intentionally omits stable refs and setters; adding callbacks here would
     // recreate this handler whenever upstream identities churn.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, replayActiveSubscriptionsForRelay]);
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge]);
 
   // Sync pool-hook deps every render so attach-time handlers see latest callbacks.
   poolDepsRef.current = {
@@ -352,6 +376,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     primeRelayAuthChallenge,
     markRelayVerificationSuccess,
     updateRelayCapabilityStatus,
+    attachActiveSubscriptionsToRelay,
+    markRelayAuthGated,
     scheduleRelayTimeout,
     resolveRelayConnectRetryDelay,
     relayDocumentRef,
@@ -482,18 +508,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // useEffect correctly update status via resolveConnectedRelayStatus; we do not attach
     // per-relay listeners here to avoid: hardcoded "connected" overriding write-rejected
     // state, leaked beginRelayOperation("read") calls, and listener accumulation on re-add.
+    // The new relay's relay:connect event replays active subscriptions onto it.
     connectManagedRelay(ndk, normalized);
-
-    // Active subs were registered with NDK's sub-manager before this relay joined the pool,
-    // so NDK won't add the new NDKRelay to existing per-relay sub records. Attach them now;
-    // NDK queues them until the socket is ready (and, for NIP-42, until authed).
-    replayActiveSubscriptionsForRelay(ndk, normalized);
     if (ndk.signer) {
       primeRelayAuthChallenge(ndk, normalized);
     }
     // Stable refs and setRelays intentionally omitted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, probeRelayInfo, replayActiveSubscriptionsForRelay]);
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, probeRelayInfo]);
 
   const connectResolvedAuthRelayUrls = useCallback((relayUrls: string[]) => {
     relayUrls
@@ -605,6 +627,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     relayConnectFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     forgetAuthPreflight(normalized);
+    forgetRelayAuthGated(normalized);
     clearRelayInfo(normalized);
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
 
@@ -648,12 +671,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       reconnectMode: forceNewSocket ? "hard" : "soft",
     });
 
+    // Any resulting socket (re)establishment replays active subscriptions via
+    // the relay:connect handler.
     const relay = connectManagedRelay(ndk, normalized, { forceNewSocket });
-    if (forceNewSocket) {
-      // Fresh NDKRelay has no subs; re-attach active ones. Soft reconnects reuse
-      // the existing instance which still holds its subs.
-      replayActiveSubscriptionsForRelay(ndk, normalized);
-    }
     if (ndk.signer) {
       primeRelayAuthChallenge(ndk, normalized);
     }
@@ -666,7 +686,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     });
     // Stable refs intentionally omitted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, updateRelayEntry]);
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, resolveConnectedRelayStatus, updateRelayEntry]);
 
   // Periodic + visibility-triggered reconciliation of React relay state against
   // NDK's pool. Catches two divergence sources nothing else fixes uniformly:
@@ -690,6 +710,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       stuckOnTransport.forEach((relayUrl) => {
         reconnectRelay(relayUrl, { forceNewSocket: true });
       });
+      // Subscription-level reconciliation: re-attach any active subscription the
+      // relay no longer holds (e.g. relay-side CLOSED with no follow-up event).
+      relaysRef.current.forEach((relay) => {
+        if (removedRelaysRef.current.has(relay.url)) return;
+        if (relay.status !== "connected" && relay.status !== "read-only") return;
+        attachActiveSubscriptionsToRelay(ndk, relay.url, { onlyMissing: true });
+      });
     };
     const onVisibilityChange = () => {
       if (document.visibilityState !== "visible") return;
@@ -706,7 +733,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("online", reconcile);
     };
-  }, [ndk, reconcileRelayStatusesFromPool, reconnectRelay]);
+  }, [attachActiveSubscriptionsToRelay, ndk, reconcileRelayStatusesFromPool, reconnectRelay, relaysRef, removedRelaysRef]);
 
   const { publishEvent, signEvent, broadcastSignedEvent } = usePublish({
     ndk,

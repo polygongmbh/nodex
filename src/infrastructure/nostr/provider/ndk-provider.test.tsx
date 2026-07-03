@@ -1329,7 +1329,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
   });
 
-  it("retries verification-failed relays after signing in again without forcing a new socket", async () => {
+  it("gives auth-gated relays a fresh socket and replays subscriptions on re-sign-in", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
         <Harness />
@@ -1363,10 +1363,48 @@ describe("NDKProvider relay lifecycle", () => {
       fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
     });
 
+    // The relay proved auth-gated (CLOSED auth-required), and most relays send
+    // the NIP-42 challenge only once per connection — so the new identity needs
+    // a fresh socket, with active subscriptions re-attached to the new instance.
     await waitFor(() => {
-      expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
-      expect(firstRelay.disconnectCalls).toBe(0);
+      const createdRelays = ndk.pool.getCreatedRelays("wss://relay.one");
+      expect(createdRelays).toHaveLength(2);
       expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
+      const replacementRelay = createdRelays[1];
+      expect(replacementRelay.subscribeCalls.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("replays active subscriptions when the same relay instance reconnects", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one/:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "start subscription" }));
+    });
+
+    const subscribeCallsBeforeReconnect = relay.subscribeCalls.length;
+
+    // Same-instance socket drop + reconnect (sleep/wake, NDK-internal retry):
+    // NDK leaves the previous REQs orphaned, so the relay:connect handler must
+    // re-attach the active subscriptions.
+    await act(async () => {
+      relay.disconnect();
+      relay.connect();
+    });
+
+    await waitFor(() => {
+      expect(relay.subscribeCalls.length).toBeGreaterThan(subscribeCallsBeforeReconnect);
     });
   });
 
