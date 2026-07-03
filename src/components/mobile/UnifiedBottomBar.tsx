@@ -659,7 +659,10 @@ export function UnifiedBottomBar({
       isEventSubmit && eventDraft
         ? [
             buildEntry(eventDraft.start, eventDraft.time, "start"),
-            ...(eventDraft.end ? [buildEntry(eventDraft.end, eventDraft.time, "end")] : []),
+            // An end time without an end date is a same-day timed event.
+            ...(eventDraft.end || eventDraft.endTime
+              ? [buildEntry(eventDraft.end ?? eventDraft.start, eventDraft.endTime, "end")]
+              : []),
           ]
         : dates;
     const submitTitledPost =

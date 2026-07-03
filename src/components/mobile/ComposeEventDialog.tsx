@@ -19,11 +19,13 @@ import {
  * The minimal event description the mobile composer attaches to a message to
  * turn it into a NIP-52 calendar event. `time` (HH:MM) being set makes the
  * event time-based (kind 31923); otherwise it is all-day (kind 31922).
+ * `endTime` may be set without `end` — that's a same-day timed event.
  */
 export interface ComposeEventDraft {
   start: Date;
   end?: Date;
   time?: string;
+  endTime?: string;
   title?: string;
   location?: string;
 }
@@ -39,6 +41,7 @@ export function ComposeEventDialog({ open, initialDraft, onConfirm, onCancel }: 
   const { t } = useTranslation("composer");
   const [range, setRange] = useState<DateRange | undefined>(undefined);
   const [time, setTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
 
@@ -48,6 +51,7 @@ export function ComposeEventDialog({ open, initialDraft, onConfirm, onCancel }: 
     if (!open) return;
     setRange(initialDraft ? { from: initialDraft.start, to: initialDraft.end } : undefined);
     setTime(initialDraft?.time ?? "");
+    setEndTime(initialDraft?.endTime ?? "");
     setTitle(initialDraft?.title ?? "");
     setLocation(initialDraft?.location ?? "");
   }, [open, initialDraft]);
@@ -61,6 +65,7 @@ export function ComposeEventDialog({ open, initialDraft, onConfirm, onCancel }: 
       start,
       end,
       time: time.trim() || undefined,
+      endTime: endTime.trim() || undefined,
       title: title.trim() || undefined,
       location: location.trim() || undefined,
     });
@@ -100,10 +105,20 @@ export function ComposeEventDialog({ open, initialDraft, onConfirm, onCancel }: 
                 title={t("composer.event.startTime")}
                 className="border-0 bg-transparent px-0 h-8"
               />
-              {time && (
+              <span className="text-muted-foreground/60 select-none">–</span>
+              <TaskTimeInput
+                value={endTime}
+                onChange={setEndTime}
+                title={t("composer.event.endTime")}
+                className="border-0 bg-transparent px-0 h-8"
+              />
+              {(time || endTime) && (
                 <button
                   type="button"
-                  onClick={() => setTime("")}
+                  onClick={() => {
+                    setTime("");
+                    setEndTime("");
+                  }}
                   className="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground"
                   title={t("composer.event.allDay")}
                 >
@@ -112,7 +127,7 @@ export function ComposeEventDialog({ open, initialDraft, onConfirm, onCancel }: 
               )}
             </div>
             <span className="text-xs text-muted-foreground">
-              {time ? "" : t("composer.event.allDay")}
+              {time || endTime ? "" : t("composer.event.allDay")}
             </span>
           </div>
 

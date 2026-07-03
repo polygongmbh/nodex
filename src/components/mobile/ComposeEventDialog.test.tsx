@@ -35,6 +35,23 @@ describe("ComposeEventDialog", () => {
     expect(draft.location).toBe("HQ");
     // No time entered ⇒ all-day event.
     expect(draft.time).toBeUndefined();
+    expect(draft.endTime).toBeUndefined();
+  });
+
+  it("emits start and end times for a timed event", () => {
+    const onConfirm = vi.fn();
+    render(<ComposeEventDialog open initialDraft={null} onConfirm={onConfirm} onCancel={vi.fn()} />);
+
+    fireEvent.click(screen.getByText("Select calendar date"));
+
+    const [startHours, endHours] = screen.getAllByTestId("task-time-input-hours");
+    fireEvent.change(startHours, { target: { value: "14" } });
+    fireEvent.change(endHours, { target: { value: "16" } });
+    fireEvent.click(screen.getByTestId("compose-event-confirm"));
+
+    const draft = onConfirm.mock.calls[0][0] as ComposeEventDraft;
+    expect(draft.time).toBe("14:00");
+    expect(draft.endTime).toBe("16:00");
   });
 
   it("calls onCancel from the cancel button", () => {
