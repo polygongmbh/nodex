@@ -291,6 +291,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     let attachedSubscriptions = 0;
     activeSubscriptions.forEach((subscription) => {
+      // One-shot fetches (closeOnEose) are point-in-time queries: their
+      // per-relay subs remove themselves after EOSE (so they always look
+      // "missing"), and an auth-gated relay answering CLOSED instead of EOSE
+      // leaves the parent sub in subManager forever. Replaying those would
+      // re-issue every historical fetch on each connect/tick. Only persistent
+      // subscriptions carry live state worth re-attaching.
+      if (subscription.closeOnEose) return;
       const relayFilters = subscription.relayFilters?.get(normalizedRelayUrl) ?? subscription.filters;
       if (!Array.isArray(relayFilters) || relayFilters.length === 0) return;
       if (options?.onlyMissing && hasLiveRelaySub(subscription.internalId)) return;
