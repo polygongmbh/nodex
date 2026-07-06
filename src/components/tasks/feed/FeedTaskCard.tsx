@@ -97,12 +97,12 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const hasAnyReaction = Object.keys(reactions?.totals ?? {}).length > 0;
   const handleMenuReact = (emoji: string) => {
     void publishReaction(
-      { id: task.id, kind: task.kind, pubkey: task.pubkey, relayIds: task.relayIds },
+      { id: task.id, kind: task.kind, pubkey: task.pubkey, relayIds: task.relays },
       emoji,
     );
   };
   const handleMenuUnreact = (emoji: string) => {
-    void publishUnreact(task.id, emoji, task.relayIds);
+    void publishUnreact(task.id, emoji, task.relays);
   };
   const { focusTask } = useTaskViewServices();
   const activeRelayCount = relays.filter((relay) => relay.isActive).length;
