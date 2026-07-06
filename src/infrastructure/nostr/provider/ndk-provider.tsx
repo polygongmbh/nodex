@@ -433,7 +433,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // per-relay attribution preserved across hydration, which NDK's event
     // cache adapters don't carry.
     const ndkInstance = new NDK({
-      explicitRelayUrls: resolvedDefaultRelays,
+      // Copy, never the memoized array itself: NDK stores explicitRelayUrls by
+      // reference and addRelay mutates it in place (ndk.explicitRelayUrls.push).
+      // Passing resolvedDefaultRelays directly would let that mutation change the
+      // memo, flipping resolvedDefaultRelaysKey and rebuilding NDK on every add.
+      explicitRelayUrls: [...resolvedDefaultRelays],
       cacheAdapter: ndkMetadataCacheAdapter,
       // NDK defaults to true: on signer set, it fetches the user's kind 3 / 10002 and
       // silently connects to every relay listed there, bypassing our relay-state tracking.

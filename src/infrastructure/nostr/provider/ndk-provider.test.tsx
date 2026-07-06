@@ -226,9 +226,16 @@ const mockedNdk = vi.hoisted(() => {
     relayAuthDefaultPolicy: unknown;
     subManager: { subscriptions: Map<string, unknown> };
     subscribeCalls: Array<{ filters: unknown; options: unknown }>;
+    // Real NDK stores the passed explicitRelayUrls array BY REFERENCE, and
+    // addRelay mutates it in place (ndk.explicitRelayUrls.push). Replicate that
+    // aliasing so a caller that passes its memoized array (instead of a copy)
+    // is caught: the mutation would flip the init effect's content key and
+    // rebuild NDK, creating a second instance.
+    explicitRelayUrls?: string[];
     private subscriptionCounter = 0;
 
     constructor(options: { explicitRelayUrls?: string[] }) {
+      this.explicitRelayUrls = options.explicitRelayUrls;
       this.pool = new FakePool(options.explicitRelayUrls ?? []);
       this.signer = undefined;
       this.relayAuthDefaultPolicy = undefined;
