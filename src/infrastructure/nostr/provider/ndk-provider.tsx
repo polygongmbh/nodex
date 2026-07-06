@@ -393,8 +393,38 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     pendingRelayVerificationRef,
   };
 
+  // The NDK init effect keys ONLY on the relay-set content — it reads these
+  // callbacks from a ref so that a callback re-identifying on a later render
+  // (e.g. once after mount) cannot re-run the effect and tear down + rebuild
+  // the whole NDK instance (every relay socket would close and reopen).
+  const initDepsRef = useRef({
+    attachPoolHandlers,
+    clearAllTrackedRelayTimeouts,
+    createRestoreSession,
+    hydrateStartupCache,
+    notifyRelayVerificationEvent,
+    probeRelayInfo,
+  });
+  initDepsRef.current = {
+    attachPoolHandlers,
+    clearAllTrackedRelayTimeouts,
+    createRestoreSession,
+    hydrateStartupCache,
+    notifyRelayVerificationEvent,
+    probeRelayInfo,
+  };
+  const resolvedDefaultRelaysKey = resolvedDefaultRelays.join(",");
+
   // Initialize NDK
   useEffect(() => {
+    const {
+      attachPoolHandlers,
+      clearAllTrackedRelayTimeouts,
+      createRestoreSession,
+      hydrateStartupCache,
+      notifyRelayVerificationEvent,
+      probeRelayInfo,
+    } = initDepsRef.current;
     nostrDevLog("provider", "Initializing NDK provider", {
       configuredDefaultRelays: resolvedDefaultRelays,
     });
@@ -460,10 +490,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         relay.disconnect();
       });
     };
-    // Init-only effect: omits refs and setRelays intentionally — they are stable
-    // and re-running this would tear down NDK and reconnect every relay.
+    // Keyed on relay-set CONTENT only: this rebuilds NDK when the configured
+    // relay set genuinely changes (e.g. async fallback populates it), NOT when a
+    // callback re-identifies or a new-array-same-content update arrives — either
+    // of which would needlessly tear down NDK and reconnect every relay. Callbacks
+    // are read from initDepsRef above; refs and setters are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attachPoolHandlers, clearAllTrackedRelayTimeouts, createRestoreSession, hydrateStartupCache, notifyRelayVerificationEvent, probeRelayInfo, resolvedDefaultRelays]);
+  }, [resolvedDefaultRelaysKey]);
 
   const addRelay = useCallback((url: string) => {
     if (!ndk) return;
