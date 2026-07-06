@@ -34,10 +34,8 @@ import { resolveSubmissionTags } from "@/lib/submission-tags";
 import {   resolveRelaySelectionForSubmission, } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
-import {   buildImetaTag, extractEmbeddableAttachmentsFromContent, normalizePublishedAttachments, } from "@/lib/attachments";
-import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
-import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
-import { buildStandaloneCalendarEvent } from "@/infrastructure/nostr/nip52-task-calendar-events";
+import { extractEmbeddableAttachmentsFromContent, normalizePublishedAttachments } from "@/lib/attachments";
+import { buildPublishPayload, deriveCalendarTimes } from "@/infrastructure/nostr/build-publish-payload";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { SignedNostrEvent } from "@/infrastructure/nostr/provider/use-publish";
 import { usePreferencesStore } from "@/features/feed-page/stores/preferences-store";
@@ -323,12 +321,7 @@ export function useTaskPublishFlow({
 
     const normalizedTaskType: TaskEntryType = normalizedPostType === "task" ? "task" : "comment";
     const isEventSubmission = normalizedPostType === "event";
-    const startEntry = dates.find((d) => d.type === "start");
-    const endEntry = dates.find((d) => d.type === "end");
-    const eventStartDateTime = startEntry ? getTaskLocalDate(startEntry) : undefined;
-    const eventEndDateTime = endEntry ? getTaskLocalDate(endEntry) : undefined;
-    const eventIsAllDay =
-      isEventSubmission && (!startEntry || isDateOnlyTaskDate(startEntry)) && (!endEntry || isDateOnlyTaskDate(endEntry));
+    const { eventStartDateTime, eventEndDateTime, eventIsAllDay } = deriveCalendarTimes(dates, isEventSubmission);
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
@@ -453,71 +446,20 @@ export function useTaskPublishFlow({
       return fallbackAuthor;
     })();
 
-    const eventBuilt = isEventSubmission && eventStartDateTime
-      ? buildStandaloneCalendarEvent({
-          title: titledPost?.title?.trim() || content.slice(0, 200),
-          content,
-          start: eventStartDateTime,
-          end: eventEndDateTime,
-          isAllDay: eventIsAllDay,
-          summary: titledPost?.summary?.trim() || undefined,
-          location: titledPost?.location?.trim() || undefined,
-          mentions: undefined,
-        })
-      : undefined;
-    const publishKind: NostrEventKind =
-      eventBuilt?.kind ??
-      (normalizedPostType === "task"
-        ? NostrEventKind.Task
-        : normalizedPostType === "listing"
-          ? NostrEventKind.ClassifiedListing
-          : NostrEventKind.TextNote);
-    const validParentId = submissionParentId && /^[a-f0-9]{64}$/i.test(submissionParentId) ? submissionParentId : undefined;
-    const primaryRelayUrl = selectedRelayUrls[0] ?? "";
-    const publishTags = shouldPublish
-      ? (
-          eventBuilt
-            ? [
-                ...eventBuilt.tags,
-                ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
-                ...resolvedSubmissionTags.map((tag) => ["t", tag] as string[]),
-                ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
-              ]
-            : normalizedTaskType === "task"
-              ? buildTaskPublishTags(
-                  validParentId,
-                  primaryRelayUrl,
-                  assigneePubkeys || [],
-                  priority,
-                  resolvedSubmissionTags,
-                  normalizedAttachments,
-                  normalizedLocationGeohash
-                )
-              : normalizedPostType === "listing"
-                ? buildNip99PublishTags({
-                    metadata: nip99,
-                    titledPost,
-                    hashtags: resolvedSubmissionTags,
-                    mentionPubkeys,
-                    attachmentTags: normalizedAttachments
-                      .map((attachment) => buildImetaTag(attachment))
-                      .filter((tag) => tag.length > 0),
-                    fallbackTitle: content.slice(0, 80),
-                    statusOverride: (nip99?.status || "active") as Nip99ListingStatus,
-                    locationGeohash: normalizedLocationGeohash,
-                  })
-                : [
-                    ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
-                    ...resolvedSubmissionTags.map((tag) => ["t", tag] as string[]),
-                    ...normalizedAttachments
-                      .map((attachment) => buildImetaTag(attachment))
-                      .filter((tag) => tag.length > 0),
-                    ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
-                  ]
-        )
-      : [];
-    const publishParentId =
-      shouldPublish && normalizedTaskType === "comment" && validParentId ? validParentId : undefined;
+    const { kind: publishKind, tags: publishTags, parentId: publishParentId } = buildPublishPayload({
+      content,
+      postType: normalizedPostType,
+      dates,
+      submissionTags: resolvedSubmissionTags,
+      mentionPubkeys,
+      attachments: normalizedAttachments,
+      locationGeohash: normalizedLocationGeohash,
+      parentId: submissionParentId && /^[a-f0-9]{64}$/i.test(submissionParentId) ? submissionParentId : undefined,
+      primaryRelayUrl: selectedRelayUrls[0] ?? "",
+      priority,
+      titledPost,
+      nip99,
+    });
 
     const buildFailedPublishDraft = (
       fallbackKind: NostrEventKind,
@@ -581,7 +523,7 @@ export function useTaskPublishFlow({
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
     const buildPost = (id: string): Post => {
-      if (isEventSubmission && eventStartDateTime && eventBuilt) {
+      if (isEventSubmission && eventStartDateTime) {
         const titledBase = {
           ...baseFields,
           id,
