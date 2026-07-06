@@ -1,16 +1,51 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   bootstrapReactions,
+  getReactionsForTarget,
   __resetReactionsRegistryForTests,
 } from "@/features/feed-page/stores/reactions-registry";
 
 const publishEvent = vi.fn();
 let mockUser: { pubkey: string } | null = { pubkey: "viewer-pk" };
 
+// A minimal fake NDK subscription the reaction batcher can drive. Each subscribe
+// call records its filters and exposes emit()/stop() so tests can simulate the
+// relay stream and assert lifecycle.
+interface FakeSub {
+  filters: Array<{ kinds?: number[]; "#e"?: string[] }>;
+  listeners: Map<string, Array<(...args: unknown[]) => void>>;
+  stopped: boolean;
+  emit: (event: string, ...args: unknown[]) => void;
+}
+const subscribeCalls: FakeSub[] = [];
+const fakeNdk = {
+  subscribe(filters: FakeSub["filters"]) {
+    const listeners = new Map<string, Array<(...args: unknown[]) => void>>();
+    const sub: FakeSub & { on: (e: string, cb: (...a: unknown[]) => void) => void; stop: () => void } = {
+      filters,
+      listeners,
+      stopped: false,
+      on(event, cb) {
+        const arr = listeners.get(event) ?? [];
+        arr.push(cb);
+        listeners.set(event, arr);
+      },
+      stop() {
+        this.stopped = true;
+      },
+      emit(event, ...args) {
+        listeners.get(event)?.forEach((cb) => cb(...args));
+      },
+    };
+    subscribeCalls.push(sub);
+    return sub;
+  },
+};
+
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
-  useNDK: () => ({ ndk: {}, user: mockUser, publishEvent }),
+  useNDK: () => ({ ndk: fakeNdk, user: mockUser, publishEvent }),
 }));
 
 // The reaction controller resolves the reacted-to post's relay ids to URLs via the feed-surface
@@ -49,7 +84,96 @@ beforeEach(() => {
   publishEvent.mockResolvedValue({ success: true, eventId: "r1", targetRelayUrls: EXPECTED_URLS, publishedRelayUrls: EXPECTED_URLS });
   mockUser = { pubkey: "viewer-pk" };
   Object.values(notify).forEach((fn) => fn.mockClear());
+  subscribeCalls.length = 0;
   __resetReactionsRegistryForTests();
+});
+
+describe("useReactions.ensureReactionsFetched (batching)", () => {
+  it("coalesces per-target fetches from a mount burst into one merged REQ", () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useReactions());
+      act(() => {
+        result.current.ensureReactionsFetched("post-a");
+        result.current.ensureReactionsFetched("post-b");
+        result.current.ensureReactionsFetched("post-c");
+      });
+      expect(subscribeCalls).toHaveLength(0); // nothing until the flush timer fires
+      act(() => {
+        vi.advanceTimersByTime(60);
+      });
+      expect(subscribeCalls).toHaveLength(1);
+      expect(subscribeCalls[0].filters[0]).toEqual({
+        kinds: [NostrEventKind.Reaction],
+        "#e": ["post-a", "post-b", "post-c"],
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("merges received reactions and stops the sub on eose", () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useReactions());
+      act(() => {
+        result.current.ensureReactionsFetched("post-x");
+        vi.advanceTimersByTime(60);
+      });
+      const sub = subscribeCalls[0];
+      act(() => {
+        sub.emit("event", { id: "r-x", pubkey: "someone", kind: NostrEventKind.Reaction, tags: [["e", "post-x"]], content: "👍" });
+        sub.emit("eose");
+      });
+      expect(sub.stopped).toBe(true);
+      expect(getReactionsForTarget("post-x")?.totals["👍"]).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops the sub and allows retry when the relay CLOSEs instead of EOSEing", () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useReactions());
+      act(() => {
+        result.current.ensureReactionsFetched("post-y");
+        vi.advanceTimersByTime(60);
+      });
+      const first = subscribeCalls[0];
+      act(() => {
+        first.emit("closed", {}, "auth-required");
+      });
+      expect(first.stopped).toBe(true);
+      // Un-stamped on a non-EOSE end → a fresh mount re-batches it.
+      act(() => {
+        result.current.ensureReactionsFetched("post-y");
+        vi.advanceTimersByTime(60);
+      });
+      expect(subscribeCalls).toHaveLength(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops a sub that never EOSEs after the timeout", () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useReactions());
+      act(() => {
+        result.current.ensureReactionsFetched("post-z");
+        vi.advanceTimersByTime(60);
+      });
+      const sub = subscribeCalls[0];
+      expect(sub.stopped).toBe(false);
+      act(() => {
+        vi.advanceTimersByTime(5_000);
+      });
+      expect(sub.stopped).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("useReactions.react", () => {

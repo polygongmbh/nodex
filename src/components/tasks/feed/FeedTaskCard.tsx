@@ -91,7 +91,7 @@ export const FeedTaskCard = memo(function FeedTaskCard({
   const { react: publishReaction, unreact: publishUnreact, ensureReactionsFetched } = useReactions();
   const reactions = useReactionsFor(task.id);
   useEffect(() => {
-    void ensureReactionsFetched(task.id);
+    ensureReactionsFetched(task.id);
   }, [task.id, ensureReactionsFetched]);
   const { relays } = useFeedSurfaceState();
   const hasAnyReaction = Object.keys(reactions?.totals ?? {}).length > 0;
