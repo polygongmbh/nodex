@@ -36,6 +36,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile channel chips now light up every included channel, so a multi-channel scope (selected from the sidebar / Manage pane) highlights all of those chips at once instead of none. The burger/manage chip is now a true toggle: tapping it while the Manage pane is open closes it again.
 - Fixed: while signed out the mobile composer's send button is a sign-in affordance, so tapping it now opens the sign-in popup directly instead of running submit-time checks and complaining about (for example) no channel being selected.
 - The startup Welcome popover can now be dismissed with a close (X) button or by clicking outside it, and no longer offers a "Start the Tour" action — the onboarding guide is opened from the sidebar *Guide* / mobile *Manage* instead.
+- Fixed: retrying or reposting a failed publish now rebuilds the post from its saved content instead of replaying a frozen copy of the original attempt — so the parent-reply relay hint reflects the relays actually targeted, and retrying a failed recompose properly replaces the original post instead of leaving it behind. The failed-publish banner also gained an **Edit** action that reopens the post in the composer to fix and resend.
 
 ## [4.1.0] - 2026-06-07
 Minor release for Status view creation shortcuts, kanban compose hints, recomposition context fixes, relay recovery, and profile/presence cleanup.

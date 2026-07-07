@@ -874,6 +874,40 @@ export function useTaskPublishFlow({
     setFailedPublishDrafts([]);
   }, [setFailedPublishDrafts]);
 
+  const handleEditFailedPublish = useCallback((draftId: string): void => {
+    if (guardInteraction("modify")) return;
+    const draft = failedPublishDrafts.find((item) => item.id === draftId);
+    if (!draft) return;
+
+    const inlineHashtags = new Set(extractHashtagsFromContent(draft.content).map((tag) => tag.toLowerCase()));
+    const explicitTagNames = draft.tags
+      .map((tag) => tag.trim().toLowerCase())
+      .filter((tag) => tag && !inlineHashtags.has(tag));
+
+    const knownRelayIds = new Set(relays.map((relay) => relay.id));
+    const matchingRelayIds = draft.relayIds.filter((id) => knownRelayIds.has(id));
+    if (matchingRelayIds.length > 0) {
+      useFilterStore.getState().setActiveRelayIds(new Set(matchingRelayIds));
+    }
+
+    const restoreState: ComposerDraft = {
+      content: draft.content,
+      postType: draft.postType,
+      dates: rehydrateSerializedDates(draft.dates),
+      titledPost: { ...(draft.titledPost ?? {}) },
+      nip99: draft.nip99 ?? { status: "active" },
+      attachments: draft.attachments ?? [],
+      explicitTagNames,
+      explicitMentionPubkeys: draft.mentionPubkeys,
+      priority: displayPriorityFromStored(draft.priority),
+      locationGeohash: draft.locationGeohash,
+      recomposeOf: draft.recomposeOf,
+    };
+
+    setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
+    setComposeRestoreRequest({ id: Date.now(), state: restoreState });
+  }, [failedPublishDrafts, guardInteraction, relays, setFailedPublishDrafts]);
+
   const handleDueDateChange = useCallback((
     taskId: string,
     dueDate: Date | undefined,
@@ -1038,6 +1072,7 @@ export function useTaskPublishFlow({
     handleNewTask,
     handleRetryFailedPublish,
     handleRepostFailedPublish,
+    handleEditFailedPublish,
     handleDismissFailedPublish,
     handleDismissAllFailedPublish,
     handleDueDateChange,

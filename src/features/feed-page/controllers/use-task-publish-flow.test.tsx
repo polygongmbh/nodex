@@ -223,6 +223,36 @@ describe("useTaskPublishFlow", () => {
     expect(publishEvent).toHaveBeenCalledTimes(2);
   });
 
+  it("restores composer content and sidebar relays when editing a failed draft", async () => {
+    const publishEvent = vi.fn(async () => ({
+      success: false,
+      eventId: "c".repeat(64),
+      rejectionReason: "blocked",
+      publishedRelayUrls: [],
+    }));
+
+    renderHarness({ publishEvent });
+    await submit({
+      content: "Ship #general",
+      tags: ["general"],
+      explicitMentionPubkeys: ["a".repeat(64)],
+      priority: 42,
+    });
+    expect(failedDrafts()).toHaveLength(1);
+    const draftId = failedDrafts()[0].id;
+
+    act(() => {
+      hookRef.current!.handleEditFailedPublish(draftId);
+    });
+
+    expect(failedDrafts()).toHaveLength(0);
+    const restored = hookRef.current!.composeRestoreRequest;
+    expect(restored?.state.content).toBe("Ship #general");
+    expect(restored?.state.explicitTagNames).toEqual([]);
+    expect(restored?.state.explicitMentionPubkeys).toEqual(["a".repeat(64)]);
+    expect(useFilterStore.getState().activeRelayIds).toEqual(new Set(["relay-one"]));
+  });
+
   it("restores the event start and end fields when undoing a pending publish", async () => {
     usePreferencesStore.setState({ publishDelayEnabled: true });
     renderHarness({});

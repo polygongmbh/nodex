@@ -1,4 +1,4 @@
-import { Loader2, RotateCcw, XCircle } from "lucide-react";
+import { Loader2, Pencil, RotateCcw, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
@@ -169,6 +169,18 @@ export function FailedPublishQueueBanner({
                 ) : (
                   t("publishQueue.repost")
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void dispatchFeedInteraction({ type: "publish.failed.edit", draftId: draft.id });
+                }}
+                disabled={isPending}
+                className="rounded p-1 text-destructive/80 transition-colors hover:bg-destructive/15 hover:text-destructive"
+                data-testid="failed-publish-edit"
+                title={t("publishQueue.editHint")}
+              >
+                <Pencil className="h-3.5 w-3.5" />
               </button>
               <button
                 type="button"

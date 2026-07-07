@@ -63,6 +63,7 @@ export interface FeedViewCommands {
 export interface FailedPublishCommands {
   retryFailedPublish(draftId: string): Promise<void>;
   repostFailedPublish(draftId: string): Promise<void>;
+  editFailedPublish(draftId: string): void;
   dismissFailedPublish(draftId: string): void;
   dismissAllFailedPublish(): void;
 }

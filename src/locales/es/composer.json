@@ -252,6 +252,8 @@
     "reposting": "Republicando...",
     "repostHint": "Republicar en los relays de spaces seleccionados actualmente",
     "repostUnavailable": "Selecciona otro space para enviar de nuevo",
+    "edit": "Editar",
+    "editHint": "Reabrir esta publicación en el editor para corregirla y reenviarla",
     "scopeSelected": "Spaces seleccionados",
     "scopeAll": "Todas fallidas",
     "hiddenCount": "{{count}} ocultas",

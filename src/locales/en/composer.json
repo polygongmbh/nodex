@@ -252,6 +252,8 @@
     "reposting": "Reposting...",
     "repostHint": "Repost to currently selected space relays",
     "repostUnavailable": "Select a different space to send again",
+    "edit": "Edit",
+    "editHint": "Reopen this post in the composer to fix and resend",
     "scopeSelected": "Selected spaces",
     "scopeAll": "All failed",
     "hiddenCount": "{{count}} hidden",

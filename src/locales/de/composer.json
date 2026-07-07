@@ -252,6 +252,8 @@
     "reposting": "Wird erneut gesendet...",
     "repostHint": "An aktuell ausgewählte Space-Relays neu senden",
     "repostUnavailable": "Wähle einen anderen Space, um erneut zu senden",
+    "edit": "Bearbeiten",
+    "editHint": "Diesen Beitrag im Editor erneut öffnen, um ihn zu korrigieren und erneut zu senden",
     "scopeSelected": "Ausgewählte Spaces",
     "scopeAll": "Alle fehlgeschlagenen",
     "hiddenCount": "{{count}} ausgeblendet",

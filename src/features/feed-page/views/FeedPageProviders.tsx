@@ -233,6 +233,9 @@ function FeedInteractionBusProvider({
           dismissRetryInProgress(toastId);
         }
       },
+      "publish.failed.edit": (intent) => {
+        failedPublishCommands.editFailedPublish(intent.draftId);
+      },
       "publish.failed.discard": (intent) => {
         failedPublishCommands.dismissFailedPublish(intent.draftId);
       },

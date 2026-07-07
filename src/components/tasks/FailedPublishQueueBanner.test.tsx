@@ -130,6 +130,24 @@ describe("FailedPublishQueueBanner", () => {
     expect(screen.getByTestId("failed-publish-repost")).toBeEnabled();
   });
 
+  it("dispatches edit for a draft regardless of relay selection", () => {
+    const drafts: FailedPublishDraft[] = [
+      { ...baseDraft, id: "1", relayIds: ["relay-a"], relayUrls: ["wss://relay.a"] },
+    ];
+
+    render(
+      <FailedPublishQueueBanner
+        drafts={drafts}
+        selectedFeedDrafts={drafts}
+        selectedRelayIds={["relay-b"]}
+      />
+    );
+
+    expect(screen.getByTestId("failed-publish-edit")).toBeEnabled();
+    fireEvent.click(screen.getByTestId("failed-publish-edit"));
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "publish.failed.edit", draftId: "1" });
+  });
+
   it("shows retry progress state while retry is in flight", () => {
     let resolveRetry: (() => void) | undefined;
     dispatchFeedInteraction.mockImplementation((intent: { type: string }) => {

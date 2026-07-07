@@ -569,6 +569,7 @@ function FeedIndexContent() {
     handleNewTask,
     handleRetryFailedPublish,
     handleRepostFailedPublish,
+    handleEditFailedPublish,
     handleDismissFailedPublish,
     handleDismissAllFailedPublish,
     handleDueDateChange,
@@ -703,11 +704,12 @@ function FeedIndexContent() {
     () => ({
       retryFailedPublish: handleRetryFailedPublish,
       repostFailedPublish: handleRepostFailedPublish,
+      editFailedPublish: handleEditFailedPublish,
       dismissFailedPublish: handleDismissFailedPublish,
       dismissAllFailedPublish: handleDismissAllFailedPublish,
     }),
     [
-      handleRetryFailedPublish, handleRepostFailedPublish,
+      handleRetryFailedPublish, handleRepostFailedPublish, handleEditFailedPublish,
       handleDismissFailedPublish, handleDismissAllFailedPublish,
     ]
   );

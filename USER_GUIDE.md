@@ -194,7 +194,7 @@
 - Components may change visibility, density, and control labels at these breakpoints.
 
 ## Reliability and Sorting
-- If feed publish fails, the post is queued locally in a failed-publish banner with retry/dismiss actions instead of being treated as a normal published task/comment.
+- If feed publish fails, the post is queued locally in a failed-publish banner with retry/repost/edit/dismiss actions instead of being treated as a normal published task/comment. Retry and repost rebuild the post from its stored content (not a frozen snapshot), so they reflect the relay set actually targeted. Edit reopens the failed post in the composer to fix and resend, and switches the sidebar's active relays to match the post's original spaces.
 - Relays with repeated initial websocket handshake failures are auto-paused and shown with `error` status until explicitly re-enabled.
 - Latest feed events are cached locally and rehydrated on app load for better offline/reconnect continuity.
 - Task state changes now delay status-driven reorder updates slightly to reduce jarring list/table/kanban jumps during completion transitions.
