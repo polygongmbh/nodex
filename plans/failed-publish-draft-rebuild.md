@@ -1,6 +1,11 @@
 # Failed-publish drafts: rebuild from composer content + Edit-in-composer
 
-Status: **planned, not started** (designed 2026-06-27). Greenfield for a fresh session.
+Status: **implemented** (2026-07-07). All 4 commits landed on `dev`:
+`4e6c655b` (extract builder), `b59853ce` (retry/repost rebuild + recompose-deletion
+replay), `19530277` (Edit action), `e86936e9` (schema tighten + `.v2` key). One
+pre-existing unrelated build break (`FeedTaskCard.tsx` stale `task.relayIds`)
+was fixed first in `c6bf7be0` so each commit here could be verified green.
+The "Follow-ups to consider" section below is still open for a future session.
 
 ## Context / why
 
