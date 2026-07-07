@@ -473,18 +473,13 @@ export function useTaskPublishFlow({
       nip99,
     });
 
-    const buildFailedPublishDraft = (
-      fallbackKind: NostrEventKind,
-      fallbackTags: string[][],
-      fallbackParentId?: string
-    ): FailedPublishDraft => ({
+    const buildFailedPublishDraft = (): FailedPublishDraft => ({
       id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       content,
       tags: resolvedSubmissionTags,
       relayIds: targetRelayIds,
       relayUrls: selectedRelayUrls,
       postType: normalizedPostType,
-      createdAt: createdAt.toISOString(),
       dates: dates.map((entry) =>
         isDateTimeTaskDate(entry)
           ? { datetime: entry.datetime.toISOString(), type: entry.type }
@@ -493,16 +488,12 @@ export function useTaskPublishFlow({
       parentId: submissionParentId ?? undefined,
       initialState,
       mentionPubkeys,
-      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
       locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
+      attachments: normalizedAttachments,
       titledPost,
       nip99,
       recomposeOf,
-      publishKind: fallbackKind,
-      publishTags: fallbackTags,
-      publishParentId: fallbackParentId,
     });
 
     const effectiveRelayIds = targetRelayIds.length > 0
@@ -643,7 +634,7 @@ export function useTaskPublishFlow({
     if (usePreferencesStore.getState().publishDelayEnabled) {
       const signedEvent = await signEvent(publishKind, content, publishTags, publishParentId);
       if (!signedEvent) {
-        const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
+        const failedDraft = buildFailedPublishDraft();
         setFailedPublishDrafts((prev) => [failedDraft, ...prev]);
         notifyPublishSavedForRetry({
           relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
@@ -668,7 +659,7 @@ export function useTaskPublishFlow({
         const publishResult = await broadcastWithFeedback(broadcastSignedEvent, signedEvent, selectedRelayUrls, "task broadcast");
         if (!publishResult.success) {
           suppressFailedPublishEvent(eventId);
-          const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
+          const failedDraft = buildFailedPublishDraft();
           setFailedPublishDrafts((prev) => [failedDraft, ...prev]);
           setLocalTasks((prev) => prev.filter((task) => task.id !== eventId));
           notifyPublishSavedForRetry({
@@ -717,7 +708,7 @@ export function useTaskPublishFlow({
     const publishResult = await publishWithMetadata();
     if (!publishResult.success) {
       suppressFailedPublishEvent(publishResult.eventId);
-      const failedDraft = buildFailedPublishDraft(publishKind, publishTags, publishParentId);
+      const failedDraft = buildFailedPublishDraft();
       setFailedPublishDrafts((prev) => [failedDraft, ...prev]);
       notifyPublishSavedForRetry({
         relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,

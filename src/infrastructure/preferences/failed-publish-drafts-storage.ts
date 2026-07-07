@@ -1,6 +1,4 @@
-import { NostrEventKind } from "@/lib/nostr/types";
 import type {
-  PublishedAttachment,
   SerializedComposerContent,
   SerializedTaskDate,
   TaskState,
@@ -16,27 +14,19 @@ export type PersistedTaskDate = SerializedTaskDate;
 
 /**
  * A failed-publish draft is the full serialized composer content plus
- * wire-resolved tagging and the publish metadata needed to retry. The
- * `attachments` field is widened to optional here because pre-existing
- * localStorage entries (written before this field was guaranteed) must
- * still load — failed drafts are user state, not a cache the live
- * subscription rebuilds.
+ * wire-resolved tagging — everything `buildPublishPayload` needs to rebuild
+ * the event on retry/repost/edit. There is no separate publishKind/
+ * publishTags snapshot: replaying a frozen payload verbatim instead of
+ * rebuilding from this content was the bug this shape fixes (see
+ * plans/failed-publish-draft-rebuild.md).
  */
-type FailedPublishContent = Omit<SerializedComposerContent, "attachments"> & {
-  attachments?: PublishedAttachment[];
-};
-
-export type FailedPublishDraft = FailedPublishContent &
+export type FailedPublishDraft = SerializedComposerContent &
   WireTagging & {
     id: string;
-    createdAt: string;
     relayIds: string[];
     relayUrls: string[];
     parentId?: string;
     initialState?: TaskState;
-    publishKind: NostrEventKind;
-    publishTags: string[][];
-    publishParentId?: string;
   };
 
 const postTypeSchema = z.enum(["task", "comment", "listing", "event"] as const);
@@ -75,7 +65,6 @@ const failedPublishDraftSchema = z.object({
   relayIds: z.array(z.string()),
   relayUrls: z.array(z.string()),
   postType: postTypeSchema,
-  createdAt: z.string(),
   dates: z.array(
     z.union([
       z.object({ date: z.string(), type: taskDateTypeSchema }),
@@ -85,7 +74,6 @@ const failedPublishDraftSchema = z.object({
   parentId: z.string().optional(),
   initialState: taskStateSchema.optional(),
   mentionPubkeys: z.array(z.string()),
-  assigneePubkeys: z.array(z.string()).optional(),
   priority: z.number().finite().optional(),
   locationGeohash: z.string().optional(),
   attachments: z.array(
@@ -99,12 +87,9 @@ const failedPublishDraftSchema = z.object({
       alt: z.string().optional(),
       name: z.string().optional(),
     })
-  ).optional(),
+  ),
   titledPost: titledPostFieldsSchema.optional(),
   nip99: nip99MetadataSchema.optional(),
   recomposeOf: composeRecomposeOfSchema.optional(),
-  publishKind: z.number().int(),
-  publishTags: z.array(z.array(z.string())),
-  publishParentId: z.string().optional(),
 });
 export const failedPublishDraftsSchema = z.array(failedPublishDraftSchema);

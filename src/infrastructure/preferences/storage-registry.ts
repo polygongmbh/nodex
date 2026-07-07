@@ -26,7 +26,8 @@ export const SAVED_FILTER_CONFIGS_STORAGE_KEY = "nodex.saved-filter-configuratio
 export const PINNED_CHANNELS_STORAGE_KEY_PREFIX = "nodex.pinned-channels";
 
 // ── State ────────────────────────────────────────────────────────────────────
-export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts";
+/** v2: draft shape rebuilds the wire payload from composer content on retry instead of storing a frozen publishKind/publishTags snapshot — incompatible with v1, bump on any future incompatible shape change. */
+export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts.v2";
 /** Per-user key: append `.${pubkey}`. Marks that the profile completion prompt was already shown for this identity. */
 export const PROFILE_COMPLETION_PROMPTED_STORAGE_KEY_PREFIX = "nodex.profile-completion-prompted.v1";
 

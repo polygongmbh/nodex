@@ -223,6 +223,32 @@ describe("useTaskPublishFlow", () => {
     expect(publishEvent).toHaveBeenCalledTimes(2);
   });
 
+  it("replays the recompose deletion after a successful retry of a failed recompose", async () => {
+    const publishEvent = vi
+      .fn()
+      .mockResolvedValueOnce({ success: false, eventId: "d".repeat(64), rejectionReason: "blocked", publishedRelayUrls: [] })
+      .mockResolvedValueOnce({ success: true, eventId: "e".repeat(64), publishedRelayUrls: ["wss://relay.one"] })
+      .mockResolvedValueOnce({ success: true, eventId: "f".repeat(64), publishedRelayUrls: ["wss://relay.one"] });
+
+    renderHarness({ publishEvent });
+    await submit({
+      content: "Reworded #general",
+      tags: ["general"],
+      recomposeOf: { eventId: "b".repeat(64), originalKind: 1, relayIds: ["relay-one"] },
+    });
+    expect(failedDrafts()).toHaveLength(1);
+
+    await act(async () => {
+      await hookRef.current!.handleRetryFailedPublish(failedDrafts()[0].id);
+    });
+
+    expect(failedDrafts()).toHaveLength(0);
+    expect(publishEvent).toHaveBeenCalledTimes(3);
+    const [deletionKind, , deletionTags] = publishEvent.mock.calls[2] as unknown as PublishEventCall;
+    expect(deletionKind).toBe(5);
+    expect(deletionTags).toEqual(expect.arrayContaining([["e", "b".repeat(64)]]));
+  });
+
   it("restores composer content and sidebar relays when editing a failed draft", async () => {
     const publishEvent = vi.fn(async () => ({
       success: false,

@@ -72,12 +72,11 @@ export interface SubmitTagging {
 
 /**
  * Wire-ready tagging — only stored on failed-publish entries that have
- * already gone through the publish flow. Mentions are flat pubkey lists
- * (no display identifiers); `assigneePubkeys` is broken out separately so
- * the retry path can re-emit the assignee tags verbatim.
+ * already gone through the publish flow. `tags` is the resolved submission
+ * tags (channels + extracted hashtags); `mentionPubkeys` is the flat p-tag
+ * pubkey list (mentions and, for tasks, assignees are the same set).
  */
 export interface WireTagging {
   tags: string[];
   mentionPubkeys: string[];
-  assigneePubkeys?: string[];
 }

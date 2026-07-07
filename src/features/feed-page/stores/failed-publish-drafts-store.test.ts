@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { NostrEventKind } from "@/lib/nostr/types";
 import {
   FAILED_PUBLISH_DRAFTS_STORAGE_KEY,
   type FailedPublishDraft,
@@ -13,11 +12,9 @@ const sampleDraft: FailedPublishDraft = {
   relayIds: ["relay-a"],
   relayUrls: ["wss://relay.a"],
   postType: "task",
-  createdAt: "2026-02-18T12:00:00.000Z",
   dates: [{ datetime: "2026-02-20T10:30:00.000Z", type: "due" }],
   initialState: { status: "open" },
   mentionPubkeys: ["f".repeat(64)],
-  assigneePubkeys: ["f".repeat(64)],
   priority: 2,
   attachments: [
     {
@@ -26,8 +23,6 @@ const sampleDraft: FailedPublishDraft = {
       size: 512,
     },
   ],
-  publishKind: NostrEventKind.Task,
-  publishTags: [["t", "go"]],
 };
 
 describe("failedPublishDraftsStore", () => {
@@ -50,5 +45,15 @@ describe("failedPublishDraftsStore", () => {
     useFailedPublishDraftsStore.getState().setFailedPublishDrafts((prev) => [...prev, second]);
     expect(useFailedPublishDraftsStore.getState().failedPublishDrafts).toHaveLength(2);
     expect(useFailedPublishDraftsStore.getState().failedPublishDrafts[1].id).toBe("draft-2");
+  });
+
+  it("drops a malformed persisted array on rehydrate instead of migrating it", () => {
+    localStorage.setItem(
+      FAILED_PUBLISH_DRAFTS_STORAGE_KEY,
+      JSON.stringify({ state: { failedPublishDrafts: [{ id: "old-v1-draft", content: "no attachments field" }] } })
+    );
+    useFailedPublishDraftsStore.persist.rehydrate();
+
+    expect(useFailedPublishDraftsStore.getState().failedPublishDrafts).toEqual([]);
   });
 });

@@ -17,10 +17,8 @@ const baseDraft: FailedPublishDraft = {
   relayUrls: ["wss://relay.a"],
   postType: "task",
   dates: [],
-  createdAt: new Date().toISOString(),
   mentionPubkeys: [],
-  publishKind: 1,
-  publishTags: [],
+  attachments: [],
 };
 
 beforeEach(() => {
