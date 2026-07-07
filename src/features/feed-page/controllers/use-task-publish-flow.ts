@@ -72,6 +72,7 @@ import type {
   PublishedAttachment,
   PostedTag,
   Relay,
+  SerializedTaskDate,
   TaskPost,
   CommentPost,
   ListingPost,
@@ -87,6 +88,23 @@ import type {
 import type { Person } from "@/types/person";
 
 const PUBLISH_UNDO_DELAY_MS = 5000;
+
+/**
+ * Rehydrate a failed draft's serialized dates back into in-memory TaskDates,
+ * dropping any entry whose stored value no longer parses. Used to rebuild both
+ * the wire payload and the post-publish follow-ups on retry.
+ */
+function rehydrateSerializedDates(dates: SerializedTaskDate[]): TaskDate[] {
+  return dates
+    .map((entry): TaskDate | null => {
+      if ("datetime" in entry) {
+        const moment = new Date(entry.datetime);
+        return Number.isNaN(moment.getTime()) ? null : { datetime: moment, type: entry.type };
+      }
+      return parseIsoDateLocal(entry.date) ? { date: entry.date, type: entry.type } : null;
+    })
+    .filter((entry): entry is TaskDate => entry !== null);
+}
 
 
 interface PublishResult {
@@ -267,12 +285,6 @@ export function useTaskPublishFlow({
       return next;
     });
   }, [setSuppressedNostrEventIds]);
-
-  const parseStoredDate = useCallback((value?: string): Date | undefined => {
-    if (!value) return undefined;
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-  }, []);
 
   const publishRecomposeDeletion = useCallback(async (target: ComposeRecomposeOf): Promise<void> => {
     const targetRelayUrls = resolveTargetPostRelayUrls(relays, target.relayIds);
@@ -774,11 +786,30 @@ export function useTaskPublishFlow({
       return;
     }
 
-    const result = await publishWithFeedback(publishEvent, {
-      kind: draft.publishKind,
+    // Rebuild the event from stored composer content instead of replaying a
+    // frozen tag snapshot: the parent `e`-tag relay hint now reflects the relay
+    // set this retry/repost actually targets.
+    const draftDates = rehydrateSerializedDates(draft.dates);
+    const payload = buildPublishPayload({
       content: draft.content,
-      tags: draft.publishTags,
-      parentId: draft.publishParentId,
+      postType: draft.postType,
+      dates: draftDates,
+      submissionTags: draft.tags,
+      mentionPubkeys: draft.mentionPubkeys,
+      attachments: draft.attachments ?? [],
+      locationGeohash: draft.locationGeohash,
+      parentId: draft.parentId && /^[a-f0-9]{64}$/i.test(draft.parentId) ? draft.parentId : undefined,
+      primaryRelayUrl: relayUrls[0] ?? "",
+      priority: draft.priority,
+      titledPost: draft.titledPost,
+      nip99: draft.nip99,
+    });
+
+    const result = await publishWithFeedback(publishEvent, {
+      kind: payload.kind,
+      content: payload.content,
+      tags: payload.tags,
+      parentId: payload.parentId,
       relayUrls,
     }, "retry publish");
     if (!result.success) {
@@ -795,18 +826,9 @@ export function useTaskPublishFlow({
 
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
 
-    const draftDates: TaskDate[] = draft.dates
-      .map((entry): TaskDate | null => {
-        if ("datetime" in entry) {
-          const moment = parseStoredDate(entry.datetime);
-          return moment ? { datetime: moment, type: entry.type } : null;
-        }
-        return parseIsoDateLocal(entry.date) ? { date: entry.date, type: entry.type } : null;
-      })
-      .filter((entry): entry is TaskDate => entry !== null);
     await publishTaskCreateFollowUps({
       publishedEventId: result.eventId,
-      kind: draft.publishKind,
+      kind: payload.kind,
       initialState: draft.initialState,
       dates: draftDates,
       content: draft.content,
@@ -814,15 +836,20 @@ export function useTaskPublishFlow({
       fallbackRelayUrls: relayUrls,
     });
 
-    notifyPublished(draft.publishKind, {
+    notifyPublished(payload.kind, {
       relayUrls: result.publishedRelayUrls?.length ? result.publishedRelayUrls : relayUrls,
     });
+    // A recompose whose original publish failed never issued the tombstone for
+    // the event it replaces; a successful retry must, or the replaced event lingers.
+    if (draft.recomposeOf) {
+      await publishRecomposeDeletion(draft.recomposeOf);
+    }
   }, [
     failedPublishDrafts,
     guardInteraction,
-    parseStoredDate,
     publishEvent,
     publishTaskCreateFollowUps,
+    publishRecomposeDeletion,
     setFailedPublishDrafts,
     suppressFailedPublishEvent,
   ]);
