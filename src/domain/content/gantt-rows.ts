@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays, startOfDay } from "date-fns";
 import { getTaskLocalDate } from "@/lib/task-dates";
-import type { TaskDate, TaskDateType, TaskPost } from "@/types";
+import { getPostDateEntries, type Post, type TaskDate, type TaskDateType, type TaskPost } from "@/types";
 
 /** Inclusive day span, both ends at local midnight. */
 export interface GanttSpan {
@@ -33,15 +33,25 @@ function firstLocalDay(dates: TaskDate[], types: TaskDateType[]): Date | undefin
 }
 
 /**
- * A task's own bar: `start` (or `scheduled`) to `end` (or `due`). A task with
- * only one side gets a single-day bar on it. Milestones never form a bar.
+ * Day span of a set of dates: `start` (or `scheduled`) to `end` (or `due`).
+ * Only one side gives a single-day span on it. Milestones never form a span.
  */
-export function getTaskGanttSpan(task: TaskPost): GanttSpan | null {
-  const start = firstLocalDay(task.dates, ["start", "scheduled"]);
-  const end = firstLocalDay(task.dates, ["end", "due"]);
+export function getDateEntriesSpan(dates: TaskDate[]): GanttSpan | null {
+  const start = firstLocalDay(dates, ["start", "scheduled"]);
+  const end = firstLocalDay(dates, ["end", "due"]);
   if (start && end) return start <= end ? { start, end } : { start: end, end: start };
   const single = start ?? end;
   return single ? { start: single, end: single } : null;
+}
+
+/** A task's own bar, see {@link getDateEntriesSpan}. */
+export function getTaskGanttSpan(task: TaskPost): GanttSpan | null {
+  return getDateEntriesSpan(task.dates);
+}
+
+/** Day span of any dated post: tasks and NIP-52 calendar events alike. */
+export function getPostDaySpan(post: Post): GanttSpan | null {
+  return getDateEntriesSpan(getPostDateEntries(post));
 }
 
 export function getTaskGanttMarkers(task: TaskPost): GanttMarker[] {

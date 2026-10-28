@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { makeTask } from "@/test/fixtures";
-import { buildGanttRows, getGanttRange, getTaskGanttSpan } from "./gantt-rows";
+import { NostrEventKind } from "@/lib/nostr/types";
+import type { DateBasedEventPost } from "@/types";
+import { buildGanttRows, getGanttRange, getPostDaySpan, getTaskGanttSpan } from "./gantt-rows";
 
 const day = (iso: string) => {
   const [y, m, d] = iso.split("-").map(Number);
@@ -24,6 +26,23 @@ describe("getTaskGanttSpan", () => {
       end: day("2026-03-04"),
     });
     expect(getTaskGanttSpan(makeTask({ dates: [{ date: "2026-03-04", type: "milestone" }] }))).toBeNull();
+  });
+});
+
+describe("getPostDaySpan", () => {
+  it("spans a date-based calendar event from start to inclusive end day", () => {
+    const event: DateBasedEventPost = {
+      id: "e",
+      kind: NostrEventKind.CalendarDateBased,
+      pubkey: "p",
+      content: "Conference",
+      tags: [],
+      relays: [],
+      timestamp: day("2026-03-01"),
+      startDate: "2026-03-03",
+      endDate: "2026-03-05",
+    };
+    expect(getPostDaySpan(event)).toEqual({ start: day("2026-03-03"), end: day("2026-03-05") });
   });
 });
 
