@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 - New desktop Gantt view (`/gantt`): tasks of the current context as start→end bars on a zoomable timeline, nested under their parents with summary bars for undated parents, milestone diamonds and a today line.
 - The desktop calendar grid draws multi-day tasks and events as one continuous bar per week row across the days they cover, stacked above the single-day entries, instead of repeating them in every day cell. Bars split at week boundaries with flat ends marking the continuation. A task's span now matches its Gantt bar: Start (or Scheduled) to End (or Due).
+- Drag and drop rescheduling on desktop: move or resize Gantt bars by their edges, and drag calendar chips or multi-day bars onto another day. Dates keep their type and time of day.
 
 ## [4.2.0] - 2026-10-28
 Minor release for the desktop Home view, sidebar Projects, mobile channel chips, the new Nodex logo and splash, Noas vanity keys, and a round of relay connection, subscription and multi-space reliability fixes.

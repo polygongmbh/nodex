@@ -5,6 +5,7 @@ import type { Channel, Relay, Post, TaskPost } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person } from "@/types/person";
 import { makePerson, makeTask } from "@/test/fixtures";
+import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
@@ -182,6 +183,81 @@ describe("CalendarView responsiveness", () => {
     fireEvent.click(screen.getByText("Launch week #general"));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "launch" });
     vi.useRealTimers();
+  });
+
+  describe("drag and drop", () => {
+    const dataTransfer = () => {
+      const store = new Map<string, string>();
+      return {
+        get types() {
+          return Array.from(store.keys());
+        },
+        setData: (type: string, value: string) => store.set(type, value),
+        getData: (type: string) => store.get(type) ?? "",
+        effectAllowed: "all",
+        dropEffect: "none",
+      };
+    };
+    const drag = (source: Element, target: Element) => {
+      const transfer = dataTransfer();
+      fireEvent.dragStart(source, { dataTransfer: transfer, clientX: 0 });
+      fireEvent.dragOver(target, { dataTransfer: transfer });
+      fireEvent.drop(target, { dataTransfer: transfer });
+    };
+    const dueUpdates = () =>
+      dispatchFeedInteraction.mock.calls
+        .map(([intent]) => intent)
+        .filter((intent) => intent.type === "task.updateDueDate")
+        .map((intent) => [intent.dateType, intent.dueDate.toDateString()]);
+
+    it("moves a task's date to the day it is dropped on", () => {
+      dispatchFeedInteraction.mockClear();
+      useCurrentUserStore.getState().setCurrentUser(people[0]);
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 1, 17, 10));
+      const dentist = makeTask({
+        id: "dentist",
+        author: people[0],
+        content: "Dentist visit #general",
+        dates: [{ date: "2026-02-20", type: "due" }],
+      });
+      const { container } = render(
+        <CalendarView posts={[dentist]} selectedDate={new Date(2026, 2, 20)} focusedTaskId={null} />
+      );
+
+      drag(screen.getByText(/Dentist visit/), container.querySelector('[data-day="2026-02-25"]')!);
+
+      expect(dueUpdates()).toEqual([["due", new Date(2026, 1, 25).toDateString()]]);
+      vi.useRealTimers();
+    });
+
+    it("shifts both ends of a multi-day bar", () => {
+      dispatchFeedInteraction.mockClear();
+      useCurrentUserStore.getState().setCurrentUser(people[0]);
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 1, 17, 10));
+      const trip = makeTask({
+        id: "trip",
+        author: people[0],
+        content: "Conference trip #general",
+        dates: [
+          { date: "2026-02-16", type: "start" },
+          { date: "2026-02-18", type: "end" },
+        ],
+      });
+      const { container } = render(
+        <CalendarView posts={[trip]} selectedDate={new Date(2026, 2, 20)} focusedTaskId={null} />
+      );
+
+      // jsdom has no layout, so the grab resolves to the bar's first day.
+      drag(screen.getByText(/Conference trip/), container.querySelector('[data-day="2026-02-23"]')!);
+
+      expect(dueUpdates()).toEqual([
+        ["start", new Date(2026, 1, 23).toDateString()],
+        ["end", new Date(2026, 1, 25).toDateString()],
+      ]);
+      vi.useRealTimers();
+    });
   });
 
   it("renders core month navigation controls", () => {
