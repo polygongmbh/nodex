@@ -33,6 +33,7 @@
       "feed": "Timeline",
       "kanban": "Kanban",
       "calendar": "Calendar",
+      "gantt": "Gantt",
       "list": "Table",
       "upcoming": "Upcoming",
       "switchTo": "Switch to {{view}} view"

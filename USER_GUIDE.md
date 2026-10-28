@@ -16,7 +16,7 @@
 - Views share the current context: selected feeds, included/excluded channels, selected people, quick filters, search text, and the focused task when one is active.
 
 ## Navigation
-- Use the top view switcher to move between Home, Status, Feed, Kanban, and Calendar. Tree and Table are hidden from the top nav but remain reachable via direct URL (`/tree`, `/list`) and the numeric view shortcuts.
+- Use the top view switcher to move between Home, Status, Feed, Kanban, Calendar, and Gantt (Gantt is desktop-only). Tree and Table are hidden from the top nav but remain reachable via direct URL (`/tree`, `/list`) and the numeric view shortcuts.
 - Home is the default landing view on desktop (mobile lands on Status; Home is desktop-only).
 - The Home timeline (left) shows top-level activity plus anything that involves you — posts you authored, tasks assigned to you, and activity beneath those. Activating any sidebar channel or person filter lifts that restriction and shows everything matching the filters.
 - The Home right column shows My Tasks (same ownership rules as the Status view) above a small month calendar. Days with dated tasks or events carry a dot.
@@ -175,6 +175,7 @@
 - The calendar's selected-day panel offers both `Create Task` and `Create Event` buttons; `Create Event` opens the composer in Event mode (NIP-52) with explicit Start Date / Start Time / End Date / End Time controls. Times are optional — leaving both sides timeless publishes an all-day event (kind 31922); adding any time promotes it to a timed event (kind 31923).
 - Calendar events appear in the feed and on the calendar grid alongside tasks, marked with an `EVENT` label. Their date chip is grey once ended, yellow while active, blue while upcoming. An event without an explicit end counts as active through its start day — and for at least an hour after start, so a timed late-evening event does not grey out at midnight.
 - For an all-day event, the End Date you pick is the last day the event runs (inclusive): an event ending `Jun 12` shows on the calendar and stays active through all of Jun 12. On the wire it is published per NIP-52 (the end date is stored exclusively, as the day after), so other Nostr clients show the same range.
+- The desktop **Gantt** view shows tasks of the current context (sidebar filters plus focused task) as bars on a timeline: Start (or Scheduled) to End (or Due); a task with a single date gets a one-day bar, milestones show as diamonds. Tasks are nested under their parents; an undated parent gets a thin summary bar spanning its dated subtasks, and undated tasks without dated subtasks are left out. Bars are coloured by status, a vertical line marks today, and the Days/Weeks/Months buttons change the zoom. Clicking a task name or bar focuses that task, narrowing the chart to its subtree.
 - Tree, Kanban, List, and Status cards show a paperclip and attachment count when a post has attachments; Feed and Calendar render attachments inline.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, the combined bottom bar's send button creates a message in the timeline and a task in upcoming; the tree view keeps task/comment send options. The timeline's extras button (left of the field) attaches media or an event.

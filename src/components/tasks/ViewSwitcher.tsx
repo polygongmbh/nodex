@@ -1,10 +1,10 @@
-import { Home, LayoutList, Columns3, GitBranch, Calendar, List, LayoutDashboard } from "lucide-react";
+import { Home, LayoutList, Columns3, GitBranch, Calendar, List, LayoutDashboard, ChartGantt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { CONFIGURED_VIEW_NAMES } from "@/lib/views-config";
 
-export const VIEW_ORDER = ["home", "status", "feed", "tree", "kanban", "list", "calendar"] as const;
+export const VIEW_ORDER = ["home", "status", "feed", "tree", "kanban", "list", "calendar", "gantt"] as const;
 export type ViewType = (typeof VIEW_ORDER)[number];
 
 /** Pure: VIEW_ORDER ∩ configured names, or all views when null/empty/no match. */
@@ -21,7 +21,7 @@ export function resolveDefaultViewFor(enabled: readonly ViewType[], isMobile: bo
   const preferred: ViewType = isMobile ? "status" : "home";
   if (enabled.includes(preferred)) return preferred;
   if (isMobile) {
-    const mobileView = enabled.find((view) => view !== "home" && view !== "kanban");
+    const mobileView = enabled.find((view) => view !== "home" && view !== "kanban" && view !== "gantt");
     if (mobileView) return mobileView;
   }
   return enabled[0];
@@ -56,6 +56,7 @@ export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
     kanban: { labelKey: "navigation.views.kanban", icon: <Columns3 className="w-4 h-4 xl:w-5 xl:h-5" /> },
     list: { labelKey: "navigation.views.list", icon: <List className="w-4 h-4 xl:w-5 xl:h-5" /> },
     calendar: { labelKey: "navigation.views.calendar", icon: <Calendar className="w-4 h-4 xl:w-5 xl:h-5" /> },
+    gantt: { labelKey: "navigation.views.gantt", icon: <ChartGantt className="w-4 h-4 xl:w-5 xl:h-5" /> },
   };
   const views = DESKTOP_NAV_VIEWS.map((id) => ({ id, label: t(viewMeta[id].labelKey), icon: viewMeta[id].icon }));
 

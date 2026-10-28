@@ -17,7 +17,7 @@ describe("resolveEnabledViews", () => {
 
   it("does not shrink VIEW_ORDER (every view stays URL-routable)", () => {
     resolveEnabledViews(["feed"]);
-    expect(VIEW_ORDER).toEqual(["home", "status", "feed", "tree", "kanban", "list", "calendar"]);
+    expect(VIEW_ORDER).toEqual(["home", "status", "feed", "tree", "kanban", "list", "calendar", "gantt"]);
   });
 });
 

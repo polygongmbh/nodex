@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- New desktop Gantt view (`/gantt`): tasks of the current context as start→end bars on a zoomable timeline, nested under their parents with summary bars for undated parents, milestone diamonds and a today line.
+
 ## [4.2.0] - 2026-10-28
 Minor release for the desktop Home view, sidebar Projects, mobile channel chips, the new Nodex logo and splash, Noas vanity keys, and a round of relay connection, subscription and multi-space reliability fixes.
 

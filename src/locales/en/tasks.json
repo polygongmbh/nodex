@@ -162,6 +162,15 @@
     "hydrating": "Loading events from relay…",
     "loadingMoreEvents": "Loading more events..."
   },
+  "gantt": {
+    "empty": "No tasks with dates in this context",
+    "today": "Today",
+    "zoom": {
+      "day": "Days",
+      "week": "Weeks",
+      "month": "Months"
+    }
+  },
   "calendar": {
     "weekShort": "Wk",
     "moreTasks": "+{{count}} more",

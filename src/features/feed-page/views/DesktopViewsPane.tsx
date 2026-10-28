@@ -25,6 +25,9 @@ const KanbanView = lazy(() =>
 const CalendarView = lazy(() =>
   import("@/components/tasks/CalendarView").then((module) => ({ default: module.CalendarView }))
 );
+const GanttView = lazy(() =>
+  import("@/components/tasks/GanttView").then((module) => ({ default: module.GanttView }))
+);
 const ListView = lazy(() =>
   import("@/components/tasks/ListView").then((module) => ({ default: module.ListView }))
 );
@@ -118,6 +121,9 @@ export function DesktopViewsPane({
       break;
     case "calendar":
       viewPane = <CalendarView posts={posts} focusedTaskId={focusedTaskId} />;
+      break;
+    case "gantt":
+      viewPane = <GanttView posts={posts} focusedTaskId={focusedTaskId} />;
       break;
     case "list":
       viewPane = <ListView posts={posts} focusedTaskId={focusedTaskId} />;

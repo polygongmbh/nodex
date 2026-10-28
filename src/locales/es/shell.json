@@ -33,6 +33,7 @@
       "feed": "Cronología",
       "kanban": "Kanban",
       "calendar": "Calendario",
+      "gantt": "Gantt",
       "list": "Tabla",
       "upcoming": "Próximas",
       "switchTo": "Cambiar a la vista {{view}}"

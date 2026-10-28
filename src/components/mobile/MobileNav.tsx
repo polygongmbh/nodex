@@ -5,11 +5,11 @@ import { VIEW_ORDER, ENABLED_VIEWS, type ViewType } from "@/components/tasks/Vie
 import { useTranslation } from "react-i18next";
 
 /**
- * Views mobile can render — everything except kanban and the desktop-only home,
+ * Views mobile can render — everything except kanban, gantt and the desktop-only home,
  * in the desktop order. This is the rendering capability, not the nav: a view
  * here is reachable by direct URL even when VITE_VIEWS keeps it out of the nav.
  */
-export const MOBILE_VIEW_ORDER = VIEW_ORDER.filter((view) => view !== "kanban" && view !== "home");
+export const MOBILE_VIEW_ORDER = VIEW_ORDER.filter((view) => view !== "kanban" && view !== "home" && view !== "gantt");
 export type MobileViewType = (typeof MOBILE_VIEW_ORDER)[number];
 
 /** Nav segments: tree is hidden, and only the enabled views are surfaced. */

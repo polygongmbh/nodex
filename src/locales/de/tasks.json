@@ -162,6 +162,15 @@
     "hydrating": "Lade Ereignisse vom Relay…",
     "loadingMoreEvents": "Lade weitere Ereignisse..."
   },
+  "gantt": {
+    "empty": "Keine Aufgaben mit Datum in diesem Kontext",
+    "today": "Heute",
+    "zoom": {
+      "day": "Tage",
+      "week": "Wochen",
+      "month": "Monate"
+    }
+  },
   "calendar": {
     "weekShort": "KW",
     "moreTasks": "+{{count}} mehr",
