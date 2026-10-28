@@ -232,6 +232,24 @@ describe("createCalendarSelectors", () => {
       "overlap",
     ]);
   });
+
+  it("spans scheduled to due like the Gantt bar and lists only multi-day entries as spans", () => {
+    const planned = makeTask({
+      id: "planned",
+      content: "Planned #general",
+      dates: [
+        { date: "2026-06-01", type: "scheduled" },
+        { date: "2026-06-03", type: "due" },
+      ],
+    });
+    const single = makeTask({ id: "single", content: "Single #general", dates: [{ date: "2026-06-02", type: "due" }] });
+    const selectors = createCalendarSelectors(makeCalendarSource([planned, single]));
+    expect(selectors.getTasksForDay(new Date("2026-06-02T12:00:00.000Z")).map((t) => t.id).sort()).toEqual([
+      "planned",
+      "single",
+    ]);
+    expect(selectors.getMultiDayEntries().map((entry) => entry.item.id)).toEqual(["planned"]);
+  });
 });
 
 describe("sortKanbanColumnTasks", () => {

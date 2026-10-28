@@ -19,6 +19,8 @@ import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/con
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
 import { buildUserInvolvementIndex, makeHomeTimelinePredicate } from "@/domain/content/user-involvement";
 import { formatDayKey, postOccursOnDay } from "@/domain/content/post-day-matching";
+import { getPostDaySpan } from "@/domain/content/gantt-rows";
+import { isMultiDaySpan, type WeekSpanEntry } from "@/domain/content/calendar-week-spans";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFilterStore } from "@/features/feed-page/stores/filter-store";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
@@ -156,6 +158,8 @@ export interface CalendarSelectors {
   getTasksWithDueDates(): CalendarEntryPost[];
   getUpcomingTasks(): CalendarEntryPost[];
   getTasksForDay(day: Date): CalendarEntryPost[];
+  /** Entries whose day span covers more than one day, drawn as week-row bars. */
+  getMultiDayEntries(): WeekSpanEntry<CalendarEntryPost>[];
   getAncestorChain(taskId: string): { id: string; text: string }[];
 }
 
@@ -394,6 +398,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
   let tasksWithDueDatesCache: CalendarEntryPost[] | null = null;
   let tasksByDayCache: Map<string, CalendarEntryPost[]> | null = null;
   let upcomingTasksCache: CalendarEntryPost[] | null = null;
+  let multiDayEntriesCache: WeekSpanEntry<CalendarEntryPost>[] | null = null;
   const { included, excluded } = getIncludedExcludedChannelNames(source.channels);
 
   const getTasksWithDueDates = () => {
@@ -440,20 +445,14 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       }
     };
     for (const task of getTasksWithDueDates()) {
-      const entries = getPostDateEntries(task);
-      const startEntry = entries.find((d) => d.type === "start");
-      const endEntry = entries.find((d) => d.type === "end");
-      const start = startEntry ? getTaskLocalDate(startEntry) : undefined;
-      const end = endEntry ? getTaskLocalDate(endEntry) : undefined;
-      const rangeStart = start && end ? startOfDay(start <= end ? start : end) : null;
-      const rangeEnd = start && end ? startOfDay(start <= end ? end : start) : null;
-      if (rangeStart && rangeEnd) {
-        for (let cursor = rangeStart; cursor.getTime() <= rangeEnd.getTime(); cursor = addDays(cursor, 1)) {
+      // Same start/scheduled → end/due span the Gantt view draws, every day in it.
+      const span = getPostDaySpan(task);
+      if (span) {
+        for (let cursor = span.start; cursor.getTime() <= span.end.getTime(); cursor = addDays(cursor, 1)) {
           addToDay(cursor, task);
         }
       }
-      for (const entry of entries) {
-        if (rangeStart && (entry.type === "start" || entry.type === "end")) continue;
+      for (const entry of getPostDateEntries(task)) {
         const entryDate = getTaskLocalDate(entry);
         if (entryDate) addToDay(entryDate, task);
       }
@@ -478,6 +477,14 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
     },
     getTasksForDay(day: Date) {
       return getTasksByDay().get(format(startOfDay(day), "yyyy-MM-dd")) || [];
+    },
+    getMultiDayEntries() {
+      if (multiDayEntriesCache) return multiDayEntriesCache;
+      multiDayEntriesCache = sortTasks(getTasksWithDueDates(), source.sortContext).flatMap((task) => {
+        const span = getPostDaySpan(task);
+        return span && isMultiDaySpan(span) ? [{ item: task as CalendarEntryPost, span }] : [];
+      });
+      return multiDayEntriesCache;
     },
     getAncestorChain(taskId: string) {
       return getAncestorChainFromSource(source, taskId, source.focusedTaskId);
