@@ -1,5 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { differenceInCalendarDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { ganttDayOffset, getGanttRange } from "@/domain/content/gantt-rows";
@@ -31,16 +32,28 @@ export function GanttView({ posts, focusedTaskId }: GanttViewProps) {
   const todayLeft = LABEL_WIDTH + (ganttDayOffset(range, today) + 0.5) * dayWidth;
 
   const hasRows = rows.length > 0;
+  const rangeStartTime = range.start.getTime();
+  const anchorRef = useRef<{ zoom: GanttZoom; rangeStartTime: number } | null>(null);
 
-  // why: when the timeline first appears and on zoom change, scroll it so
-  // today sits near the left edge of the track instead of at the range start.
+  // why: when the timeline first appears or the zoom changes, scroll so today
+  // sits near the left edge of the track; when hydration later moves the range
+  // start, shift by the same days so the visible dates (and today) stay put.
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
-    if (!scroller) return;
-    scroller.scrollLeft = Math.max(0, todayLeft - LABEL_WIDTH - 7 * dayWidth);
-    featureDebugLog("gantt", "Anchored timeline on today", { zoom, rows: rows.length, totalDays });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-anchor on zoom/appearance only, not on every row update
-  }, [zoom, hasRows]);
+    const anchor = anchorRef.current;
+    if (!scroller) {
+      anchorRef.current = null;
+      return;
+    }
+    if (!anchor || anchor.zoom !== zoom) {
+      scroller.scrollLeft = Math.max(0, todayLeft - LABEL_WIDTH - 7 * dayWidth);
+      featureDebugLog("gantt", "Anchored timeline on today", { zoom, rows: rows.length, totalDays });
+    } else if (anchor.rangeStartTime !== rangeStartTime) {
+      scroller.scrollLeft += differenceInCalendarDays(anchor.rangeStartTime, rangeStartTime) * dayWidth;
+    }
+    anchorRef.current = { zoom, rangeStartTime };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-anchor on zoom/appearance/range start only, not on every row update
+  }, [zoom, hasRows, rangeStartTime]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
