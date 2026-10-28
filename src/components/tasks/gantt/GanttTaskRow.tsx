@@ -2,8 +2,10 @@ import { format } from "date-fns";
 import { TaskStateIcon } from "@/components/tasks/task-state-ui";
 import { ganttDayOffset, type GanttRow, type GanttSpan } from "@/domain/content/gantt-rows";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
+import { useTaskReschedule } from "@/features/feed-page/controllers/use-task-reschedule";
 import { cn } from "@/lib/utils";
 import { getTaskState, getTaskStatusFromTask, type TaskStatus } from "@/types";
+import { GanttBar } from "./GanttBar";
 
 const BAR_CLASS_BY_STATUS: Record<TaskStatus, string> = {
   open: "bg-primary/70",
@@ -22,6 +24,7 @@ interface GanttTaskRowProps {
 
 export function GanttTaskRow({ row, range, dayWidth, labelWidth, onFocusTask }: GanttTaskRowProps) {
   const { task, span, derived, markers } = row;
+  const { canReschedule, reschedule } = useTaskReschedule();
   const label = formatBreadcrumbLabel(task.content);
   const status = getTaskStatusFromTask(task);
   const spanTitle = span
@@ -44,18 +47,16 @@ export function GanttTaskRow({ row, range, dayWidth, labelWidth, onFocusTask }: 
       </button>
       <div className="relative flex-1">
         {span ? (
-          <button
-            type="button"
-            onClick={() => onFocusTask(task.id)}
+          <GanttBar
+            span={span}
+            range={range}
+            dayWidth={dayWidth}
             title={spanTitle}
-            className={cn(
-              "absolute rounded-sm",
-              derived ? "top-3 h-2 bg-foreground/50" : cn("top-1.5 h-5", BAR_CLASS_BY_STATUS[status])
-            )}
-            style={{
-              left: ganttDayOffset(range, span.start) * dayWidth,
-              width: (ganttDayOffset(range, span.end) - ganttDayOffset(range, span.start) + 1) * dayWidth,
-            }}
+            className={derived ? "top-3 h-2 bg-foreground/50" : cn("top-1.5 h-5", BAR_CLASS_BY_STATUS[status])}
+            onReschedule={
+              !derived && canReschedule(task) ? (mode, deltaDays) => reschedule(task, mode, deltaDays) : undefined
+            }
+            onClick={() => onFocusTask(task.id)}
           />
         ) : null}
         {markers.map((marker) => (

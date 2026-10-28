@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GanttView } from "./GanttView";
-import { makeTask } from "@/test/fixtures";
+import { makePerson, makeTask } from "@/test/fixtures";
+import { useCurrentUserStore } from "@/features/feed-page/stores/current-user-store";
 
 const dispatchFeedInteraction = vi.fn();
 
@@ -13,9 +14,25 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
   useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
 
+const me = makePerson({ pubkey: "me", name: "me" });
+
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
+  useCurrentUserStore.getState().setCurrentUser(me);
 });
+
+const dateUpdates = () =>
+  dispatchFeedInteraction.mock.calls
+    .map(([intent]) => intent)
+    .filter((intent) => intent.type === "task.updateDueDate")
+    .map((intent) => [intent.dateType, intent.dueDate.toDateString()]);
+
+/** Drags with the mouse by whole 32px days (the default "Days" zoom). */
+const dragBy = (target: Element, days: number) => {
+  fireEvent.mouseDown(target, { button: 0, clientX: 100 });
+  fireEvent.mouseMove(window, { clientX: 100 + days * 32 });
+  fireEvent.mouseUp(window, { clientX: 100 + days * 32 });
+};
 
 describe("GanttView", () => {
   const project = makeTask({ id: "project", content: "Launch #general" });
@@ -75,6 +92,34 @@ describe("GanttView", () => {
       if (descriptor) Object.defineProperty(Element.prototype, "scrollLeft", descriptor);
       vi.useRealTimers();
     }
+  });
+
+  it("moves a bar's start and end by the dragged days without focusing it", () => {
+    render(<GanttView posts={[design]} focusedTaskId={null} />);
+    const bar = screen.getByTestId("gantt-bar");
+
+    dragBy(bar, 2);
+    fireEvent.click(bar);
+
+    expect(dateUpdates()).toEqual([
+      ["start", new Date(2026, 2, 4).toDateString()],
+      ["end", new Date(2026, 2, 8).toDateString()],
+    ]);
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(expect.objectContaining({ type: "task.focus.change" }));
+  });
+
+  it("extends only the end when its handle is dragged", () => {
+    render(<GanttView posts={[design]} focusedTaskId={null} />);
+
+    dragBy(screen.getByTestId("gantt-bar-end-handle"), 3);
+
+    expect(dateUpdates()).toEqual([["end", new Date(2026, 2, 9).toDateString()]]);
+  });
+
+  it("does not offer dragging for summary bars of undated parents", () => {
+    render(<GanttView posts={[project, design]} focusedTaskId={null} />);
+
+    expect(screen.getAllByTestId("gantt-bar-end-handle")).toHaveLength(1);
   });
 
   it("shows an empty hint when no task in context has dates", () => {
