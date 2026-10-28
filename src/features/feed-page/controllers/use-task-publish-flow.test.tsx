@@ -10,6 +10,7 @@ import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Relay, Post, TaskCreatePayload, TaskCreateResult } from "@/types";
 import { getTaskAssigneePubkeys, getTaskPriority, getTaskPrimaryDate } from "@/types";
 import type { Person } from "@/types/person";
+import { notifyPublishDateFailed } from "@/lib/notifications";
 
 type PublishEventCall = [
   kind: number,
@@ -44,6 +45,7 @@ vi.mock("@/lib/notifications", () => ({
   notifyRetryRejectedByRelay: vi.fn(),
   notifyTaskCreationFailed: vi.fn(),
   notifyRecomposeRelaysUnavailable: vi.fn(),
+  notifyPublishDateFailed: vi.fn(),
 }));
 
 vi.mock("@/lib/user-preferences", () => ({
@@ -314,7 +316,9 @@ describe("useTaskPublishFlow", () => {
 
     renderHarness({ initialTasks: [initialTask], publishTaskDueUpdate, publishTaskPriorityUpdate });
     await act(async () => {
-      hookRef.current!.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due");
+      void hookRef.current!.handleDatesChange("task-1", [
+        { type: "due", date: new Date("2026-04-01T10:00:00.000Z"), time: "10:00" },
+      ]);
       hookRef.current!.handlePriorityChange("task-1", 60);
     });
 
@@ -326,6 +330,23 @@ describe("useTaskPublishFlow", () => {
       "10:00",
       "due",
     );
+  });
+
+  it("publishes every date of a batch and toasts once when some fail", async () => {
+    const initialTask = makeTask({ id: "task-1", relays: ["relay-one"] });
+    const publishTaskDueUpdate = vi.fn(async () => false);
+    vi.mocked(notifyPublishDateFailed).mockClear();
+
+    renderHarness({ initialTasks: [initialTask], publishTaskDueUpdate });
+    await act(async () => {
+      await hookRef.current!.handleDatesChange("task-1", [
+        { type: "start", date: new Date(2026, 3, 1) },
+        { type: "end", date: new Date(2026, 3, 3) },
+      ]);
+    });
+
+    expect(publishTaskDueUpdate).toHaveBeenCalledTimes(2);
+    expect(notifyPublishDateFailed).toHaveBeenCalledTimes(1);
   });
 
   it("blocks due date and priority changes for unrelated users on assigned tasks", async () => {
@@ -348,7 +369,9 @@ describe("useTaskPublishFlow", () => {
       publishTaskPriorityUpdate,
     });
     await act(async () => {
-      hookRef.current!.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due");
+      void hookRef.current!.handleDatesChange("task-1", [
+        { type: "due", date: new Date("2026-04-01T10:00:00.000Z"), time: "10:00" },
+      ]);
       hookRef.current!.handlePriorityChange("task-1", 60);
     });
 

@@ -572,7 +572,7 @@ function FeedIndexContent() {
     handleEditFailedPublish,
     handleDismissFailedPublish,
     handleDismissAllFailedPublish,
-    handleDueDateChange,
+    handleDatesChange,
     handlePriorityChange,
     handlePostDelete,
     handleRecomposeTask,
@@ -684,7 +684,7 @@ function FeedIndexContent() {
       focusTask: setFocusedTaskId,
       toggleComplete: handleToggleComplete,
       changeStatus: handleStatusChange,
-      updateDueDate: handleDueDateChange,
+      updateDates: handleDatesChange,
       updatePriority: handlePriorityChange,
       changeListingStatus: handleListingStatusChange,
       deletePost: handlePostDelete,
@@ -694,7 +694,7 @@ function FeedIndexContent() {
     }),
     [
       setFocusedTaskId, handleToggleComplete, handleStatusChange,
-      handleDueDateChange, handlePriorityChange, handleListingStatusChange,
+      handleDatesChange, handlePriorityChange, handleListingStatusChange,
       handlePostDelete, handleRecomposeTask, handleCopyPermalink,
       handleUndoPendingPublish,
     ]

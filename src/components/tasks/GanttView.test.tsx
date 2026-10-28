@@ -24,8 +24,8 @@ beforeEach(() => {
 const dateUpdates = () =>
   dispatchFeedInteraction.mock.calls
     .map(([intent]) => intent)
-    .filter((intent) => intent.type === "task.updateDueDate")
-    .map((intent) => [intent.dateType, intent.dueDate.toDateString()]);
+    .filter((intent) => intent.type === "task.updateDates")
+    .flatMap((intent) => intent.changes.map((change: { type: string; date: Date }) => [change.type, change.date.toDateString()]));
 
 /** Drags with the mouse by whole 32px days (the default "Days" zoom). */
 const dragBy = (target: Element, days: number) => {

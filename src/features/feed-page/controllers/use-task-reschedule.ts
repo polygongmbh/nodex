@@ -29,15 +29,8 @@ export function useTaskReschedule(): TaskRescheduleCommands {
     (task: TaskPost, mode: TaskDateShiftMode, deltaDays: number) => {
       const changes = planTaskDateShift(task, mode, deltaDays);
       featureDebugLog("reschedule", "Drag rescheduled task", { taskId: task.id, mode, deltaDays, changes });
-      for (const change of changes) {
-        void dispatchFeedInteraction({
-          type: "task.updateDueDate",
-          taskId: task.id,
-          dueDate: change.date,
-          dueTime: change.time,
-          dateType: change.type,
-        });
-      }
+      if (changes.length === 0) return;
+      void dispatchFeedInteraction({ type: "task.updateDates", taskId: task.id, changes });
     },
     [dispatchFeedInteraction]
   );

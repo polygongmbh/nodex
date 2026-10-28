@@ -1,10 +1,10 @@
 import type {
   ChannelMatchMode,
   TaskState,
-  TaskDateType,
   Nip99ListingStatus,
 } from "@/types";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
+import type { TaskDateChange } from "@/domain/content/task-date-shift";
 import type { DisplayDepthMode } from "./feed-interaction-intent";
 
 /**
@@ -77,7 +77,7 @@ export interface TaskInteractionCommands {
   focusTask(taskId: string | null, view?: ViewType): void;
   toggleComplete(taskId: string): void;
   changeStatus(taskId: string, status: TaskState): void;
-  updateDueDate(taskId: string, dueDate?: Date, dueTime?: string, dateType?: TaskDateType): void;
+  updateDates(taskId: string, changes: TaskDateChange[]): Promise<void>;
   updatePriority(taskId: string, priority: number): void;
   changeListingStatus(taskId: string, status: Nip99ListingStatus): void;
   deletePost(taskId: string): Promise<boolean>;

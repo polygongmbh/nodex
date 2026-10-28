@@ -207,8 +207,8 @@ describe("CalendarView responsiveness", () => {
     const dueUpdates = () =>
       dispatchFeedInteraction.mock.calls
         .map(([intent]) => intent)
-        .filter((intent) => intent.type === "task.updateDueDate")
-        .map((intent) => [intent.dateType, intent.dueDate.toDateString()]);
+        .filter((intent) => intent.type === "task.updateDates")
+        .flatMap((intent) => intent.changes.map((change: { type: string; date: Date }) => [change.type, change.date.toDateString()]));
 
     it("moves a task's date to the day it is dropped on", () => {
       dispatchFeedInteraction.mockClear();

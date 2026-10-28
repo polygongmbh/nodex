@@ -166,7 +166,7 @@ export function useTaskPublishControls({
       ? relayUrlsOverride.slice(0, 1)
       : resolveTaskOriginRelay(taskId).relayUrls;
     if (relayUrls.length === 0) {
-      notifyPublishDateFailed();
+      console.warn("Date publish skipped: no origin relay", { taskId });
       return false;
     }
     const relayUrl = relayUrls[0];
@@ -185,10 +185,8 @@ export function useTaskPublishControls({
       undefined,
       [relayUrl]
     );
-    if (!result.success) {
-      notifyPublishDateFailed();
-      console.warn("Date publish failed", { taskId, relayUrl });
-    }
+    // No toast here: callers publish dates in batches and toast once.
+    if (!result.success) console.warn("Date publish failed", { taskId, relayUrl });
     return result.success;
   }, [publishEvent, resolveTaskOriginRelay]);
 
@@ -249,10 +247,11 @@ export function useTaskPublishControls({
     if (effectiveInitialState.status !== "open" || effectiveInitialState.description) {
       await publishTaskStateUpdate(publishedEventId, effectiveInitialState, followUpRelayUrls);
     }
+    let dateFailed = false;
     for (const entry of dates) {
       const moment = getTaskLocalDate(entry);
       if (!moment) continue;
-      await publishTaskDueUpdate(
+      const published = await publishTaskDueUpdate(
         publishedEventId,
         content,
         moment,
@@ -260,7 +259,9 @@ export function useTaskPublishControls({
         entry.type,
         followUpRelayUrls
       );
+      if (!published) dateFailed = true;
     }
+    if (dateFailed) notifyPublishDateFailed();
   }, [publishTaskDueUpdate, publishTaskStateUpdate]);
 
   return {

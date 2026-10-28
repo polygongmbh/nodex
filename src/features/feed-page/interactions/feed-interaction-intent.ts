@@ -5,6 +5,7 @@ import type {
   TaskDateType,
 } from "@/types";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
+import type { TaskDateChange } from "@/domain/content/task-date-shift";
 
 export type DisplayDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
@@ -68,6 +69,8 @@ export type FeedInteractionIntent =
   | { type: "task.toggleComplete"; taskId: string }
   | { type: "task.changeStatus"; taskId: string; state: TaskState }
   | { type: "task.updateDueDate"; taskId: string; dueDate?: Date; dueTime?: string; dateType?: TaskDateType }
+  /** Several dates of one task changed by one user action (e.g. a drag); toasts at most once. */
+  | { type: "task.updateDates"; taskId: string; changes: TaskDateChange[] }
   | { type: "task.updatePriority"; taskId: string; priority: number }
   | { type: "task.listingStatus.change"; taskId: string; status: Nip99ListingStatus }
   | { type: "task.delete"; taskId: string }

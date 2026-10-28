@@ -10,6 +10,7 @@ import {
   parseIsoDateLocal,
 } from "@/types";
 import { getTaskLocalDate } from "@/lib/task-dates";
+import type { TaskDateChange } from "@/domain/content/task-date-shift";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SetStateAction } from "react";
 import { useTaskMutationStore } from "@/features/feed-page/stores/task-mutation-store";
@@ -51,6 +52,7 @@ import {
   notifyPublished,
   notifyPublishSavedForRetry,
   notifyStatusRestricted,
+  notifyPublishDateFailed,
   notifyRelaySelectionError,
   notifyPendingPublish,
   notifyPublishUndone,
@@ -899,20 +901,23 @@ export function useTaskPublishFlow({
     setComposeRestoreRequest({ id: Date.now(), state: restoreState });
   }, [failedPublishDrafts, guardInteraction, relays, setFailedPublishDrafts]);
 
-  const handleDueDateChange = useCallback((
-    taskId: string,
-    dueDate: Date | undefined,
-    dueTime?: string,
-    dateType: TaskDateType = "due"
-  ) => {
+  // One guard, permission check and failure toast per user action, however
+  // many dates it touches; each date is still its own NIP-52 event.
+  const handleDatesChange = useCallback(async (taskId: string, changes: TaskDateChange[]) => {
+    if (changes.length === 0) return;
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || !isTaskPost(existingTask) || !dueDate) return;
+    if (!existingTask || !isTaskPost(existingTask)) return;
     if (!canUserUpdateTask(existingTask, currentUser)) {
       notifyStatusRestricted();
       return;
     }
-    void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
+    const results = await Promise.all(
+      changes.map((change) =>
+        publishTaskDueUpdate(taskId, existingTask.content, change.date, change.time, change.type)
+      )
+    );
+    if (results.some((success) => !success)) notifyPublishDateFailed();
   }, [allTasks, currentUser, guardInteraction, publishTaskDueUpdate]);
 
   const handlePostDelete = useCallback(async (taskId: string): Promise<boolean> => {
@@ -1066,7 +1071,7 @@ export function useTaskPublishFlow({
     handleEditFailedPublish,
     handleDismissFailedPublish,
     handleDismissAllFailedPublish,
-    handleDueDateChange,
+    handleDatesChange,
     handlePriorityChange,
     handlePostDelete,
     handleRecomposeTask,

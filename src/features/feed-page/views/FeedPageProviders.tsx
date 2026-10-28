@@ -197,7 +197,13 @@ function FeedInteractionBusProvider({
         taskCommands.changeStatus(intent.taskId, intent.state);
       },
       "task.updateDueDate": (intent) => {
-        taskCommands.updateDueDate(intent.taskId, intent.dueDate, intent.dueTime, intent.dateType);
+        if (!intent.dueDate) return;
+        void taskCommands.updateDates(intent.taskId, [
+          { type: intent.dateType ?? "due", date: intent.dueDate, time: intent.dueTime },
+        ]);
+      },
+      "task.updateDates": (intent) => {
+        void taskCommands.updateDates(intent.taskId, intent.changes);
       },
       "task.updatePriority": (intent) => {
         taskCommands.updatePriority(intent.taskId, intent.priority);
