@@ -112,6 +112,78 @@ describe("CalendarView responsiveness", () => {
     vi.useRealTimers();
   });
 
+  it("draws a multi-day task as one bar per week row instead of a chip per day", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-17T10:00:00.000Z"));
+    // Thu Feb 19 → Tue Feb 24 crosses one week boundary: two week rows.
+    const trip = makeTask({
+      id: "trip",
+      author: people[0],
+      content: "Conference trip #general",
+      dates: [
+        { date: "2026-02-19", type: "start" },
+        { date: "2026-02-24", type: "end" },
+      ],
+    });
+    const single = makeTask({
+      id: "single",
+      author: people[0],
+      content: "Dentist visit #general",
+      dueDate: new Date("2026-02-20T10:00:00.000Z"),
+    });
+
+    render(
+      <CalendarView posts={[trip, single]} selectedDate={new Date("2026-03-20T00:00:00.000Z")} focusedTaskId={null} />
+    );
+
+    expect(screen.getAllByText(/Conference trip/)).toHaveLength(2);
+    expect(screen.getAllByText(/Dentist visit/)).toHaveLength(1);
+
+    vi.useRealTimers();
+  });
+
+  it("lists a multi-day task in the selected-day panel on a middle day", () => {
+    const trip = makeTask({
+      id: "trip",
+      author: people[0],
+      content: "Conference trip #general",
+      dates: [
+        { date: "2026-02-19", type: "start" },
+        { date: "2026-02-24", type: "end" },
+      ],
+    });
+
+    const { container } = render(
+      <CalendarView posts={[trip]} selectedDate={new Date(2026, 1, 21)} focusedTaskId={null} />
+    );
+
+    expect(container.querySelector('[data-task-id="trip"]')).toBeInTheDocument();
+  });
+
+  it("focuses a multi-day project from its bar", () => {
+    dispatchFeedInteraction.mockClear();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-17T10:00:00.000Z"));
+    const project = makeTask({
+      id: "launch",
+      author: people[0],
+      content: "Launch week #general",
+      dates: [
+        { date: "2026-02-16", type: "start" },
+        { date: "2026-02-18", type: "end" },
+      ],
+    });
+    const subtask = makeTask({ id: "launch-sub", author: people[0], content: "Prep #general", parentId: "launch" });
+
+    render(
+      <CalendarView posts={[project, subtask]} selectedDate={new Date(2026, 2, 20)} focusedTaskId={null} />
+    );
+
+    fireEvent.click(screen.getByText("Launch week #general"));
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "launch" });
+    vi.useRealTimers();
+  });
+
   it("renders core month navigation controls", () => {
     render(
       <CalendarView posts={tasks} focusedTaskId={null} />

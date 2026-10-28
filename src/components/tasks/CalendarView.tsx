@@ -1,34 +1,22 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { ChevronLeft, ChevronRight, Plus, X, CalendarPlus } from "lucide-react";
-import {
-  formatLocalIsoDate,
-  getTaskState,
-  getTaskStatus,
-  type Post,
-  isTaskPost,
-} from "@/types";
-import type { Person } from "@/types/person";
+import { formatLocalIsoDate, type Post, isTaskPost } from "@/types";
 import {
   format,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
   isSameMonth,
-  isSameDay,
   addMonths,
   subMonths,
-  isToday,
   startOfDay,
   startOfWeek,
   endOfWeek,
   eachWeekOfInterval,
-  getISOWeek,
 } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getAuthorColor } from "@/lib/author-color";
 import { makeIsProject } from "@/domain/content/task-projects";
 import { useTranslation } from "react-i18next";
-import { isTaskTerminal } from "@/domain/content/task-state";
 import {
   createCalendarSelectors,
   useTaskViewSource,
@@ -39,6 +27,7 @@ import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useComposerSubmitHandler } from "./use-composer-submit-handler";
 import { useTaskViewServices } from "./use-task-view-services";
 import { CalendarTaskCard } from "./calendar/CalendarTaskCard";
+import { CalendarWeekRow } from "./calendar/CalendarWeekRow";
 import { useCurrentUser } from "@/features/feed-page/stores/current-user-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -132,6 +121,14 @@ export function CalendarView({
       })
       .sort((a, b) => a.month.getTime() - b.month.getTime());
   }, [desktopMonths]);
+
+  const multiDayEntries = useMemo(() => calendarSelectors.getMultiDayEntries(), [calendarSelectors]);
+  const weekGridClassName = isMobile
+    ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]"
+    : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]";
+  const setCurrentWeekNode = useCallback((node: HTMLDivElement | null) => {
+    desktopCurrentWeekRef.current = node;
+  }, []);
 
   const selectedDayTasks = useMemo(
     () => (selectedDate ? getTasksForDay(selectedDate) : []),
@@ -282,6 +279,24 @@ export function CalendarView({
     };
   }, [desktopMonthSections]);
 
+  const selectDay = (day: Date, inDisplayedMonth: boolean) => {
+    if (controlledSelectedDate === undefined) {
+      setSelectedDateInternal(day);
+    }
+    onSelectedDateChange?.(day);
+    if (!inDisplayedMonth) {
+      setCurrentMonth(startOfMonth(day));
+      ensureDesktopMonthRendered(day);
+    }
+  };
+
+  // Multi-day bars act like the selected-day cards: focus a task with
+  // subtasks, otherwise select the bar's first day to show it in the panel.
+  const handleSpanClick = (task: Post, day: Date, inDisplayedMonth: boolean) => {
+    if (hasChildren(task.id)) focusTask(task.id);
+    else selectDay(day, inDisplayedMonth);
+  };
+
   const navigateMonth = (direction: "prev" | "next") => {
     const targetMonth =
       direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1);
@@ -326,10 +341,7 @@ export function CalendarView({
                   {format(section.month, "MMMM yyyy")}
                 </h2>
 
-                <div className={cn(
-                  "grid gap-px mb-0.5",
-                  isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
-                )}>
+                <div className={cn("grid gap-px mb-0.5", weekGridClassName)}>
                   <div className="text-center text-xs font-medium text-muted-foreground py-1">{t("calendar.weekShort")}</div>
                   {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
                     <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
@@ -339,128 +351,21 @@ export function CalendarView({
                 </div>
 
                 <div className="space-y-px bg-border/35">
-                  {section.weeks.map((week) => {
-                    const weekContainsToday = week.some((day) => isToday(day));
-                    return (
-                      <div
-                        key={week[0]?.toISOString() ?? section.key}
-                        ref={(node: HTMLDivElement | null) => {
-                          if (weekContainsToday) {
-                            desktopCurrentWeekRef.current = node;
-                          }
-                        }}
-                        data-current-week={weekContainsToday ? "true" : undefined}
-                        className={cn(
-                          "grid gap-px bg-border/35",
-                          isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "flex items-center justify-center text-xs font-medium",
-                            weekContainsToday
-                              ? "bg-primary/15 text-primary font-semibold"
-                              : "bg-muted/55 text-muted-foreground"
-                          )}
-                        >
-                          {getISOWeek(week[3] ?? week[0])}
-                        </div>
-                        {week.map((day) => {
-                          const dayTasks = getTasksForDay(day);
-                          const isSelected = selectedDate && isSameDay(day, selectedDate);
-                          const isInDisplayedMonth = isSameMonth(day, section.month);
-                          const dayIsToday = isToday(day);
-
-                          return (
-                            <button
-                              key={day.toISOString()}
-                              onClick={() => {
-                                if (controlledSelectedDate === undefined) {
-                                  setSelectedDateInternal(day);
-                                }
-                                onSelectedDateChange?.(day);
-                                if (!isInDisplayedMonth) {
-                                  setCurrentMonth(startOfMonth(day));
-                                  ensureDesktopMonthRendered(day);
-                                }
-                              }}
-                              className={cn(
-                                "transition-colors duration-150 text-left flex flex-col relative border border-transparent",
-                                isMobile ? "min-h-[4.4rem] p-1" : "min-h-[6.2rem] p-1",
-                                // Subtle row tint when this week contains today, distinct from selected day
-                                weekContainsToday ? "bg-primary/5" : "bg-background",
-                                dayIsToday && "border-primary bg-primary/15 ring-1 ring-primary/40",
-                                isSelected ? "bg-primary/25 border-primary" : !dayIsToday && "hover:bg-muted/40",
-                                !isInDisplayedMonth && "opacity-60"
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  isMobile ? "text-xs" : "text-sm",
-                                  "font-medium",
-                                  dayIsToday &&
-                                    "inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground"
-                                )}
-                              >
-                                {format(day, "d")}
-                              </span>
-                              {dayTasks.length > 0 && (
-                                isMobile ? (
-                                  <div className="flex gap-0.5 mt-0.5">
-                                    {Array.from({ length: Math.min(dayTasks.length, 3) }, (_, i) => {
-                                      const task = dayTasks[i];
-                                      const authorColor = getAuthorColor(task.pubkey);
-                                      return (
-                                        <span
-                                          key={task.id}
-                                          className="w-1 h-1 rounded-full"
-                                          style={{ backgroundColor: authorColor.accent }}
-                                        />
-                                      );
-                                    })}
-                                    {dayTasks.length > 3 && (
-                                      <span className="text-[0.375rem] text-muted-foreground">+</span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
-                                    {Array.from({ length: Math.min(dayTasks.length, 2) }, (_, i) => {
-                                      const task = dayTasks[i];
-                                      const authorColor = getAuthorColor(task.pubkey);
-                                      return (
-                                        <div
-                                          key={task.id}
-                                          className={cn(
-                                            "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
-                                            isTaskTerminal(getTaskState(task))
-                                              ? "bg-muted text-muted-foreground line-through"
-                                              : getTaskStatus(getTaskState(task)) === "active"
-                                                ? "bg-warning/15 text-warning"
-                                                : "bg-primary/10"
-                                          )}
-                                        >
-                                          <span
-                                            className="h-1.5 w-1.5 rounded-full"
-                                            style={{ backgroundColor: authorColor.accent }}
-                                          />
-                                          {task.content.slice(0, 15)}...
-                                                                                </div>
-                                      );
-                                    })}
-                                    {dayTasks.length > 2 && (
-                                      <span className="text-[0.625rem] text-muted-foreground">
-                                        {t("calendar.moreTasks", { count: dayTasks.length - 2 })}
-                                      </span>
-                                    )}
-                                  </div>
-                                )
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
+                  {section.weeks.map((week) => (
+                    <CalendarWeekRow
+                      key={week[0]?.toISOString() ?? section.key}
+                      week={week}
+                      month={section.month}
+                      isMobile={isMobile}
+                      gridClassName={weekGridClassName}
+                      selectedDate={selectedDate}
+                      getTasksForDay={getTasksForDay}
+                      multiDayEntries={multiDayEntries}
+                      onSelectDay={selectDay}
+                      onSpanClick={handleSpanClick}
+                      currentWeekRef={setCurrentWeekNode}
+                    />
+                  ))}
                 </div>
               </section>
             ))}
